@@ -26,32 +26,32 @@ class TestFlextLDAPApiComprehensive:
     """Comprehensive tests for FlextLDAPApi with real functionality."""
 
     def test_api_initialization_default(self) -> None:
-        """Test API initialization with default settings using FlextMatchers."""
+        """Test API initialization with default settings using FlextTestsMatchers."""
         api = FlextLDAPApi()
 
-        # Use FlextMatchers for better validation
+        # Use FlextTestsMatchers for better validation
         assert isinstance(api._config, FlextLDAPSettings)
         assert api._container_manager is not None
         assert api._container is not None
         assert api._service is not None
 
     def test_api_initialization_with_config(self) -> None:
-        """Test API initialization with custom config using FlextMatchers."""
+        """Test API initialization with custom config using FlextTestsMatchers."""
         config = FlextLDAPSettings()
         api = FlextLDAPApi(config)
 
-        # Use FlextMatchers for identity validation
+        # Use FlextTestsMatchers for identity validation
         assert api._config is config
         assert isinstance(api._config, FlextLDAPSettings)
 
     def test_generate_session_id(self) -> None:
-        """Test session ID generation using FlextMatchers validation."""
+        """Test session ID generation using FlextTestsMatchers validation."""
         api = FlextLDAPApi()
 
         session_id1 = api._generate_session_id()
         session_id2 = api._generate_session_id()
 
-        # Use basic assertions for string validation (FlextMatchers doesn't have assert_string_not_empty)
+        # Use basic assertions for string validation (FlextTestsMatchers doesn't have assert_string_not_empty)
         assert session_id1
         assert len(session_id1) > 0
         assert session_id2
@@ -108,7 +108,7 @@ class TestFlextLDAPApiComprehensive:
         assert result == "Default"
 
     async def test_connect_without_real_server(self) -> None:
-        """Test connect method without real LDAP server using FlextMatchers."""
+        """Test connect method without real LDAP server using FlextTestsMatchers."""
         api = FlextLDAPApi()
 
         result = await api.connect(

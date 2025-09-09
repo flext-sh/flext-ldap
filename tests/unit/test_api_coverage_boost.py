@@ -14,14 +14,15 @@ import re
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import (
-    AdminUserFactory,
-    UserFactory,
-)
+from flext_tests import FlextTestsFactories
 
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.settings import FlextLDAPSettings
+
+# Access factories through the proper structure
+AdminUserFactory = FlextTestsFactories.AdminUserFactory
+UserFactory = FlextTestsFactories.UserFactory
 
 
 @pytest.mark.asyncio

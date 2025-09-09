@@ -14,14 +14,14 @@ import re
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import (
-    AdminUserFactory,
-    PerformanceProfiler,
-    UserFactory,
-)
+from flext_tests import FlextTestsFactories
 
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
+
+# Access factories through the proper structure
+AdminUserFactory = FlextTestsFactories.AdminUserFactory
+UserFactory = FlextTestsFactories.UserFactory
 
 
 @pytest.mark.asyncio
@@ -169,10 +169,9 @@ class TestFlextLDAPApiFlextTestsIntegration:
             assert search_result.error
             assert isinstance(search_result.error, str)
 
-    async def test_performance_monitoring_with_profiler(self) -> None:
-        """Test performance monitoring using PerformanceProfiler."""
+    async def test_basic_performance_monitoring(self) -> None:
+        """Test basic performance monitoring without external dependencies."""
         api = FlextLDAPApi()
-        profiler = PerformanceProfiler()
 
         # Create search request for performance test
         search_request = FlextLDAPEntities.SearchRequest(
@@ -181,13 +180,11 @@ class TestFlextLDAPApiFlextTestsIntegration:
             scope="subtree",
         )
 
-        # Profile memory usage during operation
-        with profiler.profile_memory("ldap_search"):
-            # Perform search operation
-            api.search(search_request)
+        # Simple timing test - execute operation
+        result = await api.search(search_request)
 
-        # Validate that profiling completed without errors
-        assert True  # Operation completed successfully
+        # Validate that operation completed with proper FlextResult structure
+        assert isinstance(result, FlextResult)
 
     async def test_error_handling_comprehensive(self) -> None:
         """Test comprehensive error handling."""

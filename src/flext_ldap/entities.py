@@ -751,14 +751,6 @@ class FlextLDAPEntities:
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY CLASSES - Backward Compatibility
-# =============================================================================
-
-# Legacy class aliases for backward compatibility
-# Export aliases eliminated - use FlextLDAPEntities.* directly following flext-core pattern
-
-
-# =============================================================================
 # PYDANTIC MODEL REBUILD - Fix forward references
 # =============================================================================
 

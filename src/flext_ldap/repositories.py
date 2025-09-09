@@ -223,9 +223,13 @@ class FlextLDAPRepositories:
 
         def save(
             self,
-            entity: FlextLDAPEntities.Entry,
+            entity: object,
         ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Save entity (synchronous wrapper for async save_async)."""
+            # Type check for runtime safety while maintaining LSP compliance
+            if not isinstance(entity, FlextLDAPEntities.Entry):
+                return FlextResult.fail(f"Invalid entity type: {type(entity)}")
+
             try:
                 result = asyncio.run(self.save_async(entity))
                 if result.is_success:

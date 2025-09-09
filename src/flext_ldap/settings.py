@@ -14,8 +14,11 @@ from pathlib import Path
 from typing import final, override
 
 import yaml
+
+# MANDATORY: Automatic .env loading - dotenv is always available
 from flext_core import FlextConfig, FlextLogger, FlextResult, FlextTypes
-from pydantic import ConfigDict, Field, SecretStr
+from pydantic import Field, SecretStr
+from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.fields import FlextLDAPFields
@@ -35,9 +38,9 @@ class FlextLDAPSettings(FlextConfig):
     No separate config classes, no custom configuration helpers.
     """
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         populate_by_name=True,
-        extra="forbid",
+        extra="ignore",  # Allow client-a and other project-specific environment variables
         validate_assignment=True,
         use_enum_values=True,
     )
@@ -269,8 +272,12 @@ class FlextLDAPSettings(FlextConfig):
             raise ValueError(base_dn_error)
 
         # Get optional values
-        use_ssl_result = FlextConfig.get_env_var("FLEXT_LDAP_USE_SSL", default="false")
-        use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
+        use_ssl_result = FlextConfig.get_env_var("FLEXT_LDAP_USE_SSL")
+        use_ssl = (
+            use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
+            if use_ssl_result.is_success
+            else False
+        )
 
         # Use direct auth fields
         bind_dn = bind_dn_result.value

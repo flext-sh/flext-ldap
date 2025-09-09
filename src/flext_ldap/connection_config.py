@@ -21,7 +21,7 @@ class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
     model_config: ClassVar = {
-        "extra": "forbid",
+        "extra": "ignore",  # Allow client-a and other project-specific environment variables
         "validate_assignment": True,
         "str_strip_whitespace": True,
     }

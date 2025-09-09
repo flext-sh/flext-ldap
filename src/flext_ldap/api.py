@@ -116,8 +116,7 @@ class FlextLDAPApi:
         # Note: session_id parameter maintained for API compatibility
         # Currently not used by the service layer implementation
         _ = session_id  # Acknowledge parameter to silence linter
-        result = await self._service.disconnect()
-        return result.map(lambda _: None)
+        return await self._service.disconnect()
 
     @asynccontextmanager
     async def connection(
@@ -140,7 +139,7 @@ class FlextLDAPApi:
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
         if not connect_result.is_success:
             error_msg = connect_result.error or "Connection failed"
-            raise FlextLDAPExceptions.LDAPConnectionError(error_msg)
+            raise FlextLDAPExceptions.LdapConnectionError(error_msg)
 
         session_id = connect_result.value
         try:
@@ -314,13 +313,13 @@ class FlextLDAPApi:
     @overload
     async def create_group(
         self,
-        request: FlextLDAPEntities.CreateGroupRequest,
+        dn_or_request: FlextLDAPEntities.CreateGroupRequest,
     ) -> FlextResult[FlextLDAPEntities.Group]: ...
 
     @overload
     async def create_group(
         self,
-        dn: str,
+        dn_or_request: str,
         cn: str,
         description: str | None = None,
         members: FlextTypes.Core.StringList | None = None,

@@ -20,16 +20,22 @@ import asyncio
 import pytest
 from flext_core import FlextResult
 from flext_tests import (
-    AdminUserFactory,
-    AsyncTestUtils,
-    FlextMatchers,
-    PerformanceProfiler,
-    TestBuilders,
-    UserFactory,
+    FlextTestsAsyncs,
+    FlextTestsBuilders,
+    FlextTestsFactories,
+    FlextTestsMatchers,
+    FlextTestsPerformance,
 )
 
 from flext_ldap import get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
+
+# Access components through proper structure
+AdminUserFactory = FlextTestsFactories.AdminUserFactory
+UserFactory = FlextTestsFactories.UserFactory
+AsyncTestUtils = FlextTestsAsyncs
+TestBuilders = FlextTestsBuilders
+PerformanceProfiler = FlextTestsPerformance
 
 
 @pytest.mark.asyncio
@@ -42,7 +48,7 @@ class TestComprehensiveFlextTests:
         users = UserFactory.build_batch(5)
         REDACTED_LDAP_BIND_PASSWORD_user = AdminUserFactory.build()
 
-        # Validate using FlextMatchers
+        # Validate using FlextTestsMatchers
         assert len(users) == 5
         assert users
         assert len(users) > 0
@@ -91,7 +97,7 @@ class TestComprehensiveFlextTests:
                 [session_generation_task() for _ in range(10)]
             )
 
-        # Validate results using FlextMatchers
+        # Validate results using FlextTestsMatchers
         assert sessions
         assert len(sessions) > 0
         assert len(sessions) == 10
@@ -135,7 +141,7 @@ class TestComprehensiveFlextTests:
         assert ldap_search.scope in {"base", "one", "subtree"}
 
     async def test_real_ldap_operations_with_matchers(self) -> None:
-        """Test real LDAP operations using FlextMatchers for validation."""
+        """Test real LDAP operations using FlextTestsMatchers for validation."""
         api = get_flext_ldap_api()
 
         # Generate test user using UserFactory
@@ -152,14 +158,14 @@ class TestComprehensiveFlextTests:
         # Execute real search (will fail gracefully without connection)
         result = await api.search(search_request)
 
-        # Use FlextMatchers for result validation
-        FlextMatchers.assert_is_flext_result(result)
+        # Use FlextTestsMatchers for result validation
+        FlextTestsMatchers.assert_is_flext_result(result)
 
         if result.is_success:
             assert isinstance(result.value, list)
         else:
             # Expected failure without real LDAP connection
-            FlextMatchers.assert_result_failure(result)
+            FlextTestsMatchers.assert_result_failure(result)
             assert result.error is not None
             assert result.error
             assert len(result.error) > 0
@@ -220,7 +226,7 @@ class TestComprehensiveFlextTests:
         assert result == "completed"
 
     def test_data_validation_with_comprehensive_matchers(self) -> None:
-        """Test comprehensive data validation using all FlextMatchers."""
+        """Test comprehensive data validation using all FlextTestsMatchers."""
         # Test various data validation scenarios
         user = UserFactory.build()
 
@@ -249,8 +255,8 @@ class TestComprehensiveFlextTests:
         success_result = FlextResult.ok("success")
         failure_result = FlextResult.fail("error")
 
-        FlextMatchers.assert_result_success(success_result)
-        FlextMatchers.assert_result_failure(failure_result)
+        FlextTestsMatchers.assert_result_success(success_result)
+        FlextTestsMatchers.assert_result_failure(failure_result)
 
-        assert FlextMatchers.is_successful_result(success_result)
-        assert FlextMatchers.is_failed_result(failure_result)
+        assert FlextTestsMatchers.is_successful_result(success_result)
+        assert FlextTestsMatchers.is_failed_result(failure_result)

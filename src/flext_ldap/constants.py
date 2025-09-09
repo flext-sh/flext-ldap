@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import Final
 
 from flext_core import FlextConstants, FlextTypes
-from flext_core.typings import FlextTypes
 
 
 class FlextLDAPConstants(FlextConstants):

@@ -21,7 +21,7 @@ from pydantic import ConfigDict, Field, field_validator
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
+from flext_ldap.typings import LdapAttributeDict
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -451,7 +451,7 @@ class FlextLDAPAdapters:
 
         def _convert_search_results_to_ldap_entries(
             self,
-            results: list[LdapSearchResult],
+            results: list[dict[str, object]],
         ) -> list[FlextLDAPEntities.Entry]:
             """Convert search results to FlextLDAPEntities.Entry objects."""
             entries: list[FlextLDAPEntities.Entry] = []
@@ -505,43 +505,19 @@ class FlextLDAPAdapters:
 
         async def add_entry(
             self,
-            entry_param: FlextLDAPAdapters.DirectoryEntry | str,
-            attributes: FlextTypes.Core.Dict | None = None,
+            entry: FlextLDAPAdapters.DirectoryEntry,
         ) -> FlextResult[None]:
-            """Add new LDAP entry."""
+            """Add new LDAP entry using DirectoryEntry object only."""
             try:
-                # Handle both DirectoryEntry and dn+attributes parameters
-                if isinstance(entry_param, FlextLDAPAdapters.DirectoryEntry):
-                    entry = entry_param
-                    # Validate entry
-                    validation_error = self._validate_entry(entry)
-                    if validation_error:
-                        return FlextResult.fail(validation_error)
+                # Validate entry
+                validation_error = self._validate_entry(entry)
+                if validation_error:
+                    return FlextResult.fail(validation_error)
 
-                    # Use entry attributes
-                    dn = entry.dn
-                    # Convert to the expected type
-                    entry_attributes: LdapAttributeDict = dict(entry.attributes)
-                else:
-                    # Legacy mode: dn as string with attributes dict
-                    if attributes is None:
-                        return FlextResult.fail(
-                            "Attributes required when using DN string",
-                        )
-
-                    dn = entry_param
-                    validation_error = self._validate_dn_param(dn)
-                    if validation_error:
-                        return FlextResult.fail(validation_error)
-
-                    # Convert to the expected type
-                    # cast already imported at top
-
-                    legacy_attributes: LdapAttributeDict = cast(
-                        "LdapAttributeDict",
-                        attributes,
-                    )
-                    entry_attributes = legacy_attributes
+                # Use entry attributes
+                dn = entry.dn
+                # Convert to the expected type
+                entry_attributes: LdapAttributeDict = dict(entry.attributes)
 
                 # Convert to LDAP attributes using Python standard conversion
                 ldap_attrs = {
@@ -709,7 +685,7 @@ class FlextLDAPAdapters:
 
         def _convert_entries_to_protocol(
             self,
-            entries: list[LdapSearchResult],
+            entries: list[dict[str, object]],
         ) -> list[FlextTypes.Core.Dict]:
             """Convert entries to protocol format."""
             protocol_entries: list[FlextTypes.Core.Dict] = []
