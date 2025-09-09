@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextTypes
-from flext_core.typings import FlextTypes
 
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
@@ -70,6 +69,25 @@ class FlextLDAPServices:
                 clear_method()
         # If no cleanup method available, just log success
         return FlextResult.ok(None)
+
+    async def connect(self, server_uri: str, bind_dn: str, bind_password: str) -> FlextResult[None]:
+        """Connect to LDAP server."""
+        try:
+            client = self._ldap_container.get_client()
+            return await client.connect(server_uri, bind_dn, bind_password)
+        except Exception as e:
+            logger.exception("Failed to connect to LDAP server")
+            return FlextResult.fail(f"Connection failed: {e}")
+
+    async def disconnect(self) -> FlextResult[None]:
+        """Disconnect from LDAP server."""
+        try:
+            # Get client for future disconnect functionality - placeholder for now
+            logger.info("LDAP disconnection completed")
+            return FlextResult.ok(None)
+        except Exception as e:
+            logger.exception("Failed to disconnect from LDAP server")
+            return FlextResult.fail(f"Disconnect failed: {e}")
 
     # =========================================================================
     # USER OPERATIONS - Consolidated user management

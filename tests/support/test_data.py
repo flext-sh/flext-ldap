@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_core import FlextTypes
+
 # Sample LDAP entries for testing
 SAMPLE_USER_ENTRY: FlextTypes.Core.Dict = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",

@@ -9,16 +9,21 @@ import asyncio
 import pytest
 from flext_core import FlextResult
 from flext_tests import (
-    AdminUserFactory,
-    AsyncTestUtils,
-    FlextMatchers,
-    PerformanceProfiler,
-    UserFactory,
+    FlextTestsAsyncs,
+    FlextTestsFactories,
+    FlextTestsMatchers,
+    FlextTestsPerformance,
 )
 
 from flext_ldap import get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.exceptions import FlextLDAPExceptions
+
+# Access components through proper structure
+AdminUserFactory = FlextTestsFactories.AdminUserFactory
+UserFactory = FlextTestsFactories.UserFactory
+AsyncTestUtils = FlextTestsAsyncs
+PerformanceProfiler = FlextTestsPerformance
 
 
 class TestFlextTestsIntegration:
@@ -54,21 +59,21 @@ class TestFlextTestsIntegration:
             )
 
     async def test_flext_matchers_for_result_validation(self) -> None:
-        """Test FlextMatchers for FlextResult validation without mocks."""
+        """Test FlextTestsMatchers for FlextResult validation without mocks."""
         get_flext_ldap_api()
 
         # Test successful result validation using real FlextResult
         success_result = FlextResult.ok("test_success_value")
 
-        # Use FlextMatchers for result assertions
-        FlextMatchers.assert_result_success(success_result)
-        assert FlextMatchers.is_successful_result(success_result)
+        # Use FlextTestsMatchers for result assertions
+        FlextTestsMatchers.assert_result_success(success_result)
+        assert FlextTestsMatchers.is_successful_result(success_result)
 
         # Test failure result validation
         failure_result = FlextResult.fail("test_error")
 
-        FlextMatchers.assert_result_failure(failure_result)
-        assert FlextMatchers.is_failed_result(failure_result)
+        FlextTestsMatchers.assert_result_failure(failure_result)
+        assert FlextTestsMatchers.is_failed_result(failure_result)
 
         # Test JSON structure validation
         user_data = {
@@ -77,7 +82,7 @@ class TestFlextTestsIntegration:
             "cn": "Test User",
         }
 
-        FlextMatchers.assert_json_structure(
+        FlextTestsMatchers.assert_json_structure(
             user_data, {"dn": str, "uid": str, "cn": str}
         )
 
@@ -102,7 +107,7 @@ class TestFlextTestsIntegration:
 
             # Validate business rules
             validation_result = create_request.validate_business_rules()
-            FlextMatchers.assert_result_success(validation_result)
+            FlextTestsMatchers.assert_result_success(validation_result)
 
     async def test_performance_profiling_for_ldap_operations(self) -> None:
         """Test PerformanceProfiler for LDAP operation performance."""
@@ -117,7 +122,7 @@ class TestFlextTestsIntegration:
         assert memory_result is not None
 
         # Skip performance test for now - requires benchmark fixture
-        # FlextMatchers.assert_performance_within_limit would need benchmark fixture
+        # FlextTestsMatchers.assert_performance_within_limit would need benchmark fixture
         assert True  # Placeholder for performance testing
 
     def test_admin_user_factory_integration(self) -> None:
@@ -140,7 +145,7 @@ class TestFlextTestsIntegration:
 
             # Validate admin user request
             validation_result = admin_request.validate_business_rules()
-            FlextMatchers.assert_result_success(validation_result)
+            FlextTestsMatchers.assert_result_success(validation_result)
 
     async def test_async_concurrent_ldap_operations(self) -> None:
         """Test concurrent LDAP operations using AsyncTestUtils."""
@@ -174,17 +179,17 @@ class TestFlextTestsIntegration:
         assert len(set(session_ids)) == len(session_ids)
 
     def test_type_guard_validation_with_flext_matchers(self) -> None:
-        """Test type guard validation using FlextMatchers."""
+        """Test type guard validation using FlextTestsMatchers."""
         # Test LDAP DN validation
         valid_dn = "cn=test,ou=users,dc=example,dc=com"
         invalid_dn = "invalid_dn_format"
 
-        # Use FlextMatchers.assert_regex_match for DN validation
+        # Use FlextTestsMatchers.assert_regex_match for DN validation
         dn_pattern = r"^[a-zA-Z]+=[^,]+(?:,[a-zA-Z]+=[^,]+)*$"
-        FlextMatchers.assert_regex_match(valid_dn, dn_pattern)
+        FlextTestsMatchers.assert_regex_match(valid_dn, dn_pattern)
 
         with pytest.raises(AssertionError):
-            FlextMatchers.assert_regex_match(invalid_dn, dn_pattern)
+            FlextTestsMatchers.assert_regex_match(invalid_dn, dn_pattern)
 
     def test_exception_validation_with_real_scenarios(self) -> None:
         """Test exception handling in real scenarios without mocks."""

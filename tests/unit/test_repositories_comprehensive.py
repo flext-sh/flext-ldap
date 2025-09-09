@@ -23,11 +23,11 @@ class TestFlextLDAPRepositoriesComprehensive:
     """Comprehensive tests for FlextLDAPRepositories with real functionality."""
 
     def test_repositories_initialization(self) -> None:
-        """Test repositories initialization using FlextMatchers."""
+        """Test repositories initialization using FlextTestsMatchers."""
         client = FlextLDAPClient()
         repos = FlextLDAPRepositories(client)
 
-        # Use FlextMatchers for comprehensive validation
+        # Use FlextTestsMatchers for comprehensive validation
         assert hasattr(repos, "_base_repo")
         assert hasattr(repos, "_user_repo")
         assert hasattr(repos, "_group_repo")
@@ -36,11 +36,11 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(repos._group_repo, FlextLDAPRepositories.GroupRepository)
 
     def test_repository_property_access(self) -> None:
-        """Test repository property access using FlextMatchers."""
+        """Test repository property access using FlextTestsMatchers."""
         client = FlextLDAPClient()
         repos = FlextLDAPRepositories(client)
 
-        # Test repository property with FlextMatchers
+        # Test repository property with FlextTestsMatchers
         repo = repos.repository
         assert isinstance(repo, FlextLDAPRepositories.Repository)
 
@@ -64,7 +64,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert repo._client is client
 
     async def test_find_by_dn_without_connection(self) -> None:
-        """Test find_by_dn without connection using FlextMatchers."""
+        """Test find_by_dn without connection using FlextTestsMatchers."""
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
@@ -81,7 +81,7 @@ class TestFlextLDAPRepositoriesComprehensive:
             )
 
     async def test_search_without_connection(self) -> None:
-        """Test search without connection using FlextMatchers and TestBuilders."""
+        """Test search without connection using FlextTestsMatchers and TestBuilders."""
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 

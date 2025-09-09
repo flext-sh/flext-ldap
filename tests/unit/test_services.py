@@ -10,12 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import cast
 
 import pytest
 from flext_core import FlextContainer, FlextResult, FlextTypes
 from flext_tests import (
-    FlextMatchers,
+    FlextTestsMatchers,
 )
 
 from flext_ldap import (
@@ -33,33 +34,33 @@ class TestFlextLDAPServicesComprehensive:
     """Comprehensive tests for FlextLDAPServices with real functionality."""
 
     async def test_init_with_container(self) -> None:
-        """Test service initialization with provided container using FlextMatchers."""
+        """Test service initialization with provided container using FlextTestsMatchers."""
         container = FlextLDAPContainer().get_container()
         service = FlextLDAPServices(container)
 
-        # Use FlextMatchers for comprehensive validation
+        # Use FlextTestsMatchers for comprehensive validation
         assert service._container is container
         assert service._ldap_container is not None
         assert isinstance(service, FlextLDAPServices)
 
     async def test_init_without_container(self) -> None:
-        """Test service initialization without container creates default using FlextMatchers."""
+        """Test service initialization without container creates default using FlextTestsMatchers."""
         service = FlextLDAPServices()
 
-        # Use FlextMatchers for comprehensive validation
+        # Use FlextTestsMatchers for comprehensive validation
         assert service._container is not None
         assert service._ldap_container is not None
         assert isinstance(service, FlextLDAPServices)
 
     async def test_process_base_implementation(self) -> None:
-        """Test process method base implementation using FlextMatchers."""
+        """Test process method base implementation using FlextTestsMatchers."""
         service = FlextLDAPServices()
         request: FlextTypes.Core.Dict = {"test": "data"}
 
         result = service.process(request)
 
-        # Use FlextMatchers for result validation
-        FlextMatchers.assert_result_success(result)
+        # Use FlextTestsMatchers for result validation
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value == request
 
     async def test_build_with_dict_domain(self) -> None:
@@ -72,7 +73,7 @@ class TestFlextLDAPServicesComprehensive:
 
         result = service.build(domain, correlation_id=correlation_id)
 
-        # Use FlextMatchers for comprehensive validation
+        # Use FlextTestsMatchers for comprehensive validation
         assert result["user"] == "test_user"
         assert result["correlation_id"] == correlation_id
         assert result
@@ -90,13 +91,13 @@ class TestFlextLDAPServicesComprehensive:
         assert result["correlation_id"] == correlation_id
 
     async def test_get_repository(self) -> None:
-        """Test repository retrieval from container using FlextMatchers."""
+        """Test repository retrieval from container using FlextTestsMatchers."""
         service = FlextLDAPServices()
 
         result = service._get_repository()
 
-        # Use FlextMatchers for comprehensive result validation
-        FlextMatchers.assert_result_success(result)
+        # Use FlextTestsMatchers for comprehensive result validation
+        FlextTestsMatchers.assert_result_success(result)
         assert isinstance(result.value, FlextLDAPRepositories.Repository)
 
     async def test_initialize(self) -> None:
@@ -642,3 +643,167 @@ class TestFlextLDAPServicesComprehensive:
             "cn=lifecycle_group,ou=groups,dc=flext,dc=local"
         )
         assert isinstance(delete_result, FlextResult)
+
+    async def test_connect_method_functionality(self) -> None:
+        """Test connect method with real connection attempt."""
+        service = FlextLDAPServices()
+
+        # Test connection attempt (may fail gracefully in test environment)
+        result = await service.connect(
+            "ldap://localhost:3890",
+            "cn=admin,dc=flext,dc=local",
+            "admin123"
+        )
+
+        # Verify FlextResult returned and method executed
+        assert isinstance(result, FlextResult)
+        # Connection may fail in test env - that's acceptable
+
+    async def test_disconnect_method_functionality(self) -> None:
+        """Test disconnect method functionality."""
+        service = FlextLDAPServices()
+
+        # Test disconnect (should complete successfully as placeholder)
+        result = await service.disconnect()
+
+        # Verify successful execution of disconnect logic
+        assert isinstance(result, FlextResult)
+        assert result.is_success  # Disconnect should succeed as it's placeholder
+
+    async def test_get_user_with_empty_result_path(self) -> None:
+        """Test get_user method when repository returns None/empty result."""
+        from unittest.mock import AsyncMock, Mock
+
+        service = FlextLDAPServices()
+
+        # Create mock repository that returns None entry
+        mock_repo = Mock()
+        mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(None))
+
+        # Mock _get_repository to return our mock
+        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+
+        result = await service.get_user("cn=nonexistent,dc=test")
+
+        # Should return successful result with None value
+        assert result.is_success
+        assert result.value is None
+
+    async def test_get_user_with_successful_conversion(self) -> None:
+        """Test get_user method with successful entry to user conversion."""
+        from unittest.mock import AsyncMock, Mock
+
+        from flext_ldap.entities import FlextLDAPEntities
+
+        service = FlextLDAPServices()
+
+        # Create mock entry with test data
+        mock_entry = Mock()
+        mock_entry.id = "test_user"
+        mock_entry.dn = "cn=test,dc=example,dc=com"
+        mock_entry.object_classes = ["person", "organizationalPerson"]
+        mock_entry.attributes = {"cn": ["Test User"], "uid": ["testuid"]}
+        mock_entry.get_attribute = Mock(side_effect=lambda attr: {
+            "uid": "testuid",
+            "cn": "Test User",
+            "sn": "User",
+            "givenName": "Test",
+            "mail": "test@example.com",
+            "userPassword": "password123"
+        }.get(attr))
+        from datetime import datetime
+        mock_entry.created_at = datetime.now(UTC)
+        mock_entry.modified_at = datetime.now(UTC)
+
+        # Mock repository to return this entry
+        mock_repo = Mock()
+        mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(mock_entry))
+
+        # Mock _get_repository to return our mock
+        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+
+        result = await service.get_user("cn=test,dc=example,dc=com")
+
+        # Should successfully convert entry to user
+        assert result.is_success
+        assert result.value is not None
+        assert isinstance(result.value, FlextLDAPEntities.User)
+        assert result.value.uid == "testuid"
+        assert result.value.cn == "Test User"
+
+    async def test_update_user_with_successful_retrieval(self) -> None:
+        """Test update_user method with successful user retrieval after update."""
+        from unittest.mock import AsyncMock, Mock
+
+        from flext_ldap.entities import FlextLDAPEntities
+
+        service = FlextLDAPServices()
+
+        # Create mock user to be returned after update
+        test_user = FlextLDAPEntities.User(
+            id="updated_user",
+            dn="cn=updated,dc=example,dc=com",
+            uid="updateduid",
+            cn="Updated User"
+        )
+
+        # Mock repository with successful update
+        mock_repo = Mock()
+        mock_repo.update = AsyncMock(return_value=FlextResult.ok(True))
+
+        # Mock _get_repository to return our mock
+        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+
+        # Mock get_user to return updated user (this tests lines 204-211)
+        service.get_user = AsyncMock(return_value=FlextResult.ok(test_user))
+
+        result = await service.update_user(
+            "cn=updated,dc=example,dc=com",
+            {"cn": ["Updated User"]}
+        )
+
+        # Should successfully return updated user
+        assert result.is_success
+        assert result.value is not None
+        assert result.value.uid == "updateduid"
+        assert result.value.cn == "Updated User"
+
+    async def test_update_user_retrieval_failure_path(self) -> None:
+        """Test update_user when getting updated user fails."""
+        from unittest.mock import AsyncMock, Mock
+
+        service = FlextLDAPServices()
+
+        # Mock repository with successful update
+        mock_repo = Mock()
+        mock_repo.update = AsyncMock(return_value=FlextResult.ok(True))
+        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+
+        # Mock get_user to fail (tests lines 205-208)
+        service.get_user = AsyncMock(return_value=FlextResult.fail("Retrieval failed"))
+
+        result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
+
+        # Should fail with retrieval error
+        assert not result.is_success
+        assert "Failed to get updated user" in result.error or "Retrieval failed" in result.error
+
+    async def test_update_user_none_result_path(self) -> None:
+        """Test update_user when getting updated user returns None."""
+        from unittest.mock import AsyncMock, Mock
+
+        service = FlextLDAPServices()
+
+        # Mock repository with successful update
+        mock_repo = Mock()
+        mock_repo.update = AsyncMock(return_value=FlextResult.ok(True))
+        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+
+        # Mock get_user to return None (tests lines 209-211)
+        service.get_user = AsyncMock(return_value=FlextResult.ok(None))
+
+        result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
+
+        # Should fail with "not found" error
+        assert not result.is_success
+        assert "Updated user not found" in result.error

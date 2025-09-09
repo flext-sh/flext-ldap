@@ -23,7 +23,7 @@ from ldap3.core.exceptions import LDAPException
 from flext_ldap.entities import FlextLDAPEntities
 
 if TYPE_CHECKING:
-    from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
+    from flext_ldap.typings import LdapAttributeDict
 
 
 logger = FlextLogger(__name__)
@@ -81,7 +81,7 @@ class LDAPSearchStrategies:
                 success: bool = connection_obj.search(
                     search_base=request.base_dn,
                     search_filter=request.filter_str,
-                    search_scope=cast("LdapScope", scope),
+                    search_scope=scope,
                     attributes=request.attributes or ALL_ATTRIBUTES,
                     size_limit=request.size_limit,
                     time_limit=request.time_limit,
@@ -120,13 +120,13 @@ class LDAPSearchStrategies:
 
             """
             try:
-                entries: list[LdapSearchResult] = []
+                entries: list[FlextTypes.Core.Dict] = []
                 connection_entries = connection.entries if connection else []
 
                 for entry in connection_entries:
                     # Get DN directly from ldap3 entry
                     entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
-                    entry_data: LdapSearchResult = {"dn": entry_dn}
+                    entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
 
                     # Process attributes using strategy pattern
                     entry_attributes = (
@@ -167,7 +167,7 @@ class LDAPSearchStrategies:
 
             """
             try:
-                entries = cast("list[LdapSearchResult]", data.get("entries", []))
+                entries = cast("list[dict[str, object]]", data.get("entries", []))
                 request = cast("FlextLDAPEntities.SearchRequest", data.get("request"))
 
                 response = FlextLDAPEntities.SearchResponse(
@@ -380,7 +380,7 @@ class FlextLDAPClient:
                 extra={
                     "base_dn": request.base_dn,
                     "filter": request.filter_str,
-                    "count": len(cast("list", entries_result.value.get("entries", []))),
+                    "count": len(cast("list[object]", entries_result.value.get("entries", []))),
                 },
             )
 

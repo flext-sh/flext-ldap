@@ -8,7 +8,7 @@ import asyncio
 from collections.abc import AsyncGenerator, Generator
 
 import pytest
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import FlextLDAPApi, FlextLDAPConnectionConfig
 

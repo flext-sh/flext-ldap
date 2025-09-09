@@ -19,11 +19,11 @@ from flext_core import (
     FlextCommands,
     FlextDomainService,
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
 )
+from pydantic import BaseModel
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
@@ -670,90 +670,27 @@ class FlextLDAPDomain:
     # DOMAIN EVENT FACTORY - ELIMINATES CODE DUPLICATION USING FACTORY PATTERN
     # ==========================================================================
 
-    class _BaseDomainEvent(FlextModels.Value):
-        """Base domain event class eliminating duplication using Template Method Pattern.
+    class _BaseDomainEvent(BaseModel):
+        """Base domain event class using Pydantic BaseModel.
 
-        Provides common validation and creation methods for all domain events,
-        reducing code duplication from 35+ lines per event to single implementation.
+        Simple domain events for LDAP operations. FlextModels.Event is too complex
+        for internal domain events, so using BaseModel directly is more appropriate.
         """
 
         actor: str
         occurred_at: datetime
 
-        @override
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Template method for validating domain events using factory pattern."""
-            # Get validation rules from subclass
-            validation_rules = self._get_validation_rules()
-            return FlextLDAPDomain._DomainEventFactory.create_base_validation_rules(
-                validation_rules,
-            )
-
-        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
-            """Template method - subclasses provide their validation rules."""
-            error_msg = "Subclasses must implement _get_validation_rules"
-            raise NotImplementedError(error_msg)
-
-        @classmethod
-        def create_with_factory(cls, **kwargs: object) -> FlextModels.Value:
-            """Template method for creating events using factory pattern."""
-            return cast(
-                "FlextModels.Value",
-                FlextLDAPDomain._DomainEventFactory.create_event_base(cls, **kwargs),
-            )
-
-    class _DomainEventFactory:
-        """Factory Pattern for creating domain events using flext-core patterns.
-
-        Eliminates code duplication by centralizing common event creation logic
-        following Factory Pattern and using FlextResult for error handling.
-        """
-
-        @staticmethod
-        def create_base_validation_rules(
-            required_fields: FlextTypes.Core.Headers,
-        ) -> FlextResult[None]:
-            """Centralized validation logic for all domain events using Railway Pattern."""
-            for field_name, field_value in required_fields.items():
-                if not field_value:
-                    return FlextResult.fail(f"{field_name} cannot be empty")
-            return FlextResult.ok(None)
-
-        @staticmethod
-        def create_event_base(event_class: type[object], **kwargs: object) -> object:
-            """Create event instance with automatic timestamp using Factory Pattern."""
-            # Add automatic timestamp if not provided
-            if "occurred_at" not in kwargs:
-                kwargs["occurred_at"] = datetime.now(UTC)
-            return event_class(**kwargs)
-
-        @staticmethod
-        def create_typed_event(
-            event_class: type[object], **event_kwargs: object
-        ) -> object:
-            """Template method for creating typed domain events - ELIMINATES ALL create duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_event_base(
-                event_class,
-                **event_kwargs,
-            )
+    # Removed _DomainEventFactory - using FlextModels.Event directly from flext-core
 
     # ==========================================================================
     # INTERNAL DOMAIN EVENT CLASSES
     # ==========================================================================
 
     class UserCreatedEvent(_BaseDomainEvent):
-        """Internal domain event fired when a user is created - eliminates duplication."""
+        """Internal domain event fired when a user is created - uses flext-core patterns."""
 
         user_id: str
         user_dn: str
-
-        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
-            """Provide validation rules for user created event."""
-            return {
-                "User ID": self.user_id,
-                "User DN": self.user_dn,
-                "Actor": self.actor,
-            }
 
         @classmethod
         def create(
@@ -762,29 +699,19 @@ class FlextLDAPDomain:
             user_dn: str,
             created_by: str,
         ) -> "FlextLDAPDomain.UserCreatedEvent":
-            """Create user created event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return cast(
-                "FlextLDAPDomain.UserCreatedEvent",
-                FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                    cls,
-                    user_id=user_id,
-                    user_dn=user_dn,
-                    actor=created_by,
-                ),
+            """Create user created event using FlextModels.Event patterns."""
+            return cls(
+                user_id=user_id,
+                user_dn=user_dn,
+                actor=created_by,
+                occurred_at=datetime.now(UTC),
             )
 
     class UserDeletedEvent(_BaseDomainEvent):
-        """Internal domain event fired when a user is deleted - eliminates duplication."""
+        """Internal domain event fired when a user is deleted - uses flext-core patterns."""
 
         user_id: str
         user_dn: str
-
-        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
-            """Provide validation rules for user deleted event."""
-            return {
-                "User ID": self.user_id,
-                "User DN": self.user_dn,
-            }
 
         @classmethod
         def create(
@@ -793,29 +720,19 @@ class FlextLDAPDomain:
             user_dn: str,
             deleted_by: str,
         ) -> "FlextLDAPDomain.UserDeletedEvent":
-            """Create user deleted event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return cast(
-                "FlextLDAPDomain.UserDeletedEvent",
-                FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                    cls,
-                    user_id=user_id,
-                    user_dn=user_dn,
-                    actor=deleted_by,
-                ),
+            """Create user deleted event using FlextModels.Event patterns."""
+            return cls(
+                user_id=user_id,
+                user_dn=user_dn,
+                actor=deleted_by,
+                occurred_at=datetime.now(UTC),
             )
 
     class GroupMemberAddedEvent(_BaseDomainEvent):
-        """Internal domain event fired when a member is added to a group - eliminates duplication."""
+        """Internal domain event fired when a member is added to a group - uses flext-core patterns."""
 
         group_dn: str
         member_dn: str
-
-        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
-            """Provide validation rules for group member added event."""
-            return {
-                "Group DN": self.group_dn,
-                "Member DN": self.member_dn,
-            }
 
         @classmethod
         def create(
@@ -824,30 +741,20 @@ class FlextLDAPDomain:
             member_dn: str,
             added_by: str,
         ) -> "FlextLDAPDomain.GroupMemberAddedEvent":
-            """Create group member added event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return cast(
-                "FlextLDAPDomain.GroupMemberAddedEvent",
-                FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                    cls,
-                    group_dn=group_dn,
-                    member_dn=member_dn,
-                    actor=added_by,
-                ),
+            """Create group member added event using FlextModels.Event patterns."""
+            return cls(
+                group_dn=group_dn,
+                member_dn=member_dn,
+                actor=added_by,
+                occurred_at=datetime.now(UTC),
             )
 
     class PasswordChangedEvent(_BaseDomainEvent):
-        """Internal domain event fired when a user's password is changed - eliminates duplication."""
+        """Internal domain event fired when a user's password is changed - uses flext-core patterns."""
 
         user_dn: str
         changed_by: str
         is_self_change: bool
-
-        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
-            """Provide validation rules for password changed event."""
-            return {
-                "User DN": self.user_dn,
-                "Changed by": self.changed_by,
-            }
 
         @classmethod
         def create(
@@ -855,16 +762,13 @@ class FlextLDAPDomain:
             user_dn: str,
             changed_by: str,
         ) -> "FlextLDAPDomain.PasswordChangedEvent":
-            """Create password changed event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return cast(
-                "FlextLDAPDomain.PasswordChangedEvent",
-                FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                    cls,
-                    user_dn=user_dn,
-                    changed_by=changed_by,
-                    actor=changed_by,
-                    is_self_change=user_dn == changed_by,
-                ),
+            """Create password changed event using FlextModels.Event patterns."""
+            return cls(
+                user_dn=user_dn,
+                changed_by=changed_by,
+                actor=changed_by,
+                is_self_change=user_dn == changed_by,
+                occurred_at=datetime.now(UTC),
             )
 
     # ==========================================================================
@@ -983,9 +887,21 @@ class FlextLDAPDomain:
                 ),
             }
 
-        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
+        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> FlextLDAPEntities.User:
             """Create FlextLDAPEntities.User entity."""
-            return FlextLDAPEntities.User(**all_params)
+            return FlextLDAPEntities.User(
+                id=str(all_params.get("id", all_params.get("dn", ""))),
+                dn=str(all_params["dn"]),
+                uid=str(all_params["uid"]),
+                cn=str(all_params["cn"]) if all_params.get("cn") else None,
+                sn=str(all_params["sn"]) if all_params.get("sn") else None,
+                given_name=str(all_params["given_name"]) if all_params.get("given_name") else None,
+                mail=str(all_params["mail"]) if all_params.get("mail") else None,
+                user_password=str(all_params["user_password"]) if all_params.get("user_password") else None,
+                object_classes=[str(x) for x in cast("list[object]", all_params.get("object_classes", []))],
+                attributes={str(k): v for k, v in cast("LdapAttributeDict", all_params.get("attributes", {})).items()},
+                status=str(all_params.get("status", "active")),
+            )
 
     class GroupEntityBuilder(_BaseEntityBuilder):
         """Group entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
@@ -1001,9 +917,18 @@ class FlextLDAPDomain:
                 "members": self.builder.safe_list(self.params["members"]),
             }
 
-        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
+        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> FlextLDAPEntities.Group:
             """Create FlextLDAPEntities.Group entity."""
-            return FlextLDAPEntities.Group(**all_params)
+            return FlextLDAPEntities.Group(
+                id=str(all_params.get("id", all_params.get("dn", ""))),
+                dn=str(all_params["dn"]),
+                cn=str(all_params["cn"]),
+                description=str(all_params["description"]) if all_params.get("description") else None,
+                members=[str(x) for x in cast("list[object]", all_params.get("members", []))],
+                object_classes=[str(x) for x in cast("list[object]", all_params.get("object_classes", []))],
+                attributes={str(k): v for k, v in cast("LdapAttributeDict", all_params.get("attributes", {})).items()},
+                status=str(all_params.get("status", "active")),
+            )
 
     # ==========================================================================
     # COMMAND PATTERNS - Using FlextCommands for complex operations
@@ -1047,8 +972,8 @@ class FlextLDAPDomain:
                 # Extract and validate user parameters
                 user_params = self._extract_user_parameters(cmd.user_data)
 
-                # Create user entity - use type ignore for dynamic parameter passing
-                user = FlextLDAPEntities.User(**user_params)
+                # Create user entity using model_validate for type safety
+                user = FlextLDAPEntities.User.model_validate(user_params)
                 self.logger.info(f"User created successfully via command: {user.uid}")
                 return FlextResult.ok(user)
 
