@@ -529,8 +529,8 @@ class TestAdapterErrorHandling:
     async def test_connection_operation_types_comprehensive(self, test_client: FlextLDAPClient) -> None:
         """Test connection operation types - covers lines 200-214."""
         connection_service = FlextLDAPAdapters.ConnectionService(
-            test_client, 
-            FlextLDAPAdapters.ConnectionConfig(
+            client=test_client, 
+            config=FlextLDAPAdapters.ConnectionConfig(
                 server="ldap://test.example.com:389",
                 bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", 
                 bind_password="test_password"
@@ -549,7 +549,7 @@ class TestAdapterErrorHandling:
             )
             
             # Test operation execution (covers lines 200-214)
-            result = await connection_service.execute(connection_request)
+            result = await connection_service.execute_with_processor(connection_request)
             
             # Should return FlextResult (may succeed or fail, both exercise the code paths)
             assert isinstance(result, FlextResult)
