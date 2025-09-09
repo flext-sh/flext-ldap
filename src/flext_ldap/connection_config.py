@@ -2,16 +2,11 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
 """
 
 from pathlib import Path
-from typing import ClassVar
 
-from flext_core import FlextConfig, FlextLogger, FlextResult
+from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
 from pydantic import Field, field_validator
 
 logger = FlextLogger(__name__)
@@ -20,7 +15,7 @@ logger = FlextLogger(__name__)
 class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
-    model_config: ClassVar = {
+    model_config = {
         "extra": "ignore",  # Allow client-a and other project-specific environment variables
         "validate_assignment": True,
         "str_strip_whitespace": True,
@@ -96,14 +91,23 @@ class FlextLDAPConnectionConfig(FlextConfig):
     @field_validator("server")
     @classmethod
     def validate_server_uri(cls, v: str) -> str:
-        """Validate LDAP server URI format."""
-        if not v or not v.strip():
-            msg = "Server URI cannot be empty"
+        """Validate LDAP server URI format using FlextValidations - NO DUPLICATION."""
+        # Use FlextValidations.Rules.StringRules instead of custom validation
+        validation_result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+        if validation_result.is_failure:
+            msg = f"Server URI cannot be empty: {validation_result.error}"
             raise ValueError(msg)
 
         v = v.strip()
-        if not v.startswith(("ldap://", "ldaps://")):
-            msg = f"Server URI must start with 'ldap://' or 'ldaps://': {v}"
+
+        # Use FlextValidations pattern matching for URI validation
+        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+            v,
+            r"^(ldap://|ldaps://)",
+            "LDAP URI must start with 'ldap://' or 'ldaps://'",
+        )
+        if pattern_result.is_failure:
+            msg = f"Server URI validation failed: {pattern_result.error}"
             raise ValueError(msg)
 
         return v
@@ -111,15 +115,24 @@ class FlextLDAPConnectionConfig(FlextConfig):
     @field_validator("ca_cert_file", "client_cert_file", "client_key_file")
     @classmethod
     def validate_cert_files(cls, v: Path | None) -> Path | None:
-        """Validate certificate files exist if specified.
+        """Validate certificate files using FlextValidations - NO DUPLICATION."""
+        if v is None:
+            return v
 
-        Returns:
-            str:: Description of return value.
+        # Use FlextValidations for file path validation
+        path_str = str(v)
+        validation_result = FlextValidations.Rules.StringRules.validate_non_empty(
+            path_str
+        )
+        if validation_result.is_failure:
+            msg = f"Certificate file path invalid: {validation_result.error}"
+            raise ValueError(msg)
 
-        """
-        if v is not None and not v.exists():
+        # File existence validation - could be extended with FlextValidations.Rules.FileRules if available
+        if not v.exists():
             msg = f"Certificate file does not exist: {v}"
             raise ValueError(msg)
+
         return v
 
     def get_server_uri(self) -> str:

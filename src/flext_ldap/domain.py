@@ -1,8 +1,4 @@
-"""LDAP domain module.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
+"""LDAP domain module - Python 3.13 optimized with advanced DDD patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,6 +8,7 @@ import re
 import secrets
 import string
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar, cast, override
 
@@ -23,16 +20,20 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
-# Removed FlextLDAPUtilities - using Python standard library and flext-core
-# directly
-
 logger = FlextLogger(__name__)
+
+# Advanced type definitions for domain
+type DomainEntity = (
+    FlextLDAPEntities.User | FlextLDAPEntities.Group | FlextLDAPEntities.Entry
+)
+type ValidationResult = FlextResult[None]
+type DomainEvent = dict[str, object]
 
 
 class FlextLDAPDomain:
@@ -81,26 +82,42 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate is a valid LDAP user."""
-            if not hasattr(candidate, "uid") or not hasattr(candidate, "dn"):
-                return False
+            """Check using Python 3.13 structural pattern matching."""
+            # Use pattern matching for attribute validation
+            match candidate:
+                case obj if (
+                    hasattr(obj, "uid") and hasattr(obj, "dn") and hasattr(obj, "cn")
+                ):
+                    return self._validate_user_attributes(obj)
+                case _:
+                    return False
 
-            # Validate required attributes
-            uid = getattr(candidate, "uid", None)
-            dn = getattr(candidate, "dn", None)
-            cn = getattr(candidate, "cn", None)
+        def _validate_user_attributes(self, user: object) -> bool:
+            """Validate user attributes using Python 3.13 patterns."""
+            uid = getattr(user, "uid", None)
+            dn = getattr(user, "dn", None)
+            cn = getattr(user, "cn", None)
+            object_classes = getattr(user, "object_classes", [])
 
-            if not uid or not dn or not cn:
-                return False
+            # Use pattern matching for validation logic
+            match (uid, dn, cn):
+                case (str() as u, str() as d, str() as c) if u and d and c:
+                    return self._validate_object_classes(object_classes)
+                case _:
+                    return False
 
-            # Validate object classes
-            object_classes = getattr(candidate, "object_classes", [])
+        def _validate_object_classes(self, object_classes: object) -> bool:
+            """Validate object classes using pattern matching."""
             required_classes = [
                 FlextLDAPConstants.ObjectClasses.PERSON,
                 FlextLDAPConstants.ObjectClasses.TOP,
             ]
 
-            return all(cls in object_classes for cls in required_classes)
+            match object_classes:
+                case list() as classes:
+                    return all(cls in classes for cls in required_classes)
+                case _:
+                    return False
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -122,18 +139,26 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate is a valid LDAP group."""
-            if not hasattr(candidate, "cn") or not hasattr(candidate, "dn"):
-                return False
+            """Check using Python 3.13 structural pattern matching."""
+            match candidate:
+                case obj if hasattr(obj, "cn") and hasattr(obj, "dn"):
+                    return self._validate_group_attributes(obj)
+                case _:
+                    return False
 
-            # Validate object classes
-            object_classes = getattr(candidate, "object_classes", [])
+        def _validate_group_attributes(self, group: object) -> bool:
+            """Validate group attributes using Python 3.13 patterns."""
+            object_classes = getattr(group, "object_classes", [])
             required_classes = [
                 FlextLDAPConstants.ObjectClasses.GROUP_OF_NAMES,
                 FlextLDAPConstants.ObjectClasses.TOP,
             ]
 
-            return all(cls in object_classes for cls in required_classes)
+            match object_classes:
+                case list() as classes:
+                    return all(cls in classes for cls in required_classes)
+                case _:
+                    return False
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -159,14 +184,24 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate is a valid DN string."""
-            if not isinstance(candidate, str):
-                return False
+            """Check using Python 3.13 pattern matching and enhanced validation."""
+            match candidate:
+                case str() as dn_str:
+                    return self._validate_dn_string(dn_str)
+                case _:
+                    return False
 
-            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_FILTER_LENGTH:
-                return False
-
-            return bool(self.DN_PATTERN.match(candidate))
+        def _validate_dn_string(self, dn_str: str) -> bool:
+            """Validate DN string with length and pattern checks."""
+            match len(dn_str):
+                case length if (
+                    length > FlextLDAPConstants.LdapValidation.MAX_FILTER_LENGTH
+                ):
+                    return False
+                case length if length == 0:
+                    return False
+                case _:
+                    return bool(self.DN_PATTERN.match(dn_str))
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -188,29 +223,47 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate meets password requirements."""
-            if not isinstance(candidate, str):
-                return False
+            """Check using Python 3.13 pattern matching for password validation."""
+            match candidate:
+                case str() as password:
+                    return self._validate_password_requirements(password)
+                case _:
+                    return False
 
-            if len(candidate) < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-                return False
+        def _validate_password_requirements(self, password: str) -> bool:
+            """Validate password using pattern matching for length and complexity."""
+            # Use pattern matching for length validation
+            match len(password):
+                case length if (
+                    length < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH
+                ):
+                    return False
+                case length if (
+                    length > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH
+                ):
+                    return False
+                case _:
+                    return self._check_password_complexity(password)
 
-            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-                return False
+        def _check_password_complexity(self, password: str) -> bool:
+            """Check password complexity using enhanced patterns."""
+            match FlextLDAPConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
+                case False:
+                    return True
+                case True:
+                    return self._validate_complexity_rules(password)
 
-            # Check complexity if required
-            if FlextLDAPConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
-                # Implement proper password complexity validation
+        def _validate_complexity_rules(self, password: str) -> bool:
+            """Validate complexity rules using compiled patterns."""
+            # Use compiled patterns for better performance
+            patterns = {
+                "upper": re.compile(r"[A-Z]"),
+                "lower": re.compile(r"[a-z]"),
+                "digit": re.compile(r"[0-9]"),
+                "special": re.compile(r'[!@#$%^&*(),.?":{}|<>]'),
+            }
 
-                # Password must have: uppercase, lowercase, digit, special char
-                has_upper = bool(re.search(r"[A-Z]", candidate))
-                has_lower = bool(re.search(r"[a-z]", candidate))
-                has_digit = bool(re.search(r"[0-9]", candidate))
-                has_special = bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', candidate))
-
-                return has_upper and has_lower and has_digit and has_special
-
-            return True
+            return all(pattern.search(password) for pattern in patterns.values())
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -234,17 +287,26 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if user account is active."""
-            if not hasattr(candidate, "status"):
-                return False
+            """Check using Python 3.13 pattern matching for status validation."""
+            match candidate:
+                case obj if hasattr(obj, "status"):
+                    return self._validate_user_status(obj)
+                case _:
+                    return False
 
-            status = getattr(candidate, "status", None)
-            # Compare with enum value - EntityStatus.ACTIVE is "active" (lowercase)
-            if status is None:
-                return False
-            if hasattr(status, "value"):
-                return str(status.value) == "active"
-            return str(status) == "active"
+        def _validate_user_status(self, user: object) -> bool:
+            """Validate user status using pattern matching."""
+            status = getattr(user, "status", None)
+
+            match status:
+                case None:
+                    return False
+                case obj if hasattr(obj, "value"):
+                    return str(obj.value) == "active"
+                case str() as status_str:
+                    return status_str == "active"
+                case _:
+                    return str(status) == "active"
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -269,11 +331,12 @@ class FlextLDAPDomain:
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate is a valid email address."""
-            if not isinstance(candidate, str):
-                return False
-
-            return bool(self.EMAIL_PATTERN.match(candidate))
+            """Check using Python 3.13 pattern matching for email validation."""
+            match candidate:
+                case str() as email_str if email_str.strip():
+                    return bool(self.EMAIL_PATTERN.match(email_str.strip()))
+                case _:
+                    return False
 
         @override
         def get_validation_error(self, candidate: object) -> str:
@@ -671,14 +734,44 @@ class FlextLDAPDomain:
     # ==========================================================================
 
     class _BaseDomainEvent(BaseModel):
-        """Base domain event class using Pydantic BaseModel.
+        """Base domain event class using Pydantic v2 advanced patterns.
 
-        Simple domain events for LDAP operations. FlextModels.Event is too complex
-        for internal domain events, so using BaseModel directly is more appropriate.
+        Enhanced with Python 3.13 type safety and Pydantic v2 ConfigDict.
         """
 
-        actor: str
-        occurred_at: datetime
+        model_config = ConfigDict(
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+        )
+
+        actor: str = Field(
+            ...,
+            description="Actor who triggered this domain event",
+            min_length=1,
+            max_length=255,
+        )
+        occurred_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="When the domain event occurred",
+        )
+
+        @computed_field
+        def event_id(self) -> str:
+            """Generate unique event identifier using Pydantic computed_field."""
+            timestamp = self.occurred_at.strftime("%Y%m%d%H%M%S%f")
+            return f"{self.__class__.__name__.lower()}_{timestamp}"
+
+        @field_validator("actor")
+        @classmethod
+        def validate_actor_format(cls, v: str) -> str:
+            """Validate actor follows proper format."""
+            if not v.strip():
+                msg = "Actor cannot be empty or whitespace"
+                raise ValueError(msg)
+            return v.strip()
 
     # Removed _DomainEventFactory - using FlextModels.Event directly from flext-core
 
@@ -775,50 +868,76 @@ class FlextLDAPDomain:
     # INTERNAL DOMAIN FACTORY CLASSES
     # ==========================================================================
 
+    @dataclass(frozen=True, slots=True)
     class EntityParameterBuilder:
-        """Internal helper class to build entity parameters with type safety - REDUCES COMPLEXITY."""
+        """Internal helper class using Python 3.13 dataclass with slots for performance."""
+
+        # Use type aliases for better readability
+        _safe_types: ClassVar[tuple[type, ...]] = (str, int, float, bool, type(None))
 
         @staticmethod
         def safe_str(value: object) -> str | None:
-            """Safely convert value to string or None - USES FLEXT-CORE."""
-            # Cast to supported type for FlextUtilities
-            safe_value = (
-                value
-                if isinstance(value, (str, int, float, bool, type(None)))
-                else str(value)
-            )
-            result = FlextUtilities.TextProcessor.clean_text(str(safe_value))
-            return result or None
+            """Safely convert value using Python 3.13 structural pattern matching."""
+            match value:
+                case None:
+                    return None
+                case str() as text if text.strip():
+                    result = FlextUtilities.TextProcessor.clean_text(text)
+                    return result or None
+                case int() | float() | bool() as primitive:
+                    result = FlextUtilities.TextProcessor.clean_text(str(primitive))
+                    return result or None
+                case _:
+                    result = FlextUtilities.TextProcessor.clean_text(str(value))
+                    return result or None
 
         @staticmethod
         def safe_list(
             value: object, default: FlextTypes.Core.StringList | None = None
         ) -> FlextTypes.Core.StringList:
-            """Safely convert value to list or use default - USES FLEXT-CORE."""
-            if FlextUtilities.TypeGuards.is_list_non_empty(value):
-                # Use Python standard conversion instead of custom wrapper
-                return [str(item) for item in cast("FlextTypes.Core.List", value)]
-            return default or []
+            """Safely convert using Python 3.13 structural pattern matching."""
+            match value:
+                case list() as items if items:
+                    # Validate all items are convertible to string
+                    return [str(item) for item in items if item is not None]
+                case tuple() as items if items:
+                    return [str(item) for item in items if item is not None]
+                case str() as single_item if single_item:
+                    return [single_item]
+                case _:
+                    return default or []
 
         @staticmethod
         def safe_dict(value: object) -> FlextTypes.Core.Dict:
-            """Safely convert value to dict or empty dict."""
-            if isinstance(value, dict):
-                typed_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", value)
-                return dict(typed_dict)
-            return {}
+            """Safely convert using Python 3.13 pattern matching."""
+            match value:
+                case dict() as dict_value:
+                    # Filter out None values and ensure string keys
+                    return {str(k): v for k, v in dict_value.items() if v is not None}
+                case _:
+                    return {}
 
         @staticmethod
         def safe_ldap_attributes(value: object) -> LdapAttributeDict:
-            """Safely convert value to LdapAttributeDict using Python standard conversion."""
-            if not isinstance(value, dict):
-                return {}
-            # Use Python standard dict comprehension instead of custom converter
-            return {
-                k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
-                for k, v in value.items()
-                if v is not None
-            }
+            """Convert to LDAP attributes using Python 3.13 pattern matching."""
+            match value:
+                case dict() as attrs:
+                    result: LdapAttributeDict = {}
+                    for k, v in attrs.items():
+                        match v:
+                            case None:
+                                continue
+                            case list() as list_val:
+                                result[str(k)] = [
+                                    str(item) for item in list_val if item is not None
+                                ]
+                            case str() | int() | float() | bool() as single_val:
+                                result[str(k)] = [str(single_val)]
+                            case _:
+                                result[str(k)] = [str(v)]
+                    return result
+                case _:
+                    return {}
 
     class _BaseEntityBuilder:
         """Base builder using Template Method Pattern - ELIMINATES DUPLICATION between User/Group builders."""
@@ -875,19 +994,37 @@ class FlextLDAPDomain:
             super().__init__(params, "user")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
-            """Extract user-specific parameters."""
-            return {
-                "uid": self.builder.safe_str(self.params["uid"]) or "",
-                "cn": self.builder.safe_str(self.params["cn"]) or "",
-                "sn": self.builder.safe_str(self.params["sn"]) or "",
-                "given_name": self.builder.safe_str(self.params["given_name"]),
-                "mail": self.builder.safe_str(self.params["mail"]),
-                "user_password": self.builder.safe_str(
-                    self.params.get("user_password"),
-                ),
-            }
+            """Extract user parameters using Python 3.13 pattern matching."""
+            match self.params:
+                case {"uid": uid, "cn": cn, "sn": sn, **optional}:
+                    return {
+                        "uid": self.builder.safe_str(uid) or "",
+                        "cn": self.builder.safe_str(cn) or "",
+                        "sn": self.builder.safe_str(sn) or "",
+                        "given_name": self.builder.safe_str(optional.get("given_name")),
+                        "mail": self.builder.safe_str(optional.get("mail")),
+                        "user_password": self.builder.safe_str(
+                            optional.get("user_password")
+                        ),
+                    }
+                case _:
+                    # Fallback for partial data
+                    return {
+                        "uid": self.builder.safe_str(self.params.get("uid")) or "",
+                        "cn": self.builder.safe_str(self.params.get("cn")) or "",
+                        "sn": self.builder.safe_str(self.params.get("sn")) or "",
+                        "given_name": self.builder.safe_str(
+                            self.params.get("given_name")
+                        ),
+                        "mail": self.builder.safe_str(self.params.get("mail")),
+                        "user_password": self.builder.safe_str(
+                            self.params.get("user_password")
+                        ),
+                    }
 
-        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> FlextLDAPEntities.User:
+        def _create_entity(
+            self, all_params: FlextTypes.Core.Dict
+        ) -> FlextLDAPEntities.User:
             """Create FlextLDAPEntities.User entity."""
             return FlextLDAPEntities.User(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
@@ -895,11 +1032,23 @@ class FlextLDAPDomain:
                 uid=str(all_params["uid"]),
                 cn=str(all_params["cn"]) if all_params.get("cn") else None,
                 sn=str(all_params["sn"]) if all_params.get("sn") else None,
-                given_name=str(all_params["given_name"]) if all_params.get("given_name") else None,
+                given_name=str(all_params["given_name"])
+                if all_params.get("given_name")
+                else None,
                 mail=str(all_params["mail"]) if all_params.get("mail") else None,
-                user_password=str(all_params["user_password"]) if all_params.get("user_password") else None,
-                object_classes=[str(x) for x in cast("list[object]", all_params.get("object_classes", []))],
-                attributes={str(k): v for k, v in cast("LdapAttributeDict", all_params.get("attributes", {})).items()},
+                user_password=str(all_params["user_password"])
+                if all_params.get("user_password")
+                else None,
+                object_classes=[
+                    str(x)
+                    for x in cast("list[object]", all_params.get("object_classes", []))
+                ],
+                attributes={
+                    str(k): v
+                    for k, v in cast(
+                        "LdapAttributeDict", all_params.get("attributes", {})
+                    ).items()
+                },
                 status=str(all_params.get("status", "active")),
             )
 
@@ -910,23 +1059,52 @@ class FlextLDAPDomain:
             super().__init__(params, "group")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
-            """Extract group-specific parameters."""
-            return {
-                "cn": self.builder.safe_str(self.params["cn"]) or "",
-                "description": self.builder.safe_str(self.params["description"]),
-                "members": self.builder.safe_list(self.params["members"]),
-            }
+            """Extract group parameters using Python 3.13 pattern matching."""
+            match self.params:
+                case {"cn": cn, **optional}:
+                    return {
+                        "cn": self.builder.safe_str(cn) or "",
+                        "description": self.builder.safe_str(
+                            optional.get("description")
+                        ),
+                        "members": self.builder.safe_list(optional.get("members", [])),
+                    }
+                case _:
+                    # Fallback for partial data
+                    return {
+                        "cn": self.builder.safe_str(self.params.get("cn")) or "",
+                        "description": self.builder.safe_str(
+                            self.params.get("description")
+                        ),
+                        "members": self.builder.safe_list(
+                            self.params.get("members", [])
+                        ),
+                    }
 
-        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> FlextLDAPEntities.Group:
+        def _create_entity(
+            self, all_params: FlextTypes.Core.Dict
+        ) -> FlextLDAPEntities.Group:
             """Create FlextLDAPEntities.Group entity."""
             return FlextLDAPEntities.Group(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
                 cn=str(all_params["cn"]),
-                description=str(all_params["description"]) if all_params.get("description") else None,
-                members=[str(x) for x in cast("list[object]", all_params.get("members", []))],
-                object_classes=[str(x) for x in cast("list[object]", all_params.get("object_classes", []))],
-                attributes={str(k): v for k, v in cast("LdapAttributeDict", all_params.get("attributes", {})).items()},
+                description=str(all_params["description"])
+                if all_params.get("description")
+                else None,
+                members=[
+                    str(x) for x in cast("list[object]", all_params.get("members", []))
+                ],
+                object_classes=[
+                    str(x)
+                    for x in cast("list[object]", all_params.get("object_classes", []))
+                ],
+                attributes={
+                    str(k): v
+                    for k, v in cast(
+                        "LdapAttributeDict", all_params.get("attributes", {})
+                    ).items()
+                },
                 status=str(all_params.get("status", "active")),
             )
 
@@ -939,13 +1117,24 @@ class FlextLDAPDomain:
 
         user_data: FlextTypes.Core.Dict
 
+        model_config = ConfigDict(
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
+        )
+
         def validate_command(self) -> FlextResult[None]:
-            """Validate user creation data."""
-            if not self.user_data.get("uid"):
-                return FlextResult.fail("uid is required")
-            if not self.user_data.get("cn"):
-                return FlextResult.fail("cn is required")
-            return FlextResult.ok(None)
+            """Validate user creation data using Python 3.13 match expression."""
+            # Use structural pattern matching for validation
+            match self.user_data:
+                case {"uid": uid, "cn": cn} if uid and cn:
+                    return FlextResult.ok(None)
+                case data if not data.get("uid"):
+                    return FlextResult.fail("uid is required")
+                case data if not data.get("cn"):
+                    return FlextResult.fail("cn is required")
+                case _:
+                    return FlextResult.fail("Invalid user data structure")
 
     class CreateUserCommandHandler(
         FlextCommands.Handlers.CommandHandler[object, object]
@@ -986,30 +1175,58 @@ class FlextLDAPDomain:
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Extract and validate user parameters for entity creation."""
-            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
-                "extract_uid": lambda data: str(data.get("uid", "")),
-                "extract_cn": lambda data: str(data.get("cn", "")),
-                "extract_sn": lambda data: str(
-                    data.get(
-                        "sn",
-                        str(data.get("cn", "")).split()[-1] if data.get("cn") else "",
-                    ),
-                ),
-                "extract_mail": lambda data: str(data.get("mail", "")),
-                "extract_dn": lambda data: str(
-                    data.get(
-                        "dn",
-                        f"uid={data.get('uid')},ou=users,{data.get('base_dn', 'dc=example,dc=com')}",
-                    ),
-                ),
-                "extract_object_class": lambda data: data.get(
+            """Extract user parameters using Python 3.13 pattern matching."""
+            # Use structural pattern matching for cleaner parameter extraction
+            match user_data:
+                case {"uid": uid, "cn": cn, "dn": dn, **rest} if uid and cn and dn:
+                    return self._build_complete_user_params(
+                        str(uid), str(cn), str(dn), rest
+                    )
+                case {"uid": uid, "cn": cn, **rest} if uid and cn:
+                    # Generate DN if missing
+                    base_dn = rest.get("base_dn", "dc=example,dc=com")
+                    dn = f"uid={uid},ou=users,{base_dn}"
+                    return self._build_complete_user_params(
+                        str(uid), str(cn), str(dn), rest
+                    )
+                case _:
+                    # Fallback to safe extraction
+                    return self._extract_with_defaults(user_data)
+
+        def _build_complete_user_params(
+            self, uid: str, cn: str, dn: str, rest: dict[str, object]
+        ) -> FlextTypes.Core.Dict:
+            """Build complete user parameters with type safety."""
+            # Extract surname from common name if not provided
+            sn = str(rest.get("sn", cn.rsplit(maxsplit=1)[-1] if cn else ""))
+
+            return {
+                "extract_uid": uid,
+                "extract_cn": cn,
+                "extract_sn": sn,
+                "extract_mail": str(rest.get("mail", "")),
+                "extract_dn": dn,
+                "extract_object_class": rest.get(
                     "objectClass",
                     ["inetOrgPerson", "organizationalPerson", "person", "top"],
                 ),
             }
 
-            return {key: operation(user_data) for key, operation in operations.items()}
+        def _extract_with_defaults(
+            self, user_data: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
+            """Extract parameters with safe defaults."""
+            return {
+                "extract_uid": str(user_data.get("uid", "")),
+                "extract_cn": str(user_data.get("cn", "")),
+                "extract_sn": str(user_data.get("sn", "")),
+                "extract_mail": str(user_data.get("mail", "")),
+                "extract_dn": str(user_data.get("dn", "")),
+                "extract_object_class": user_data.get(
+                    "objectClass",
+                    ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                ),
+            }
 
     class DomainFactory:
         """Internal factory for creating domain objects with business rule validation.
@@ -1075,9 +1292,15 @@ class FlextLDAPDomain:
             }
 
         def _create_user_entity(self, user_params: FlextTypes.Core.Dict) -> object:
-            """Create FlextLDAPEntities.User entity from extracted parameters - REFACTORED."""
-            builder = FlextLDAPDomain.UserEntityBuilder(user_params)
-            return builder.build()
+            """Create User entity using Python 3.13 pattern matching for validation."""
+            # Validate required parameters using structural pattern matching
+            match user_params:
+                case {"dn": str() as dn, "uid": str() as uid} if dn and uid:
+                    builder = FlextLDAPDomain.UserEntityBuilder(user_params)
+                    return builder.build()
+                case _:
+                    msg = "User parameters missing required fields (dn, uid)"
+                    raise ValueError(msg)
 
         def _validate_created_user(self, user: object) -> FlextResult[object]:
             """Validate created user against domain specifications."""
@@ -1159,9 +1382,15 @@ class FlextLDAPDomain:
             }
 
         def _create_group_entity(self, group_params: FlextTypes.Core.Dict) -> object:
-            """Create FlextLDAPEntities.Group entity from extracted parameters - REFACTORED."""
-            builder = FlextLDAPDomain.GroupEntityBuilder(group_params)
-            return builder.build()
+            """Create Group entity using Python 3.13 pattern matching for validation."""
+            # Validate required parameters using structural pattern matching
+            match group_params:
+                case {"dn": str() as dn, "cn": str() as cn} if dn and cn:
+                    builder = FlextLDAPDomain.GroupEntityBuilder(group_params)
+                    return builder.build()
+                case _:
+                    msg = "Group parameters missing required fields (dn, cn)"
+                    raise ValueError(msg)
 
         def _validate_created_group(self, group: object) -> FlextResult[object]:
             """Validate created group against domain specifications."""
@@ -1227,13 +1456,23 @@ class FlextLDAPDomain:
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Step 1: Validate business rules."""
-            result = self._execute_operation(
-                operations.get("validate"),
-                data,
-                f"{entity_type} validation",
-            )
-            return result.flat_map(lambda _: FlextResult[FlextTypes.Core.Dict].ok(data))
+            """Step 1: Validate business rules using Python 3.13 enhanced patterns."""
+            # Use structural pattern matching for operation validation
+            match operations.get("validate"):
+                case None:
+                    return FlextResult.fail(
+                        f"No validation operation for {entity_type}"
+                    )
+                case validate_fn:
+                    result = self._execute_operation(
+                        validate_fn,
+                        data,
+                        f"{entity_type} validation",
+                    )
+                    # Use modern railway pattern chaining
+                    return result.flat_map(
+                        lambda _: FlextResult[FlextTypes.Core.Dict].ok(data)
+                    )
 
         def _extract_parameters(
             self,
@@ -1288,29 +1527,44 @@ class FlextLDAPDomain:
             data: object,
             operation_name: str,
         ) -> FlextResult[object]:
-            """Execute a single operation with error handling."""
-            if operation is None:
-                return FlextResult.fail(
-                    f"Invalid operation function for {operation_name}",
-                )
-
-            try:
-                # Handle both dict and general object data
-                # Safely cast to expected dict type for operation
-                if isinstance(data, dict):
-                    result = operation(data)
-                # Convert object to dict if possible
-                elif hasattr(data, "__dict__"):
-                    result = operation(vars(data))
-                else:
+            """Execute operation using Python 3.13 structural pattern matching."""
+            match operation:
+                case None:
                     return FlextResult.fail(
-                        f"Cannot convert data to dict for operation {operation_name}",
+                        f"Invalid operation function for {operation_name}"
                     )
-                # Ensure result is FlextResult format
-                if hasattr(result, "is_success") and hasattr(result, "value"):
-                    return cast("FlextResult[object]", result)
-                # Wrap non-FlextResult returns
-                return FlextResult.ok(result)
+                case callable_op:
+                    return self._execute_callable_operation(
+                        callable_op, data, operation_name
+                    )
+
+        def _execute_callable_operation(
+            self,
+            operation: Callable[[FlextTypes.Core.Dict], object]
+            | Callable[[object], object],
+            data: object,
+            operation_name: str,
+        ) -> FlextResult[object]:
+            """Execute callable operation with enhanced error handling."""
+            try:
+                # Use pattern matching for data type handling
+                match data:
+                    case dict() as dict_data:
+                        result = operation(dict_data)
+                    case obj if hasattr(obj, "__dict__"):
+                        result = operation(vars(obj))
+                    case _:
+                        return FlextResult.fail(
+                            f"Cannot convert data to dict for operation {operation_name}"
+                        )
+
+                # Pattern match result type for proper wrapping
+                match result:
+                    case obj if hasattr(obj, "is_success") and hasattr(obj, "value"):
+                        return cast("FlextResult[object]", result)
+                    case _:
+                        return FlextResult.ok(result)
+
             except Exception as e:
                 return FlextResult.fail(f"{operation_name} failed: {e}")
 

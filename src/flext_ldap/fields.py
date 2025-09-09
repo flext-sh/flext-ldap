@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import Enum, StrEnum
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextTypes, FlextValidations
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict
@@ -138,11 +138,11 @@ class FlextLDAPFields:
             }
 
     # =========================================================================
-    # VALIDATORS - LDAP domain validation utilities
+    # VALIDATORS - Using FlextValidations.Rules.StringRules - NO DUPLICATION
     # =========================================================================
 
     class Validators:
-        """Helper class for domain validation - ELIMINATES DUPLICATION."""
+        """LDAP domain validation using FlextValidations - ELIMINATES DUPLICATION."""
 
         @staticmethod
         def validate_common_name(
@@ -150,17 +150,24 @@ class FlextLDAPFields:
             attributes: FlextTypes.Core.Dict,
             entity_type: str,
         ) -> FlextResult[None]:
-            """Validate common name requirement for users and groups.
+            """Validate common name using FlextValidations.Rules.StringRules."""
+            # Get CN value from field or attributes
+            cn_value = cn_field or FlextLDAPFields.Validators._get_attribute_value(
+                attributes, "cn"
+            )
 
-            Returns:
-                FlextResult[None]: Validation result.
-
-            """
-            if not cn_field and not FlextLDAPFields.Validators._get_attribute_value(
-                attributes,
-                "cn",
-            ):
+            if not cn_value:
                 return FlextResult.fail(f"{entity_type} must have a Common Name")
+
+            # Use FlextValidations for actual validation
+            validation_result = FlextValidations.Rules.StringRules.validate_non_empty(
+                cn_value
+            )
+            if validation_result.is_failure:
+                return FlextResult.fail(
+                    f"{entity_type} Common Name validation failed: {validation_result.error}"
+                )
+
             return FlextResult.ok(None)
 
         @staticmethod
@@ -169,17 +176,26 @@ class FlextLDAPFields:
             required_classes: FlextTypes.Core.StringList,
             entity_type: str,
         ) -> FlextResult[None]:
-            """Validate required object classes for entities.
+            """Validate required object classes using FlextValidations.Rules.CollectionRules."""
+            # Use FlextValidations for list validation
+            if not object_classes:
+                return FlextResult.fail(f"{entity_type} must have object classes")
 
-            Returns:
-                FlextResult[None]: Validation result.
-
-            """
             for req_class in required_classes:
+                # Use FlextValidations for string validation
+                class_validation = (
+                    FlextValidations.Rules.StringRules.validate_non_empty(req_class)
+                )
+                if class_validation.is_failure:
+                    return FlextResult.fail(
+                        f"Invalid required class: {class_validation.error}"
+                    )
+
                 if req_class not in object_classes:
                     return FlextResult.fail(
-                        f"{entity_type} must have object class '{req_class}'",
+                        f"{entity_type} must have object class '{req_class}'"
                     )
+
             return FlextResult.ok(None)
 
         @staticmethod
@@ -187,12 +203,7 @@ class FlextLDAPFields:
             attributes: FlextTypes.Core.Dict,
             name: str,
         ) -> str | None:
-            """Helper to get single attribute value.
-
-            Returns:
-                str | None: Attribute value as string or None if not found.
-
-            """
+            """Helper to get single attribute value using FlextValidations patterns."""
             raw = attributes.get(name)
             if raw is None:
                 return None

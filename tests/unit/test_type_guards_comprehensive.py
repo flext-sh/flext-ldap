@@ -19,7 +19,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_dn_valid_dns(self) -> None:
         """Test is_ldap_dn with valid DN formats."""
-        type_guards = FlextLDAPTypeGuards()
+        FlextLDAPTypeGuards()
 
         # Standard valid DNs
         valid_dns = [

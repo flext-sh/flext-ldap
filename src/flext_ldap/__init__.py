@@ -68,7 +68,7 @@ from contextlib import suppress
 # Import all key classes directly for explicit exports
 from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.entities import FlextLDAPEntities, DictEntry
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.models import FlextLDAPModels

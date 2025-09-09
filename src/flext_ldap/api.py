@@ -9,35 +9,54 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import cached_property
 from typing import cast, overload
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import (
+    FlextExceptions,
+    FlextMixins,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
 from flext_ldap.settings import FlextLDAPSettings
 from flext_ldap.typings import LdapAttributeDict
 
-logger = FlextLogger(__name__)
+# Python 3.13 type aliases
+type ApiRequest = FlextTypes.Core.Dict
+type ApiResponse = FlextResult[object]
+
+# FlextLogger available via FlextMixins.Service inheritance
 
 
-class FlextLDAPApi:
-    """High-level LDAP API facade."""
+class FlextLDAPApi(FlextMixins.Service):
+    """High-level LDAP API facade using FlextMixins.Service for logging and utilities."""
 
     def __init__(self, config: FlextLDAPSettings | None = None) -> None:
-        """Initialize API."""
+        """Initialize API using FlextMixins.Service patterns."""
+        # Initialize FlextMixins.Service
+        super().__init__()
         self._config = config or FlextLDAPSettings()
         self._container_manager = FlextLDAPContainer()
         self._container = self._container_manager.get_container()
         self._service = FlextLDAPServices(self._container)
 
-        logger.info("FlextLDAPApi initialized with clean architecture")
+        self.log_info(
+            "FlextLDAPApi initialized with clean architecture", api="FlextLDAPApi"
+        )
+
+    @cached_property
+    def session_id(self) -> str:
+        """Generate session ID using FlextUtilities (cached for performance)."""
+        return f"session_{FlextUtilities.generate_uuid()}"
 
     def _generate_session_id(self) -> str:
-        """Generate session ID."""
+        """Generate session ID - private method generates new UUID each time."""
         return f"session_{uuid.uuid4()}"
 
     def _get_entry_attribute(
@@ -46,37 +65,28 @@ class FlextLDAPApi:
         key: str,
         default: str = "",
     ) -> str:
-        """Extract string attribute from entry."""
-        # Handle Entry objects
+        """Extract string attribute from entry using Python 3.13 pattern matching."""
+        # Get attribute value using type-safe extraction
         if isinstance(entry, FlextLDAPEntities.Entry):
             attr_value = entry.get_attribute(key)
-            value = attr_value if attr_value is not None else [default]
-        else:
-            # Handle dict entries
+            value = attr_value if attr_value is not None else default
+        elif isinstance(entry, dict):
             value = cast(
-                "str | bytes | FlextTypes.Core.StringList | list[bytes]",
-                entry.get(key, [default]),
+                "str | bytes | list[str] | list[bytes]", entry.get(key, [default])
             )
+        else:
+            return default
 
-        # Handle list values (common in LDAP)
+        # Process value with type safety
         if isinstance(value, list):
-            if value:
-                # Get first item with type safety - suppress type checking
-                # for object conversion
-                first_value: object = value[0]
-                try:
-                    # Use type ignore for object to string conversion
-                    # - safe for LDAP data
-                    return str(first_value) if first_value is not None else default
-                except (TypeError, ValueError):
-                    return default
-            return default
+            if len(value) > 0 and value[0] is not None:
+                return str(value[0])
+        elif isinstance(value, str):
+            return value
+        elif isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
 
-        # Handle non-list values - suppress type checking for object conversion
-        try:
-            return str(value) if value is not None else default
-        except (TypeError, ValueError):
-            return default
+        return default
 
     # Connection Management
 
@@ -97,11 +107,12 @@ class FlextLDAPApi:
             FlextResult containing session ID or error
 
         """
-        session_id = self._generate_session_id()
+        # Use cached session_id property from FlextUtilities
+        new_session_id = self.session_id
         result = await self._service.connect(server_uri, bind_dn, bind_password)
         if not result.is_success:
             return FlextResult[str].fail(result.error or "Connection failed")
-        return FlextResult[str].ok(session_id)
+        return FlextResult[str].ok(new_session_id)
 
     async def disconnect(self, session_id: str | None = None) -> FlextResult[None]:
         """Disconnect from LDAP server.
@@ -139,7 +150,7 @@ class FlextLDAPApi:
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
         if not connect_result.is_success:
             error_msg = connect_result.error or "Connection failed"
-            raise FlextLDAPExceptions.LdapConnectionError(error_msg)
+            raise FlextExceptions.ConnectionError(error_msg)
 
         session_id = connect_result.value
         try:
@@ -443,8 +454,8 @@ class FlextLDAPApi:
             return FlextResult.fail(
                 f"Failed to get LDAP repository: {repository_result.error}",
             )
-        repository = cast("FlextLDAPRepositories.Repository", repository_result.value)
-        result = await repository.delete_async(dn)
+        repository = cast("FlextLDAPRepositories", repository_result.value)
+        result = await repository._delete_async(dn)
         if not result.is_success:
             return FlextResult.fail(result.error or "Delete failed")
         return FlextResult.ok(None)

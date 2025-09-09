@@ -1,4 +1,4 @@
-"""LDAP adapters module.
+"""LDAP adapters module - Python 3.13 optimized with advanced patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, override
+from collections.abc import Awaitable, Callable
+from typing import cast, override
 from urllib.parse import urlparse
 
 from flext_core import (
@@ -23,10 +24,14 @@ from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
-
 logger = FlextLogger(__name__)
+
+# Advanced type aliases using Python 3.13
+type ConnectionId = str
+type ServerUri = str
+type OperationType = str
+type AdapterResult[T] = FlextResult[T]
+type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
 
 # =============================================================================
 # SINGLE FLEXT LDAP ADAPTERS CLASS - Consolidated adapter functionality
@@ -532,7 +537,7 @@ class FlextLDAPAdapters:
                 # cast already imported at top
 
                 typed_ldap_attrs = cast("LdapAttributeDict", ldap_attrs)
-                return await self.client.add(dn, typed_ldap_attrs)
+                return await self.client.add_entry(dn, typed_ldap_attrs)
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
@@ -562,7 +567,7 @@ class FlextLDAPAdapters:
                 # cast already imported at top
 
                 typed_modifications = cast("LdapAttributeDict", ldap_modifications)
-                return await self.client.modify(dn, typed_modifications)
+                return await self.client.modify_entry(dn, typed_modifications)
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
@@ -666,7 +671,7 @@ class FlextLDAPAdapters:
                     size_limit=1000,
                     time_limit=30,
                 )
-                search_result = await self.client.search(search_request)
+                search_result = await self.client.search_with_request(search_request)
 
                 if search_result.is_success:
                     # Convert results to protocol format - SearchResponse.entries is the list we need
@@ -773,7 +778,7 @@ class FlextLDAPAdapters:
                     size_limit=1000,
                     time_limit=30,
                 )
-                search_result = await self.client.search(search_request)
+                search_result = await self.client.search_with_request(search_request)
 
                 if search_result.is_success:
                     protocol_entries = self._convert_entries_to_protocol(
