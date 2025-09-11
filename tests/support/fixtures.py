@@ -52,9 +52,7 @@ async def ldap_connection(
 
 
 @pytest.fixture
-async def ldap_api(
-    ldap_connection: FlextLDAPConnectionConfig,
-) -> AsyncGenerator[FlextLDAPApi]:
+async def ldap_api() -> AsyncGenerator[FlextLDAPApi]:
     """Get configured LDAP API instance."""
     return FlextLDAPApi()
 

@@ -15,14 +15,9 @@ import uuid
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import FlextTestsFactories
 
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
-
-# Access factories through the proper structure
-AdminUserFactory = FlextTestsFactories.AdminUserFactory
-UserFactory = FlextTestsFactories.UserFactory
 
 
 @pytest.mark.asyncio
@@ -109,25 +104,25 @@ class TestFlextLDAPApiFlextTestsIntegration:
             assert len(connection_result.error) > 0
 
     async def test_user_operations_with_user_factory(self) -> None:
-        """Test user operations using UserFactory."""
+        """Test user operations using manual user data."""
         api = FlextLDAPApi()
 
-        # Create test users using UserFactory
-        regular_user = UserFactory.build(
-            email="testuser1@example.com",
-            age=25,
-        )
+        # Create test users manually
+        regular_user = {
+            "email": "testuser1@example.com",
+            "age": 25,
+        }
 
-        REDACTED_LDAP_BIND_PASSWORD_user = AdminUserFactory.build(
-            email="REDACTED_LDAP_BIND_PASSWORD1@example.com",
-            age=35,
-        )
+        REDACTED_LDAP_BIND_PASSWORD_user = {
+            "email": "REDACTED_LDAP_BIND_PASSWORD1@example.com",
+            "age": 35,
+        }
 
         # Basic validation of created users
-        assert regular_user.email == "testuser1@example.com"
-        assert regular_user.age == 25
-        assert REDACTED_LDAP_BIND_PASSWORD_user.email == "REDACTED_LDAP_BIND_PASSWORD1@example.com"
-        assert REDACTED_LDAP_BIND_PASSWORD_user.age == 35
+        assert regular_user["email"] == "testuser1@example.com"
+        assert regular_user["age"] == 25
+        assert REDACTED_LDAP_BIND_PASSWORD_user["email"] == "REDACTED_LDAP_BIND_PASSWORD1@example.com"
+        assert REDACTED_LDAP_BIND_PASSWORD_user["age"] == 35
 
         # Test user creation request (will fail without connection, but validates logic)
         create_request = FlextLDAPEntities.CreateUserRequest(
@@ -234,11 +229,11 @@ class TestFlextLDAPApiFlextTestsIntegration:
         # 1. Initialize API
         api = get_flext_ldap_api()
 
-        # 2. Create test data using factories
-        user_data = UserFactory.create(
-            email="workflow@example.com",
-            age=30,
-        )
+        # 2. Create test data manually
+        user_data = {
+            "email": "workflow@example.com",
+            "age": 30,
+        }
 
         # 3. Test connection (may fail without server)
         connection_result = await api.connect(

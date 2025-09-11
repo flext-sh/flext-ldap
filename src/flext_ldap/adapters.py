@@ -44,7 +44,9 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
         DN_CANNOT_BE_EMPTY = "DN cannot be empty"
         SERVER_URI_CANNOT_BE_EMPTY = "Server URI cannot be empty"
-        SERVER_MUST_BE_VALID_LDAP_URI = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
+        SERVER_MUST_BE_VALID_LDAP_URI = (
+            "Server must be a valid LDAP URI (ldap:// or ldaps://)"
+        )
 
     # =========================================================================
     # CONFIGURATION AND MODELS - Specialized configuration classes
@@ -123,7 +125,9 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
                 v, r"^ldaps?://.+", "LDAP URI format"
             )
             if pattern_result.is_failure:
-                error_msg = FlextLDAPAdapters.ErrorMessages.SERVER_MUST_BE_VALID_LDAP_URI
+                error_msg = (
+                    FlextLDAPAdapters.ErrorMessages.SERVER_MUST_BE_VALID_LDAP_URI
+                )
                 raise ValueError(error_msg)
 
             return v

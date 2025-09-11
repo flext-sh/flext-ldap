@@ -464,7 +464,6 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_dn_validation_real_ldap(
         self,
-        connected_ldap_client: FlextLDAPClient,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test DN validation with real LDAP server."""
@@ -609,7 +608,7 @@ class TestLdapErrorHandlingReal:
             time_limit=30,
         )
 
-        search_result = await connected_ldap_client.search(invalid_search)
+        search_result = await connected_ldap_client.search_with_request(invalid_search)
         # Should handle gracefully - either return empty results or proper error
         assert search_result.is_success or (
             search_result.error

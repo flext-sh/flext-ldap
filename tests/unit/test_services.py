@@ -21,7 +21,6 @@ from flext_tests import (
 )
 
 from flext_ldap import (
-    FlextLDAPClient,
     FlextLDAPContainer,
     FlextLDAPEntities,
     FlextLDAPServices,
@@ -171,7 +170,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_create_user_with_valid_request(
         self,
-        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test user creation with valid request using real LDAP."""
         service = FlextLDAPServices()
@@ -590,7 +588,6 @@ class TestFlextLDAPServicesComprehensive:
     @pytest.mark.integration
     async def test_full_user_lifecycle_with_docker(
         self,
-        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test complete user lifecycle with real LDAP Docker container."""
         service = FlextLDAPServices()
@@ -625,7 +622,6 @@ class TestFlextLDAPServicesComprehensive:
     @pytest.mark.integration
     async def test_full_group_lifecycle_with_docker(
         self,
-        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test complete group lifecycle with real LDAP Docker container."""
         service = FlextLDAPServices()

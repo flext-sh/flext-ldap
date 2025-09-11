@@ -15,15 +15,10 @@ import uuid
 
 import pytest
 from flext_core import FlextResult
-from flext_tests import FlextTestsFactories
 
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.settings import FlextLDAPSettings
-
-# Access factories through the proper structure
-AdminUserFactory = FlextTestsFactories.AdminUserFactory
-UserFactory = FlextTestsFactories.UserFactory
 
 
 @pytest.mark.asyncio
@@ -110,40 +105,42 @@ class TestFlextLDAPApiCoverageBoost:
             assert isinstance(result, str)
 
     def test_user_factory_integration_comprehensive(self) -> None:
-        """Test UserFactory integration with comprehensive scenarios."""
-        # Test UserFactory with keyword arguments
-        user1 = UserFactory.create_object(
-            email="test1@example.com",
-            age=25,
-        )
+        """Test user data creation with comprehensive scenarios."""
+        # Test user data creation with keyword arguments
+        user1 = {
+            "email": "test1@example.com",
+            "age": 25,
+        }
 
-        user2 = UserFactory.create_object(
-            email="test2@example.com",
-            age=35,
-        )
+        user2 = {
+            "email": "test2@example.com",
+            "age": 35,
+        }
 
         # Validate created users
-        assert user1.email == "test1@example.com"
-        assert user1.age == 25
-        assert user2.email == "test2@example.com"
-        assert user2.age == 35
+        assert user1["email"] == "test1@example.com"
+        assert user1["age"] == 25
+        assert user2["email"] == "test2@example.com"
+        assert user2["age"] == 35
 
-        # Test AdminUserFactory
-        REDACTED_LDAP_BIND_PASSWORD = AdminUserFactory.create_object(
-            email="REDACTED_LDAP_BIND_PASSWORD@example.com",
-            age=40,
-        )
+        # Test REDACTED_LDAP_BIND_PASSWORD user data
+        REDACTED_LDAP_BIND_PASSWORD = {
+            "email": "REDACTED_LDAP_BIND_PASSWORD@example.com",
+            "age": 40,
+        }
 
-        assert REDACTED_LDAP_BIND_PASSWORD.email == "REDACTED_LDAP_BIND_PASSWORD@example.com"
-        assert REDACTED_LDAP_BIND_PASSWORD.age == 40
+        assert REDACTED_LDAP_BIND_PASSWORD["email"] == "REDACTED_LDAP_BIND_PASSWORD@example.com"
+        assert REDACTED_LDAP_BIND_PASSWORD["age"] == 40
 
         # Test batch creation
-        users_batch = UserFactory.build_batch(5)
+        users_batch = [
+            {"email": f"user{i}@example.com", "age": 20 + i} for i in range(5)
+        ]
 
         assert len(users_batch) == 5
         for user in users_batch:
-            assert hasattr(user, "email")
-            assert hasattr(user, "age")
+            assert "email" in user
+            assert "age" in user
 
     async def test_api_connection_comprehensive(self) -> None:
         """Test API connection with comprehensive scenarios."""

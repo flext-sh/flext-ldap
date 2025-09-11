@@ -63,8 +63,12 @@ class TestFlextLDAPDistinguishedName:
 
     def test_dn_inequality(self) -> None:
         """Test DN inequality comparison."""
-        dn1 = FlextLDAPValueObjects.DistinguishedName(value="cn=test1,dc=example,dc=com")
-        dn2 = FlextLDAPValueObjects.DistinguishedName(value="cn=test2,dc=example,dc=com")
+        dn1 = FlextLDAPValueObjects.DistinguishedName(
+            value="cn=test1,dc=example,dc=com"
+        )
+        dn2 = FlextLDAPValueObjects.DistinguishedName(
+            value="cn=test2,dc=example,dc=com"
+        )
         assert dn1 != dn2
 
 
