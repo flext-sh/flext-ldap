@@ -14,13 +14,13 @@ from flext_core import (
     FlextResult,
     FlextServices,
     FlextTypes,
+    FlextValidations,
 )
 
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # FlextLogger available via FlextMixins.Service inheritance - no need for module logger
 
@@ -189,7 +189,10 @@ class FlextLDAPServices(
     @cached_property
     def _repository(self) -> RepositoryInstance:
         """Cached repository instance for performance optimization."""
-        return self._ldap_container.get_repository()
+        # Get the connected client from container
+        client = self._ldap_container.get_client()
+        # Create repository with the connected client
+        return FlextLDAPRepositories(client).repository
 
     def _get_repository(self) -> FlextResult[object]:
         """Get LDAP repository using cached property."""
@@ -219,7 +222,12 @@ class FlextLDAPServices(
         """Connect to LDAP server."""
         try:
             client = self._ldap_container.get_client()
-            return await client.connect(server_uri, bind_dn, bind_password)
+            connect_result = await client.connect(server_uri, bind_dn, bind_password)
+            if connect_result.is_success:
+                # Update repository cache with connected client
+                self._repository_cache = None  # Force recreation with connected client
+                return FlextResult[None].ok(None)
+            return connect_result
         except Exception as e:
             self.log_error("Failed to connect to LDAP server", error=str(e))
             return FlextResult[None].fail(f"Connection failed: {e}")
@@ -583,18 +591,28 @@ class FlextLDAPServices(
 
     # Validation methods needed by API
     def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate DN format."""
-        result = FlextLDAPValueObjects.DistinguishedName.create(dn)
-        if result.is_success:
-            return FlextResult.ok(None)
-        return FlextResult.fail(result.error or "Invalid DN")
+        """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+        result = FlextValidations.Rules.StringRules.validate_non_empty(dn)
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "DN validation failed")
+
+        # Validate DN format pattern
+        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+            dn, r"^[a-zA-Z]+=.+", "DN format"
+        )
+        if pattern_result.is_failure:
+            return FlextResult[None].fail(pattern_result.error or "Invalid DN format")
+
+        return FlextResult[None].ok(None)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP filter format."""
-        result = FlextLDAPValueObjects.Filter.create(filter_str)
-        if result.is_success:
-            return FlextResult.ok(None)
-        return FlextResult.fail(result.error or "Invalid filter")
+        """Validate LDAP filter format using FlextValidations SOURCE OF TRUTH."""
+        result = FlextValidations.Rules.StringRules.validate_pattern(
+            filter_str, r"^\(.+\)$", "LDAP filter"
+        )
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "Filter validation failed")
+        return FlextResult[None].ok(None)
 
     # =========================================================================
     # SEARCH OPERATIONS - Consolidated search functionality

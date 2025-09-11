@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import cast
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from flext_core import FlextContainer, FlextResult, FlextTypes
@@ -169,7 +170,8 @@ class TestFlextLDAPServicesComprehensive:
             assert result.error is not None
 
     async def test_create_user_with_valid_request(
-        self, connected_ldap_client: FlextLDAPClient
+        self,
+        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test user creation with valid request using real LDAP."""
         service = FlextLDAPServices()
@@ -409,7 +411,7 @@ class TestFlextLDAPServicesComprehensive:
 
         assert not result.is_success
         assert any(
-            word in ((result.error or "").lower())
+            word in (result.error or "").lower()
             for word in ["empty", "invalid", "short", "characters"]
         )
 
@@ -440,8 +442,8 @@ class TestFlextLDAPServicesComprehensive:
 
         assert not result.is_success
         assert any(
-            word in ((result.error or "").lower())
-            for word in ["empty", "invalid", "short", "characters"]
+            word in (result.error or "").lower()
+            for word in ["empty", "invalid", "pattern", "match"]
         )
 
     def test_validate_filter_invalid_format(self) -> None:
@@ -451,8 +453,9 @@ class TestFlextLDAPServicesComprehensive:
         result = service.validate_filter("invalid_filter")
 
         assert not result.is_success
-        assert "invalid" in ((result.error or "").lower()) or "format" in (
-            (result.error or "").lower()
+        assert any(
+            word in (result.error or "").lower()
+            for word in ["invalid", "format", "pattern", "match"]
         )
 
     async def test_search(self) -> None:
@@ -675,8 +678,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_get_user_with_empty_result_path(self) -> None:
         """Test get_user method when repository returns None/empty result."""
-        from unittest.mock import AsyncMock, Mock
-
         service = FlextLDAPServices()
 
         # Create mock repository that returns None entry
@@ -699,10 +700,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_get_user_with_successful_conversion(self) -> None:
         """Test get_user method with successful entry to user conversion."""
-        from unittest.mock import AsyncMock, Mock
-
-        from flext_ldap.entities import FlextLDAPEntities
-
         service = FlextLDAPServices()
 
         # Create mock entry with test data
@@ -721,7 +718,6 @@ class TestFlextLDAPServicesComprehensive:
                 "userPassword": "password123",
             }.get
         )
-        from datetime import datetime
 
         mock_entry.created_at = datetime.now(UTC)
         mock_entry.modified_at = datetime.now(UTC)
@@ -749,10 +745,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_update_user_with_successful_retrieval(self) -> None:
         """Test update_user method with successful user retrieval after update."""
-        from unittest.mock import AsyncMock, Mock, patch
-
-        from flext_ldap.entities import FlextLDAPEntities
-
         service = FlextLDAPServices()
 
         # Create mock user to be returned after update
@@ -789,8 +781,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_update_user_retrieval_failure_path(self) -> None:
         """Test update_user when getting updated user fails."""
-        from unittest.mock import AsyncMock, Mock
-
         service = FlextLDAPServices()
 
         # Mock repository with successful update
@@ -817,8 +807,6 @@ class TestFlextLDAPServicesComprehensive:
 
     async def test_update_user_none_result_path(self) -> None:
         """Test update_user when getting updated user returns None."""
-        from unittest.mock import AsyncMock, Mock
-
         service = FlextLDAPServices()
 
         # Mock repository with successful update

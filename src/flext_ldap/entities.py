@@ -54,6 +54,16 @@ class FlextLDAPEntities(FlextMixins.Loggable):
     """
 
     # =========================================================================
+    # ERROR MESSAGES - Constants for exception messages
+    # =========================================================================
+
+    class ErrorMessages:
+        """Error message constants following TRY003 and EM101/EM102 rules."""
+
+        DN_CANNOT_BE_EMPTY = "DN cannot be empty"
+        INVALID_DN_FORMAT = "Invalid DN format: {error}"
+
+    # =========================================================================
     # SEARCH MODELS - Request and response models for search operations
     # =========================================================================
 
@@ -460,13 +470,20 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format."""
-            try:
-                FlextLDAPValueObjects.DistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid DN format: {e}"
-                raise ValueError(msg) from e
+            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
+
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^[a-zA-Z]+=.+", "DN format"
+            )
+            if pattern_result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                raise ValueError(error_msg)
+
+            return v
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -511,6 +528,23 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         given_name: str | None = Field(None, description="Given Name")
         mail: str | None = Field(None, description="Email address")
         user_password: str | None = Field(None, description="User password")
+
+        def model_post_init(self, __context: object, /) -> None:
+            """Populate LDAP attributes from entity fields."""
+            super().model_post_init(__context)
+            # Convert entity fields to LDAP attributes
+            if self.uid:
+                self.attributes["uid"] = self.uid
+            if self.cn:
+                self.attributes["cn"] = self.cn
+            if self.sn:
+                self.attributes["sn"] = self.sn
+            if self.given_name:
+                self.attributes["givenName"] = self.given_name
+            if self.mail:
+                self.attributes["mail"] = self.mail
+            if self.user_password:
+                self.attributes["userPassword"] = self.user_password
 
         @field_validator("mail")
         @classmethod
@@ -636,13 +670,20 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format."""
-            try:
-                FlextLDAPValueObjects.DistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid DN format: {e}"
-                raise ValueError(msg) from e
+            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
+
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^[a-zA-Z]+=.+", "DN format"
+            )
+            if pattern_result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                raise ValueError(error_msg)
+
+            return v
 
         @field_validator("mail")
         @classmethod
@@ -703,13 +744,20 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format."""
-            try:
-                FlextLDAPValueObjects.DistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid DN format: {e}"
-                raise ValueError(msg) from e
+            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
+
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^[a-zA-Z]+=.+", "DN format"
+            )
+            if pattern_result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                raise ValueError(error_msg)
+
+            return v
 
         def to_group_entity(self) -> FlextLDAPEntities.Group:
             """Convert request to group entity."""
@@ -759,13 +807,20 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format."""
-            try:
-                FlextLDAPValueObjects.DistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid DN format: {e}"
-                raise ValueError(msg) from e
+            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
+
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^[a-zA-Z]+=.+", "DN format"
+            )
+            if pattern_result.is_failure:
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                raise ValueError(error_msg)
+
+            return v
 
 
 # LdapAttributeDict already imported in TYPE_CHECKING block above

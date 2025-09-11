@@ -1,6 +1,6 @@
 """Real adapters tests - testing actual adapter functionality without mocks.
 
-These tests execute REAL adapter code to increase coverage and validate functionality.
+These tests Execute adapter code to increase coverage and validate functionality.
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -147,8 +147,14 @@ class TestRealAdaptersModels:
         ]
 
         for uri in invalid_uris:
-            with pytest.raises(ValidationError):
+            # Test that invalid URIs are rejected
+            try:
                 ConnectionConfig(server=uri)
+                # If we get here, the validation failed to catch the invalid URI
+                pytest.fail(f"Expected ValidationError for invalid URI: {uri}")
+            except ValidationError:
+                # This is expected - validation should catch invalid URIs
+                pass
 
     def test_connection_config_business_rules_validation(self) -> None:
         """Test ConnectionConfig business rules validation."""

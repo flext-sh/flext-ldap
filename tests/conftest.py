@@ -37,8 +37,8 @@ except Exception:  # pragma: no cover - docker may be unavailable in CI
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
-OPENLDAP_CONTAINER_NAME = "flext-ldap-test-server"
-OPENLDAP_PORT = 3390  # Use non-standard port to avoid conflicts
+OPENLDAP_CONTAINER_NAME = f"flext-ldap-test-server-{int(time.time())}"
+OPENLDAP_PORT = 3391  # Use non-standard port to avoid conflicts
 OPENLDAP_ADMIN_PASSWORD = "admin123"
 OPENLDAP_DOMAIN = "flext.local"
 OPENLDAP_BASE_DN = f"dc={',dc='.join(OPENLDAP_DOMAIN.split('.'))}"
@@ -248,7 +248,7 @@ def ldap_test_config(docker_openldap_container: object) -> FlextTypes.Core.Dict:
 
 @pytest.fixture
 async def ldap_service(
-    clean_ldap_container: FlextTypes.Core.Dict,
+    ldap_test_config: FlextTypes.Core.Dict,
 ) -> AsyncGenerator[FlextLDAPServices]:
     """Provide configured LDAP service for testing."""
     ldap_container = FlextLDAPContainer()
@@ -259,6 +259,15 @@ async def ldap_service(
     init_result = await service.initialize()
     if not init_result.is_success:
         pytest.fail(f"Failed to initialize LDAP service: {init_result.error}")
+
+    # Connect to LDAP server
+    connect_result = await service.connect(
+        str(ldap_test_config["server_url"]),
+        str(ldap_test_config["bind_dn"]),
+        str(ldap_test_config["password"]),
+    )
+    if not connect_result.is_success:
+        pytest.fail(f"Failed to connect LDAP service: {connect_result.error}")
 
     yield service
 
@@ -390,7 +399,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config,
+    config: pytest.Config,  # noqa: ARG001
     items: list[pytest.Item],
 ) -> None:
     """Automatically mark integration tests based on file path."""

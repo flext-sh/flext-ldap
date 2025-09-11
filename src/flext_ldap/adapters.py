@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from typing import cast, override
-from urllib.parse import urlparse
 
 from flext_core import (
     FlextMixins,
@@ -16,6 +15,7 @@ from flext_core import (
     FlextResult,
     FlextServices,
     FlextTypes,
+    FlextValidations,
 )
 from pydantic import ConfigDict, Field, field_validator
 
@@ -34,6 +34,17 @@ type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
 
 class FlextLDAPAdapters(FlextMixins.Loggable):
     """LDAP adapter functionality consolidated class using FlextMixins.Loggable."""
+
+    # =========================================================================
+    # ERROR MESSAGES - Constants for exception messages
+    # =========================================================================
+
+    class ErrorMessages:
+        """Error message constants following TRY003 and EM101/EM102 rules."""
+
+        DN_CANNOT_BE_EMPTY = "DN cannot be empty"
+        SERVER_URI_CANNOT_BE_EMPTY = "Server URI cannot be empty"
+        SERVER_MUST_BE_VALID_LDAP_URI = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
 
     # =========================================================================
     # CONFIGURATION AND MODELS - Specialized configuration classes
@@ -65,10 +76,11 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format."""
-            if not v or not isinstance(v, str):
-                msg = "DN must be a non-empty string"
-                raise ValueError(msg)
+            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPAdapters.ErrorMessages.DN_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
             return v
 
         @override
@@ -101,15 +113,19 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         @field_validator("server")
         @classmethod
         def validate_server(cls, v: str) -> str:
-            """Validate server URI format - USES FLEXT-CORE."""
-            # Basic URL validation
-            parsed = urlparse(v)
-            if not parsed.scheme or not parsed.netloc:
-                msg = "Server must be a valid URL"
-                raise ValueError(msg)
-            if not parsed.scheme or parsed.scheme not in {"ldap", "ldaps"}:
-                msg = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
-                raise ValueError(msg)
+            """Validate server URI format using FlextValidations SOURCE OF TRUTH."""
+            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
+            if result.is_failure:
+                error_msg = FlextLDAPAdapters.ErrorMessages.SERVER_URI_CANNOT_BE_EMPTY
+                raise ValueError(error_msg)
+
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^ldaps?://.+", "LDAP URI format"
+            )
+            if pattern_result.is_failure:
+                error_msg = FlextLDAPAdapters.ErrorMessages.SERVER_MUST_BE_VALID_LDAP_URI
+                raise ValueError(error_msg)
+
             return v
 
         @override

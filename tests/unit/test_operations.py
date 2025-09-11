@@ -16,10 +16,8 @@ from datetime import UTC, datetime
 import pytest
 from flext_core import FlextConstants
 
-from flext_ldap import (
-    FlextLDAPOperations,
-)
 from flext_ldap.entities import FlextLDAPEntities
+from flext_ldap.operations import FlextLDAPOperations
 
 # SearchParams moved to entities.py
 from flext_ldap.typings import LdapAttributeDict

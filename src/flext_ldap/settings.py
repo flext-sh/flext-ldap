@@ -19,7 +19,7 @@ from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.fields import FlextLDAPFields
+from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # Python 3.13 type aliases for LDAP settings
 type LdapSettingsDict = FlextTypes.Core.Dict
@@ -75,7 +75,7 @@ class FlextLDAPSettings(FlextConfig):
 
     # Search configuration (direct fields)
     default_scope: str = Field(
-        default=FlextLDAPFields.Scopes.SUBTREE,
+        default=FlextLDAPValueObjects.Scope.subtree().scope,
         description="Default search scope",
     )
     size_limit: int = Field(

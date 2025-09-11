@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
+import uuid
 
 import pytest
 from flext_core import FlextResult
@@ -35,17 +36,13 @@ class TestFlextTestsIntegration:
 
         # Test concurrent session generation using AsyncTestUtils
         async def generate_session() -> str:
-            import uuid
-
             return f"session_{uuid.uuid4()}"
 
-        # Use AsyncTestUtils.run_concurrent for parallel testing
-        session_results = await AsyncTestUtils.run_concurrent(
-            [
-                generate_session(),
-                generate_session(),
-                generate_session(),
-            ]
+        # Use asyncio.gather for parallel testing
+        session_results = await asyncio.gather(
+            generate_session(),
+            generate_session(),
+            generate_session(),
         )
 
         # Verify all sessions are unique
@@ -117,8 +114,6 @@ class TestFlextTestsIntegration:
 
         # Profile session creation performance
         def session_operation() -> str:
-            import uuid
-
             return f"session_{uuid.uuid4()}"
 
         # Use FlextTestsPerformance.quick_memory_profile
@@ -160,8 +155,6 @@ class TestFlextTestsIntegration:
 
         async def create_user_session(user: object) -> str:
             """Create session for user creation."""
-            import uuid
-
             session_id = f"session_{uuid.uuid4()}"
             return {
                 "session_id": session_id,
@@ -169,9 +162,12 @@ class TestFlextTestsIntegration:
                 "timestamp": asyncio.get_event_loop().time(),
             }
 
-        # Run concurrent user session creation
-        concurrent_tasks = [create_user_session(user) for user in users]
-        results = await AsyncTestUtils.run_concurrent_tasks(concurrent_tasks)
+        # Run concurrent user session creation using asyncio.gather
+        results = await asyncio.gather(
+            create_user_session(users[0]),
+            create_user_session(users[1]),
+            create_user_session(users[2]),
+        )
 
         # Validate all operations completed successfully
         assert len(results) == 3

@@ -80,7 +80,7 @@ class TestLdapClientRealOperations:
             time_limit=30,  # 30 seconds timeout
         )
 
-        result = await connected_ldap_client.search(search_request)
+        result = await connected_ldap_client.search_with_request(search_request)
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"

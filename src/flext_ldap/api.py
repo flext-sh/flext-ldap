@@ -17,6 +17,7 @@ from flext_core import (
     FlextMixins,
     FlextResult,
     FlextTypes,
+    FlextValidations,
 )
 
 from flext_ldap.container import FlextLDAPContainer
@@ -482,12 +483,28 @@ class FlextLDAPApi(FlextMixins.Service):
     # Validation Methods
 
     def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate distinguished name format."""
-        return self._service.validate_dn(dn)
+        """Validate distinguished name format using FlextValidations SOURCE OF TRUTH."""
+        result = FlextValidations.Rules.StringRules.validate_non_empty(dn)
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "DN validation failed")
+
+        # Validate DN format pattern
+        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+            dn, r"^[a-zA-Z]+=.+", "DN format"
+        )
+        if pattern_result.is_failure:
+            return FlextResult[None].fail(pattern_result.error or "Invalid DN format")
+
+        return FlextResult[None].ok(None)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP search filter."""
-        return self._service.validate_filter(filter_str)
+        """Validate LDAP search filter using FlextValidations SOURCE OF TRUTH."""
+        result = FlextValidations.Rules.StringRules.validate_pattern(
+            filter_str, r"^\(.+\)$", "LDAP filter"
+        )
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "Filter validation failed")
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, config: FlextLDAPSettings | None = None) -> FlextLDAPApi:

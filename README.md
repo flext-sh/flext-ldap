@@ -99,7 +99,7 @@ FLEXT_LOG_LEVEL=INFO
 
 ```bash
 make lint         # Lint
-make type-check   # MyPy estrito
+make type-check 
 make test         # Testes
 make validate     # Pipeline completo
 ```

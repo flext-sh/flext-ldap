@@ -84,9 +84,18 @@ class TestComprehensiveFlextTests:
             """Generate session ID."""
             return f"session_{uuid.uuid4()}"
 
-        # Run concurrent operations without profiling
-        sessions = await AsyncTestUtils.run_concurrent(
-            [session_generation_task() for _ in range(10)]
+        # Run concurrent operations without profiling using asyncio.gather
+        sessions = await asyncio.gather(
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
+            session_generation_task(),
         )
 
         # Validate results using FlextTestsMatchers
@@ -133,7 +142,7 @@ class TestComprehensiveFlextTests:
             attributes=["cn", "mail"],
         )
 
-        # Execute real search (will fail gracefully without connection)
+        # Execute search (will fail gracefully without connection)
         result = await api.search(search_request)
 
         # Use FlextTestsMatchers for result validation

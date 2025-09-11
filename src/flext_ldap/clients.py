@@ -65,6 +65,7 @@ class FlextLDAPClient(
         """LDAP search execution strategy - nested within unified client."""
 
         def __init__(self, connection: Connection | None) -> None:
+            """Initialize search strategy with LDAP connection."""
             self.connection = connection
 
         def execute_search(
@@ -129,21 +130,19 @@ class FlextLDAPClient(
                     entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
 
                     # Process attributes using strategy pattern
-                    entry_attributes = (
-                        list(entry.entry_attributes.keys())
-                        if hasattr(entry, "entry_attributes")
-                        else []
-                    )
-                    for attr_name in entry_attributes:
-                        attr_values = (
-                            entry.entry_attributes.get(attr_name, [])
-                            if hasattr(entry, "entry_attributes")
-                            else []
-                        )
-                        if len(attr_values) == 1:
-                            entry_data[attr_name] = attr_values[0]
-                        elif attr_values:  # Only add non-empty lists
-                            entry_data[attr_name] = attr_values
+                    if hasattr(entry, "entry_attributes") and entry.entry_attributes:
+                        if isinstance(entry.entry_attributes, dict):
+                            entry_attributes = list(entry.entry_attributes.keys())
+                            for attr_name in entry_attributes:
+                                attr_values = entry.entry_attributes.get(attr_name, [])
+                                if len(attr_values) == 1:
+                                    entry_data[attr_name] = attr_values[0]
+                                elif attr_values:  # Only add non-empty lists
+                                    entry_data[attr_name] = attr_values
+                        else:
+                            # Handle case where entry_attributes is not a dict
+                            # Skip processing if not a dict - this is expected for some LDAP responses
+                            pass
                     entries.append(entry_data)
 
                 return FlextResult[FlextTypes.Core.Dict].ok({"entries": entries})
@@ -179,6 +178,7 @@ class FlextLDAPClient(
                 )
 
     def __init__(self) -> None:
+        """Initialize LDAP client with flext-core logging capabilities."""
         # Initialize FlextMixins.Service for logging capabilities
         super().__init__()
         self._connection: Connection | None = None
