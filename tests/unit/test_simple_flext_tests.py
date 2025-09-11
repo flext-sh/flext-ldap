@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from flext_core import FlextResult
 
@@ -29,8 +31,6 @@ class TestSimpleFlextTestsIntegration:
 
     def test_session_id_generation(self) -> None:
         """Test session ID generation using Python stdlib SOURCE OF TRUTH."""
-        import uuid
-
         # Generate session IDs using Python standard library SOURCE OF TRUTH
         session_id_1 = f"session_{uuid.uuid4()}"
         session_id_2 = f"session_{uuid.uuid4()}"

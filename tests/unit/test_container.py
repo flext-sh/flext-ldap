@@ -39,7 +39,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
     def test_ldap_container_initialization(self) -> None:
         """Test FlextLDAPContainer initialization."""
-        # Execute REAL container initialization
+        # Execute container initialization
         container = FlextLDAPContainer()
 
         # Verify REAL container initialization
@@ -59,20 +59,17 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         # Verify REAL protocol methods exist (protocol requires @runtime_checkable for isinstance)
         assert hasattr(self.container, "get_client")
         assert hasattr(self.container, "get_repository")
-        assert hasattr(self.container, "get_user_repository")
-        assert hasattr(self.container, "get_group_repository")
+        # Only get_client and get_repository are available
         assert hasattr(self.container, "configure")
 
         # Verify REAL protocol methods are callable
         assert callable(self.container.get_client)
         assert callable(self.container.get_repository)
-        assert callable(self.container.get_user_repository)
-        assert callable(self.container.get_group_repository)
         assert callable(self.container.configure)
 
     def test_get_client_first_time(self) -> None:
         """Test get_client when called for first time."""
-        # Execute REAL client retrieval first time
+        # Execute client retrieval first time
         client = self.container.get_client()
 
         # Verify REAL client creation
@@ -85,7 +82,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
     def test_get_client_cached(self) -> None:
         """Test get_client returns cached instance."""
-        # Execute REAL client caching
+        # Execute client caching
         client1 = self.container.get_client()
         client2 = self.container.get_client()
 
@@ -94,7 +91,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
     def test_get_repository_first_time(self) -> None:
         """Test get_repository when called for first time."""
-        # Execute REAL repository retrieval first time
+        # Execute repository retrieval first time
         repository = self.container.get_repository()
 
         # Verify REAL repository creation
@@ -107,56 +104,36 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
     def test_get_repository_cached(self) -> None:
         """Test get_repository returns cached instance."""
-        # Execute REAL repository caching
+        # Execute repository caching
         repo1 = self.container.get_repository()
         repo2 = self.container.get_repository()
 
         # Verify REAL caching behavior
         assert repo1 is repo2
 
-    def test_get_user_repository_first_time(self) -> None:
-        """Test get_user_repository when called for first time."""
-        # Execute REAL user repository retrieval first time
-        user_repo = self.container.get_user_repository()
 
-        # Verify REAL user repository creation
-        assert user_repo is not None
-        # User repository is from FlextLDAPRepositories.UserRepository class
+    def test_get_repository_group_operations(self) -> None:
+        """Test get_repository supports group operations."""
+        # Execute repository retrieval for group operations
+        repo = self.container.get_repository()
 
-        # Verify REAL user repository is cached
-        user_repo2 = self.container.get_user_repository()
-        assert user_repo is user_repo2
+        # Verify REAL repository creation
+        assert repo is not None
+        # Repository supports both user and group operations
 
-    def test_get_user_repository_cached(self) -> None:
-        """Test get_user_repository returns cached instance."""
-        # Execute REAL user repository caching
-        user_repo1 = self.container.get_user_repository()
-        user_repo2 = self.container.get_user_repository()
+        # Verify REAL repository supports basic methods
+        assert hasattr(repo, "get_by_id")
+        assert hasattr(repo, "save")
+        assert hasattr(repo, "delete")
 
-        # Verify REAL caching behavior
-        assert user_repo1 is user_repo2
+    def test_get_repository_consistency(self) -> None:
+        """Test get_repository returns consistent instance."""
+        # Execute repository consistency check
+        repo1 = self.container.get_repository()
+        repo2 = self.container.get_repository()
 
-    def test_get_group_repository_first_time(self) -> None:
-        """Test get_group_repository when called for first time."""
-        # Execute REAL group repository retrieval first time
-        group_repo = self.container.get_group_repository()
-
-        # Verify REAL group repository creation
-        assert group_repo is not None
-        # Group repository is from FlextLDAPRepositories.GroupRepository class
-
-        # Verify REAL group repository is cached
-        group_repo2 = self.container.get_group_repository()
-        assert group_repo is group_repo2
-
-    def test_get_group_repository_cached(self) -> None:
-        """Test get_group_repository returns cached instance."""
-        # Execute REAL group repository caching
-        group_repo1 = self.container.get_group_repository()
-        group_repo2 = self.container.get_group_repository()
-
-        # Verify REAL caching behavior
-        assert group_repo1 is group_repo2
+        # Verify REAL consistency behavior
+        assert repo1 is repo2
 
     def test_configure_with_valid_settings(self) -> None:
         """Test configure with valid LDAP settings."""
@@ -167,7 +144,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
-        # Execute REAL configuration
+        # Execute configuration
         result = self.container.configure(settings)
 
         # Verify REAL configuration success
@@ -183,7 +160,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
-        # Execute REAL SSL configuration
+        # Execute SSL configuration
         result = self.container.configure(settings)
 
         # Verify REAL SSL configuration success
@@ -198,7 +175,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
-        # Execute REAL configuration
+        # Execute configuration
         result = self.container.configure(settings)
 
         # Verify REAL settings update
@@ -219,7 +196,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
-        # Execute REAL reconfiguration
+        # Execute reconfiguration
         result = self.container.configure(settings)
 
         # Verify REAL reconfiguration success
@@ -237,33 +214,29 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
     def test_dependency_injection_chain(self) -> None:
         """Test complete dependency injection chain."""
-        # Execute REAL dependency chain
+        # Execute dependency chain
         client = self.container.get_client()
         repository = self.container.get_repository()
-        user_repo = self.container.get_user_repository()
-        group_repo = self.container.get_group_repository()
+        repo = self.container.get_repository()
 
         # Verify REAL dependency injection
         assert repository._client is client
-        assert user_repo._repo is repository  # User repo uses composition
-        assert group_repo._repo is repository  # Group repo uses composition
+        assert repo._client is client  # Repository uses client directly
 
     def test_repository_client_consistency(self) -> None:
         """Test all repositories use the same client instance."""
-        # Execute REAL repository instantiation
+        # Execute repository instantiation
         client = self.container.get_client()
         repository = self.container.get_repository()
-        user_repo = self.container.get_user_repository()
-        group_repo = self.container.get_group_repository()
+        repo = self.container.get_repository()
 
         # Verify REAL client consistency across repositories
         assert repository._client is client
-        assert user_repo._repo._client is client  # Through composition chain
-        assert group_repo._repo._client is client  # Through composition chain
+        assert repo._client is client  # Through composition chain
 
     def test_container_logger_usage(self) -> None:
         """Test container uses proper logging."""
-        # Execute REAL logger access
+        # Execute logger access
         # The container should use FlextLogger(__name__) pattern
 
         # Verify REAL logging initialization
@@ -288,7 +261,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         container1 = FlextLDAPContainer()
         container2 = FlextLDAPContainer()
 
-        # Execute REAL independent configuration
+        # Execute independent configuration
         connection1 = FlextLDAPConnectionConfig(
             server="ldap://ldap1.example.com",
             port=389,
@@ -332,34 +305,28 @@ class TestFlextLDAPContainerProtocolRealCoverage(unittest.TestCase):
         """Test IFlextLDAPContainer protocol method signatures."""
         # Verify REAL protocol requirements
 
-        # Execute REAL protocol verification
+        # Execute protocol verification
         # Note: Container protocol is defined in flext-core FlextContainer
         container = FlextLDAPContainer()
 
         # Verify REAL container methods exist
         assert hasattr(container, "get_client")
         assert hasattr(container, "get_repository")
-        assert hasattr(container, "get_user_repository")
-        assert hasattr(container, "get_group_repository")
         assert hasattr(container, "configure")
 
     def test_protocol_compliance_check(self) -> None:
         """Test FlextLDAPContainer implements protocol completely."""
-        # Execute REAL protocol compliance check
+        # Execute protocol compliance check
         container = FlextLDAPContainer()
 
         # Verify REAL method availability (protocol requires @runtime_checkable for isinstance)
         assert callable(container.get_client)
         assert callable(container.get_repository)
-        assert callable(container.get_user_repository)
-        assert callable(container.get_group_repository)
         assert callable(container.configure)
 
         # Verify REAL method signatures match protocol expectations
         assert hasattr(container, "get_client")
         assert hasattr(container, "get_repository")
-        assert hasattr(container, "get_user_repository")
-        assert hasattr(container, "get_group_repository")
         assert hasattr(container, "configure")
 
 

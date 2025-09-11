@@ -93,7 +93,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
         Implements FlextProtocols.Domain.Repository[Entry] protocol correctly without duplication.
         Uses FlextMixins.Service for logging capabilities from flext-core.
-        Single consolidated class following SOLID principles.
+        Single consolidated class
         """
 
         def __init__(self, client: FlextLDAPClient, **data: object) -> None:
@@ -238,7 +238,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 case other_value:
                     object_classes = [str(other_value)]
 
-            # Create entry without FlextLDAPFields dependency
+            # Create entry using domain entities
             attributes = {k: v for k, v in entry_data.items() if k != "dn"}
 
             entry = FlextLDAPEntities.Entry(

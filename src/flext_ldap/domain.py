@@ -73,6 +73,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal specification for comprehensive LDAP user validation."""
 
         def __init__(self) -> None:
+            """Initialize LDAP user specification with default values."""
             super().__init__(
                 name=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_NAME,
                 description=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_DESCRIPTION,
@@ -130,6 +131,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal specification for comprehensive LDAP group validation."""
 
         def __init__(self) -> None:
+            """Initialize LDAP group specification with default values."""
             super().__init__(
                 name="ValidLdapGroup",
                 description="Validates LDAP group entity business rules",
@@ -175,6 +177,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         )
 
         def __init__(self) -> None:
+            """Initialize distinguished name specification with default values."""
             super().__init__(
                 name="ValidDistinguishedName",
                 description="Validates RFC 4514 compliant Distinguished Names",
@@ -214,6 +217,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal specification for password strength validation."""
 
         def __init__(self) -> None:
+            """Initialize password specification with default values."""
             super().__init__(
                 name="SecurePassword",
                 description="Validates password strength according to security policy",
@@ -278,6 +282,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal specification for active user account validation."""
 
         def __init__(self) -> None:
+            """Initialize active user specification with default values."""
             super().__init__(
                 name="ActiveUser",
                 description="Validates that user account is active and not disabled",
@@ -322,6 +327,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         )
 
         def __init__(self) -> None:
+            """Initialize email specification with default values."""
             super().__init__(
                 name="ValidEmail",
                 description="Validates email address format",
@@ -347,6 +353,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal composite specification for complete user validation."""
 
         def __init__(self) -> None:
+            """Initialize complete user specification with default values."""
             super().__init__(
                 name="CompleteUser",
                 description="Validates complete user entity with all business rules",
@@ -393,6 +400,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal domain service for user management business logic."""
 
         def __init__(self) -> None:
+            """Initialize user management service with specifications."""
             super().__init__()
             self._user_spec = FlextLDAPDomain.CompleteUserSpecification()
             self._password_spec = FlextLDAPDomain.PasswordSpecification()
@@ -563,6 +571,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal domain service for group management business logic."""
 
         def __init__(self) -> None:
+            """Initialize group management service with specifications."""
             super().__init__()
             self._group_spec = FlextLDAPDomain.GroupSpecification()
             self._dn_spec = FlextLDAPDomain.DistinguishedNameSpecification()
@@ -651,6 +660,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Internal domain service for password management business logic."""
 
         def __init__(self) -> None:
+            """Initialize password management service with specifications."""
             super().__init__()
             self._password_spec = FlextLDAPDomain.PasswordSpecification()
 
@@ -989,6 +999,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """User entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
 
         def __init__(self, params: FlextTypes.Core.Dict) -> None:
+            """Initialize user entity builder with parameters."""
             super().__init__(params, "user")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
@@ -1055,6 +1066,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Group entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
 
         def __init__(self, params: FlextTypes.Core.Dict) -> None:
+            """Initialize group entity builder with parameters."""
             super().__init__(params, "group")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
@@ -1142,6 +1154,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Handler for user creation commands using FlextCommands pattern."""
 
         def __init__(self) -> None:
+            """Initialize user creation handler with password service."""
             super().__init__()
             self._password_service = FlextLDAPDomain.PasswordService()
 
@@ -1234,6 +1247,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """
 
         def __init__(self) -> None:
+            """Initialize management handler with user and group services."""
             self._user_service = FlextLDAPDomain.UserManagementService()
             self._group_service = FlextLDAPDomain.GroupManagementService()
             self._password_service = FlextLDAPDomain.PasswordService()

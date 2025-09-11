@@ -1,6 +1,6 @@
 """Isolated tests for type guards - testing REAL functionality without external deps.
 
-These tests import and execute REAL type guard code to increase coverage.
+These tests import and Execute type guard code to increase coverage.
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

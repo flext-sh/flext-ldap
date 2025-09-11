@@ -816,7 +816,7 @@ class TestAdapterErrorHandling:
                         except Exception:
                             pass  # Exception handling code path exercised
                 except Exception:
-                    # Any exception provides coverage of error handling paths
+                    # object exception provides coverage of error handling paths
                     pass
 
     def test_model_validation_edge_cases(self) -> None:

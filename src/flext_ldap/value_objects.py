@@ -164,6 +164,16 @@ class FlextLDAPValueObjects:
             """Create subtree scope (search entry and all descendants)."""
             return cls(scope=FlextLDAPConstants.Scopes.SUB)
 
+        @classmethod
+        def subtree(cls) -> FlextLDAPValueObjects.Scope:
+            """Create subtree scope (alias for sub)."""
+            return cls(scope=FlextLDAPConstants.Scopes.SUB)
+
+        @classmethod
+        def onelevel(cls) -> FlextLDAPValueObjects.Scope:
+            """Create one level scope (alias for one)."""
+            return cls(scope=FlextLDAPConstants.Scopes.ONE)
+
     # =========================================================================
     # FILTER - LDAP filter value object with RFC 4515 compliance
     # =========================================================================

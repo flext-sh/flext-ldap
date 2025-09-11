@@ -11,14 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextMixins
+
+import flext_ldap.utilities as utilities_module
+
 
 class TestFlextLDAPUtilities:
     """Test FLEXT LDAP utilities module for complete coverage."""
 
     def test_utilities_module_imports_successfully(self) -> None:
         """Test that utilities module imports without errors."""
-        import flext_ldap.utilities as utilities_module
-
         # Module should import successfully
         assert utilities_module is not None
 
@@ -34,8 +36,6 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_module_design_principle(self) -> None:
         """Test that utilities follows minimal design principle."""
-        import flext_ldap.utilities as utilities_module
-
         # Should have minimal exports (empty __all__)
         assert utilities_module.__all__ == []
 
@@ -55,8 +55,6 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_flext_types_import(self) -> None:
         """Test that FlextTypes import is working correctly."""
-        import flext_ldap.utilities as utilities_module
-
         # Should have FlextTypes available in module context
         # Check that the module compiled without import errors
         assert utilities_module.__name__ == "flext_ldap.utilities"
@@ -68,13 +66,10 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_logger_functionality(self) -> None:
         """Test that logger duplication was eliminated following SOURCE OF TRUTH principle."""
-        import flext_ldap.utilities as utilities_module
-
         # Logger should NOT exist in utilities - eliminated duplication
         assert not hasattr(utilities_module, "logger")
 
         # Logging should be done through FlextMixins.Loggable inheritance
-        from flext_core import FlextMixins
 
         # Verify SOURCE OF TRUTH pattern is being followed
         loggable = FlextMixins.Loggable()

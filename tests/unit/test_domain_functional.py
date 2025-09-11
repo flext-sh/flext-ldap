@@ -14,10 +14,11 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import FlextResult
+from flext_core import FlextDomainService, FlextResult
 from pydantic import BaseModel
 
 # Import the target module for coverage
+import flext_ldap.domain as domain_module
 from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
 
@@ -50,8 +51,6 @@ class TestFlextLDAPDomainFunctional:
 
     def test_domain_module_loads_without_errors(self) -> None:
         """Test that domain module loads completely without import errors."""
-        import flext_ldap.domain as domain_module
-
         # Verify module has expected structure
         assert hasattr(domain_module, "FlextLDAPDomain")
 
@@ -526,8 +525,6 @@ class TestDomainIntegration:
         user_service = FlextLDAPDomain.UserManagementService()
 
         # Should inherit from FlextDomainService
-        from flext_core import FlextDomainService
-
         assert isinstance(user_service, FlextDomainService)
 
         # Test domain events use BaseModel

@@ -1,6 +1,6 @@
 """REAL config tests - testing actual config functionality without mocks.
 
-These tests execute REAL config code to increase coverage and validate functionality.
+These tests Execute config code to increase coverage and validate functionality.
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
