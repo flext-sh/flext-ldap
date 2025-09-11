@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from flext_core import FlextResult
 
@@ -31,7 +33,7 @@ class TestFlextLDAPApiComprehensiveExpansion:
             host="custom.example.com",
             port=636,
             use_ssl=True,
-            base_dn="ou=custom,dc=example,dc=com"
+            base_dn="ou=custom,dc=example,dc=com",
         )
 
         # Initialize API with custom config
@@ -53,7 +55,11 @@ class TestFlextLDAPApiComprehensiveExpansion:
         entry = FlextLDAPEntities.Entry(
             id="test_entry_001",
             dn="cn=test,ou=users,dc=example,dc=com",
-            attributes={"cn": ["Test User"], "uid": ["testuser"], "mail": ["test@example.com"]}
+            attributes={
+                "cn": ["Test User"],
+                "uid": ["testuser"],
+                "mail": ["test@example.com"],
+            },
         )
 
         # Test attribute extraction from Entry object
@@ -103,23 +109,31 @@ class TestFlextLDAPApiComprehensiveExpansion:
         }
 
         # Test error handling
-        bad_result = api._get_entry_attribute(problematic_entry, "bad_object", "safe_default")
-        nested_result = api._get_entry_attribute(problematic_entry, "complex_nested", "safe_default")
-        numeric_result = api._get_entry_attribute(problematic_entry, "numeric_list", "safe_default")
+        bad_result = api._get_entry_attribute(
+            problematic_entry, "bad_object", "safe_default"
+        )
+        nested_result = api._get_entry_attribute(
+            problematic_entry, "complex_nested", "safe_default"
+        )
+        numeric_result = api._get_entry_attribute(
+            problematic_entry, "numeric_list", "safe_default"
+        )
 
         # Should handle errors gracefully
-        assert bad_result == "safe_default"  # Should use default due to conversion error
-        assert nested_result != "safe_default"  # Dict should convert to str representation
+        assert (
+            bad_result == "safe_default"
+        )  # Should use default due to conversion error
+        assert (
+            nested_result != "safe_default"
+        )  # Dict should convert to str representation
         assert numeric_result != "safe_default"  # Numbers should convert successfully
 
     async def test_session_management_lifecycle(self) -> None:
         """Test complete session management lifecycle."""
-        api = FlextLDAPApi()
-
         # Generate multiple session IDs
         session_ids = []
         for _ in range(20):  # Test multiple generations
-            session_id = api._generate_session_id()
+            session_id = f"session_{uuid.uuid4()}"
             session_ids.append(session_id)
 
             # Verify format
@@ -137,14 +151,12 @@ class TestFlextLDAPApiComprehensiveExpansion:
         invalid_hosts = [
             "invalid://not-a-real-server:389",
             "ldap://nonexistent.domain.invalid:389",
-            "ldaps://unreachable.host.invalid:636"
+            "ldaps://unreachable.host.invalid:636",
         ]
 
         for invalid_host in invalid_hosts:
             connection_result = await api.connect(
-                invalid_host,
-                "cn=admin,dc=example,dc=com",
-                "password"
+                invalid_host, "cn=admin,dc=example,dc=com", "password"
             )
 
             # Should return FlextResult with failure
@@ -165,13 +177,11 @@ class TestFlextLDAPApiComprehensiveExpansion:
                 base_dn="ou=users,dc=example,dc=com",
                 filter_str="(objectClass=person)",
                 scope="subtree",
-                attributes=["uid", "cn", "mail"]
+                attributes=["uid", "cn", "mail"],
             ),
             # Minimal request
             FlextLDAPEntities.SearchRequest(
-                base_dn="dc=example,dc=com",
-                filter_str="(objectClass=*)",
-                scope="base"
+                base_dn="dc=example,dc=com", filter_str="(objectClass=*)", scope="base"
             ),
             # Request with limits
             FlextLDAPEntities.SearchRequest(
@@ -179,8 +189,8 @@ class TestFlextLDAPApiComprehensiveExpansion:
                 filter_str="(objectClass=groupOfNames)",
                 scope="one",
                 size_limit=100,
-                time_limit=30
-            )
+                time_limit=30,
+            ),
         ]
 
         for search_request in search_requests:
@@ -193,9 +203,10 @@ class TestFlextLDAPApiComprehensiveExpansion:
             # Error should be connection-related, not validation-related
             if not search_result.is_success:
                 error_msg = search_result.error.lower()
-                assert any(keyword in error_msg for keyword in [
-                    "connect", "bind", "server", "host", "timeout"
-                ])
+                assert any(
+                    keyword in error_msg
+                    for keyword in ["connect", "bind", "server", "host", "timeout"]
+                )
 
     async def test_user_operations_validation_paths(self) -> None:
         """Test user operation validation paths comprehensively."""
@@ -211,14 +222,14 @@ class TestFlextLDAPApiComprehensiveExpansion:
                 sn="Doe",
                 given_name="John",
                 mail="john.doe@example.com",
-                object_classes=["person", "organizationalPerson", "top"]
+                object_classes=["person", "organizationalPerson", "top"],
             ),
             # Minimal user request
             FlextLDAPEntities.CreateUserRequest(
                 dn="cn=minimal,ou=users,dc=example,dc=com",
                 uid="minimal",
                 cn="Minimal User",
-                sn="User"
+                sn="User",
             ),
             # User with additional attributes
             FlextLDAPEntities.CreateUserRequest(
@@ -227,8 +238,8 @@ class TestFlextLDAPApiComprehensiveExpansion:
                 cn="Extended User",
                 sn="User",
                 description="Test user with extended attributes",
-                telephone_number="123-456-7890"
-            )
+                telephone_number="123-456-7890",
+            ),
         ]
 
         for user_request in user_requests:
@@ -302,17 +313,16 @@ class TestFlextLDAPApiComprehensiveExpansion:
         # Test that errors are properly wrapped in FlextResult
         operations = [
             lambda: api.connect("invalid", "dn", "pass"),
-            lambda: api.search(FlextLDAPEntities.SearchRequest(
-                base_dn="dc=test",
-                filter_str="(objectClass=*)",
-                scope="base"
-            )),
-            lambda: api.create_user(FlextLDAPEntities.CreateUserRequest(
-                dn="cn=test,dc=test",
-                uid="test",
-                cn="Test",
-                sn="User"
-            ))
+            lambda: api.search(
+                FlextLDAPEntities.SearchRequest(
+                    base_dn="dc=test", filter_str="(objectClass=*)", scope="base"
+                )
+            ),
+            lambda: api.create_user(
+                FlextLDAPEntities.CreateUserRequest(
+                    dn="cn=test,dc=test", uid="test", cn="Test", sn="User"
+                )
+            ),
         ]
 
         for operation in operations:

@@ -15,7 +15,7 @@ from flext_core import FlextTypes
 import asyncio
 import os
 
-from ..flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
+from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
 
 
 async def demonstrate_basic_operations() -> None:

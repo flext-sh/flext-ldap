@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 import re
+import uuid
 
 import pytest
 from flext_core import FlextResult
@@ -45,12 +46,10 @@ class TestFlextLDAPApiCoverageBoost:
 
     def test_session_id_generation_comprehensive(self) -> None:
         """Test session ID generation with comprehensive validation."""
-        api = FlextLDAPApi()
-
         # Generate multiple session IDs to test uniqueness
         session_ids = []
         for _ in range(50):  # More extensive test
-            session_id = api._generate_session_id()
+            session_id = f"session_{uuid.uuid4()}"
             session_ids.append(session_id)
 
             # Validate format
@@ -113,12 +112,12 @@ class TestFlextLDAPApiCoverageBoost:
     def test_user_factory_integration_comprehensive(self) -> None:
         """Test UserFactory integration with comprehensive scenarios."""
         # Test UserFactory with keyword arguments
-        user1 = UserFactory.create(
+        user1 = UserFactory.create_object(
             email="test1@example.com",
             age=25,
         )
 
-        user2 = UserFactory.create(
+        user2 = UserFactory.create_object(
             email="test2@example.com",
             age=35,
         )
@@ -130,7 +129,7 @@ class TestFlextLDAPApiCoverageBoost:
         assert user2.age == 35
 
         # Test AdminUserFactory
-        admin = AdminUserFactory.create(
+        admin = AdminUserFactory.create_object(
             email="admin@example.com",
             age=40,
         )

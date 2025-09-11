@@ -125,7 +125,6 @@ class LdapTestServer:
                             authentication=ldap3.SIMPLE,
                         )
 
-                        # Simple search to verify server is ready
                         conn.search(
                             search_base="dc=flext,dc=local",
                             search_filter="(objectClass=*)",

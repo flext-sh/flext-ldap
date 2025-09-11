@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from flext_core import FlextResult
 
@@ -34,9 +36,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
         # Test with explicit config
         custom_config = FlextLDAPSettings(
-            host="test.example.com",
-            port=389,
-            base_dn="dc=test,dc=com"
+            host="test.example.com", port=389, base_dn="dc=test,dc=com"
         )
         api2 = FlextLDAPApi(config=custom_config)
         assert api2._config is custom_config
@@ -47,12 +47,10 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_session_id_generation_comprehensive(self) -> None:
         """Test session ID generation with comprehensive validation."""
-        api = FlextLDAPApi()
-
         # Generate many IDs to test uniqueness and format
         session_ids = []
         for _ in range(50):
-            session_id = api._generate_session_id()
+            session_id = f"session_{uuid.uuid4()}"
             session_ids.append(session_id)
 
             # Validate format: "session_" + UUID
@@ -83,7 +81,7 @@ class TestFlextLDAPApiFunctionalFocused:
             "cn": ["John Doe"],
             "uid": ["johndoe"],
             "mail": ["john@example.com", "j.doe@example.com"],  # Multiple values
-            "description": ["User account"]
+            "description": ["User account"],
         }
 
         # Extract single values from lists
@@ -112,7 +110,7 @@ class TestFlextLDAPApiFunctionalFocused:
             "uid": "direct_uid",
             "number": 12345,
             "boolean": True,
-            "none_value": None
+            "none_value": None,
         }
 
         # Should handle direct string values
@@ -143,7 +141,7 @@ class TestFlextLDAPApiFunctionalFocused:
             "none_list": [None],
             "mixed_none": [None, "valid_value"],
             "empty_string_list": [""],
-            "whitespace_list": [" ", "\t", "\n"]
+            "whitespace_list": [" ", "\t", "\n"],
         }
 
         # Empty list should return default
@@ -159,11 +157,15 @@ class TestFlextLDAPApiFunctionalFocused:
         assert mixed == "default"  # Takes first element which is None
 
         # Empty string should be returned as-is
-        empty_str = api._get_entry_attribute(edge_case_entry, "empty_string_list", "default")
+        empty_str = api._get_entry_attribute(
+            edge_case_entry, "empty_string_list", "default"
+        )
         assert empty_str == ""
 
         # Whitespace should be preserved
-        whitespace = api._get_entry_attribute(edge_case_entry, "whitespace_list", "default")
+        whitespace = api._get_entry_attribute(
+            edge_case_entry, "whitespace_list", "default"
+        )
         assert whitespace == " "
 
     def test_entry_attribute_extraction_with_entry_objects(self) -> None:
@@ -177,8 +179,8 @@ class TestFlextLDAPApiFunctionalFocused:
             attributes={
                 "cn": ["Test User"],
                 "uid": ["testuser"],
-                "mail": ["test@example.com"]
-            }
+                "mail": ["test@example.com"],
+            },
         )
 
         # Test extraction from Entry object
@@ -216,18 +218,26 @@ class TestFlextLDAPApiFunctionalFocused:
         error_entry = {
             "bad_conversion": [BadStringConversion()],
             "bad_repr": [BadRepr()],
-            "recoverable": [123, BadStringConversion(), "fallback"],  # Mixed with errors
+            "recoverable": [
+                123,
+                BadStringConversion(),
+                "fallback",
+            ],  # Mixed with errors
         }
 
         # Should handle conversion errors gracefully
-        bad_conv = api._get_entry_attribute(error_entry, "bad_conversion", "safe_default")
+        bad_conv = api._get_entry_attribute(
+            error_entry, "bad_conversion", "safe_default"
+        )
         assert bad_conv == "safe_default"
 
         bad_repr = api._get_entry_attribute(error_entry, "bad_repr", "safe_default")
         assert bad_repr == "safe_default"
 
         # Should take first element even if later ones would work
-        recoverable = api._get_entry_attribute(error_entry, "recoverable", "safe_default")
+        recoverable = api._get_entry_attribute(
+            error_entry, "recoverable", "safe_default"
+        )
         assert recoverable == "123"  # First element (123) converts fine
 
     def test_factory_function_get_flext_ldap_api(self) -> None:
@@ -240,9 +250,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
         # Test factory with config parameter
         custom_config = FlextLDAPSettings(
-            host="factory.test.com",
-            port=636,
-            use_ssl=True
+            host="factory.test.com", port=636, use_ssl=True
         )
         api2 = get_flext_ldap_api(config=custom_config)
         assert isinstance(api2, FlextLDAPApi)

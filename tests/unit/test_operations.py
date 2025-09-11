@@ -59,31 +59,34 @@ class TestFlextLDAPOperationsReal:
         assert id1 != id2
         assert len(id1) > 0
 
-        # Should be UUID-like format
-        # Try to parse as UUID to verify format
-        uuid.UUID(id1)  # Will raise if not valid UUID format
-        uuid.UUID(id2)
+        # Should be entity ID format from FlextUtilities (not UUID)
+        assert id1.startswith("entity_"), f"ID should start with 'entity_': {id1}"
+        assert id2.startswith("entity_"), f"ID should start with 'entity_': {id2}"
+        assert len(id1) > 10, f"ID should be reasonably long: {id1}"
+        assert len(id2) > 10, f"ID should be reasonably long: {id2}"
 
     def test_validate_uri_real_validation(self) -> None:
         """Test URI validation with real code execution."""
         # FlextLDAPOperationsBase is now internal - use concrete implementation
         ops = FlextLDAPOperations()
 
+        connection_ops = ops.ConnectionOperations()
+
         # Test valid LDAP URI
-        result = ops._validate_uri_or_fail("ldap://localhost:389")
+        result = connection_ops.validate_uri_string("ldap://localhost:389")
         assert result.is_success
 
         # Test valid LDAPS URI
-        result = ops._validate_uri_or_fail("ldaps://secure.example.com:636")
+        result = connection_ops.validate_uri_string("ldaps://secure.example.com:636")
         assert result.is_success
 
         # Test invalid protocol
-        result = ops._validate_uri_or_fail("http://localhost:80")
+        result = connection_ops.validate_uri_string("http://localhost:80")
         assert not result.is_success
         assert "ldap://" in (result.error or "")
 
         # Test empty URI
-        result = ops._validate_uri_or_fail("")
+        result = connection_ops.validate_uri_string("")
         assert not result.is_success
         assert "empty" in (result.error or "")
 
@@ -100,7 +103,8 @@ class TestFlextLDAPOperationsReal:
         ]
 
         for dn in valid_dns:
-            result = ops._validate_dn_or_fail(dn)
+            connection_ops = ops.ConnectionOperations()
+            result = connection_ops.validate_dn_string(dn)
             assert result.is_success, f"Valid DN failed: {dn}"
 
     def test_validate_filter_real_validation(self) -> None:
@@ -117,7 +121,8 @@ class TestFlextLDAPOperationsReal:
         ]
 
         for filter_str in valid_filters:
-            result = ops._validate_filter_or_fail(filter_str)
+            connection_ops = ops.ConnectionOperations()
+            result = connection_ops.validate_filter_string(filter_str)
             assert result.is_success, f"Valid filter failed: {filter_str}"
 
     def test_handle_exception_with_context_real(self) -> None:
@@ -166,8 +171,8 @@ class TestFlextLDAPConnectionOperationsReal:
         # Verify connection was stored
         assert connection_id in ops._active_connections
         connection_data = ops._active_connections[connection_id]
-        assert connection_data["server_uri"] == "ldap://localhost:389"
-        assert connection_data["is_authenticated"] is False
+        assert connection_data.server_uri == "ldap://localhost:389"
+        assert connection_data.is_authenticated is False
 
     @pytest.mark.asyncio
     async def test_create_connection_with_bind_real(self) -> None:
@@ -185,8 +190,8 @@ class TestFlextLDAPConnectionOperationsReal:
 
         # Verify connection stored with bind info
         connection_data = ops._active_connections[connection_id]
-        assert connection_data["bind_dn"] == "cn=admin,dc=example,dc=com"
-        assert connection_data["is_authenticated"] is True
+        assert connection_data.bind_dn == "cn=admin,dc=example,dc=com"
+        assert connection_data.is_authenticated is True
 
     @pytest.mark.asyncio
     async def test_create_connection_invalid_uri_real(self) -> None:
@@ -202,15 +207,16 @@ class TestFlextLDAPConnectionOperationsReal:
         """Test getting connection info - real execution."""
         ops = FlextLDAPOperations.ConnectionOperations()
 
-        # Add test connection directly
+        # Add test connection directly using ConnectionMetadata object
         connection_id = str(uuid.uuid4())
-        ops._active_connections[connection_id] = {
-            "server_uri": "ldap://test:389",
-            "bind_dn": "cn=test,dc=example,dc=com",
-            "created_at": datetime.now(UTC),
-            "timeout": 30,
-            "is_authenticated": True,
-        }
+        metadata = ops.ConnectionMetadata(
+            server_uri="ldap://test:389",
+            bind_dn="cn=test,dc=example,dc=com",
+            created_at=datetime.now(UTC),
+            timeout_seconds=30,
+            is_authenticated=True,
+        )
+        ops._active_connections[connection_id] = metadata
 
         result = ops.get_connection_info(connection_id)
 
@@ -219,9 +225,9 @@ class TestFlextLDAPConnectionOperationsReal:
         assert info["connection_id"] == connection_id
         assert info["server_uri"] == "ldap://test:389"
         assert info["bind_dn"] == "cn=test,dc=example,dc=com"
-        assert info["active"] is True
         assert info["is_authenticated"] is True
         assert "created_at" in info
+        assert "age_seconds" in info
 
     def test_get_connection_info_not_found_real(self) -> None:
         """Test getting connection info for non-existent connection."""
@@ -331,8 +337,11 @@ class TestFlextLDAPSearchOperationsReal:
 
         # Should succeed but return empty results (no real LDAP)
         assert result.is_success
-        assert isinstance(result.value, list)
-        assert len(result.value) == 0  # No real LDAP server
+        # SearchResult has an entries property that is a list
+        search_result = result.value
+        assert hasattr(search_result, "entries")
+        assert isinstance(search_result.entries, list)
+        assert len(search_result.entries) == 0  # No real LDAP server
 
     @pytest.mark.asyncio
     async def test_search_entries_invalid_dn_real(self) -> None:
@@ -347,8 +356,8 @@ class TestFlextLDAPSearchOperationsReal:
         )
         result = await ops.search_entries(search_params)
 
-        # Should handle gracefully and return failed result
-        assert not result.is_success or result.value == []
+        # Should handle gracefully and return failed result or empty results
+        assert not result.is_success or result.value.entries == []
 
     def test_build_user_filter_real(self) -> None:
         """Test user filter building - real execution."""

@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextLogger
 
-from ..flext_ldap import FlextLDAPApi, FlextLDAPSettings
+from flext_ldap import FlextLDAPApi, FlextLDAPSettings
 
 logger = FlextLogger(__name__)
 

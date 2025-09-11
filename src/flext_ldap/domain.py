@@ -9,13 +9,13 @@ import secrets
 import string
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import ClassVar, cast, override
 
 from flext_core import (
     FlextCommands,
     FlextDomainService,
-    FlextLogger,
+    FlextMixins,
     FlextResult,
     FlextTypes,
     FlextUtilities,
@@ -26,8 +26,6 @@ from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
-logger = FlextLogger(__name__)
-
 # Advanced type definitions for domain
 type DomainEntity = (
     FlextLDAPEntities.User | FlextLDAPEntities.Group | FlextLDAPEntities.Entry
@@ -36,8 +34,8 @@ type ValidationResult = FlextResult[None]
 type DomainEvent = dict[str, object]
 
 
-class FlextLDAPDomain:
-    """SINGLE CONSOLIDATED CLASS for all LDAP domain functionality.
+class FlextLDAPDomain(FlextMixins.Loggable):
+    """SINGLE CONSOLIDATED CLASS for all LDAP domain functionality using FlextMixins.Loggable.
 
     Following FLEXT architectural patterns - consolidates ALL LDAP domain functionality
     including specifications, domain services, domain events, and domain factories
@@ -425,7 +423,7 @@ class FlextLDAPDomain:
                 # Perform all validations in sequence
                 return self._perform_all_user_validations(user_data)
             except Exception as e:
-                logger.exception("User validation failed")
+                self.log_operation(operation="User validation failed")
                 return FlextResult.fail(f"User validation error: {e}")
 
         def _perform_all_user_validations(
@@ -520,7 +518,7 @@ class FlextLDAPDomain:
                 return FlextResult.ok(success)
 
             except Exception as e:
-                logger.exception("User deletion check failed")
+                self.log_operation(operation="User deletion check failed")
                 return FlextResult.fail(f"User deletion check error: {e}")
 
         def generate_username(
@@ -558,7 +556,7 @@ class FlextLDAPDomain:
                 return FlextResult.ok(username)
 
             except Exception as e:
-                logger.exception("Username generation failed")
+                self.log_operation(operation="Username generation failed")
                 return FlextResult.fail(f"Username generation error: {e}")
 
     class GroupManagementService(FlextDomainService[FlextLDAPEntities.Group]):
@@ -619,7 +617,7 @@ class FlextLDAPDomain:
                 return FlextResult.ok(success)
 
             except Exception as e:
-                logger.exception("Group membership check failed")
+                self.log_operation(operation="Group membership check failed")
                 return FlextResult.fail(f"Group membership check error: {e}")
 
         def validate_group_creation(
@@ -646,7 +644,7 @@ class FlextLDAPDomain:
                 return FlextResult.ok(None)
 
             except Exception as e:
-                logger.exception("Group validation failed")
+                self.log_operation(operation="Group validation failed")
                 return FlextResult.fail(f"Group validation error: {e}")
 
     class PasswordService(FlextDomainService[str]):
@@ -682,7 +680,7 @@ class FlextLDAPDomain:
                 return FlextResult.ok(None)
 
             except Exception as e:
-                logger.exception("Password validation failed")
+                self.log_operation(operation="Password validation failed")
                 return FlextResult.fail(f"Password validation error: {e}")
 
         def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
@@ -697,7 +695,7 @@ class FlextLDAPDomain:
                 return self._generate_password_with_retries(length)
 
             except Exception as e:
-                logger.exception("Password generation failed")
+                self.log_operation(operation="Password generation failed")
                 return FlextResult.fail(f"Password generation error: {e}")
 
         def _validate_password_length(self, length: int) -> str | None:
@@ -754,15 +752,15 @@ class FlextLDAPDomain:
             max_length=255,
         )
         occurred_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="When the domain event occurred",
+            default_factory=FlextUtilities.TimeUtils.get_timestamp_utc,
+            description="When the domain event occurred using FlextUtilities SOURCE OF TRUTH",
         )
 
         @computed_field
         def event_id(self) -> str:
-            """Generate unique event identifier using Pydantic computed_field."""
-            timestamp = self.occurred_at.strftime("%Y%m%d%H%M%S%f")
-            return f"{self.__class__.__name__.lower()}_{timestamp}"
+            """Generate unique event identifier using FlextUtilities SOURCE OF TRUTH - ELIMINATE timestamp duplication."""
+            # Use FlextUtilities instead of local timestamp logic - SOLID compliance
+            return FlextUtilities.Generators.generate_entity_id()
 
         @field_validator("actor")
         @classmethod
@@ -797,7 +795,7 @@ class FlextLDAPDomain:
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=created_by,
-                occurred_at=datetime.now(UTC),
+                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
             )
 
     class UserDeletedEvent(_BaseDomainEvent):
@@ -818,7 +816,7 @@ class FlextLDAPDomain:
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=deleted_by,
-                occurred_at=datetime.now(UTC),
+                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
             )
 
     class GroupMemberAddedEvent(_BaseDomainEvent):
@@ -839,7 +837,7 @@ class FlextLDAPDomain:
                 group_dn=group_dn,
                 member_dn=member_dn,
                 actor=added_by,
-                occurred_at=datetime.now(UTC),
+                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
             )
 
     class PasswordChangedEvent(_BaseDomainEvent):
@@ -861,7 +859,7 @@ class FlextLDAPDomain:
                 changed_by=changed_by,
                 actor=changed_by,
                 is_self_change=user_dn == changed_by,
-                occurred_at=datetime.now(UTC),
+                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
             )
 
     # ==========================================================================
@@ -962,8 +960,8 @@ class FlextLDAPDomain:
             return self._create_entity({**base_params, **specific_params})
 
         def _generate_entity_id(self) -> str:
-            """Generate entity ID with timestamp."""
-            return f"{self.entity_type}_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+            """Generate entity ID using FlextUtilities SOURCE OF TRUTH - ELIMINATE local duplication."""
+            return FlextUtilities.Generators.generate_entity_id()
 
         def _extract_base_parameters(self, entity_id: str) -> FlextTypes.Core.Dict:
             """Extract parameters common to all entities."""
@@ -1050,6 +1048,7 @@ class FlextLDAPDomain:
                     ).items()
                 },
                 status=str(all_params.get("status", "active")),
+                modified_at=cast("datetime | None", all_params.get("modified_at")),
             )
 
     class GroupEntityBuilder(_BaseEntityBuilder):
@@ -1106,6 +1105,7 @@ class FlextLDAPDomain:
                     ).items()
                 },
                 status=str(all_params.get("status", "active")),
+                modified_at=cast("datetime | None", all_params.get("modified_at")),
             )
 
     # ==========================================================================
@@ -1163,12 +1163,10 @@ class FlextLDAPDomain:
 
                 # Create user entity using model_validate for type safety
                 user = FlextLDAPEntities.User.model_validate(user_params)
-                self.logger.info(f"User created successfully via command: {user.uid}")
                 return FlextResult.ok(user)
 
             except Exception as e:
                 error_msg = f"User creation command failed: {e!s}"
-                self.logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
         def _extract_user_parameters(
@@ -1228,7 +1226,7 @@ class FlextLDAPDomain:
                 ),
             }
 
-    class DomainFactory:
+    class DomainFactory(FlextMixins.Loggable):
         """Internal factory for creating domain objects with business rule validation.
 
         Refactored to use FlextCommands pattern for complex operations to reduce
@@ -1268,7 +1266,6 @@ class FlextLDAPDomain:
             )
             attributes_raw = user_data.get("attributes", {})
 
-            # Type-safe conversions with explicit casts
             object_classes: FlextTypes.Core.StringList = (
                 [str(item) for item in cast("FlextTypes.Core.List", object_classes_raw)]
                 if isinstance(object_classes_raw, list)
@@ -1355,7 +1352,6 @@ class FlextLDAPDomain:
             )
             attributes_raw = group_data.get("attributes", {})
 
-            # Type-safe conversions with explicit casts
             members: FlextTypes.Core.StringList = (
                 [str(item) for item in cast("FlextTypes.Core.List", members_raw)]
                 if isinstance(members_raw, list)
@@ -1414,7 +1410,7 @@ class FlextLDAPDomain:
                     operations,
                 )
             except Exception as e:
-                logger.exception(f"{entity_type} creation failed")
+                self.log_operation(operation=f"{entity_type} creation failed")
                 return FlextResult.fail(f"{entity_type} creation error: {e}")
 
         def _execute_entity_creation_pipeline(
@@ -1651,10 +1647,6 @@ class FlextLDAPDomain:
         """Generate secure password (convenience method)."""
         return self._password_service.generate_secure_password(length)
 
-
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Following FLEXT consolidation patterns
-# =============================================================================
 
 # Export aliases eliminated - use FlextLDAPDomain.* directly following flext-core pattern
 

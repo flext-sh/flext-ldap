@@ -16,32 +16,24 @@ SPDX-License-Identifier: MIT
 
 import importlib.metadata
 
-# =============================================================================
-# FOUNDATION LAYER - Import first, no dependencies on other modules
-# =============================================================================
+
 from flext_ldap import constants
 from flext_ldap import typings
 from flext_ldap import exceptions
 
-# =============================================================================
-# DOMAIN LAYER - Depends only on Foundation layer
-# =============================================================================
+
 from flext_ldap import entities
 from flext_ldap import value_objects
 from flext_ldap import domain
 from flext_ldap import models
 
-# =============================================================================
-# APPLICATION LAYER - Depends on Domain + Foundation layers
-# =============================================================================
+
 from flext_ldap import services
 from flext_ldap import operations
 from flext_ldap import repositories
 from flext_ldap import api
 
-# =============================================================================
-# INFRASTRUCTURE LAYER - Depends on Application + Core + Foundation
-# =============================================================================
+
 from flext_ldap import clients
 from flext_ldap import container
 
@@ -49,22 +41,16 @@ from flext_ldap import container
 from flext_ldap import connection_config
 from flext_ldap import settings
 
-# =============================================================================
-# SUPPORT LAYER - Depends on layers as needed, imported last
-# =============================================================================
+
 from flext_ldap import adapters
 from flext_ldap import fields
 from flext_ldap import type_guards
 
-# =============================================================================
-# CLI ENTRY POINT - Main CLI functionality (optional import)
-# =============================================================================
+
 from contextlib import suppress
 
 # CLI import disabled - using flext-cli directly where needed
-# =============================================================================
-# PUBLIC EXPORTS - Manual definition of all public APIs
-# =============================================================================
+
 # Import all key classes directly for explicit exports
 from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
@@ -114,7 +100,6 @@ __all__ = [
     "TLdapSearchResult",
     "FlextLDAPExceptions",
     # Domain Layer
-    "DictEntry",
     "FlextLDAPEntities",
     "FlextLDAPValueObjects",
     "FlextLDAPDomain",

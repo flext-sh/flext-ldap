@@ -202,10 +202,6 @@ class FlextLDAPConstants:
         REQUIRE_PASSWORD_COMPLEXITY: Final[bool] = True
 
 
-# =============================================================================
-# MODULE EXPORTS - FLEXT-CORE PATTERN
-# =============================================================================
-
 __all__ = [
     "FlextLDAPConstants",
 ]

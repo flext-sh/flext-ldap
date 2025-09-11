@@ -28,7 +28,7 @@ from flext_ldap.value_objects import FlextLDAPValueObjects
 type LDAPRequest = FlextTypes.Core.Dict
 type LDAPDomain = object
 type LDAPResult = FlextTypes.Core.Dict
-type RepositoryInstance = FlextLDAPRepositories
+type RepositoryInstance = FlextLDAPRepositories.Repository
 
 
 class FlextLDAPServices(
@@ -79,9 +79,54 @@ class FlextLDAPServices(
     ) -> FlextResult[LDAPDomain]:
         """Process user creation with enhanced validation."""
         try:
-            # Type cast for Pydantic model creation
-            typed_data = cast("dict", user_data)
-            create_request = FlextLDAPEntities.CreateUserRequest(**typed_data)
+            # Validate and extract required fields with proper types
+            dn = str(user_data.get("dn", ""))
+            uid = str(user_data.get("uid", ""))
+            cn = str(user_data.get("cn", ""))
+
+            if not dn or not uid or not cn:
+                return FlextResult[LDAPDomain].fail(
+                    "Missing required fields: dn, uid, cn are required"
+                )
+
+            # Extract optional fields with proper types
+            sn = user_data.get("sn")
+            sn_str = str(sn) if sn is not None else None
+
+            given_name = user_data.get("given_name")
+            given_name_str = str(given_name) if given_name is not None else None
+
+            mail = user_data.get("mail")
+            mail_str = str(mail) if mail is not None else None
+
+            user_password = user_data.get("user_password")
+            password_str = str(user_password) if user_password is not None else None
+
+            # Extract object classes
+            object_classes_raw = user_data.get("object_classes", [])
+            if isinstance(object_classes_raw, list):
+                object_classes = [str(cls) for cls in object_classes_raw]
+            else:
+                object_classes = [
+                    "top",
+                    "person",
+                    "organizationalPerson",
+                    "inetOrgPerson",
+                ]
+
+            # Create request with validated data
+            create_request = FlextLDAPEntities.CreateUserRequest(
+                dn=dn,
+                uid=uid,
+                cn=cn,
+                sn=sn_str,
+                given_name=given_name_str,
+                mail=mail_str,
+                description=None,  # Optional field
+                telephone_number=None,  # Optional field
+                user_password=password_str,
+                object_classes=object_classes,
+            )
             return FlextResult[LDAPDomain].ok(
                 {"status": "user_creation_initiated", "request": create_request}
             )
@@ -209,7 +254,10 @@ class FlextLDAPServices(
 
         # Use cached repository for performance
         repository = self._repository
-        save_result = await repository.save_async(user_entity)
+        save_method = getattr(repository, "save_async", None)
+        if save_method is None:
+            return FlextResult.fail("Repository does not support save_async method")
+        save_result = await save_method(user_entity)
 
         if not save_result.is_success:
             return FlextResult.fail(
@@ -230,7 +278,10 @@ class FlextLDAPServices(
         """Get user by DN using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        entry_result = await repository.find_by_dn(dn)
+        find_method = getattr(repository, "find_by_dn", None)
+        if find_method is None:
+            return FlextResult.fail("Repository does not support find_by_dn method")
+        entry_result = await find_method(dn)
 
         if not entry_result.is_success:
             return FlextResult.fail(
@@ -243,14 +294,11 @@ class FlextLDAPServices(
         # Convert entry to user using Python 3.13 pattern matching for attribute extraction
         entry = entry_result.value
 
-        # Python 3.13 optimized attribute extraction with pattern matching
+        # Extract string attributes safely using Python 3.13 pattern matching
         def safe_str_attr(attr_name: str) -> str | None:
-            """Safely extract string attribute with None handling."""
-            match entry.get_attribute(attr_name):
-                case str(value) if value:
-                    return value
-                case _:
-                    return None
+            """Extract string attribute safely using Python 3.13 patterns."""
+            value = entry.get_attribute(attr_name)
+            return str(value) if value and str(value).strip() else None
 
         user_entity = FlextLDAPEntities.User(
             id=entry.id,
@@ -276,7 +324,10 @@ class FlextLDAPServices(
         """Update user attributes using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        update_result = await repository.update(dn, updates)
+        update_method = getattr(repository, "update", None)
+        if update_method is None:
+            return FlextResult.fail("Repository does not support update method")
+        update_result = await update_method(dn, cast("dict[str, object]", updates))
 
         if not update_result.is_success:
             return FlextResult.fail(
@@ -297,7 +348,10 @@ class FlextLDAPServices(
         """Delete user from directory using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        delete_result = await repository._delete_async(dn)
+        delete_method = getattr(repository, "_delete_async", None)
+        if delete_method is None:
+            return FlextResult.fail("Repository does not support _delete_async method")
+        delete_result = await delete_method(dn)
 
         if not delete_result.is_success:
             return FlextResult.fail(delete_result.error or "User deletion failed")
@@ -329,7 +383,10 @@ class FlextLDAPServices(
 
         # Use cached repository for performance
         repository = self._repository
-        save_result = await repository.save_async(group)
+        save_method = getattr(repository, "save_async", None)
+        if save_method is None:
+            return FlextResult.fail("Repository does not support save_async method")
+        save_result = await save_method(group)
 
         if not save_result.is_success:
             return FlextResult.fail(
@@ -349,7 +406,10 @@ class FlextLDAPServices(
         """Get group by DN using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        entry_result = await repository.find_by_dn(dn)
+        find_method = getattr(repository, "find_by_dn", None)
+        if find_method is None:
+            return FlextResult.fail("Repository does not support find_by_dn method")
+        entry_result = await find_method(dn)
         if not entry_result.is_success:
             return FlextResult.fail(
                 entry_result.error or "Failed to find entry",
@@ -403,7 +463,10 @@ class FlextLDAPServices(
         """Update group attributes using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        result = await repository.update(dn, attributes)
+        update_method = getattr(repository, "update", None)
+        if update_method is None:
+            return FlextResult.fail("Repository does not support update method")
+        result = await update_method(dn, cast("dict[str, object]", attributes))
         if not result.is_success:
             return FlextResult.fail(result.error or "Update failed")
         return FlextResult.ok(None)
@@ -412,7 +475,10 @@ class FlextLDAPServices(
         """Delete group by DN using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        result = await repository._delete_async(dn)
+        delete_method = getattr(repository, "_delete_async", None)
+        if delete_method is None:
+            return FlextResult.fail("Repository does not support _delete_async method")
+        result = await delete_method(dn)
         if not result.is_success:
             return FlextResult.fail(result.error or "Delete failed")
         return FlextResult.ok(None)
@@ -425,7 +491,6 @@ class FlextLDAPServices(
                 f"Repository access failed: {repository_result.error}",
             )
 
-        # Type cast repository to correct interface
         base_repository = cast(
             "FlextLDAPRepositories",
             repository_result.value,
@@ -433,9 +498,12 @@ class FlextLDAPServices(
         # Use base repository directly - no need to create new instance
         group_repository = base_repository
         # Use update_attributes to modify group membership
-        result = await group_repository.update_attributes(
-            group_dn, {"member": [member_dn]}
-        )
+        update_method = getattr(group_repository, "update_attributes", None)
+        if update_method is None:
+            return FlextResult.fail(
+                "Repository does not support update_attributes method"
+            )
+        result = await update_method(group_dn, {"member": [member_dn]})
         if not result.is_success:
             return FlextResult.fail(result.error or "Add member failed")
         return FlextResult.ok(None)
@@ -449,7 +517,6 @@ class FlextLDAPServices(
                 f"Repository access failed: {repository_result.error}",
             )
 
-        # Type cast repository to correct interface
         base_repository = cast(
             "FlextLDAPRepositories",
             repository_result.value,
@@ -458,7 +525,12 @@ class FlextLDAPServices(
         group_repository = base_repository
 
         # Get group entry to check current members
-        group_entry_result = await group_repository._find_by_dn_async(group_dn)
+        find_method = getattr(group_repository, "_find_by_dn_async", None)
+        if find_method is None:
+            return FlextResult.fail(
+                "Repository does not support _find_by_dn_async method"
+            )
+        group_entry_result = await find_method(group_dn)
         if not group_entry_result.is_success or not group_entry_result.value:
             return FlextResult.fail("Group not found")
 
@@ -470,7 +542,10 @@ class FlextLDAPServices(
         # Remove member and update
         updated_members = [m for m in current_members if m != member_dn]
         attributes: LdapAttributeDict = {"member": updated_members}
-        result = await base_repository.update(group_dn, attributes)
+        update_method = getattr(base_repository, "update", None)
+        if update_method is None:
+            return FlextResult.fail("Repository does not support update method")
+        result = await update_method(group_dn, cast("dict[str, object]", attributes))
         if not result.is_success:
             return FlextResult.fail(result.error or "Remove member failed")
         return FlextResult.ok(None)
@@ -485,14 +560,18 @@ class FlextLDAPServices(
                 f"Repository access failed: {repository_result.error}",
             )
 
-        # Type cast repository to correct interface
         base_repository = cast(
             "FlextLDAPRepositories",
             repository_result.value,
         )
         # Use base repository directly to get group entry
         group_repository = base_repository
-        group_entry_result = await group_repository._find_by_dn_async(group_dn)
+        find_method = getattr(group_repository, "_find_by_dn_async", None)
+        if find_method is None:
+            return FlextResult.fail(
+                "Repository does not support _find_by_dn_async method"
+            )
+        group_entry_result = await find_method(group_dn)
         if not group_entry_result.is_success or not group_entry_result.value:
             return FlextResult[list[str]].fail("Group not found")
 
@@ -528,7 +607,10 @@ class FlextLDAPServices(
         """Perform LDAP search operation using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        search_result = await repository.search(request)
+        search_method = getattr(repository, "search", None)
+        if search_method is None:
+            return FlextResult.fail("Repository does not support search method")
+        search_result = await search_method(request)
 
         if not search_result.is_success:
             return FlextResult.fail(
@@ -670,10 +752,6 @@ class FlextLDAPServices(
 
         return FlextResult[FlextTypes.Core.StringList].ok(group_result.value.members)
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     "FlextLDAPServices",

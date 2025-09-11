@@ -30,7 +30,7 @@ repos:
         require_serial: true
         args: [--check, --diff]
 
-      # Ruff linting and formatting
+
       - id: ruff-format
         name: "⚡ Ruff Format"
         entry: poetry run ruff format

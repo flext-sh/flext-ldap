@@ -22,14 +22,15 @@ class TestFlextLDAPUtilities:
         # Module should import successfully
         assert utilities_module is not None
 
-        # Should have logger defined
-        assert hasattr(utilities_module, "logger")
-        assert utilities_module.logger is not None
+        # Logger should NOT exist - eliminated duplication following SOURCE OF TRUTH
+        assert not hasattr(utilities_module, "logger")
 
         # Should have __all__ defined as empty list (using standard libraries instead)
         assert hasattr(utilities_module, "__all__")
         assert isinstance(utilities_module.__all__, list)
-        assert len(utilities_module.__all__) == 0  # Empty by design - uses standard libraries
+        assert (
+            len(utilities_module.__all__) == 0
+        )  # Empty by design - uses standard libraries
 
     def test_utilities_module_design_principle(self) -> None:
         """Test that utilities follows minimal design principle."""
@@ -38,13 +39,16 @@ class TestFlextLDAPUtilities:
         # Should have minimal exports (empty __all__)
         assert utilities_module.__all__ == []
 
-        # Should have logger from flext_core
-        assert utilities_module.logger.__class__.__name__ == "FlextLogger"  # FlextLogger instance
+        # Logger should NOT exist - eliminated duplication following SOURCE OF TRUTH
+        assert not hasattr(utilities_module, "logger")
 
         # Module should be minimal - no custom utility functions
         # (Following the mandate to use standard libraries instead)
-        module_attrs = [attr for attr in dir(utilities_module)
-                       if not attr.startswith("_") and attr not in {"logger", "FlextLogger", "FlextTypes", "annotations"}]
+        module_attrs = [
+            attr
+            for attr in dir(utilities_module)
+            if not attr.startswith("_") and attr not in {"FlextTypes", "annotations"}
+        ]
 
         # Should have minimal custom attributes beyond imports and logger
         assert len(module_attrs) == 0  # Only imports, logger and internals
@@ -63,23 +67,20 @@ class TestFlextLDAPUtilities:
         assert all(isinstance(item, str) for item in all_export) if all_export else True
 
     def test_utilities_logger_functionality(self) -> None:
-        """Test that logger is properly initialized from flext_core."""
+        """Test that logger duplication was eliminated following SOURCE OF TRUTH principle."""
         import flext_ldap.utilities as utilities_module
 
-        # Logger should be FlextLogger instance
-        logger = utilities_module.logger
-        assert logger is not None
+        # Logger should NOT exist in utilities - eliminated duplication
+        assert not hasattr(utilities_module, "logger")
 
-        # Logger should have standard logging methods
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "debug")
-        assert hasattr(logger, "warning")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "exception")
+        # Logging should be done through FlextMixins.Loggable inheritance
+        from flext_core import FlextMixins
 
-        # Should be callable methods
-        assert callable(logger.info)
-        assert callable(logger.debug)
-        assert callable(logger.warning)
-        assert callable(logger.error)
-        assert callable(logger.exception)
+        # Verify SOURCE OF TRUTH pattern is being followed
+        loggable = FlextMixins.Loggable()
+        assert hasattr(loggable, "log_info")
+        assert hasattr(loggable, "log_error")
+        assert hasattr(loggable, "log_operation")
+        assert callable(loggable.log_info)
+        assert callable(loggable.log_error)
+        assert callable(loggable.log_operation)

@@ -10,14 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated, Literal, Self, override
 
 from flext_core import (
-    FlextLogger,
+    FlextMixins,
     FlextModels,
     FlextResult,
     FlextTypes,
+    FlextUtilities,
     FlextValidations,
 )
 from pydantic import (
@@ -31,8 +32,6 @@ from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
-logger = FlextLogger(__name__)
-
 # Advanced type aliases using Python 3.13
 type EntityId = str
 type DistinguishedName = str
@@ -44,13 +43,9 @@ type EntityResult[T] = FlextResult[T]
 type EntityStatus = Literal["active", "inactive", "disabled", "pending"]
 type ObjectClassList = list[str]
 
-# =============================================================================
-# SINGLE FLEXT LDAP ENTITIES CLASS - Consolidated entity functionality
-# =============================================================================
 
-
-class FlextLDAPEntities:
-    """Single FlextLDAPEntities class with all LDAP domain entities.
+class FlextLDAPEntities(FlextMixins.Loggable):
+    """Single FlextLDAPEntities class with all LDAP domain entities using FlextMixins.Loggable.
 
     Consolidates ALL LDAP entities into a single class following FLEXT patterns.
     Everything from search requests to domain entities is available as internal classes
@@ -79,7 +74,7 @@ class FlextLDAPEntities:
             str,
             Field(
                 default="subtree",
-                pattern="^(base|onelevel|subtree)$",
+                pattern="^(base|one|onelevel|subtree)$",
                 description="Search scope",
             ),
         ]
@@ -224,7 +219,7 @@ class FlextLDAPEntities:
             """Primary object class for this entry."""
             return self.object_classes[0] if self.object_classes else "unknown"
 
-    class SearchResponse(FlextModels.Value):
+    class SearchResponse(FlextModels.Value, FlextMixins.Loggable):
         """Advanced search response with discriminated unions for type safety."""
 
         entries: list[FlextTypes.Core.Dict] = Field(
@@ -251,11 +246,13 @@ class FlextLDAPEntities:
 
             # Validate reasonable results (domain rule)
             if self.total_count > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
-                logger.warning("Large search result", extra={"count": self.total_count})
+                self.log_operation(
+                    operation="Large search result", count=self.total_count
+                )
 
             return FlextResult.ok(None)
 
-    class SearchParams(FlextModels.Config):
+    class SearchParams(FlextModels.Config, FlextMixins.Loggable):
         """Unified parameter object for search operations across all components.
 
         Consolidates all SearchParams classes from operations.py, repositories.py,
@@ -409,9 +406,9 @@ class FlextLDAPEntities:
 
             # Validate reasonable limits (domain rule)
             if self.size_limit > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
-                logger.warning(
-                    "Large search limit",
-                    extra={"size_limit": self.size_limit},
+                self.log_operation(
+                    operation="Large search limit",
+                    size_limit=self.size_limit,
                 )
 
             return FlextResult.ok(None)
@@ -452,8 +449,8 @@ class FlextLDAPEntities:
 
         # Entity metadata
         created_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="Creation timestamp",
+            default_factory=FlextUtilities.TimeUtils.get_timestamp_utc,
+            description="Creation timestamp using FlextUtilities SOURCE OF TRUTH",
         )
         modified_at: datetime | None = Field(
             None,
@@ -501,7 +498,9 @@ class FlextLDAPEntities:
             """Set attribute value."""
             self.attributes[name] = value
             # Use model field assignment through __setattr__
-            object.__setattr__(self, "modified_at", datetime.now(UTC))
+            object.__setattr__(
+                self, "modified_at", FlextUtilities.TimeUtils.get_timestamp_utc()
+            )
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -581,7 +580,7 @@ class FlextLDAPEntities:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = datetime.now(UTC)
+                self.modified_at = FlextUtilities.TimeUtils.get_timestamp_utc()
                 return FlextResult.ok(None)
             return FlextResult.ok(None)  # Already a member, no-op
 
@@ -589,7 +588,7 @@ class FlextLDAPEntities:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = datetime.now(UTC)
+                self.modified_at = FlextUtilities.TimeUtils.get_timestamp_utc()
                 return FlextResult.ok(None)
             return FlextResult.fail(f"Member {member_dn} not found in group")
 
@@ -610,6 +609,8 @@ class FlextLDAPEntities:
         sn: str | None = Field(None, description="Surname")
         given_name: str | None = Field(None, description="Given Name")
         mail: str | None = Field(None, description="Email address")
+        description: str | None = Field(None, description="User description")
+        telephone_number: str | None = Field(None, description="Telephone number")
         user_password: str | None = Field(None, description="User password")
         object_classes: FlextTypes.Core.StringList = Field(
             default_factory=lambda: [
@@ -767,10 +768,6 @@ class FlextLDAPEntities:
                 raise ValueError(msg) from e
 
 
-# =============================================================================
-# PYDANTIC MODEL REBUILD - Fix forward references
-# =============================================================================
-
 # LdapAttributeDict already imported in TYPE_CHECKING block above
 
 # Rebuild models after all definitions are complete
@@ -783,9 +780,6 @@ FlextLDAPEntities.CreateUserRequest.model_rebuild()
 FlextLDAPEntities.CreateGroupRequest.model_rebuild()
 FlextLDAPEntities.UpdateGroupRequest.model_rebuild()
 
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     # Primary consolidated class

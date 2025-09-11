@@ -73,7 +73,7 @@ connect_result = await self._api.connect(
 **Issues**:
 
 - Repository methods return raw `dict` instead of domain entities
-- Type safety violations with `# type: ignore` comments
+- Type safety violations with `
 - Direct LDAP client calls without abstraction
 - Mixed return types breaking Liskov Substitution Principle
 

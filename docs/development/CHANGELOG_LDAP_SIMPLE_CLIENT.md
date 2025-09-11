@@ -31,7 +31,7 @@
 
 **import-untyped:**
 
-- ✅ Adicionado `# type: ignore[import-untyped]` para imports do ldap3
+- ✅ Adicionado `
 - ✅ Mantida funcionalidade completa com supressão de warnings de tipos
 
 **attr-defined:**

@@ -26,7 +26,7 @@ from contextlib import asynccontextmanager
 
 from flext_core import FlextLogger, FlextResult
 
-from ..flext_ldap import (
+from flext_ldap import (
     FlextLDAPApi,
     FlextLDAPDistinguishedName,
     FlextLDAPEntry,
