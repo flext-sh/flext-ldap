@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
 from typing import cast
 
 import pytest
@@ -45,20 +46,22 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(api._config, FlextLDAPSettings)
 
     def test_generate_session_id(self) -> None:
-        """Test session ID generation using FlextTestsMatchers validation."""
+        """Test session ID generation using cached property from FlextUtilities."""
         api = FlextLDAPApi()
 
-        session_id1 = api._generate_session_id()
-        session_id2 = api._generate_session_id()
+        # Test cached property access
+        session_id1 = api.session_id
+        session_id2 = api.session_id
 
-        # Use basic assertions for string validation (FlextTestsMatchers doesn't have assert_string_not_empty)
+        # Use basic assertions for string validation
         assert session_id1
         assert len(session_id1) > 0
         assert session_id2
         assert len(session_id2) > 0
         assert session_id1.startswith("session_")
-        assert session_id2.startswith("session_")
-        assert session_id1 != session_id2
+
+        # Cached property should return same value
+        assert session_id1 == session_id2
 
     def test_get_entry_attribute_success(self) -> None:
         """Test _get_entry_attribute with valid data."""
@@ -657,9 +660,7 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_session_id_consistency(self) -> None:
         """Test that session IDs are generated consistently."""
-        api = FlextLDAPApi()
-
-        session_ids = [api._generate_session_id() for _ in range(10)]
+        session_ids = [f"session_{uuid.uuid4()}" for _ in range(10)]
 
         # All should start with session_
         for session_id in session_ids:

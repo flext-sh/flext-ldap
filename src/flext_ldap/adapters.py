@@ -11,7 +11,7 @@ from typing import cast, override
 from urllib.parse import urlparse
 
 from flext_core import (
-    FlextLogger,
+    FlextMixins,
     FlextModels,
     FlextResult,
     FlextServices,
@@ -24,8 +24,6 @@ from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
-logger = FlextLogger(__name__)
-
 # Advanced type aliases using Python 3.13
 type ConnectionId = str
 type ServerUri = str
@@ -33,13 +31,9 @@ type OperationType = str
 type AdapterResult[T] = FlextResult[T]
 type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
 
-# =============================================================================
-# SINGLE FLEXT LDAP ADAPTERS CLASS - Consolidated adapter functionality
-# =============================================================================
 
-
-class FlextLDAPAdapters:
-    """LDAP adapter functionality consolidated class."""
+class FlextLDAPAdapters(FlextMixins.Loggable):
+    """LDAP adapter functionality consolidated class using FlextMixins.Loggable."""
 
     # =========================================================================
     # CONFIGURATION AND MODELS - Specialized configuration classes
@@ -278,7 +272,7 @@ class FlextLDAPAdapters:
                 search_executed=correlation_id,
             )
 
-    class OperationExecutor:
+    class OperationExecutor(FlextMixins.Loggable):
         """Base operation executor with reduced complexity through ServiceProcessor integration."""
 
         def __init__(self, client: FlextLDAPClient) -> None:
@@ -494,8 +488,8 @@ class FlextLDAPAdapters:
                     entries.append(entry)
 
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to convert search result to FlextLDAPEntities.Entry: {e}",
+                    self.log_operation(
+                        operation=f"Failed to convert search result to FlextLDAPEntities.Entry: {e}",
                     )
                     continue
 
@@ -541,7 +535,7 @@ class FlextLDAPAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
-                logger.exception(error_msg)
+                self.log_operation(operation=error_msg)
                 return FlextResult.fail(error_msg)
 
         async def modify_entry(
@@ -571,7 +565,7 @@ class FlextLDAPAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
-                logger.exception(error_msg)
+                self.log_operation(operation=error_msg)
                 return FlextResult.fail(error_msg)
 
         async def delete_entry(self, dn: str) -> FlextResult[None]:
@@ -585,7 +579,7 @@ class FlextLDAPAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to delete entry {dn}: {e}"
-                logger.exception(error_msg)
+                self.log_operation(operation=error_msg)
                 return FlextResult.fail(error_msg)
 
         async def _async_validation_wrapper(
@@ -649,7 +643,7 @@ class FlextLDAPAdapters:
     # DIRECTORY SERVICES - High-level directory operation classes
     # =========================================================================
 
-    class DirectoryService:
+    class DirectoryService(FlextMixins.Loggable):
         """High-level directory service for comprehensive LDAP operations."""
 
         def __init__(self, client: FlextLDAPClient) -> None:
@@ -685,7 +679,7 @@ class FlextLDAPAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to get all entries: {e}"
-                logger.exception(error_msg)
+                self.log_operation(operation=error_msg)
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(error_msg)
 
         def _convert_entries_to_protocol(
@@ -714,7 +708,9 @@ class FlextLDAPAdapters:
                     protocol_entries.append(protocol_entry)
 
                 except Exception as e:
-                    logger.warning(f"Failed to convert entry to protocol format: {e}")
+                    self.log_operation(
+                        operation=f"Failed to convert entry to protocol format: {e}"
+                    )
                     continue
 
             return protocol_entries
@@ -790,7 +786,7 @@ class FlextLDAPAdapters:
                 )
             except Exception as e:
                 error_msg = f"Failed to search users: {e}"
-                logger.exception(error_msg)
+                self.log_operation(operation=error_msg)
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(error_msg)
 
         def execute(self) -> FlextResult[object]:
@@ -843,15 +839,6 @@ class FlextLDAPAdapters:
                 result.error or "Search failed",
             )
 
-
-# =============================================================================
-# FLEXT-CORE PATTERN - Single class exports only
-# =============================================================================
-
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     # Primary consolidated class

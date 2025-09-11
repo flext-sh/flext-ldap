@@ -17,7 +17,6 @@ from flext_core import (
     FlextMixins,
     FlextResult,
     FlextTypes,
-    FlextUtilities,
 )
 
 from flext_ldap.container import FlextLDAPContainer
@@ -52,11 +51,7 @@ class FlextLDAPApi(FlextMixins.Service):
 
     @cached_property
     def session_id(self) -> str:
-        """Generate session ID using FlextUtilities (cached for performance)."""
-        return f"session_{FlextUtilities.generate_uuid()}"
-
-    def _generate_session_id(self) -> str:
-        """Generate session ID - private method generates new UUID each time."""
+        """Generate session ID using Python stdlib SOURCE OF TRUTH."""
         return f"session_{uuid.uuid4()}"
 
     def _get_entry_attribute(
@@ -66,27 +61,48 @@ class FlextLDAPApi(FlextMixins.Service):
         default: str = "",
     ) -> str:
         """Extract string attribute from entry using Python 3.13 pattern matching."""
-        # Get attribute value using type-safe extraction
+        # Get raw value from entry based on union type
+        raw_value: object
         if isinstance(entry, FlextLDAPEntities.Entry):
-            attr_value = entry.get_attribute(key)
-            value = attr_value if attr_value is not None else default
-        elif isinstance(entry, dict):
-            value = cast(
-                "str | bytes | list[str] | list[bytes]", entry.get(key, [default])
-            )
-        else:
+            raw_value = entry.get_attribute(key)
+        else:  # Must be dict due to union type constraint
+            raw_value = entry.get(key)
+
+        # Return default if no value found
+        if raw_value is None:
             return default
 
-        # Process value with type safety
-        if isinstance(value, list):
-            if len(value) > 0 and value[0] is not None:
-                return str(value[0])
-        elif isinstance(value, str):
-            return value
-        elif isinstance(value, bytes):
-            return value.decode("utf-8", errors="replace")
-
-        return default
+        # Convert value to string with type safety
+        if isinstance(raw_value, str):
+            return raw_value
+        if isinstance(raw_value, bytes):
+            return raw_value.decode("utf-8", errors="replace")
+        if isinstance(raw_value, list):
+            if len(raw_value) > 0:
+                # Check if first element is None
+                first_element = raw_value[0]
+                if first_element is None:
+                    return default
+                try:
+                    return str(first_element)
+                except (ValueError, TypeError):
+                    return default
+            else:
+                # Empty list should return default value
+                return default
+        elif isinstance(raw_value, (int, float, bool)):
+            return str(raw_value)
+        elif isinstance(raw_value, dict):
+            try:
+                return str(raw_value)
+            except (ValueError, TypeError):
+                return default
+        else:
+            # For any other type, try string conversion
+            try:
+                return str(raw_value)
+            except (ValueError, TypeError):
+                return default
 
     # Connection Management
 
@@ -455,7 +471,10 @@ class FlextLDAPApi(FlextMixins.Service):
                 f"Failed to get LDAP repository: {repository_result.error}",
             )
         repository = cast("FlextLDAPRepositories", repository_result.value)
-        result = await repository._delete_async(dn)
+        delete_method = getattr(repository, "_delete_async", None)
+        if delete_method is None:
+            return FlextResult.fail("Repository does not support _delete_async method")
+        result = await delete_method(dn)
         if not result.is_success:
             return FlextResult.fail(result.error or "Delete failed")
         return FlextResult.ok(None)

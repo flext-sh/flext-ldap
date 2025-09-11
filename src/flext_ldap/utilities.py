@@ -16,9 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextTypes
-
-logger = FlextLogger(__name__)
+from flext_core import FlextTypes
 
 # Export only what's actually needed - everything else uses standard libraries
 __all__: FlextTypes.Core.StringList = []

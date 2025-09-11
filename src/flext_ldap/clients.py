@@ -48,16 +48,21 @@ SCOPE_MAP: dict[str, LdapScope] = {
 }
 
 
-# =============================================================================
-# LDAP SEARCH STRATEGIES - Strategy Pattern for Complex Operations
-# =============================================================================
+# LDAPSearchStrategies ELIMINATED - consolidated into FlextLDAPClient nested classes
+# Following flext-core consolidation pattern: ALL functionality within single class
 
 
-class LDAPSearchStrategies:
-    """LDAP search strategies."""
+class FlextLDAPClient(
+    FlextMixins.Service, FlextProtocols.Infrastructure.LdapConnection
+):
+    """UNIFIED LDAP client - consolidates all LDAP functionality in single class following SOLID."""
+
+    # =========================================================================
+    # NESTED STRATEGY CLASSES - Following single class pattern with nesting
+    # =========================================================================
 
     class SearchExecutionStrategy:
-        """LDAP search execution strategy."""
+        """LDAP search execution strategy - nested within unified client."""
 
         def __init__(self, connection: Connection | None) -> None:
             self.connection = connection
@@ -66,12 +71,7 @@ class LDAPSearchStrategies:
             self,
             request: FlextLDAPEntities.SearchRequest,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Execute LDAP search using ldap3 connection.
-
-            Returns:
-                FlextResult[FlextTypes.Core.Dict]: Result with connection context when successful.
-
-            """
+            """Execute LDAP search using ldap3 connection."""
             if not self.connection or not getattr(self.connection, "bound", False):
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     "Not connected to LDAP server",
@@ -112,18 +112,13 @@ class LDAPSearchStrategies:
                 return FlextResult[FlextTypes.Core.Dict].fail(f"Search error: {e}")
 
     class EntryConversionStrategy:
-        """LDAP entry conversion strategy."""
+        """LDAP entry conversion strategy - nested within unified client."""
 
         def convert_entries(
             self,
             connection: Connection,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Convert ldap3 entries to structured format.
-
-            Returns:
-                FlextResult[FlextTypes.Core.Dict]: Mapping with key "entries" as a list of results.
-
-            """
+            """Convert ldap3 entries to structured format."""
             try:
                 entries: list[FlextTypes.Core.Dict] = []
                 connection_entries = connection.entries if connection else []
@@ -159,18 +154,13 @@ class LDAPSearchStrategies:
                 )
 
     class ResponseBuilderStrategy:
-        """Search response builder strategy."""
+        """Search response builder strategy - nested within unified client."""
 
         def build_response(
             self,
             data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
-            """Build search response from entries and request data.
-
-            Returns:
-                FlextResult[FlextLDAPEntities.SearchResponse]: Typed search response.
-
-            """
+            """Build search response from entries and request data."""
             try:
                 entries = cast("list[dict[str, object]]", data.get("entries", []))
                 request = cast("FlextLDAPEntities.SearchRequest", data.get("request"))
@@ -187,17 +177,6 @@ class LDAPSearchStrategies:
                 return FlextResult.fail(
                     f"Response building error: {e}",
                 )
-
-
-# =============================================================================
-# SINGLE FLEXT LDAP CLIENT CLASS - Consolidated client functionality
-# =============================================================================
-
-
-class FlextLDAPClient(
-    FlextMixins.Service, FlextProtocols.Infrastructure.LdapConnection
-):
-    """LDAP client implementing FlextProtocols.Infrastructure.LdapConnection with FlextMixins.Service."""
 
     def __init__(self) -> None:
         # Initialize FlextMixins.Service for logging capabilities
@@ -266,7 +245,7 @@ class FlextLDAPClient(
             )
             return FlextResult.fail(f"Connection error: {e}")
 
-    async def bind(self, dn: str, password: str) -> FlextResult[None]:
+    async def bind(self, bind_dn: str, password: str) -> FlextResult[None]:
         """Bind with different credentials.
 
         Returns:
@@ -278,7 +257,7 @@ class FlextLDAPClient(
 
         try:
             # Use ldap3 directly - no wrapper needed
-            self._connection.rebind(dn, password)
+            self._connection.rebind(bind_dn, password)
             success = self._connection.result.get("description") == "success"
             if not success:
                 error_message = str(
@@ -286,14 +265,14 @@ class FlextLDAPClient(
                 )
                 return FlextResult.fail(f"Bind failed: {error_message}")
 
-            self.log_info("Bind successful", dn=dn)
+            self.log_info("Bind successful", dn=bind_dn)
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            self.log_error("LDAP bind failed", error=str(e), dn=dn)
+            self.log_error("LDAP bind failed", error=str(e), dn=bind_dn)
             return FlextResult.fail(f"Bind failed: {e}")
         except Exception as e:
-            self.log_error("Unexpected bind error", error=str(e), dn=dn)
+            self.log_error("Unexpected bind error", error=str(e), dn=bind_dn)
             return FlextResult.fail(f"Bind error: {e}")
 
     async def unbind(self) -> FlextResult[None]:
@@ -324,13 +303,15 @@ class FlextLDAPClient(
             return FlextResult.fail(f"Unbind error: {e}")
 
     def is_connected(self) -> bool:
-        """Check if connected and bound to LDAP server.
+        """Check if connected and bound to LDAP server - protocol method.
 
         Returns:
             bool: True when a bound connection exists.
 
         """
-        return self._connection is not None and self._connection.bound
+        return self._connection is not None and getattr(
+            self._connection, "bound", False
+        )
 
     # =========================================================================
     # SEARCH OPERATIONS - Consolidated search functionality
@@ -371,7 +352,7 @@ class FlextLDAPClient(
         """
         try:
             # Strategy 1: Execute LDAP search
-            search_strategy = LDAPSearchStrategies.SearchExecutionStrategy(
+            search_strategy = self.SearchExecutionStrategy(
                 self._connection,
             )
             execution_result = search_strategy.execute_search(request)
@@ -387,7 +368,7 @@ class FlextLDAPClient(
                     "No active connection available",
                 )
 
-            conversion_strategy = LDAPSearchStrategies.EntryConversionStrategy()
+            conversion_strategy = self.EntryConversionStrategy()
             entries_result = conversion_strategy.convert_entries(self._connection)
 
             if not entries_result.is_success:
@@ -396,7 +377,7 @@ class FlextLDAPClient(
                 )
 
             # Strategy 3: Build final response
-            response_strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
+            response_strategy = self.ResponseBuilderStrategy()
             response_data = {
                 "entries": entries_result.value.get("entries", []),
                 "request": request,
@@ -578,7 +559,7 @@ class FlextLDAPClient(
     def __call__(self, *_args: object, **_kwargs: object) -> object:
         """Callable interface for connection - protocol requirement."""
         # Return connection status for callable interface
-        return self.is_connected()
+        return self.is_connected
 
     def test_connection(self) -> object:
         """Test connection to LDAP server - protocol requirement."""
@@ -609,13 +590,9 @@ class FlextLDAPClient(
             return "Connection string unavailable"
 
     def close_connection(self) -> object:
-        """Close connection to LDAP server - protocol requirement."""
-        return self.unbind()  # Delegate to existing unbind method
+        """Close connection to LDAP server - required by flext-core protocol."""
+        return self.unbind()  # Protocol compliance - delegates to domain method
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     "SCOPE_MAP",

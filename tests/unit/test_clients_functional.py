@@ -19,7 +19,7 @@ from flext_tests import (
 from flext_ldap import FlextLDAPClient, FlextLDAPEntities
 from flext_ldap.clients import (
     FlextLDAPClient as DirectFlextLDAPClient,
-    LDAPSearchStrategies,
+    # LDAPSearchStrategies ELIMINATED - now nested classes within FlextLDAPClient
 )
 from flext_ldap.typings import LdapAttributeDict
 
@@ -35,7 +35,7 @@ class TestFlextLDAPClientComprehensive:
         # Use FlextTestsMatchers for comprehensive validation
         assert client._connection is None
         assert client._server is None
-        assert not client.is_connected
+        assert not client.is_connected()
         assert isinstance(client, FlextLDAPClient)
 
     async def test_connect_with_valid_ldap_uri(self) -> None:
@@ -154,7 +154,7 @@ class TestFlextLDAPClientComprehensive:
         """Test is_connected check without connection."""
         client = FlextLDAPClient()
 
-        assert not client.is_connected
+        assert not client.is_connected()
 
     async def test_search_without_connection(self) -> None:
         """Test search operation without connection."""
@@ -167,7 +167,7 @@ class TestFlextLDAPClientComprehensive:
             attributes=["cn", "uid"],
         )
 
-        result = await client.search(request)
+        result = await client.search_with_request(request)
 
         assert not result.is_success
         assert "not connected" in result.error.lower()
@@ -231,7 +231,7 @@ class TestFlextLDAPClientComprehensive:
                 attributes=["*"],
             )
 
-            result = await client.search(request)
+            result = await client.search_with_request(request)
 
             # Should fail gracefully (not connected)
             assert not result.is_success
@@ -250,7 +250,7 @@ class TestFlextLDAPClientComprehensive:
             time_limit=30,
         )
 
-        result = await client.search(request)
+        result = await client.search_with_request(request)
 
         # Should fail gracefully (not connected)
         assert not result.is_success
@@ -293,7 +293,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_search_strategy_classes_direct(self) -> None:
         """Test internal SearchStrategy classes directly."""
         # Test SearchExecutionStrategy
-        strategy = LDAPSearchStrategies.SearchExecutionStrategy(None)
+        strategy = FlextLDAPClient.SearchExecutionStrategy(None)
 
         request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=test,dc=com",
@@ -313,7 +313,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_entry_conversion_strategy_direct(self) -> None:
         """Test EntryConversionStrategy directly."""
         DirectFlextLDAPClient()
-        strategy = LDAPSearchStrategies.EntryConversionStrategy()
+        strategy = FlextLDAPClient.EntryConversionStrategy()
 
         # Test with None connection (should handle gracefully)
         result = strategy.convert_entries(None)
@@ -327,7 +327,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_response_builder_strategy_direct(self) -> None:
         """Test ResponseBuilderStrategy directly."""
         DirectFlextLDAPClient()
-        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
+        strategy = FlextLDAPClient.ResponseBuilderStrategy()
 
         # Test with minimal valid data
         data = {
@@ -351,7 +351,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_response_builder_with_entries(self) -> None:
         """Test ResponseBuilderStrategy with entries."""
         DirectFlextLDAPClient()
-        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
+        strategy = FlextLDAPClient.ResponseBuilderStrategy()
 
         # Test with entries that hit size limit
         request = FlextLDAPEntities.SearchRequest(
@@ -378,7 +378,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_response_builder_error_handling(self) -> None:
         """Test ResponseBuilderStrategy error handling."""
         DirectFlextLDAPClient()
-        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
+        strategy = FlextLDAPClient.ResponseBuilderStrategy()
 
         # Test with invalid data (missing request)
         data = {
@@ -412,7 +412,7 @@ class TestFlextLDAPClientComprehensive:
 
         if connect_result.is_success:
             # If connection succeeds, test basic operations
-            assert client.is_connected
+            assert client.is_connected()
 
             # Test search
             search_request = FlextLDAPEntities.SearchRequest(
@@ -421,13 +421,13 @@ class TestFlextLDAPClientComprehensive:
                 scope="base",
                 attributes=["*"],
             )
-            search_result = await client.search(search_request)
+            search_result = await client.search_with_request(search_request)
             assert isinstance(search_result, FlextResult)
 
             # Test unbind
             unbind_result = await client.unbind()
             assert unbind_result.is_success
-            assert not client.is_connected
+            assert not client.is_connected()
         else:
             # Expected failure without Docker LDAP server
             error_lower = connect_result.error.lower()
@@ -507,8 +507,8 @@ class TestFlextLDAPClientComprehensive:
         assert client._connection is None
         assert client._server is None
 
-        # These should not raise exceptions
-        assert not client.is_connected
+        # These should not raise exceptions - call as method (protocol compliance)
+        assert not client.is_connected()
 
     async def test_error_message_consistency(self) -> None:
         """Test that error messages are consistent across operations."""
@@ -516,7 +516,7 @@ class TestFlextLDAPClientComprehensive:
 
         operations = [
             lambda: client.bind("cn=test,dc=test", "pass"),
-            lambda: client.search(
+            lambda: client.search_with_request(
                 FlextLDAPEntities.SearchRequest(
                     base_dn="dc=test",
                     filter_str="(objectClass=*)",
@@ -547,7 +547,10 @@ class TestFlextLDAPClientComprehensive:
 
         # Should fail gracefully
         assert not result.is_success
-        assert "not connected" in result.error.lower() or "no connection" in result.error.lower()
+        assert (
+            "not connected" in result.error.lower()
+            or "no connection" in result.error.lower()
+        )
 
     async def test_ssl_tls_connection_configuration(self) -> None:
         """Test SSL/TLS connection configuration - covers SSL setup paths."""
@@ -555,16 +558,18 @@ class TestFlextLDAPClientComprehensive:
 
         # Test LDAPS connection (SSL)
         result = await client.connect(
-            "ldaps://localhost:636",
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
-            "password"
+            "ldaps://localhost:636", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", "password"
         )
 
         # Should attempt SSL connection (will fail without server but exercises SSL code)
         assert isinstance(result, FlextResult)
         if not result.is_success:
             # SSL-related error is expected without server
-            assert "connection" in result.error.lower() or "ssl" in result.error.lower() or "ldap" in result.error.lower()
+            assert (
+                "connection" in result.error.lower()
+                or "ssl" in result.error.lower()
+                or "ldap" in result.error.lower()
+            )
 
     async def test_search_strategy_execution_comprehensive(self) -> None:
         """Test search strategy execution - covers strategy pattern code paths."""
@@ -575,14 +580,17 @@ class TestFlextLDAPClientComprehensive:
             filter_str="(&(objectClass=person)(uid=test*))",
             scope="subtree",
             attributes=["cn", "uid", "mail", "objectClass"],
-            size_limit=50
+            size_limit=50,
         )
 
         # Test search without connection (exercises strategy failure path)
-        result = await client.search(search_request)
+        result = await client.search_with_request(search_request)
 
         assert not result.is_success
-        assert "not connected" in result.error.lower() or "no connection" in result.error.lower()
+        assert (
+            "not connected" in result.error.lower()
+            or "no connection" in result.error.lower()
+        )
 
     async def test_search_with_all_attributes_wildcard(self) -> None:
         """Test search with ALL_ATTRIBUTES wildcard - covers attribute handling."""
@@ -593,10 +601,10 @@ class TestFlextLDAPClientComprehensive:
             filter_str="(objectClass=*)",
             scope="base",
             attributes=["*"],  # All attributes
-            size_limit=10
+            size_limit=10,
         )
 
-        result = await client.search(search_request)
+        result = await client.search_with_request(search_request)
 
         # Should fail without connection but exercises attribute processing
         assert not result.is_success
@@ -617,10 +625,12 @@ class TestFlextLDAPClientComprehensive:
             "telephoneNumber": "+1-555-0123",
             "description": ["Primary description", "Secondary note"],
             "employeeNumber": "EMP-12345",
-            "departmentNumber": ["IT", "Engineering"]
+            "departmentNumber": ["IT", "Engineering"],
         }
 
-        result = await client.add("cn=testcomplex,ou=users,dc=test,dc=com", complex_attributes)
+        result = await client.add(
+            "cn=testcomplex,ou=users,dc=test,dc=com", complex_attributes
+        )
 
         # Should fail without connection but exercises attribute processing
         assert not result.is_success
@@ -636,10 +646,12 @@ class TestFlextLDAPClientComprehensive:
             "mail": "newemail@example.com",
             "telephoneNumber": ["+1-555-0199", "+1-555-0200"],  # Multiple values
             "title": "Senior Developer",
-            "departmentNumber": "Engineering"
+            "departmentNumber": "Engineering",
         }
 
-        result = await client.modify("cn=testuser,ou=users,dc=test,dc=com", modifications)
+        result = await client.modify(
+            "cn=testuser,ou=users,dc=test,dc=com", modifications
+        )
 
         # Should fail without connection but exercises modification logic
         assert not result.is_success
@@ -653,7 +665,7 @@ class TestFlextLDAPClientComprehensive:
         test_dns = [
             "cn=testuser,ou=users,dc=test,dc=com",
             "uid=testuid,ou=people,dc=example,dc=org",
-            "ou=testou,dc=test,dc=com"
+            "ou=testou,dc=test,dc=com",
         ]
 
         for dn in test_dns:
@@ -684,7 +696,7 @@ class TestFlextLDAPClientComprehensive:
         client = FlextLDAPClient()
 
         # Verify initial state
-        assert not client.is_connected
+        assert not client.is_connected()
         assert client._connection is None
         assert client._server is None
 
@@ -692,19 +704,10 @@ class TestFlextLDAPClientComprehensive:
         await client.connect("ldap://nonexistent.example.com:389", "cn=REDACTED_LDAP_BIND_PASSWORD", "pass")
 
         # Connection should still be None after failure
-        assert not client.is_connected
-        assert client._connection is None or not getattr(client._connection, "bound", True)
-
-    async def test_unbind_without_connection(self) -> None:
-        """Test unbind operation when no connection exists."""
-        client = FlextLDAPClient()
-
-        # Test unbind without connection
-        result = await client.unbind()
-
-        # Should handle gracefully (no-op when not connected)
-        assert result.is_success or not result.is_success  # Both outcomes acceptable
-        assert not client.is_connected
+        assert not client.is_connected()
+        assert client._connection is None or not getattr(
+            client._connection, "bound", True
+        )
 
     async def test_error_propagation_consistency(self) -> None:
         """Test consistent error propagation across all operations."""
@@ -713,7 +716,19 @@ class TestFlextLDAPClientComprehensive:
         # Test all operations return FlextResult with consistent error format
         operations_results = []
 
-        operations_results.extend((await client.bind("cn=test", "pass"), await client.search(FlextLDAPEntities.SearchRequest(base_dn="dc=test", filter_str="(objectClass=*)", scope="base")), await client.add("cn=test", {"cn": "test"}), await client.modify("cn=test", {"description": "test"}), await client.delete("cn=test")))
+        operations_results.extend(
+            (
+                await client.bind("cn=test", "pass"),
+                await client.search_with_request(
+                    FlextLDAPEntities.SearchRequest(
+                        base_dn="dc=test", filter_str="(objectClass=*)", scope="base"
+                    )
+                ),
+                await client.add("cn=test", {"cn": "test"}),
+                await client.modify("cn=test", {"description": "test"}),
+                await client.delete("cn=test"),
+            )
+        )
 
         # All should be FlextResult objects with errors
         for result in operations_results:
@@ -722,4 +737,7 @@ class TestFlextLDAPClientComprehensive:
                 assert isinstance(result.error, str)
                 assert len(result.error) > 0
                 # Error message should mention connection issue
-                assert any(word in result.error.lower() for word in ["connect", "connection", "bound"])
+                assert any(
+                    word in result.error.lower()
+                    for word in ["connect", "connection", "bound"]
+                )

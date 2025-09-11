@@ -270,7 +270,6 @@ class TestLdapTypeGuards:
 
     def test_type_guard_with_simple_real_data(self) -> None:
         """Test type guards with simple realistic LDAP data."""
-        # Simple user entry
         user_entry = {
             "dn": "uid=john.doe,ou=people,dc=example,dc=com",
             "cn": "John Doe",

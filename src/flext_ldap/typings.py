@@ -14,10 +14,6 @@ from typing import Protocol
 
 from flext_core import FlextResult, FlextTypes
 
-# =============================================================================
-# SINGLE FLEXT LDAP TYPES CLASS - Inheriting from FlextCoreTypes
-# =============================================================================
-
 
 class FlextLDAPTypes(FlextTypes):
     """Single FlextLDAPTypes class inheriting from FlextTypes.
@@ -163,14 +159,6 @@ class FlextLDAPTypes(FlextTypes):
             """Execute async callable with arbitrary arguments."""
             ...
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
-
-# =============================================================================
-# ESSENTIAL TYPE ALIASES - Only for internal usage
-# =============================================================================
 
 # Core LDAP value types - only the ones used in code
 LdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue

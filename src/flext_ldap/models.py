@@ -28,10 +28,6 @@ type LdapConnectionConfigType = FlextLDAPConnectionConfig
 type LdapUserType = FlextLDAPEntities.User
 type LdapGroupType = FlextLDAPEntities.Group
 
-# =============================================================================
-# SINGLE FLEXT LDAP MODELS CLASS - Inheriting from FlextModels
-# =============================================================================
-
 
 @final
 class FlextLDAPModels(FlextModels.AggregateRoot):
@@ -68,21 +64,7 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
         Settings: type[FlextLDAPSettings] = FlextLDAPSettings
         ConnectionConfig: type[FlextLDAPConnectionConfig] = FlextLDAPConnectionConfig
 
-        # Factory methods with Python 3.13 return type annotations
-        @staticmethod
-        def create_development() -> LdapSettingsType:
-            """Create development configuration using SOURCE OF TRUTH patterns."""
-            return FlextLDAPSettings.create_development()
-
-        @staticmethod
-        def create_production() -> LdapSettingsType:
-            """Create production configuration using SOURCE OF TRUTH patterns."""
-            return FlextLDAPSettings.create_production()
-
-        @staticmethod
-        def create_test() -> LdapSettingsType:
-            """Create test configuration using SOURCE OF TRUTH patterns."""
-            return FlextLDAPSettings.create_test()
+        # Factory methods are available directly through FlextLDAPSettings - NO WRAPPERS NEEDED
 
     # =========================================================================
     # DOMAIN MODELS - LDAP Domain Entities
@@ -150,14 +132,13 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
         DomainValidator = FlextLDAPFields.Validators
 
     # =========================================================================
-    # TYPE MODELS - LDAP Type Definitions
+
     # =========================================================================
 
     @final
     class Type:
         """LDAP type definitions using Python 3.13 type aliases."""
 
-        # Type aliases using Python 3.13 patterns
         AttributeDict = LdapAttributeDict
         AttributeValue = LdapAttributeValue
         SearchResult = LdapSearchResult
@@ -179,10 +160,6 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
         Scope = FlextLDAPConstants.Scopes
 
 
-# =============================================================================
-# LEGACY MODEL ALIASES - Backward Compatibility
-# =============================================================================
-
 # All legacy aliases are provided through the imports above - no need for
 # self-assignments as ruff correctly identifies them as redundant
 
@@ -194,10 +171,6 @@ DEFAULT_LDAP_ENTITY_STATUS: FlextLDAPEntityStatus = (
     FlextLDAPConstants.DefaultValues.STRING_FIELD_TYPE
 )
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     # Main class following flext-core pattern

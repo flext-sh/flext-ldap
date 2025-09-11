@@ -28,7 +28,7 @@ import os
 
 from flext_core import FlextLogger
 
-from ..flext_ldap import (
+from flext_ldap import (
     FlextLDAPApi,
     FlextLDAPDistinguishedName,
     FlextLDAPFilter,

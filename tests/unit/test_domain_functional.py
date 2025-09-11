@@ -40,7 +40,7 @@ class TestFlextLDAPDomainFunctional:
             "PasswordSpecification",
             "UserManagementService",
             "GroupManagementService",
-            "PasswordService"
+            "PasswordService",
         ]
 
         for class_name in expected_nested_classes:
@@ -57,7 +57,9 @@ class TestFlextLDAPDomainFunctional:
 
         # Check module-level functionality
         module_attrs = [attr for attr in dir(domain_module) if not attr.startswith("_")]
-        assert len(module_attrs) >= 5, f"Expected substantial module content, got: {module_attrs}"
+        assert len(module_attrs) >= 5, (
+            f"Expected substantial module content, got: {module_attrs}"
+        )
 
 
 class TestDomainSpecifications:
@@ -76,7 +78,7 @@ class TestDomainSpecifications:
                 cn="John Doe",
                 sn="Doe",
                 mail="john.doe@example.com",
-                object_classes=["person", "top"]
+                object_classes=["person", "top"],
             ),
             FlextLDAPEntities.User(
                 id="user_2",
@@ -86,8 +88,8 @@ class TestDomainSpecifications:
                 sn="Smith",
                 given_name="Jane",
                 mail="jane.smith@company.org",
-                object_classes=["person", "top"]
-            )
+                object_classes=["person", "top"],
+            ),
         ]
 
         for user in valid_users:
@@ -113,7 +115,7 @@ class TestDomainSpecifications:
                 dn="cn=engineers,ou=groups,dc=example,dc=com",
                 cn="engineers",
                 description="Engineering Team",
-                object_classes=["groupOfNames", "top"]
+                object_classes=["groupOfNames", "top"],
             ),
             FlextLDAPEntities.Group(
                 id="group_2",
@@ -123,13 +125,15 @@ class TestDomainSpecifications:
                 object_classes=["groupOfNames", "top"],
                 members=[
                     "cn=REDACTED_LDAP_BIND_PASSWORD1,ou=users,dc=company,dc=org",
-                    "cn=REDACTED_LDAP_BIND_PASSWORD2,ou=users,dc=company,dc=org"
-                ]
-            )
+                    "cn=REDACTED_LDAP_BIND_PASSWORD2,ou=users,dc=company,dc=org",
+                ],
+            ),
         ]
 
         for group in valid_groups:
-            assert group_spec.is_satisfied_by(group), f"Group should be valid: {group.cn}"
+            assert group_spec.is_satisfied_by(group), (
+                f"Group should be valid: {group.cn}"
+            )
 
         # Test with invalid group objects
         invalid_groups = [None, "", {}, [], 123, "not-a-group"]
@@ -150,7 +154,7 @@ class TestDomainSpecifications:
             "uid=john,ou=people,dc=organization,dc=org",
             "cn=REDACTED_LDAP_BIND_PASSWORD,cn=users,dc=domain,dc=local",
             "ou=groups,dc=company,dc=com",
-            "cn=John Smith,ou=Engineering,dc=company,dc=com"
+            "cn=John Smith,ou=Engineering,dc=company,dc=com",
         ]
 
         for dn in valid_dns:
@@ -162,8 +166,8 @@ class TestDomainSpecifications:
             "invalid-dn",  # No DN components
             None,  # None value
             123,  # Non-string
-            [],   # Wrong type
-            {}    # Wrong type
+            [],  # Wrong type
+            {},  # Wrong type
         ]
 
         for invalid_dn in invalid_dns:
@@ -182,11 +186,13 @@ class TestDomainSpecifications:
             "SecurePass2023@",
             "StrongP@ssw0rd",
             "ValidPass123#",
-            "Secure123$Password"
+            "Secure123$Password",
         ]
 
         for password in valid_passwords:
-            assert password_spec.is_satisfied_by(password), f"Password should be valid: {password}"
+            assert password_spec.is_satisfied_by(password), (
+                f"Password should be valid: {password}"
+            )
 
         # Test with invalid passwords
         invalid_passwords = [
@@ -197,7 +203,7 @@ class TestDomainSpecifications:
             "NoNumbers!",  # No numbers
             "NoSpecialChars123",  # No special characters
             None,  # None value
-            123,   # Non-string
+            123,  # Non-string
         ]
 
         for invalid_password in invalid_passwords:
@@ -222,7 +228,9 @@ class TestDomainSpecifications:
             # Assume no disabled flags or attributes
         )
 
-        assert active_spec.is_satisfied_by(active_user), "Active user should pass validation"
+        assert active_spec.is_satisfied_by(active_user), (
+            "Active user should pass validation"
+        )
 
         # Test with non-user objects
         invalid_candidates = [None, "", {}, [], "not-a-user"]
@@ -243,7 +251,7 @@ class TestDomainSpecifications:
             "john.doe@company.org",
             "REDACTED_LDAP_BIND_PASSWORD+test@domain.co.uk",
             "user123@subdomain.example.com",
-            "first.last@organization.gov"
+            "first.last@organization.gov",
         ]
 
         for email in valid_emails:
@@ -257,7 +265,7 @@ class TestDomainSpecifications:
             "user@",  # No domain
             "user@.com",  # Invalid domain
             None,  # None value
-            123,   # Non-string
+            123,  # Non-string
         ]
 
         for invalid_email in invalid_emails:
@@ -287,7 +295,7 @@ class TestDomainSpecifications:
             cn="Complete User",
             sn="User",
             mail="complete.user@example.com",
-            object_classes=["person", "top"]
+            object_classes=["person", "top"],
         )
 
         result = complete_spec.is_satisfied_by(complete_user)
@@ -313,7 +321,7 @@ class TestDomainServices:
                 "uid": "new.user1",
                 "cn": "New User 1",
                 "sn": "User",
-                "mail": "new.user1@example.com"
+                "mail": "new.user1@example.com",
             },
             {
                 "dn": "uid=new.user2,ou=people,dc=company,dc=org",
@@ -321,8 +329,8 @@ class TestDomainServices:
                 "cn": "New User 2",
                 "sn": "User",
                 "given_name": "New",
-                "mail": "new.user2@company.org"
-            }
+                "mail": "new.user2@company.org",
+            },
         ]
 
         for request_data in valid_creation_requests:
@@ -341,15 +349,15 @@ class TestDomainServices:
                 "dn": "cn=new.user,ou=users,dc=example,dc=com",
                 "cn": "New User",
                 "sn": "User",
-                "mail": "new.user@example.com"
+                "mail": "new.user@example.com",
             },
             {
                 "uid": "another.user",
                 "dn": "cn=another.user,ou=users,dc=example,dc=com",
                 "cn": "Another User",
                 "sn": "User",
-                "mail": "another.user@example.com"
-            }
+                "mail": "another.user@example.com",
+            },
         ]
 
         for creation_data in creation_requests:
@@ -365,7 +373,7 @@ class TestDomainServices:
         group_creation_data = {
             "dn": "cn=new.group,ou=groups,dc=example,dc=com",
             "cn": "new.group",
-            "description": "New test group"
+            "description": "New test group",
         }
 
         creation_result = group_service.validate_group_creation(group_creation_data)
@@ -379,7 +387,7 @@ class TestDomainServices:
             description="Test group",
             object_classes=["groupOfNames", "top"],
             members=[],
-            modified_at=None
+            modified_at=None,
         )
 
         test_user = FlextLDAPEntities.User(
@@ -388,7 +396,7 @@ class TestDomainServices:
             uid="user",
             cn="Test User",
             sn="User",
-            object_classes=["person", "top"]
+            object_classes=["person", "top"],
         )
 
         membership_result = group_service.can_add_member(test_group, test_user)
@@ -418,11 +426,13 @@ class TestDomainServices:
         test_password_changes = [
             ("OldPass123!", "NewStrongPassword456@"),
             ("CurrentPass789#", "AnotherSecure123$"),
-            ("ExistingPass456@", "ValidNewPass789!")
+            ("ExistingPass456@", "ValidNewPass789!"),
         ]
 
         for current_pass, new_pass in test_password_changes:
-            validation_result = password_service.validate_password_change(current_pass, new_pass)
+            validation_result = password_service.validate_password_change(
+                current_pass, new_pass
+            )
             assert isinstance(validation_result, FlextResult)
 
 
@@ -436,7 +446,7 @@ class TestDomainEvents:
             "actor": "REDACTED_LDAP_BIND_PASSWORD@example.com",
             "occurred_at": datetime.now(UTC),
             "user_id": "new.user.123",
-            "user_dn": "cn=new.user,ou=users,dc=example,dc=com"
+            "user_dn": "cn=new.user,ou=users,dc=example,dc=com",
         }
 
         user_created_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
@@ -453,7 +463,7 @@ class TestDomainEvents:
             "actor": "REDACTED_LDAP_BIND_PASSWORD@company.org",
             "occurred_at": datetime.now(UTC),
             "user_id": "deleted.user.456",
-            "user_dn": "cn=deleted.user,ou=users,dc=company,dc=org"
+            "user_dn": "cn=deleted.user,ou=users,dc=company,dc=org",
         }
 
         user_deleted_event = FlextLDAPDomain.UserDeletedEvent(**event_data)
@@ -462,7 +472,9 @@ class TestDomainEvents:
         assert user_deleted_event.actor == "REDACTED_LDAP_BIND_PASSWORD@company.org"
         assert isinstance(user_deleted_event.occurred_at, datetime)
         assert user_deleted_event.user_id == "deleted.user.456"
-        assert user_deleted_event.user_dn == "cn=deleted.user,ou=users,dc=company,dc=org"
+        assert (
+            user_deleted_event.user_dn == "cn=deleted.user,ou=users,dc=company,dc=org"
+        )
 
     def test_group_membership_changed_event(self) -> None:
         """Test GroupMembershipChangedEvent functionality."""
@@ -471,14 +483,17 @@ class TestDomainEvents:
             "occurred_at": datetime.now(UTC),
             "group_dn": "cn=engineering,ou=groups,dc=example,dc=com",
             "member_dn": "cn=engineer,ou=users,dc=example,dc=com",
-            "action": "added"
+            "action": "added",
         }
 
         try:
             # Try to create event (may not exist yet)
             membership_event = FlextLDAPDomain.GroupMembershipChangedEvent(**event_data)
             assert membership_event.actor == "manager@example.com"
-            assert membership_event.group_dn == "cn=engineering,ou=groups,dc=example,dc=com"
+            assert (
+                membership_event.group_dn
+                == "cn=engineering,ou=groups,dc=example,dc=com"
+            )
             assert membership_event.action == "added"
         except AttributeError:
             # Event class may not be implemented yet - that's fine for testing
@@ -512,6 +527,7 @@ class TestDomainIntegration:
 
         # Should inherit from FlextDomainService
         from flext_core import FlextDomainService
+
         assert isinstance(user_service, FlextDomainService)
 
         # Test domain events use BaseModel
@@ -519,7 +535,7 @@ class TestDomainIntegration:
             "actor": "test@example.com",
             "occurred_at": datetime.now(UTC),
             "user_id": "test.user",
-            "user_dn": "cn=test,dc=example,dc=com"
+            "user_dn": "cn=test,dc=example,dc=com",
         }
 
         user_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
@@ -539,7 +555,7 @@ class TestDomainFactoriesAndUtilities:
             FlextLDAPDomain.PasswordSpecification(),
             FlextLDAPDomain.ActiveUserSpecification(),
             FlextLDAPDomain.EmailSpecification(),
-            FlextLDAPDomain.CompleteUserSpecification()
+            FlextLDAPDomain.CompleteUserSpecification(),
         ]
 
         for spec in specifications:
@@ -555,14 +571,17 @@ class TestDomainFactoriesAndUtilities:
         services = [
             FlextLDAPDomain.UserManagementService(),
             FlextLDAPDomain.GroupManagementService(),
-            FlextLDAPDomain.PasswordService()
+            FlextLDAPDomain.PasswordService(),
         ]
 
         for service in services:
             assert service is not None
             # Should have domain service methods
-            service_methods = [method for method in dir(service)
-                             if not method.startswith("_") and callable(getattr(service, method))]
+            service_methods = [
+                method
+                for method in dir(service)
+                if not method.startswith("_") and callable(getattr(service, method))
+            ]
             assert len(service_methods) > 0
 
 
@@ -574,7 +593,7 @@ class TestDomainErrorHandling:
         specifications = [
             FlextLDAPDomain.UserSpecification(),
             FlextLDAPDomain.GroupSpecification(),
-            FlextLDAPDomain.DistinguishedNameSpecification()
+            FlextLDAPDomain.DistinguishedNameSpecification(),
         ]
 
         # Test error handling with various invalid inputs

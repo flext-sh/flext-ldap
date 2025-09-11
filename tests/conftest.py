@@ -304,7 +304,7 @@ async def _cleanup_ldap_entries_under_dn(
         time_limit=30,  # 30 seconds timeout
     )
 
-    search_result = await client.search(search_request)
+    search_result = await client.search_with_request(search_request)
 
     # Early return if search failed or no data - use proper typing
     empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)

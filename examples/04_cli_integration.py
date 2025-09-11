@@ -17,7 +17,7 @@ from flext_cli import (
 )
 from flext_core import FlextResult
 
-from ..flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
+from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
 
 
 class FlextLDAPCLI:

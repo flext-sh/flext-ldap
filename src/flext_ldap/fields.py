@@ -12,20 +12,14 @@ from __future__ import annotations
 from enum import Enum, StrEnum
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, FlextValidations
+from flext_core import FlextMixins, FlextResult, FlextTypes, FlextValidations
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict
 
-logger = FlextLogger(__name__)
 
-# =============================================================================
-# SINGLE FLEXT LDAP FIELDS CLASS - Consolidated field functionality
-# =============================================================================
-
-
-class FlextLDAPFields:
-    """Single FlextLDAPFields class with all LDAP field functionality.
+class FlextLDAPFields(FlextMixins.Loggable):
+    """Single FlextLDAPFields class with all LDAP field functionality using FlextMixins.Loggable.
 
     Consolidates ALL LDAP field definitions, processors, and validators into
     a single class following FLEXT patterns. Everything from data types to
@@ -216,10 +210,6 @@ class FlextLDAPFields:
     # CONSTANTS - Field-related constants
     # =========================================================================
 
-
-# =============================================================================
-# MODULE EXPORTS - Following flext-core pattern: only main class
-# =============================================================================
 
 __all__ = [
     "FlextLDAPFields",

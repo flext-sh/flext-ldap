@@ -20,7 +20,7 @@ from flext_ldap.settings import FlextLDAPSettings
 
 # Python 3.13 type aliases for container services
 type LdapClientService = FlextLDAPClient
-type LdapRepositoryService = FlextLDAPRepositories
+type LdapRepositoryService = FlextLDAPRepositories.Repository
 type ContainerServiceKey = str
 
 # Type variable for generic service resolution
@@ -113,15 +113,10 @@ class FlextLDAPContainer(FlextMixins.Service):
             else:
                 msg = "LDAP repository factory is not callable"
                 raise RuntimeError(msg)
-        return self._repository_cache
+        # Return the actual Repository nested class, not the container
+        return self._repository_cache.repository
 
-    def get_user_repository(self) -> LdapRepositoryService:
-        """Get user repository - alias to get_repository for compatibility."""
-        return self.get_repository()
-
-    def get_group_repository(self) -> LdapRepositoryService:
-        """Get group repository - alias to get_repository for compatibility."""
-        return self.get_repository()
+    # Removed unnecessary alias methods - use get_repository() directly per SOURCE OF TRUTH
 
     def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
         """Configure container with LDAP settings.

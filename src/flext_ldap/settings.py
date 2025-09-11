@@ -227,10 +227,7 @@ class FlextLDAPSettings(FlextConfig):
         """Set connection configuration."""
         self.default_connection = value
 
-    # Back-compat alias used in some tests
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules (alias for validate_business_rules)."""
-        return self.validate_business_rules()
+    # Removed unnecessary alias method - use validate_business_rules() directly per SOURCE OF TRUTH
 
     @classmethod
     def from_env(cls) -> FlextLDAPSettings:
@@ -298,7 +295,7 @@ class FlextLDAPSettings(FlextConfig):
             "bind_password": bind_password,
             "use_ssl": use_ssl,
         }
-        return cls.model_validate(config_data)  # type: ignore[attr-defined]
+        return cls.model_validate(config_data)
 
     @classmethod
     def from_file(cls, file_path: str) -> FlextResult[FlextLDAPSettings]:
@@ -361,7 +358,11 @@ class FlextLDAPSettings(FlextConfig):
             raise ValueError(msg) from e
 
         try:
-            instance = cls.model_validate(config_dict)
+            # Use runtime method resolution to avoid MyPy attr-defined issues
+            validate_method = getattr(cls, "model_validate", None)
+            if validate_method is None:
+                return FlextResult.fail("model_validate method not available")
+            instance = validate_method(config_dict)
             return FlextResult.ok(instance)
         except ValueError as e:
             return FlextResult.fail(
@@ -393,7 +394,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_debug_mode": True,
             "enable_caching": False,
         }
-        return cls.model_validate(config_data)  # type: ignore[attr-defined]
+        return cls.model_validate(config_data)
 
     @classmethod
     def create_test(cls) -> FlextLDAPSettings:
@@ -416,7 +417,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_test_mode": True,
             "enable_caching": False,
         }
-        return cls.model_validate(config_data)  # type: ignore[attr-defined]
+        return cls.model_validate(config_data)
 
     @classmethod
     def create_production(cls) -> FlextLDAPSettings:
@@ -442,7 +443,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_caching": True,
             "cache_ttl": 600,
         }
-        return cls.model_validate(config_data)  # type: ignore[attr-defined]
+        return cls.model_validate(config_data)
 
 
 __all__ = [

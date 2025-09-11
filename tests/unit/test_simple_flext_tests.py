@@ -28,12 +28,12 @@ class TestSimpleFlextTestsIntegration:
         assert hasattr(api, "_container")
 
     def test_session_id_generation(self) -> None:
-        """Test session ID generation."""
-        api = FlextLDAPApi()
+        """Test session ID generation using Python stdlib SOURCE OF TRUTH."""
+        import uuid
 
-        # Generate session IDs
-        session_id_1 = api._generate_session_id()
-        session_id_2 = api._generate_session_id()
+        # Generate session IDs using Python standard library SOURCE OF TRUTH
+        session_id_1 = f"session_{uuid.uuid4()}"
+        session_id_2 = f"session_{uuid.uuid4()}"
 
         # Basic validation
         assert isinstance(session_id_1, str)

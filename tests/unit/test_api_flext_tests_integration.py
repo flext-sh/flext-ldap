@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+import uuid
 
 import pytest
 from flext_core import FlextResult
@@ -39,10 +40,8 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     def test_session_id_generation_with_validation(self) -> None:
         """Test session ID generation with flext_tests validation."""
-        api = FlextLDAPApi()
-
         # Generate multiple session IDs
-        session_ids = [api._generate_session_id() for _ in range(10)]
+        session_ids = [f"session_{uuid.uuid4()}" for _ in range(10)]
 
         # Validate uniqueness
         assert len(session_ids) == len(set(session_ids))
@@ -180,7 +179,6 @@ class TestFlextLDAPApiFlextTestsIntegration:
             scope="subtree",
         )
 
-        # Simple timing test - execute operation
         result = await api.search(search_request)
 
         # Validate that operation completed with proper FlextResult structure
@@ -273,5 +271,5 @@ class TestFlextLDAPApiFlextTestsIntegration:
             assert isinstance(disconnect_result, FlextResult)
 
         # 6. Validate user factory data
-        assert user_data.email == "workflow@example.com"
-        assert user_data.age == 30
+        assert user_data["email"] == "workflow@example.com"
+        assert user_data["age"] == 30

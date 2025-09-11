@@ -42,10 +42,6 @@ class FlextLDAPExceptions:
     LdapTypeError = FlextExceptions.TypeError
 
 
-# =============================================================================
-# MODULE EXPORTS - Following flext-core pattern: only main class
-# =============================================================================
-
 __all__ = [
     "FlextLDAPExceptions",
 ]

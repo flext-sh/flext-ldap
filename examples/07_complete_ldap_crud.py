@@ -16,7 +16,7 @@ from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
 
-from ..flext_ldap import (
+from flext_ldap import (
     FlextLDAPApi,
     FlextLDAPCreateUserRequest,
 )
@@ -97,7 +97,6 @@ async def search_users(api: FlextLDAPApi) -> None:
         logger.info(f"✅ Found {len(typed_users)} users:")
 
         for user in typed_users:
-            # Type-safe access to user data from LDAP entry
             if hasattr(user, "get_single_attribute_value"):
                 cn = user.get_single_attribute_value("cn") or "Unknown"
                 mail = user.get_single_attribute_value("mail") or "No email"

@@ -178,21 +178,21 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         # Should return failure result, not raise NotImplementedError
         assert not result.is_success
-        assert "failed" in ((result.error or "").lower()) or "error" in (
-            (result.error or "").lower()
+        assert (
+            "failed" in ((result.error or "").lower())
+            or "error" in ((result.error or "").lower())
+            or "not found" in ((result.error or "").lower())
         )
 
     def test_find_all_not_implemented(self) -> None:
-        """Test find_all raises NotImplementedError."""
+        """Test find_all returns empty list (not practical for LDAP)."""
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
         result = repo.find_all()
-        assert not result.is_success
-        assert any(
-            pattern in ((result.error or "").lower())
-            for pattern in ["not supported", "not connected", "error"]
-        )
+        # find_all returns empty list since it's not practical for LDAP
+        assert result.is_success
+        assert result.value == []
 
     def test_save_not_implemented(self) -> None:
         """Test save raises NotImplementedError."""

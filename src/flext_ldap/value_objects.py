@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, final, override
 
-from flext_core import FlextModels, FlextResult, FlextUtilities
+from flext_core import FlextModels, FlextResult, FlextUtilities, FlextValidations
 from pydantic import ConfigDict, Field, field_validator
 
 from flext_ldap.constants import FlextLDAPConstants
@@ -21,10 +21,6 @@ from flext_ldap.constants import FlextLDAPConstants
 type ValidatedDn = str
 type LdapFilterString = str
 type AttributeName = str
-
-# =============================================================================
-# SINGLE FLEXT LDAP VALUE OBJECTS CLASS - Consolidated value object functionality
-# =============================================================================
 
 
 class FlextLDAPValueObjects:
@@ -65,15 +61,20 @@ class FlextLDAPValueObjects:
         @field_validator("value")
         @classmethod
         def validate_dn_format(cls, value: str) -> str:
-            """Validate Distinguished Name format."""
-            if not value or not value.strip():
-                msg = "Distinguished Name cannot be empty"
-                raise ValueError(msg)
+            """Validate DN using FlextValidations SOURCE OF TRUTH - ELIMINATE local duplication."""
+            # Use FlextValidations instead of local logic
+            result = FlextValidations.Rules.StringRules.validate_non_empty(value)
+            if result.is_failure:
+                error_msg = "Distinguished Name cannot be empty"
+                raise ValueError(error_msg)
 
-            # Basic format validation
-            if not cls.DN_PATTERN.match(value):
-                msg = f"Invalid DN format: {value}"
-                raise ValueError(msg)
+            # Use FlextValidations pattern matching instead of local regex
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                value, r"^[a-zA-Z]+=.+", "DN format"
+            )
+            if pattern_result.is_failure:
+                error_msg = f"Invalid DN format: {value}"
+                raise ValueError(error_msg)
 
             return value.strip()
 
@@ -193,16 +194,26 @@ class FlextLDAPValueObjects:
         @field_validator("value")
         @classmethod
         def validate_filter_format(cls, value: str) -> str:
-            """Validate LDAP filter format."""
-            if not FlextUtilities.TypeGuards.is_string_non_empty(value):
-                msg = "LDAP filter cannot be empty"
-                raise ValueError(msg)
+            """Validate LDAP filter using FlextValidations SOURCE OF TRUTH - ELIMINATE local duplication."""
+            # Use FlextValidations for consistent validation
+            result = FlextValidations.Rules.StringRules.validate_non_empty(value)
+            if result.is_failure:
+                error_msg = "LDAP filter cannot be empty"
+                raise ValueError(error_msg)
 
-            # Clean text using FlextUtilities
+            # Use FlextValidations pattern matching for LDAP filter format
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                value, r"^\(.+\)$", "LDAP filter"
+            )
+            if pattern_result.is_failure:
+                error_msg = f"Invalid LDAP filter format: {value}"
+                raise ValueError(error_msg)
+
+            # Clean text using FlextUtilities (keep this as it's domain-specific)
             clean_value = FlextUtilities.TextProcessor.clean_text(value)
             if not clean_value:
-                msg = "LDAP filter cannot be empty after cleaning"
-                raise ValueError(msg)
+                error_msg = "LDAP filter cannot be empty after cleaning"
+                raise ValueError(error_msg)
 
             # Must start and end with parentheses
             if not (clean_value.startswith("(") and clean_value.endswith(")")):
@@ -252,10 +263,6 @@ class FlextLDAPValueObjects:
             """Create filter that matches all objects."""
             return cls(value="(objectClass=*)")
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     "FlextLDAPValueObjects",

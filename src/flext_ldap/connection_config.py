@@ -5,17 +5,16 @@ SPDX-License-Identifier: MIT
 """
 
 from pathlib import Path
+from typing import ClassVar
 
-from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
+from flext_core import FlextConfig, FlextMixins, FlextResult, FlextValidations
 from pydantic import Field, field_validator
 
-logger = FlextLogger(__name__)
 
-
-class FlextLDAPConnectionConfig(FlextConfig):
+class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
     """LDAP connection configuration with validation."""
 
-    model_config = {
+    model_config: ClassVar = {
         "extra": "ignore",  # Allow client-a and other project-specific environment variables
         "validate_assignment": True,
         "str_strip_whitespace": True,
@@ -159,8 +158,8 @@ class FlextLDAPConnectionConfig(FlextConfig):
         try:
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
-                logger.warning(
-                    "SSL verification enabled but no CA certificate file specified",
+                self.log_operation(
+                    operation="SSL verification enabled but no CA certificate file specified",
                 )
 
             return FlextResult.ok(None)
