@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 import asyncio
 from collections.abc import AsyncIterator, Awaitable

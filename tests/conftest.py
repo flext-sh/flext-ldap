@@ -399,7 +399,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config,  # noqa: ARG001
     items: list[pytest.Item],
 ) -> None:
     """Automatically mark integration tests based on file path."""

@@ -111,7 +111,6 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         # Verify REAL caching behavior
         assert repo1 is repo2
 
-
     def test_get_repository_group_operations(self) -> None:
         """Test get_repository supports group operations."""
         # Execute repository retrieval for group operations

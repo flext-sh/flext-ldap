@@ -7,7 +7,6 @@ comandos CLI no contexto do flext-ldap.
 import asyncio
 import contextlib
 
-from flext_core import FlextTypes
 from flext_cli import (
     FlextCliConfig,
     FlextCliContext,
@@ -15,7 +14,7 @@ from flext_cli import (
     FlextCliOutputFormat,
     flext_cli_format,
 )
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
 

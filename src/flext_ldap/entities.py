@@ -480,7 +480,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
                 v, r"^[a-zA-Z]+=.+", "DN format"
             )
             if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
+                    error=pattern_result.error
+                )
                 raise ValueError(error_msg)
 
             return v
@@ -680,7 +682,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
                 v, r"^[a-zA-Z]+=.+", "DN format"
             )
             if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
+                    error=pattern_result.error
+                )
                 raise ValueError(error_msg)
 
             return v
@@ -754,7 +758,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
                 v, r"^[a-zA-Z]+=.+", "DN format"
             )
             if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
+                    error=pattern_result.error
+                )
                 raise ValueError(error_msg)
 
             return v
@@ -817,7 +823,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
                 v, r"^[a-zA-Z]+=.+", "DN format"
             )
             if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(error=pattern_result.error)
+                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
+                    error=pattern_result.error
+                )
                 raise ValueError(error_msg)
 
             return v

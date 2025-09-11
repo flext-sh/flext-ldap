@@ -394,7 +394,6 @@ class TestFlextLDAPClientComprehensive:
     @pytest.mark.integration
     async def test_full_client_lifecycle_with_docker(
         self,
-        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test complete client lifecycle with real Docker LDAP server."""
         # This test would use the connected_ldap_client fixture which
