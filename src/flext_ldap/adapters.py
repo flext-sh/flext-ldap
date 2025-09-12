@@ -13,11 +13,10 @@ from flext_core import (
     FlextMixins,
     FlextModels,
     FlextResult,
-    FlextServices,
     FlextTypes,
     FlextValidations,
 )
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.constants import FlextLDAPConstants
@@ -142,10 +141,10 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
             return FlextResult.ok(None)
 
     # =========================================================================
-    # SERVICE PROCESSORS - Advanced FlextServices.ServiceProcessor patterns
+    # SERVICE PROCESSORS - Advanced service processor patterns
     # =========================================================================
 
-    class ConnectionRequest(FlextModels.Config):
+    class ConnectionRequest(BaseModel):
         """Request model for connection operations using Parameter Object Pattern."""
 
         model_config = ConfigDict(frozen=True, extra="forbid")
@@ -171,7 +170,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
             """Validate connection result business rules."""
             return FlextResult.ok(None)
 
-    class SearchRequest(FlextModels.Config):
+    class SearchRequest(BaseModel):
         """Search request model using Parameter Object Pattern."""
 
         model_config = ConfigDict(frozen=True, extra="forbid")
@@ -197,10 +196,8 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
             """Validate search result business rules."""
             return FlextResult.ok(None)
 
-    class ConnectionServiceProcessor(
-        FlextServices.ServiceProcessor[object, object, object]
-    ):
-        """Advanced connection service processor using FlextServices template pattern.
+    class ConnectionServiceProcessor:
+        """Advanced connection service processor using template pattern.
 
         Eliminates boilerplate code and reduces complexity through standardized
         processing pipeline with automatic error handling and metrics.
@@ -245,9 +242,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
                 operation_executed=correlation_id,
             )
 
-    class SearchServiceProcessor(
-        FlextServices.ServiceProcessor[object, object, object]
-    ):
+    class SearchServiceProcessor:
         """Advanced search service processor eliminating search complexity.
 
         Reduces search operation complexity through standardized ServiceProcessor

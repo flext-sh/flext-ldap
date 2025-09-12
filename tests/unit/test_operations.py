@@ -14,7 +14,7 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextUtilities
 
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.operations import FlextLDAPOperations
@@ -43,13 +43,10 @@ class TestFlextLDAPOperationsReal:
         assert ops.search is not None
 
     def test_generate_id_real_execution(self) -> None:
-        """Test ID generation with real execution."""
-        # FlextLDAPOperationsBase is now internal - use concrete implementation
-        ops = FlextLDAPOperations()
-
-        # Call real implementation
-        id1 = ops.generate_id()
-        id2 = ops.generate_id()
+        """Test ID generation with real execution using FlextUtilities directly."""
+        # Use FlextUtilities directly - NO WRAPPER METHODS
+        id1 = FlextUtilities.Generators.generate_entity_id()
+        id2 = FlextUtilities.Generators.generate_entity_id()
 
         # Verify real ID generation
         assert isinstance(id1, str)

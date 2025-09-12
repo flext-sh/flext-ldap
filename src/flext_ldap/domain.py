@@ -19,6 +19,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
     FlextUtilities,
+    FlextValidations,
 )
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
@@ -43,6 +44,59 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
     CONSOLIDATED CLASSES: All domain specifications + domain services + domain events + domain factories
     """
+
+    # ==========================================================================
+    # CENTRALIZED VALIDATION USING FLEXTVALIDATIONS - ELIMINATE DUPLICATION
+    # ==========================================================================
+
+    class CentralizedValidations:
+        """Centralized validation using FlextValidations - SOURCE OF TRUTH for all LDAP validations."""
+
+        @staticmethod
+        def validate_dn(dn: str, context: str = "DN") -> FlextResult[None]:
+            """Centralized DN validation using FlextValidations - ELIMINATE ALL DUPLICATION."""
+            if not dn or not dn.strip():
+                return FlextResult[None].fail(f"{context} cannot be empty")
+
+            # Use FlextValidations for string validation
+            string_validator = FlextValidations.Core.Predicates(
+                lambda v: isinstance(v, str) and len(v.strip()) > 0,
+                "non_empty_string"
+            )
+
+            result = string_validator(dn)
+            if result.is_failure:
+                return FlextResult[None].fail(f"{context} validation failed: {result.error}")
+
+            # Basic DN format validation (RFC 2253)
+            if not re.match(r"^[a-zA-Z0-9=,\s\-\.]+$", dn.strip()):
+                return FlextResult[None].fail(f"{context} contains invalid characters")
+
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_filter(filter_str: str) -> FlextResult[None]:
+            """Centralized LDAP filter validation - ELIMINATE ALL DUPLICATION."""
+            if not filter_str or not filter_str.strip():
+                return FlextResult[None].fail("Filter cannot be empty")
+
+            # Basic filter format validation
+            if not re.match(r"^[\(\)=&!|a-zA-Z0-9\s\-\.\*]+$", filter_str.strip()):
+                return FlextResult[None].fail("Filter contains invalid characters")
+
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_uri(uri: str) -> FlextResult[None]:
+            """Centralized URI validation - ELIMINATE ALL DUPLICATION."""
+            if not uri or not uri.strip():
+                return FlextResult[None].fail("URI cannot be empty")
+
+            # Validate LDAP URI format specifically
+            if not uri.strip().startswith(("ldap://", "ldaps://")):
+                return FlextResult[None].fail("URI must start with ldap:// or ldaps://")
+
+            return FlextResult[None].ok(None)
 
     # ==========================================================================
     # INTERNAL BASE CLASSES FOR DOMAIN PATTERNS
@@ -431,7 +485,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 # Perform all validations in sequence
                 return self._perform_all_user_validations(user_data)
             except Exception as e:
-                self.log_operation(operation="User validation failed")
+                self.log_error("User validation failed")
                 return FlextResult.fail(f"User validation error: {e}")
 
         def _perform_all_user_validations(
@@ -526,7 +580,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.ok(success)
 
             except Exception as e:
-                self.log_operation(operation="User deletion check failed")
+                self.log_error("User deletion check failed")
                 return FlextResult.fail(f"User deletion check error: {e}")
 
         def generate_username(
@@ -564,7 +618,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.ok(username)
 
             except Exception as e:
-                self.log_operation(operation="Username generation failed")
+                self.log_error("Username generation failed")
                 return FlextResult.fail(f"Username generation error: {e}")
 
     class GroupManagementService(FlextDomainService[FlextLDAPEntities.Group]):
@@ -626,7 +680,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.ok(success)
 
             except Exception as e:
-                self.log_operation(operation="Group membership check failed")
+                self.log_error("Group membership check failed")
                 return FlextResult.fail(f"Group membership check error: {e}")
 
         def validate_group_creation(
@@ -653,7 +707,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.ok(None)
 
             except Exception as e:
-                self.log_operation(operation="Group validation failed")
+                self.log_error("Group validation failed")
                 return FlextResult.fail(f"Group validation error: {e}")
 
     class PasswordService(FlextDomainService[str]):
@@ -690,7 +744,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.ok(None)
 
             except Exception as e:
-                self.log_operation(operation="Password validation failed")
+                self.log_error("Password validation failed")
                 return FlextResult.fail(f"Password validation error: {e}")
 
         def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
@@ -705,7 +759,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return self._generate_password_with_retries(length)
 
             except Exception as e:
-                self.log_operation(operation="Password generation failed")
+                self.log_error("Password generation failed")
                 return FlextResult.fail(f"Password generation error: {e}")
 
         def _validate_password_length(self, length: int) -> str | None:
@@ -762,7 +816,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             max_length=255,
         )
         occurred_at: datetime = Field(
-            default_factory=FlextUtilities.TimeUtils.get_timestamp_utc,
+            default_factory=datetime.now,
             description="When the domain event occurred using FlextUtilities SOURCE OF TRUTH",
         )
 
@@ -805,7 +859,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=created_by,
-                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
+                occurred_at=datetime.now(),
             )
 
     class UserDeletedEvent(_BaseDomainEvent):
@@ -826,7 +880,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=deleted_by,
-                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
+                occurred_at=datetime.now(),
             )
 
     class GroupMemberAddedEvent(_BaseDomainEvent):
@@ -847,7 +901,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 group_dn=group_dn,
                 member_dn=member_dn,
                 actor=added_by,
-                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
+                occurred_at=datetime.now(),
             )
 
     class PasswordChangedEvent(_BaseDomainEvent):
@@ -869,7 +923,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 changed_by=changed_by,
                 actor=changed_by,
                 is_self_change=user_dn == changed_by,
-                occurred_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
+                occurred_at=datetime.now(),
             )
 
     # ==========================================================================
@@ -1424,7 +1478,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     operations,
                 )
             except Exception as e:
-                self.log_operation(operation=f"{entity_type} creation failed")
+                self.log_error(f"{entity_type} creation failed")
                 return FlextResult.fail(f"{entity_type} creation error: {e}")
 
         def _execute_entity_creation_pipeline(

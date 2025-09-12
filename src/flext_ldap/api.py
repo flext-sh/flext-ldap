@@ -17,37 +17,38 @@ from flext_core import (
     FlextMixins,
     FlextResult,
     FlextTypes,
-    FlextValidations,
 )
 
+from flext_ldap.config import FlextLDAPConfig, get_flext_ldap_config
 from flext_ldap.container import FlextLDAPContainer
+from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
-from flext_ldap.settings import FlextLDAPSettings
 from flext_ldap.typings import LdapAttributeDict
 
 # Python 3.13 type aliases
 type ApiRequest = FlextTypes.Core.Dict
 type ApiResponse = FlextResult[object]
 
-# FlextLogger available via FlextMixins.Service inheritance
+# FlextLogger available via FlextMixins.Loggable inheritance
 
 
-class FlextLDAPApi(FlextMixins.Service):
-    """High-level LDAP API facade using FlextMixins.Service for logging and utilities."""
+class FlextLDAPApi(FlextMixins.Loggable):
+    """High-level LDAP API facade using FlextMixins.Loggable for logging and utilities."""
 
-    def __init__(self, config: FlextLDAPSettings | None = None) -> None:
-        """Initialize API using FlextMixins.Service patterns."""
-        # Initialize FlextMixins.Service
+    def __init__(self, config: FlextLDAPConfig | None = None) -> None:
+        """Initialize API using FlextMixins.Loggable patterns with FlextLDAPConfig singleton."""
+        # Initialize FlextMixins.Loggable
         super().__init__()
-        self._config = config or FlextLDAPSettings()
+        # Use FlextLDAPConfig singleton as single source of truth
+        self._config = config or get_flext_ldap_config()
         self._container_manager = FlextLDAPContainer()
         self._container = self._container_manager.get_container()
         self._service = FlextLDAPServices(self._container)
 
         self.log_info(
-            "FlextLDAPApi initialized with clean architecture", api="FlextLDAPApi"
+            "FlextLDAPApi initialized with FlextLDAPConfig singleton", api="FlextLDAPApi"
         )
 
     @cached_property
@@ -483,39 +484,23 @@ class FlextLDAPApi(FlextMixins.Service):
     # Validation Methods
 
     def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate distinguished name format using FlextValidations SOURCE OF TRUTH."""
-        result = FlextValidations.Rules.StringRules.validate_non_empty(dn)
-        if result.is_failure:
-            return FlextResult[None].fail(result.error or "DN validation failed")
-
-        # Validate DN format pattern
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-            dn, r"^[a-zA-Z]+=.+", "DN format"
-        )
-        if pattern_result.is_failure:
-            return FlextResult[None].fail(pattern_result.error or "Invalid DN format")
-
-        return FlextResult[None].ok(None)
+        """Validate distinguished name format using centralized validation - SOURCE OF TRUTH."""
+        return FlextLDAPDomain.CentralizedValidations.validate_dn(dn)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP search filter using FlextValidations SOURCE OF TRUTH."""
-        result = FlextValidations.Rules.StringRules.validate_pattern(
-            filter_str, r"^\(.+\)$", "LDAP filter"
-        )
-        if result.is_failure:
-            return FlextResult[None].fail(result.error or "Filter validation failed")
-        return FlextResult[None].ok(None)
+        """Validate LDAP search filter using centralized validation - SOURCE OF TRUTH."""
+        return FlextLDAPDomain.CentralizedValidations.validate_filter(filter_str)
 
     @classmethod
-    def create(cls, config: FlextLDAPSettings | None = None) -> FlextLDAPApi:
+    def create(cls, config: FlextLDAPConfig | None = None) -> FlextLDAPApi:
         """Create FlextLDAP API instance with dependency injection.
 
         Factory method following flext-core pattern for consistent API access
-        across the FLEXT ecosystem. Provides proper dependency injection and
-        service layer initialization.
+        across the FLEXT ecosystem. Uses FlextLDAPConfig singleton as single
+        source of truth for configuration.
 
         Args:
-            config: Optional LDAP configuration. If None, uses environment variables.
+            config: Optional LDAP configuration. If None, uses FlextLDAPConfig singleton.
 
         Returns:
             Configured FlextLDAPApi instance ready for LDAP operations.
@@ -530,7 +515,7 @@ class FlextLDAPApi(FlextMixins.Service):
         return cls(config)
 
 
-def get_flext_ldap_api(config: FlextLDAPSettings | None = None) -> FlextLDAPApi:
+def get_flext_ldap_api(config: FlextLDAPConfig | None = None) -> FlextLDAPApi:
     """Get FlextLDAP API instance - factory function following flext-core pattern.
 
     Convenience function that wraps FlextLDAPApi.create() for consistent

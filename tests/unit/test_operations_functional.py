@@ -25,6 +25,7 @@ from flext_core import (
     FlextProcessors,
     FlextResult,
     FlextTypes,
+    FlextUtilities,
     FlextValidations,
 )
 from pydantic import ValidationError
@@ -1082,12 +1083,10 @@ class TestOperationsInternalMethods:
 
     def test_generate_id_multiple_calls(self) -> None:
         """Test generate_id method with multiple calls for uniqueness."""
-        operations = FlextLDAPOperations()
-
-        # Generate multiple IDs to test uniqueness and coverage
+        # Generate multiple IDs to test uniqueness and coverage using FlextUtilities directly
         generated_ids = []
         for _ in range(10):
-            new_id = operations.generate_id()
+            new_id = FlextUtilities.Generators.generate_entity_id()
             assert isinstance(new_id, str)
             assert len(new_id) > 0
             generated_ids.append(new_id)
