@@ -53,7 +53,7 @@ SCOPE_MAP: dict[str, LdapScope] = {
 
 
 class FlextLDAPClient(
-    FlextMixins.Service, FlextProtocols.Infrastructure.LdapConnection
+    FlextMixins.Service, FlextProtocols.Infrastructure.Connection
 ):
     """UNIFIED LDAP client - consolidates all LDAP functionality in single class following SOLID."""
 

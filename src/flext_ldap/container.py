@@ -15,6 +15,7 @@ from flext_core import (
 )
 
 from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.settings import FlextLDAPSettings
 
@@ -28,11 +29,11 @@ T = TypeVar("T")
 
 
 @final
-class FlextLDAPContainer(FlextMixins.Service):
+class FlextLDAPContainer(FlextMixins.Loggable):
     """FLEXT-LDAP Container - Direct dependency injection using FlextContainer only.
 
     Uses FlextContainer from flext-core exclusively, NO custom registry duplication.
-    Implements proper singleton pattern with logging via FlextMixins.Service.
+    Implements proper singleton pattern with logging via FlextMixins.Loggable.
     """
 
     def __init__(self, **data: object) -> None:
@@ -170,10 +171,15 @@ class FlextLDAPContainer(FlextMixins.Service):
                     client = client_factory()
                 return FlextLDAPRepositories(client)
 
+            def operations_factory() -> FlextLDAPOperations:
+                """Factory for LDAP operations."""
+                return FlextLDAPOperations()
+
             # Register service factories in FlextContainer
             services = [
                 ("ldap_client_factory", client_factory),
                 ("ldap_repository_factory", repository_factory),
+                ("operations", operations_factory),
             ]
 
             # Register all service factories in FlextContainer

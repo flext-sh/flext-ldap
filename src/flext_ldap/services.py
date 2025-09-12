@@ -6,19 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import cached_property
 from typing import cast
 
 from flext_core import (
     FlextContainer,
+    FlextProcessing,
     FlextResult,
-    FlextServices,
     FlextTypes,
-    FlextValidations,
+    FlextUtilities,
 )
 
 from flext_ldap.container import FlextLDAPContainer
+from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
+from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.typings import LdapAttributeDict
 
@@ -31,17 +34,19 @@ type LDAPResult = FlextTypes.Core.Dict
 type RepositoryInstance = FlextLDAPRepositories.Repository
 
 
-class FlextLDAPServices(
-    FlextServices.ServiceProcessor[LDAPRequest, LDAPDomain, LDAPResult]
-):
-    """LDAP operations service using FlextServices.ServiceProcessor pattern."""
+class FlextLDAPServices(FlextProcessing.Handler):
+    """LDAP operations service using FlextProcessing.Handler pattern."""
 
     def __init__(self, container: FlextContainer | None = None) -> None:
-        """Initialize LDAP services using FlextServices patterns."""
-        # Initialize FlextServices.ServiceProcessor (which includes FlextMixins.Service)
+        """Initialize LDAP services using FlextProcessing patterns."""
+        # Initialize FlextProcessing.Handler
         super().__init__()
         self._ldap_container = FlextLDAPContainer()
         self._container = container or self._ldap_container.get_container()
+
+    def handle(self, request: LDAPRequest) -> FlextResult[LDAPDomain]:
+        """Handle LDAP request - implements FlextProcessing.Handler.handle()."""
+        return self.process(request)
 
     def process(self, request: LDAPRequest) -> FlextResult[LDAPDomain]:
         """Process LDAP request using Python 3.13 pattern matching - implements ServiceProcessor.process()."""
@@ -199,12 +204,12 @@ class FlextLDAPServices(
         return FlextResult.ok(self._repository)
 
     async def initialize(self) -> FlextResult[None]:
-        """Initialize service using FlextServices logging."""
+        """Initialize service using FlextProcessing logging."""
         self.log_info("LDAP service initializing", service="FlextLDAPServices")
         return FlextResult[None].ok(None)
 
     async def cleanup(self) -> FlextResult[None]:
-        """Cleanup service using FlextServices logging."""
+        """Cleanup service using FlextProcessing logging."""
         self.log_info("LDAP service cleaning up", service="FlextLDAPServices")
         # Handle different container types safely using getattr for type safety
         reset_method = getattr(self._container, "reset", None)
@@ -381,7 +386,7 @@ class FlextLDAPServices(
         self,
         group: FlextLDAPEntities.Group,
     ) -> FlextResult[FlextLDAPEntities.Group]:
-        """Create new LDAP group."""
+        """Create new LDAP group using operations layer."""
         # Validate group business rules
         validation_result = group.validate_business_rules()
         if not validation_result.is_success:
@@ -389,16 +394,27 @@ class FlextLDAPServices(
                 f"Group validation failed: {validation_result.error}",
             )
 
-        # Use cached repository for performance
-        repository = self._repository
-        save_method = getattr(repository, "save_async", None)
-        if save_method is None:
-            return FlextResult.fail("Repository does not support save_async method")
-        save_result = await save_method(group)
-
-        if not save_result.is_success:
+        # Get operations from container
+        operations_result = self._container.get("operations")
+        if not operations_result.is_success:
             return FlextResult.fail(
-                save_result.error or "Group save failed",
+                f"LDAP operations not available: {operations_result.error}"
+            )
+        operations_factory = cast("Callable[[], FlextLDAPOperations]", operations_result.value)
+        operations = operations_factory()
+
+        # Use group operations to create group
+        create_result = await operations.groups.create_group(
+            connection_id="default",
+            dn=group.dn,
+            cn=group.cn,
+            description=group.description,
+            initial_members=group.members,
+        )
+
+        if not create_result.is_success:
+            return FlextResult.fail(
+                create_result.error or "Group creation failed",
             )
 
         self.log_info(
@@ -408,31 +424,45 @@ class FlextLDAPServices(
             cn=group.cn,
             execution_context="FlextLDAPServices.create_group",
         )
-        return FlextResult.ok(group)
+        return FlextResult.ok(create_result.value)
 
     async def get_group(self, dn: str) -> FlextResult[FlextLDAPEntities.Group | None]:
-        """Get group by DN using cached repository."""
-        # Use cached repository for performance
-        repository = self._repository
-        find_method = getattr(repository, "find_by_dn", None)
-        if find_method is None:
-            return FlextResult.fail("Repository does not support find_by_dn method")
-        entry_result = await find_method(dn)
-        if not entry_result.is_success:
+        """Get group by DN using operations layer."""
+        # Get operations from container
+        operations_result = self._container.get("operations")
+        if not operations_result.is_success:
             return FlextResult.fail(
-                entry_result.error or "Failed to find entry",
+                f"LDAP operations not available: {operations_result.error}"
+            )
+        operations_factory = cast("Callable[[], FlextLDAPOperations]", operations_result.value)
+        operations = operations_factory()
+
+        # Use search operations to find group
+        search_params = FlextLDAPEntities.SearchParams(
+            connection_id="default",
+            base_dn=dn,
+            search_filter="(objectClass=groupOfNames)",
+            scope="base",
+            attributes=["cn", "description", "member"],
+            size_limit=1,
+        )
+        search_result = await operations.search.search_entries(search_params)
+
+        if not search_result.is_success:
+            return FlextResult.fail(
+                search_result.error or "Failed to search for group",
             )
 
-        if entry_result.value is None:
+        if not search_result.value.entries:
             return FlextResult.ok(None)
 
-        # Convert entry to group using Python 3.13 pattern matching for attributes
-        entry = entry_result.value
+        # Convert first entry to group
+        entry_dict = search_result.value.entries[0]
 
-        # Python 3.13 optimized attribute extraction with pattern matching
+        # Extract group attributes
         def extract_group_attr(attr_name: str) -> str:
             """Extract group attribute using pattern matching."""
-            match entry.attributes.get(attr_name):
+            match entry_dict.get(attr_name):
                 case [first, *_] if isinstance(first, str):
                     return first
                 case str(value):
@@ -442,7 +472,7 @@ class FlextLDAPServices(
 
         def extract_members() -> list[str]:
             """Extract members list using pattern matching."""
-            match entry.attributes.get("member"):
+            match entry_dict.get("member"):
                 case list(members):
                     return [str(m) for m in members if m]
                 case str(single_member):
@@ -450,15 +480,16 @@ class FlextLDAPServices(
                 case _:
                     return []
 
+        # Create group from dict data
         group = FlextLDAPEntities.Group(
-            id=entry.id,
-            dn=entry.dn,
+            id=FlextUtilities.Generators.generate_entity_id(),
+            dn=str(entry_dict.get("dn", "")),
             cn=extract_group_attr("cn"),
-            object_classes=entry.object_classes,
+            object_classes=["groupOfNames"],
             members=extract_members(),
-            status=entry.status,
+            status="active",
             description=extract_group_attr("description"),
-            modified_at=entry.modified_at,
+            modified_at=datetime.now(),
         )
 
         return FlextResult.ok(group)
@@ -591,28 +622,12 @@ class FlextLDAPServices(
 
     # Validation methods needed by API
     def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-        result = FlextValidations.Rules.StringRules.validate_non_empty(dn)
-        if result.is_failure:
-            return FlextResult[None].fail(result.error or "DN validation failed")
-
-        # Validate DN format pattern
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-            dn, r"^[a-zA-Z]+=.+", "DN format"
-        )
-        if pattern_result.is_failure:
-            return FlextResult[None].fail(pattern_result.error or "Invalid DN format")
-
-        return FlextResult[None].ok(None)
+        """Validate DN format using centralized validation - SOURCE OF TRUTH."""
+        return FlextLDAPDomain.CentralizedValidations.validate_dn(dn)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP filter format using FlextValidations SOURCE OF TRUTH."""
-        result = FlextValidations.Rules.StringRules.validate_pattern(
-            filter_str, r"^\(.+\)$", "LDAP filter"
-        )
-        if result.is_failure:
-            return FlextResult[None].fail(result.error or "Filter validation failed")
-        return FlextResult[None].ok(None)
+        """Validate LDAP filter format using centralized validation - SOURCE OF TRUTH."""
+        return FlextLDAPDomain.CentralizedValidations.validate_filter(filter_str)
 
     # =========================================================================
     # SEARCH OPERATIONS - Consolidated search functionality

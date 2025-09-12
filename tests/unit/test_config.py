@@ -15,6 +15,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_ldap import FlextLDAPSettings
+from flext_ldap.config import FlextLDAPConfig
 
 
 class TestRealFlextLDAPSettings:
@@ -89,8 +90,8 @@ class TestRealFlextLDAPSettings:
         assert isinstance(data, dict)
 
         # Test deserialization works
-        restored = FlextLDAPSettings.model_validate(data)
-        assert isinstance(restored, FlextLDAPSettings)
+        restored = FlextLDAPConfig.model_validate(data)
+        assert isinstance(restored, FlextLDAPConfig)
 
     def test_multiple_settings_instances_are_independent(self) -> None:
         """Test multiple FlextLDAPSettings instances are independent."""
@@ -119,14 +120,14 @@ class TestRealFlextLDAPSettings:
         # Test with obviously invalid data types
         try:
             # This should work - empty dict
-            FlextLDAPSettings.model_validate({})
+            FlextLDAPConfig.model_validate({})
         except ValidationError:
             # If validation fails, that's also valid behavior
             pass
 
         # Test with clearly invalid data
         with pytest.raises(ValidationError):
-            FlextLDAPSettings.model_validate(
+            FlextLDAPConfig.model_validate(
                 {
                     "invalid_field": "value",
                     "port": "not_an_int",
@@ -184,7 +185,7 @@ class TestRealConfigErrorHandling:
 
         for invalid_config in invalid_configs:
             try:
-                FlextLDAPSettings.model_validate(invalid_config)
+                FlextLDAPConfig.model_validate(invalid_config)
                 # If it doesn't raise an error, that's also valid behavior
             except ValidationError:
                 # Expected behavior for invalid configuration
@@ -194,7 +195,7 @@ class TestRealConfigErrorHandling:
         """Test that settings provides helpful error messages on validation failure."""
         # Test with clearly invalid data
         try:
-            FlextLDAPSettings.model_validate({"port": "not_a_number"})
+            FlextLDAPConfig.model_validate({"port": "not_a_number"})
         except ValidationError as e:
             error_str = str(e)
             # Should contain information about the validation failure

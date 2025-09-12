@@ -2,6 +2,9 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT.
+
+CONFIGURATION: Use FlextLDAPConfig.get_global_instance() as the single source of truth.
+FlextLDAPSettings is deprecated and delegates to FlextLDAPConfig singleton.
 """
 
 from __future__ import annotations
@@ -11,6 +14,11 @@ from flext_ldap.adapters import FlextLDAPAdapters
 # Import all key classes directly for explicit exports
 from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.clients import SCOPE_MAP, FlextLDAPClient, LdapScope
+from flext_ldap.config import (
+    FlextLDAPConfig,
+    get_flext_ldap_config,
+    set_flext_ldap_config,
+)
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.container import FlextLDAPContainer
@@ -23,7 +31,7 @@ from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
-from flext_ldap.settings import FlextLDAPSettings
+from flext_ldap.settings import FlextLDAPSettings  # DEPRECATED: Use FlextLDAPConfig
 from flext_ldap.type_guards import FlextLDAPTypeGuards
 from flext_ldap.typings import (
     FlextLDAPTypes,
@@ -46,6 +54,7 @@ __all__ = [
     "FlextLDAPAdapters",
     "FlextLDAPApi",
     "FlextLDAPClient",
+    "FlextLDAPConfig",
     "FlextLDAPConnectionConfig",
     "FlextLDAPConstants",
     "FlextLDAPContainer",
@@ -72,4 +81,6 @@ __all__ = [
     "__version__",
     "__version_info__",
     "get_flext_ldap_api",
+    "get_flext_ldap_config",
+    "set_flext_ldap_config",
 ]

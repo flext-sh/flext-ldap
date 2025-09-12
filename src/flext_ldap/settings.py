@@ -1,7 +1,7 @@
 """FLEXT LDAP Settings - Single class following flext-core patterns.
 
 Unified settings class consolidating ALL LDAP configuration using Pydantic models
-and flext-core patterns. Eliminates separate config classes.
+and flext-core patterns. Now uses FlextLDAPConfig as the single source of truth.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,12 +14,14 @@ from pathlib import Path
 from typing import final, override
 
 import yaml
-from flext_core import FlextConfig, FlextResult, FlextTypes
-from pydantic import Field, SecretStr
-from pydantic_settings import SettingsConfigDict
+from flext_core import FlextResult, FlextTypes
 
+from flext_ldap.config import (
+    FlextLDAPConfig,
+    get_flext_ldap_config,
+    set_flext_ldap_config,
+)
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # Python 3.13 type aliases for LDAP settings
 type LdapSettingsDict = FlextTypes.Core.Dict
@@ -30,202 +32,63 @@ yaml_module: object | None = yaml
 
 
 @final
-class FlextLDAPSettings(FlextConfig):
-    """Single FLEXT LDAP Settings class following flext-core patterns.
+class FlextLDAPSettings:
+    """FLEXT LDAP Settings - Simple wrapper around FlextLDAPConfig singleton.
 
-    Consolidates ALL LDAP configuration including auth, search, logging, and
-    connection settings using Pydantic and flext-core patterns.
+    This class provides backward compatibility while delegating to the singleton
+    FlextLDAPConfig instance for actual configuration management.
 
-    Uses Python 3.13 type aliases and final decorator for enhanced type safety.
-    No separate config classes, no custom configuration helpers.
+    DEPRECATED: Use FlextLDAPConfig.get_global_instance() directly for new code.
     """
 
-    model_config = SettingsConfigDict(
-        populate_by_name=True,
-        extra="ignore",  # Allow client-a and other project-specific environment variables
-        validate_assignment=True,
-        use_enum_values=True,
-    )
+    def __init__(self) -> None:
+        """Initialize settings by delegating to FlextLDAPConfig singleton."""
+        # Store reference to singleton
+        self._ldap_config = get_flext_ldap_config()
 
-    # Primary connection configuration
-    default_connection: FlextLDAPConnectionConfig | None = Field(
-        default=None,
-        description="Default connection configuration",
-        alias="connection",
-    )
+    def __getattr__(self, name: str) -> object:
+        """Delegate all attribute access to the singleton FlextLDAPConfig."""
+        return getattr(self._ldap_config, name)
 
-    # Authentication configuration (direct fields)
-    bind_dn: str | None = Field(
-        default=None,
-        description="Distinguished Name for binding",
-        min_length=3,
-    )
-    bind_password: SecretStr | None = Field(
-        default=None,
-        description="Password for binding (secure)",
-    )
-    use_ssl: bool = Field(
-        default=False,
-        description="Use SSL/TLS for connection",
-    )
-    verify_certificates: bool = Field(
-        default=True,
-        description="Verify SSL certificates",
-    )
+    def __setattr__(self, name: str, value: object) -> None:
+        """Delegate attribute setting to the singleton FlextLDAPConfig."""
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            setattr(self._ldap_config, name, value)
 
-    # Search configuration (direct fields)
-    default_scope: str = Field(
-        default=FlextLDAPValueObjects.Scope.subtree().scope,
-        description="Default search scope",
-    )
-    size_limit: int = Field(
-        default=1000,
-        description="Maximum search results",
-        gt=0,
-        le=10000,
-    )
-    time_limit: int = Field(
-        default=30,
-        description="Search timeout in seconds",
-        gt=0,
-        le=300,
-    )
-    page_size: int = Field(
-        default=100,
-        description="Paging size for large results",
-        gt=0,
-        le=1000,
-    )
-
-    # Logging configuration (direct fields)
-    enable_debug: bool = Field(
-        default=False,
-        description="Enable debug logging",
-    )
-    log_queries: bool = Field(
-        default=False,
-        description="Log LDAP queries",
-    )
-    log_responses: bool = Field(
-        default=False,
-        description="Log LDAP responses",
-    )
-    structured_logging: bool = Field(
-        default=True,
-        description="Enable structured (JSON) logging",
-    )
-
-    # Performance tuning
-    enable_caching: bool = Field(
-        default=False,
-        description="Enable result caching",
-    )
-    cache_ttl: int = Field(
-        default=300,
-        description="Cache TTL in seconds",
-        gt=0,
-        le=3600,
-    )
-
-    # Development settings
-    enable_debug_mode: bool = Field(
-        default=False,
-        description="Enable debug mode with verbose logging",
-    )
-    enable_test_mode: bool = Field(
-        default=False,
-        description="Enable test mode",
-    )
+    # No fields needed - all delegated to FlextLDAPConfig singleton
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate complete settings configuration using Railway Pattern - ELIMINATES 9 returns."""
-        # Use Railway Pattern to chain validations - eliminates multiple returns
-        return (
-            FlextResult[None]
-            .ok(None)
-            .flat_map(lambda _: self._validate_default_connection())
-            .flat_map(lambda _: self._validate_cache_settings())
-            .flat_map(lambda _: self._validate_search_configuration())
-            .flat_map(lambda _: self._validate_auth_configuration())
-        )
+        """Validate settings by delegating to FlextLDAPConfig singleton."""
+        return self._ldap_config.validate_business_rules()
 
-    def _validate_default_connection(self) -> FlextResult[None]:
-        """Validate default connection settings.
-
-        Returns:
-            FlextResult[None]: Validation result.
-
-        """
-        if not self.default_connection:
-            return FlextResult.ok(None)
-
-        if not self.default_connection.server:
-            return FlextResult.fail("Default connection must specify a server")
-
-        return self.default_connection.validate_business_rules()
-
-    def _validate_cache_settings(self) -> FlextResult[None]:
-        """Validate cache configuration."""
-        if self.enable_caching and self.cache_ttl <= 0:
-            return FlextResult.fail(
-                "Cache TTL must be positive when caching is enabled",
-            )
-        return FlextResult.ok(None)
-
-    def _validate_search_configuration(self) -> FlextResult[None]:
-        """Validate search limits configuration."""
-        if self.size_limit <= 0:
-            return FlextResult.fail("Size limit must be positive")
-        if self.time_limit <= 0:
-            return FlextResult.fail("Time limit must be positive")
-        if self.page_size <= 0:
-            return FlextResult.fail("Page size must be positive")
-        return FlextResult.ok(None)
-
-    def _validate_auth_configuration(self) -> FlextResult[None]:
-        """Validate authentication configuration."""
-        if self.bind_dn and not self.bind_dn.strip():
-            return FlextResult.fail("Bind DN cannot be empty")
-        if self.bind_password and len(self.bind_password.get_secret_value()) < 1:
-            return FlextResult.fail("Bind password cannot be empty")
-        return FlextResult.ok(None)
+    # All validation methods delegated to FlextLDAPConfig singleton
 
     def get_effective_connection(
         self,
         override: FlextLDAPConnectionConfig | None = None,
     ) -> FlextLDAPConnectionConfig:
         """Get effective connection configuration with optional override."""
-        if override:
-            return override
-
-        if self.default_connection:
-            return self.default_connection
-
-        # Return minimal default configuration
-        return FlextLDAPConnectionConfig()
+        # Delegate to FlextLDAPConfig singleton
+        return self._ldap_config.get_effective_connection(override)
 
     def get_effective_auth_config(self) -> FlextTypes.Core.Dict | None:
         """Get effective authentication configuration as dictionary."""
-        if self.bind_dn and self.bind_password:
-            return {
-                "bind_dn": self.bind_dn,
-                "bind_password": self.bind_password,
-                "use_ssl": self.use_ssl,
-                "verify_certificates": self.verify_certificates,
-            }
-        return None
+        # Delegate to FlextLDAPConfig singleton
+        return self._ldap_config.get_effective_auth_config()
 
     # Testing convenience: expose `.connection` attribute used by some callers/tests
     @property
     def connection(self) -> FlextLDAPConnectionConfig | None:
         """Get connection configuration."""
-        return self.default_connection
+        return self._ldap_config.ldap_default_connection
 
     @connection.setter
     def connection(self, value: FlextLDAPConnectionConfig | None) -> None:
         """Set connection configuration."""
-        self.default_connection = value
+        self._ldap_config.update_connection_config(value)
 
     # Removed unnecessary alias method - use validate_business_rules() directly per SOURCE OF TRUTH
 
@@ -233,69 +96,14 @@ class FlextLDAPSettings(FlextConfig):
     def from_env(cls) -> FlextLDAPSettings:
         """Create FlextLDAPSettings from environment variables.
 
-        Raises:
-            ValueError: If required environment variables are missing.
+        Now delegates to FlextLDAPConfig singleton for environment loading.
 
         Returns:
-            "FlextLDAPSettings":: Description of return value.
+            FlextLDAPSettings: Settings instance using FlextLDAPConfig singleton
 
         """
-        # Error messages as constants
-        host_error = "FLEXT_LDAP_HOST environment variable is required"
-        port_error = "FLEXT_LDAP_PORT environment variable is required"
-        bind_dn_error = "FLEXT_LDAP_BIND_DN environment variable is required"
-        bind_credential_error = (
-            "FLEXT_LDAP_BIND_PASSWORD environment variable is required"
-        )
-        base_dn_error = "FLEXT_LDAP_BASE_DN environment variable is required"
-
-        # Check for required environment variables
-        host_result = FlextConfig.get_env_var("FLEXT_LDAP_HOST")
-        if not host_result.is_success:
-            raise ValueError(host_error)
-
-        port_result = FlextConfig.get_env_var("FLEXT_LDAP_PORT")
-        if not port_result.is_success:
-            raise ValueError(port_error)
-
-        bind_dn_result = FlextConfig.get_env_var("FLEXT_LDAP_BIND_DN")
-        if not bind_dn_result.is_success:
-            raise ValueError(bind_dn_error)
-
-        bind_password_result = FlextConfig.get_env_var("FLEXT_LDAP_BIND_PASSWORD")
-        if not bind_password_result.is_success:
-            raise ValueError(bind_credential_error)
-
-        base_dn_result = FlextConfig.get_env_var("FLEXT_LDAP_BASE_DN")
-        if not base_dn_result.is_success:
-            raise ValueError(base_dn_error)
-
-        # Get optional values
-        use_ssl_result = FlextConfig.get_env_var("FLEXT_LDAP_USE_SSL")
-        use_ssl = (
-            use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
-            if use_ssl_result.is_success
-            else False
-        )
-
-        # Use direct auth fields
-        bind_dn = bind_dn_result.value
-        bind_password = SecretStr(bind_password_result.value)
-
-        # Create connection config - only with valid fields
-        connection_config = FlextLDAPConnectionConfig(
-            server=host_result.value,
-            port=int(port_result.value),
-        )
-
-        # Create settings with unified fields
-        config_data: FlextTypes.Core.Dict = {
-            "default_connection": connection_config,
-            "bind_dn": bind_dn,
-            "bind_password": bind_password,
-            "use_ssl": use_ssl,
-        }
-        return cls.model_validate(config_data)
+        # Create settings instance that delegates to the singleton
+        return cls()
 
     @classmethod
     def from_file(cls, file_path: str) -> FlextResult[FlextLDAPSettings]:
@@ -375,75 +183,48 @@ class FlextLDAPSettings(FlextConfig):
 
     @classmethod
     def create_development(cls) -> FlextLDAPSettings:
-        """Create development configuration."""
-        connection_config = FlextLDAPConnectionConfig(
-            server="ldap://localhost",
-            port=389,
-        )
+        """Create development configuration using FlextLDAPConfig singleton."""
+        # Create development LDAP config
+        dev_config_result = FlextLDAPConfig.create_development_ldap_config()
+        if dev_config_result.is_failure:
+            error_msg = f"Failed to create development config: {dev_config_result.error}"
+            raise ValueError(error_msg)
 
-        # Use direct field assignments
-        config_data: FlextTypes.Core.Dict = {
-            "default_connection": connection_config,
-            "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=local",
-            "bind_password": SecretStr("REDACTED_LDAP_BIND_PASSWORD123"),
-            "use_ssl": False,
-            "verify_certificates": False,
-            "enable_debug": True,
-            "log_queries": True,
-            "structured_logging": True,
-            "enable_debug_mode": True,
-            "enable_caching": False,
-        }
-        return cls.model_validate(config_data)
+        # Set as global instance
+        set_flext_ldap_config(dev_config_result.value)
+
+        # Return settings instance that delegates to singleton
+        return cls()
 
     @classmethod
     def create_test(cls) -> FlextLDAPSettings:
-        """Create test configuration."""
-        connection_config = FlextLDAPConnectionConfig(
-            server="ldap://localhost",
-            port=3389,
-        )
+        """Create test configuration using FlextLDAPConfig singleton."""
+        # Create test LDAP config
+        test_config_result = FlextLDAPConfig.create_test_ldap_config()
+        if test_config_result.is_failure:
+            error_msg = f"Failed to create test config: {test_config_result.error}"
+            raise ValueError(error_msg)
 
-        # Use direct field assignments
-        config_data: FlextTypes.Core.Dict = {
-            "default_connection": connection_config,
-            "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
-            "bind_password": SecretStr("test123"),
-            "use_ssl": False,
-            "verify_certificates": False,
-            "enable_debug": False,
-            "log_queries": False,
-            "structured_logging": False,
-            "enable_test_mode": True,
-            "enable_caching": False,
-        }
-        return cls.model_validate(config_data)
+        # Set as global instance
+        set_flext_ldap_config(test_config_result.value)
+
+        # Return settings instance that delegates to singleton
+        return cls()
 
     @classmethod
     def create_production(cls) -> FlextLDAPSettings:
-        """Create production configuration."""
-        connection_config = FlextLDAPConnectionConfig(
-            server="ldaps://ldap.company.com",
-            port=636,
-            use_ssl=True,
-            verify_ssl=True,
-        )
+        """Create production configuration using FlextLDAPConfig singleton."""
+        # Create production LDAP config
+        prod_config_result = FlextLDAPConfig.create_production_ldap_config()
+        if prod_config_result.is_failure:
+            error_msg = f"Failed to create production config: {prod_config_result.error}"
+            raise ValueError(error_msg)
 
-        # Use direct field assignments
-        config_data: FlextTypes.Core.Dict = {
-            "default_connection": connection_config,
-            "bind_dn": "cn=service,ou=accounts,dc=company,dc=com",
-            "bind_password": SecretStr("${LDAP_BIND_PASSWORD}"),
-            "use_ssl": True,
-            "verify_certificates": True,
-            "enable_debug": False,
-            "log_queries": False,
-            "structured_logging": True,
-            "enable_debug_mode": False,
-            "enable_caching": True,
-            "cache_ttl": 600,
-        }
-        return cls.model_validate(config_data)
+        # Set as global instance
+        set_flext_ldap_config(prod_config_result.value)
+
+        # Return settings instance that delegates to singleton
+        return cls()
 
 
 __all__ = [

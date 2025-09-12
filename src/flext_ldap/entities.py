@@ -18,7 +18,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextTypes,
-    FlextUtilities,
     FlextValidations,
 )
 from pydantic import (
@@ -262,7 +261,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
             return FlextResult.ok(None)
 
-    class SearchParams(FlextModels.Config, FlextMixins.Loggable):
+    class SearchParams(FlextMixins.Loggable):
         """Unified parameter object for search operations across all components.
 
         Consolidates all SearchParams classes from operations.py, repositories.py,
@@ -435,11 +434,11 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
         @field_validator("id", mode="before")
         @classmethod
-        def convert_entity_id(cls, v: str | FlextModels.EntityId) -> str:
+        def convert_entity_id(cls, v: str) -> str:
             """Convert EntityId to string if needed."""
-            # Handle FlextModels.EntityId objects
-            if isinstance(v, FlextModels.EntityId):
-                return str(v)
+            # Handle string objects
+            if isinstance(v, str):
+                return v
             # Handle string and other types
             return str(v)
 
@@ -459,8 +458,8 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
         # Entity metadata
         created_at: datetime = Field(
-            default_factory=FlextUtilities.TimeUtils.get_timestamp_utc,
-            description="Creation timestamp using FlextUtilities SOURCE OF TRUTH",
+            default_factory=datetime.now,
+            description="Creation timestamp",
         )
         modified_at: datetime | None = Field(
             None,
@@ -518,7 +517,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             self.attributes[name] = value
             # Use model field assignment through __setattr__
             object.__setattr__(
-                self, "modified_at", FlextUtilities.TimeUtils.get_timestamp_utc()
+                self, "modified_at", datetime.now()
             )
 
     class User(Entry):
@@ -616,7 +615,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = FlextUtilities.TimeUtils.get_timestamp_utc()
+                self.modified_at = datetime.now()
                 return FlextResult.ok(None)
             return FlextResult.ok(None)  # Already a member, no-op
 
@@ -624,7 +623,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = FlextUtilities.TimeUtils.get_timestamp_utc()
+                self.modified_at = datetime.now()
                 return FlextResult.ok(None)
             return FlextResult.fail(f"Member {member_dn} not found in group")
 

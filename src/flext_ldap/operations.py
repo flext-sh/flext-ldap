@@ -14,12 +14,10 @@ from typing import (
 
 from flext_core import (
     FlextExceptions,
-    FlextProcessors,
+    FlextMixins,
     FlextResult,
-    FlextServices,
     FlextTypes,
     FlextUtilities,
-    FlextValidations,
 )
 from pydantic import (
     BaseModel,
@@ -31,6 +29,7 @@ from pydantic import (
 )
 
 from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
@@ -46,8 +45,25 @@ type ConnectionId = str
 # Use FlextLDAPEntities.SearchParams instead
 
 
+# LDAP MONSTER FILE: 2218 LINES COM 129 CLASSES/MÉTODOS!
+# GOD OBJECT HELL: Uma classe para TODAS as operações LDAP!
+# PATTERN SOUP: Strategy + Command + Result patterns para LDAP básico!
+# PYTHON 3.13 MARKETING: "Advanced patterns" para justify complexity!
+
 class FlextLDAPOperations:
-    """Consolidated LDAP operations with Python 3.13 advanced patterns.
+    """MONSTER LDAP CLASS: 2218 lines of LDAP over-engineering!
+
+    ARCHITECTURAL VIOLATIONS:
+    - GOD OBJECT with 129+ methods for all LDAP operations
+    - PATTERN SOUP: Strategy + Command patterns for LDAP queries
+    - "COMPREHENSIVE LDAP OPERATIONS" = God object antipattern
+    - "Python 3.13 advanced patterns" as complexity justification
+    - IMMUTABLE DATA STRUCTURES for mutable LDAP directory operations
+
+    REALITY CHECK: This should be separated into connection, query, and user management modules.
+    MIGRATE TO: python-ldap wrapper + simple query functions + connection manager.
+
+    Consolidated LDAP operations with Python 3.13 advanced patterns.
 
     Implements comprehensive LDAP operations using:
     - Advanced type hints and protocols
@@ -185,7 +201,7 @@ class FlextLDAPOperations:
                 or bool(self.attribute_filter)
             )
 
-    class LdapBaseExtractor(FlextProcessors.BaseProcessor):
+    class LdapBaseExtractor:
         """Base extractor with common methods - eliminates duplication."""
 
         def _extract_as_string(self, value: object) -> str:
@@ -309,12 +325,8 @@ class FlextLDAPOperations:
     # INTERNAL OPTIMIZED SERVICE CLASS
     # ==========================================================================
 
-    class OperationsService(
-        FlextServices.ServiceProcessor[
-            dict[str, object], dict[str, object], dict[str, object]
-        ]
-    ):
-        """Internal operations service using FlextServices.ServiceProcessor - ELIMINATES DUPLICATION."""
+    class OperationsService(FlextMixins.Loggable):
+        """Internal operations service - ELIMINATES DUPLICATION."""
 
         # Immutable configuration using FlextValidations patterns
         _operation_config: Final[dict[str, object]] = {
@@ -324,8 +336,8 @@ class FlextLDAPOperations:
         }
 
         def __init__(self) -> None:
-            """Initialize with FlextServices.ServiceProcessor - NO custom service architecture."""
-            super().__init__()  # Initializes FlextMixins.Service + ServiceProcessor
+            """Initialize service - NO custom service architecture."""
+            super().__init__()  # Initializes FlextMixins.Loggable
             self._connection_registry: dict[ConnectionId, object] = {}
 
         def process(self, request: dict[str, object]) -> FlextResult[dict[str, object]]:
@@ -351,45 +363,18 @@ class FlextLDAPOperations:
 
         # Advanced validation using FlextValidations - ELIMINATES custom validation duplication
         def validate_dn_string(self, dn: str, context: str = "DN") -> FlextResult[None]:
-            """Validate DN using FlextValidations SOURCE OF TRUTH - ELIMINATE local logic."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(dn)
-            if result.is_failure:
-                return FlextResult[None].fail(f"{context} cannot be empty")
-            return FlextResult[None].ok(None)
+            """Validate DN using centralized validation - SOURCE OF TRUTH."""
+            return FlextLDAPDomain.CentralizedValidations.validate_dn(dn, context)
 
         def validate_filter_string(self, search_filter: str) -> FlextResult[None]:
-            """Validate LDAP filter using FlextValidations SOURCE OF TRUTH - ELIMINATE local logic."""
-            result = FlextValidations.Rules.StringRules.validate_pattern(
-                search_filter, r"^\(.+\)$", "LDAP filter"
-            )
-            if result.is_failure:
-                return FlextResult[None].fail(
-                    "LDAP filter must be enclosed in parentheses"
-                )
-            return FlextResult[None].ok(None)
+            """Validate LDAP filter using centralized validation - SOURCE OF TRUTH."""
+            return FlextLDAPDomain.CentralizedValidations.validate_filter(search_filter)
 
         # ELIMINATE wrapper methods - use validate_* directly (SOLID: no unnecessary indirection)
 
         def validate_uri_string(self, server_uri: str) -> FlextResult[None]:
-            """Validate server URI using FlextValidations - NO custom URI validators."""
-            # Use FlextValidations.Rules.StringRules for basic validation
-            non_empty_result = FlextValidations.Rules.StringRules.validate_non_empty(
-                server_uri
-            )
-            if non_empty_result.is_failure:
-                return FlextResult[None].fail("Server URI cannot be empty")
-
-            # Use FlextValidations pattern matching for LDAP URI format
-            uri_pattern = r"^ldaps?://.*"
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                server_uri, uri_pattern, "LDAP URI"
-            )
-            if pattern_result.is_failure:
-                return FlextResult[None].fail(
-                    "Server URI must start with ldap:// or ldaps://"
-                )
-
-            return FlextResult[None].ok(None)
+            """Validate server URI using centralized validation - SOURCE OF TRUTH."""
+            return FlextLDAPDomain.CentralizedValidations.validate_uri(server_uri)
 
         # ELIMINATE URI wrapper - use validate_uri_string directly
 
@@ -520,7 +505,7 @@ class FlextLDAPOperations:
                 metadata = self.ConnectionMetadata(
                     server_uri=server_uri,
                     bind_dn=bind_dn,
-                    created_at=FlextUtilities.TimeUtils.get_timestamp_utc(),
+                    created_at=datetime.now(),
                     timeout_seconds=timeout_seconds,
                     is_authenticated=bind_dn is not None,
                 )
@@ -761,7 +746,7 @@ class FlextLDAPOperations:
             params: FlextLDAPEntities.SearchParams,
         ) -> FlextResult["FlextLDAPOperations.SearchOperations.SearchResult"]:
             """Execute LDAP search with enhanced validation and metrics."""
-            start_time = FlextUtilities.TimeUtils.get_timestamp_utc()
+            start_time = datetime.now()
 
             # Comprehensive parameter validation
             validation_result = await self._validate_search_parameters(params)
@@ -2126,11 +2111,8 @@ class FlextLDAPOperations:
         """Access group operations through consolidated interface."""
         return self._groups
 
-    # High-level convenience methods
-    def generate_id(self) -> str:
-        """Public method to generate ID using FlextUtilities SOURCE OF TRUTH - ELIMINATE delegation duplication."""
-        # Use FlextUtilities directly instead of delegation - SOLID compliance
-        return FlextUtilities.Generators.generate_entity_id()
+    # High-level convenience methods - ELIMINATED DUPLICATION
+    # Use FlextUtilities.Generators.generate_entity_id() directly - NO WRAPPER METHODS
 
     async def create_connection_and_bind(
         self,

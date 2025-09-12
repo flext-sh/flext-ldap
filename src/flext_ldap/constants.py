@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Final, final
 
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextTypes
 
 
 @final
@@ -22,8 +22,40 @@ class FlextLDAPConstants:
     Only adds specific constants that FlextConstants.LDAP doesn't provide.
     """
 
-    # SOURCE OF TRUTH: Use FlextConstants.LDAP directly
-    LDAP = FlextConstants.LDAP
+    # LDAP constants - defined directly since FlextConstants.LDAP doesn't exist
+    class LDAP:
+        """Standard LDAP constants."""
+
+        # Standard LDAP ports
+        DEFAULT_PORT = 389
+        DEFAULT_SSL_PORT = 636
+
+        # Standard LDAP protocols
+        PROTOCOL_LDAP = "ldap"
+        PROTOCOL_LDAPS = "ldaps"
+
+        # Standard LDAP scopes
+        SCOPE_BASE = "base"
+        SCOPE_ONELEVEL = "onelevel"
+        SCOPE_SUBTREE = "subtree"
+
+        # Standard LDAP object classes
+        OBJECT_CLASS_PERSON = "person"
+        OBJECT_CLASS_ORGANIZATIONAL_PERSON = "organizationalPerson"
+        OBJECT_CLASS_INET_ORG_PERSON = "inetOrgPerson"
+        OBJECT_CLASS_GROUP = "group"
+        OBJECT_CLASS_GROUP_OF_NAMES = "groupOfNames"
+        OBJECT_CLASS_GROUP_OF_UNIQUE_NAMES = "groupOfUniqueNames"
+
+        # Standard LDAP attributes
+        ATTR_CN = "cn"
+        ATTR_SN = "sn"
+        ATTR_GIVEN_NAME = "givenName"
+        ATTR_MAIL = "mail"
+        ATTR_UID = "uid"
+        ATTR_USER_PASSWORD = "userPassword"
+        ATTR_OBJECT_CLASS = "objectClass"
+        ATTR_DISTINGUISHED_NAME = "distinguishedName"
 
     # =========================================================================
     # LDAP-SPECIFIC EXTENSIONS - Only what FlextConstants.LDAP doesn't provide
@@ -135,14 +167,10 @@ class FlextLDAPConstants:
     class Protocol:
         """Protocol constants - aliases to FlextConstants.LDAP."""
 
-        DEFAULT_LDAP_PORT: Final[int] = FlextConstants.LDAP.DEFAULT_LDAP_PORT
-        DEFAULT_LDAPS_PORT: Final[int] = FlextConstants.LDAP.DEFAULT_LDAPS_PORT
-        DEFAULT_GLOBAL_CATALOG_PORT: Final[int] = (
-            FlextConstants.LDAP.DEFAULT_GLOBAL_CATALOG_PORT
-        )
-        DEFAULT_GLOBAL_CATALOG_SSL_PORT: Final[int] = (
-            FlextConstants.LDAP.DEFAULT_GLOBAL_CATALOG_SSL_PORT
-        )
+        DEFAULT_LDAP_PORT: Final[int] = 389
+        DEFAULT_LDAPS_PORT: Final[int] = 636
+        DEFAULT_GLOBAL_CATALOG_PORT: Final[int] = 3268
+        DEFAULT_GLOBAL_CATALOG_SSL_PORT: Final[int] = 3269
         LDAP_VERSION_3: Final[int] = 3
         LDAP_URL_PREFIX: Final[str] = "ldap://"
         LDAPS_URL_PREFIX: Final[str] = "ldaps://"
@@ -152,10 +180,10 @@ class FlextLDAPConstants:
     class Connection:
         """Connection constants - aliases to FlextConstants."""
 
-        DEFAULT_TIMEOUT: Final[int] = FlextConstants.LDAP.DEFAULT_TIMEOUT
-        MAX_RETRIES: Final[int] = FlextConstants.LDAP.MAX_RETRIES
-        DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.LDAP.DEFAULT_PAGE_SIZE
-        DEFAULT_HOST: Final[str] = FlextConstants.Infrastructure.DEFAULT_HOST
+        DEFAULT_TIMEOUT: Final[int] = 30
+        MAX_RETRIES: Final[int] = 3
+        DEFAULT_PAGE_SIZE: Final[int] = 1000
+        DEFAULT_HOST: Final[str] = "localhost"
         MAX_SIZE_LIMIT: Final[int] = 10000
 
     class Scopes:
@@ -180,9 +208,9 @@ class FlextLDAPConstants:
 
         # Mapping from flext-core integer scopes to string scopes
         SCOPE_INT_TO_STRING: Final[dict[int, str]] = {
-            FlextConstants.LDAP.SCOPE_BASE: BASE,
-            FlextConstants.LDAP.SCOPE_ONELEVEL: ONE,
-            FlextConstants.LDAP.SCOPE_SUBTREE: SUB,
+            "base": BASE,
+            "one": ONE,
+            "sub": SUB,
         }
 
     class LdapValidation:
@@ -193,7 +221,7 @@ class FlextLDAPConstants:
         MAX_DN_LENGTH: Final[int] = 2048
         MIN_FILTER_LENGTH: Final[int] = 1
         MAX_FILTER_LENGTH_VALUE_OBJECTS: Final[int] = 4096
-        DN_PATTERN: Final[str] = FlextConstants.LDAP.DN_PATTERN
+        DN_PATTERN: Final[str] = r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
         FILTER_PATTERN: Final[str] = r"^\(.+\)$"
         EMAIL_PATTERN: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         MAX_FILTER_LENGTH: Final[int] = 8192
