@@ -8,6 +8,7 @@ import asyncio
 from typing import cast
 
 from flext_core import (
+    FlextLogger,
     FlextMixins,
     FlextProtocols,
     FlextResult,
@@ -15,7 +16,7 @@ from flext_core import (
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # Python 3.13 type aliases
@@ -83,7 +84,9 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
-        return await self._base_repo.update(dn, cast("dict[str, object]", attributes))
+        # Convert LdapAttributeDict to dict[str, object] for repository compatibility
+        converted_attributes: dict[str, object] = dict(attributes)
+        return await self._base_repo.update(dn, converted_attributes)
 
     class Repository(
         FlextMixins.Service,
@@ -100,6 +103,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
             """Initialize repository with LDAP client and FlextMixins.Service."""
             super().__init__(**data)
             self._client = client
+            self._logger = FlextLogger(__name__)
             # For test compatibility - user/group repositories can access main repository via _repo
             self._repo = self
 
@@ -159,25 +163,29 @@ class FlextLDAPRepositories(FlextMixins.Service):
             self, dn: str, attributes: dict[str, object]
         ) -> FlextResult[None]:
             """Update entry attributes - alias for test compatibility."""
-            # Convert dict attributes to Entry and save
-            object_class_value = attributes.get("objectClass", [])
-            object_classes = (
-                [str(cls) for cls in object_class_value]
-                if isinstance(object_class_value, list)
-                else []
+            # Get existing entry to preserve object classes
+            existing_entry_result = await self.find_by_dn(dn)
+            if not existing_entry_result.is_success:
+                return FlextResult.fail(
+                    f"Failed to find existing entry: {existing_entry_result.error}"
+                )
+
+            existing_entry = existing_entry_result.value
+            if not existing_entry:
+                return FlextResult.fail(f"Entry not found: {dn}")
+
+            # Merge existing attributes with updates (exclude objectClass from modification)
+            merged_attributes = dict(existing_entry.attributes)
+            merged_attributes.update(
+                {
+                    k: cast("LdapAttributeValue", v)
+                    for k, v in attributes.items()
+                    if k != "objectClass"
+                }
             )
 
-            entry = FlextLDAPEntities.Entry(
-                id=f"update_{dn.replace(',', '_').replace('=', '_')}",
-                dn=dn,
-                object_classes=object_classes,
-                attributes=cast(
-                    "LdapAttributeDict",
-                    {k: v for k, v in attributes.items() if k != "objectClass"},
-                ),
-                modified_at=None,
-            )
-            return await self._save_async(entry)
+            # Use update_attributes method which calls LDAP modify directly
+            return await self.update_attributes(dn, merged_attributes)
 
         async def delete_async(self, dn: str) -> FlextResult[None]:
             """Delete entry by DN - public async method for facade."""
@@ -249,7 +257,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 modified_at=None,
             )
 
-            self.log_debug("Found entry by DN", dn=dn)
+            self._logger.debug("Found entry by DN", extra={"dn": dn})
             return FlextResult.ok(entry)
 
         async def _save_async(
@@ -279,11 +287,11 @@ class FlextLDAPRepositories(FlextMixins.Service):
             if existing_result.value:
                 result = await self._client.modify_entry(entry.dn, attributes)
                 if result.is_success:
-                    self.log_info("Entry updated", dn=entry.dn)
+                    self._logger.info("Entry updated", extra={"dn": entry.dn})
             else:
                 result = await self._client.add_entry(entry.dn, attributes)
                 if result.is_success:
-                    self.log_info("Entry created", dn=entry.dn)
+                    self._logger.info("Entry created", extra={"dn": entry.dn})
 
             return result
 
@@ -296,7 +304,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             result = await self._client.delete(dn)
             if result.is_success:
-                self.log_info("Entry deleted", dn=dn)
+                self._logger.info("Entry deleted", extra={"dn": dn})
 
             return result
 
@@ -310,11 +318,13 @@ class FlextLDAPRepositories(FlextMixins.Service):
             """Search LDAP entries directly."""
             search_result = await self._client.search_with_request(request)
             if search_result.is_success:
-                self.log_debug(
+                self._logger.debug(
                     "Search completed",
-                    base_dn=request.base_dn,
-                    filter=request.filter_str,
-                    count=search_result.value.total_count,
+                    extra={
+                        "base_dn": request.base_dn,
+                        "filter": request.filter_str,
+                        "count": search_result.value.total_count,
+                    },
                 )
             return search_result
 
@@ -347,10 +357,12 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             result = await self._client.modify_entry(dn, attributes)
             if result.is_success:
-                self.log_info(
+                self._logger.info(
                     "Entry attributes updated",
-                    dn=dn,
-                    attributes=list(attributes.keys()),
+                    extra={
+                        "dn": dn,
+                        "attributes": list(attributes.keys()),
+                    },
                 )
             return result
 

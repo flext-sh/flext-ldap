@@ -9,7 +9,7 @@ import secrets
 import string
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import ClassVar, cast, override
 
 from flext_core import (
@@ -36,14 +36,7 @@ type DomainEvent = dict[str, object]
 
 
 class FlextLDAPDomain(FlextMixins.Loggable):
-    """SINGLE CONSOLIDATED CLASS for all LDAP domain functionality using FlextMixins.Loggable.
-
-    Following FLEXT architectural patterns - consolidates ALL LDAP domain functionality
-    including specifications, domain services, domain events, and domain factories
-    into one main class with specialized internal subclasses for organization.
-
-    CONSOLIDATED CLASSES: All domain specifications + domain services + domain events + domain factories
-    """
+    """LDAP domain functionality using FlextMixins.Loggable."""
 
     # ==========================================================================
     # CENTRALIZED VALIDATION USING FLEXTVALIDATIONS - ELIMINATE DUPLICATION
@@ -60,13 +53,14 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
             # Use FlextValidations for string validation
             string_validator = FlextValidations.Core.Predicates(
-                lambda v: isinstance(v, str) and len(v.strip()) > 0,
-                "non_empty_string"
+                lambda v: isinstance(v, str) and len(v.strip()) > 0, "non_empty_string"
             )
 
             result = string_validator(dn)
             if result.is_failure:
-                return FlextResult[None].fail(f"{context} validation failed: {result.error}")
+                return FlextResult[None].fail(
+                    f"{context} validation failed: {result.error}"
+                )
 
             # Basic DN format validation (RFC 2253)
             if not re.match(r"^[a-zA-Z0-9=,\s\-\.]+$", dn.strip()):
@@ -535,12 +529,15 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate email field if provided."""
+            """Validate email field using flext-core - SOURCE OF TRUTH."""
             if user_data.get("mail"):
                 email = str(user_data["mail"])
-                if not self._email_spec.is_satisfied_by(email):
+                validation_result = FlextValidations.FieldValidators.validate_email(
+                    email
+                )
+                if not validation_result.is_success:
                     return FlextResult.fail(
-                        self._email_spec.get_validation_error(email),
+                        validation_result.error or "Email validation failed"
                     )
             return FlextResult.ok(None)
 
@@ -859,7 +856,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=created_by,
-                occurred_at=datetime.now(),
+                occurred_at=datetime.now(UTC),
             )
 
     class UserDeletedEvent(_BaseDomainEvent):
@@ -880,7 +877,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 user_id=user_id,
                 user_dn=user_dn,
                 actor=deleted_by,
-                occurred_at=datetime.now(),
+                occurred_at=datetime.now(UTC),
             )
 
     class GroupMemberAddedEvent(_BaseDomainEvent):
@@ -901,7 +898,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 group_dn=group_dn,
                 member_dn=member_dn,
                 actor=added_by,
-                occurred_at=datetime.now(),
+                occurred_at=datetime.now(UTC),
             )
 
     class PasswordChangedEvent(_BaseDomainEvent):
@@ -923,7 +920,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 changed_by=changed_by,
                 actor=changed_by,
                 is_self_change=user_dn == changed_by,
-                occurred_at=datetime.now(),
+                occurred_at=datetime.now(UTC),
             )
 
     # ==========================================================================
@@ -1005,6 +1002,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         """Base builder using Template Method Pattern - ELIMINATES DUPLICATION between User/Group builders."""
 
         def __init__(self, params: FlextTypes.Core.Dict, entity_type: str) -> None:
+            """Initialize the instance."""
             self.params = params
             self.entity_type = entity_type
             self.builder = FlextLDAPDomain.EntityParameterBuilder()
@@ -1189,12 +1187,12 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             validate_assignment=True,
         )
 
-        def validate_command(self) -> FlextResult[None]:
+        def validate_command(self) -> FlextResult[bool]:
             """Validate user creation data using Python 3.13 match expression."""
             # Use structural pattern matching for validation
             match self.user_data:
                 case {"uid": uid, "cn": cn} if uid and cn:
-                    return FlextResult.ok(None)
+                    return FlextResult.ok(data=True)
                 case data if not data.get("uid"):
                     return FlextResult.fail("uid is required")
                 case data if not data.get("cn"):
@@ -1677,39 +1675,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             "password": self._password_service,
         }
 
-    @property
-    def factory(self) -> DomainFactory:
-        """Access domain factory through consolidated interface."""
-        return self._factory
-
     # High-level convenience methods
-    def validate_user_creation(
-        self,
-        user_data: FlextTypes.Core.Dict,
-    ) -> FlextResult[object]:
-        """Validate user creation (convenience method)."""
-        return self._user_service.validate_user_creation(user_data)
-
-    def validate_group_creation(
-        self,
-        group_data: FlextTypes.Core.Dict,
-    ) -> FlextResult[object]:
-        """Validate group creation (convenience method)."""
-        return self._group_service.validate_group_creation(group_data)
-
-    def create_user_from_data(
-        self,
-        user_data: FlextTypes.Core.Dict,
-    ) -> FlextResult[FlextLDAPEntities.User]:
-        """Create user from data (convenience method)."""
-        return self._factory.create_user_from_data(user_data)
-
-    def create_group_from_data(
-        self,
-        group_data: FlextTypes.Core.Dict,
-    ) -> FlextResult[FlextLDAPEntities.Group]:
-        """Create group from data (convenience method)."""
-        return self._factory.create_group_from_data(group_data)
 
     def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
         """Generate secure password (convenience method)."""

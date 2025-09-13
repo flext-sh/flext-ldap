@@ -1,17 +1,12 @@
-"""FLEXT LDAP - Enterprise LDAP operations library built on FLEXT Framework.
+"""Enterprise LDAP integration library for FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT.
-
-CONFIGURATION: Use FlextLDAPConfig.get_global_instance() as the single source of truth.
-FlextLDAPSettings is deprecated and delegates to FlextLDAPConfig singleton.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from flext_ldap.adapters import FlextLDAPAdapters
-
-# Import all key classes directly for explicit exports
 from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.clients import SCOPE_MAP, FlextLDAPClient, LdapScope
 from flext_ldap.config import (
@@ -25,9 +20,6 @@ from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.exceptions import FlextLDAPExceptions
-
-# FlextLDAPFields removed - functionality moved to FlextLDAPValueObjects
-# FlextLDAPModels removed - functionality moved to FlextLDAPEntities
 from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
@@ -44,6 +36,9 @@ from flext_ldap.typings import (
     TLdapSearchResult,
 )
 from flext_ldap.value_objects import FlextLDAPValueObjects
+
+# FlextLDAPFields removed - functionality moved to FlextLDAPValueObjects
+# FlextLDAPModels removed - functionality moved to FlextLDAPEntities
 
 # Version info
 __version__ = "0.9.0"

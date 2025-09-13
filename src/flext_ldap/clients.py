@@ -1,7 +1,7 @@
-"""LDAP client module.
+"""LDAP client implementation for flext-ldap.
 
-Implements connection management and basic LDAP operations using ldap3,
-with strategy classes for search execution, entry conversion and response build.
+This module provides the core LDAP client functionality using ldap3
+with Clean Architecture patterns and flext-core integration.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,12 +15,7 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import (
-    FlextMixins,
-    FlextProtocols,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
@@ -53,7 +48,7 @@ SCOPE_MAP: dict[str, LdapScope] = {
 
 
 class FlextLDAPClient(
-    FlextMixins.Service, FlextProtocols.Infrastructure.Connection
+    FlextMixins.Service, FlextMixins.Loggable, FlextProtocols.Infrastructure.Connection
 ):
     """UNIFIED LDAP client - consolidates all LDAP functionality in single class following SOLID."""
 
@@ -132,6 +127,7 @@ class FlextLDAPClient(
                     # Process attributes using strategy pattern
                     if hasattr(entry, "entry_attributes") and entry.entry_attributes:
                         if isinstance(entry.entry_attributes, dict):
+                            # Handle dict format (attribute names as keys)
                             entry_attributes = list(entry.entry_attributes.keys())
                             for attr_name in entry_attributes:
                                 attr_values = entry.entry_attributes.get(attr_name, [])
@@ -139,10 +135,24 @@ class FlextLDAPClient(
                                     entry_data[attr_name] = attr_values[0]
                                 elif attr_values:  # Only add non-empty lists
                                     entry_data[attr_name] = attr_values
-                        else:
-                            # Handle case where entry_attributes is not a dict
-                            # Skip processing if not a dict - this is expected for some LDAP responses
-                            pass
+                        elif isinstance(entry.entry_attributes, list):
+                            # Handle list format (attribute names as list items)
+                            # Access attributes directly from entry object
+                            for attr_name in entry.entry_attributes:
+                                if hasattr(entry, attr_name):
+                                    attr_value = getattr(entry, attr_name)
+                                    if attr_value is not None:
+                                        if (
+                                            isinstance(attr_value, list)
+                                            and len(attr_value) == 1
+                                        ):
+                                            entry_data[attr_name] = attr_value[0]
+                                        elif (
+                                            isinstance(attr_value, list) and attr_value
+                                        ):
+                                            entry_data[attr_name] = attr_value
+                                        else:
+                                            entry_data[attr_name] = attr_value
                     entries.append(entry_data)
 
                 return FlextResult[FlextTypes.Core.Dict].ok({"entries": entries})

@@ -1,7 +1,9 @@
-"""FLEXT LDAP Repository Tests - FUNCTIONAL REAL TESTS (NO MOCKS).
 
-Following mandate: "testes funcionais reais sem mocks" and "PRIORIZAR BIBLIOTECAS".
-Tests validate REAL repository pattern functionality using Python standard libraries.
+from __future__ import annotations
+
+import unittest
+from flext_core import FlextResult, FlextTypes
+
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,9 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import unittest
 
-from flext_core import FlextResult, FlextTypes
+from typing import Dict
 
 
 class TestRepositoryPatternFunctional(unittest.TestCase):
@@ -40,6 +41,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
     def test_data_transformation_functional(self) -> None:
         """Test data transformation patterns using Python standard library."""
+
         # Simulate repository data transformation
         raw_ldap_data = [
             {
@@ -113,6 +115,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
     def test_dn_parsing_functional(self) -> None:
         """Test DN parsing using Python standard string operations."""
+
         # Test DN component extraction using standard library
         test_dns = [
             "cn=john,ou=users,dc=example,dc=com",
@@ -138,6 +141,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
     def test_attribute_validation_functional(self) -> None:
         """Test attribute validation using Python standard validation."""
+
         # Required attributes for different object types
         person_required = ["cn", "sn", "objectClass"]
         org_person_required = ["cn", "sn", "objectClass", "mail"]

@@ -1,8 +1,7 @@
 """End-to-end tests for LDAP operations.
 
-These tests validate complete LDAP workflows from API to infrastructure.
-They require a real LDAP server for full integration testing.
-
+This module provides comprehensive end-to-end tests for LDAP operations
+using real LDAP server integration and complete user lifecycle testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

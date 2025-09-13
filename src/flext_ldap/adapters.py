@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable, Callable
-from typing import cast, override
+from typing import cast
 
 from flext_core import (
+    FlextLogger,
     FlextMixins,
     FlextModels,
     FlextResult,
@@ -31,8 +33,12 @@ type AdapterResult[T] = FlextResult[T]
 type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
 
 
-class FlextLDAPAdapters(FlextMixins.Loggable):
-    """LDAP adapter functionality consolidated class using FlextMixins.Loggable."""
+class FlextLDAPAdapters:
+    """LDAP adapter functionality consolidated class."""
+
+    def __init__(self) -> None:
+        """Initialize LDAP adapters."""
+        self._logger = FlextLogger(__name__)
 
     # =========================================================================
     # ERROR MESSAGES - Constants for exception messages
@@ -78,13 +84,11 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         @classmethod
         def validate_dn(cls, v: str) -> str:
             """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
+            if not FlextValidations.is_non_empty_string(v):
                 error_msg = FlextLDAPAdapters.ErrorMessages.DN_CANNOT_BE_EMPTY
                 raise ValueError(error_msg)
             return v
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate entry business rules."""
             if not self.dn:
@@ -115,15 +119,12 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         @classmethod
         def validate_server(cls, v: str) -> str:
             """Validate server URI format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
+            if not FlextValidations.is_non_empty_string(v):
                 error_msg = FlextLDAPAdapters.ErrorMessages.SERVER_URI_CANNOT_BE_EMPTY
                 raise ValueError(error_msg)
 
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^ldaps?://.+", "LDAP URI format"
-            )
-            if pattern_result.is_failure:
+            # Basic pattern validation for LDAP URI format
+            if not re.match(r"^ldaps?://.+", v):
                 error_msg = (
                     FlextLDAPAdapters.ErrorMessages.SERVER_MUST_BE_VALID_LDAP_URI
                 )
@@ -131,7 +132,6 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
             return v
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate connection config business rules."""
             if not self.server:
@@ -165,7 +165,6 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         server_info: FlextTypes.Core.Headers | None = None
         operation_executed: str
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate connection result business rules."""
             return FlextResult.ok(None)
@@ -191,7 +190,6 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         total_count: int
         search_executed: str
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search result business rules."""
             return FlextResult.ok(None)
@@ -415,6 +413,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize with SearchServiceProcessor."""
             super().__init__(client)
+            self._logger = FlextLogger(__name__)
             self._search_processor = FlextLDAPAdapters.SearchServiceProcessor(client)
 
         async def search_entries(
@@ -502,9 +501,9 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
                     )
                     entries.append(entry)
 
-                except Exception as e:
-                    self.log_operation(
-                        operation=f"Failed to convert search result to FlextLDAPEntities.Entry: {e}",
+                except Exception:
+                    self._logger.exception(
+                        "Failed to convert search result to FlextLDAPEntities.Entry"
                     )
                     continue
 
@@ -516,6 +515,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize entry service with client."""
             super().__init__(client=client)
+            self._logger = FlextLogger(__name__)
 
         async def add_entry(
             self,
@@ -550,7 +550,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
-                self.log_operation(operation=error_msg)
+                self._logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
         async def modify_entry(
@@ -580,7 +580,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
-                self.log_operation(operation=error_msg)
+                self._logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
         async def delete_entry(self, dn: str) -> FlextResult[None]:
@@ -594,7 +594,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
             except Exception as e:
                 error_msg = f"Failed to delete entry {dn}: {e}"
-                self.log_operation(operation=error_msg)
+                self._logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
         async def _async_validation_wrapper(
@@ -664,6 +664,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
         def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize directory service with client."""
             self.client = client
+            self._logger = FlextLogger(__name__)
 
         async def get_all_entries(
             self,
@@ -694,7 +695,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
 
             except Exception as e:
                 error_msg = f"Failed to get all entries: {e}"
-                self.log_operation(operation=error_msg)
+                self._logger.exception(error_msg)
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(error_msg)
 
         def _convert_entries_to_protocol(
@@ -722,10 +723,8 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
                     protocol_entry.update(normalized_attrs)
                     protocol_entries.append(protocol_entry)
 
-                except Exception as e:
-                    self.log_operation(
-                        operation=f"Failed to convert entry to protocol format: {e}"
-                    )
+                except Exception:
+                    self._logger.exception("Failed to convert entry to protocol format")
                     continue
 
             return protocol_entries
@@ -801,7 +800,7 @@ class FlextLDAPAdapters(FlextMixins.Loggable):
                 )
             except Exception as e:
                 error_msg = f"Failed to search users: {e}"
-                self.log_operation(operation=error_msg)
+                self._logger.exception(error_msg)
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(error_msg)
 
         def execute(self) -> FlextResult[object]:

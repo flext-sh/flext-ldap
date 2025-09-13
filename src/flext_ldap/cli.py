@@ -7,13 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
+
+# from flext_cli import (
+#     FlextCliApi,
+#     FlextCliConfig,
+# )
 from typing import cast, final
 
-from flext_cli import (
-    FlextCliApi,
-    FlextCliConfig,
-)
 from flext_core import FlextMixins, FlextResult, FlextTypes
 
 from flext_ldap.api import FlextLDAPApi
@@ -26,27 +28,28 @@ type LdapBindDn = str
 
 
 @final
-class FlextLDAPCli(FlextMixins.Service):
+class FlextLDAPCli(FlextMixins.Loggable):
     """Single FLEXT LDAP CLI class using flext-cli exclusively with ZERO TOLERANCE."""
 
     def __init__(self, **data: object) -> None:
         """Initialize unified LDAP CLI using flext-cli exclusively."""
         super().__init__(**data)
         self._api = FlextLDAPApi()
-        self._cli_api = FlextCliApi()
-        self._cli_config = FlextCliConfig.get_global_instance()
+        # Temporarily disabled flext-cli integration
+        # self._cli_api = FlextCliApi()
+        # self._cli_config = FlextCliConfig.get_global_instance()
 
-        # Integrate LDAP config with CLI config following flext-cli patterns
-        integration_result = FlextLDAPConfig.integrate_with_cli_config()
-        if integration_result.is_success:
-            self._ldap_config = integration_result.value
-        else:
-            # Fallback to basic LDAP config if integration fails
-            self._ldap_config = FlextLDAPConfig.get_global_instance()
-            self.log_warning("CLI integration failed, using basic LDAP config",
-                           error=integration_result.error)
+        # Use basic LDAP config
+        self._ldap_config = FlextLDAPConfig.get_global_instance()
 
-        self.log_debug("LDAP CLI initialized with flext-cli exclusively")
+        self.log_debug("LDAP CLI initialized")
+
+    def _format_data(self, data: dict[str, object]) -> FlextResult[str]:
+        """Simple data formatter - temporary replacement for flext-cli."""
+        try:
+            return FlextResult.ok(json.dumps(data, indent=2))
+        except Exception as e:
+            return FlextResult.fail(f"Format error: {e}")
 
     def test_connection(
         self,
@@ -71,7 +74,9 @@ class FlextLDAPCli(FlextMixins.Service):
             if self._ldap_config.ldap_default_connection
             else "ldap://localhost"
         )
-        effective_bind_dn = bind_dn or self._ldap_config.ldap_bind_dn or "cn=admin,dc=example,dc=com"
+        effective_bind_dn = (
+            bind_dn or self._ldap_config.ldap_bind_dn or "cn=admin,dc=example,dc=com"
+        )
         effective_bind_password = bind_password or (
             self._ldap_config.ldap_bind_password.get_secret_value()
             if self._ldap_config.ldap_bind_password
@@ -91,12 +96,14 @@ class FlextLDAPCli(FlextMixins.Service):
                     )
 
                 await self._api.disconnect(connection_result.value)
-                return FlextResult.ok({
-                    "status": "connected",
-                    "server": effective_server,
-                    "bind_dn": effective_bind_dn,
-                    "config_source": "ldap_config_singleton"
-                })
+                return FlextResult.ok(
+                    {
+                        "status": "connected",
+                        "server": effective_server,
+                        "bind_dn": effective_bind_dn,
+                        "config_source": "ldap_config_singleton",
+                    }
+                )
             except Exception as e:
                 self.log_error("LDAP connection test failed", error=str(e))
                 return FlextResult.fail(f"Connection error: {e}")
@@ -135,7 +142,7 @@ class FlextLDAPCli(FlextMixins.Service):
     def _handle_test_command(self, **kwargs: object) -> CliCommandResult:
         """Handle test command through flext-cli patterns with configuration overrides."""
         # Extract CLI parameters
-        cli_params = {}
+        cli_params: dict[str, object] = {}
         if "server" in kwargs:
             cli_params["server"] = str(kwargs["server"])
         if "bind_dn" in kwargs:
@@ -143,9 +150,9 @@ class FlextLDAPCli(FlextMixins.Service):
         if "bind_password" in kwargs:
             cli_params["bind_password"] = str(kwargs["bind_password"])
         if "use_ssl" in kwargs:
-            cli_params["use_ssl"] = str(kwargs["use_ssl"]).lower() in {"true", "1", "yes", "on"}
+            cli_params["use_ssl"] = kwargs["use_ssl"]
         if "debug" in kwargs:
-            cli_params["debug"] = str(kwargs["debug"]).lower() in {"true", "1", "yes", "on"}
+            cli_params["debug"] = kwargs["debug"]
 
         # Apply CLI overrides to configuration
         if cli_params:
@@ -158,10 +165,14 @@ class FlextLDAPCli(FlextMixins.Service):
             self._ldap_config = override_result.value
 
         # Execute test connection using configuration as source of truth
+        server = cli_params.get("server")
+        bind_dn = cli_params.get("bind_dn")
+        bind_password = cli_params.get("bind_password")
+
         return self.test_connection(
-            cli_params.get("server"),
-            cli_params.get("bind_dn"),
-            cli_params.get("bind_password")
+            server if isinstance(server, str) else None,
+            bind_dn if isinstance(bind_dn, str) else None,
+            bind_password if isinstance(bind_password, str) else None,
         )
 
     def run_command(self, command: str, **kwargs: object) -> None:
@@ -172,16 +183,16 @@ class FlextLDAPCli(FlextMixins.Service):
 
             # Use flext-cli for output formatting - NO direct print/rich usage
             if result.is_success:
-                formatted_result = self._cli_api.format_data(
-                    {"status": "success", "data": result.value}, "json"
+                formatted_result = self._format_data(
+                    {"status": "success", "data": result.value}
                 )
                 if formatted_result.is_success:
                     self.log_info("CLI output", result=formatted_result.value)
                 else:
                     self.log_error("Format error", error=formatted_result.error)
             else:
-                formatted_result = self._cli_api.format_data(
-                    {"status": "error", "error": result.error}, "json"
+                formatted_result = self._format_data(
+                    {"status": "error", "error": result.error}
                 )
                 if formatted_result.is_success:
                     self.log_error("CLI error output", error=formatted_result.value)
@@ -210,26 +221,27 @@ def main() -> None:
         current_config = cli_service._ldap_config
 
         # Use flext-cli for help/usage output with configuration info
-        help_result = cli_service._cli_api.format_data(
+        help_result = cli_service._format_data(
             {
                 "command": "flext-ldap",
                 "usage": "flext-ldap test [--server <server>] [--bind-dn <dn>] [--bind-password <password>]",
                 "description": "FLEXT LDAP CLI - Enterprise LDAP operations with configuration integration",
                 "available_commands": list(commands.keys()),
                 "configuration": {
-                    "current_server": current_config.ldap_default_connection.server if current_config.ldap_default_connection else "Not configured",
+                    "current_server": current_config.ldap_default_connection.server
+                    if current_config.ldap_default_connection
+                    else "Not configured",
                     "current_bind_dn": current_config.ldap_bind_dn or "Not configured",
                     "use_ssl": current_config.ldap_use_ssl,
                     "debug_mode": current_config.ldap_enable_debug,
-                    "config_source": "FlextLDAPConfig singleton"
+                    "config_source": "FlextLDAPConfig singleton",
                 },
                 "examples": [
                     "flext-ldap test  # Uses configuration defaults",
                     "flext-ldap test --server ldap://localhost:389 --bind-dn 'cn=admin,dc=example,dc=com' --bind-password password",
-                    "flext-ldap test --debug true  # Override debug mode"
+                    "flext-ldap test --debug true  # Override debug mode",
                 ],
-            },
-            "json",
+            }
         )
 
         if help_result.is_success:
@@ -242,12 +254,11 @@ def main() -> None:
 
     # Validate command exists
     if command not in commands:
-        error_result = cli_service._cli_api.format_data(
+        error_result = cli_service._format_data(
             {
                 "error": f"Unknown command: {command}",
                 "available_commands": list(commands.keys()),
-            },
-            "json",
+            }
         )
 
         if error_result.is_success:
@@ -279,8 +290,8 @@ def main() -> None:
 
         # Use flext-cli for output formatting
         if handler_result.is_success:
-            output_result = cli_service._cli_api.format_data(
-                {"status": "success", "data": handler_result.value}, "json"
+            output_result = cli_service._format_data(
+                {"status": "success", "data": handler_result.value}
             )
             if output_result.is_success:
                 cli_service.log_info(
@@ -291,8 +302,8 @@ def main() -> None:
                     "Output formatting failed", error=output_result.error
                 )
         else:
-            error_result = cli_service._cli_api.format_data(
-                {"status": "error", "error": handler_result.error}, "json"
+            error_result = cli_service._format_data(
+                {"status": "error", "error": handler_result.error}
             )
             if error_result.is_success:
                 cli_service.log_error("Test failed", error=error_result.value)
@@ -300,13 +311,12 @@ def main() -> None:
                 cli_service.log_error("Test failed", error=handler_result.error)
             sys.exit(1)
     else:
-        error_result = cli_service._cli_api.format_data(
+        error_result = cli_service._format_data(
             {
                 "error": f"Unknown command: {command}",
                 "available_commands": list(commands.keys()),
                 "usage": "flext-ldap test [--server <server>] [--bind-dn <dn>] [--bind-password <password>] [--debug <true/false>]",
-            },
-            "json",
+            }
         )
 
         if error_result.is_success:

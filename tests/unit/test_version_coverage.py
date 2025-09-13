@@ -1,6 +1,10 @@
-"""Version coverage tests for complete coverage.
 
-Following COMPREHENSIVE_QUALITY_REFACTORING_PROMPT.md:
+from __future__ import annotations
+
+import flext_ldap.__version__ as version_module
+
+"""Module documentation.
+
 - Target __version__.py (18 statements, 0% coverage) for easy 100% win
 - Validate version information and metadata
 
@@ -8,9 +12,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+"""
+
 from __future__ import annotations
 
-import flext_ldap.__version__ as version_module
 
 
 class TestFlextLDAPVersionCoverage:
@@ -18,6 +23,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_version_module_imports_successfully(self) -> None:
         """Test that version module imports without errors."""
+
         # Module should import successfully
         assert version_module is not None
 
@@ -30,6 +36,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_version_attributes_are_strings(self) -> None:
         """Test that version attributes are properly typed."""
+
         # Version should be a string
         assert isinstance(version_module.__version__, str)
         assert len(version_module.__version__) > 0
@@ -49,6 +56,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_version_info_parsing(self) -> None:
         """Test that version info is properly parsed."""
+
         # Version info should be a tuple
         assert isinstance(version_module.__version_info__, tuple)
         assert len(version_module.__version_info__) > 0
@@ -62,6 +70,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_author_email_parsing(self) -> None:
         """Test that author email is properly parsed."""
+
         # Author email should be a string
         assert isinstance(version_module.__author_email__, str)
 
@@ -71,6 +80,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_maintainer_information(self) -> None:
         """Test that maintainer information is available."""
+
         # Maintainer should be a string
         assert isinstance(version_module.__maintainer__, str)
 
@@ -79,6 +89,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_copyright_information(self) -> None:
         """Test that copyright information is available."""
+
         # Copyright should be a string
         assert isinstance(version_module.__copyright__, str)
         assert "2025" in version_module.__copyright__
@@ -86,6 +97,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_build_information(self) -> None:
         """Test that build information is available."""
+
         # Build information should be strings
         assert isinstance(version_module.__build__, str)
         assert isinstance(version_module.__commit__, str)
@@ -93,6 +105,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_all_exports(self) -> None:
         """Test that __all__ contains all expected exports."""
+
         # Should have __all__ defined
         assert hasattr(version_module, "__all__")
         assert isinstance(version_module.__all__, list)
@@ -121,6 +134,7 @@ class TestFlextLDAPVersionCoverage:
 
     def test_version_format(self) -> None:
         """Test that version follows semantic versioning format."""
+
         version = version_module.__version__
 
         # Should contain at least one dot

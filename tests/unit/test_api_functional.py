@@ -1,7 +1,9 @@
-"""FLEXT LDAP API Tests - FUNCTIONAL REAL TESTS (NO MOCKS).
 
-Following mandate: "testes funcionais reais sem mocks" and "PRIORIZAR BIBLIOTECAS".
-Tests validate REAL API functionality using Python standard libraries.
+from __future__ import annotations
+
+import unittest
+from flext_core import FlextResult
+from flext_ldap.api import FlextLDAPApi
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,11 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import unittest
 
-from flext_core import FlextResult
 
-from flext_ldap.api import FlextLDAPApi
 
 
 class TestFlextLDAPApiFunctional(unittest.TestCase):
@@ -22,6 +21,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_api_factory_function_functional(self) -> None:
         """Test API factory function creates real API instances."""
+
         # Test factory function (PRIORIZAR BIBLIOTECAS - using flext-core patterns)
         api = FlextLDAPApi()
 
@@ -30,6 +30,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_api_direct_instantiation_functional(self) -> None:
         """Test direct API instantiation works correctly."""
+
         api = FlextLDAPApi()
 
         assert api is not None
@@ -45,6 +46,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_flext_result_integration_functional(self) -> None:
         """Test FlextResult pattern integration (functional validation)."""
+
         # Test FlextResult.ok() functionality
         success = FlextResult.ok("test_data")
         assert success.is_success is True
@@ -63,6 +65,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_search_parameters_validation_functional(self) -> None:
         """Test search parameter validation using Python standard validation."""
+
         # Valid LDAP search parameters
         valid_base_dns = [
             "dc=example,dc=com",
@@ -93,6 +96,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_attribute_processing_functional(self) -> None:
         """Test attribute processing using Python standard library."""
+
         # Simulate LDAP entry data
         ldap_entry_data = {
             "dn": "cn=john,ou=users,dc=example,dc=com",
@@ -122,6 +126,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_user_creation_request_validation_functional(self) -> None:
         """Test user creation request validation using Python standard validation."""
+
         # Valid user creation data
         user_data = {
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
@@ -145,6 +150,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
 
     def test_python_standard_patterns_usage(self) -> None:
         """Test that we use Python standard library patterns effectively."""
+
         # Test dict comprehensions
         test_data = {"a": 1, "b": None, "c": 3, "d": ""}
         filtered = {k: v for k, v in test_data.items() if v}

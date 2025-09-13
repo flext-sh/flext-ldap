@@ -1,8 +1,7 @@
-"""Global pytest configuration for FLEXT-LDAP tests.
+"""Test configuration and fixtures for flext-ldap.
 
-This module provides fixtures for OpenLDAP container management and test configuration.
-
-
+This module provides Docker-based LDAP server fixtures and test configuration
+for integration testing with real LDAP operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,11 +22,11 @@ from flext_core import FlextTypes
 
 from flext_ldap import (
     FlextLDAPClient,
+    FlextLDAPContainer,
+    FlextLDAPEntities,
     FlextLDAPServices,
+    LdapAttributeDict,
 )
-from flext_ldap.container import FlextLDAPContainer
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict
 
 docker: object | None
 try:
@@ -37,7 +36,9 @@ except Exception:  # pragma: no cover - docker may be unavailable in CI
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
-OPENLDAP_CONTAINER_NAME = f"flext-ldap-test-server-{int(time.time())}"
+OPENLDAP_CONTAINER_NAME = (
+    "flext-ldap-test-server"  # Fixed name for persistent container
+)
 OPENLDAP_PORT = 3391  # Use non-standard port to avoid conflicts
 OPENLDAP_ADMIN_PASSWORD = "admin123"
 OPENLDAP_DOMAIN = "flext.local"
@@ -207,31 +208,83 @@ def _get_container_manager() -> OpenLDAPContainerManager:
     return OpenLDAPContainerManager()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def docker_openldap_container() -> Generator[object]:
     """Session-scoped fixture that provides OpenLDAP Docker container.
 
     This fixture starts an OpenLDAP container at the beginning of the test session
-    and stops it at the end. The container is shared across all tests.
+    and keeps it running for ALL tests. The container is shared across all tests
+    for real LDAP testing.
+
+    AUTOUSE=True ensures the container is started automatically for ALL tests,
+    providing real LDAP server for comprehensive testing.
     """
     if docker is None:
-        pytest.skip("Docker not installed; skipping integration container fixture")
-    manager = _get_container_manager()
-    # Start container
-    container = manager.start_container()
+        print("Docker not available - tests will run without real LDAP server")
+        yield None
+        return
 
-    # Set environment variables for tests
-    for key, value in TEST_ENV_VARS.items():
-        os.environ[key] = value
+    manager = None
+    container = None
 
-    yield container
+    try:
+        # Check if container is already running
+        docker_client = importlib.import_module("docker").from_env()
+        try:
+            existing = docker_client.containers.get(OPENLDAP_CONTAINER_NAME)
+            if existing.status == "running":
+                print(
+                    f"Using existing Docker container: {OPENLDAP_CONTAINER_NAME} on port {OPENLDAP_PORT}"
+                )
+                container = existing
+                # Set environment variables for tests
+                for key, value in TEST_ENV_VARS.items():
+                    os.environ[key] = value
+                yield container
+                return
+        except Exception:
+            # Container doesn't exist, will create new one
+            pass
 
-    # Cleanup
-    manager.stop_container()
+        manager = _get_container_manager()
+        # Start container
+        print(
+            f"Starting Docker container: {OPENLDAP_CONTAINER_NAME} on port {OPENLDAP_PORT}"
+        )
+        container = manager.start_container()
 
-    # Clean up environment variables
-    for key in TEST_ENV_VARS:
-        os.environ.pop(key, None)
+        # Set environment variables for tests
+        for key, value in TEST_ENV_VARS.items():
+            os.environ[key] = value
+
+        print(
+            f"LDAP container ready on port {OPENLDAP_PORT} - will stay running for all tests"
+        )
+        yield container
+
+    except Exception as e:
+        print(f"Failed to start Docker container: {e}")
+        yield None
+    finally:
+        # Only cleanup environment variables, NOT the container
+        # Container stays running for future test sessions
+        for key in TEST_ENV_VARS:
+            os.environ.pop(key, None)
+
+        # Optional: only stop if explicitly requested via environment variable
+        if os.environ.get("STOP_LDAP_CONTAINER", "").lower() == "true":
+            if manager and docker is not None:
+                try:
+                    manager.stop_container()
+                    print(
+                        f"Stopped Docker container: {OPENLDAP_CONTAINER_NAME} (explicit stop requested)"
+                    )
+                except Exception:
+                    pass
+        else:
+            print(
+                f"LDAP container {OPENLDAP_CONTAINER_NAME} kept running for future tests"
+            )
 
 
 @pytest.fixture

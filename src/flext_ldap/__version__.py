@@ -1,12 +1,7 @@
-"""Version information for FLEXT LDAP.
+"""Version information for flext-ldap.
 
 This file reads version from pyproject.toml metadata.
 All version references should import from this file.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

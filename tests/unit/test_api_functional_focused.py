@@ -1,24 +1,22 @@
-"""Focused API functional tests targeting uncovered methods.
 
-Following COMPREHENSIVE_QUALITY_REFACTORING_PROMPT.md:
-- Target uncovered API.py methods for maximum coverage impact
-- Focus on local logic, avoid network timeouts
-- Test edge cases and error conditions systematically
+from __future__ import annotations
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+import uuid
+import pytest
+from flext_core import FlextResult
+from flext_ldap import FlextLDAPApi, get_flext_ldap_api
+from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.entities import FlextLDAPEntities
+
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-import uuid
 
-import pytest
-from flext_core import FlextResult
 
-from flext_ldap import FlextLDAPApi, get_flext_ldap_api
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.settings import FlextLDAPSettings
+from typing import Dict
+from typing import List
 
 
 class TestFlextLDAPApiFunctionalFocused:
@@ -26,16 +24,17 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_api_initialization_comprehensive_paths(self) -> None:
         """Test all API initialization code paths."""
+
         # Test with default config (None)
         api1 = FlextLDAPApi()
         assert api1._config is not None
-        assert isinstance(api1._config, FlextLDAPSettings)
+        assert isinstance(api1._config, FlextLDAPConfig)
         assert api1._container_manager is not None
         assert api1._container is not None
         assert api1._service is not None
 
         # Test with explicit config
-        custom_config = FlextLDAPSettings(
+        custom_config = FlextLDAPConfig(
             host="test.example.com", port=389, base_dn="dc=test,dc=com"
         )
         api2 = FlextLDAPApi(config=custom_config)
@@ -47,6 +46,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_session_id_generation_comprehensive(self) -> None:
         """Test session ID generation with comprehensive validation."""
+
         # Generate many IDs to test uniqueness and format
         session_ids = []
         for _ in range(50):
@@ -74,6 +74,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_dict_entries(self) -> None:
         """Test _get_entry_attribute with dictionary entries comprehensively."""
+
         api = FlextLDAPApi()
 
         # Test normal LDAP attribute format (list values)
@@ -102,6 +103,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_non_list_values(self) -> None:
         """Test _get_entry_attribute with non-list values."""
+
         api = FlextLDAPApi()
 
         # Test with direct string values (not in lists)
@@ -133,6 +135,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_empty_and_none_lists(self) -> None:
         """Test _get_entry_attribute with empty lists and None values in lists."""
+
         api = FlextLDAPApi()
 
         # Test with various empty/None scenarios
@@ -170,6 +173,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_with_entry_objects(self) -> None:
         """Test _get_entry_attribute with FlextLDAPEntities.Entry objects."""
+
         api = FlextLDAPApi()
 
         # Create Entry object with attributes
@@ -197,6 +201,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_error_handling(self) -> None:
         """Test _get_entry_attribute error handling for problematic values."""
+
         api = FlextLDAPApi()
 
         # Create objects that raise errors during string conversion
@@ -242,22 +247,19 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_factory_function_get_flext_ldap_api(self) -> None:
         """Test get_flext_ldap_api factory function comprehensively."""
+
         # Test factory without parameters
         api1 = get_flext_ldap_api()
         assert isinstance(api1, FlextLDAPApi)
         assert api1._config is not None
-        assert isinstance(api1._config, FlextLDAPSettings)
+        assert isinstance(api1._config, FlextLDAPConfig)
 
         # Test factory with config parameter
-        custom_config = FlextLDAPSettings(
-            host="factory.test.com", port=636, use_ssl=True
-        )
+        custom_config = FlextLDAPConfig(ldap_use_ssl=True)
         api2 = get_flext_ldap_api(config=custom_config)
         assert isinstance(api2, FlextLDAPApi)
         assert api2._config is custom_config
-        assert api2._config.host == "factory.test.com"
-        assert api2._config.port == 636
-        assert api2._config.use_ssl is True
+        assert api2._config.ldap_use_ssl is True
 
         # Verify different instances are created
         api3 = get_flext_ldap_api()
@@ -265,13 +267,14 @@ class TestFlextLDAPApiFunctionalFocused:
         assert api1 is not api3
         assert api2 is not api3
 
-        # Verify each has independent configuration
-        assert api1._config is not api2._config
-        assert api1._config is not api3._config
+        # Verify configuration behavior (singleton vs custom)
+        assert api1._config is not api2._config  # api2 has custom config
+        assert api1._config is api3._config  # api3 uses singleton (same as api1)
 
     @pytest.mark.asyncio
     async def test_disconnect_method_comprehensive(self) -> None:
         """Test disconnect method with various input types."""
+
         api = FlextLDAPApi()
 
         # Test disconnect with None
@@ -296,15 +299,16 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_internal_state_consistency(self) -> None:
         """Test that internal state is consistent across different initialization paths."""
+
         # Test multiple API instances have proper isolation
         apis = []
         for i in range(5):
-            config = FlextLDAPSettings(host=f"host{i}.example.com")
+            config = FlextLDAPConfig(ldap_size_limit=100 + i)
             api = FlextLDAPApi(config=config)
             apis.append(api)
 
             # Verify each instance has proper internal state
-            assert api._config.host == f"host{i}.example.com"
+            assert api._config.ldap_size_limit == 100 + i
             assert api._container_manager is not None
             assert api._container is not None
             assert api._service is not None
@@ -323,6 +327,7 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_logging_initialization(self) -> None:
         """Test that logging is properly initialized during API creation."""
+
         # This test ensures the logging statement in __init__ is covered
         api = FlextLDAPApi()
 

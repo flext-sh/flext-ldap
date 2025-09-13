@@ -1,7 +1,4 @@
-"""LDAP exceptions using FlextExceptions - NO DUPLICATION.
-
-Uses FlextExceptions from flext-core directly with simple aliases.
-ELIMINATES MASSIVE code duplication following SOURCE OF TRUTH pattern.
+"""LDAP exceptions module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

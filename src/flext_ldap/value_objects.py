@@ -1,7 +1,4 @@
-"""LDAP Value Objects - Single FlextLDAPValueObjects class following FLEXT patterns.
-
-Single class with all LDAP value objects following domain-driven design patterns
-organized as internal classes for complete backward compatibility.
+"""LDAP Value Objects module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar, final, override
+from typing import ClassVar, final
 
 from flext_core import FlextModels, FlextResult, FlextUtilities, FlextValidations
 from pydantic import ConfigDict, Field, field_validator
@@ -63,22 +60,18 @@ class FlextLDAPValueObjects:
         def validate_dn_format(cls, value: str) -> str:
             """Validate DN using FlextValidations SOURCE OF TRUTH - ELIMINATE local duplication."""
             # Use FlextValidations instead of local logic
-            result = FlextValidations.Rules.StringRules.validate_non_empty(value)
-            if result.is_failure:
+            if not FlextValidations.is_non_empty_string(value):
                 error_msg = "Distinguished Name cannot be empty"
                 raise ValueError(error_msg)
 
             # Use FlextValidations pattern matching instead of local regex
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                value, r"^[a-zA-Z]+=.+", "DN format"
-            )
-            if pattern_result.is_failure:
+            # Basic pattern validation for DN format
+            if not re.match(r"^[a-zA-Z]+=.+", value):
                 error_msg = f"Invalid DN format: {value}"
                 raise ValueError(error_msg)
 
             return value.strip()
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules for DN."""
             # DN is validated in field_validator, no additional business rules
@@ -134,7 +127,6 @@ class FlextLDAPValueObjects:
                 raise ValueError(msg)
             return normalized
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules."""
             # Scope is validated in field_validator, no additional business rules
@@ -206,14 +198,13 @@ class FlextLDAPValueObjects:
         def validate_filter_format(cls, value: str) -> str:
             """Validate LDAP filter using FlextValidations SOURCE OF TRUTH - ELIMINATE local duplication."""
             # Use FlextValidations for consistent validation
-            result = FlextValidations.Rules.StringRules.validate_non_empty(value)
-            if result.is_failure:
+            if not FlextValidations.is_non_empty_string(value):
                 error_msg = "LDAP filter cannot be empty"
                 raise ValueError(error_msg)
 
             # Use FlextValidations pattern matching for LDAP filter format
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                value, r"^\(.+\)$", "LDAP filter"
+            pattern_result = FlextValidations.BusinessValidators.validate_string_field(
+                value, pattern=r"^\(.+\)$"
             )
             if pattern_result.is_failure:
                 error_msg = f"Invalid LDAP filter format: {value}"
@@ -232,7 +223,6 @@ class FlextLDAPValueObjects:
 
             return clean_value
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules for filter."""
             # Filter is validated in field_validator, no additional business rules

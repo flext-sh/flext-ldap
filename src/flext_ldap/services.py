@@ -7,11 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import UTC, datetime
 from functools import cached_property
 from typing import cast
 
 from flext_core import (
     FlextContainer,
+    FlextMixins,
     FlextProcessing,
     FlextResult,
     FlextTypes,
@@ -34,7 +36,7 @@ type LDAPResult = FlextTypes.Core.Dict
 type RepositoryInstance = FlextLDAPRepositories.Repository
 
 
-class FlextLDAPServices(FlextProcessing.Handler):
+class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
     """LDAP operations service using FlextProcessing.Handler pattern."""
 
     def __init__(self, container: FlextContainer | None = None) -> None:
@@ -44,11 +46,11 @@ class FlextLDAPServices(FlextProcessing.Handler):
         self._ldap_container = FlextLDAPContainer()
         self._container = container or self._ldap_container.get_container()
 
-    def handle(self, request: LDAPRequest) -> FlextResult[LDAPDomain]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Handle LDAP request - implements FlextProcessing.Handler.handle()."""
         return self.process(request)
 
-    def process(self, request: LDAPRequest) -> FlextResult[LDAPDomain]:
+    def process(self, request: object) -> FlextResult[object]:
         """Process LDAP request using Python 3.13 pattern matching - implements ServiceProcessor.process()."""
         # Python 3.13 structural pattern matching for LDAP request dispatch
         match request:
@@ -311,14 +313,25 @@ class FlextLDAPServices(FlextProcessing.Handler):
         def safe_str_attr(attr_name: str) -> str | None:
             """Extract string attribute safely using Python 3.13 patterns."""
             value = entry.get_attribute(attr_name)
-            return str(value) if value and str(value).strip() else None
+            if not value:
+                return None
+
+            # Handle list values by taking the first element
+            if isinstance(value, list):
+                if len(value) > 0 and value[0]:
+                    return str(value[0])
+                return None
+
+            # Handle single values
+            str_value = str(value).strip()
+            return str_value or None
 
         user_entity = FlextLDAPEntities.User(
             id=entry.id,
             dn=entry.dn,
             object_classes=entry.object_classes,
             attributes=entry.attributes,
-            uid=str(entry.get_attribute("uid") or "unknown"),
+            uid=safe_str_attr("uid") or "unknown",
             cn=safe_str_attr("cn"),
             sn=safe_str_attr("sn"),
             given_name=safe_str_attr("givenName"),
@@ -400,7 +413,9 @@ class FlextLDAPServices(FlextProcessing.Handler):
             return FlextResult.fail(
                 f"LDAP operations not available: {operations_result.error}"
             )
-        operations_factory = cast("Callable[[], FlextLDAPOperations]", operations_result.value)
+        operations_factory = cast(
+            "Callable[[], FlextLDAPOperations]", operations_result.value
+        )
         operations = operations_factory()
 
         # Use group operations to create group
@@ -434,7 +449,9 @@ class FlextLDAPServices(FlextProcessing.Handler):
             return FlextResult.fail(
                 f"LDAP operations not available: {operations_result.error}"
             )
-        operations_factory = cast("Callable[[], FlextLDAPOperations]", operations_result.value)
+        operations_factory = cast(
+            "Callable[[], FlextLDAPOperations]", operations_result.value
+        )
         operations = operations_factory()
 
         # Use search operations to find group
@@ -489,7 +506,7 @@ class FlextLDAPServices(FlextProcessing.Handler):
             members=extract_members(),
             status="active",
             description=extract_group_attr("description"),
-            modified_at=datetime.now(),
+            modified_at=datetime.now(UTC),
         )
 
         return FlextResult.ok(group)

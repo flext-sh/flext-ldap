@@ -4,13 +4,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
-from datetime import datetime
-from typing import (
-    Final,
-    Literal,
-    cast,
-)
+from datetime import UTC, datetime
+from typing import Final, Literal, cast
 
 from flext_core import (
     FlextExceptions,
@@ -50,8 +48,9 @@ type ConnectionId = str
 # PATTERN SOUP: Strategy + Command + Result patterns para LDAP básico!
 # PYTHON 3.13 MARKETING: "Advanced patterns" para justify complexity!
 
+
 class FlextLDAPOperations:
-    """MONSTER LDAP CLASS: 2218 lines of LDAP over-engineering!
+    """MONSTER LDAP CLASS: 2218 lines of LDAP over-engineering.
 
     ARCHITECTURAL VIOLATIONS:
     - GOD OBJECT with 129+ methods for all LDAP operations
@@ -75,6 +74,10 @@ class FlextLDAPOperations:
 
     type ConnectionRegistry = dict[ConnectionId, object]
     type OperationResult = FlextResult[dict[str, object]]
+
+    def generate_id(self) -> str:
+        """Generate unique ID using flext-core utilities - SOURCE OF TRUTH."""
+        return FlextUtilities.Generators.generate_entity_id()
 
     # ==========================================================================
     # NESTED PARAMETER AND EXTRACTOR CLASSES - CONSOLIDATED FOR SOLID COMPLIANCE
@@ -359,7 +362,7 @@ class FlextLDAPOperations:
 
         def _generate_id(self) -> ConnectionId:
             """Generate connection ID using FlextUtilities - NO DUPLICATION."""
-            return FlextUtilities.Generators.generate_entity_id()
+            return FlextUtilities.Generators.generate_id()
 
         # Advanced validation using FlextValidations - ELIMINATES custom validation duplication
         def validate_dn_string(self, dn: str, context: str = "DN") -> FlextResult[None]:
@@ -471,7 +474,7 @@ class FlextLDAPOperations:
             @property
             def age_seconds(self) -> float:
                 """Calculate connection age in seconds."""
-                return FlextUtilities.get_elapsed_time(self.created_at)
+                return (datetime.now(UTC) - self.created_at).total_seconds()
 
         def __init__(self) -> None:
             """Initialize with enhanced connection registry."""
@@ -505,7 +508,7 @@ class FlextLDAPOperations:
                 metadata = self.ConnectionMetadata(
                     server_uri=server_uri,
                     bind_dn=bind_dn,
-                    created_at=datetime.now(),
+                    created_at=datetime.now(UTC),
                     timeout_seconds=timeout_seconds,
                     is_authenticated=bind_dn is not None,
                 )
@@ -639,7 +642,9 @@ class FlextLDAPOperations:
                         created_at = metadata_dict.get("created_at")
                         age_seconds = 0.0
                         if isinstance(created_at, datetime):
-                            age_seconds = FlextUtilities.get_elapsed_time(created_at)
+                            age_seconds = (
+                                datetime.now(UTC) - created_at
+                            ).total_seconds()
 
                         # Build connection info with proper typing
                         server_uri = str(metadata_dict.get("server_uri", "unknown"))
@@ -710,7 +715,7 @@ class FlextLDAPOperations:
             """Calculate duration from start time to now in seconds."""
             try:
                 if isinstance(start_time, datetime):
-                    return FlextUtilities.get_elapsed_time(start_time)
+                    return (datetime.now(UTC) - start_time).total_seconds()
                 return 0.0
             except Exception:
                 return 0.0
@@ -744,9 +749,9 @@ class FlextLDAPOperations:
         async def search_entries(
             self,
             params: FlextLDAPEntities.SearchParams,
-        ) -> FlextResult["FlextLDAPOperations.SearchOperations.SearchResult"]:
+        ) -> FlextResult[FlextLDAPOperations.SearchOperations.SearchResult]:
             """Execute LDAP search with enhanced validation and metrics."""
-            start_time = datetime.now()
+            start_time = datetime.now(UTC)
 
             # Comprehensive parameter validation
             validation_result = await self._validate_search_parameters(params)
@@ -758,7 +763,7 @@ class FlextLDAPOperations:
             try:
                 # Execute search with enhanced monitoring
                 entries = await self._execute_search_operation(params)
-                execution_time = FlextUtilities.get_elapsed_time(start_time) * 1000
+                execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 # Create typed result
                 search_result = self.SearchResult(
@@ -790,7 +795,7 @@ class FlextLDAPOperations:
                 ].ok(search_result)
 
             except Exception as e:
-                execution_time = FlextUtilities.get_elapsed_time(start_time) * 1000
+                execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 error_msg = self._handle_exception_with_context(
                     "search_entries",
                     e,
@@ -1046,7 +1051,7 @@ class FlextLDAPOperations:
                 # Convert dict entries to Entry objects first
                 entry_objects = [
                     FlextLDAPEntities.Entry(
-                        id=FlextUtilities.Generators.generate_entity_id(),
+                        id=FlextUtilities.Generators.generate_id(),
                         dn=str(entry_dict.get("dn", f"cn=unknown,{base_dn}")),
                         object_classes=(
                             [
@@ -1129,7 +1134,7 @@ class FlextLDAPOperations:
             entry_data = search_result.value.entries[0]
             # Convert dict to Entry object with proper type conversion
             entry = FlextLDAPEntities.Entry(
-                id=FlextUtilities.Generators.generate_entity_id(),
+                id=FlextUtilities.Generators.generate_id(),
                 dn=dn,
                 object_classes=(
                     [
@@ -1213,7 +1218,7 @@ class FlextLDAPOperations:
                 # Build user entity using extracted data with safe casting
                 users.append(
                     FlextLDAPEntities.User(
-                        id=FlextUtilities.Generators.generate_entity_id(),
+                        id=FlextUtilities.Generators.generate_id(),
                         dn=entry.dn,
                         uid=str(attrs.get("uid") or "unknown"),
                         cn=str(attrs.get("cn"))
@@ -1265,7 +1270,7 @@ class FlextLDAPOperations:
                 # Build group entity using extracted data
                 groups.append(
                     FlextLDAPEntities.Group(
-                        id=FlextUtilities.Generators.generate_entity_id(),
+                        id=FlextUtilities.Generators.generate_id(),
                         dn=entry.dn,
                         cn=str(attrs.get("cn", "unknown"))
                         if attrs.get("cn")
@@ -1322,7 +1327,7 @@ class FlextLDAPOperations:
 
                 # Create entry entity with validation
                 entry = FlextLDAPEntities.Entry(
-                    id=FlextUtilities.Generators.generate_entity_id(),
+                    id=FlextUtilities.Generators.generate_id(),
                     dn=dn,
                     object_classes=object_classes,
                     attributes=safe_attributes,
@@ -2112,7 +2117,7 @@ class FlextLDAPOperations:
         return self._groups
 
     # High-level convenience methods - ELIMINATED DUPLICATION
-    # Use FlextUtilities.Generators.generate_entity_id() directly - NO WRAPPER METHODS
+    # Use FlextUtilities.Generators.generate_id() directly - NO WRAPPER METHODS
 
     async def create_connection_and_bind(
         self,
@@ -2152,7 +2157,7 @@ class FlextLDAPOperations:
         if search_result.value.entries:
             entry_data = search_result.value.entries[0]
             first_entry = FlextLDAPEntities.Entry(
-                id=FlextUtilities.Generators.generate_entity_id(),
+                id=FlextUtilities.Generators.generate_id(),
                 dn=base_dn,
                 object_classes=(
                     [

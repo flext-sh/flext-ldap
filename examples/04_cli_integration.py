@@ -23,6 +23,7 @@ class FlextLDAPCLI:
     """CLI integrada para operações LDAP usando flext-cli."""
 
     def __init__(self) -> None:
+        """Initialize the LDAP CLI with configuration and API."""
         self.config = FlextCliConfig()
         self.ldap_api = FlextLDAPApi()
         # Create CLI context with available parameters

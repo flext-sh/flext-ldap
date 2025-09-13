@@ -202,7 +202,7 @@ async def check_ldap_health():
             \"cn=health,ou=service,dc=company,dc=com\",
             \"health_check_password\"
         ) as session:
-          
+
             result = await api.search(session, \"dc=company,dc=com\", \"(objectClass=organization)\")
 
             if result.success:

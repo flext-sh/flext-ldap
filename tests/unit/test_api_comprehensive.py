@@ -1,13 +1,3 @@
-"""Comprehensive flext_tests-based tests for FlextLDAPApi with 100% coverage.
-
-Follows flext_tests patterns for real LDAP functionality testing,
-Docker containers, and no mocks. Tests both success and failure paths.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import uuid
@@ -18,6 +8,7 @@ from flext_core import FlextResult, FlextTypes
 
 from flext_ldap import FlextLDAPEntities, get_flext_ldap_api
 from flext_ldap.api import FlextLDAPApi
+from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.settings import FlextLDAPSettings
 
@@ -31,7 +22,7 @@ class TestFlextLDAPApiComprehensive:
         api = FlextLDAPApi()
 
         # Use FlextTestsMatchers for better validation
-        assert isinstance(api._config, FlextLDAPSettings)
+        assert isinstance(api._config, FlextLDAPConfig)
         assert api._container_manager is not None
         assert api._container is not None
         assert api._service is not None
@@ -532,9 +523,11 @@ class TestFlextLDAPApiComprehensive:
         connection_config = FlextLDAPConnectionConfig(
             server="ldap://factory.example.com"
         )
-        config = FlextLDAPSettings(default_connection=connection_config)
+        config = FlextLDAPConfig(ldap_default_connection=connection_config)
         api3 = get_flext_ldap_api(config)
-        assert api3._config.default_connection.server == "ldap://factory.example.com"
+        assert (
+            api3._config.ldap_default_connection.server == "ldap://factory.example.com"
+        )
 
     # =============================================================================
     # Error Handling and Edge Cases

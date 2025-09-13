@@ -132,6 +132,13 @@ class FlextLDAPContainer(FlextMixins.Loggable):
         try:
             # Validate and register settings in FlextContainer
             container = FlextContainer.get_global()
+
+            # Check if settings are already registered to avoid duplicate registration
+            existing_result = container.get("ldap_settings")
+            if existing_result.is_success:
+                self.log_debug("LDAP settings already registered, skipping")
+                return FlextResult.ok(None)
+
             settings_result = container.register("ldap_settings", settings)
 
             if not settings_result.is_success:
@@ -164,12 +171,10 @@ class FlextLDAPContainer(FlextMixins.Loggable):
 
             def repository_factory() -> FlextLDAPRepositories:
                 """Factory for LDAP repository using cached client."""
-                # Get the cached client instance through the container's get_client method
-                if hasattr(self, "_client_cache") and self._client_cache is not None:
-                    client = self._client_cache
-                else:
-                    client = client_factory()
-                return FlextLDAPRepositories(client)
+                # Use the cached client directly to avoid circular dependency
+                if self._client_cache is None:
+                    self._client_cache = FlextLDAPClient()
+                return FlextLDAPRepositories(self._client_cache)
 
             def operations_factory() -> FlextLDAPOperations:
                 """Factory for LDAP operations."""
@@ -184,6 +189,14 @@ class FlextLDAPContainer(FlextMixins.Loggable):
 
             # Register all service factories in FlextContainer
             for service_name, service_factory in services:
+                # Check if service is already registered to avoid duplicate registration
+                existing_result = container.get(service_name)
+                if existing_result.is_success:
+                    self.log_debug(
+                        f"Service '{service_name}' already registered, skipping"
+                    )
+                    continue
+
                 registration_result = container.register(service_name, service_factory)
                 if not registration_result.is_success:
                     error_msg = f"Failed to register service '{service_name}': {registration_result.error}"

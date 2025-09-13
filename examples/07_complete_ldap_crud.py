@@ -14,7 +14,7 @@ import asyncio
 import sys
 from typing import Final, cast
 
-from flext_core import FlextConstants, FlextLogger, FlextResult
+from flext_core import FlextConstants, FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import (
     FlextLDAPApi,
