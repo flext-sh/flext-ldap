@@ -1,8 +1,7 @@
-"""FLEXT-LDAP Configuration - Singleton configuration management extending flext-core.
+"""Configuration management for flext-ldap.
 
-This module provides enterprise-grade LDAP configuration management using the
-FlextConfig singleton pattern from flext-core, with LDAP-specific fields and
-validation rules. Follows exact patterns from flext-core and flext-cli.
+This module provides LDAP configuration management with environment
+variable support, validation, and singleton patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,15 +13,17 @@ import os
 import threading
 from contextlib import suppress
 from pathlib import Path
-from typing import ClassVar, Self, final, override
+from typing import ClassVar, cast, final, override
 
-# from flext_cli import FlextCliConfig  # Temporarily disabled
 from flext_core import FlextConfig, FlextResult, FlextTypes
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.value_objects import FlextLDAPValueObjects
+
+# from flext_cli import FlextCliConfig  # Temporarily disabled
+
 
 # Python 3.13 type aliases for LDAP configuration
 type LdapConfigDict = FlextTypes.Core.Dict
@@ -52,7 +53,7 @@ class FlextLDAPConfig(FlextConfig):
     Core: ClassVar[type[FlextConfig]] = FlextConfig
 
     # SINGLETON PATTERN - Global LDAP configuration instance with thread safety
-    _global_instance: ClassVar[FlextLDAPConfig | None] = None
+    _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
     # Advanced Pydantic v2 configuration with environment loading
@@ -74,7 +75,7 @@ class FlextLDAPConfig(FlextConfig):
                     "ldap_default_connection": {
                         "server": "ldap://localhost",
                         "port": 389,
-                        "use_ssl": False
+                        "use_ssl": False,
                     },
                     "ldap_bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                     "ldap_use_ssl": False,
@@ -84,7 +85,7 @@ class FlextLDAPConfig(FlextConfig):
                     "ldap_default_connection": {
                         "server": "ldaps://ldap.company.com",
                         "port": 636,
-                        "use_ssl": True
+                        "use_ssl": True,
                     },
                     "ldap_bind_dn": "cn=service,ou=accounts,dc=company,dc=com",
                     "ldap_use_ssl": True,
@@ -244,13 +245,15 @@ class FlextLDAPConfig(FlextConfig):
             msg = "Bind DN cannot be empty"
             raise ValueError(msg)
         # Basic DN format validation
-        if not any(value.startswith(prefix) for prefix in ["cn=", "uid=", "ou=", "dc="]):
+        if not any(
+            value.startswith(prefix) for prefix in ["cn=", "uid=", "ou=", "dc="]
+        ):
             msg = "Bind DN should start with cn=, uid=, ou=, or dc="
             raise ValueError(msg)
         return value
 
     @model_validator(mode="after")
-    def validate_ldap_configuration_consistency(self) -> Self:
+    def validate_ldap_configuration_consistency(self) -> FlextLDAPConfig:
         """Validate cross-field LDAP configuration consistency."""
         # Cache validation
         if self.ldap_enable_caching and self.ldap_cache_ttl <= 0:
@@ -296,7 +299,7 @@ class FlextLDAPConfig(FlextConfig):
                 # Double-check locking pattern for thread safety
                 if cls._global_instance is None:
                     cls._global_instance = cls._load_ldap_config_from_sources()
-        return cls._global_instance
+        return cast("FlextLDAPConfig", cls._global_instance)
 
     @classmethod
     def _load_ldap_config_from_sources(cls) -> FlextLDAPConfig:
@@ -333,14 +336,14 @@ class FlextLDAPConfig(FlextConfig):
             return cls()
 
     @classmethod
-    def set_global_instance(cls, config: FlextLDAPConfig) -> None:
+    def set_global_instance(cls, config: FlextConfig) -> None:
         """Set the SINGLETON GLOBAL LDAP configuration instance.
 
         Args:
             config: The LDAP configuration to set as global
 
         """
-        cls._global_instance = config
+        cls._global_instance = cast("FlextLDAPConfig", config)
 
     @classmethod
     def clear_global_instance(cls) -> None:
@@ -348,9 +351,9 @@ class FlextLDAPConfig(FlextConfig):
         cls._global_instance = None
 
     @classmethod
-    def _get_ldap_environment_overrides(cls) -> FlextTypes.Core.Dict:
+    def _get_ldap_environment_overrides(cls) -> dict[str, object]:
         """Get LDAP-specific environment variable overrides."""
-        ldap_overrides = {}
+        ldap_overrides: dict[str, object] = {}
 
         # Map LDAP-specific environment variables
         env_mappings = {
@@ -376,16 +379,29 @@ class FlextLDAPConfig(FlextConfig):
             value = os.getenv(env_var)
             if value is not None:
                 # Convert string values to appropriate types
-                if config_key in {"ldap_use_ssl", "ldap_verify_certificates", "ldap_enable_debug",
-                                "ldap_log_queries", "ldap_log_responses", "ldap_structured_logging",
-                                "ldap_enable_caching", "ldap_enable_debug_mode", "ldap_enable_test_mode"}:
+                if config_key in {
+                    "ldap_use_ssl",
+                    "ldap_verify_certificates",
+                    "ldap_enable_debug",
+                    "ldap_log_queries",
+                    "ldap_log_responses",
+                    "ldap_structured_logging",
+                    "ldap_enable_caching",
+                    "ldap_enable_debug_mode",
+                    "ldap_enable_test_mode",
+                }:
                     ldap_overrides[config_key] = value.lower() in {
                         "true",
                         "1",
                         "yes",
                         "on",
                     }
-                elif config_key in {"ldap_size_limit", "ldap_time_limit", "ldap_page_size", "ldap_cache_ttl"}:
+                elif config_key in {
+                    "ldap_size_limit",
+                    "ldap_time_limit",
+                    "ldap_page_size",
+                    "ldap_cache_ttl",
+                }:
                     with suppress(ValueError):
                         ldap_overrides[config_key] = int(value)
                 else:
@@ -438,7 +454,7 @@ class FlextLDAPConfig(FlextConfig):
             current_config = cls.get_global_instance()
 
             # Create updated configuration with CLI overrides
-            config_updates = {}
+            config_updates: dict[str, object] = {}
 
             # Map CLI parameters to configuration fields
             param_mappings = {
@@ -478,7 +494,9 @@ class FlextLDAPConfig(FlextConfig):
                     value = cli_params[cli_param]
                     if value is not None:
                         # Handle special cases for connection config
-                        if config_field == "ldap_default_connection" and isinstance(value, str):
+                        if config_field == "ldap_default_connection" and isinstance(
+                            value, str
+                        ):
                             # Create connection config from server string
                             connection_config = FlextLDAPConnectionConfig(server=value)
                             config_updates[config_field] = connection_config
@@ -692,10 +710,13 @@ class FlextLDAPConfig(FlextConfig):
         result = cls.create(constants=config_data)
         if result.is_success:
             instance = result.value
+            if not isinstance(instance, cls):
+                return FlextResult.fail("Invalid instance type returned from create")
             instance._metadata["profile"] = "ldap_development"
             instance._metadata["created_with"] = "development_ldap_factory"
+            return FlextResult.ok(instance)
 
-        return result
+        return FlextResult.fail(result.error or "Unknown error")
 
     @classmethod
     def create_test_ldap_config(cls) -> FlextResult[FlextLDAPConfig]:
@@ -729,10 +750,13 @@ class FlextLDAPConfig(FlextConfig):
         result = cls.create(constants=config_data)
         if result.is_success:
             instance = result.value
+            if not isinstance(instance, cls):
+                return FlextResult.fail("Invalid instance type returned from create")
             instance._metadata["profile"] = "ldap_test"
             instance._metadata["created_with"] = "test_ldap_factory"
+            return FlextResult.ok(instance)
 
-        return result
+        return FlextResult.fail(result.error or "Unknown error")
 
     @classmethod
     def create_production_ldap_config(cls) -> FlextResult[FlextLDAPConfig]:
@@ -769,10 +793,13 @@ class FlextLDAPConfig(FlextConfig):
         result = cls.create(constants=config_data)
         if result.is_success:
             instance = result.value
+            if not isinstance(instance, cls):
+                return FlextResult.fail("Invalid instance type returned from create")
             instance._metadata["profile"] = "ldap_production"
             instance._metadata["created_with"] = "production_ldap_factory"
+            return FlextResult.ok(instance)
 
-        return result
+        return FlextResult.fail(result.error or "Unknown error")
 
     # =============================================================================
     # VALIDATION METHODS
@@ -822,7 +849,10 @@ class FlextLDAPConfig(FlextConfig):
         """Validate LDAP authentication configuration."""
         if self.ldap_bind_dn and not self.ldap_bind_dn.strip():
             return FlextResult.fail("LDAP bind DN cannot be empty")
-        if self.ldap_bind_password and len(self.ldap_bind_password.get_secret_value()) < 1:
+        if (
+            self.ldap_bind_password
+            and len(self.ldap_bind_password.get_secret_value()) < 1
+        ):
             return FlextResult.fail("LDAP bind password cannot be empty")
         return FlextResult.ok(None)
 
@@ -830,6 +860,7 @@ class FlextLDAPConfig(FlextConfig):
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def get_flext_ldap_config() -> FlextLDAPConfig:
     """Get the global LDAP configuration instance.

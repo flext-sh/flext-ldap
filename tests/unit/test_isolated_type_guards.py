@@ -1,19 +1,19 @@
-"""Isolated tests for type guards - testing REAL functionality without external deps.
-
-These tests import and Execute type guard code to increase coverage.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
 
 from __future__ import annotations
 
 import pytest
 from flext_core import FlextTypes
-
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.type_guards import FlextLDAPTypeGuards
+
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+
+from typing import List
+from typing import Type
 
 TYPE_GUARDS_AVAILABLE = True
 
@@ -24,11 +24,13 @@ class TestIsolatedTypeGuards:
 
     def test_min_dn_parts_constant_is_correct(self) -> None:
         """Test that MIN_DN_PARTS constant has correct value (now in FlextLDAPConstants)."""
+
         assert FlextLDAPConstants.LdapValidation.MIN_DN_PARTS == 2
         assert isinstance(FlextLDAPConstants.LdapValidation.MIN_DN_PARTS, int)
 
     def test_is_ldap_dn_with_valid_dn_strings(self) -> None:
         """Test is_ldap_dn function with valid DN strings."""
+
         valid_dns = [
             "cn=John Doe,ou=users,dc=example,dc=com",
             "uid=john.doe,ou=people,dc=test,dc=local",
@@ -43,6 +45,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_dn_with_invalid_strings(self) -> None:
         """Test is_ldap_dn function with invalid strings."""
+
         invalid_dns = [
             "",  # Empty string
             "no equals sign",
@@ -57,6 +60,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_dn_with_non_strings(self) -> None:
         """Test is_ldap_dn function rejects non-strings."""
+
         non_strings = [None, 123, [], {}, object()]
 
         for value in non_strings:
@@ -65,6 +69,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_attribute_value_with_valid_values(self) -> None:
         """Test is_ldap_attribute_value with valid LDAP attribute values."""
+
         valid_values = [
             "string value",
             b"bytes value",
@@ -80,6 +85,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_attribute_value_with_invalid_values(self) -> None:
         """Test is_ldap_attribute_value rejects invalid values."""
+
         invalid_values = [
             None,
             123,
@@ -94,6 +100,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_attributes_dict_with_valid_dicts(self) -> None:
         """Test is_ldap_attributes_dict with valid attribute dictionaries."""
+
         valid_dicts = [
             {"cn": "John Doe"},
             {"mail": ["user@example.com"]},
@@ -107,6 +114,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_attributes_dict_with_invalid_dicts(self) -> None:
         """Test is_ldap_attributes_dict rejects invalid dictionaries."""
+
         invalid_dicts: FlextTypes.Core.List = [
             None,
             "string",
@@ -122,34 +130,40 @@ class TestIsolatedTypeGuards:
 
     def test_ensure_ldap_dn_with_valid_dn(self) -> None:
         """Test ensure_ldap_dn returns valid DN unchanged."""
+
         valid_dn = "cn=test,dc=example,dc=com"
         result = FlextLDAPTypeGuards.ensure_ldap_dn(valid_dn)
         assert result == valid_dn
 
     def test_ensure_ldap_dn_converts_string_with_equals(self) -> None:
         """Test ensure_ldap_dn converts string with equals to DN."""
+
         convertible = "uid=user,ou=people"
         result = FlextLDAPTypeGuards.ensure_ldap_dn(convertible)
         assert result == convertible
 
     def test_ensure_ldap_dn_raises_for_invalid_string(self) -> None:
         """Test ensure_ldap_dn raises ValueError for invalid input."""
-        with pytest.raises(ValueError, match="Cannot convert.*to valid LDAP DN"):
+
+        with pytest.raises(ValueError, match=r"Cannot convert.*to valid LDAP DN"):
             FlextLDAPTypeGuards.ensure_ldap_dn("no equals sign")
 
     def test_ensure_string_list_converts_string_to_list(self) -> None:
         """Test ensure_string_list converts single string to list."""
+
         result = FlextLDAPTypeGuards.ensure_string_list("single value")
         assert result == ["single value"]
 
     def test_ensure_string_list_keeps_list_unchanged(self) -> None:
         """Test ensure_string_list keeps list unchanged."""
+
         input_list = ["value1", "value2", "value3"]
         result = FlextLDAPTypeGuards.ensure_string_list(input_list)
         assert result == input_list
 
     def test_ensure_string_list_converts_non_strings_in_list(self) -> None:
         """Test ensure_string_list with string list."""
+
         string_list = ["123", "string", "456"]
         result = FlextLDAPTypeGuards.ensure_string_list(string_list)
         expected = ["123", "string", "456"]
@@ -157,6 +171,7 @@ class TestIsolatedTypeGuards:
 
     def test_ensure_string_list_handles_string_input(self) -> None:
         """Test ensure_string_list handles string input."""
+
         result = FlextLDAPTypeGuards.ensure_string_list("single_string")
         assert result == ["single_string"]
 
@@ -167,6 +182,7 @@ class TestTypeGuardsNotAvailable:
 
     def test_type_guards_import_failed(self) -> None:
         """Test that we handle the case when type guards can't be imported."""
+
         # This test runs when TYPE_GUARDS_AVAILABLE is False
         assert not TYPE_GUARDS_AVAILABLE
         # This is expected in some environments and is not a failure

@@ -1,27 +1,17 @@
-"""Integration tests for FLEXT LDAP with REAL LDAP operations.
-
-These tests execute actual LDAP operations against a real OpenLDAP container.
-NO MOCKS - only real code execution and validation.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
 
 from __future__ import annotations
 
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextTypes
 
 from flext_ldap import (
     FlextLDAPClient,
     FlextLDAPContainer,
+    FlextLDAPEntities,
     FlextLDAPValueObjects,
 )
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.services import FlextLDAPServices as FlextLDAPService
 
 
 # Helper function to replace create_ldap_attributes
@@ -57,11 +47,11 @@ class TestLdapClientRealOperations:
 
         # Verify connection succeeded
         assert result.is_success, f"Connection failed: {result.error}"
-        assert client.is_connected
+        assert client.is_connected()
 
         # Cleanup
         await client.unbind()
-        assert not client.is_connected
+        assert not client.is_connected()
 
     @pytest.mark.asyncio
     async def test_client_search_real_entries(
@@ -141,7 +131,7 @@ class TestLdapClientRealOperations:
             size_limit=1,
             time_limit=30,
         )
-        search_result = await connected_ldap_client.search(search_request)
+        search_result = await connected_ldap_client.search_with_request(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
         empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
         search_data = (
@@ -150,16 +140,15 @@ class TestLdapClientRealOperations:
         assert search_data.entries, "User entry should exist"
 
         entry_data = search_data.entries[0]
-        assert "updated@example.com" in str(entry_data.get("mail", "")), (
-            "Email should be updated"
-        )
+        mail_value = entry_data.get("mail", "")
+        assert "updated@example.com" in str(mail_value), "Email should be updated"
 
         # DELETE: Remove user entry
         delete_result = await connected_ldap_client.delete(test_dn)
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
-        verify_search = await connected_ldap_client.search(search_request)
+        verify_search = await connected_ldap_client.search_with_request(search_request)
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
@@ -223,7 +212,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
         created_user = create_result.value if create_result.is_success else default_user
         assert created_user.uid == user_request.uid
@@ -239,7 +228,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
         retrieved_user = get_result.value if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -267,7 +256,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
         updated_user = (
             updated_get_result.value if updated_get_result.is_success else default_user
@@ -279,7 +268,6 @@ class TestLdapServiceRealOperations:
         search_result = await ldap_service.search_users(
             f"(uid={user_request.uid})",
             ou_dn,
-            "subtree",
         )
         assert search_result.is_success, (
             f"Failed to search users: {search_result.error}"
@@ -352,7 +340,7 @@ class TestLdapServiceRealOperations:
             object_classes=["groupOfNames"],
             attributes={},
             members=[user_dn],  # Add member during creation
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
 
         # CREATE: Real group creation
@@ -372,7 +360,7 @@ class TestLdapServiceRealOperations:
             object_classes=["groupOfNames"],
             attributes={},
             members=[],
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
         retrieved_group = get_result.value if get_result.is_success else default_group
         assert retrieved_group is not None
@@ -534,7 +522,7 @@ class TestLdapValidationRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
         created_user = create_result.value if create_result.is_success else default_user
         validation_result = created_user.validate_business_rules()

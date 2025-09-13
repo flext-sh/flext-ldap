@@ -12,9 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-
-# Add src to path for imports
 import sys
+import traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -43,7 +42,9 @@ def demonstrate_singleton_pattern() -> None:
     print(f"Second instance ID: {id(config2)}")
 
     # Verify they are the same instance
-    assert config1 is config2, "Instances should be identical"
+    if config1 is not config2:
+        error_msg = "Instances should be identical"
+        raise RuntimeError(error_msg)
     print("✅ Singleton pattern working correctly\n")
 
 
@@ -52,14 +53,16 @@ def demonstrate_environment_loading() -> None:
     print("=== Environment Variable Loading Demo ===\n")
 
     # Set environment variables
-    os.environ.update({
-        "FLEXT_LDAP_BIND_DN": "cn=env-user,dc=example,dc=com",
-        "FLEXT_LDAP_BIND_PASSWORD": "env-password-123",
-        "FLEXT_LDAP_USE_SSL": "true",
-        "FLEXT_LDAP_SIZE_LIMIT": "5000",
-        "FLEXT_LDAP_ENABLE_CACHING": "true",
-        "FLEXT_LDAP_CACHE_TTL": "900",
-    })
+    os.environ.update(
+        {
+            "FLEXT_LDAP_BIND_DN": "cn=env-user,dc=example,dc=com",
+            "FLEXT_LDAP_BIND_PASSWORD": "env-password-123",
+            "FLEXT_LDAP_USE_SSL": "true",
+            "FLEXT_LDAP_SIZE_LIMIT": "5000",
+            "FLEXT_LDAP_ENABLE_CACHING": "true",
+            "FLEXT_LDAP_CACHE_TTL": "900",
+        }
+    )
 
     # Clear and reload to pick up environment variables
     clear_flext_ldap_config()
@@ -131,12 +134,12 @@ def demonstrate_parameter_overrides() -> None:
 
     # Apply overrides to change behavior
     overrides = {
-        "size_limit": 10000,      # Increase search result limit
-        "time_limit": 300,        # Increase timeout to 5 minutes
-        "enable_caching": True,   # Enable result caching
-        "cache_ttl": 1800,        # Cache for 30 minutes
-        "log_queries": True,      # Enable query logging
-        "log_responses": True,    # Enable response logging
+        "size_limit": 10000,  # Increase search result limit
+        "time_limit": 300,  # Increase timeout to 5 minutes
+        "enable_caching": True,  # Enable result caching
+        "cache_ttl": 1800,  # Cache for 30 minutes
+        "log_queries": True,  # Enable query logging
+        "log_responses": True,  # Enable response logging
         "structured_logging": True,  # Enable structured logging
     }
 
@@ -216,7 +219,9 @@ def demonstrate_runtime_behavior_changes() -> None:
 
     # Start with development configuration
     dev_result = FlextLDAPConfig.create_development_ldap_config()
-    assert dev_result.is_success
+    if not dev_result.is_success:
+        error_msg = f"Failed to create development config: {dev_result.error}"
+        raise RuntimeError(error_msg)
     dev_config = dev_result.value
 
     set_flext_ldap_config(dev_config)
@@ -229,14 +234,14 @@ def demonstrate_runtime_behavior_changes() -> None:
 
     # Simulate production deployment - change behavior
     production_overrides = {
-        "debug": False,              # Disable debug mode
-        "log_level": "INFO",         # Set production log level
-        "log_queries": False,        # Disable query logging
-        "log_responses": False,      # Disable response logging
-        "enable_caching": True,      # Enable caching for performance
-        "cache_ttl": 3600,          # Cache for 1 hour
-        "size_limit": 5000,         # Increase limits for production
-        "time_limit": 120,          # Increase timeout
+        "debug": False,  # Disable debug mode
+        "log_level": "INFO",  # Set production log level
+        "log_queries": False,  # Disable query logging
+        "log_responses": False,  # Disable response logging
+        "enable_caching": True,  # Enable caching for performance
+        "cache_ttl": 3600,  # Cache for 1 hour
+        "size_limit": 5000,  # Increase limits for production
+        "time_limit": 120,  # Increase timeout
     }
 
     result = dev_config.apply_ldap_overrides(production_overrides)
@@ -287,7 +292,6 @@ def main() -> None:
 
     except Exception as e:
         print(f"❌ Error during demonstration: {e}")
-        import traceback
         traceback.print_exc()
 
 

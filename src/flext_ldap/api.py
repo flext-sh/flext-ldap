@@ -48,7 +48,8 @@ class FlextLDAPApi(FlextMixins.Loggable):
         self._service = FlextLDAPServices(self._container)
 
         self.log_info(
-            "FlextLDAPApi initialized with FlextLDAPConfig singleton", api="FlextLDAPApi"
+            "FlextLDAPApi initialized with FlextLDAPConfig singleton",
+            api="FlextLDAPApi",
         )
 
     @cached_property

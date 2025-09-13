@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextConfig, FlextMixins, FlextResult, FlextValidations
+from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
 from pydantic import Field, field_validator
 
 
-class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
+class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
     model_config: ClassVar = {
@@ -19,6 +19,24 @@ class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
         "validate_assignment": True,
         "str_strip_whitespace": True,
     }
+
+    def __init__(
+        self,
+        /,
+        *,
+        _factory_mode: bool = False,
+        _env_file: str | None = None,
+        _env_format: str = "env",
+        **_data: object,
+    ) -> None:
+        """Initialize LDAP connection configuration."""
+        super().__init__(
+            _factory_mode=_factory_mode,
+            _env_file=_env_file,
+            _env_format=_env_format,
+            **_data,
+        )
+        self._logger = FlextLogger(__name__)
 
     # Basic Connection Settings
     server: str = Field(
@@ -91,22 +109,16 @@ class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
     @classmethod
     def validate_server_uri(cls, v: str) -> str:
         """Validate LDAP server URI format using FlextValidations - NO DUPLICATION."""
-        # Use FlextValidations.Rules.StringRules instead of custom validation
-        validation_result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-        if validation_result.is_failure:
-            msg = f"Server URI cannot be empty: {validation_result.error}"
+        # Use FlextValidations instead of custom validation
+        if not FlextValidations.is_non_empty_string(v):
+            msg = "Server URI cannot be empty"
             raise ValueError(msg)
 
         v = v.strip()
 
-        # Use FlextValidations pattern matching for URI validation
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-            v,
-            r"^(ldap://|ldaps://)",
-            "LDAP URI must start with 'ldap://' or 'ldaps://'",
-        )
-        if pattern_result.is_failure:
-            msg = f"Server URI validation failed: {pattern_result.error}"
+        # Use basic pattern validation for URI validation
+        if not v.startswith(("ldap://", "ldaps://")):
+            msg = "LDAP URI must start with 'ldap://' or 'ldaps://'"
             raise ValueError(msg)
 
         return v
@@ -120,11 +132,8 @@ class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
 
         # Use FlextValidations for file path validation
         path_str = str(v)
-        validation_result = FlextValidations.Rules.StringRules.validate_non_empty(
-            path_str
-        )
-        if validation_result.is_failure:
-            msg = f"Certificate file path invalid: {validation_result.error}"
+        if not FlextValidations.is_non_empty_string(path_str):
+            msg = "Certificate file path invalid"
             raise ValueError(msg)
 
         # File existence validation - could be extended with FlextValidations.Rules.FileRules if available
@@ -158,8 +167,8 @@ class FlextLDAPConnectionConfig(FlextConfig, FlextMixins.Loggable):
         try:
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
-                self.log_operation(
-                    operation="SSL verification enabled but no CA certificate file specified",
+                self._logger.warning(
+                    "SSL verification enabled but no CA certificate file specified"
                 )
 
             return FlextResult.ok(None)

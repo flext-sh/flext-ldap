@@ -8,13 +8,6 @@ This example demonstrates the core functionality of flext-ldap library:
 - User management
 - Error handling with FlextResult patterns
 
-Requirements:
-- flext-ldap library installed
-- Optional: LDAP server for real operations
-
-Usage:
-    python examples/basic_ldap_operations.py
-
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 

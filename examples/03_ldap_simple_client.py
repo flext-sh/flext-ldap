@@ -14,8 +14,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_ldap import FlextLDAPClient, FlextLDAPSearchRequest
-from flext_ldap.entities import FlextLDAPSearchResponse
+from flext_ldap import FlextLDAPClient, FlextLDAPEntities
 
 
 async def main() -> None:
@@ -34,8 +33,8 @@ async def main() -> None:
         password=bind_password,
     )
     if result.is_success:
-        # Example search using FlextLDAPSearchRequest
-        search_request = FlextLDAPSearchRequest(
+        # Example search using FlextLDAPEntities.SearchRequest
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail"],
@@ -43,11 +42,11 @@ async def main() -> None:
             size_limit=1000,
             time_limit=30,
         )
-        search_result = await client.search(request=search_request)
+        search_result = await client.search_with_request(search_request)
 
         if search_result.is_success:
             # Use proper type for FlextResult unwrapping
-            empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
+            empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
             response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3
                 dn_value = entry.get("dn", "N/A")
@@ -63,7 +62,7 @@ async def main() -> None:
     )
     if op_result.is_success:
         # Add entry
-        add_result = await client.add(
+        add_result = await client.add_entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "objectClass": ["top", "person", "organizationalPerson"],
@@ -75,7 +74,7 @@ async def main() -> None:
 
         if add_result.is_success:
             # Modify entry
-            modify_result = await client.modify(
+            modify_result = await client.modify_entry(
                 dn="cn=testuser,dc=example,dc=com",
                 attributes={"mail": ["updated@example.com"]},
             )

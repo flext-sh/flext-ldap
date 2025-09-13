@@ -28,7 +28,7 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
     FlextLDAPApi,
     FlextLDAPDistinguishedName,
-    FlextLDAPEntry,
+    FlextLDAPEntities,
     FlextLDAPFilter,
     FlextLDAPSearchRequest,
     FlextLDAPSettings,
@@ -148,7 +148,7 @@ async def demonstrate_async_patterns() -> None:
             "ldap://demo.example.com:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password"
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[FlextLDAPEntry]]]] = []
+            tasks: list[Awaitable[FlextResult[list[FlextLDAPEntities]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
@@ -166,7 +166,7 @@ async def demonstrate_async_patterns() -> None:
 
             # Execute concurrent searches with proper typing
             results: list[
-                FlextResult[list[FlextLDAPEntry]] | BaseException
+                FlextResult[list[FlextLDAPEntities]] | BaseException
             ] = await asyncio.gather(*tasks, return_exceptions=True)
 
             sum(

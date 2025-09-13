@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import final, override
+from typing import final
 
 import yaml
 from flext_core import FlextResult, FlextTypes
@@ -28,7 +28,15 @@ type LdapSettingsDict = FlextTypes.Core.Dict
 type LdapConnectionName = str
 type LdapConfigPath = str | Path
 
-yaml_module: object | None = yaml
+# YAML module will be imported dynamically when needed
+
+
+def _safe_yaml_load(content: str) -> dict[str, object]:
+    try:
+        return yaml.safe_load(content) or {}
+    except Exception as e:
+        yaml_parse_error_msg = f"Failed to parse YAML content: {e}"
+        raise ValueError(yaml_parse_error_msg) from e
 
 
 @final
@@ -59,7 +67,6 @@ class FlextLDAPSettings:
 
     # No fields needed - all delegated to FlextLDAPConfig singleton
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate settings by delegating to FlextLDAPConfig singleton."""
         return self._ldap_config.validate_business_rules()
@@ -88,7 +95,8 @@ class FlextLDAPSettings:
     @connection.setter
     def connection(self, value: FlextLDAPConnectionConfig | None) -> None:
         """Set connection configuration."""
-        self._ldap_config.update_connection_config(value)
+        if value is not None:
+            self._ldap_config.update_connection_config(value)
 
     # Removed unnecessary alias method - use validate_business_rules() directly per SOURCE OF TRUTH
 
@@ -122,9 +130,6 @@ class FlextLDAPSettings:
         """
         # Error messages as constants
         file_not_found_msg = f"Configuration file not found: {file_path}"
-        yaml_import_error_msg = (
-            "Failed to parse configuration file: YAML parsing requires PyYAML package"
-        )
 
         # Check if file exists
         file_path_obj = Path(file_path)
@@ -139,26 +144,8 @@ class FlextLDAPSettings:
             try:
                 config_dict = json.loads(content)
             except json.JSONDecodeError:
-                # Try to parse as YAML
-                if yaml_module is None:
-                    return FlextResult.fail(yaml_import_error_msg)
-                try:
-                    safe_load_method = getattr(yaml_module, "safe_load", None)
-                    if safe_load_method is None:
-                        return FlextResult.fail(
-                            "YAML module doesn't have safe_load method",
-                        )
-                    config_dict = safe_load_method(content)
-                except ImportError as import_err:
-                    yaml_error_msg = (
-                        "PyYAML not installed but required for .yml/.yaml files"
-                    )
-                    raise ValueError(yaml_error_msg) from import_err
-                except Exception as e:  # YAMLError if yaml is available
-                    yaml_format_error_msg = (
-                        f"Failed to parse configuration file: Invalid YAML format: {e}"
-                    )
-                    raise ValueError(yaml_format_error_msg) from e
+                # Try to parse as YAML using helper function
+                config_dict = _safe_yaml_load(content)
         except (FileNotFoundError, ValueError):
             raise
         except OSError as e:
@@ -187,7 +174,9 @@ class FlextLDAPSettings:
         # Create development LDAP config
         dev_config_result = FlextLDAPConfig.create_development_ldap_config()
         if dev_config_result.is_failure:
-            error_msg = f"Failed to create development config: {dev_config_result.error}"
+            error_msg = (
+                f"Failed to create development config: {dev_config_result.error}"
+            )
             raise ValueError(error_msg)
 
         # Set as global instance
@@ -217,7 +206,9 @@ class FlextLDAPSettings:
         # Create production LDAP config
         prod_config_result = FlextLDAPConfig.create_production_ldap_config()
         if prod_config_result.is_failure:
-            error_msg = f"Failed to create production config: {prod_config_result.error}"
+            error_msg = (
+                f"Failed to create production config: {prod_config_result.error}"
+            )
             raise ValueError(error_msg)
 
         # Set as global instance

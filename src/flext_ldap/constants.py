@@ -1,8 +1,5 @@
 """LDAP Constants - SOURCE OF TRUTH using FlextConstants.LDAP exclusively.
 
-ZERO TOLERANCE for duplication. Uses FlextConstants.LDAP as single source of truth
-with minimal LDAP-specific extensions only where FlextConstants.LDAP doesn't cover.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -16,11 +13,7 @@ from flext_core import FlextTypes
 
 @final
 class FlextLDAPConstants:
-    """LDAP Constants using SOURCE OF TRUTH pattern - FlextConstants.LDAP exclusively.
-
-    ELIMINATED DUPLICATION: Uses FlextConstants.LDAP for all standard constants.
-    Only adds specific constants that FlextConstants.LDAP doesn't provide.
-    """
+    """LDAP Constants using SOURCE OF TRUTH pattern - FlextConstants.LDAP exclusively."""
 
     # LDAP constants - defined directly since FlextConstants.LDAP doesn't exist
     class LDAP:
@@ -53,7 +46,7 @@ class FlextLDAPConstants:
         ATTR_GIVEN_NAME = "givenName"
         ATTR_MAIL = "mail"
         ATTR_UID = "uid"
-        ATTR_USER_PASSWORD = "userPassword"
+        ATTR_USER_PASSWORD = "userPassword"  # nosec B105 - LDAP attribute name, not password
         ATTR_OBJECT_CLASS = "objectClass"
         ATTR_DISTINGUISHED_NAME = "distinguishedName"
 
@@ -73,7 +66,7 @@ class FlextLDAPConstants:
         DESCRIPTION: Final[str] = "description"
         USER_ID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
-        USER_PASSWORD: Final[str] = "userPassword"
+        USER_PASSWORD: Final[str] = "userPassword"  # nosec B105 - LDAP attribute name, not password
 
         # Group Attributes
         MEMBER: Final[str] = "member"
@@ -207,7 +200,7 @@ class FlextLDAPConstants:
         }
 
         # Mapping from flext-core integer scopes to string scopes
-        SCOPE_INT_TO_STRING: Final[dict[int, str]] = {
+        SCOPE_INT_TO_STRING: Final[dict[str, str]] = {
             "base": BASE,
             "one": ONE,
             "sub": SUB,
@@ -221,7 +214,9 @@ class FlextLDAPConstants:
         MAX_DN_LENGTH: Final[int] = 2048
         MIN_FILTER_LENGTH: Final[int] = 1
         MAX_FILTER_LENGTH_VALUE_OBJECTS: Final[int] = 4096
-        DN_PATTERN: Final[str] = r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
+        DN_PATTERN: Final[str] = (
+            r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
+        )
         FILTER_PATTERN: Final[str] = r"^\(.+\)$"
         EMAIL_PATTERN: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         MAX_FILTER_LENGTH: Final[int] = 8192

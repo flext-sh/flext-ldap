@@ -1,7 +1,4 @@
-"""LDAP Types - Single FlextLDAPTypes class following FLEXT patterns.
-
-Single class inheriting from FlextCoreTypes with all LDAP types
-organized as internal properties and methods for complete backward compatibility.
+"""FLEXT LDAP Types Module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

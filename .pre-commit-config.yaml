@@ -30,7 +30,6 @@ repos:
         require_serial: true
         args: [--check, --diff]
 
-
       - id: ruff-format
         name: "⚡ Ruff Format"
         entry: poetry run ruff format
@@ -56,7 +55,6 @@ repos:
         require_serial: true
         args: [--check-only, --diff]
 
-    
       - id: mypy
         name: "🛡️ MyPy Strict"
         entry: poetry run mypy

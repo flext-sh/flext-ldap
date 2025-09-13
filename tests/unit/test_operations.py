@@ -1,26 +1,16 @@
-"""Real functional tests for FLEXT-LDAP Operations that actually exercise code.
-
-These tests provide functional validation of operations.py by executing real code paths
-without requiring external LDAP infrastructure. Focus on business logic validation.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
 
 import pytest
-from flext_core import FlextConstants, FlextUtilities
+from flext_core import FlextUtilities
 
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.operations import FlextLDAPOperations
+from flext_ldap.typings import LdapAttributeDict
 
 # SearchParams moved to entities.py
-from flext_ldap.typings import LdapAttributeDict
 
 
 class TestFlextLDAPOperationsReal:
@@ -55,8 +45,8 @@ class TestFlextLDAPOperationsReal:
         assert len(id1) > 0
 
         # Should be entity ID format from FlextUtilities (not UUID)
-        assert id1.startswith("entity_"), f"ID should start with 'entity_': {id1}"
-        assert id2.startswith("entity_"), f"ID should start with 'entity_': {id2}"
+        assert id1.startswith("ent_"), f"ID should start with 'ent_': {id1}"
+        assert id2.startswith("ent_"), f"ID should start with 'ent_': {id2}"
         assert len(id1) > 10, f"ID should be reasonably long: {id1}"
         assert len(id2) > 10, f"ID should be reasonably long: {id2}"
 
@@ -420,7 +410,7 @@ class TestFlextLDAPSearchOperationsReal:
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             object_classes=["person", "organizationalPerson"],
             attributes=attributes,
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
 
         users = ops._convert_entries_to_users([entry])
@@ -453,7 +443,7 @@ class TestFlextLDAPSearchOperationsReal:
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes=attributes,
-            status=FlextConstants.Enums.EntityStatus.ACTIVE,
+            status="active",
         )
 
         groups = ops._convert_entries_to_groups([entry])
@@ -524,7 +514,7 @@ class TestFlextLDAPUserOperationsReal:
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
         assert user.given_name == "John"
-        assert user.status == FlextConstants.Enums.EntityStatus.ACTIVE
+        assert user.status == "active"
 
 
 class TestFlextLDAPGroupOperationsReal:

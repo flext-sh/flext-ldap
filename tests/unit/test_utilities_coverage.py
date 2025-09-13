@@ -1,7 +1,11 @@
-"""Utilities coverage tests for complete coverage.
 
-Following COMPREHENSIVE_QUALITY_REFACTORING_PROMPT.md:
-- Target utilities.py (4 statements, 0% coverage) for easy 100% win
+from __future__ import annotations
+
+from flext_core import FlextMixins
+import flext_ldap.utilities as utilities_module
+
+"""Module documentation.
+
 - Validate module imports and __all__ export correctly
 - Test minimal module design principle
 
@@ -9,11 +13,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+"""
+
 from __future__ import annotations
 
-from flext_core import FlextMixins
 
-import flext_ldap.utilities as utilities_module
 
 
 class TestFlextLDAPUtilities:
@@ -21,6 +25,7 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_module_imports_successfully(self) -> None:
         """Test that utilities module imports without errors."""
+
         # Module should import successfully
         assert utilities_module is not None
 
@@ -36,6 +41,7 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_module_design_principle(self) -> None:
         """Test that utilities follows minimal design principle."""
+
         # Should have minimal exports (empty __all__)
         assert utilities_module.__all__ == []
 
@@ -55,6 +61,7 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_flext_types_import(self) -> None:
         """Test that FlextTypes import is working correctly."""
+
         # Should have FlextTypes available in module context
         # Check that the module compiled without import errors
         assert utilities_module.__name__ == "flext_ldap.utilities"
@@ -66,6 +73,7 @@ class TestFlextLDAPUtilities:
 
     def test_utilities_logger_functionality(self) -> None:
         """Test that logger duplication was eliminated following SOURCE OF TRUTH principle."""
+
         # Logger should NOT exist in utilities - eliminated duplication
         assert not hasattr(utilities_module, "logger")
 
@@ -75,7 +83,9 @@ class TestFlextLDAPUtilities:
         loggable = FlextMixins.Loggable()
         assert hasattr(loggable, "log_info")
         assert hasattr(loggable, "log_error")
-        assert hasattr(loggable, "log_operation")
+        assert hasattr(loggable, "log_warning")
+        assert hasattr(loggable, "log_debug")
         assert callable(loggable.log_info)
         assert callable(loggable.log_error)
-        assert callable(loggable.log_operation)
+        assert callable(loggable.log_warning)
+        assert callable(loggable.log_debug)

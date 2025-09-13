@@ -1,8 +1,7 @@
-"""LDAP Entities - Python 3.13 optimized with advanced Pydantic v2 patterns.
+"""Domain entities for flext-ldap.
 
-Single class with all LDAP domain entities implementing rich business objects
-organized as internal classes with Python 3.13 structural pattern matching,
-type aliases, and Pydantic v2 computed fields for maximum performance.
+This module defines the core domain entities for LDAP operations
+using Pydantic v2 models and Clean Architecture patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,17 +9,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Annotated, Literal, Self, override
+import re
+from datetime import UTC, datetime
+from typing import Annotated, Literal, Self
 
 from flext_core import (
     FlextMixins,
     FlextModels,
     FlextResult,
     FlextTypes,
+    FlextUtilities,
     FlextValidations,
 )
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Field,
     computed_field,
@@ -29,7 +31,6 @@ from pydantic import (
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
-from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # Advanced type aliases using Python 3.13
 type EntityId = str
@@ -61,6 +62,33 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
         DN_CANNOT_BE_EMPTY = "DN cannot be empty"
         INVALID_DN_FORMAT = "Invalid DN format: {error}"
+        INVALID_EMAIL_FORMAT = "Invalid email format"
+
+    class _ValidationHelpers:
+        """Centralized validation helpers to eliminate duplication."""
+
+        @staticmethod
+        def validate_email_field(v: str | None) -> str | None:
+            """Validate email format using flext-core - SOURCE OF TRUTH."""
+            if v and not FlextValidations.FieldValidators.validate_email(v).is_success:
+                raise ValueError(FlextLDAPEntities.ErrorMessages.INVALID_EMAIL_FORMAT)
+            return v
+
+        @staticmethod
+        def validate_dn_field(v: str) -> str:
+            """Validate DN format - SOURCE OF TRUTH."""
+            if not FlextUtilities.Validation.is_non_empty_string(v):
+                raise ValueError(FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY)
+
+            # Basic DN pattern validation
+            if not re.match(r"^[a-zA-Z]+=.+", v):
+                raise ValueError(
+                    FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
+                        error="Invalid DN pattern"
+                    )
+                )
+
+            return v
 
     # =========================================================================
     # SEARCH MODELS - Request and response models for search operations
@@ -121,7 +149,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             ),
         ]
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search request business rules."""
             if not self.base_dn:
@@ -133,21 +160,16 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("base_dn")
         @classmethod
         def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN format."""
-            try:
-                FlextLDAPValueObjects.DistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid base DN format: {e}"
-                raise ValueError(msg) from e
+            """Validate base DN format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_dn_field(v)
 
         @field_validator("filter_str")
         @classmethod
         def validate_filter(cls, v: str) -> str:
             """Validate filter format using FlextValidations - NO DUPLICATION."""
             # Use FlextValidations pattern matching for LDAP filter validation
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^\(.+\)$", "LDAP filter must be enclosed in parentheses"
+            pattern_result = FlextValidations.BusinessValidators.validate_string_field(
+                v, pattern=r"^\(.+\)$"
             )
             if pattern_result.is_failure:
                 error_msg = f"Filter validation failed: {pattern_result.error}"
@@ -228,7 +250,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Primary object class for this entry."""
             return self.object_classes[0] if self.object_classes else "unknown"
 
-    class SearchResponse(FlextModels.Value, FlextMixins.Loggable):
+    class SearchResponse(FlextModels.Value):
         """Advanced search response with discriminated unions for type safety."""
 
         entries: list[FlextTypes.Core.Dict] = Field(
@@ -245,7 +267,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             description="Search execution time in ms",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search response business rules."""
             if self.total_count < 0:
@@ -255,13 +276,12 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
             # Validate reasonable results (domain rule)
             if self.total_count > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
-                self.log_operation(
-                    operation="Large search result", count=self.total_count
-                )
+                # Log large search results - could be extended with proper logging
+                pass
 
             return FlextResult.ok(None)
 
-    class SearchParams(FlextMixins.Loggable):
+    class SearchParams(BaseModel):
         """Unified parameter object for search operations across all components.
 
         Consolidates all SearchParams classes from operations.py, repositories.py,
@@ -405,7 +425,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
                 search_filter=f"(uid={identifier})",
             )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search parameters business rules."""
             if self.size_limit <= 0:
@@ -415,10 +434,8 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
             # Validate reasonable limits (domain rule)
             if self.size_limit > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
-                self.log_operation(
-                    operation="Large search limit",
-                    size_limit=self.size_limit,
-                )
+                # Log large search limits - could be extended with proper logging
+                pass
 
             return FlextResult.ok(None)
 
@@ -430,16 +447,16 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         """Base LDAP directory entry implementing rich domain model patterns."""
 
         # Override id field with validator to convert EntityId to str
-        id: str = Field(..., description="Entity identifier")
+        id: str = Field(default="", description="Entity identifier")
 
         @field_validator("id", mode="before")
         @classmethod
-        def convert_entity_id(cls, v: str) -> str:
+        def convert_entity_id(cls, v: object) -> str:
             """Convert EntityId to string if needed."""
             # Handle string objects
             if isinstance(v, str):
                 return v
-            # Handle string and other types
+            # Handle other types
             return str(v)
 
         dn: str = Field(..., description="Distinguished Name")
@@ -469,24 +486,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
-                raise ValueError(error_msg)
+            """Validate DN format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_dn_field(v)
 
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^[a-zA-Z]+=.+", "DN format"
-            )
-            if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
-                    error=pattern_result.error
-                )
-                raise ValueError(error_msg)
-
-            return v
-
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules."""
             if not self.object_classes:
@@ -516,9 +518,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Set attribute value."""
             self.attributes[name] = value
             # Use model field assignment through __setattr__
-            object.__setattr__(
-                self, "modified_at", datetime.now()
-            )
+            object.__setattr__(self, "modified_at", datetime.now(UTC))
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -550,17 +550,9 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("mail")
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
-            """Validate email format - USES FLEXT-CORE."""
-            # FlextValidations already imported at top
+            """Validate email format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_email_field(v)
 
-            if v:
-                result = FlextValidations.Rules.StringRules.validate_email(v)
-                if not result.is_success:
-                    msg = "Invalid email format"
-                    raise ValueError(msg)
-            return v
-
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate user business rules."""
             # Call parent validation first
@@ -595,7 +587,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             description="Group member DNs",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate group business rules."""
             # Call parent validation first
@@ -615,7 +606,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = datetime.now()
+                self.modified_at = datetime.now(UTC)
                 return FlextResult.ok(None)
             return FlextResult.ok(None)  # Already a member, no-op
 
@@ -623,7 +614,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = datetime.now()
+                self.modified_at = datetime.now(UTC)
                 return FlextResult.ok(None)
             return FlextResult.fail(f"Member {member_dn} not found in group")
 
@@ -657,7 +648,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             description="LDAP object classes",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate create user request business rules."""
             if not self.dn:
@@ -671,35 +661,14 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
-                raise ValueError(error_msg)
-
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^[a-zA-Z]+=.+", "DN format"
-            )
-            if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
-                    error=pattern_result.error
-                )
-                raise ValueError(error_msg)
-
-            return v
+            """Validate DN format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_dn_field(v)
 
         @field_validator("mail")
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
-            """Validate email format - USES FLEXT-CORE."""
-            # FlextValidations already imported at top
-
-            if v:
-                result = FlextValidations.Rules.StringRules.validate_email(v)
-                if not result.is_success:
-                    msg = "Invalid email format"
-                    raise ValueError(msg)
-            return v
+            """Validate email format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_email_field(v)
 
         def to_user_entity(self) -> FlextLDAPEntities.User:
             """Convert request to user entity."""
@@ -735,7 +704,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             description="LDAP object classes",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate create group request business rules."""
             if not self.dn:
@@ -747,22 +715,8 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
-                raise ValueError(error_msg)
-
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^[a-zA-Z]+=.+", "DN format"
-            )
-            if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
-                    error=pattern_result.error
-                )
-                raise ValueError(error_msg)
-
-            return v
+            """Validate DN format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_dn_field(v)
 
         def to_group_entity(self) -> FlextLDAPEntities.Group:
             """Convert request to group entity."""
@@ -788,7 +742,6 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             description="New list of member DNs (replaces existing)",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate update group request business rules."""
             if not self.dn:
@@ -812,22 +765,8 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using FlextValidations SOURCE OF TRUTH."""
-            result = FlextValidations.Rules.StringRules.validate_non_empty(v)
-            if result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.DN_CANNOT_BE_EMPTY
-                raise ValueError(error_msg)
-
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v, r"^[a-zA-Z]+=.+", "DN format"
-            )
-            if pattern_result.is_failure:
-                error_msg = FlextLDAPEntities.ErrorMessages.INVALID_DN_FORMAT.format(
-                    error=pattern_result.error
-                )
-                raise ValueError(error_msg)
-
-            return v
+            """Validate DN format using centralized helper."""
+            return FlextLDAPEntities._ValidationHelpers.validate_dn_field(v)
 
 
 # LdapAttributeDict already imported in TYPE_CHECKING block above

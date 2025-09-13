@@ -1,23 +1,19 @@
-"""Comprehensive API tests using flext_tests library for 100% coverage.
-
-Tests real functionality using flext_tests factories, matchers, and async utilities.
-NO MOCKS - only real functional validation with Docker containers.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
 
 from __future__ import annotations
 
 import re
 import uuid
-
 import pytest
 from flext_core import FlextResult
-
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
+
+"""
+
+from __future__ import annotations
+
+
+
 
 
 @pytest.mark.asyncio
@@ -26,6 +22,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     def test_api_initialization_with_flext_tests_factory(self) -> None:
         """Test API initialization using flext_tests patterns."""
+
         api = FlextLDAPApi()
 
         # Basic validation
@@ -35,6 +32,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     def test_session_id_generation_with_validation(self) -> None:
         """Test session ID generation with flext_tests validation."""
+
         # Generate multiple session IDs
         session_ids = [f"session_{uuid.uuid4()}" for _ in range(10)]
 
@@ -47,6 +45,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_entry_attribute_handling_with_factory_data(self) -> None:
         """Test entry attribute extraction using factory data."""
+
         api = FlextLDAPApi()
 
         # Create test data with various edge cases
@@ -85,6 +84,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_connection_lifecycle_validation(self) -> None:
         """Test connection lifecycle without external dependencies."""
+
         api = FlextLDAPApi()
 
         # Test connection attempt (will fail without server, but validates logic)
@@ -105,6 +105,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_user_operations_with_user_factory(self) -> None:
         """Test user operations using manual user data."""
+
         api = FlextLDAPApi()
 
         # Create test users manually
@@ -144,6 +145,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_search_operations_functionality(self) -> None:
         """Test search operations functionality."""
+
         api = FlextLDAPApi()
 
         # Create search request
@@ -165,6 +167,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_basic_performance_monitoring(self) -> None:
         """Test basic performance monitoring without external dependencies."""
+
         api = FlextLDAPApi()
 
         # Create search request for performance test
@@ -181,6 +184,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_error_handling_comprehensive(self) -> None:
         """Test comprehensive error handling."""
+
         api = FlextLDAPApi()
 
         # Test with invalid DNs (meeting min length requirement)
@@ -213,6 +217,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     def test_api_factory_function(self) -> None:
         """Test the get_flext_ldap_api factory function."""
+
         # Test factory function
         api1 = get_flext_ldap_api()
         api2 = get_flext_ldap_api()
@@ -226,6 +231,7 @@ class TestFlextLDAPApiFlextTestsIntegration:
 
     async def test_comprehensive_workflow_integration(self) -> None:
         """Test comprehensive workflow using multiple flext_tests utilities."""
+
         # 1. Initialize API
         api = get_flext_ldap_api()
 

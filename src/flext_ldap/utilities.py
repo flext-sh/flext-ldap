@@ -1,7 +1,6 @@
-"""FLEXT LDAP Utilities - Minimal utilities using libraries instead of custom code.
+"""LDAP Utilities module.
 
-Following the mandate to PRIORIZE BIBLIOTECAS, this module now contains only
-the absolute minimum utilities needed, using Python standard library and
+The absolute minimum utilities needed, using Python standard library and
 flext-core instead of custom implementations.
 
 All custom wrappers have been eliminated in favor of:
