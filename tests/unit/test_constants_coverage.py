@@ -1,3 +1,4 @@
+"""Constants coverage tests for flext-ldap."""
 
 from __future__ import annotations
 
@@ -12,18 +13,12 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
-from __future__ import annotations
-
-
 
 class TestFlextLDAPConstantsCoverage:
     """Test FLEXT LDAP constants for complete coverage."""
 
     def test_get_person_attributes(self) -> None:
         """Test get_person_attributes method."""
-
         attributes = FlextLDAPConstants.Attributes.get_person_attributes()
 
         # Should return a list
@@ -42,7 +37,6 @@ class TestFlextLDAPConstantsCoverage:
 
     def test_get_group_attributes(self) -> None:
         """Test get_group_attributes method."""
-
         attributes = FlextLDAPConstants.Attributes.get_group_attributes()
 
         # Should return a list
@@ -58,7 +52,6 @@ class TestFlextLDAPConstantsCoverage:
 
     def test_constants_module_structure(self) -> None:
         """Test that constants module has expected structure."""
-
         # Should have Attributes class
         assert hasattr(FlextLDAPConstants, "Attributes")
 
@@ -76,7 +69,6 @@ class TestFlextLDAPConstantsCoverage:
 
     def test_attribute_values(self) -> None:
         """Test that attribute constants have expected values."""
-
         attrs = FlextLDAPConstants.Attributes
 
         # Test specific values

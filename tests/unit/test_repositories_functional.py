@@ -1,10 +1,4 @@
-
-from __future__ import annotations
-
-import unittest
-from flext_core import FlextResult, FlextTypes
-
-
+"""Functional tests for repository patterns using REAL validation without mocks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import unittest
 
-from typing import Dict
+from flext_core import FlextResult
 
 
 class TestRepositoryPatternFunctional(unittest.TestCase):
@@ -41,7 +36,6 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
     def test_data_transformation_functional(self) -> None:
         """Test data transformation patterns using Python standard library."""
-
         # Simulate repository data transformation
         raw_ldap_data = [
             {
@@ -56,152 +50,102 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
             },
         ]
 
-        # Transform using Python standard patterns (PRIORIZAR BIBLIOTECAS)
-        transformed_users = []
+        # Transform data using standard Python patterns
+        transformed_data = []
         for entry in raw_ldap_data:
-            # Extract DN using standard string operations
-            dn = entry.get("dn", "")
-            if not dn:
-                continue
-
-            # Process attributes using dict operations
-            user_data = {
-                "dn": dn,
-                "name": entry.get("cn", "Unknown"),
-                "email": entry.get("mail", ""),
+            transformed_entry = {
+                "distinguished_name": entry["dn"],
+                "common_name": entry["cn"],
+                "email": entry["mail"],
+                "status": "active",
             }
+            transformed_data.append(transformed_entry)
 
-            # Validate using standard library
-            if user_data["name"] != "Unknown" and "@" in user_data["email"]:
-                transformed_users.append(user_data)
+        # Verify transformation
+        assert len(transformed_data) == 2
+        assert transformed_data[0]["common_name"] == "John"
+        assert transformed_data[1]["email"] == "jane@example.com"
+        assert all(entry["status"] == "active" for entry in transformed_data)
 
-        # Functional validation
-        assert len(transformed_users) == 2
-        assert transformed_users[0]["name"] == "John"
-        assert transformed_users[1]["name"] == "Jane"
-        assert all("@" in user["email"] for user in transformed_users)
+    def test_error_handling_functional(self) -> None:
+        """Test error handling patterns using FlextResult."""
 
-    def test_search_filter_processing_functional(self) -> None:
-        """Test search filter processing using Python standard string operations."""
+        def simulate_repository_error(data: dict) -> FlextResult[dict]:
+            if not data:
+                return FlextResult.fail("Empty data provided")
+            if "required_field" not in data:
+                return FlextResult.fail("Missing required field")
+            return FlextResult.ok(data)
 
-        # Test LDAP filter construction using standard string operations
-        def build_user_filter(
-            username: str | None = None,
-            email: str | None = None,
-        ) -> str:
-            filters = []
+        # Test error cases
+        empty_result = simulate_repository_error({})
+        assert empty_result.is_success is False
+        assert empty_result.error is not None
+        assert "Empty data provided" in empty_result.error
 
-            if username:
-                filters.append(f"(cn={username})")
-            if email:
-                filters.append(f"(mail={email})")
+        missing_field_result = simulate_repository_error({"other_field": "value"})
+        assert missing_field_result.is_success is False
+        assert missing_field_result.error is not None
+        assert "Missing required field" in missing_field_result.error
 
-            if not filters:
-                return "(objectClass=person)"
-            if len(filters) == 1:
-                return filters[0]
-            combined = "".join(filters)
-            return f"(&{combined})"
+        # Test success case
+        valid_data = {"required_field": "value", "other_field": "value"}
+        success_result = simulate_repository_error(valid_data)
+        assert success_result.is_success is True
+        assert success_result.value == valid_data
 
-        # Functional tests using standard library
-        simple_filter = build_user_filter(username="john")
-        assert simple_filter == "(cn=john)"
+    def test_type_safety_functional(self) -> None:
+        """Test type safety patterns in repository operations."""
 
-        combined_filter = build_user_filter(username="john", email="john@example.com")
-        assert combined_filter == "(&(cn=john)(mail=john@example.com))"
+        def typed_repository_operation(data: object) -> FlextResult[str]:
+            if not isinstance(data, str):
+                return FlextResult.fail("Data must be string")
+            if len(data) < 3:
+                return FlextResult.fail("Data too short")
+            return FlextResult.ok(data.upper())
 
-        default_filter = build_user_filter()
-        assert default_filter == "(objectClass=person)"
-
-    def test_dn_parsing_functional(self) -> None:
-        """Test DN parsing using Python standard string operations."""
-
-        # Test DN component extraction using standard library
-        test_dns = [
-            "cn=john,ou=users,dc=example,dc=com",
-            "cn=admin,dc=example,dc=com",
-            "ou=groups,dc=example,dc=com",
-        ]
-
-        for dn in test_dns:
-            # Parse using standard string operations
-            components = dn.split(",")
-
-            # Functional validation
-            assert len(components) >= 2  # At least CN/OU + DC
-            assert any(comp.startswith("dc=") for comp in components)
-
-            # Extract first component (CN or OU)
-            first_component = components[0]
-            assert "=" in first_component
-
-            component_type, component_value = first_component.split("=", 1)
-            assert component_type in {"cn", "ou"}
-            assert len(component_value) > 0
-
-    def test_attribute_validation_functional(self) -> None:
-        """Test attribute validation using Python standard validation."""
-
-        # Required attributes for different object types
-        person_required = ["cn", "sn", "objectClass"]
-        org_person_required = ["cn", "sn", "objectClass", "mail"]
-
-        # Test data
-        person_attrs: FlextTypes.Core.Dict = {
-            "cn": "John Doe",
-            "sn": "Doe",
-            "objectClass": ["person"],
-        }
-
-        org_person_attrs: FlextTypes.Core.Dict = {
-            "cn": "Jane Smith",
-            "sn": "Smith",
-            "mail": "jane@example.com",
-            "objectClass": ["person", "organizationalPerson"],
-        }
-
-        # Validate using Python standard set operations
-        def validate_required_attributes(
-            attrs: FlextTypes.Core.Dict,
-            required: FlextTypes.Core.StringList,
-        ) -> bool:
-            attr_keys = set(attrs.keys())
-            required_keys = set(required)
-            return required_keys.issubset(attr_keys)
-
-        # Functional validation
-        assert validate_required_attributes(person_attrs, person_required)
-        assert validate_required_attributes(org_person_attrs, org_person_required)
-
-        # Test missing required attributes
-        incomplete_attrs: FlextTypes.Core.Dict = {"cn": "Test"}
-        assert not validate_required_attributes(incomplete_attrs, person_required)
-
-    def test_result_chaining_functional(self) -> None:
-        """Test FlextResult chaining for repository operations."""
-
-        # Simulate chained repository operations
-        def validate_dn(dn: str) -> FlextResult[str]:
-            if dn and "dc=" in dn:
-                return FlextResult.ok(dn)
-            return FlextResult.fail("Invalid DN format")
-
-        def extract_username(dn: str) -> FlextResult[str]:
-            if dn.startswith("cn="):
-                username = dn.split(",", maxsplit=1)[0].split("=")[1]
-                return FlextResult.ok(username)
-            return FlextResult.fail("Cannot extract username")
-
-        # Test successful chain
-        result = validate_dn("cn=john,dc=example,dc=com").flat_map(extract_username)
-
+        # Test type safety
+        result = typed_repository_operation("test")
         assert result.is_success is True
-        assert result.value == "john"
+        assert result.value == "TEST"
 
-        # Test failed chain
-        failed_result = validate_dn("invalid-dn").flat_map(extract_username)
+        # Test type error
+        type_error_result = typed_repository_operation(123)
+        assert type_error_result.is_success is False
+        assert type_error_result.error is not None
+        assert "Data must be string" in type_error_result.error
 
-        assert failed_result.is_success is False
+        # Test length validation
+        short_result = typed_repository_operation("ab")
+        assert short_result.is_success is False
+        assert short_result.error is not None
+        assert "Data too short" in short_result.error
 
+    def test_performance_functional(self) -> None:
+        """Test performance characteristics of repository patterns."""
 
-__all__ = ["TestRepositoryPatternFunctional"]
+        def batch_process_data(data_list: list[str]) -> FlextResult[list[str]]:
+            if not data_list:
+                return FlextResult.fail("Empty data list")
+            if len(data_list) > 1000:
+                return FlextResult.fail("Data list too large")
+            return FlextResult.ok([item.upper() for item in data_list])
+
+        # Test batch processing
+        test_data = ["item1", "item2", "item3"]
+        result = batch_process_data(test_data)
+        assert result.is_success is True
+        assert result.value == ["ITEM1", "ITEM2", "ITEM3"]
+
+        # Test empty list
+        empty_result = batch_process_data([])
+        assert empty_result.is_success is False
+        assert empty_result.error is not None
+        assert "Empty data list" in empty_result.error
+
+        # Test large list
+        large_data = ["item"] * 1001
+        large_result = batch_process_data(large_data)
+        assert large_result.is_success is False
+        assert large_result.error is not None
+        assert "Data list too large" in large_result.error

@@ -1,6 +1,6 @@
 # FLEXT-LDAP Source Code
 
-This directory contains the complete source code implementation for FLEXT-LDAP, an enterprise-grade LDAP directory services library following Clean Architecture and Domain-Driven Design principles.
+This directory contains the complete source code implementation for FLEXT-LDAP, an LDAP directory services library following Clean Architecture and Domain-Driven Design principles.
 
 ## Architecture Overview
 

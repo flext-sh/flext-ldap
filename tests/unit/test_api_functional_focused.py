@@ -1,22 +1,18 @@
-
-from __future__ import annotations
-
-import uuid
-import pytest
-from flext_core import FlextResult
-from flext_ldap import FlextLDAPApi, get_flext_ldap_api
-from flext_ldap.config import FlextLDAPConfig
-from flext_ldap.entities import FlextLDAPEntities
+"""Focused functional tests for API coverage improvement.
 
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import uuid
 
+import pytest
+from flext_core import FlextResult
 
-from typing import Dict
-from typing import List
+from flext_ldap import FlextLDAPApi, get_flext_ldap_api
+from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.entities import FlextLDAPEntities
 
 
 class TestFlextLDAPApiFunctionalFocused:
@@ -24,7 +20,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_api_initialization_comprehensive_paths(self) -> None:
         """Test all API initialization code paths."""
-
         # Test with default config (None)
         api1 = FlextLDAPApi()
         assert api1._config is not None
@@ -46,7 +41,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_session_id_generation_comprehensive(self) -> None:
         """Test session ID generation with comprehensive validation."""
-
         # Generate many IDs to test uniqueness and format
         session_ids = []
         for _ in range(50):
@@ -74,7 +68,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_dict_entries(self) -> None:
         """Test _get_entry_attribute with dictionary entries comprehensively."""
-
         api = FlextLDAPApi()
 
         # Test normal LDAP attribute format (list values)
@@ -103,7 +96,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_non_list_values(self) -> None:
         """Test _get_entry_attribute with non-list values."""
-
         api = FlextLDAPApi()
 
         # Test with direct string values (not in lists)
@@ -135,7 +127,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_empty_and_none_lists(self) -> None:
         """Test _get_entry_attribute with empty lists and None values in lists."""
-
         api = FlextLDAPApi()
 
         # Test with various empty/None scenarios
@@ -173,7 +164,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_with_entry_objects(self) -> None:
         """Test _get_entry_attribute with FlextLDAPEntities.Entry objects."""
-
         api = FlextLDAPApi()
 
         # Create Entry object with attributes
@@ -201,7 +191,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_entry_attribute_extraction_error_handling(self) -> None:
         """Test _get_entry_attribute error handling for problematic values."""
-
         api = FlextLDAPApi()
 
         # Create objects that raise errors during string conversion
@@ -247,7 +236,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_factory_function_get_flext_ldap_api(self) -> None:
         """Test get_flext_ldap_api factory function comprehensively."""
-
         # Test factory without parameters
         api1 = get_flext_ldap_api()
         assert isinstance(api1, FlextLDAPApi)
@@ -274,7 +262,6 @@ class TestFlextLDAPApiFunctionalFocused:
     @pytest.mark.asyncio
     async def test_disconnect_method_comprehensive(self) -> None:
         """Test disconnect method with various input types."""
-
         api = FlextLDAPApi()
 
         # Test disconnect with None
@@ -299,7 +286,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_internal_state_consistency(self) -> None:
         """Test that internal state is consistent across different initialization paths."""
-
         # Test multiple API instances have proper isolation
         apis = []
         for i in range(5):
@@ -327,7 +313,6 @@ class TestFlextLDAPApiFunctionalFocused:
 
     def test_logging_initialization(self) -> None:
         """Test that logging is properly initialized during API creation."""
-
         # This test ensures the logging statement in __init__ is covered
         api = FlextLDAPApi()
 

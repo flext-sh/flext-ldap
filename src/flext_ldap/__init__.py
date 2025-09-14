@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib as _importlib
+
 from flext_ldap.adapters import FlextLDAPAdapters
 from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
 from flext_ldap.clients import SCOPE_MAP, FlextLDAPClient, LdapScope
@@ -37,12 +39,17 @@ from flext_ldap.typings import (
 )
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
-# FlextLDAPFields removed - functionality moved to FlextLDAPValueObjects
-# FlextLDAPModels removed - functionality moved to FlextLDAPEntities
+_vermod = _importlib.import_module("flext_ldap.__version__")
 
-# Version info
-__version__ = "0.9.0"
-__version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
+
+def __getattr__(name: str) -> str:  # pragma: no cover
+    if name == "__version__":
+        return str(_vermod.__version__)
+    if name == "__version_info__":
+        return str(_vermod.__version_info__)
+    raise AttributeError(name)
+
+
 # Manual __all__ definition for explicit control
 __all__ = [
     "SCOPE_MAP",
@@ -56,8 +63,6 @@ __all__ = [
     "FlextLDAPDomain",
     "FlextLDAPEntities",
     "FlextLDAPExceptions",
-    # "FlextLDAPFields",  # Removed - functionality moved to FlextLDAPValueObjects
-    # "FlextLDAPModels",  # Removed - functionality moved to FlextLDAPEntities
     "FlextLDAPOperations",
     "FlextLDAPRepositories",
     "FlextLDAPServices",
@@ -73,8 +78,6 @@ __all__ = [
     "TLdapAttributes",
     "TLdapEntryData",
     "TLdapSearchResult",
-    "__version__",
-    "__version_info__",
     "get_flext_ldap_api",
     "get_flext_ldap_config",
     "set_flext_ldap_config",

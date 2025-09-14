@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
+from flext_ldap import FlextLDAPApi, FlextLDAPEntities
 
 
 async def demonstrate_basic_operations() -> None:
@@ -41,7 +41,7 @@ async def _initialize_ldap_service() -> FlextLDAPApi:
 
 async def _demo_create_primary_user(_service: FlextLDAPApi) -> None:
     """Create primary test user - Single Responsibility."""
-    FlextLDAPCreateUserRequest(
+    FlextLDAPEntities.CreateUserRequest(
         dn="cn=johndoe,ou=users,dc=example,dc=com",
         uid="johndoe",
         cn="John Doe",
@@ -84,7 +84,7 @@ async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
     ]
 
     for user_data in additional_users:
-        FlextLDAPCreateUserRequest(
+        FlextLDAPEntities.CreateUserRequest(
             dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
             uid=user_data["uid"],
             cn=user_data["cn"],
@@ -125,7 +125,7 @@ async def demonstrate_connection_handling() -> None:
         await service.disconnect(session_id)
 
     # Show that operations still work in memory mode
-    FlextLDAPCreateUserRequest(
+    FlextLDAPEntities.CreateUserRequest(
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",

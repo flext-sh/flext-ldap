@@ -1,10 +1,4 @@
-
-from __future__ import annotations
-
-from flext_core import FlextResult
-from flext_ldap.cli import FlextLDAPCli
-
-"""Module documentation.
+"""CLI coverage tests for flext-ldap.
 
 - Test CLI initialization and basic functionality
 - Validate flext-cli integration
@@ -13,11 +7,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
 from __future__ import annotations
 
+from flext_core import FlextResult
 
+from flext_ldap.cli import FlextLDAPCli
 
 
 class TestFlextLDAPCliCoverage:
@@ -25,7 +19,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_cli_initialization(self) -> None:
         """Test CLI initialization."""
-
         cli = FlextLDAPCli()
 
         # Verify CLI components are initialized (flext-cli temporarily disabled)
@@ -38,7 +31,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_test_connection_method(self) -> None:
         """Test connection test method."""
-
         cli = FlextLDAPCli()
 
         # Test with invalid parameters (should return failure)
@@ -51,7 +43,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_create_cli_interface_method(self) -> None:
         """Test create CLI interface method."""
-
         cli = FlextLDAPCli()
 
         # Test CLI interface creation
@@ -64,7 +55,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_run_command_method(self) -> None:
         """Test run command method."""
-
         cli = FlextLDAPCli()
 
         # Test with invalid command (should not raise exception)
@@ -76,7 +66,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_handle_test_command_method(self) -> None:
         """Test handle test command method."""
-
         cli = FlextLDAPCli()
 
         # Test with empty parameters
@@ -89,7 +78,6 @@ class TestFlextLDAPCliCoverage:
 
     def test_cli_flext_cli_integration(self) -> None:
         """Test flext-cli integration."""
-
         cli = FlextLDAPCli()
 
         # Verify CLI has basic functionality (flext-cli temporarily disabled)

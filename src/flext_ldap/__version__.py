@@ -20,6 +20,14 @@ __author_email__ = (
     if "<" in _metadata.get("Author-email", "")
     else ""
 )
+__email__ = __author_email__
+
+# Ensure sensible defaults when metadata is missing in editable installs
+if not __author__:
+    __author__ = "FLEXT Team"
+if not __author_email__:
+    __author_email__ = "dev@flext.dev"
+    __email__ = __author_email__
 __maintainer__ = _metadata.get("Maintainer", __author__)
 __maintainer_email__ = _metadata.get("Maintainer-email", __author_email__)
 __license__ = _metadata.get("License", "MIT")
@@ -54,3 +62,17 @@ __all__ = [
     "__version_info__",
     "__version_tuple__",
 ]
+
+# Also expose string version on package attribute for convenience imports
+try:  # pragma: no cover - import-time convenience
+    import sys as _sys
+
+    _pkg = _sys.modules.get("flext_ldap")
+    if _pkg is not None:
+        setattr(_pkg, "__version__", __version__)
+        setattr(_pkg, "__version_info__", __version_info__)
+except Exception as e:
+    # Log version setting failure but don't raise to avoid import issues
+    import logging
+
+    logging.getLogger(__name__).debug(f"Failed to set version attributes: {e}")

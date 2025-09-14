@@ -1,10 +1,13 @@
+"""Comprehensive flext-tests integration tests for flext-ldap."""
 
 from __future__ import annotations
 
 import asyncio
 import uuid
+
 import pytest
 from flext_core import FlextResult
+
 from flext_ldap import get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
 
@@ -17,13 +20,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
-from __future__ import annotations
-
-
-
-
 
 # Access components through proper flext-core structure
 class TestDataFactory:
@@ -32,7 +28,6 @@ class TestDataFactory:
     @staticmethod
     def create_user() -> dict[str, str]:
         """Create test user data."""
-
         return {
             "name": f"TestUser_{uuid.uuid4().hex[:8]}",
             "email": f"test_{uuid.uuid4().hex[:8]}@example.com",
@@ -45,7 +40,6 @@ class TestComprehensiveFlextTests:
 
     def test_user_factory_comprehensive(self) -> None:
         """Test UserFactory for LDAP user creation."""
-
         # Generate test users using TestDataFactory
         users = [TestDataFactory.create_user() for _ in range(5)]
         admin_user = TestDataFactory.create_user()
@@ -85,7 +79,6 @@ class TestComprehensiveFlextTests:
         # Run concurrent operations with async utils
         async def session_generation_task() -> str:
             """Generate session ID."""
-
             return f"session_{uuid.uuid4()}"
 
         # Run concurrent operations without profiling using asyncio.gather
@@ -115,7 +108,6 @@ class TestComprehensiveFlextTests:
 
     def test_builders_for_search_requests(self) -> None:
         """Test direct LDAP SearchRequest creation using SOURCE OF TRUTH pattern."""
-
         # Use direct FlextLDAPEntities.SearchRequest construction - no duplication
         ldap_search = FlextLDAPEntities.SearchRequest(
             base_dn="ou=users,dc=test,dc=com",
@@ -134,7 +126,6 @@ class TestComprehensiveFlextTests:
 
     async def test_real_ldap_operations_with_matchers(self) -> None:
         """Test real LDAP operations using FlextTestsMatchers for validation."""
-
         api = get_flext_ldap_api()
 
         # Generate test user using TestDataFactory
@@ -166,7 +157,6 @@ class TestComprehensiveFlextTests:
 
     def test_hypothesis_like_testing_with_factories(self) -> None:
         """Test hypothesis-like behavior using flext_tests factories."""
-
         # Generate multiple test scenarios using factories
         test_scenarios = []
 
@@ -220,7 +210,6 @@ class TestComprehensiveFlextTests:
 
     def test_data_validation_with_comprehensive_matchers(self) -> None:
         """Test comprehensive data validation using standard assertions."""
-
         # Test various data validation scenarios
         user = TestDataFactory.create_user()
 

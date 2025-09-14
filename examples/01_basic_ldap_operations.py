@@ -22,9 +22,8 @@ from flext_core import FlextLogger
 
 from flext_ldap import (
     FlextLDAPApi,
-    FlextLDAPDistinguishedName,
-    FlextLDAPFilter,
     FlextLDAPSettings,
+    FlextLDAPValueObjects,
 )
 
 logger = FlextLogger(__name__)
@@ -70,7 +69,7 @@ async def demonstrate_search_operations(api: FlextLDAPApi) -> None:
 
     try:
         # 1. Basic search using correct API
-        search_result = await api.search(
+        search_result = await api.search_simple(
             base_dn="dc=example,dc=com",
             search_filter="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
@@ -91,12 +90,12 @@ async def demonstrate_search_operations(api: FlextLDAPApi) -> None:
 async def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result = FlextLDAPDistinguishedName.create("")
+    dn_result = FlextLDAPValueObjects.DistinguishedName.create("")
     if not dn_result.is_success:
         pass
 
     # 2. Filter validation errors
-    filter_result = FlextLDAPFilter.create("invalid-filter-format")
+    filter_result = FlextLDAPValueObjects.Filter.create("invalid-filter-format")
     if not filter_result.is_success:
         pass
 

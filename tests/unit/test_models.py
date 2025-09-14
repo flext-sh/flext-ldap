@@ -1,9 +1,4 @@
-
-from __future__ import annotations
-
-from typing import cast
-from flext_core import FlextTypes
-from flext_ldap import FlextLDAPEntities, FlextLDAPValueObjects
+"""Model tests for flext-ldap entities and value objects.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,8 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
 
+from flext_core import FlextTypes
 
+from flext_ldap import FlextLDAPEntities, FlextLDAPValueObjects
 
 
 class TestFlextLDAPDistinguishedName:
@@ -20,7 +18,6 @@ class TestFlextLDAPDistinguishedName:
 
     def test_dn_creation_with_valid_dns(self) -> None:
         """Test DN creation with various valid DN formats."""
-
         valid_dns = [
             "cn=test,dc=example,dc=com",
             "uid=user,ou=people,dc=company,dc=org",
@@ -38,7 +35,6 @@ class TestFlextLDAPDistinguishedName:
 
     def test_dn_validation_rejects_invalid_formats(self) -> None:
         """Test DN validation rejects clearly invalid formats."""
-
         invalid_dns = [
             "",  # Empty string
             "   ",  # Only whitespace
@@ -57,7 +53,6 @@ class TestFlextLDAPDistinguishedName:
 
     def test_dn_equality_and_comparison(self) -> None:
         """Test DN equality and string representation."""
-
         dn_str = "cn=test,dc=example,dc=com"
         dn1 = FlextLDAPValueObjects.DistinguishedName(value=dn_str)
         dn2 = FlextLDAPValueObjects.DistinguishedName(value=dn_str)
@@ -71,7 +66,6 @@ class TestFlextLDAPUser:
 
     def create_test_user(self, **kwargs: object) -> FlextLDAPEntities.User:
         """Helper to create test user with defaults using object for kwargs."""
-
         # Create with typed arguments to satisfy MyPy
         return FlextLDAPEntities.User(
             id=str(kwargs.get("id", "test_user")),
@@ -94,7 +88,6 @@ class TestFlextLDAPUser:
 
     def test_user_creation_with_required_fields(self) -> None:
         """Test user entity creation with required fields."""
-
         user = self.create_test_user()
 
         assert user.uid == "testuser"
@@ -105,7 +98,6 @@ class TestFlextLDAPUser:
 
     def test_user_business_rule_validation(self) -> None:
         """Test user business rule validation logic."""
-
         # Valid user should pass validation
         valid_user = self.create_test_user()
         validation_result = valid_user.validate_business_rules()
@@ -122,7 +114,6 @@ class TestFlextLDAPUser:
 
     def test_user_attribute_access_methods(self) -> None:
         """Test user attribute access methods."""
-
         user = self.create_test_user(
             mail="test@example.com",
             attributes={
@@ -148,7 +139,6 @@ class TestFlextLDAPUser:
 
     def test_user_immutability_and_copying(self) -> None:
         """Test that user entity modifications create new instances."""
-
         original_user = self.create_test_user()
 
         # Test immutability by creating copy with different attributes
@@ -174,7 +164,6 @@ class TestFlextLDAPGroup:
 
     def create_test_group(self, **kwargs: object) -> FlextLDAPEntities.Group:
         """Helper to create test group with defaults using object for kwargs."""
-
         # Create with typed arguments to satisfy MyPy
         return FlextLDAPEntities.Group(
             id=str(kwargs.get("id", "test_group")),
@@ -195,7 +184,6 @@ class TestFlextLDAPGroup:
 
     def test_group_creation_with_required_fields(self) -> None:
         """Test group entity creation with required fields."""
-
         group = self.create_test_group()
 
         assert group.cn == "Test Group"
@@ -205,7 +193,6 @@ class TestFlextLDAPGroup:
 
     def test_group_business_rule_validation(self) -> None:
         """Test group business rule validation logic."""
-
         # Valid group should pass validation
         valid_group = self.create_test_group()
         validation_result = valid_group.validate_business_rules()
@@ -223,7 +210,6 @@ class TestFlextLDAPGroup:
 
     def test_group_member_management(self) -> None:
         """Test group member management operations."""
-
         group = self.create_test_group()
         member_dn = "cn=user1,ou=users,dc=example,dc=com"
 
@@ -255,7 +241,6 @@ class TestFlextLDAPGroup:
 
     def test_group_duplicate_member_handling(self) -> None:
         """Test handling of duplicate member additions."""
-
         group = self.create_test_group()
         member_dn = "cn=user1,ou=users,dc=example,dc=com"
 
@@ -279,7 +264,6 @@ class TestFlextLDAPEntities:
 
     def create_test_entry(self, **kwargs: object) -> FlextLDAPEntities.Entry:
         """Helper to create test entry with defaults using object for kwargs."""
-
         # Create with typed arguments to satisfy MyPy
         return FlextLDAPEntities.Entry(
             id=str(kwargs.get("id", "test_entry")),
@@ -297,7 +281,6 @@ class TestFlextLDAPEntities:
 
     def test_entry_creation_and_attribute_access(self) -> None:
         """Test entry creation and attribute access methods."""
-
         entry = self.create_test_entry(
             attributes={
                 "cn": ["Test Entry"],
@@ -348,7 +331,6 @@ class TestFlextLDAPEntities:
 
     def test_entry_business_rule_validation(self) -> None:
         """Test entry business rule validation."""
-
         # Valid entry should pass validation
         valid_entry = self.create_test_entry()
         validation_result = valid_entry.validate_business_rules()
@@ -369,7 +351,6 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_basic_fields(self) -> None:
         """Test basic user creation request."""
-
         request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=newuser,ou=users,dc=example,dc=com",
             uid="newuser",
@@ -386,7 +367,6 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_optional_fields(self) -> None:
         """Test user creation request with optional fields."""
-
         request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=fulluser,ou=users,dc=example,dc=com",
             uid="fulluser",
@@ -403,7 +383,6 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_to_user_entity(self) -> None:
         """Test converting user request to user entity."""
-
         request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=convertuser,ou=users,dc=example,dc=com",
             uid="convertuser",
@@ -425,7 +404,6 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_to_ldap_attributes(self) -> None:
         """Test converting user request to LDAP attributes dictionary."""
-
         request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=ldapuser,ou=users,dc=example,dc=com",
             uid="ldapuser",
@@ -445,7 +423,6 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_validation(self) -> None:
         """Test user creation request validation."""
-
         # Valid request should pass
         valid_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=validuser,ou=users,dc=example,dc=com",
@@ -475,7 +452,6 @@ class TestBusinessRulesIntegration:
 
     def test_cross_entity_validation(self) -> None:
         """Test business rules that span multiple entities."""
-
         # Create user
         user = FlextLDAPEntities.User(
             id="test_cross_user",
@@ -512,7 +488,6 @@ class TestBusinessRulesIntegration:
 
     def test_domain_consistency_rules(self) -> None:
         """Test consistency rules within domain entities."""
-
         # Create user request
         user_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=consistent,ou=users,dc=example,dc=com",
@@ -545,7 +520,6 @@ class TestRealWorldScenarios:
 
     def test_enterprise_user_patterns(self) -> None:
         """Test enterprise user creation with realistic corporate data."""
-
         # Real-world corporate user patterns
         realistic_users = [
             {
@@ -630,7 +604,6 @@ class TestRealWorldScenarios:
 
     def test_organizational_group_structures(self) -> None:
         """Test realistic organizational group hierarchies."""
-
         # Real-world organizational structures
         org_groups = [
             {

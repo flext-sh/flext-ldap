@@ -13,17 +13,15 @@ import os
 import threading
 from contextlib import suppress
 from pathlib import Path
-from typing import ClassVar, cast, final, override
+from typing import ClassVar, final, override
 
-from flext_core import FlextConfig, FlextResult, FlextTypes
+from flext_core import FlextConfig, FlextConstants, FlextResult, FlextTypes
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.value_objects import FlextLDAPValueObjects
-
-# from flext_cli import FlextCliConfig  # Temporarily disabled
-
 
 # Python 3.13 type aliases for LDAP configuration
 type LdapConfigDict = FlextTypes.Core.Dict
@@ -261,9 +259,8 @@ class FlextLDAPConfig(FlextConfig):
             raise ValueError(msg)
 
         # SSL validation
-        if self.ldap_use_ssl and not self.ldap_verify_certificates:
-            # This is a warning, not an error - some environments disable cert verification
-            pass
+        # Note: environments may disable certificate verification intentionally.
+        # This is allowed and not treated as an error here.
 
         # Test mode validation
         if self.ldap_enable_test_mode and self.environment == "production":
@@ -299,41 +296,43 @@ class FlextLDAPConfig(FlextConfig):
                 # Double-check locking pattern for thread safety
                 if cls._global_instance is None:
                     cls._global_instance = cls._load_ldap_config_from_sources()
-        return cast("FlextLDAPConfig", cls._global_instance)
+        instance = cls._global_instance
+        if not isinstance(instance, FlextLDAPConfig):
+            raise FlextLDAPExceptions.ConfigurationError(
+                FlextConstants.Messages.TYPE_MISMATCH,
+                config_key="global_instance",
+            )
+        return instance
 
     @classmethod
     def _load_ldap_config_from_sources(cls) -> FlextLDAPConfig:
         """Load LDAP configuration from all available sources in priority order."""
-        try:
-            # Get base FlextConfig singleton as foundation
-            base_config = FlextConfig.get_global_instance()
+        # Get base FlextConfig singleton as foundation
+        base_config = FlextConfig.get_global_instance()
 
-            # Create LDAP config extending base config
-            ldap_config = cls()
+        # Create LDAP config extending base config
+        ldap_config = cls()
 
-            # Copy base configuration values to LDAP config
-            base_dict = base_config.to_dict()
-            for key, value in base_dict.items():
-                if hasattr(ldap_config, key):
-                    setattr(ldap_config, key, value)
+        # Copy base configuration values to LDAP config
+        base_dict = base_config.to_dict()
+        for key, value in base_dict.items():
+            if hasattr(ldap_config, key):
+                setattr(ldap_config, key, value)
 
-            # Apply LDAP-specific overrides from environment
-            ldap_overrides = cls._get_ldap_environment_overrides()
-            for key, value in ldap_overrides.items():
-                if hasattr(ldap_config, key):
-                    setattr(ldap_config, key, value)
+        # Apply LDAP-specific overrides from environment
+        ldap_overrides = cls._get_ldap_environment_overrides()
+        for key, value in ldap_overrides.items():
+            if hasattr(ldap_config, key):
+                setattr(ldap_config, key, value)
 
-            # Validate the merged configuration
-            validation_result = ldap_config.validate_business_rules()
-            if validation_result.is_failure:
-                # Log warning but continue with base config
-                pass
+        # Validate the merged configuration strictly
+        validation_result = ldap_config.validate_business_rules()
+        if validation_result.is_failure:
+            raise FlextLDAPExceptions.ConfigurationError(
+                FlextConstants.Messages.VALIDATION_FAILED
+            )
 
-            return ldap_config
-
-        except Exception:
-            # Fallback to default LDAP config if loading fails
-            return cls()
+        return ldap_config
 
     @classmethod
     def set_global_instance(cls, config: FlextConfig) -> None:
@@ -343,7 +342,9 @@ class FlextLDAPConfig(FlextConfig):
             config: The LDAP configuration to set as global
 
         """
-        cls._global_instance = cast("FlextLDAPConfig", config)
+        if not isinstance(config, FlextLDAPConfig):
+            raise FlextLDAPExceptions.TypeError(FlextConstants.Messages.TYPE_MISMATCH)
+        cls._global_instance = config
 
     @classmethod
     def clear_global_instance(cls) -> None:
@@ -505,18 +506,20 @@ class FlextLDAPConfig(FlextConfig):
 
             # Create new instance with overrides
             if config_updates:
-                updated_config = current_config.model_copy(update=config_updates)
+                # Apply updates directly to the current instance
+                for key, value in config_updates.items():
+                    setattr(current_config, key, value)
 
                 # Validate the updated configuration
-                validation_result = updated_config.validate_business_rules()
+                validation_result = current_config.validate_business_rules()
                 if validation_result.is_failure:
                     return FlextResult[FlextLDAPConfig].fail(
                         f"CLI override validation failed: {validation_result.error}"
                     )
 
                 # Update global instance
-                cls.set_global_instance(updated_config)
-                return FlextResult[FlextLDAPConfig].ok(updated_config)
+                cls.set_global_instance(current_config)
+                return FlextResult[FlextLDAPConfig].ok(current_config)
             return FlextResult[FlextLDAPConfig].ok(current_config)
 
         except Exception as e:
@@ -807,15 +810,17 @@ class FlextLDAPConfig(FlextConfig):
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate LDAP-specific business rules using Railway Pattern."""
-        return (
-            FlextResult[None]
-            .ok(None)
-            .flat_map(lambda _: self._validate_ldap_connection())
-            .flat_map(lambda _: self._validate_ldap_cache_settings())
-            .flat_map(lambda _: self._validate_ldap_search_configuration())
-            .flat_map(lambda _: self._validate_ldap_auth_configuration())
-        )
+        """Validate LDAP-specific business rules using explicit sequencing."""
+        for step in (
+            self._validate_ldap_connection,
+            self._validate_ldap_cache_settings,
+            self._validate_ldap_search_configuration,
+            self._validate_ldap_auth_configuration,
+        ):
+            result = step()
+            if result.is_failure:
+                return result
+        return FlextResult[None].ok(None)
 
     def _validate_ldap_connection(self) -> FlextResult[None]:
         """Validate LDAP connection settings."""

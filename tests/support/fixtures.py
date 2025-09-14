@@ -113,7 +113,7 @@ async def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup = [entry["dn"] for entry in search_result.value]
+        dns_to_cleanup: list[str] = [str(entry["dn"]) for entry in search_result.value]
         if dns_to_cleanup:
             await cleanup_test_entries(ldap_connection, dns_to_cleanup)
 
@@ -127,6 +127,6 @@ async def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup = [entry["dn"] for entry in search_result.value]
+        dns_to_cleanup: list[str] = [str(entry["dn"]) for entry in search_result.value]
         if dns_to_cleanup:
             await cleanup_test_entries(ldap_connection, dns_to_cleanup)

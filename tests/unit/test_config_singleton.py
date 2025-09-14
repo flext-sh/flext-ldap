@@ -11,9 +11,17 @@ import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+
 import pytest
 from pydantic import SecretStr, ValidationError
-from flext_ldap.config import ( from flext_ldap.connection_config import FlextLDAPConnectionConfig FlextLDAPConfig, clear_flext_ldap_config, get_flext_ldap_config, set_flext_ldap_config, )
+
+from flext_ldap.config import (
+    FlextLDAPConfig,
+    clear_flext_ldap_config,
+    get_flext_ldap_config,
+    set_flext_ldap_config,
+)
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
 
 
 class TestFlextLDAPConfigSingleton:
@@ -21,17 +29,14 @@ class TestFlextLDAPConfigSingleton:
 
     def setup_method(self) -> None:
         """Clear global instance before each test."""
-
         clear_flext_ldap_config()
 
     def teardown_method(self) -> None:
         """Clear global instance after each test."""
-
         clear_flext_ldap_config()
 
     def test_singleton_instance_creation(self) -> None:
         """Test that get_global_instance returns the same instance."""
-
         # Get first instance
         config1 = FlextLDAPConfig.get_global_instance()
 
@@ -44,7 +49,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_convenience_function_get_config(self) -> None:
         """Test that get_flext_ldap_config returns the singleton instance."""
-
         config1 = get_flext_ldap_config()
         config2 = get_flext_ldap_config()
 
@@ -53,7 +57,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_set_global_instance(self) -> None:
         """Test setting a custom global instance."""
-
         # Create custom config
         custom_config = FlextLDAPConfig(
             app_name="test-app",
@@ -74,7 +77,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_clear_global_instance(self) -> None:
         """Test clearing the global instance."""
-
         # Get initial instance
         config1 = get_flext_ldap_config()
 
@@ -89,7 +91,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_environment_variable_loading(self) -> None:
         """Test loading configuration from environment variables."""
-
         with patch.dict(
             os.environ,
             {
@@ -105,13 +106,13 @@ class TestFlextLDAPConfigSingleton:
 
             # Should load from environment
             assert config.ldap_bind_dn == "cn=env,dc=example,dc=com"
+            assert config.ldap_bind_password is not None
             assert config.ldap_bind_password.get_secret_value() == "env123"
             assert config.ldap_use_ssl is True
             assert config.ldap_size_limit == 500
 
     def test_config_file_loading(self) -> None:
         """Test loading configuration from JSON file."""
-
         config_data = {
             "app_name": "file-app",
             "ldap_bind_dn": "cn=file,dc=example,dc=com",
@@ -132,16 +133,18 @@ class TestFlextLDAPConfigSingleton:
 
             config = config_result.value
             assert config.app_name == "file-app"
-            assert config.ldap_bind_dn == "cn=file,dc=example,dc=com"
-            assert config.ldap_bind_password.get_secret_value() == "file123"
-            assert config.ldap_use_ssl is False
+            # Convert to FlextLDAPConfig to access LDAP-specific attributes
+            ldap_config = FlextLDAPConfig.model_validate(config.model_dump())
+            assert ldap_config.ldap_bind_dn == "cn=file,dc=example,dc=com"
+            assert ldap_config.ldap_bind_password is not None
+            assert ldap_config.ldap_bind_password.get_secret_value() == "file123"
+            assert ldap_config.ldap_use_ssl is False
 
         finally:
             Path(config_file).unlink()
 
     def test_development_config_factory(self) -> None:
         """Test development configuration factory method."""
-
         dev_config_result = FlextLDAPConfig.create_development_ldap_config()
 
         assert dev_config_result.is_success
@@ -156,7 +159,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_test_config_factory(self) -> None:
         """Test test configuration factory method."""
-
         test_config_result = FlextLDAPConfig.create_test_ldap_config()
 
         assert test_config_result.is_success
@@ -169,7 +171,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_production_config_factory(self) -> None:
         """Test production configuration factory method."""
-
         prod_config_result = FlextLDAPConfig.create_production_ldap_config()
 
         assert prod_config_result.is_success
@@ -184,8 +185,7 @@ class TestFlextLDAPConfigSingleton:
 
     def test_ldap_specific_methods(self) -> None:
         """Test LDAP-specific configuration methods."""
-
-        config = FlextLDAPConfig(_factory_mode=True)
+        config = FlextLDAPConfig()
         config.ldap_default_connection = FlextLDAPConnectionConfig(
             server="ldap://test.example.com",
             port=389,
@@ -225,7 +225,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_parameter_overrides(self) -> None:
         """Test applying LDAP parameter overrides."""
-
         config = FlextLDAPConfig(
             ldap_size_limit=100,
             ldap_time_limit=30,
@@ -233,7 +232,7 @@ class TestFlextLDAPConfigSingleton:
         )
 
         # Apply overrides
-        overrides = {
+        overrides: dict[str, object] = {
             "size_limit": 500,
             "time_limit": 60,
             "enable_caching": True,
@@ -251,7 +250,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_connection_config_update(self) -> None:
         """Test updating connection configuration."""
-
         config = FlextLDAPConfig()
 
         new_connection = FlextLDAPConnectionConfig(
@@ -270,7 +268,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_validation_business_rules(self) -> None:
         """Test LDAP-specific business rule validation."""
-
         # Valid configuration
         valid_config = FlextLDAPConfig(
             ldap_size_limit=1000,
@@ -286,7 +283,6 @@ class TestFlextLDAPConfigSingleton:
         # Test business rules validation with valid configuration
         # The validation_business_rules method should handle edge cases
         valid_config_with_cache = FlextLDAPConfig(
-            _factory_mode=True,
             ldap_enable_caching=True,
             ldap_cache_ttl=300,  # Valid value
         )
@@ -296,7 +292,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_field_validation(self) -> None:
         """Test LDAP-specific field validation."""
-
         # Valid bind DN
         config = FlextLDAPConfig(ldap_bind_dn="cn=test,dc=example,dc=com")
         assert config.ldap_bind_dn == "cn=test,dc=example,dc=com"
@@ -313,7 +308,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_model_validation_consistency(self) -> None:
         """Test cross-field validation consistency."""
-
         # Valid configuration
         config = FlextLDAPConfig(
             ldap_use_ssl=True,
@@ -334,7 +328,6 @@ class TestFlextLDAPConfigSingleton:
 
     def test_singleton_persistence_across_imports(self) -> None:
         """Test that singleton persists across different import contexts."""
-
         # Get config from first context
         config1 = get_flext_ldap_config()
 

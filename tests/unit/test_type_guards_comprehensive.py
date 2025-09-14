@@ -1,23 +1,16 @@
+"""Comprehensive tests for LDAP type guards.
 
-from __future__ import annotations
-
-from flext_ldap.type_guards import FlextLDAPTypeGuards
-
-"""Module documentation.
-
-- Target type_guards.py (105 statements, 19% coverage) for high impact
-- Test all type guard methods with comprehensive edge cases
-- Focus on real functional validation, not mocks
+- Target type_guards.py for high coverage impact
+- Test all guard methods with edge cases
+- Real functional validation, no mocks
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
 from __future__ import annotations
 
-from typing import Dict
+from flext_ldap.type_guards import FlextLDAPTypeGuards
 
 
 class TestFlextLDAPTypeGuardsComprehensive:
@@ -25,7 +18,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_dn_valid_dns(self) -> None:
         """Test is_ldap_dn with valid DN formats."""
-
         FlextLDAPTypeGuards()
 
         # Standard valid DNs
@@ -45,7 +37,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_dn_complex_valid_dns(self) -> None:
         """Test is_ldap_dn with complex but valid DN formats."""
-
         complex_dns = [
             "cn=John Doe,ou=users,dc=example,dc=com",  # Spaces in name
             "cn=user,with,comma,ou=test,dc=example,dc=com",  # Commas in value
@@ -62,7 +53,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_dn_invalid_dns(self) -> None:
         """Test is_ldap_dn with invalid DN formats."""
-
         invalid_dns = [
             "",  # Empty string
             "   ",  # Only whitespace
@@ -83,8 +73,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_dn_non_string_types(self) -> None:
         """Test is_ldap_dn with non-string types."""
-
-        non_string_values = [
+        non_string_values: list[object] = [
             None,
             123,
             [],
@@ -103,7 +92,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_attribute_value_valid_string_values(self) -> None:
         """Test is_ldap_attribute_value with valid string values."""
-
         valid_strings = [
             "simple_value",
             "Value with spaces",
@@ -122,7 +110,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_attribute_value_valid_bytes_values(self) -> None:
         """Test is_ldap_attribute_value with valid bytes values."""
-
         valid_bytes = [
             b"byte_value",
             b"bytes with spaces",
@@ -132,12 +119,11 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
         for value in valid_bytes:
             assert FlextLDAPTypeGuards.is_ldap_attribute_value(value), (
-                f"Should accept bytes: {value}"
+                f"Should accept bytes: {value!r}"
             )
 
     def test_is_ldap_attribute_value_valid_list_values(self) -> None:
         """Test is_ldap_attribute_value with valid list values."""
-
         valid_lists = [
             ["value1", "value2"],
             ["single_value"],
@@ -153,7 +139,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_attribute_value_invalid_types(self) -> None:
         """Test is_ldap_attribute_value with invalid types."""
-
         invalid_values = [
             None,
             123,
@@ -173,7 +158,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_attributes_dict_valid_dictionaries(self) -> None:
         """Test is_ldap_attributes_dict with valid attribute dictionaries."""
-
         valid_attrs = [
             {"cn": ["John Doe"]},
             {"uid": ["jdoe"], "mail": ["john@example.com"]},
@@ -191,8 +175,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_attributes_dict_invalid_structures(self) -> None:
         """Test is_ldap_attributes_dict with invalid structures."""
-
-        invalid_attrs = [
+        invalid_attrs: list[object] = [
             None,
             "not_a_dict",
             123,
@@ -209,7 +192,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_entry_data_valid_entries(self) -> None:
         """Test is_ldap_entry_data with valid entry data structures."""
-
         valid_entries = [
             {
                 "dn": "cn=john,ou=users,dc=example,dc=com",
@@ -229,8 +211,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_entry_data_invalid_entries(self) -> None:
         """Test is_ldap_entry_data with invalid entry data structures."""
-
-        invalid_entries = [
+        invalid_entries: list[object] = [
             None,
             {},  # Missing required dn key
             {"attributes": {}},  # Missing dn
@@ -257,7 +238,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_search_result_valid_results(self) -> None:
         """Test is_ldap_search_result with valid search result structures."""
-
         valid_results = [
             [
                 {"dn": "cn=user1,dc=test", "attributes": {"cn": ["User 1"]}},
@@ -274,8 +254,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_is_ldap_search_result_invalid_results(self) -> None:
         """Test is_ldap_search_result with invalid search result structures."""
-
-        invalid_results = [
+        invalid_results: list[object] = [
             None,
             {},  # Dict instead of list
             "not_list",  # String instead of list
@@ -293,7 +272,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_type_guards_edge_cases_and_boundaries(self) -> None:
         """Test type guards with edge cases and boundary conditions."""
-
         # Test very long DN
         long_dn = "cn=" + "a" * 1000 + ",ou=test,dc=example,dc=com"
         assert FlextLDAPTypeGuards.is_ldap_dn(long_dn), "Should accept very long DN"
@@ -316,7 +294,6 @@ class TestFlextLDAPTypeGuardsComprehensive:
 
     def test_type_guards_consistency_across_calls(self) -> None:
         """Test that type guards return consistent results across multiple calls."""
-
         test_values = [
             ("cn=test,dc=example,dc=com", True),
             ("invalid_dn", False),

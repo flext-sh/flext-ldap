@@ -220,7 +220,7 @@ def docker_openldap_container() -> Generator[object]:
     providing real LDAP server for comprehensive testing.
     """
     if docker is None:
-        print("Docker not available - tests will run without real LDAP server")
+        # Docker not available - tests will run without real LDAP server
         yield None
         return
 
@@ -233,9 +233,7 @@ def docker_openldap_container() -> Generator[object]:
         try:
             existing = docker_client.containers.get(OPENLDAP_CONTAINER_NAME)
             if existing.status == "running":
-                print(
-                    f"Using existing Docker container: {OPENLDAP_CONTAINER_NAME} on port {OPENLDAP_PORT}"
-                )
+                # Using existing Docker container
                 container = existing
                 # Set environment variables for tests
                 for key, value in TEST_ENV_VARS.items():
@@ -248,22 +246,18 @@ def docker_openldap_container() -> Generator[object]:
 
         manager = _get_container_manager()
         # Start container
-        print(
-            f"Starting Docker container: {OPENLDAP_CONTAINER_NAME} on port {OPENLDAP_PORT}"
-        )
+        # Starting Docker container for LDAP testing
         container = manager.start_container()
 
         # Set environment variables for tests
         for key, value in TEST_ENV_VARS.items():
             os.environ[key] = value
 
-        print(
-            f"LDAP container ready on port {OPENLDAP_PORT} - will stay running for all tests"
-        )
+        # LDAP container ready - will stay running for all tests
         yield container
 
-    except Exception as e:
-        print(f"Failed to start Docker container: {e}")
+    except Exception:
+        # Failed to start Docker container - tests will run without real LDAP server
         yield None
     finally:
         # Only cleanup environment variables, NOT the container
@@ -276,15 +270,12 @@ def docker_openldap_container() -> Generator[object]:
             if manager and docker is not None:
                 try:
                     manager.stop_container()
-                    print(
-                        f"Stopped Docker container: {OPENLDAP_CONTAINER_NAME} (explicit stop requested)"
-                    )
+                    # Stopped Docker container (explicit stop requested)
                 except Exception:
                     pass
         else:
-            print(
-                f"LDAP container {OPENLDAP_CONTAINER_NAME} kept running for future tests"
-            )
+            # LDAP container kept running for future tests
+            pass
 
 
 @pytest.fixture

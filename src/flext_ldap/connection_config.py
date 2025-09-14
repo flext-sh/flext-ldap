@@ -5,20 +5,20 @@ SPDX-License-Identifier: MIT
 """
 
 from pathlib import Path
-from typing import ClassVar
 
 from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
 from pydantic import Field, field_validator
+from pydantic_settings import SettingsConfigDict
 
 
 class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
-    model_config: ClassVar = {
-        "extra": "ignore",  # Allow ALGAR and other project-specific environment variables
-        "validate_assignment": True,
-        "str_strip_whitespace": True,
-    }
+    model_config = SettingsConfigDict(
+        extra="ignore",  # Allow ALGAR and other project-specific environment variables
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
 
     def __init__(
         self,

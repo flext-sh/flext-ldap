@@ -5,15 +5,13 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
+
 import docker
 import ldap3
 from flext_core import FlextLogger, FlextResult
+
 from flext_ldap import FlextLDAPConnectionConfig
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
-
-
-
-from flext_core import FlextResult
 
 logger = FlextLogger(__name__)
 
@@ -28,7 +26,6 @@ class LdapTestServer:
         admin_password: str = "admin123",
     ) -> None:
         """Initialize LDAP test server."""
-
         self.container_name = container_name
         self.port = port
         self.admin_password = admin_password
@@ -37,7 +34,6 @@ class LdapTestServer:
 
     async def start(self) -> FlextResult[bool]:
         """Start LDAP server container."""
-
         try:
             # Stop and remove existing container if it exists
             await self.stop()
@@ -87,7 +83,6 @@ class LdapTestServer:
 
     async def stop(self) -> FlextResult[bool]:
         """Stop and remove LDAP server container."""
-
         try:
             # Try to find existing container
             try:
@@ -108,7 +103,6 @@ class LdapTestServer:
 
     async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
-
         # ldap3 already imported at top
 
         try:
@@ -151,7 +145,6 @@ class LdapTestServer:
 
     async def setup_test_data(self) -> FlextResult[bool]:
         """Setup initial test data in LDAP server."""
-
         try:
             # ldap3 and test_data already imported at top
 
@@ -204,7 +197,6 @@ class LdapTestServer:
 
     def get_connection_config(self) -> FlextLDAPConnectionConfig:
         """Get connection configuration for test server."""
-
         return FlextLDAPConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=admin,dc=flext,dc=local",
@@ -217,7 +209,6 @@ class LdapTestServer:
 
 def get_test_ldap_config() -> FlextLDAPConnectionConfig:
     """Get test LDAP connection configuration."""
-
     return FlextLDAPConnectionConfig(
         server="ldap://localhost:3390",
         bind_dn="cn=admin,dc=flext,dc=local",
@@ -234,7 +225,6 @@ async def wait_for_ldap_server(
     timeout_seconds: int = 60,
 ) -> bool:
     """Wait for LDAP server to be available."""
-
     # ldap3 already imported at top
 
     try:

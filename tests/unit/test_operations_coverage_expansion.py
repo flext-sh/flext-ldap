@@ -1,10 +1,3 @@
-
-from __future__ import annotations
-
-import time
-from flext_core import FlextResult
-from flext_ldap.operations import FlextLDAPOperations
-
 """Module documentation.
 
 - Test actual business logic execution paths
@@ -14,12 +7,13 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
 from __future__ import annotations
 
+import time
 
+from flext_core import FlextResult
 
+from flext_ldap.operations import FlextLDAPOperations
 
 
 class TestFlextLDAPOperationsCoverageExpansion:
@@ -27,7 +21,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_generate_id_functionality(self) -> None:
         """Test ID generation functionality."""
-
         ops = FlextLDAPOperations()
 
         # Test ID generation
@@ -43,7 +36,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_ldap_command_processor_search_command_creation(self) -> None:
         """Test SearchCommand creation and initialization."""
-
         # Test SearchCommand creation
         search_cmd = FlextLDAPOperations.LDAPCommandProcessor.SearchCommand(
             connection_id="test_conn",
@@ -64,7 +56,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_ldap_command_processor_search_command_defaults(self) -> None:
         """Test SearchCommand with default values."""
-
         # Test SearchCommand with minimal parameters
         search_cmd = FlextLDAPOperations.LDAPCommandProcessor.SearchCommand(
             connection_id="test_conn",
@@ -79,7 +70,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_ldap_command_processor_membership_command_creation(self) -> None:
         """Test MembershipCommand creation and initialization."""
-
         # Test MembershipCommand creation
         membership_cmd = FlextLDAPOperations.LDAPCommandProcessor.MembershipCommand(
             connection_id="test_conn",
@@ -96,7 +86,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_ldap_command_processor_membership_command_validation(self) -> None:
         """Test MembershipCommand validation."""
-
         # Test valid actions (only "add" and "remove" are valid according to the model)
         valid_actions = ["add", "remove"]
         for action in valid_actions:
@@ -110,14 +99,12 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_user_attribute_extractor_creation(self) -> None:
         """Test UserAttributeExtractor creation."""
-
         extractor = FlextLDAPOperations.UserAttributeExtractor()
         assert extractor is not None
         assert isinstance(extractor, FlextLDAPOperations.UserAttributeExtractor)
 
     def test_user_attribute_extractor_process_data(self) -> None:
         """Test UserAttributeExtractor process_data method."""
-
         extractor = FlextLDAPOperations.UserAttributeExtractor()
 
         # Create mock LDAP entry data
@@ -143,14 +130,12 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_group_attribute_extractor_creation(self) -> None:
         """Test GroupAttributeExtractor creation."""
-
         extractor = FlextLDAPOperations.GroupAttributeExtractor()
         assert extractor is not None
         assert isinstance(extractor, FlextLDAPOperations.GroupAttributeExtractor)
 
     def test_group_attribute_extractor_process_data(self) -> None:
         """Test GroupAttributeExtractor process_data method."""
-
         extractor = FlextLDAPOperations.GroupAttributeExtractor()
 
         # Create mock LDAP entry data
@@ -174,7 +159,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_user_conversion_params_creation(self) -> None:
         """Test UserConversionParams creation."""
-
         params = FlextLDAPOperations.UserConversionParams(
             entries=[{"cn": ["test"], "mail": ["test@example.com"]}]
         )
@@ -186,7 +170,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_user_conversion_params_defaults(self) -> None:
         """Test UserConversionParams with default values."""
-
         params = FlextLDAPOperations.UserConversionParams(entries=[])
 
         # Verify default values
@@ -196,7 +179,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_class_structure(self) -> None:
         """Test FlextLDAPOperations class structure."""
-
         ops = FlextLDAPOperations()
 
         # Verify class has expected attributes
@@ -208,7 +190,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_class_methods_callable(self) -> None:
         """Test that FlextLDAPOperations methods are callable."""
-
         ops = FlextLDAPOperations()
 
         # Verify methods are callable
@@ -221,7 +202,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_nested_classes_instantiation(self) -> None:
         """Test instantiation of nested classes."""
-
         ops = FlextLDAPOperations()
 
         # Test nested class instantiation
@@ -253,7 +233,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_error_handling(self) -> None:
         """Test error handling in operations."""
-
         ops = FlextLDAPOperations()
 
         # Test with invalid data
@@ -273,7 +252,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_type_consistency(self) -> None:
         """Test type consistency across operations."""
-
         ops = FlextLDAPOperations()
 
         # Test ID generation returns string
@@ -296,7 +274,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_performance(self) -> None:
         """Test operations performance characteristics."""
-
         ops = FlextLDAPOperations()
 
         # Test ID generation performance
@@ -313,7 +290,6 @@ class TestFlextLDAPOperationsCoverageExpansion:
 
     def test_operations_memory_usage(self) -> None:
         """Test operations memory usage."""
-
         ops = FlextLDAPOperations()
 
         # Test that operations don't leak memory

@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The flext-ldap library is fully integrated with flext-core's centralized logging system, supporting enterprise-grade observability with TRACE, DEBUG, INFO, WARNING, ERROR, and CRITICAL levels.
+The flext-ldap library is fully integrated with flext-core's centralized logging system, supporting observability with TRACE, DEBUG, INFO, WARNING, ERROR, and CRITICAL levels.
 
 ## 🔧 Centralized Configuration
 

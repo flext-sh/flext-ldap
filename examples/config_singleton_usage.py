@@ -18,6 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from pydantic import SecretStr
+
 from flext_ldap.config import (
     FlextLDAPConfig,
     clear_flext_ldap_config,
@@ -133,7 +135,7 @@ def demonstrate_parameter_overrides() -> None:
     print()
 
     # Apply overrides to change behavior
-    overrides = {
+    overrides: dict[str, object] = {
         "size_limit": 10000,  # Increase search result limit
         "time_limit": 300,  # Increase timeout to 5 minutes
         "enable_caching": True,  # Enable result caching
@@ -179,7 +181,7 @@ def demonstrate_direct_singleton_usage() -> None:
     custom_config = FlextLDAPConfig(
         app_name="custom-ldap-app",
         ldap_bind_dn="cn=custom,dc=example,dc=com",
-        ldap_bind_password="custom-password",
+        ldap_bind_password=SecretStr("custom-password"),
         ldap_use_ssl=True,
         ldap_size_limit=2000,
     )
@@ -233,7 +235,7 @@ def demonstrate_runtime_behavior_changes() -> None:
     print()
 
     # Simulate production deployment - change behavior
-    production_overrides = {
+    production_overrides: dict[str, object] = {
         "debug": False,  # Disable debug mode
         "log_level": "INFO",  # Set production log level
         "log_queries": False,  # Disable query logging
