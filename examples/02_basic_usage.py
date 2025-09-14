@@ -47,6 +47,9 @@ async def _demo_create_primary_user(_service: FlextLDAPApi) -> None:
         cn="John Doe",
         sn="Doe",
         given_name="John",
+        description=None,
+        telephone_number=None,
+        user_password=None,
         # phone=None,  # Field not available in CreateUserRequest
         mail="john.doe@example.com",
     )
@@ -89,6 +92,9 @@ async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
             uid=user_data["uid"],
             cn=user_data["cn"],
             sn=user_data["sn"],
+            description=None,
+            telephone_number=None,
+            user_password=None,
             mail=user_data["mail"],
             given_name=None,
             # phone=None,  # Field not available in CreateUserRequest
@@ -132,6 +138,9 @@ async def demonstrate_connection_handling() -> None:
         sn="User",
         given_name="Test",
         mail=None,
+        description=None,
+        telephone_number=None,
+        user_password=None,
         # phone=None,  # Field not available in CreateUserRequest
     )
 

@@ -76,7 +76,7 @@ class TestFlextTestsIntegration:
         assert success_result.is_success
 
         # Test failure result validation
-        failure_result = FlextResult.fail("test_error")
+        failure_result: FlextResult[object] = FlextResult.fail("test_error")
 
         assert failure_result.is_failure
         assert failure_result.is_failure

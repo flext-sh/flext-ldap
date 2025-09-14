@@ -55,6 +55,9 @@ class TestLdapE2EOperations:
             sn="User",
             given_name="Test",
             mail="testuser@example.com",
+            description=None,
+            telephone_number=None,
+            user_password=None,
         )
 
         # Test user creation request structure
@@ -197,6 +200,9 @@ class TestLdapE2EWithDockerServer:
             sn="TestUser",
             given_name="E2E",
             mail="e2etest@example.com",
+            description=None,
+            telephone_number=None,
+            user_password=None,
         )
 
         assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"

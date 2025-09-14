@@ -39,11 +39,11 @@ async def create_test_user(
         if success:
             logger.debug(f"Created test user: {dn}")
             return FlextResult.ok(data=True)
-        return FlextResult.error(f"Failed to create user: {conn.last_error}")
+        return FlextResult[bool].fail(f"Failed to create user: {conn.last_error}")
 
     except Exception as e:
         logger.exception(f"Error creating test user {dn}")
-        return FlextResult.error(f"Error creating test user: {e}")
+        return FlextResult[bool].fail(f"Error creating test user: {e}")
 
 
 async def create_test_group(
@@ -73,11 +73,11 @@ async def create_test_group(
         if success:
             logger.debug(f"Created test group: {dn}")
             return FlextResult.ok(data=True)
-        return FlextResult.error(f"Failed to create group: {conn.last_error}")
+        return FlextResult[bool].fail(f"Failed to create group: {conn.last_error}")
 
     except Exception as e:
         logger.exception(f"Error creating test group {dn}")
-        return FlextResult.error(f"Error creating test group: {e}")
+        return FlextResult[bool].fail(f"Error creating test group: {e}")
 
 
 async def cleanup_test_entries(
@@ -116,7 +116,7 @@ async def cleanup_test_entries(
 
     except Exception as e:
         logger.exception("Error during cleanup")
-        return FlextResult.error(f"Error during cleanup: {e}")
+        return FlextResult[int].fail(f"Error during cleanup: {e}")
 
 
 async def verify_entry_exists(
@@ -152,7 +152,7 @@ async def verify_entry_exists(
 
     except Exception as e:
         logger.exception(f"Error verifying entry {dn}")
-        return FlextResult.error(f"Error verifying entry: {e}")
+        return FlextResult[bool].fail(f"Error verifying entry: {e}")
 
 
 async def get_entry_attributes(
@@ -187,11 +187,11 @@ async def get_entry_attributes(
             conn.unbind()
             return FlextResult.ok(attributes)
         conn.unbind()
-        return FlextResult.error(f"Entry not found: {dn}")
+        return FlextResult[FlextTypes.Core.Dict].fail(f"Entry not found: {dn}")
 
     except Exception as e:
         logger.exception(f"Error getting attributes for {dn}")
-        return FlextResult.error(f"Error getting attributes: {e}")
+        return FlextResult[FlextTypes.Core.Dict].fail(f"Error getting attributes: {e}")
 
 
 async def search_entries(
@@ -238,7 +238,9 @@ async def search_entries(
 
     except Exception as e:
         logger.exception("Error searching entries")
-        return FlextResult.error(f"Error searching entries: {e}")
+        return FlextResult[list[FlextTypes.Core.Dict]].fail(
+            f"Error searching entries: {e}"
+        )
 
 
 async def modify_entry(
@@ -276,11 +278,11 @@ async def modify_entry(
         if success:
             logger.debug(f"Modified entry: {dn}")
             return FlextResult.ok(data=True)
-        return FlextResult.error(f"Failed to modify entry: {conn.last_error}")
+        return FlextResult[bool].fail(f"Failed to modify entry: {conn.last_error}")
 
     except Exception as e:
         logger.exception(f"Error modifying entry {dn}")
-        return FlextResult.error(f"Error modifying entry: {e}")
+        return FlextResult[bool].fail(f"Error modifying entry: {e}")
 
 
 def extract_server_info(server_url: str) -> tuple[str, int]:

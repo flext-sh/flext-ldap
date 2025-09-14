@@ -27,13 +27,10 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLDAPApi,
-    FlextLDAPDistinguishedName,
     FlextLDAPEntities,
-    FlextLDAPFilter,
-    FlextLDAPSearchRequest,
     FlextLDAPSettings,
+    FlextLDAPValueObjects,
 )
-from flext_ldap.value_objects import FlextLDAPFilter as FilterClass
 
 logger = FlextLogger(__name__)
 
@@ -101,15 +98,17 @@ async def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
-        dn = FlextLDAPDistinguishedName(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
+        dn = FlextLDAPValueObjects.DistinguishedName(
+            value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
+        )
         dn.validate_business_rules()
 
         # 2. LDAP Filters - Using correct FlextLDAPFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_result = FlextLDAPFilter.create(complex_filter)
+        filter_result = FlextLDAPValueObjects.Filter.create(complex_filter)
 
         if filter_result.is_success:
-            default_filter = FilterClass(value="(objectClass=*)")
+            default_filter = FlextLDAPValueObjects.Filter(value="(objectClass=*)")
             filter_obj = filter_result.unwrap_or(default_filter)
             filter_obj.validate_business_rules()
 
@@ -121,10 +120,10 @@ async def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLDAPSettings(enable_debug_mode=True)
+        _settings = FlextLDAPSettings()
 
         # 2. Create search request using FlextLDAPSearchRequest
-        search_request = FlextLDAPSearchRequest(
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=person)",
@@ -148,7 +147,7 @@ async def demonstrate_async_patterns() -> None:
             "ldap://demo.example.com:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password"
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[FlextLDAPEntities]]]] = []
+            tasks: list[Awaitable[FlextResult[list[FlextLDAPEntities.Entry]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
@@ -156,18 +155,19 @@ async def demonstrate_async_patterns() -> None:
             ]
 
             for base_dn in search_bases:
-                task = api.search(
+                search_request = FlextLDAPEntities.SearchRequest(
                     base_dn=base_dn,
-                    search_filter="(objectClass=*)",
+                    filter_str="(objectClass=*)",
                     attributes=["dn"],
                     scope="one",
+                    size_limit=100,
+                    time_limit=30,
                 )
+                task = api.search(search_request)
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
-            results: list[
-                FlextResult[list[FlextLDAPEntities]] | BaseException
-            ] = await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
             sum(
                 1

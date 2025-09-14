@@ -871,7 +871,7 @@ class FlextLDAPOperations:
                     scope_lower = _params.scope.lower()
                     if scope_lower == "base":
                         scope_const: Literal["BASE", "LEVEL", "SUBTREE"] = "BASE"
-                    elif scope_lower in ("one", "onelevel"):
+                    elif scope_lower in {"one", "onelevel"}:
                         scope_const = "LEVEL"
                     else:
                         scope_const = "SUBTREE"
@@ -910,7 +910,7 @@ class FlextLDAPOperations:
                     return normalized
                 finally:
                     with contextlib.suppress(Exception):
-                        conn.unbind()
+                        conn.unbind()  # type: ignore[no-untyped-call]
             finally:
                 with contextlib.suppress(Exception):
                     await client.unbind()

@@ -14,19 +14,17 @@ import asyncio
 import sys
 from typing import Final, cast
 
-from flext_core import FlextConstants, FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLDAPApi,
-    FlextLDAPCreateUserRequest,
+    FlextLDAPEntities,
 )
 
 logger = FlextLogger(__name__)
 
 # LDAP connection settings
-LDAP_URI: Final[str] = (
-    f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Database.LDAP_DEFAULT_PORT}"
-)
+LDAP_URI: Final[str] = f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:389"
 BASE_DN: Final[str] = "dc=example,dc=com"
 USERS_DN: Final[str] = f"ou=users,{BASE_DN}"
 GROUPS_DN: Final[str] = f"ou=groups,{BASE_DN}"
@@ -58,13 +56,16 @@ async def create_sample_users(api: FlextLDAPApi) -> None:
     ]
 
     for user_data in users_to_create:
-        request = FlextLDAPCreateUserRequest(
+        request = FlextLDAPEntities.CreateUserRequest(
             dn=user_data["dn"],
             uid=user_data["uid"],
             cn=user_data["cn"],
             sn=user_data["sn"],
             given_name=user_data.get("given_name"),
             mail=user_data.get("mail"),
+            description=None,
+            telephone_number=None,
+            user_password=None,
         )
         create_result: FlextResult[object] = cast(
             "FlextResult[object]", await api.create_user(request)
@@ -82,29 +83,29 @@ async def search_users(api: FlextLDAPApi) -> None:
     """Search for users using FlextLDAPApi."""
     logger.info("Searching for users...")
 
-    result = await api.search(
-        USERS_DN,
-        "(objectClass=inetOrgPerson)",
+    search_request = FlextLDAPEntities.SearchRequest(
+        base_dn=USERS_DN,
+        filter_str="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
+        scope="subtree",
         size_limit=1000,
         time_limit=30,
     )
-    typed_result: FlextResult[object] = cast("FlextResult[object]", result)
+    result = await api.search(search_request)
 
-    if typed_result.is_success:
-        users = typed_result.value or []
-        typed_users: FlextTypes.Core.List = cast("FlextTypes.Core.List", users)
-        logger.info(f"✅ Found {len(typed_users)} users:")
+    if result.is_success:
+        users = result.value or []
+        logger.info(f"✅ Found {len(users)} users:")
 
-        for user in typed_users:
-            if hasattr(user, "get_single_attribute_value"):
-                cn = user.get_single_attribute_value("cn") or "Unknown"
-                mail = user.get_single_attribute_value("mail") or "No email"
-                logger.info(f"  - {cn} ({mail})")
-            else:
-                logger.info(f"  - {user}")  # Fallback
+        for user in users:
+            cn = user.get_attribute("cn") or "Unknown"
+            mail = user.get_attribute("mail") or "No email"
+            # Handle bytes values properly
+            cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
+            mail_str = mail.decode("utf-8") if isinstance(mail, bytes) else str(mail)
+            logger.info(f"  - {cn_str} ({mail_str})")
     else:
-        logger.error(f"❌ Search failed: {typed_result.error}")
+        logger.error(f"❌ Search failed: {result.error}")
 
 
 async def update_user(api: FlextLDAPApi, user_dn: str, new_mail: str) -> None:
