@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import ssl
+from collections.abc import Mapping
 from typing import Literal, cast
 from urllib.parse import urlparse
 
@@ -424,7 +425,7 @@ class FlextLDAPClient(
     # CRUD OPERATIONS - Consolidated Create, Update, Delete operations
     # =========================================================================
 
-    def add(self, dn: str, attributes: FlextTypes.Core.Dict) -> object:
+    def add(self, dn: str, attributes: Mapping[str, object]) -> object:
         """Add new entry to LDAP directory following flext-core protocol.
 
         Returns:

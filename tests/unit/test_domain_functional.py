@@ -90,7 +90,7 @@ class TestDomainSpecifications:
             assert user_spec.is_satisfied_by(user), f"User should be valid: {user.uid}"
 
         # Test validation error messages for invalid objects
-        invalid_candidates = [None, "", {}, [], 123, "not-a-user"]
+        invalid_candidates: list[object] = [None, "", {}, [], 123, "not-a-user"]
 
         for invalid in invalid_candidates:
             assert not user_spec.is_satisfied_by(invalid)
@@ -130,7 +130,7 @@ class TestDomainSpecifications:
             )
 
         # Test with invalid group objects
-        invalid_groups = [None, "", {}, [], 123, "not-a-group"]
+        invalid_groups: list[object] = [None, "", {}, [], 123, "not-a-group"]
 
         for invalid in invalid_groups:
             assert not group_spec.is_satisfied_by(invalid)
@@ -155,7 +155,7 @@ class TestDomainSpecifications:
             assert dn_spec.is_satisfied_by(dn), f"DN should be valid: {dn}"
 
         # Test with invalid DN formats
-        invalid_dns = [
+        invalid_dns: list[object] = [
             "",  # Empty string
             "invalid-dn",  # No DN components
             None,  # None value
@@ -227,7 +227,7 @@ class TestDomainSpecifications:
         )
 
         # Test with non-user objects
-        invalid_candidates = [None, "", {}, [], "not-a-user"]
+        invalid_candidates: list[object] = [None, "", {}, [], "not-a-user"]
 
         for invalid in invalid_candidates:
             assert not active_spec.is_satisfied_by(invalid)

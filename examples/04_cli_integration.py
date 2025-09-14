@@ -11,7 +11,7 @@ from flext_cli import (
     FlextCliConfig,
     FlextCliContext,
     FlextCliExecutionContext,
-    FlextCliOutputFormat,
+    FlextCliFormatters,
 )
 from flext_core import FlextResult, FlextTypes
 
@@ -104,6 +104,9 @@ class FlextLDAPCLI:
                 if " " in full_name
                 else full_name,
                 mail=email,
+                description=None,
+                telephone_number=None,
+                user_password=None,
                 # Note: phone field removed - not available in CreateUserRequest
             )
 
@@ -152,6 +155,7 @@ async def main() -> None:
     """Função principal demonstrando uso da flext-cli."""
     # Inicializar CLI
     cli = FlextLDAPCLI()
+    formatter = FlextCliFormatters()
 
     # Teste 1: Listar usuários
 
@@ -161,7 +165,7 @@ async def main() -> None:
         empty_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_data)
         if data:
-            cli.format_and_display(data, "json")
+            print(formatter.format_json(data))
 
     # Teste 2: Criar usuário
 
@@ -173,7 +177,7 @@ async def main() -> None:
         empty_create_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_create_data)
         if data:
-            cli.format_and_display(data, "json")
+            print(formatter.format_json(data))
 
     # Teste 3: Demonstrar configuração
 
@@ -192,7 +196,8 @@ async def main() -> None:
         ],
     }
 
-    cli.format_and_display(config_data, FlextCliOutputFormat.JSON)
+    formatter = FlextCliFormatters()
+    print(formatter.format_json(config_data))
 
     # Teste 4: Demonstrar diferentes formatos de output
 
@@ -203,10 +208,10 @@ async def main() -> None:
         "recursos": ["CLI patterns", "Error handling", "Output formatting"],
     }
 
-    cli.format_and_display(sample_data, FlextCliOutputFormat.JSON)
+    print(formatter.format_json(sample_data))
 
     # Table format not available, using JSON
-    cli.format_and_display(sample_data, "json")
+    print(formatter.format_json(sample_data))
 
 
 if __name__ == "__main__":

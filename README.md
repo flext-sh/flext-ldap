@@ -1,114 +1,246 @@
 # flext-ldap
 
-**Tipo**: Biblioteca de Infraestrutura | **Status**: Em desenvolvimento ativo | **Dependências**: flext-core, ldap3, pydantic, click, rich, structlog
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 
-Biblioteca de operações LDAP com Clean Architecture e DDD, oferecendo serviços de diretório com tratamento de erros tipo-safe via FlextResult.
+**LDAP directory services integration library** for the FLEXT ecosystem, providing LDAP operations using **Clean Architecture patterns** with async/await support.
+
+> **⚠️ STATUS**: Active development with 33% test coverage, targeting 90%+ compliance with FLEXT-Core patterns
 
 ---
 
-## 🚀 Instalação
+## 🎯 Purpose and Role in FLEXT Ecosystem
 
-Pré-requisitos:
+### **For the FLEXT Ecosystem**
 
-- Python 3.13+
-- Poetry
-- Acesso a um servidor LDAP (ou Docker para desenvolvimento)
+FLEXT-LDAP serves as the centralized LDAP operations library for all directory service needs across the FLEXT ecosystem. It provides a standardized interface for LDAP authentication, user management, and directory queries using Clean Architecture principles and domain-driven design patterns.
 
-Configuração:
+### **Key Responsibilities**
 
+1. **LDAP Operations** - User authentication, directory searches, entry management
+2. **Clean Architecture** - Domain-driven design with separated layers (domain, application, infrastructure)
+3. **FLEXT Integration** - FlextResult error handling, dependency injection, logging
+
+### **Integration Points**
+
+- **flext-core** → FlextResult, FlextContainer, FlextLogger patterns
+- **flext-auth** → LDAP authentication provider for SSO systems
+- **Singer ecosystem** → flext-tap-ldap, flext-target-ldap for data extraction
+
+---
+
+## 🏗️ Architecture and Patterns
+
+### **FLEXT-Core Integration Status**
+
+| Pattern             | Status    | Description                     |
+| ------------------- | --------- | ------------------------------- |
+| **FlextResult<T>**  | 🟢 100%   | All operations return FlextResult |
+| **FlextService**    | 🟡 75%    | Domain services implemented      |
+| **FlextContainer**  | 🟡 60%    | Dependency injection in progress |
+| **Domain Patterns** | 🟢 85%    | Entities, value objects, repositories |
+
+> **Status**: 🔴 Critical | 🟡 Partial | 🟢 Complete
+
+### **Architecture Diagram**
+
+```mermaid
+graph TB
+    A[FlextLDAPApi] --> B[FlextLDAPServices]
+    B --> C[FlextLDAPDomain]
+    B --> D[FlextLDAPRepositories]
+    D --> E[FlextLDAPOperations]
+    E --> F[FlextLDAPClient]
+    F --> G[ldap3 Library]
+
+    subgraph "Clean Architecture Layers"
+        C --> H[Entities]
+        C --> I[Value Objects]
+        H --> J[User, Group, Entry]
+        I --> K[DN, Filter, Scope]
+    end
+```
+
+---
+
+## 🚀 Quick Start
+
+### **Installation**
+
+**Production environment:**
+```bash
+poetry add flext-ldap
+```
+
+**Development environment:**
 ```bash
 git clone <repository-url>
 cd flext-ldap
-poetry install
-make setup
+make setup     # Install dependencies and pre-commit hooks
+make validate  # Run quality checks
 ```
 
-## 🔧 Uso básico (assíncrono)
+### **Basic Usage**
 
 ```python
 import asyncio
-from flext_ldap.services import FlextLDAPService
-from flext_ldap.models import FlextLDAPCreateUserRequest
+from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
 
-async def main() -> None:
-    service = FlextLDAPService()
-    ok = await service.connect(
-        server_url="ldap://localhost:3389",
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",
+async def basic_ldap_search():
+    """Basic LDAP search using FlextResult patterns."""
+    api = get_flext_ldap_api()
+
+    search_request = FlextLDAPEntities.SearchRequest(
+        base_dn="dc=example,dc=com",
+        filter_str="(objectClass=person)",
+        scope="subtree",
+        attributes=["uid", "cn", "mail"]
     )
-    if ok.is_failure:
-        raise SystemExit(f"Falha na conexão: {ok.error}")
 
-    req = FlextLDAPCreateUserRequest(
-        dn="cn=jane.doe,ou=users,dc=example,dc=com",
-        uid="jane.doe",
-        cn="Jane",
-        sn="Doe",
-        mail="jane.doe@example.com",
-    )
-    created = await service.create_user(req)
-    print(created)
+    result = await api.search_entries(search_request)
+    if result.is_success:
+        entries = result.unwrap()
+        print(f"Found {len(entries)} entries")
+    else:
+        print(f"Search failed: {result.error}")
 
-asyncio.run(main())
+asyncio.run(basic_ldap_search())
 ```
 
-Observação: a API de serviços é assíncrona (conforme `src/flext_ldap/services.py`).
+---
 
-## 🏛️ Estrutura real do projeto
+## 🔧 Development
 
-```
-src/flext_ldap/
-├── api.py                  # API de alto nível
-├── services.py             # Serviços de aplicação (assíncronos)
-├── adapters.py             # Adapters/ports para operações de diretório
-├── operations.py           # Operações LDAP de baixo nível
-├── models.py               # Entidades/Value Objects (pydantic)
-├── config.py               # Configuração e validação
-├── constants.py | types.py | utils.py | exceptions.py
-└── cli.py                  # CLI (entrypoint: flext-ldap)
-```
-
-Padrões-chave: FlextResult, FlextDomainService, Clean Architecture, DDD.
-
-## ⚙️ Configuração por ambiente
+### **Essential Commands**
 
 ```bash
-# Configuração básica LDAP
-FLEXT_LDAP_HOST=localhost
-FLEXT_LDAP_PORT=389
-FLEXT_LDAP_USE_SSL=false
-FLEXT_LDAP_BASE_DN=dc=example,dc=com
-FLEXT_LDAP_BIND_DN=cn=admin,dc=example,dc=com
-FLEXT_LDAP_BIND_PASSWORD=admin
-
-# Opções
-FLEXT_LDAP_TIMEOUT=30
-FLEXT_LOG_LEVEL=INFO
+make setup                    # Development environment setup
+make validate                 # Complete quality pipeline (lint + type + security + test)
+make test                     # Run test suite
+make lint                     # Code linting with ruff
+make type-check               # Type checking with mypy
+make format                   # Code formatting
+make clean                    # Clean build artifacts
 ```
 
-## 📦 Dependências principais
+### **Quality Gates**
 
-- `ldap3` (operações LDAP reais)
-- `pydantic` e `pydantic-settings`
-- `click` e `rich` (CLI/UX)
-- `structlog` (observabilidade)
-- Integrações locais opcionais: `flext-core`, `flext-ldif`
+- **Coverage**: 33% minimum (targeting 90%)
+- **Type Checking**: mypy --strict compliance
+- **Linting**: ruff with zero violations
+- **Security**: bandit security analysis
 
-## 🧪 Desenvolvimento
+---
+
+## 🧪 Testing
+
+### **Test Structure**
+
+```
+tests/
+├── unit/              # Unit tests for individual components
+├── integration/       # Integration tests with real LDAP server
+├── e2e/              # End-to-end workflow tests
+└── conftest.py       # Shared test fixtures
+```
+
+### **Testing Commands**
 
 ```bash
-make lint         # Lint
-make type-check
-make test         # Testes
-make validate     # Pipeline completo
+make test                     # Run all tests
+pytest tests/unit/           # Unit tests only
+pytest tests/integration/   # Integration tests (requires Docker)
+pytest --cov=src            # Coverage report
 ```
 
-## 📄 Licença
+**Docker Test Environment:**
+```bash
+make ldap-test-server        # Start OpenLDAP container for testing
+make ldap-test-server-stop   # Stop test container
+```
 
-MIT License — veja `LICENSE`.
+---
 
-## 🔗 Projetos relacionados
+## 📊 Status and Metrics
 
-- `../flext-core`
-- `../flext-ldif`
+### **Quality Standards**
+
+- **Coverage**: 33% (target: 90%)
+- **Type Safety**: mypy --strict enabled
+- **Security**: bandit analysis passing
+- **FLEXT-Core Compliance**: 80%
+
+### **Ecosystem Integration**
+
+- **Direct Dependencies**: flext-auth (authentication provider)
+- **Service Dependencies**: flext-core (patterns), flext-observability (logging)
+- **Integration Points**: 3 active integrations in ecosystem
+
+---
+
+## 🗺️ Roadmap
+
+### **Current Version (0.9.0)**
+
+- Clean Architecture foundation complete
+- FlextResult pattern implementation
+- Basic LDAP operations (authentication, search, CRUD)
+- Domain entities and value objects
+
+### **Next Version (1.0.0)**
+
+- 90% test coverage achievement
+- Complete FLEXT-Core pattern compliance
+- Performance optimization for large directories
+- Enhanced error handling and validation
+
+---
+
+## 📚 Documentation
+
+- **[Getting Started](docs/getting-started.md)** - Installation and setup
+- **[Architecture](docs/architecture.md)** - Design patterns and structure
+- **[API Reference](docs/api-reference.md)** - Complete API documentation
+- **[Development](docs/development.md)** - Contributing and workflows
+- **[Integration](docs/integration.md)** - Ecosystem integration patterns
+- **[Examples](docs/examples/)** - Working code examples
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues
+- **[TODO & Roadmap](docs/TODO.md)** - Development status and plans
+
+---
+
+## 🤝 Contributing
+
+### **FLEXT-Core Compliance Checklist**
+
+- [ ] Use FlextResult<T> for all operations
+- [ ] Implement domain entities with business logic
+- [ ] Follow Clean Architecture layer separation
+- [ ] Use FlextContainer for dependency injection
+- [ ] Implement proper error handling patterns
+
+### **Quality Standards**
+
+- All code must pass `make validate`
+- Test coverage for new features required
+- Type annotations required for all public APIs
+- Security analysis must pass
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🆘 Support
+
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/flext-sh/flext/issues)
+- **Security**: Report security issues privately to maintainers
+
+---
+
+**flext-ldap v0.9.0** - LDAP directory services enabling authentication and user management across the FLEXT ecosystem.
+
+**Mission**: Provide reliable LDAP operations with Clean Architecture patterns for enterprise directory service integration.

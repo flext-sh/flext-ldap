@@ -113,7 +113,7 @@ class TestFlextLDAPOperationsErrorHandling:
     def test_operations_module_error_resilience(self) -> None:
         """Test that operations module handles errors gracefully."""
         # Test with invalid data types
-        invalid_inputs = [None, "", {}, [], 123, True]
+        invalid_inputs: list[object] = [None, "", {}, [], 123, True]
 
         for invalid_input in invalid_inputs:
             # The operations module should be importable regardless of later data issues
@@ -140,7 +140,7 @@ class TestFlextLDAPOperationsIntegration:
         assert success_result.is_success
         assert success_result.value == "test_value"
 
-        failure_result = FlextResult.fail("test_error")
+        failure_result: FlextResult[object] = FlextResult.fail("test_error")
         assert not failure_result.is_success
         assert failure_result.error == "test_error"
 

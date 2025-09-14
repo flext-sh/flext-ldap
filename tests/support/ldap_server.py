@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 import asyncio
 
 import docker
+import docker.errors
+import docker.models.containers
 import ldap3
 from flext_core import FlextLogger, FlextResult
 
@@ -75,11 +77,11 @@ class LdapTestServer:
             if await self.wait_for_ready():
                 logger.info("LDAP test server started successfully")
                 return FlextResult.ok(data=True)
-            return FlextResult.error("LDAP server failed to start within timeout")
+            return FlextResult[bool].fail("LDAP server failed to start within timeout")
 
         except Exception as e:
             logger.exception("Failed to start LDAP server")
-            return FlextResult.error(f"Failed to start LDAP server: {e}")
+            return FlextResult[bool].fail(f"Failed to start LDAP server: {e}")
 
     async def stop(self) -> FlextResult[bool]:
         """Stop and remove LDAP server container."""
@@ -99,7 +101,7 @@ class LdapTestServer:
 
         except Exception as e:
             logger.exception("Failed to stop LDAP server")
-            return FlextResult.error(f"Failed to stop LDAP server: {e}")
+            return FlextResult[bool].fail(f"Failed to stop LDAP server: {e}")
 
     async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
@@ -193,7 +195,7 @@ class LdapTestServer:
 
         except Exception as e:
             logger.exception("Failed to setup test data")
-            return FlextResult.error(f"Failed to setup test data: {e}")
+            return FlextResult[bool].fail(f"Failed to setup test data: {e}")
 
     def get_connection_config(self) -> FlextLDAPConnectionConfig:
         """Get connection configuration for test server."""

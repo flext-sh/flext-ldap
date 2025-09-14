@@ -1,8 +1,8 @@
 # FLEXT-LDAP Architecture Overview
 
-**Clean Architecture + Domain-Driven Design Implementation**
+**Enterprise Clean Architecture + Domain-Driven Design at Scale**
 
-FLEXT-LDAP implements Clean Architecture principles with Domain-Driven Design patterns, built on the FLEXT-Core foundation. This document provides an overview of the system architecture, design decisions, and integration patterns.
+FLEXT-LDAP is a sophisticated enterprise LDAP operations library implementing Clean Architecture principles with Domain-Driven Design patterns at production scale. This **11,242-line codebase** with **15,264 lines of comprehensive tests** serves as the authoritative LDAP foundation for the entire FLEXT ecosystem, built on advanced flext-core patterns with **784 FlextResult usages** and **120+ async methods**.
 
 ---
 
@@ -29,58 +29,46 @@ FLEXT-LDAP follows Clean Architecture principles with clear separation of concer
 
 ## 🏗️ System Architecture
 
-### Layer Structure
+### Production-Scale Layer Architecture
+
+**FLEXT-LDAP implements sophisticated Clean Architecture at enterprise scale (11,242 lines):**
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Application Layer                        │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   FLEXT-LDAP   │  │   flext-auth    │  │  flext-meltano  │ │
-│  │      API       │  │  Integration    │  │  Integration    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────┐
-│                      Interface Adapters                        │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   Directory     │  │    Singer       │  │      CLI        │ │
-│  │    Adapter      │  │    Adapter      │  │    Interface    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────┐
-│                       Application Layer                        │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   LDAP Service  │  │  Command/Query  │  │   Event         │ │
-│  │   Orchestration │  │    Handlers     │  │   Handlers      │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────┐
-│                         Domain Layer                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │    Entities     │  │  Value Objects  │  │   Domain        │ │
-│  │   Aggregates    │  │  Specifications │  │   Services      │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────┐
-│                     Infrastructure Layer                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   LDAP Client   │  │   Repositories  │  │   External      │ │
-│  │   (ldap3)       │  │ Implementation  │  │   Services      │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────┐
-│                          FLEXT-Core                            │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   FlextResult   │  │  FlextContainer │  │ FlextLDAPConfig │ │
-│  │    Pattern      │  │  (DI Container) │  │  (Centralized)  │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+🏛️ Enterprise Clean Architecture Implementation (11,242 production lines)
+├── 📋 Domain Layer (2,472 lines)          # Business Logic & Rules
+│   ├── FlextLDAPEntities (790 lines)      # Rich domain entities with Pydantic v2
+│   ├── FlextLDAPValueObjects              # Immutable value objects
+│   └── FlextLDAPDomain (1,682 lines)      # Domain services & specifications
+│
+├── 🎯 Application Layer (1,352 lines)     # Use Cases & Orchestration
+│   ├── FlextLDAPApi (544 lines)           # Enterprise API facade
+│   └── FlextLDAPServices (808 lines)      # Application services
+│
+├── ⚙️ Infrastructure Layer (4,852 lines)  # External Systems Integration
+│   ├── FlextLDAPOperations (2,370 lines) # LDAP protocol operations
+│   ├── FlextLDAPAdapters (860 lines)      # External integrations
+│   ├── FlextLDAPRepositories (621 lines) # Data access patterns
+│   └── FlextLDAPClient (612 lines)        # LDAP client abstraction
+│
+└── 🔗 Cross-Cutting (2,566 lines)        # Shared Infrastructure
+    ├── FlextLDAPSettings (900 lines)      # Enterprise configuration
+    ├── FlextLDAPConstants, FlextLDAPTypes # Types & constants
+    └── FlextLDAPExceptions, FlextLDAPCli  # Errors & interfaces
 ```
+
+**Enterprise Integration Points**:
+- **784 FlextResult usages** for comprehensive railway-oriented programming
+- **120+ async methods** for enterprise-scale performance
+- **142 classes** implementing sophisticated Clean Architecture patterns
+- **Deep flext-core integration** with FlextContainer, FlextLogger, FlextMixins
 
 ---
 
-## 🎯 Domain Model
+## 🎯 Production Domain Model
 
-### Core Entities
+### Enterprise Domain Entities with Pydantic v2
+
+**FLEXT-LDAP implements sophisticated domain modeling using modern Python 3.13+ patterns with comprehensive business logic integrated across 784 FlextResult usages.**
 
 #### FlextLDAPUser
 

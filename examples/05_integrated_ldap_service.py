@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextLogger
 
-from flext_ldap import FlextLDAPApi, FlextLDAPSettings
+from flext_ldap import FlextLDAPApi, FlextLDAPConfig
 
 logger = FlextLogger(__name__)
 
@@ -44,7 +44,7 @@ async def _initialize_ldap_service() -> FlextLDAPApi:
         urlparse(server_url)
 
         # Create service using current API
-        service = FlextLDAPApi(FlextLDAPSettings())
+        service = FlextLDAPApi(FlextLDAPConfig())
     else:
         service = FlextLDAPApi()
 
