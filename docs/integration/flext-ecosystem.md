@@ -2,7 +2,7 @@
 
 **Complete Integration Guide for FLEXT Data Platform**
 
-FLEXT-LDAP serves as a core infrastructure component in the FLEXT data platform ecosystem, providing enterprise-grade LDAP directory services with seamless integration across all platform components.
+FLEXT-LDAP serves as a core infrastructure component in the FLEXT data platform ecosystem, providing LDAP directory services with seamless integration across all platform components.
 
 ---
 

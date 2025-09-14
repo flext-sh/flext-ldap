@@ -5,18 +5,17 @@ comandos CLI no contexto do flext-ldap.
 """
 
 import asyncio
-import contextlib
+import json
 
 from flext_cli import (
     FlextCliConfig,
     FlextCliContext,
     FlextCliExecutionContext,
     FlextCliOutputFormat,
-    flext_cli_format,
 )
 from flext_core import FlextResult, FlextTypes
 
-from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
+from flext_ldap import FlextLDAPApi, FlextLDAPEntities
 
 
 class FlextLDAPCLI:
@@ -96,7 +95,7 @@ class FlextLDAPCLI:
             user_dn = f"cn={username},ou=users,dc=example,dc=com"
 
             # Usar FlextLDAPCreateUserRequest para validação
-            user_request = FlextLDAPCreateUserRequest(
+            user_request = FlextLDAPEntities.CreateUserRequest(
                 dn=user_dn,
                 uid=username,
                 cn=full_name,
@@ -129,15 +128,24 @@ class FlextLDAPCLI:
         except Exception as e:
             return FlextResult[FlextTypes.Core.Dict].fail(f"Erro ao criar usuário: {e}")
 
+
+class FlextLDAPApiExample:
+    """Exemplo básico de integração com flext-cli."""
+
     def format_and_display(
         self,
         data: FlextTypes.Core.Dict | FlextTypes.Core.List | object,
-        format_type: FlextCliOutputFormat = FlextCliOutputFormat.JSON,
+        format_type: str = "json",
     ) -> None:
         """Formatar e exibir dados usando flext-cli."""
-        result = flext_cli_format(data, format_type)
-        if result.is_success:
-            print(result.value)
+        # Use basic JSON formatting since flext_cli_format is not available
+        if format_type == "json":
+            try:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            except (TypeError, ValueError):
+                print(str(data))
+        else:
+            print(str(data))
 
 
 async def main() -> None:
@@ -153,7 +161,7 @@ async def main() -> None:
         empty_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_data)
         if data:
-            cli.format_and_display(data, FlextCliOutputFormat.JSON)
+            cli.format_and_display(data, "json")
 
     # Teste 2: Criar usuário
 
@@ -165,7 +173,7 @@ async def main() -> None:
         empty_create_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_create_data)
         if data:
-            cli.format_and_display(data, FlextCliOutputFormat.JSON)
+            cli.format_and_display(data, "json")
 
     # Teste 3: Demonstrar configuração
 
@@ -197,8 +205,8 @@ async def main() -> None:
 
     cli.format_and_display(sample_data, FlextCliOutputFormat.JSON)
 
-    with contextlib.suppress(Exception):
-        cli.format_and_display(sample_data, FlextCliOutputFormat.TABLE)
+    # Table format not available, using JSON
+    cli.format_and_display(sample_data, "json")
 
 
 if __name__ == "__main__":

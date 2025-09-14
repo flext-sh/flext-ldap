@@ -1,9 +1,4 @@
-
-from __future__ import annotations
-
-from flext_core import FlextTypes
-from flext_ldap import FlextLDAPTypeGuards, LdapAttributeDict
-
+"""Tests for FlextLDAPTypeGuards with comprehensive type validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextTypes
 
-from typing import List
+from flext_ldap import FlextLDAPTypeGuards, LdapAttributeDict
 
 
 class TestLdapTypeGuards:
@@ -20,7 +16,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_dn_with_valid_dns(self) -> None:
         """Test LDAP DN type guard with valid DN strings."""
-
         valid_dns = [
             "cn=John Doe,ou=users,dc=example,dc=com",
             "uid=john.doe,ou=people,dc=test,dc=local",
@@ -36,7 +31,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_dn_with_invalid_values(self) -> None:
         """Test LDAP DN type guard with invalid values."""
-
         invalid_values: FlextTypes.Core.List = [
             None,
             123,
@@ -55,7 +49,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_attribute_value_with_string_values(self) -> None:
         """Test LDAP attribute value type guard with string values."""
-
         valid_string_values = [
             "John Doe",
             "REDACTED_LDAP_BIND_PASSWORD@example.com",
@@ -71,7 +64,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_attribute_value_with_list_values(self) -> None:
         """Test LDAP attribute value type guard with list values."""
-
         valid_list_values = [
             ["value1", "value2"],
             ["single_value"],
@@ -87,7 +79,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_attribute_value_with_invalid_values(self) -> None:
         """Test LDAP attribute value type guard with invalid values."""
-
         invalid_values = [
             None,
             123,
@@ -105,7 +96,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_attributes_with_valid_attributes(self) -> None:
         """Test LDAP attributes type guard with valid attribute dictionaries."""
-
         valid_attributes = [
             {"cn": ["John Doe"], "sn": ["Doe"]},
             {"mail": "REDACTED_LDAP_BIND_PASSWORD@example.com"},
@@ -121,7 +111,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_attributes_with_invalid_values(self) -> None:
         """Test LDAP attributes type guard with invalid values."""
-
         invalid_values = [
             None,
             "string",
@@ -140,7 +129,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_entry_data_with_valid_entries(self) -> None:
         """Test LDAP entry data type guard with valid entry data."""
-
         valid_entries = [
             {
                 "dn": "cn=John Doe,ou=users,dc=example,dc=com",
@@ -160,7 +148,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_entry_data_with_invalid_entries(self) -> None:
         """Test LDAP entry data type guard with invalid entry data."""
-
         invalid_entries: FlextTypes.Core.List = [
             None,
             "string",
@@ -183,7 +170,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_search_result_with_valid_results(self) -> None:
         """Test LDAP search result type guard with valid search results."""
-
         valid_results = [
             [],  # Empty result
             [
@@ -211,7 +197,6 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_search_result_with_invalid_results(self) -> None:
         """Test LDAP search result type guard with invalid search results."""
-
         invalid_results: FlextTypes.Core.List = [
             None,
             "string",
@@ -231,7 +216,6 @@ class TestLdapTypeGuards:
 
     def test_type_guard_with_mixed_data_types(self) -> None:
         """Test type guards handle mixed and complex data types correctly."""
-
         # Test complex valid LDAP attributes
         complex_attrs: LdapAttributeDict = {
             "objectClass": ["inetOrgPerson", "person", "organizationalPerson"],
@@ -260,7 +244,6 @@ class TestLdapTypeGuards:
 
     def test_type_guard_edge_cases(self) -> None:
         """Test type guards with edge cases and boundary conditions."""
-
         # Empty string DN - should be invalid
         assert not FlextLDAPTypeGuards.is_ldap_dn("")
 
@@ -284,7 +267,6 @@ class TestLdapTypeGuards:
 
     def test_type_guard_with_simple_real_data(self) -> None:
         """Test type guards with simple realistic LDAP data."""
-
         user_entry = {
             "dn": "uid=john.doe,ou=people,dc=example,dc=com",
             "cn": "John Doe",

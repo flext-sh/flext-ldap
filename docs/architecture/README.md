@@ -2,7 +2,7 @@
 
 **Clean Architecture + Domain-Driven Design Implementation**
 
-FLEXT-LDAP implements Clean Architecture principles with Domain-Driven Design patterns, built on the FLEXT-Core foundation. This document provides a comprehensive overview of the system architecture, design decisions, and integration patterns.
+FLEXT-LDAP implements Clean Architecture principles with Domain-Driven Design patterns, built on the FLEXT-Core foundation. This document provides an overview of the system architecture, design decisions, and integration patterns.
 
 ---
 

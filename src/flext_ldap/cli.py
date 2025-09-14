@@ -9,11 +9,6 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-
-# from flext_cli import (
-#     FlextCliApi,
-#     FlextCliConfig,
-# )
 from typing import cast, final
 
 from flext_core import FlextMixins, FlextResult, FlextTypes

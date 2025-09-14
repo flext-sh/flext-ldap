@@ -1,12 +1,4 @@
-
-from __future__ import annotations
-
-import time
-from flext_core import FlextContainer, FlextMixins, FlextProcessing, FlextResult
-from flext_ldap.container import FlextLDAPContainer
-from flext_ldap.services import FlextLDAPServices
-
-"""Module documentation.
+"""Services coverage tests for flext-ldap.
 
 - Cover edge cases and error conditions systematically
 
@@ -14,13 +6,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-"""
-
 from __future__ import annotations
 
+import time
 
+from flext_core import FlextContainer, FlextMixins, FlextProcessing, FlextResult
 
-from flext_core import FlextResult
+from flext_ldap.container import FlextLDAPContainer
+from flext_ldap.services import FlextLDAPServices
 
 
 class TestFlextLDAPServicesCoverageExpansion:
@@ -28,7 +21,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_initialization_with_container(self) -> None:
         """Test service initialization with provided container."""
-
         container = FlextLDAPContainer().get_container()
         service = FlextLDAPServices(container)
 
@@ -39,7 +31,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_initialization_without_container(self) -> None:
         """Test service initialization without container creates default."""
-
         service = FlextLDAPServices()
 
         # Verify initialization
@@ -49,7 +40,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_handle_method(self) -> None:
         """Test handle method implementation."""
-
         service = FlextLDAPServices()
 
         # Test handle method exists and is callable
@@ -65,7 +55,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_container_access(self) -> None:
         """Test container access."""
-
         service = FlextLDAPServices()
 
         # Test container access through private attribute
@@ -75,7 +64,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_repository_access(self) -> None:
         """Test repository access."""
-
         service = FlextLDAPServices()
 
         # Test repository access through cached property
@@ -86,7 +74,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_processing_capabilities(self) -> None:
         """Test processing capabilities."""
-
         service = FlextLDAPServices()
 
         # Test processing methods exist
@@ -96,7 +83,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_logging_capabilities(self) -> None:
         """Test logging capabilities."""
-
         service = FlextLDAPServices()
 
         # Test logging methods exist
@@ -107,7 +93,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_process_method(self) -> None:
         """Test process method functionality."""
-
         service = FlextLDAPServices()
 
         # Test process method
@@ -118,7 +103,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_build_method(self) -> None:
         """Test build method functionality."""
-
         service = FlextLDAPServices()
 
         # Test build method
@@ -130,7 +114,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_error_handling(self) -> None:
         """Test error handling in services."""
-
         service = FlextLDAPServices()
 
         # Test error handling with various invalid inputs
@@ -142,7 +125,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_type_consistency(self) -> None:
         """Test type consistency across services."""
-
         service = FlextLDAPServices()
 
         # Test that all attributes return expected types
@@ -152,7 +134,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_performance(self) -> None:
         """Test services performance characteristics."""
-
         # Test that service initialization is fast
         start_time = time.time()
 
@@ -167,7 +148,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_memory_usage(self) -> None:
         """Test services memory usage."""
-
         service = FlextLDAPServices()
 
         # Test that services don't leak memory
@@ -186,7 +166,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_inheritance_structure(self) -> None:
         """Test services inheritance structure."""
-
         service = FlextLDAPServices()
 
         # Test inheritance from FlextProcessing.Handler
@@ -197,7 +176,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_method_resolution(self) -> None:
         """Test method resolution order."""
-
         service = FlextLDAPServices()
 
         # Test that methods are properly resolved
@@ -209,7 +187,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_container_integration(self) -> None:
         """Test container integration."""
-
         service = FlextLDAPServices()
 
         # Test that service integrates with container
@@ -226,7 +203,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_repository_integration(self) -> None:
         """Test repository integration."""
-
         service = FlextLDAPServices()
 
         # Test that service integrates with repository
@@ -241,7 +217,6 @@ class TestFlextLDAPServicesCoverageExpansion:
 
     def test_services_async_methods(self) -> None:
         """Test async methods."""
-
         service = FlextLDAPServices()
 
         # Test async methods exist

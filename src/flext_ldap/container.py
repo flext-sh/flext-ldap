@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeVar, cast, final
+from typing import cast, final
 
 from flext_core import (
     FlextContainer,
@@ -23,9 +23,6 @@ from flext_ldap.settings import FlextLDAPSettings
 type LdapClientService = FlextLDAPClient
 type LdapRepositoryService = FlextLDAPRepositories.Repository
 type ContainerServiceKey = str
-
-# Type variable for generic service resolution
-T = TypeVar("T")
 
 
 @final

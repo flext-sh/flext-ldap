@@ -76,7 +76,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLDAPApi) -> None:
 
             for ou_dn in ous_to_verify:
                 # Search for the OU to verify it exists
-                search_result = await ldap_service.search(
+                search_result = await ldap_service.search_simple(
                     base_dn=ou_dn,
                     search_filter="(objectClass=organizationalUnit)",
                     scope="base",
@@ -115,7 +115,7 @@ async def _demo_user_operations(ldap_service: FlextLDAPApi) -> None:
 
         try:
             # Search for existing users in the people OU
-            search_result = await ldap_service.search(
+            search_result = await ldap_service.search_simple(
                 base_dn="ou=people,dc=flext,dc=local",
                 search_filter="(objectClass=person)",
                 attributes=["uid", "cn", "sn", "mail", "objectClass"],
@@ -131,7 +131,7 @@ async def _demo_user_operations(ldap_service: FlextLDAPApi) -> None:
                 await _perform_user_search_validation(ldap_service, session_id)
             else:
                 # Test wildcard search
-                wildcard_result = await ldap_service.search(
+                wildcard_result = await ldap_service.search_simple(
                     base_dn="dc=flext,dc=local",
                     search_filter="(objectClass=*)",
                     attributes=[
@@ -159,7 +159,7 @@ async def _perform_user_search_validation(
 ) -> None:
     """Perform REAL user search validation with different filters."""
     # Test 1: Search by object class
-    search_result = await ldap_service.search(
+    search_result = await ldap_service.search_simple(
         base_dn="dc=flext,dc=local",
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
@@ -170,7 +170,7 @@ async def _perform_user_search_validation(
         pass
 
     # Test 2: Search with compound filter
-    compound_result = await ldap_service.search(
+    compound_result = await ldap_service.search_simple(
         base_dn="dc=flext,dc=local",
         search_filter="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
@@ -181,7 +181,7 @@ async def _perform_user_search_validation(
         pass
 
     # Test 3: Base scope search on root
-    base_result = await ldap_service.search(
+    base_result = await ldap_service.search_simple(
         base_dn="dc=flext,dc=local",
         search_filter="(objectClass=*)",
         attributes=["dc", "objectClass"],
@@ -210,7 +210,7 @@ async def _demo_group_operations(ldap_service: FlextLDAPApi) -> None:
 
         try:
             # Search for existing groups in the groups OU
-            search_result = await ldap_service.search(
+            search_result = await ldap_service.search_simple(
                 base_dn="ou=groups,dc=flext,dc=local",
                 search_filter="(objectClass=groupOfNames)",
                 attributes=["cn", "description", "member", "objectClass"],
@@ -226,7 +226,7 @@ async def _demo_group_operations(ldap_service: FlextLDAPApi) -> None:
                 await _perform_group_search_validation(ldap_service, session_id)
             else:
                 # Test alternative group object classes
-                alt_result = await ldap_service.search(
+                alt_result = await ldap_service.search_simple(
                     base_dn="ou=groups,dc=flext,dc=local",
                     search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
                     attributes=["cn", "objectClass"],
@@ -249,7 +249,7 @@ async def _perform_group_search_validation(
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     # Test 1: Search for all group types
-    all_groups_result = await ldap_service.search(
+    all_groups_result = await ldap_service.search_simple(
         base_dn="dc=flext,dc=local",
         search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
@@ -263,7 +263,7 @@ async def _perform_group_search_validation(
             group_entry.get_attribute("objectClass")
 
     # Test 2: Search groups with wildcards
-    wildcard_result = await ldap_service.search(
+    wildcard_result = await ldap_service.search_simple(
         base_dn="ou=groups,dc=flext,dc=local",
         search_filter="(cn=*)",
         attributes=["cn", "objectClass"],
@@ -277,7 +277,7 @@ async def _perform_group_search_validation(
     scopes = ["base", "one", "subtree"]
 
     for scope in scopes:
-        scope_result = await ldap_service.search(
+        scope_result = await ldap_service.search_simple(
             base_dn="ou=groups,dc=flext,dc=local",
             search_filter="(objectClass=*)",
             attributes=[

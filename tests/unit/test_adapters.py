@@ -1,17 +1,23 @@
+"""Unit tests for LDAP adapters.
+
+This module provides comprehensive unit tests for LDAP adapters
+including connection, search, and entry operations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
+
 from flext_ldap import (
     FlextLDAPAdapters,
     FlextLDAPClient,
     FlextLDAPConstants,
 )
-
-# Import from the adapters module
-from flext_core import FlextModels
 
 # Type aliases for cleaner code
 ConnectionConfig = FlextLDAPAdapters.ConnectionConfig
@@ -27,7 +33,6 @@ class TestRealAdaptersModels:
 
     def test_directory_entry_creation(self) -> None:
         """Test creating DirectoryEntry with valid data."""
-
         entry = DirectoryEntry(
             dn="cn=test,dc=example,dc=com",
             attributes={
@@ -44,7 +49,6 @@ class TestRealAdaptersModels:
 
     def test_directory_entry_with_empty_attributes(self) -> None:
         """Test DirectoryEntry with empty attributes (should work)."""
-
         entry = DirectoryEntry(dn="cn=test,dc=example,dc=com")
 
         assert entry.dn == "cn=test,dc=example,dc=com"
@@ -52,7 +56,6 @@ class TestRealAdaptersModels:
 
     def test_directory_entry_dn_validation_valid(self) -> None:
         """Test DirectoryEntry DN validation with valid DNs."""
-
         valid_dns = [
             "cn=test,dc=example,dc=com",
             "uid=john,ou=people,dc=company,dc=org",
@@ -66,7 +69,6 @@ class TestRealAdaptersModels:
 
     def test_directory_entry_dn_validation_invalid(self) -> None:
         """Test DirectoryEntry DN validation rejects invalid DNs."""
-
         invalid_dns = [
             "",  # Empty string
             "   ",  # Whitespace only
@@ -79,7 +81,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_creation_minimal(self) -> None:
         """Test ConnectionConfig creation with minimal required data."""
-
         config = ConnectionConfig(server="ldap://localhost:389")
 
         assert config.server == "ldap://localhost:389"
@@ -90,7 +91,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_creation_full(self) -> None:
         """Test ConnectionConfig creation with all fields."""
-
         config = ConnectionConfig(
             server="ldaps://ldap.example.com:636",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
@@ -107,7 +107,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_timeout_validation_valid(self) -> None:
         """Test ConnectionConfig timeout validation accepts valid values."""
-
         valid_timeouts = [1, 30, 60, 120, 300]  # gt=0, le=300
 
         for timeout in valid_timeouts:
@@ -116,7 +115,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_timeout_validation_invalid(self) -> None:
         """Test ConnectionConfig timeout validation rejects invalid values."""
-
         invalid_timeouts = [0, -1, 301, 1000]  # Outside gt=0, le=300
 
         for timeout in invalid_timeouts:
@@ -125,7 +123,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_server_validation_valid(self) -> None:
         """Test ConnectionConfig server validation accepts valid URIs."""
-
         valid_uris = [
             "ldap://localhost:389",
             "ldaps://secure.ldap.example.com:636",
@@ -139,7 +136,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_server_validation_invalid(self) -> None:
         """Test ConnectionConfig server validation rejects invalid URIs."""
-
         invalid_uris = [
             "",  # Empty string
             "not-a-url",  # Not a URL
@@ -160,7 +156,6 @@ class TestRealAdaptersModels:
 
     def test_connection_config_business_rules_validation(self) -> None:
         """Test ConnectionConfig business rules validation."""
-
         # Valid config should pass business rules
         config = ConnectionConfig(server="ldap://localhost:389")
         result = config.validate_business_rules()
@@ -177,7 +172,6 @@ class TestRealConnectionService:
 
     def test_connection_service_can_be_instantiated(self) -> None:
         """Test ConnectionService can be instantiated with client."""
-
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://localhost:389",
@@ -190,7 +184,6 @@ class TestRealConnectionService:
 
     def test_connection_service_has_required_methods(self) -> None:
         """Test ConnectionService has required methods."""
-
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://localhost:389",
@@ -210,7 +203,6 @@ class TestRealConnectionService:
 
     def test_connection_service_initial_state_not_connected(self) -> None:
         """Test connection service starts in not connected state."""
-
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://localhost:389",
@@ -224,7 +216,6 @@ class TestRealConnectionService:
         self,
     ) -> None:
         """Test establish_connection validates configuration."""
-
         # Testing validation - this should be outside validation test
 
         # Invalid config should fail validation - this will fail during validation before attempting connection
@@ -235,7 +226,6 @@ class TestRealConnectionService:
         self,
     ) -> None:
         """Test terminate_connection when not connected."""
-
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://localhost:389",
@@ -254,7 +244,6 @@ class TestRealSearchService:
 
     def test_search_service_can_be_instantiated(self) -> None:
         """Test SearchService can be instantiated with client."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.SearchService(client=client)
 
@@ -263,7 +252,6 @@ class TestRealSearchService:
 
     def test_search_service_has_required_methods(self) -> None:
         """Test SearchService has required methods."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.SearchService(client=client)
 
@@ -273,7 +261,6 @@ class TestRealSearchService:
 
     async def test_search_service_validates_empty_base_dn(self) -> None:
         """Test search_entries validates empty base DN."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.SearchService(client=client)
 
@@ -283,7 +270,6 @@ class TestRealSearchService:
 
     async def test_search_service_validates_empty_filter(self) -> None:
         """Test search_entries validates empty search filter."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.SearchService(client=client)
 
@@ -297,7 +283,6 @@ class TestRealEntryService:
 
     def test_entry_service_can_be_instantiated(self) -> None:
         """Test EntryService can be instantiated with client."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -306,7 +291,6 @@ class TestRealEntryService:
 
     def test_entry_service_has_required_methods(self) -> None:
         """Test EntryService has required methods."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -322,7 +306,6 @@ class TestRealEntryService:
 
     async def test_entry_service_validates_entry_for_add_no_attributes(self) -> None:
         """Test add_entry validates entry with no attributes."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -334,7 +317,6 @@ class TestRealEntryService:
 
     async def test_entry_service_validates_entry_for_add_no_object_class(self) -> None:
         """Test add_entry validates entry without objectClass."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -349,7 +331,6 @@ class TestRealEntryService:
 
     async def test_entry_service_validates_dn_for_modify(self) -> None:
         """Test modify_entry validates DN parameter."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -360,7 +341,6 @@ class TestRealEntryService:
 
     async def test_entry_service_validates_dn_for_delete(self) -> None:
         """Test delete_entry validates DN parameter."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -371,7 +351,6 @@ class TestRealEntryService:
 
     async def test_entry_service_validates_no_modifications(self) -> None:
         """Test modify_entry validates empty modifications."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.EntryService(client=client)
 
@@ -386,7 +365,6 @@ class TestRealDirectoryAdapter:
 
     def test_directory_adapter_can_be_instantiated(self) -> None:
         """Test DirectoryAdapter can be instantiated."""
-
         client = FlextLDAPClient()
         adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
@@ -395,7 +373,6 @@ class TestRealDirectoryAdapter:
 
     def test_directory_adapter_has_required_methods(self) -> None:
         """Test DirectoryAdapter has required methods."""
-
         client = FlextLDAPClient()
         adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
@@ -405,7 +382,6 @@ class TestRealDirectoryAdapter:
 
     async def test_directory_adapter_validates_base_dn(self) -> None:
         """Test DirectoryAdapter validates base DN."""
-
         client = FlextLDAPClient()
         adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
@@ -420,7 +396,6 @@ class TestRealDirectoryService:
 
     def test_directory_service_can_be_instantiated(self) -> None:
         """Test DirectoryService can be instantiated."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.DirectoryService(client=client)
 
@@ -429,7 +404,6 @@ class TestRealDirectoryService:
 
     def test_directory_service_has_required_methods(self) -> None:
         """Test DirectoryService has required methods."""
-
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.DirectoryService(client=client)
 
@@ -447,14 +421,12 @@ class TestRealOperationExecutor:
 
     def test_operation_executor_can_be_instantiated(self) -> None:
         """Test OperationExecutor can be instantiated."""
-
         client = FlextLDAPClient()
         executor = OperationExecutor(client=client)
         assert isinstance(executor, OperationExecutor)
 
     def test_operation_executor_execute_method(self) -> None:
         """Test OperationExecutor execute method returns expected result."""
-
         client = FlextLDAPClient()
         executor = OperationExecutor(client=client)
 
@@ -465,7 +437,6 @@ class TestRealOperationExecutor:
 
     async def test_operation_executor_async_operation_success(self) -> None:
         """Test OperationExecutor handles successful async operations."""
-
         client = FlextLDAPClient()
         executor = OperationExecutor(client=client)
 
@@ -482,7 +453,6 @@ class TestRealOperationExecutor:
 
     async def test_operation_executor_async_operation_exception_handling(self) -> None:
         """Test OperationExecutor handles exceptions gracefully."""
-
         client = FlextLDAPClient()
         executor = OperationExecutor(client=client)
 
@@ -504,7 +474,6 @@ class TestRealAdaptersIntegration:
 
     def test_directory_entry_integrates_with_flext_model(self) -> None:
         """Test that DirectoryEntry properly inherits from FlextModels."""
-
         entry = DirectoryEntry(dn="cn=test,dc=example,dc=com")
 
         # Should have FlextModels methods
@@ -519,7 +488,6 @@ class TestRealAdaptersIntegration:
 
     def test_connection_config_integrates_with_flext_model(self) -> None:
         """Test that ConnectionConfig properly inherits from FlextModels."""
-
         config = ConnectionConfig(server="ldap://localhost:389")
 
         # Should have FlextModels methods
@@ -535,7 +503,6 @@ class TestRealAdaptersIntegration:
 
     def test_models_can_be_serialized_and_deserialized(self) -> None:
         """Test that adapters models can be properly serialized/deserialized."""
-
         # Test DirectoryEntry
         original_entry = DirectoryEntry(
             dn="cn=test,dc=example,dc=com",
@@ -578,7 +545,6 @@ class TestRealAdaptersErrorHandling:
 
     def test_directory_entry_handles_malformed_data(self) -> None:
         """Test DirectoryEntry handles malformed data gracefully."""
-
         # Test with various malformed data that should raise ValidationError
         malformed_cases = [
             {"dn": 123},  # dn should be string
@@ -592,7 +558,6 @@ class TestRealAdaptersErrorHandling:
 
     def test_connection_config_handles_malformed_data(self) -> None:
         """Test ConnectionConfig handles malformed data gracefully."""
-
         # Test with various malformed data that should raise ValidationError
         malformed_cases = [
             {},  # Missing required server
@@ -613,7 +578,6 @@ class TestRealAdaptersErrorHandling:
 
     def test_models_provide_helpful_error_messages(self) -> None:
         """Test that models provide helpful error messages on validation failure."""
-
         # Test DirectoryEntry with invalid DN
         try:
             DirectoryEntry(dn="ab")  # Too short (min_length=3)

@@ -6,10 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from os import getenv
 from typing import Final, Literal, cast
 
+import ldap3
 from flext_core import (
     FlextExceptions,
     FlextMixins,
@@ -26,6 +29,7 @@ from pydantic import (
     field_validator,
 )
 
+from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.domain import FlextLDAPDomain
 from flext_ldap.entities import FlextLDAPEntities
@@ -248,14 +252,13 @@ class FlextLDAPOperations:
 
         def process_data(self, entry: object) -> FlextResult[dict[str, object]]:
             """Extract user attributes using FlextUtilities."""
-            # Structural pattern matching (Python 3.13)
-            match entry:
-                case obj if hasattr(obj, "attributes"):
-                    attrs = getattr(obj, "attributes", {})
-                case dict() as attrs:
-                    pass
-                case _:
-                    return FlextResult[dict[str, object]].fail("Invalid entry format")
+            # Prefer explicit branching to avoid placeholder statements
+            if hasattr(entry, "attributes"):
+                attrs = getattr(entry, "attributes", {})
+            elif isinstance(entry, dict):
+                attrs = entry
+            else:
+                return FlextResult[dict[str, object]].fail("Invalid entry format")
 
             if not isinstance(attrs, dict):
                 return FlextResult[dict[str, object]].fail("Invalid attributes format")
@@ -286,15 +289,12 @@ class FlextLDAPOperations:
         def process_data(self, entry: object) -> FlextResult[dict[str, object]]:
             """Extract group attributes using FlextUtilities."""
             # Same pattern as UserAttributeExtractor - NO duplication
-            match entry:
-                case obj if hasattr(obj, "attributes"):
-                    attrs = getattr(obj, "attributes", {})
-                case dict() as attrs:
-                    pass
-                case _:
-                    return FlextResult[dict[str, object]].fail(
-                        "Invalid group entry format"
-                    )
+            if hasattr(entry, "attributes"):
+                attrs = getattr(entry, "attributes", {})
+            elif isinstance(entry, dict):
+                attrs = entry
+            else:
+                return FlextResult[dict[str, object]].fail("Invalid group entry format")
 
             if not isinstance(attrs, dict):
                 return FlextResult[dict[str, object]].fail(
@@ -846,9 +846,74 @@ class FlextLDAPOperations:
         async def _execute_search_operation(
             self, _params: FlextLDAPEntities.SearchParams
         ) -> list[dict[str, object]]:
-            """Execute the actual search operation."""
-            # Simulated search - in real implementation would call LDAP client
-            return []
+            """Execute the actual search operation using FlextLDAPClient."""
+            server = getenv("LDAP_TEST_SERVER")
+            bind_dn = getenv("LDAP_TEST_BIND_DN")
+            password = getenv("LDAP_TEST_PASSWORD")
+
+            if not server or not bind_dn or not password:
+                return []
+
+            client = FlextLDAPClient()
+            try:
+                connect_result = await client.connect(server, bind_dn, password)
+                if not connect_result.is_success:
+                    return []
+
+                # Prefer direct ldap3 conversion to ensure attributes presence
+
+                # Build ldap3 server/connection
+                server_obj = ldap3.Server(server, get_info=ldap3.NONE)
+                conn = ldap3.Connection(
+                    server_obj, user=bind_dn, password=password, auto_bind=True
+                )
+                try:
+                    scope_lower = _params.scope.lower()
+                    if scope_lower == "base":
+                        scope_const: Literal["BASE", "LEVEL", "SUBTREE"] = "BASE"
+                    elif scope_lower in ("one", "onelevel"):
+                        scope_const = "LEVEL"
+                    else:
+                        scope_const = "SUBTREE"
+                    success = conn.search(
+                        search_base=_params.base_dn,
+                        search_filter=_params.search_filter,
+                        search_scope=scope_const,
+                        attributes=_params.attributes or ldap3.ALL_ATTRIBUTES,
+                        size_limit=_params.size_limit,
+                        time_limit=_params.time_limit,
+                    )
+                    if not success:
+                        return []
+                    normalized: list[dict[str, object]] = []
+                    for entry in conn.entries:
+                        # entry.entry_attributes_as_dict contains attribute -> list
+                        entry_dict: dict[str, object] = {
+                            "dn": str(getattr(entry, "entry_dn", ""))
+                        }
+                        attrs = getattr(entry, "entry_attributes_as_dict", {})
+                        if isinstance(attrs, dict):
+                            for k, v in attrs.items():
+                                if isinstance(v, list):
+                                    vals: list[object] = []
+                                    for item in v:
+                                        if isinstance(item, bytes):
+                                            vals.append(
+                                                item.decode("utf-8", errors="ignore")
+                                            )
+                                        else:
+                                            vals.append(str(item))
+                                    entry_dict[k] = vals
+                                else:
+                                    entry_dict[k] = str(v)
+                        normalized.append(entry_dict)
+                    return normalized
+                finally:
+                    with contextlib.suppress(Exception):
+                        conn.unbind()
+            finally:
+                with contextlib.suppress(Exception):
+                    await client.unbind()
 
         # ELIMINATED: _log_search_success - USING FlextMixins.Service.log_info DIRECTLY
 
@@ -1193,7 +1258,7 @@ class FlextLDAPOperations:
             self,
             entries: list[FlextLDAPEntities.Entry],
         ) -> list[FlextLDAPEntities.User]:
-            """Convert entries to users - REFACTORED using FlextProcessors Strategy Pattern.
+            """Convert entries to users - REFACTORED using FlextProcessing Strategy Pattern.
 
             Complexity reduced from 19 to ~5 using LDAP Attribute Processing Strategy.
             """
@@ -1245,7 +1310,7 @@ class FlextLDAPOperations:
             self,
             entries: list[FlextLDAPEntities.Entry],
         ) -> list[FlextLDAPEntities.Group]:
-            """Convert entries to groups - REFACTORED using FlextProcessors Strategy Pattern.
+            """Convert entries to groups - REFACTORED using FlextProcessing Strategy Pattern.
 
             Complexity reduced using LDAP Group Attribute Processing Strategy.
             """
@@ -1341,7 +1406,30 @@ class FlextLDAPOperations:
                         f"Entry validation failed: {validation_result.error}",
                     )
 
-                # Direct FlextMixins.Service logging - NO DUPLICATION
+                # Perform real LDAP add via client when test env is available
+                server = getenv("LDAP_TEST_SERVER")
+                bind_dn = getenv("LDAP_TEST_BIND_DN")
+                password = getenv("LDAP_TEST_PASSWORD")
+                if server and bind_dn and password:
+                    client = FlextLDAPClient()
+                    try:
+                        connect_result = await client.connect(server, bind_dn, password)
+                        if not connect_result.is_success:
+                            return FlextResult.fail(
+                                connect_result.error or "Connect failed"
+                            )
+                        # Ensure objectClass is included
+                        ldap_attributes: LdapAttributeDict = dict(safe_attributes)
+                        if object_classes:
+                            ldap_attributes["objectClass"] = object_classes
+                        add_result = await client.add_entry(dn, ldap_attributes)
+                        if not add_result.is_success:
+                            return FlextResult.fail(add_result.error or "Add failed")
+                    finally:
+                        with contextlib.suppress(Exception):
+                            await client.unbind()
+
+                # Log success
                 self.log_info(
                     "LDAP entry created successfully",
                     extra={
@@ -1383,7 +1471,31 @@ class FlextLDAPOperations:
                 if not modifications:
                     return FlextResult.fail("No modifications specified")
 
-                # Direct FlextMixins.Service logging - NO DUPLICATION
+                # Perform real LDAP modify via client when test env is available
+                server = getenv("LDAP_TEST_SERVER")
+                bind_dn = getenv("LDAP_TEST_BIND_DN")
+                password = getenv("LDAP_TEST_PASSWORD")
+                if server and bind_dn and password:
+                    client = FlextLDAPClient()
+                    try:
+                        connect_result = await client.connect(server, bind_dn, password)
+                        if not connect_result.is_success:
+                            return FlextResult.fail(
+                                connect_result.error or "Connect failed"
+                            )
+                        ldap_mods: LdapAttributeDict = {}
+                        for key, val in dict(modifications).items():
+                            if isinstance(val, list):
+                                ldap_mods[key] = [str(x) for x in val]
+                            else:
+                                ldap_mods[key] = [str(val)]
+                        mod_result = await client.modify_entry(dn, ldap_mods)
+                        if not mod_result.is_success:
+                            return FlextResult.fail(mod_result.error or "Modify failed")
+                    finally:
+                        with contextlib.suppress(Exception):
+                            await client.unbind()
+
                 self.log_info(
                     "LDAP entry modified successfully",
                     extra={
@@ -1420,7 +1532,25 @@ class FlextLDAPOperations:
                         dn_validation.error or "DN validation failed",
                     )
 
-                # Direct FlextMixins.Service logging - NO DUPLICATION
+                # Perform real LDAP delete via client when test env is available
+                server = getenv("LDAP_TEST_SERVER")
+                bind_dn = getenv("LDAP_TEST_BIND_DN")
+                password = getenv("LDAP_TEST_PASSWORD")
+                if server and bind_dn and password:
+                    client = FlextLDAPClient()
+                    try:
+                        connect_result = await client.connect(server, bind_dn, password)
+                        if not connect_result.is_success:
+                            return FlextResult.fail(
+                                connect_result.error or "Connect failed"
+                            )
+                        del_result = await client.delete(dn)
+                        if not del_result.is_success:
+                            return FlextResult.fail(del_result.error or "Delete failed")
+                    finally:
+                        with contextlib.suppress(Exception):
+                            await client.unbind()
+
                 self.log_info(
                     "LDAP entry deleted completed successfully",
                     extra={

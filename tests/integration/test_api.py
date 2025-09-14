@@ -1,3 +1,11 @@
+"""Integration tests for LDAP API operations.
+
+This module provides comprehensive integration tests for LDAP API operations
+using real LDAP server integration and complete user lifecycle testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,6 +18,7 @@ from flext_ldap import (
     FlextLDAPClient,
     FlextLDAPContainer,
     FlextLDAPEntities,
+    FlextLDAPServices,
     FlextLDAPValueObjects,
 )
 
@@ -170,7 +179,7 @@ class TestLdapServiceRealOperations:
     @pytest.mark.asyncio
     async def test_service_user_lifecycle_real_operations(
         self,
-        ldap_service: FlextLDAPService,
+        ldap_service: FlextLDAPServices,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
@@ -294,7 +303,7 @@ class TestLdapServiceRealOperations:
     @pytest.mark.asyncio
     async def test_service_group_lifecycle_real_operations(
         self,
-        ldap_service: FlextLDAPService,
+        ldap_service: FlextLDAPServices,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
@@ -477,7 +486,7 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_business_rules_validation_real_ldap(
         self,
-        ldap_service: FlextLDAPService,
+        ldap_service: FlextLDAPServices,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""

@@ -1,12 +1,7 @@
+"""Comprehensive API expansion tests for flext-ldap.
 
-from __future__ import annotations
-
-import uuid
-import pytest
-from flext_core import FlextResult
-from flext_ldap import FlextLDAPApi, FlextLDAPConfig, get_flext_ldap_api
-from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.entities import FlextLDAPEntities
+This module provides comprehensive API expansion tests targeting
+uncovered methods and edge cases in the LDAP API.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,9 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
 
+import pytest
+from flext_core import FlextResult
 
-from typing import Dict
+from flext_ldap import FlextLDAPApi, FlextLDAPConfig, get_flext_ldap_api
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.entities import FlextLDAPEntities
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_api_initialization_with_custom_config(self) -> None:
         """Test API initialization with custom configuration object."""
-
         # Create custom config
         custom_config = FlextLDAPConnectionConfig(
             server="ldaps://custom.example.com",
@@ -47,7 +46,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_entry_attribute_extraction_with_entry_objects(self) -> None:
         """Test _get_entry_attribute with FlextLDAPEntities.Entry objects."""
-
         api = FlextLDAPApi()
 
         # Create Entry object with test attributes
@@ -75,7 +73,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_entry_attribute_extraction_edge_cases(self) -> None:
         """Test _get_entry_attribute with various edge cases."""
-
         api = FlextLDAPApi()
 
         # Test with None values
@@ -94,7 +91,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_entry_attribute_extraction_type_conversion_errors(self) -> None:
         """Test _get_entry_attribute with values that cause conversion errors."""
-
         api = FlextLDAPApi()
 
         # Create entry with problematic values that could cause TypeError/ValueError
@@ -131,7 +127,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_session_management_lifecycle(self) -> None:
         """Test complete session management lifecycle."""
-
         # Generate multiple session IDs
         session_ids = []
         for _ in range(20):  # Test multiple generations
@@ -147,7 +142,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_connection_error_handling_comprehensive(self) -> None:
         """Test comprehensive error handling for connection operations."""
-
         api = FlextLDAPApi()
 
         # Test connection to invalid server
@@ -171,7 +165,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_search_request_validation_comprehensive(self) -> None:
         """Test comprehensive search request validation."""
-
         api = FlextLDAPApi()
 
         # Test various search request configurations
@@ -214,7 +207,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_user_operations_validation_paths(self) -> None:
         """Test user operation validation paths comprehensively."""
-
         api = FlextLDAPApi()
 
         # Test various user creation requests
@@ -262,7 +254,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_factory_function_comprehensive(self) -> None:
         """Test get_flext_ldap_api factory function comprehensively."""
-
         # Test factory without config
         api1 = get_flext_ldap_api()
         assert isinstance(api1, FlextLDAPApi)
@@ -280,7 +271,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_disconnect_functionality_comprehensive(self) -> None:
         """Test disconnect functionality with various scenarios."""
-
         api = FlextLDAPApi()
 
         # Test disconnect with None (should handle gracefully)
@@ -297,7 +287,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_container_and_service_initialization(self) -> None:
         """Test container and service initialization paths."""
-
         # Test with default initialization
         api1 = FlextLDAPApi()
         assert api1._container_manager is not None
@@ -315,7 +304,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     async def test_error_propagation_patterns(self) -> None:
         """Test error propagation patterns across API methods."""
-
         api = FlextLDAPApi()
 
         # Test that errors are properly wrapped in FlextResult
@@ -347,7 +335,6 @@ class TestFlextLDAPApiComprehensiveExpansion:
 
     def test_attribute_extraction_performance_edge_cases(self) -> None:
         """Test attribute extraction with performance and edge case scenarios."""
-
         api = FlextLDAPApi()
 
         # Test with large lists

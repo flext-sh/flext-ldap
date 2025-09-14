@@ -51,16 +51,9 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             if not dn or not dn.strip():
                 return FlextResult[None].fail(f"{context} cannot be empty")
 
-            # Use FlextValidations for string validation
-            string_validator = FlextValidations.Core.Predicates(
-                lambda v: isinstance(v, str) and len(v.strip()) > 0, "non_empty_string"
-            )
-
-            result = string_validator(dn)
-            if result.is_failure:
-                return FlextResult[None].fail(
-                    f"{context} validation failed: {result.error}"
-                )
+            # Use simple validation for string
+            if not isinstance(dn, str) or len(dn.strip()) == 0:
+                return FlextResult[None].fail(f"{context} must be a non-empty string")
 
             # Basic DN format validation (RFC 2253)
             if not re.match(r"^[a-zA-Z0-9=,\s\-\.]+$", dn.strip()):

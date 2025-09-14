@@ -1,12 +1,4 @@
-
-from __future__ import annotations
-
-from datetime import UTC, datetime
-from flext_core import FlextDomainService, FlextResult
-from pydantic import BaseModel
-import flext_ldap.domain as domain_module
-from flext_ldap.domain import FlextLDAPDomain
-from flext_ldap.entities import FlextLDAPEntities
+"""Functional tests for flext-ldap domain layer.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,10 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 
+from flext_core import FlextDomainService, FlextResult
+from pydantic import BaseModel
+
+import flext_ldap.domain as domain_module
+from flext_ldap.domain import FlextLDAPDomain
+from flext_ldap.entities import FlextLDAPEntities
 
 # Import the target module for coverage
-from flext_core import FlextResult
 
 
 class TestFlextLDAPDomainFunctional:
@@ -25,7 +23,6 @@ class TestFlextLDAPDomainFunctional:
 
     def test_flext_ldap_domain_import_and_structure(self) -> None:
         """Test that FlextLDAPDomain can be imported and has expected structure."""
-
         # Verify main class exists and is accessible
         assert hasattr(FlextLDAPDomain, "__name__")
         assert "FlextLDAPDomain" in str(FlextLDAPDomain)
@@ -49,7 +46,6 @@ class TestFlextLDAPDomainFunctional:
 
     def test_domain_module_loads_without_errors(self) -> None:
         """Test that domain module loads completely without import errors."""
-
         # Verify module has expected structure
         assert hasattr(domain_module, "FlextLDAPDomain")
 
@@ -65,7 +61,6 @@ class TestDomainSpecifications:
 
     def test_user_specification_validation(self) -> None:
         """Test UserSpecification with comprehensive user validation scenarios."""
-
         user_spec = FlextLDAPDomain.UserSpecification()
 
         # Test with valid user objects
@@ -105,7 +100,6 @@ class TestDomainSpecifications:
 
     def test_group_specification_validation(self) -> None:
         """Test GroupSpecification with comprehensive group validation scenarios."""
-
         group_spec = FlextLDAPDomain.GroupSpecification()
 
         # Test with valid group objects
@@ -146,7 +140,6 @@ class TestDomainSpecifications:
 
     def test_distinguished_name_specification(self) -> None:
         """Test DistinguishedNameSpecification with various DN formats."""
-
         dn_spec = FlextLDAPDomain.DistinguishedNameSpecification()
 
         # Test with valid DN strings
@@ -179,7 +172,6 @@ class TestDomainSpecifications:
 
     def test_password_specification_validation(self) -> None:
         """Test PasswordSpecification with comprehensive password validation."""
-
         password_spec = FlextLDAPDomain.PasswordSpecification()
 
         # Test with valid passwords (meeting complexity requirements)
@@ -216,7 +208,6 @@ class TestDomainSpecifications:
 
     def test_active_user_specification(self) -> None:
         """Test ActiveUserSpecification for user status validation."""
-
         active_spec = FlextLDAPDomain.ActiveUserSpecification()
 
         # Test with active user objects
@@ -246,7 +237,6 @@ class TestDomainSpecifications:
 
     def test_email_specification_validation(self) -> None:
         """Test EmailSpecification with various email formats."""
-
         email_spec = FlextLDAPDomain.EmailSpecification()
 
         # Test with valid email addresses
@@ -280,7 +270,6 @@ class TestDomainSpecifications:
 
     def test_complete_user_specification_composition(self) -> None:
         """Test CompleteUserSpecification as composition of other specifications."""
-
         complete_spec = FlextLDAPDomain.CompleteUserSpecification()
 
         # Test accessing composed specifications
@@ -317,7 +306,6 @@ class TestDomainServices:
 
     def test_user_management_service_user_creation(self) -> None:
         """Test UserManagementService user creation functionality."""
-
         user_service = FlextLDAPDomain.UserManagementService()
 
         # Test user creation validation
@@ -346,7 +334,6 @@ class TestDomainServices:
 
     def test_user_management_service_user_updates(self) -> None:
         """Test UserManagementService user update functionality."""
-
         user_service = FlextLDAPDomain.UserManagementService()
 
         # Test user creation validation using actual available method
@@ -374,7 +361,6 @@ class TestDomainServices:
 
     def test_group_management_service_functionality(self) -> None:
         """Test GroupManagementService core functionality."""
-
         group_service = FlextLDAPDomain.GroupManagementService()
 
         # Test group creation
@@ -412,7 +398,6 @@ class TestDomainServices:
 
     def test_password_service_functionality(self) -> None:
         """Test PasswordService password operations."""
-
         password_service = FlextLDAPDomain.PasswordService()
 
         # Test password generation
@@ -450,7 +435,6 @@ class TestDomainEvents:
 
     def test_user_created_event_structure(self) -> None:
         """Test UserCreatedEvent creation and structure."""
-
         # Test event creation with required data
         event_data = {
             "actor": "REDACTED_LDAP_BIND_PASSWORD@example.com",
@@ -469,7 +453,6 @@ class TestDomainEvents:
 
     def test_user_deleted_event_structure(self) -> None:
         """Test UserDeletedEvent creation and structure."""
-
         event_data = {
             "actor": "REDACTED_LDAP_BIND_PASSWORD@company.org",
             "occurred_at": datetime.now(UTC),
@@ -489,7 +472,6 @@ class TestDomainEvents:
 
     def test_group_membership_changed_event(self) -> None:
         """Test GroupMembershipChangedEvent functionality."""
-
         event_data = {
             "actor": "manager@example.com",
             "occurred_at": datetime.now(UTC),
@@ -517,7 +499,6 @@ class TestDomainIntegration:
 
     def test_domain_uses_flext_result_pattern(self) -> None:
         """Test that domain services use FlextResult pattern correctly."""
-
         user_service = FlextLDAPDomain.UserManagementService()
 
         # Test that service methods return FlextResult
@@ -535,7 +516,6 @@ class TestDomainIntegration:
 
     def test_domain_follows_flext_core_patterns(self) -> None:
         """Test that domain follows flext-core architectural patterns."""
-
         # Test domain service inheritance
         user_service = FlextLDAPDomain.UserManagementService()
 
@@ -559,7 +539,6 @@ class TestDomainFactoriesAndUtilities:
 
     def test_domain_specification_factory_patterns(self) -> None:
         """Test domain specification creation patterns."""
-
         # Test specification instantiation
         specifications = [
             FlextLDAPDomain.UserSpecification(),
@@ -580,7 +559,6 @@ class TestDomainFactoriesAndUtilities:
 
     def test_domain_service_factory_patterns(self) -> None:
         """Test domain service creation patterns."""
-
         # Test service instantiation
         services = [
             FlextLDAPDomain.UserManagementService(),
@@ -604,7 +582,6 @@ class TestDomainErrorHandling:
 
     def test_specification_error_handling(self) -> None:
         """Test specification error handling with edge cases."""
-
         specifications = [
             FlextLDAPDomain.UserSpecification(),
             FlextLDAPDomain.GroupSpecification(),
@@ -626,7 +603,6 @@ class TestDomainErrorHandling:
 
     def test_service_error_handling(self) -> None:
         """Test service error handling with malformed requests."""
-
         user_service = FlextLDAPDomain.UserManagementService()
 
         # Test with malformed creation requests

@@ -1,3 +1,5 @@
+"""Test module for flext-ldap functionality."""
+
 from __future__ import annotations
 
 import uuid

@@ -1,3 +1,5 @@
+"""Additional API tests to boost coverage to 100% target."""
+
 from __future__ import annotations
 
 import math

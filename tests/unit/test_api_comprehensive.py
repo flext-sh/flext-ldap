@@ -1,3 +1,5 @@
+"""Comprehensive API tests for FlextLDAPApi with 100% coverage target."""
+
 from __future__ import annotations
 
 import uuid
