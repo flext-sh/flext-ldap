@@ -234,19 +234,26 @@ class TestFlextLDAPConnectionOperationsReal:
         assert result.is_success
         assert result.value == []
 
-        # Add test connections
+        # Add test connections using ConnectionMetadata objects
         conn1 = str(uuid.uuid4())
         conn2 = str(uuid.uuid4())
-        ops._active_connections[conn1] = {
-            "server_uri": "ldap://test1:389",
-            "bind_dn": None,
-            "created_at": datetime.now(UTC),
-        }
-        ops._active_connections[conn2] = {
-            "server_uri": "ldap://test2:389",
-            "bind_dn": "cn=admin,dc=test,dc=com",
-            "created_at": datetime.now(UTC),
-        }
+
+        # Create proper ConnectionMetadata objects
+        metadata1 = ops.ConnectionMetadata(
+            server_uri="ldap://test1:389",
+            bind_dn=None,
+            created_at=datetime.now(UTC),
+            is_authenticated=False
+        )
+        metadata2 = ops.ConnectionMetadata(
+            server_uri="ldap://test2:389",
+            bind_dn="cn=admin,dc=test,dc=com",
+            created_at=datetime.now(UTC),
+            is_authenticated=True
+        )
+
+        ops._active_connections[conn1] = metadata1
+        ops._active_connections[conn2] = metadata2
 
         result = ops.list_active_connections()
         assert result.is_success
