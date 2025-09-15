@@ -11,6 +11,7 @@ from collections.abc import Awaitable, Callable
 from typing import cast
 
 from flext_core import (
+    FlextDomainService,
     FlextLogger,
     FlextMixins,
     FlextModels,
@@ -33,12 +34,17 @@ type AdapterResult[T] = FlextResult[T]
 type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
 
 
-class FlextLDAPAdapters:
+class FlextLDAPAdapters(FlextDomainService[object]):
     """LDAP adapter functionality consolidated class."""
 
     def __init__(self) -> None:
         """Initialize LDAP adapters."""
+        super().__init__()
         self._logger = FlextLogger(__name__)
+
+    def execute(self) -> FlextResult[object]:
+        """Execute domain operation - required by FlextDomainService."""
+        return FlextResult[object].ok({"status": "adapters_available"})
 
     # =========================================================================
     # ERROR MESSAGES - Constants for exception messages
@@ -71,7 +77,7 @@ class FlextLDAPAdapters:
             description="Unique identifier",
         )
         dn: str = Field(..., description="Distinguished Name", min_length=3)
-        object_classes: FlextTypes.Core.StringList = Field(
+        object_classes: list[str] = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -162,7 +168,7 @@ class FlextLDAPAdapters:
 
         success: bool
         connection_id: str | None = None
-        server_info: FlextTypes.Core.Headers | None = None
+        server_info: FlextTypes.Core.Dict | None = None
         operation_executed: str
 
         def validate_business_rules(self) -> FlextResult[None]:
@@ -177,7 +183,7 @@ class FlextLDAPAdapters:
         base_dn: str = Field(..., min_length=1)
         filter_str: str = Field(default="(objectClass=*)")
         scope: str = Field(default="subtree", pattern="^(base|onelevel|subtree)$")
-        attributes: FlextTypes.Core.StringList | None = None
+        attributes: list[str] | None = None
         size_limit: int = Field(default=1000, ge=1, le=10000)
         time_limit: int = Field(default=30, ge=1, le=300)
 
@@ -312,14 +318,14 @@ class FlextLDAPAdapters:
 
         async def execute_async_operation(
             self,
-            operation: Callable[[], Awaitable[FlextResult[FlextTypes.Core.List]]],
+            operation: Callable[[], Awaitable[FlextResult[list[str]]]],
             operation_name: str,
-        ) -> FlextResult[FlextTypes.Core.List]:
+        ) -> FlextResult[list[str]]:
             """Execute async operation with exception handling."""
             try:
                 return await operation()
             except Exception as e:
-                return FlextResult[FlextTypes.Core.List].fail(
+                return FlextResult[list[str]].fail(
                     f"Failed to execute {operation_name}: {e}",
                 )
 
@@ -421,7 +427,7 @@ class FlextLDAPAdapters:
             base_dn: str,
             filter_str: str = "(objectClass=*)",
             scope: str = "subtree",
-            attributes: FlextTypes.Core.StringList | None = None,
+            attributes: list[str] | None = None,
         ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search LDAP entries using ServiceProcessor pattern."""
             try:
@@ -776,7 +782,7 @@ class FlextLDAPAdapters:
             self,
             search_filter: str = "(objectClass=person)",
             base_dn: str = "dc=example,dc=com",
-            attributes: FlextTypes.Core.StringList | None = None,
+            attributes: list[str] | None = None,
         ) -> FlextResult[list[FlextTypes.Core.Dict]]:
             """Search for users in directory."""
             try:

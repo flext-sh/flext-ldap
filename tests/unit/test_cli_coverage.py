@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.cli import FlextLDAPCli
 
@@ -60,9 +60,11 @@ class TestFlextLDAPCliCoverage:
         # Test with invalid command (should not raise exception)
         try:
             cli.run_command("invalid_command")
-        except Exception:
+        except Exception as e:
             # CLI should handle invalid commands gracefully
-            pass
+            # Expected behavior - no action needed
+            logger = FlextLogger(__name__)
+            logger.debug(f"Expected test behavior for invalid commands: {e}")
 
     def test_handle_test_command_method(self) -> None:
         """Test handle test command method."""

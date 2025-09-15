@@ -99,7 +99,7 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP entry and attribute types."""
 
         # Attribute value types
-        AttributeValue = str | bytes | FlextTypes.Core.StringList | list[bytes]
+        AttributeValue = str | bytes | list[str] | list[bytes]
         AttributeDict = dict[str, AttributeValue]
         AttributeName = str
 

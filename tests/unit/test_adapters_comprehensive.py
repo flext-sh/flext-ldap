@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextLogger, FlextModels, FlextResult
 
 import flext_ldap.adapters as adapters_module
 from flext_ldap import FlextLDAPAdapters, FlextLDAPClient, FlextLDAPEntities
@@ -474,9 +474,10 @@ class TestAdapterIntegration:
                 dn="invalid-dn-format",
                 attributes="not-a-dict",  # Invalid type
             )
-        except Exception:
+        except Exception as e:
             # Validation error expected for invalid data
-            pass
+            logger = FlextLogger(__name__)
+            logger.debug(f"Expected validation error for invalid data: {e}")
 
     def test_adapter_factory_patterns(self, test_client: FlextLDAPClient) -> None:
         """Test adapter factory and creation patterns."""
@@ -704,9 +705,10 @@ class TestAdapterErrorHandling:
                         result = method(test_data)
                     # Operations should return some result (exercises the code paths)
                     assert result is not None or result is None
-                except Exception:
+                except Exception as e:
                     # Even exceptions exercise the code paths for coverage
-                    pass
+                    logger = FlextLogger(__name__)
+                    logger.debug(f"Exception in operation method {operation_name}: {e}")
 
     @pytest.mark.asyncio
     async def test_adapter_integration_comprehensive(
@@ -736,9 +738,10 @@ class TestAdapterErrorHandling:
                         result = method()
                     # Integration operations should execute (covers integration code)
                     assert result is not None or result is None
-                except Exception:
+                except Exception as e:
                     # Exception handling also provides coverage
-                    pass
+                    logger = FlextLogger(__name__)
+                    logger.debug(f"Exception in adapter integration {operation}: {e}")
 
     def test_configuration_validation_comprehensive(self) -> None:
         """Test configuration validation - covers lines 248-259."""
@@ -771,9 +774,10 @@ class TestAdapterErrorHandling:
                 assert config.server == config_data["server"]
                 assert config.bind_dn == config_data["bind_dn"]
                 # This exercises the validation code paths (lines 248-259)
-            except Exception:
+            except Exception as e:
                 # Even validation failures provide coverage
-                pass
+                logger = FlextLogger(__name__)
+                logger.debug(f"Configuration validation error: {e}")
 
     async def test_service_error_exception_handling(
         self, test_client: FlextLDAPClient
@@ -808,16 +812,19 @@ class TestAdapterErrorHandling:
                         # Try calling with invalid parameters to trigger exception handling
                         try:
                             await method(None)  # Invalid parameter
-                        except Exception:
-                            pass  # Exception handling code path exercised
+                        except Exception as e:
+                            logger = FlextLogger(__name__)
+                            logger.debug(f"Expected exception in async method {method_name}: {e}")
                     else:
                         try:
                             method(None)  # Invalid parameter
-                        except Exception:
-                            pass  # Exception handling code path exercised
-                except Exception:
+                        except Exception as e:
+                            logger = FlextLogger(__name__)
+                            logger.debug(f"Expected exception in sync method {method_name}: {e}")
+                except Exception as e:
                     # object exception provides coverage of error handling paths
-                    pass
+                    logger = FlextLogger(__name__)
+                    logger.debug(f"Object exception in service method handling: {e}")
 
     def test_model_validation_edge_cases(self) -> None:
         """Test model validation edge cases - covers lines 414-433."""
@@ -842,9 +849,10 @@ class TestAdapterErrorHandling:
                 entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
                 assert entry.dn == case_data["dn"]
                 # Validation code paths are exercised (lines 414-433)
-            except Exception:
+            except Exception as e:
                 # Validation failures also provide coverage
-                pass
+                logger = FlextLogger(__name__)
+                logger.debug(f"Model validation edge case error: {e}")
 
     async def test_search_scope_and_filter_processing(
         self, test_client: FlextLDAPClient
@@ -874,6 +882,7 @@ class TestAdapterErrorHandling:
                     result = search_service.process_search_config(search_config)
                     # Should process configuration (covers processing logic)
                     assert result is not None or result is None
-                except Exception:
+                except Exception as e:
                     # Exception handling provides coverage too
-                    pass
+                    logger = FlextLogger(__name__)
+                    logger.debug(f"Search configuration processing error: {e}")

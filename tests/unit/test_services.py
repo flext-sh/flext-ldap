@@ -662,28 +662,30 @@ class TestFlextLDAPServicesComprehensive:
         assert result.is_success  # Disconnect should succeed as it's placeholder
 
     @patch("flext_ldap.services.FlextLDAPServices._get_repository")
-    async def test_get_user_with_empty_result_path(self, mock_get_repository: AsyncMock) -> None:
+    async def test_get_user_with_empty_result_path(
+        self, mock_get_repository: AsyncMock
+    ) -> None:
         """Test get_user method when repository returns None/empty result."""
         service = FlextLDAPServices()
 
-    # Create mock repository that returns None entry
-    mock_repo = Mock()
-    mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(None))
+        # Create mock repository that returns None entry
+        mock_repo = Mock()
+        mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(None))
 
-    # Mock _get_repository to return our mock
-    mock_get_repository.return_value = FlextResult.ok(mock_repo)
+        # Mock _get_repository to return our mock
+        mock_get_repository.return_value = FlextResult.ok(mock_repo)
 
-    result = await service.get_user("cn=nonexistent,dc=test")
+        result = await service.get_user("cn=nonexistent,dc=test")
 
-    # Should handle not connected gracefully or return None
-    if result.is_success:
-        assert result.value is None
-    else:
-        assert result.error is not None
-        assert any(
-            pattern in result.error.lower()
-            for pattern in ["not connected", "connection", "ldap server"]
-        )
+        # Should handle not connected gracefully or return None
+        if result.is_success:
+            assert result.value is None
+        else:
+            assert result.error is not None
+            assert any(
+                pattern in result.error.lower()
+                for pattern in ["not connected", "connection", "ldap server"]
+            )
 
     async def test_get_user_with_successful_conversion(self) -> None:
         """Test get_user method with successful entry to user conversion."""
@@ -714,21 +716,22 @@ class TestFlextLDAPServicesComprehensive:
         mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(mock_entry))
 
         # Mock _get_repository to return our mock
-        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+        with patch.object(
+            service, "_get_repository", return_value=FlextResult.ok(mock_repo)
+        ):
+            result = await service.get_user("cn=test,dc=example,dc=com")
 
-        result = await service.get_user("cn=test,dc=example,dc=com")
-
-        # Should handle connection or successfully convert entry to user
-        if result.is_success:
-            assert result.value is not None
-            assert isinstance(result.value, FlextLDAPEntities.User)
-            assert result.value.uid == "testuid"
-            assert result.value.cn == "Test User"
-        else:
-            assert any(
-                pattern in result.error.lower()
-                for pattern in ["not connected", "connection", "ldap server"]
-            )
+            # Should handle connection or successfully convert entry to user
+            if result.is_success:
+                assert result.value is not None
+                assert isinstance(result.value, FlextLDAPEntities.User)
+                assert result.value.uid == "testuid"
+                assert result.value.cn == "Test User"
+            else:
+                assert any(
+                    pattern in result.error.lower() if result.error else False
+                    for pattern in ["not connected", "connection", "ldap server"]
+                )
 
     async def test_update_user_with_successful_retrieval(self) -> None:
         """Test update_user method with successful user retrieval after update."""
@@ -748,10 +751,12 @@ class TestFlextLDAPServicesComprehensive:
         mock_repo.update = AsyncMock(return_value=FlextResult.ok(data=True))
 
         # Mock the _repository cached property directly instead of _get_repository
-        with patch.object(service, "_repository", mock_repo):
-            # Mock get_user to return updated user (this tests lines 204-211)
-            service.get_user = AsyncMock(return_value=FlextResult.ok(test_user))
-
+        with (
+            patch.object(service, "_repository", mock_repo),
+            patch.object(
+                service, "get_user", AsyncMock(return_value=FlextResult.ok(test_user))
+            ),
+        ):
             result = await service.update_user(
                 "cn=updated,dc=example,dc=com",
                 {
@@ -773,25 +778,32 @@ class TestFlextLDAPServicesComprehensive:
         # Mock repository with successful update
         mock_repo = Mock()
         mock_repo.update = AsyncMock(return_value=FlextResult.ok(data=True))
-        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
 
-        # Mock get_user to fail (tests lines 205-208)
-        service.get_user = AsyncMock(return_value=FlextResult.fail("Retrieval failed"))
+        # Mock both _get_repository and get_user using patch
+        with (
+            patch.object(
+                service, "_get_repository", return_value=FlextResult.ok(mock_repo)
+            ),
+            patch.object(
+                service,
+                "get_user",
+                AsyncMock(return_value=FlextResult.fail("Retrieval failed")),
+            ),
+        ):
+            result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
 
-        result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
-
-        # Should fail with retrieval error
-        assert not result.is_success
-        assert any(
-            msg in result.error
-            for msg in [
-                "Failed to get updated user",
-                "Retrieval failed",
-                "Entry validation failed",
-                "Failed to find existing entry",
-                "Entry must have at least one object class",
-            ]
-        )
+            # Should fail with retrieval error
+            assert not result.is_success
+            assert any(
+                msg in result.error if result.error else False
+                for msg in [
+                    "Failed to get updated user",
+                    "Retrieval failed",
+                    "Entry validation failed",
+                    "Failed to find existing entry",
+                    "Entry must have at least one object class",
+                ]
+            )
 
     async def test_update_user_none_result_path(self) -> None:
         """Test update_user when getting updated user returns None."""
@@ -800,21 +812,26 @@ class TestFlextLDAPServicesComprehensive:
         # Mock repository with successful update
         mock_repo = Mock()
         mock_repo.update = AsyncMock(return_value=FlextResult.ok(data=True))
-        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
 
-        # Mock get_user to return None (tests lines 209-211)
-        service.get_user = AsyncMock(return_value=FlextResult.ok(None))
+        # Mock both _get_repository and get_user using patch
+        with (
+            patch.object(
+                service, "_get_repository", return_value=FlextResult.ok(mock_repo)
+            ),
+            patch.object(
+                service, "get_user", AsyncMock(return_value=FlextResult.ok(None))
+            ),
+        ):
+            result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
 
-        result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
-
-        # Should fail with validation or not found error
-        assert not result.is_success
-        assert any(
-            pattern in result.error
-            for pattern in [
-                "Updated user not found",
-                "Entry validation failed",
-                "Entry must have at least one object class",
-                "Failed to find existing entry",
-            ]
-        )
+            # Should fail with validation or not found error
+            assert not result.is_success
+            assert any(
+                pattern in result.error if result.error else False
+                for pattern in [
+                    "Updated user not found",
+                    "Entry validation failed",
+                    "Entry must have at least one object class",
+                    "Failed to find existing entry",
+                ]
+            )

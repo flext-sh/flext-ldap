@@ -22,7 +22,7 @@ from flext_core import FlextLogger
 
 from flext_ldap import (
     FlextLDAPApi,
-    FlextLDAPSettings,
+    FlextLDAPConfig,
     FlextLDAPValueObjects,
 )
 
@@ -31,8 +31,8 @@ logger = FlextLogger(__name__)
 
 async def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
-    # 1. Settings configuration using FlextLDAPSettings
-    settings = FlextLDAPSettings()
+    # 1. Settings configuration using FlextLDAPConfig
+    settings = FlextLDAPConfig()
 
     # 2. Connection info - will be passed to API methods
 
@@ -128,7 +128,7 @@ async def demonstrate_logging_integration() -> None:
 
     # Create settings with logging
     logger.debug("Creating LDAP settings")
-    settings = FlextLDAPSettings()
+    settings = FlextLDAPConfig()
 
     logger.debug(
         "Settings created successfully",

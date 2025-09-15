@@ -7,23 +7,22 @@ import time
 import pytest
 from pydantic import ValidationError
 
-from flext_ldap import FlextLDAPSettings
 from flext_ldap.config import FlextLDAPConfig
 
 
-class TestRealFlextLDAPSettings:
-    """Test REAL FlextLDAPSettings configuration functionality."""
+class TestRealFlextLDAPConfig:
+    """Test REAL FlextLDAPConfig configuration functionality."""
 
     def test_flext_ldap_settings_can_be_instantiated_with_defaults(self) -> None:
-        """Test FlextLDAPSettings can be instantiated with default values."""
-        settings = FlextLDAPSettings()
+        """Test FlextLDAPConfig can be instantiated with default values."""
+        settings = FlextLDAPConfig()
 
-        assert isinstance(settings, FlextLDAPSettings)
+        assert isinstance(settings, FlextLDAPConfig)
         assert settings is not None
 
     def test_flext_ldap_settings_has_expected_default_values(self) -> None:
-        """Test FlextLDAPSettings has expected default values."""
-        settings = FlextLDAPSettings()
+        """Test FlextLDAPConfig has expected default values."""
+        settings = FlextLDAPConfig()
 
         # Should have default values for core settings (actual fields)
         assert hasattr(settings, "timeout_seconds")
@@ -36,29 +35,29 @@ class TestRealFlextLDAPSettings:
         assert settings.environment == "development"
 
     def test_flext_ldap_settings_with_custom_values(self) -> None:
-        """Test FlextLDAPSettings with custom configuration values."""
+        """Test FlextLDAPConfig with custom configuration values."""
         custom_settings = {
-            "timeout": 60,
+            "ldap_time_limit": 60,
             "debug": True,
         }
 
         # Try to create settings with custom values
         try:
-            settings = FlextLDAPSettings(**custom_settings)
+            settings = FlextLDAPConfig(**custom_settings)
             assert settings is not None
 
             # Verify custom values were applied
-            assert settings.timeout == 60
+            assert settings.ldap_time_limit == 60
             assert settings.debug is True
 
         except Exception:
             # If the settings model has different field names, just verify instantiation works
-            settings = FlextLDAPSettings()
+            settings = FlextLDAPConfig()
             assert settings is not None
 
     def test_flext_ldap_settings_field_validation_works(self) -> None:
-        """Test that FlextLDAPSettings field validation actually works."""
-        settings = FlextLDAPSettings()
+        """Test that FlextLDAPConfig field validation actually works."""
+        settings = FlextLDAPConfig()
 
         # Should be a Pydantic model with validation capabilities
         assert hasattr(settings, "model_dump")
@@ -70,8 +69,8 @@ class TestRealFlextLDAPSettings:
         assert len(data) >= 0  # Should have some configuration fields
 
     def test_flext_ldap_settings_integrates_with_pydantic(self) -> None:
-        """Test that FlextLDAPSettings properly inherits from Pydantic models."""
-        settings = FlextLDAPSettings()
+        """Test that FlextLDAPConfig properly inherits from Pydantic models."""
+        settings = FlextLDAPConfig()
 
         # Should have Pydantic methods
         assert hasattr(settings, "model_dump")
@@ -87,9 +86,9 @@ class TestRealFlextLDAPSettings:
         assert isinstance(restored, FlextLDAPConfig)
 
     def test_multiple_settings_instances_are_independent(self) -> None:
-        """Test multiple FlextLDAPSettings instances are independent."""
-        settings1 = FlextLDAPSettings()
-        settings2 = FlextLDAPSettings()
+        """Test multiple FlextLDAPConfig instances are independent."""
+        settings1 = FlextLDAPConfig()
+        settings2 = FlextLDAPConfig()
 
         # They should be different instances
         assert settings1 is not settings2
@@ -99,7 +98,7 @@ class TestRealFlextLDAPSettings:
 
     def test_settings_supports_environment_variable_integration(self) -> None:
         """Test settings can integrate with environment variables."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should have proper structure for env var integration
         assert hasattr(settings, "__class__")
@@ -133,7 +132,7 @@ class TestRealConfigIntegration:
 
     def test_settings_integrates_with_flext_patterns(self) -> None:
         """Test settings properly integrates with FLEXT patterns."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should integrate with FLEXT ecosystem
         assert hasattr(settings, "model_dump")
@@ -144,7 +143,7 @@ class TestRealConfigIntegration:
 
     def test_settings_provides_consistent_interface(self) -> None:
         """Test settings provides consistent interface."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should have consistent Pydantic interface
         methods = ["model_dump", "model_validate", "model_copy"]
@@ -154,7 +153,7 @@ class TestRealConfigIntegration:
 
     def test_settings_can_be_used_for_service_configuration(self) -> None:
         """Test settings can be used for service configuration."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should provide configuration data
         config = settings.model_dump()
@@ -198,7 +197,7 @@ class TestRealConfigErrorHandling:
     def test_settings_handles_missing_optional_fields(self) -> None:
         """Test settings handles missing optional fields."""
         # Should work with minimal configuration
-        minimal_config = {}
+        minimal_config: dict[str, object] = {}
 
         try:
             settings = FlextLDAPConfig.model_validate(minimal_config)
@@ -217,7 +216,7 @@ class TestRealConfigPerformance:
         start_time = time.time()
 
         # Create multiple settings instances
-        settings_list = [FlextLDAPSettings() for _ in range(100)]
+        settings_list = [FlextLDAPConfig() for _ in range(100)]
 
         end_time = time.time()
         elapsed = end_time - start_time
@@ -228,7 +227,7 @@ class TestRealConfigPerformance:
 
     def test_settings_serialization_is_efficient(self) -> None:
         """Test settings serialization is efficient."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         start_time = time.time()
 
@@ -250,12 +249,12 @@ class TestRealConfigDocumentation:
     def test_settings_has_docstrings(self) -> None:
         """Test settings classes have docstrings."""
         # Main settings class should have docstring
-        assert FlextLDAPSettings.__doc__ is not None
-        assert len(FlextLDAPSettings.__doc__.strip()) > 0
+        assert FlextLDAPConfig.__doc__ is not None
+        assert len(FlextLDAPConfig.__doc__.strip()) > 0
 
     def test_settings_has_proper_module_information(self) -> None:
         """Test settings has proper module information."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should have module information
         assert hasattr(settings.__class__, "__module__")
@@ -264,11 +263,11 @@ class TestRealConfigDocumentation:
 
     def test_settings_supports_introspection(self) -> None:
         """Test settings supports introspection properly."""
-        settings = FlextLDAPSettings()
+        settings = FlextLDAPConfig()
 
         # Should be able to inspect the model
         assert hasattr(settings, "__class__")
-        assert settings.__class__.__name__ == "FlextLDAPSettings"
+        assert settings.__class__.__name__ == "FlextLDAPConfig"
 
         # Should support Pydantic introspection
         schema = settings.model_json_schema()

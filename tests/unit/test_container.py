@@ -20,11 +20,10 @@ import unittest
 
 from flext_ldap import (
     FlextLDAPClient,
+    FlextLDAPConfig,
     FlextLDAPConnectionConfig,
     FlextLDAPContainer,
-    FlextLDAPSettings,
 )
-from flext_ldap.config import FlextLDAPConfig
 
 
 class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
@@ -275,7 +274,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
             server="ldap://ldap2.example.com",
             port=389,
         )
-        settings2 = FlextLDAPSettings()
+        settings2 = FlextLDAPConfig()
         settings2.ldap_default_connection = connection2
 
         # Configure containers independently

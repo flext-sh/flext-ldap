@@ -945,8 +945,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
         @staticmethod
         def safe_list(
-            value: object, default: FlextTypes.Core.StringList | None = None
-        ) -> FlextTypes.Core.StringList:
+            value: object, default: list[str] | None = None
+        ) -> list[str]:
             """Safely convert using Python 3.13 structural pattern matching."""
             match value:
                 case list() as items if items:
@@ -1325,8 +1325,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             )
             attributes_raw = user_data.get("attributes", {})
 
-            object_classes: FlextTypes.Core.StringList = (
-                [str(item) for item in cast("FlextTypes.Core.List", object_classes_raw)]
+            object_classes: list[str] = (
+                [str(item) for item in cast("list[str]", object_classes_raw)]
                 if isinstance(object_classes_raw, list)
                 else ["inetOrgPerson", "person", "top"]
             )
@@ -1411,13 +1411,13 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             )
             attributes_raw = group_data.get("attributes", {})
 
-            members: FlextTypes.Core.StringList = (
-                [str(item) for item in cast("FlextTypes.Core.List", members_raw)]
+            members: list[str] = (
+                [str(item) for item in cast("list[str]", members_raw)]
                 if isinstance(members_raw, list)
                 else []
             )
-            object_classes: FlextTypes.Core.StringList = (
-                [str(item) for item in cast("FlextTypes.Core.List", object_classes_raw)]
+            object_classes: list[str] = (
+                [str(item) for item in cast("list[str]", object_classes_raw)]
                 if isinstance(object_classes_raw, list)
                 else ["groupOfNames", "top"]
             )

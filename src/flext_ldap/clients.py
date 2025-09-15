@@ -328,12 +328,12 @@ class FlextLDAPClient(
     # SEARCH OPERATIONS - Consolidated search functionality
     # =========================================================================
 
-    def search(
+    async def search(
         self,
         base_dn: str,
         search_filter: str,
         scope: str = "subtree",
-    ) -> object:
+    ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
         """LDAP search following flext-core protocol signature.
 
         This method follows the flext-core LdapConnection protocol.
@@ -349,7 +349,7 @@ class FlextLDAPClient(
             time_limit=30,  # Default value
         )
         # Delegate to the advanced method
-        return self.search_with_request(request)
+        return await self.search_with_request(request)
 
     async def search_with_request(
         self,
@@ -425,16 +425,16 @@ class FlextLDAPClient(
     # CRUD OPERATIONS - Consolidated Create, Update, Delete operations
     # =========================================================================
 
-    def add(self, dn: str, attributes: Mapping[str, object]) -> object:
+    async def add(self, dn: str, attributes: Mapping[str, object]) -> FlextResult[None]:
         """Add new entry to LDAP directory following flext-core protocol.
 
         Returns:
-            object: Success or error result.
+            FlextResult[None]: Success or error result.
 
         """
         # Convert to LdapAttributeDict and delegate to implementation
         ldap_attributes: LdapAttributeDict = cast("LdapAttributeDict", dict(attributes))
-        return self.add_entry(dn, ldap_attributes)
+        return await self.add_entry(dn, ldap_attributes)
 
     async def add_entry(
         self, dn: str, attributes: LdapAttributeDict
@@ -467,18 +467,18 @@ class FlextLDAPClient(
             self.log_error("Unexpected add error", error=str(e), dn=dn)
             return FlextResult.fail(f"Add error: {e}")
 
-    def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> object:
+    async def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Modify existing LDAP entry following flext-core protocol.
 
         Returns:
-            object: Success or error result.
+            FlextResult[None]: Success or error result.
 
         """
         # Convert to LdapAttributeDict and delegate to implementation
         ldap_modifications: LdapAttributeDict = cast(
             "LdapAttributeDict", dict(modifications)
         )
-        return self.modify_entry(dn, ldap_modifications)
+        return await self.modify_entry(dn, ldap_modifications)
 
     async def modify_entry(
         self, dn: str, attributes: LdapAttributeDict
@@ -567,12 +567,12 @@ class FlextLDAPClient(
     # PROTOCOL METHODS - Required by FlextProtocols.Infrastructure.Connection
     # =========================================================================
 
-    def __call__(self, *_args: object, **_kwargs: object) -> object:
+    def __call__(self, *_args: object, **_kwargs: object) -> bool:
         """Callable interface for connection - protocol requirement."""
         # Return connection status for callable interface
-        return self.is_connected
+        return self.is_connected()
 
-    def test_connection(self) -> object:
+    def test_connection(self) -> FlextResult[str]:
         """Test connection to LDAP server - protocol requirement."""
         if not self._connection:
             return FlextResult.fail("No connection established")
@@ -600,9 +600,9 @@ class FlextLDAPClient(
         except Exception:
             return "Connection string unavailable"
 
-    def close_connection(self) -> object:
+    async def close_connection(self) -> FlextResult[None]:
         """Close connection to LDAP server - required by flext-core protocol."""
-        return self.unbind()  # Protocol compliance - delegates to domain method
+        return await self.unbind()  # Protocol compliance - delegates to domain method
 
 
 __all__ = [

@@ -243,13 +243,13 @@ class TestFlextLDAPConnectionOperationsReal:
             server_uri="ldap://test1:389",
             bind_dn=None,
             created_at=datetime.now(UTC),
-            is_authenticated=False
+            is_authenticated=False,
         )
         metadata2 = ops.ConnectionMetadata(
             server_uri="ldap://test2:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             created_at=datetime.now(UTC),
-            is_authenticated=True
+            is_authenticated=True,
         )
 
         ops._active_connections[conn1] = metadata1

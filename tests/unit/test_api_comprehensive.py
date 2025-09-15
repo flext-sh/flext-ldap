@@ -6,13 +6,12 @@ import uuid
 from typing import cast
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLDAPEntities, get_flext_ldap_api
 from flext_ldap.api import FlextLDAPApi
 from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.settings import FlextLDAPSettings
 
 
 @pytest.mark.asyncio
@@ -31,12 +30,12 @@ class TestFlextLDAPApiComprehensive:
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom config using FlextTestsMatchers."""
-        config = FlextLDAPSettings()
+        config = FlextLDAPConfig()
         api = FlextLDAPApi(config)
 
         # Use FlextTestsMatchers for identity validation
         assert api._config is config
-        assert isinstance(api._config, FlextLDAPSettings)
+        assert isinstance(api._config, FlextLDAPConfig)
 
     def test_generate_session_id(self) -> None:
         """Test session ID generation using cached property from FlextUtilities."""
@@ -151,9 +150,11 @@ class TestFlextLDAPApiComprehensive:
                         pattern in session_result.error.lower()
                         for pattern in ["connection", "failed", "server", "refused"]
                     )
-        except Exception:
+        except Exception as e:
             # Context manager should handle exceptions gracefully
-            pass
+            # Expected behavior - no action needed
+            logger = FlextLogger(__name__)
+            logger.debug(f"Expected test behavior for connection failures: {e}")
 
     async def test_search_without_connection(self) -> None:
         """Test search method without connection."""
@@ -509,7 +510,7 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(api2, FlextLDAPApi)
 
         # Test with custom config (use default settings without invalid fields)
-        config = FlextLDAPSettings()
+        config = FlextLDAPConfig()
         api3 = FlextLDAPApi.create(config)
         assert api3._config is config
 
@@ -521,12 +522,18 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(api1, FlextLDAPApi)
         assert isinstance(api2, FlextLDAPApi)
 
-        # Test with custom config
+        # Test with custom config - work around singleton pattern
         connection_config = FlextLDAPConnectionConfig(
             server="ldap://factory.example.com"
         )
-        config = FlextLDAPConfig(ldap_default_connection=connection_config)
+        config = FlextLDAPConfig()
+        # Manually set the connection after creation
+        config.ldap_default_connection = connection_config
         api3 = get_flext_ldap_api(config)
+
+        # The config should be properly set
+        assert api3._config is not None
+        assert api3._config.ldap_default_connection is not None
         assert (
             api3._config.ldap_default_connection.server == "ldap://factory.example.com"
         )

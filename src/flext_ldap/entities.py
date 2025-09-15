@@ -154,7 +154,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             ),
         ]
         attributes: Annotated[
-            FlextTypes.Core.StringList | None,
+            list[str] | None,
             Field(
                 default=None,
                 description="Attributes to retrieve (None for all)",
@@ -252,7 +252,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         dn: str = Field(..., description="Distinguished Name")
         cn: str = Field(..., description="Group Common Name")
         description: str | None = Field(None, description="Group description")
-        members: FlextTypes.Core.StringList = Field(
+        members: list[str] = Field(
             default_factory=list, description="Group member DNs"
         )
 
@@ -266,7 +266,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
         entry_type: Literal["generic"] = "generic"
         dn: str = Field(..., description="Distinguished Name")
-        object_classes: FlextTypes.Core.StringList = Field(
+        object_classes: list[str] = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -337,7 +337,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             pattern=r"^(base|one|subtree|onelevel)$",
             description="Search scope",
         )
-        attributes: FlextTypes.Core.StringList | None = Field(
+        attributes: list[str] | None = Field(
             default=None,
             description="Attributes to retrieve",
         )
@@ -490,7 +490,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
             return str(v)
 
         dn: str = Field(..., description="Distinguished Name")
-        object_classes: FlextTypes.Core.StringList = Field(
+        object_classes: list[str] = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -612,7 +612,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
         cn: str = Field(..., description="Common Name")
         description: str | None = Field(None, description="Group description")
-        members: FlextTypes.Core.StringList = Field(
+        members: list[str] = Field(
             default_factory=list,
             description="Group member DNs",
         )
@@ -668,7 +668,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         description: str | None = Field(None, description="User description")
         telephone_number: str | None = Field(None, description="Telephone number")
         user_password: str | None = Field(None, description="User password")
-        object_classes: FlextTypes.Core.StringList = Field(
+        object_classes: list[str] = Field(
             default_factory=lambda: [
                 "top",
                 "person",
@@ -722,11 +722,11 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         dn: str = Field(..., description="Distinguished Name for new group")
         cn: str = Field(..., description="Common Name", min_length=1)
         description: str | None = Field(None, description="Group description")
-        member_dns: FlextTypes.Core.StringList = Field(
+        member_dns: list[str] = Field(
             default_factory=list,
             description="List of member DNs",
         )
-        object_classes: FlextTypes.Core.StringList = Field(
+        object_classes: list[str] = Field(
             default_factory=lambda: [
                 "top",
                 "groupOfNames",
@@ -767,7 +767,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         dn: str = Field(..., description="Distinguished Name of group to update")
         cn: str | None = Field(None, description="New Common Name")
         description: str | None = Field(None, description="New group description")
-        member_dns: FlextTypes.Core.StringList | None = Field(
+        member_dns: list[str] | None = Field(
             None,
             description="New list of member DNs (replaces existing)",
         )

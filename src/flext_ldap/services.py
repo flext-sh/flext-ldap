@@ -206,12 +206,12 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
         return FlextResult.ok(self._repository)
 
     async def initialize(self) -> FlextResult[None]:
-        """Initialize service using FlextProcessing logging."""
+        """Initialize service using FlextProcessors logging."""
         self.log_info("LDAP service initializing", service="FlextLDAPServices")
         return FlextResult[None].ok(None)
 
     async def cleanup(self) -> FlextResult[None]:
-        """Cleanup service using FlextProcessing logging."""
+        """Cleanup service using FlextProcessors logging."""
         self.log_info("LDAP service cleaning up", service="FlextLDAPServices")
         # Handle different container types safely using getattr for type safety
         reset_method = getattr(self._container, "reset", None)
@@ -608,11 +608,11 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
     async def get_members(
         self, group_dn: str
-    ) -> FlextResult[FlextTypes.Core.StringList]:
+    ) -> FlextResult[list[str]]:
         """Get group members."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextTypes.Core.StringList].fail(
+            return FlextResult[list[str]].fail(
                 f"Repository access failed: {repository_result.error}",
             )
 
@@ -681,7 +681,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
         return FlextResult.ok(None)
 
     def validate_object_classes(
-        self, object_classes: FlextTypes.Core.StringList
+        self, object_classes: list[str]
     ) -> FlextResult[None]:
         """Validate LDAP object classes list."""
         if not object_classes:
@@ -789,18 +789,18 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
     async def get_group_members_list(
         self, group_dn: str
-    ) -> FlextResult[FlextTypes.Core.StringList]:
+    ) -> FlextResult[list[str]]:
         """Get group members list."""
         group_result = await self.get_group(group_dn)
         if not group_result.is_success:
-            return FlextResult[FlextTypes.Core.StringList].fail(
+            return FlextResult[list[str]].fail(
                 group_result.error or "Failed to get group",
             )
 
         if group_result.value is None:
-            return FlextResult[FlextTypes.Core.StringList].fail("Group not found")
+            return FlextResult[list[str]].fail("Group not found")
 
-        return FlextResult[FlextTypes.Core.StringList].ok(group_result.value.members)
+        return FlextResult[list[str]].ok(group_result.value.members)
 
 
 __all__ = [

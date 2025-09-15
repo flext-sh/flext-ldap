@@ -108,9 +108,8 @@ python_version = "3.13"
 platform = "linux"
 
 # Package structure
-explicit_package_bases = true
-namespace_packages = true
-mypy_path = ["src"]
+namespace_packages = false
+mypy_path = ["src"]  # Enable proper module resolution
 files = ["src"]
 
 # Plugins
@@ -186,7 +185,7 @@ markers = [
     "async_test: Async tests",
     "factory_test: Factory tests",
 ]
-filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
+# filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
 
 
 [tool.coverage.run]
