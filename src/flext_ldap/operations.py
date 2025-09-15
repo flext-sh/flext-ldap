@@ -910,7 +910,7 @@ class FlextLDAPOperations:
                     return normalized
                 finally:
                     with contextlib.suppress(Exception):
-                        conn.unbind()  # type: ignore[no-untyped-call]
+                        conn.unbind()
             finally:
                 with contextlib.suppress(Exception):
                     await client.unbind()
