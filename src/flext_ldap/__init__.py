@@ -25,7 +25,8 @@ from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
-from flext_ldap.settings import FlextLDAPSettings  # DEPRECATED: Use FlextLDAPConfig
+
+# FlextLDAPConfig REMOVED: Use FlextLDAPConfig directly (no wrappers/aliases)
 from flext_ldap.type_guards import FlextLDAPTypeGuards
 from flext_ldap.typings import (
     FlextLDAPTypes,
@@ -66,7 +67,7 @@ __all__ = [
     "FlextLDAPOperations",
     "FlextLDAPRepositories",
     "FlextLDAPServices",
-    "FlextLDAPSettings",
+    # "FlextLDAPConfig" REMOVED: Use FlextLDAPConfig directly
     "FlextLDAPTypeGuards",
     "FlextLDAPTypes",
     "FlextLDAPValueObjects",

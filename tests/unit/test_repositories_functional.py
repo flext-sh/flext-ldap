@@ -70,7 +70,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
     def test_error_handling_functional(self) -> None:
         """Test error handling patterns using FlextResult."""
 
-        def simulate_repository_error(data: dict) -> FlextResult[dict]:
+        def simulate_repository_error(data: dict[str, object]) -> FlextResult[dict[str, object]]:
             if not data:
                 return FlextResult.fail("Empty data provided")
             if "required_field" not in data:
@@ -89,7 +89,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         assert "Missing required field" in missing_field_result.error
 
         # Test success case
-        valid_data = {"required_field": "value", "other_field": "value"}
+        valid_data: dict[str, object] = {"required_field": "value", "other_field": "value"}
         success_result = simulate_repository_error(valid_data)
         assert success_result.is_success is True
         assert success_result.value == valid_data

@@ -10,8 +10,8 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldap import FlextLDAPApi, get_flext_ldap_api
+from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.settings import FlextLDAPSettings
 
 
 @pytest.mark.asyncio
@@ -27,7 +27,7 @@ class TestFlextLDAPApiCoverageBoost:
         assert api1._container is not None
 
         # Test with custom config
-        custom_config = FlextLDAPSettings()
+        custom_config = FlextLDAPConfig()
         api2 = FlextLDAPApi(config=custom_config)
         assert api2._config is custom_config
         assert api2._service is not None

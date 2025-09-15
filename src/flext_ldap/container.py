@@ -15,9 +15,9 @@ from flext_core import (
 )
 
 from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLDAPRepositories
-from flext_ldap.settings import FlextLDAPSettings
 
 # Python 3.13 type aliases for container services
 type LdapClientService = FlextLDAPClient
@@ -116,11 +116,11 @@ class FlextLDAPContainer(FlextMixins.Loggable):
 
     # Removed unnecessary alias methods - use get_repository() directly per SOURCE OF TRUTH
 
-    def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
+    def configure(self, config: FlextLDAPConfig) -> FlextResult[None]:
         """Configure container with LDAP settings.
 
         Args:
-            settings: LDAP settings to configure
+            config: LDAP configuration to configure
 
         Returns:
             FlextResult[None]: Success or error result
@@ -136,7 +136,7 @@ class FlextLDAPContainer(FlextMixins.Loggable):
                 self.log_debug("LDAP settings already registered, skipping")
                 return FlextResult.ok(None)
 
-            settings_result = container.register("ldap_settings", settings)
+            settings_result = container.register("ldap_settings", config)
 
             if not settings_result.is_success:
                 return FlextResult.fail(
@@ -145,7 +145,7 @@ class FlextLDAPContainer(FlextMixins.Loggable):
 
             self.log_debug(
                 "Container configured with settings",
-                settings_type=type(settings).__name__,
+                settings_type=type(config).__name__,
             )
             return FlextResult.ok(None)
 
@@ -162,8 +162,6 @@ class FlextLDAPContainer(FlextMixins.Loggable):
             # Register service factories instead of instances to avoid abstract class issues
             def client_factory() -> FlextLDAPClient:
                 """Factory for LDAP client using FlextLDAPClient directly."""
-                # Local import to avoid circular imports - PLC0415 suppressed for factory pattern
-
                 return FlextLDAPClient()
 
             def repository_factory() -> FlextLDAPRepositories:

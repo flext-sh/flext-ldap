@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import FlextLDAPClient, FlextLDAPEntities
 from flext_ldap.clients import FlextLDAPClient as DirectFlextLDAPClient
@@ -361,10 +361,13 @@ class TestFlextLDAPClientComprehensive:
             # Should succeed with valid data
             assert response.total_count == 0
             assert not response.has_more
-        except Exception:
+        except Exception as e:
             # If there's an error, it should be a validation error
             # This test expects either success or validation error
-            pass
+            # Expected behavior - no action needed
+            # This is expected test behavior for validation errors
+            logger = FlextLogger(__name__)
+            logger.debug(f"Expected test behavior for validation errors: {e}")
 
     @pytest.mark.integration
     async def test_full_client_lifecycle_with_docker(
@@ -651,9 +654,12 @@ class TestFlextLDAPClientComprehensive:
         try:
             # This should execute cleanly
             client.__del__()
-        except Exception:
+        except Exception as e:
             # __del__ should handle exceptions gracefully
-            pass  # Destructor cleanup should be safe
+            # Destructor cleanup should be safe - no action needed
+            # This is expected test behavior for destructor cleanup
+            logger = FlextLogger(__name__)
+            logger.debug(f"Expected test behavior for destructor cleanup: {e}")
 
     async def test_connection_state_consistency(self) -> None:
         """Test connection state consistency across operations."""

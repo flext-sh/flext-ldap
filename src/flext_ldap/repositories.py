@@ -16,7 +16,7 @@ from flext_core import (
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
+from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
 # Python 3.13 type aliases
@@ -84,9 +84,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
-        # Convert LdapAttributeDict to dict[str, object] for repository compatibility
-        converted_attributes: dict[str, object] = dict(attributes)
-        return await self._base_repo.update(dn, converted_attributes)
+        return await self._base_repo.update(dn, attributes)
 
     class Repository(
         FlextMixins.Service,
@@ -160,7 +158,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return await self._save_async(entity)
 
         async def update(
-            self, dn: str, attributes: dict[str, object]
+            self, dn: str, attributes: LdapAttributeDict
         ) -> FlextResult[None]:
             """Update entry attributes - alias for test compatibility."""
             # Get existing entry to preserve object classes
@@ -177,11 +175,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
             # Merge existing attributes with updates (exclude objectClass from modification)
             merged_attributes = dict(existing_entry.attributes)
             merged_attributes.update(
-                {
-                    k: cast("LdapAttributeValue", v)
-                    for k, v in attributes.items()
-                    if k != "objectClass"
-                }
+                {k: v for k, v in attributes.items() if k != "objectClass"}
             )
 
             # Use update_attributes method which calls LDAP modify directly
@@ -604,9 +598,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             # Update group with new member list
             attributes: LdapAttributeDict = {"member": updated_members}
-            update_result = await self._repo.update(
-                group_dn, cast("dict[str, object]", attributes)
-            )
+            update_result = await self._repo.update(group_dn, attributes)
 
             if not update_result.is_success:
                 return FlextResult[None].fail(

@@ -9,7 +9,13 @@ from __future__ import annotations
 import re
 from typing import ClassVar, final
 
-from flext_core import FlextModels, FlextResult, FlextUtilities, FlextValidations
+from flext_core import (
+    FlextDomainService,
+    FlextModels,
+    FlextResult,
+    FlextUtilities,
+    FlextValidations,
+)
 from pydantic import ConfigDict, Field, field_validator
 
 from flext_ldap.constants import FlextLDAPConstants
@@ -20,13 +26,17 @@ type LdapFilterString = str
 type AttributeName = str
 
 
-class FlextLDAPValueObjects:
+class FlextLDAPValueObjects(FlextDomainService[object]):
     """Single FlextLDAPValueObjects class with all LDAP value objects.
 
     Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
     Everything from DN validation to filter creation is available as internal classes
     with full backward compatibility and domain-driven design principles.
     """
+
+    def execute(self) -> FlextResult[object]:
+        """Execute domain operation - required by FlextDomainService."""
+        return FlextResult[object].ok({"status": "value_objects_available"})
 
     # =========================================================================
     # DISTINGUISHED NAME - DN value object with RFC 2253 compliance

@@ -27,8 +27,8 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLDAPApi,
+    FlextLDAPConfig,
     FlextLDAPEntities,
-    FlextLDAPSettings,
     FlextLDAPValueObjects,
 )
 
@@ -120,7 +120,7 @@ async def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLDAPSettings()
+        _settings = FlextLDAPConfig()
 
         # 2. Create search request using FlextLDAPSearchRequest
         search_request = FlextLDAPEntities.SearchRequest(

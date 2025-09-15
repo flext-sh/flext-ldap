@@ -41,8 +41,11 @@ class FlextLDAPApi(FlextMixins.Loggable):
         """Initialize API using FlextMixins.Loggable patterns with FlextLDAPConfig singleton."""
         # Initialize FlextMixins.Loggable
         super().__init__()
-        # Use FlextLDAPConfig singleton as single source of truth
-        self._config = config or get_flext_ldap_config()
+        # Use provided config directly if given, otherwise use singleton
+        if config is not None:
+            self._config = config
+        else:
+            self._config = get_flext_ldap_config()
         self._container_manager = FlextLDAPContainer()
         self._container = self._container_manager.get_container()
         self._service = FlextLDAPServices(self._container)
@@ -212,8 +215,8 @@ class FlextLDAPApi(FlextMixins.Loggable):
             if "objectClass" in typed_entry:
                 oc_value = typed_entry["objectClass"]
                 if isinstance(oc_value, list):
-                    typed_oc_list: FlextTypes.Core.List = cast(
-                        "FlextTypes.Core.List", oc_value
+                    typed_oc_list: list[str] = cast(
+                        "list[str]", oc_value
                     )
                     object_classes = [str(oc) for oc in typed_oc_list]
                 else:
@@ -246,7 +249,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
         search_filter: str = "(objectClass=*)",
         *,
         scope: str = "subtree",
-        attributes: FlextTypes.Core.StringList | None = None,
+        attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
         """Simplified search interface using factory method pattern."""
         # Use factory method from SearchRequest for convenience
@@ -352,7 +355,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
         dn_or_request: str,
         cn: str,
         description: str | None = None,
-        members: FlextTypes.Core.StringList | None = None,
+        members: list[str] | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]: ...
 
     async def create_group(
@@ -360,7 +363,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
         dn_or_request: str | FlextLDAPEntities.CreateGroupRequest,
         cn: str | None = None,
         description: str | None = None,
-        members: FlextTypes.Core.StringList | None = None,
+        members: list[str] | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]:
         """Create group using proper service layer.
 
@@ -423,7 +426,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
             # Handle members list safely
             members_raw = entry.get("member", [])
             members = (
-                cast("FlextTypes.Core.StringList", members_raw)
+                cast("list[str]", members_raw)
                 if isinstance(members_raw, list)
                 else []
             )
@@ -460,7 +463,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
 
     async def get_members(
         self, group_dn: str
-    ) -> FlextResult[FlextTypes.Core.StringList]:
+    ) -> FlextResult[list[str]]:
         """Get group members."""
         return await self._service.get_members(group_dn)
 

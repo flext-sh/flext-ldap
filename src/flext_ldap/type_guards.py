@@ -54,7 +54,7 @@ class FlextLDAPTypeGuards:
         if isinstance(value, (str, bytes)):
             return True
         if isinstance(value, list):
-            typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
+            typed_list: list[str] = cast("list[str]", value)
             return all(isinstance(item, (str, bytes)) for item in typed_list)
         return False
 
@@ -79,7 +79,7 @@ class FlextLDAPTypeGuards:
         if not isinstance(value, list):
             return False
 
-        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
+        typed_list: list[object] = cast("list[object]", value)
         for item in typed_list:
             if not isinstance(item, dict):
                 return False
@@ -133,11 +133,11 @@ class FlextLDAPTypeGuards:
         )
 
     @staticmethod
-    def is_string_list(value: object) -> TypeGuard[FlextTypes.Core.StringList]:
+    def is_string_list(value: object) -> TypeGuard[list[str]]:
         """Type guard for list of strings."""
         if not isinstance(value, list):
             return False
-        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
+        typed_list: list[str] = cast("list[str]", value)
         return all(isinstance(item, str) for item in typed_list)
 
     @staticmethod
@@ -145,13 +145,13 @@ class FlextLDAPTypeGuards:
         """Type guard for list of bytes."""
         if not isinstance(value, list):
             return False
-        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
+        typed_list: list[str] = cast("list[str]", value)
         return all(isinstance(item, bytes) for item in typed_list)
 
     @staticmethod
     def ensure_string_list(
-        value: str | FlextTypes.Core.StringList,
-    ) -> FlextTypes.Core.StringList:
+        value: str | list[str],
+    ) -> list[str]:
         """Ensure value is a list of strings."""
         if isinstance(value, str):
             return [value]

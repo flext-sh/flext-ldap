@@ -20,9 +20,9 @@ class FlextLDAPConnectionConfig(FlextConfig):
         str_strip_whitespace=True,
     )
 
-    def __init__(self, **data: object) -> None:
-        """Initialize LDAP connection configuration."""
-        super().__init__(**data)
+    def model_post_init(self, __context: dict[str, object] | None = None, /) -> None:
+        """Post-initialization setup for LDAP configuration."""
+        super().model_post_init(__context)
         self._logger = FlextLogger(__name__)
 
     # Basic Connection Settings

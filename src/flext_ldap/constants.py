@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import Final, final
 
-from flext_core import FlextTypes
-
 
 @final
 class FlextLDAPConstants:
@@ -75,7 +73,7 @@ class FlextLDAPConstants:
         OWNER: Final[str] = "owner"
 
         @classmethod
-        def get_person_attributes(cls) -> FlextTypes.Core.StringList:
+        def get_person_attributes(cls) -> list[str]:
             """Get standard person-related attributes."""
             return [
                 cls.OBJECT_CLASS,
@@ -89,7 +87,7 @@ class FlextLDAPConstants:
             ]
 
         @classmethod
-        def get_group_attributes(cls) -> FlextTypes.Core.StringList:
+        def get_group_attributes(cls) -> list[str]:
             """Get standard group-related attributes."""
             return [
                 cls.OBJECT_CLASS,
