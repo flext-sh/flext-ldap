@@ -11,11 +11,13 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 ### Connection Refused Errors
 
 **Symptom:**
+
 ```
 FlextLDAPConnectionError: Connection failed: [Errno 111] Connection refused
 ```
 
 **Diagnosis:**
+
 ```bash
 # Test LDAP server connectivity
 telnet ldap.example.com 389     # Standard LDAP port
@@ -29,6 +31,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w 
 ```
 
 **Solutions:**
+
 1. **Verify server is running and accessible**
 2. **Check firewall settings** - ensure ports 389/636 are open
 3. **Confirm network connectivity** between client and server
@@ -37,11 +40,13 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w 
 ### SSL/TLS Connection Errors
 
 **Symptom:**
+
 ```
 FlextLDAPConnectionError: TLS handshake failed
 ```
 
 **Diagnosis:**
+
 ```bash
 # Test SSL connection
 openssl s_client -connect ldap.example.com:636 -verify 5
@@ -54,6 +59,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=admin,dc=example,dc=com"
 ```
 
 **Solutions:**
+
 1. **Verify SSL certificate is valid and not expired**
 2. **Check certificate chain completeness**
 3. **Ensure CA certificate is installed**
@@ -87,11 +93,13 @@ config = FlextLDAPConfig(
 ### Invalid Credentials
 
 **Symptom:**
+
 ```
 FlextLDAPAuthenticationError: Authentication failed: Invalid credentials
 ```
 
 **Diagnosis:**
+
 ```python
 import asyncio
 from flext_ldap import get_flext_ldap_api
@@ -113,6 +121,7 @@ asyncio.run(diagnose_auth())
 ```
 
 **Solutions:**
+
 1. **Verify bind DN format** - must be RFC 4514 compliant
 2. **Check bind password** - ensure no special characters are escaped incorrectly
 3. **Confirm user exists** in the directory
@@ -121,11 +130,13 @@ asyncio.run(diagnose_auth())
 ### DN Format Issues
 
 **Symptom:**
+
 ```
 FlextLDAPSearchError: Invalid DN format
 ```
 
 **Common DN Format Mistakes:**
+
 ```python
 # ❌ WRONG - Spaces around commas
 dn = "cn=John Doe , ou=users , dc=example , dc=com"
@@ -141,6 +152,7 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 ```
 
 **Validation:**
+
 ```python
 from flext_ldap import FlextLDAPValueObjects
 
@@ -172,11 +184,13 @@ for test_dn in test_dns:
 ### Search Filter Syntax Errors
 
 **Symptom:**
+
 ```
 FlextLDAPSearchError: Bad search filter
 ```
 
 **Common Filter Mistakes:**
+
 ```python
 # ❌ WRONG - Missing parentheses
 filter_str = "objectClass=person"
@@ -198,6 +212,7 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 ```
 
 **Filter Validation:**
+
 ```python
 from flext_ldap import FlextLDAPValueObjects
 
@@ -226,11 +241,13 @@ for test_filter in test_filters:
 ### Search Base DN Not Found
 
 **Symptom:**
+
 ```
 FlextLDAPSearchError: No such object: ou=users,dc=example,dc=com
 ```
 
 **Diagnosis:**
+
 ```python
 import asyncio
 from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
@@ -265,10 +282,12 @@ asyncio.run(diagnose_base_dn())
 ### Slow Search Operations
 
 **Symptoms:**
+
 - Long response times for directory searches
 - Timeout errors on large result sets
 
 **Diagnosis:**
+
 ```python
 import asyncio
 import time
@@ -325,6 +344,7 @@ asyncio.run(diagnose_performance())
 **Optimization Solutions:**
 
 1. **Use specific base DNs:**
+
 ```python
 # ❌ Inefficient - searches entire directory
 search_request = FlextLDAPEntities.SearchRequest(
@@ -342,6 +362,7 @@ search_request = FlextLDAPEntities.SearchRequest(
 ```
 
 2. **Optimize search filters:**
+
 ```python
 # ❌ Inefficient - broad filter
 filter_str = "(cn=*john*)"
@@ -354,6 +375,7 @@ filter_str = "(&(objectClass=person)(uid=john.doe))"
 ```
 
 3. **Limit result sets:**
+
 ```python
 search_request = FlextLDAPEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
@@ -368,11 +390,13 @@ search_request = FlextLDAPEntities.SearchRequest(
 ### Connection Pool Exhaustion
 
 **Symptoms:**
+
 ```
 FlextLDAPConnectionError: Connection pool exhausted
 ```
 
 **Diagnosis:**
+
 ```python
 # Check connection pool configuration
 from flext_ldap import FlextLDAPConfig
@@ -385,6 +409,7 @@ print(f"Connection timeout: {config.connection_timeout}")
 **Solutions:**
 
 1. **Increase pool size:**
+
 ```python
 config = FlextLDAPConfig(
     host="ldap.example.com",
@@ -395,6 +420,7 @@ config = FlextLDAPConfig(
 ```
 
 2. **Implement connection reuse:**
+
 ```python
 class LDAPService:
     def __init__(self):
@@ -416,6 +442,7 @@ class LDAPService:
 ### Environment Variable Problems
 
 **Diagnosis:**
+
 ```python
 import os
 from flext_ldap import FlextLDAPConfig
@@ -455,18 +482,20 @@ diagnose_config()
 **Common Docker Problems:**
 
 1. **Service name resolution:**
+
 ```yaml
 # docker-compose.yml
 services:
   app:
     environment:
-      - FLEXT_LDAP_HOST=ldap-server  # Use service name, not localhost
+      - FLEXT_LDAP_HOST=ldap-server # Use service name, not localhost
 
   ldap-server:
     image: osixia/openldap:1.5.0
 ```
 
 2. **Network connectivity:**
+
 ```bash
 # Test from within container
 docker exec -it app-container ping ldap-server
@@ -474,6 +503,7 @@ docker exec -it app-container telnet ldap-server 389
 ```
 
 3. **Volume persistence:**
+
 ```yaml
 services:
   ldap-server:
@@ -490,11 +520,13 @@ services:
 ### Import Errors
 
 **Symptom:**
+
 ```python
 ImportError: cannot import name 'FlextLDAPApi' from 'flext_ldap'
 ```
 
 **Diagnosis:**
+
 ```python
 # Check package installation
 import pkg_resources
@@ -548,16 +580,16 @@ make ldap-test-server
 
 ### Common Error Patterns
 
-| Error Type | Pattern | Common Cause |
-|------------|---------|--------------|
-| Connection | `Connection refused` | Server down or port blocked |
-| Authentication | `Invalid credentials` | Wrong username/password |
-| Authorization | `Insufficient access` | User lacks required permissions |
-| Search | `Bad search filter` | Invalid LDAP filter syntax |
-| Search | `No such object` | Base DN doesn't exist |
-| Search | `Size limit exceeded` | Result set too large |
-| Timeout | `Operation timed out` | Slow server or network issues |
-| SSL/TLS | `Certificate verify failed` | Invalid or expired certificate |
+| Error Type     | Pattern                     | Common Cause                    |
+| -------------- | --------------------------- | ------------------------------- |
+| Connection     | `Connection refused`        | Server down or port blocked     |
+| Authentication | `Invalid credentials`       | Wrong username/password         |
+| Authorization  | `Insufficient access`       | User lacks required permissions |
+| Search         | `Bad search filter`         | Invalid LDAP filter syntax      |
+| Search         | `No such object`            | Base DN doesn't exist           |
+| Search         | `Size limit exceeded`       | Result set too large            |
+| Timeout        | `Operation timed out`       | Slow server or network issues   |
+| SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
 
 ### FlextResult Error Handling
 
@@ -735,6 +767,7 @@ collect_diagnostic_info()
 ---
 
 For additional support and community resources:
+
 - [GitHub Issues](https://github.com/flext/flext-ldap/issues) - Bug reports and feature requests
 - [FLEXT Documentation](https://docs.flext.dev) - Framework documentation
 - [Examples](examples/) - Working code examples

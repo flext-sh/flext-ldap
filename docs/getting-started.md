@@ -18,11 +18,13 @@ This guide covers installation, basic configuration, and first steps with flext-
 ### **LDAP Server Requirements**
 
 **Production:**
+
 - OpenLDAP 2.5+, Active Directory, or other LDAP v3 compliant server
 - SSL/TLS configured (recommended)
 - Service account with appropriate permissions
 
 **Development/Testing:**
+
 - Docker for running test LDAP server
 - osixia/openldap:1.5.0 container (automatic setup available)
 
@@ -33,6 +35,7 @@ This guide covers installation, basic configuration, and first steps with flext-
 ### **Production Installation**
 
 Install from PyPI:
+
 ```bash
 pip install flext-ldap
 # or with poetry
@@ -42,6 +45,7 @@ poetry add flext-ldap
 ### **Development Installation**
 
 Clone and setup development environment:
+
 ```bash
 git clone <repository-url>
 cd flext-ldap
@@ -52,6 +56,7 @@ make validate   # Run quality checks to verify installation
 ### **Verify Installation**
 
 Test your installation:
+
 ```bash
 python -c "from flext_ldap import get_flext_ldap_api; print('Installation successful')"
 ```
@@ -63,6 +68,7 @@ python -c "from flext_ldap import get_flext_ldap_api; print('Installation succes
 ### **Environment Variables**
 
 Configure LDAP connection settings:
+
 ```bash
 # Basic LDAP server configuration
 export FLEXT_LDAP_HOST=ldap.example.com
@@ -82,6 +88,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 ### **Configuration File**
 
 Create `flext_ldap_config.py`:
+
 ```python
 from flext_ldap import FlextLDAPConfig
 
@@ -179,6 +186,7 @@ asyncio.run(authenticate_user())
 ### **Test LDAP Server Setup**
 
 For development and testing, use Docker:
+
 ```bash
 # Start OpenLDAP test server
 make ldap-test-server
@@ -235,16 +243,19 @@ Once you have flext-ldap installed and working:
 ### **Common Issues**
 
 **Connection refused:**
+
 - Verify LDAP server is running and accessible
 - Check firewall settings for LDAP port (389/636)
 - Confirm SSL/TLS configuration
 
 **Authentication failed:**
+
 - Verify bind DN and password are correct
 - Check user permissions in LDAP directory
 - Ensure proper DN format (RFC 4514)
 
 **Import errors:**
+
 - Verify installation: `pip list | grep flext-ldap`
 - Check Python version: `python --version` (requires 3.13+)
 - Reinstall: `pip uninstall flext-ldap && pip install flext-ldap`

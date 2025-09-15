@@ -1,11 +1,13 @@
 # FLEXT-LDAP Project Overview
 
 ## Purpose
+
 Enterprise LDAP Operations Library for FLEXT Framework - a production-ready LDAP client library with Clean Architecture, Domain-Driven Design (DDD), and type-safe error handling via FlextResult patterns.
 
 ## Tech Stack
+
 - **Python**: 3.13+ (strict typing)
-- **Core Dependencies**: 
+- **Core Dependencies**:
   - `flext-core` (foundation library)
   - `ldap3` (LDAP protocol implementation)
   - `pydantic` (data validation and models)
@@ -15,6 +17,7 @@ Enterprise LDAP Operations Library for FLEXT Framework - a production-ready LDAP
 - **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
 ## Key Features
+
 - **Async/Await**: All LDAP operations are asynchronous
 - **Type Safety**: Strict MyPy configuration with zero tolerance for type errors
 - **Clean Architecture**: Domain, Application, Infrastructure layers properly separated
@@ -23,6 +26,7 @@ Enterprise LDAP Operations Library for FLEXT Framework - a production-ready LDAP
 - **Docker Integration**: Real LDAP server testing with osixia/openldap
 
 ## Project Structure
+
 ```
 src/flext_ldap/
 ├── api.py                  # High-level API facade
@@ -44,6 +48,7 @@ src/flext_ldap/
 ```
 
 ## Current Status
+
 - **Version**: 0.9.0
 - **Test Coverage**: 33% (targeting 90%+)
 - **Quality**: MyPy strict mode enabled, Ruff linting

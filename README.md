@@ -32,12 +32,12 @@ FLEXT-LDAP serves as the centralized LDAP operations library for all directory s
 
 ### **FLEXT-Core Integration Status**
 
-| Pattern             | Status    | Description                     |
-| ------------------- | --------- | ------------------------------- |
-| **FlextResult<T>**  | 🟢 100%   | All operations return FlextResult |
-| **FlextService**    | 🟡 75%    | Domain services implemented      |
-| **FlextContainer**  | 🟡 60%    | Dependency injection in progress |
-| **Domain Patterns** | 🟢 85%    | Entities, value objects, repositories |
+| Pattern             | Status  | Description                           |
+| ------------------- | ------- | ------------------------------------- |
+| **FlextResult<T>**  | 🟢 100% | All operations return FlextResult     |
+| **FlextService**    | 🟡 75%  | Domain services implemented           |
+| **FlextContainer**  | 🟡 60%  | Dependency injection in progress      |
+| **Domain Patterns** | 🟢 85%  | Entities, value objects, repositories |
 
 > **Status**: 🔴 Critical | 🟡 Partial | 🟢 Complete
 
@@ -67,11 +67,13 @@ graph TB
 ### **Installation**
 
 **Production environment:**
+
 ```bash
 poetry add flext-ldap
 ```
 
 **Development environment:**
+
 ```bash
 git clone <repository-url>
 cd flext-ldap
@@ -153,6 +155,7 @@ pytest --cov=src            # Coverage report
 ```
 
 **Docker Test Environment:**
+
 ```bash
 make ldap-test-server        # Start OpenLDAP container for testing
 make ldap-test-server-stop   # Stop test container

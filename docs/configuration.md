@@ -159,7 +159,7 @@ FLEXT_LDAP_POOL_SIZE=5
 ### Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   app:
     image: your-app:latest
@@ -233,16 +233,19 @@ asyncio.run(validate_config())
 ### Common Configuration Issues
 
 **Connection Refused:**
+
 - Check host and port settings
 - Verify firewall allows LDAP traffic (389/636)
 - Confirm LDAP server is running
 
 **Authentication Failed:**
+
 - Verify bind DN format (RFC 4514 compliant)
 - Check bind password
 - Ensure service account has appropriate permissions
 
 **SSL/TLS Errors:**
+
 - Verify certificate chain
 - Check CA certificate file path
 - Confirm SSL port (usually 636)
