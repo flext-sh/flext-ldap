@@ -661,27 +661,29 @@ class TestFlextLDAPServicesComprehensive:
         assert isinstance(result, FlextResult)
         assert result.is_success  # Disconnect should succeed as it's placeholder
 
-    async def test_get_user_with_empty_result_path(self) -> None:
+    @patch("flext_ldap.services.FlextLDAPServices._get_repository")
+    async def test_get_user_with_empty_result_path(self, mock_get_repository: AsyncMock) -> None:
         """Test get_user method when repository returns None/empty result."""
         service = FlextLDAPServices()
 
-        # Create mock repository that returns None entry
-        mock_repo = Mock()
-        mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(None))
+    # Create mock repository that returns None entry
+    mock_repo = Mock()
+    mock_repo.find_by_dn = AsyncMock(return_value=FlextResult.ok(None))
 
-        # Mock _get_repository to return our mock
-        service._get_repository = Mock(return_value=FlextResult.ok(mock_repo))
+    # Mock _get_repository to return our mock
+    mock_get_repository.return_value = FlextResult.ok(mock_repo)
 
-        result = await service.get_user("cn=nonexistent,dc=test")
+    result = await service.get_user("cn=nonexistent,dc=test")
 
-        # Should handle not connected gracefully or return None
-        if result.is_success:
-            assert result.value is None
-        else:
-            assert any(
-                pattern in result.error.lower()
-                for pattern in ["not connected", "connection", "ldap server"]
-            )
+    # Should handle not connected gracefully or return None
+    if result.is_success:
+        assert result.value is None
+    else:
+        assert result.error is not None
+        assert any(
+            pattern in result.error.lower()
+            for pattern in ["not connected", "connection", "ldap server"]
+        )
 
     async def test_get_user_with_successful_conversion(self) -> None:
         """Test get_user method with successful entry to user conversion."""

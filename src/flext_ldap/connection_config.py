@@ -20,22 +20,9 @@ class FlextLDAPConnectionConfig(FlextConfig):
         str_strip_whitespace=True,
     )
 
-    def __init__(
-        self,
-        /,
-        *,
-        _factory_mode: bool = False,
-        _env_file: str | None = None,
-        _env_format: str = "env",
-        **_data: object,
-    ) -> None:
+    def __init__(self, **data: object) -> None:
         """Initialize LDAP connection configuration."""
-        super().__init__(
-            _factory_mode=_factory_mode,
-            _env_file=_env_file,
-            _env_format=_env_format,
-            **_data,
-        )
+        super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
     # Basic Connection Settings
