@@ -29,16 +29,19 @@ FLEXT-LDAP implements Clean Architecture principles with clear separation of con
 ### **Layer Responsibilities**
 
 **Domain Layer** (innermost):
+
 - Entities: User, Group, Entry
 - Value Objects: DistinguishedName, Filter, Scope
 - Domain Services: Business logic and rules
 
 **Application Layer**:
+
 - Use Cases: LDAP operation orchestration
 - Services: Application-specific logic
 - DTOs: Data transfer objects
 
 **Infrastructure Layer** (outermost):
+
 - Repositories: Data access implementations
 - Clients: External LDAP server communication
 - Adapters: Framework and library integrations
@@ -50,6 +53,7 @@ FLEXT-LDAP implements Clean Architecture principles with clear separation of con
 ### **Core Entities**
 
 #### FlextLDAPUser
+
 ```python
 @dataclass
 class FlextLDAPUser:
@@ -71,6 +75,7 @@ class FlextLDAPUser:
 ```
 
 #### FlextLDAPGroup
+
 ```python
 @dataclass
 class FlextLDAPGroup:
@@ -94,6 +99,7 @@ class FlextLDAPGroup:
 ### **Value Objects**
 
 #### DistinguishedName
+
 ```python
 @dataclass(frozen=True)
 class DistinguishedName:
@@ -117,6 +123,7 @@ class DistinguishedName:
 ```
 
 #### LdapFilter
+
 ```python
 @dataclass(frozen=True)
 class LdapFilter:
@@ -145,6 +152,7 @@ class LdapFilter:
 ### **API Facade**
 
 The `FlextLDAPApi` serves as the main entry point:
+
 ```python
 class FlextLDAPApi:
     """High-level LDAP API facade."""
@@ -173,7 +181,9 @@ class FlextLDAPApi:
 ### **Application Services**
 
 #### FlextLDAPServices
+
 Orchestrates domain operations:
+
 ```python
 class FlextLDAPServices:
     """Application services for LDAP operations."""
@@ -204,6 +214,7 @@ class FlextLDAPServices:
 ### **Repository Pattern**
 
 Abstract repositories define contracts:
+
 ```python
 class FlextLDAPUserRepository(ABC):
     """Abstract user repository."""
@@ -218,6 +229,7 @@ class FlextLDAPUserRepository(ABC):
 ```
 
 Concrete implementations handle LDAP specifics:
+
 ```python
 class FlextLDAPUserRepositoryImpl(FlextLDAPUserRepository):
     """LDAP user repository implementation."""
@@ -247,6 +259,7 @@ class FlextLDAPUserRepositoryImpl(FlextLDAPUserRepository):
 ### **LDAP Client Abstraction**
 
 The `FlextLDAPClient` abstracts ldap3 operations:
+
 ```python
 class FlextLDAPClient:
     """LDAP client abstraction over ldap3."""
@@ -308,6 +321,7 @@ class FlextLDAPClient:
 ### **FlextResult Pattern**
 
 All operations use FlextResult for error handling:
+
 ```python
 # Success case
 user_result = await api.get_user("john.doe")
@@ -323,6 +337,7 @@ if user_result.is_failure:
 ### **Dependency Injection**
 
 Uses FlextContainer for service resolution:
+
 ```python
 # Container configuration
 container = FlextContainer()
@@ -336,6 +351,7 @@ user_service = container.resolve(FlextLDAPUserService)
 ### **Configuration Management**
 
 Centralized configuration via FlextLDAPConfig:
+
 ```python
 @dataclass
 class FlextLDAPConfig:
@@ -355,21 +371,25 @@ class FlextLDAPConfig:
 ## 📊 Quality Attributes
 
 ### **Maintainability**
+
 - Clear layer separation prevents tight coupling
 - Domain logic isolated from infrastructure concerns
 - Dependency injection enables easy testing and modification
 
 ### **Testability**
+
 - Repository abstractions enable mock implementations
 - Domain entities can be tested in isolation
 - Clean boundaries facilitate unit testing
 
 ### **Scalability**
+
 - Connection pooling for concurrent operations
 - Async/await support for non-blocking I/O
 - Stateless design enables horizontal scaling
 
 ### **Reliability**
+
 - FlextResult pattern ensures explicit error handling
 - Input validation at domain boundaries
 - Connection retry and recovery mechanisms

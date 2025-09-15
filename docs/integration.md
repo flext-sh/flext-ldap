@@ -568,7 +568,7 @@ if __name__ == '__main__':
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -667,50 +667,50 @@ spec:
         app: flext-ldap-app
     spec:
       containers:
-      - name: app
-        image: flext-ldap-app:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: FLEXT_LDAP_HOST
-          valueFrom:
-            secretKeyRef:
-              name: ldap-config
-              key: host
-        - name: FLEXT_LDAP_BIND_DN
-          valueFrom:
-            secretKeyRef:
-              name: ldap-config
-              key: bind_dn
-        - name: FLEXT_LDAP_BIND_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ldap-config
-              key: bind_password
-        - name: FLEXT_LDAP_BASE_DN
-          valueFrom:
-            configMapKeyRef:
-              name: ldap-config
-              key: base_dn
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: app
+          image: flext-ldap-app:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: FLEXT_LDAP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: ldap-config
+                  key: host
+            - name: FLEXT_LDAP_BIND_DN
+              valueFrom:
+                secretKeyRef:
+                  name: ldap-config
+                  key: bind_dn
+            - name: FLEXT_LDAP_BIND_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ldap-config
+                  key: bind_password
+            - name: FLEXT_LDAP_BASE_DN
+              valueFrom:
+                configMapKeyRef:
+                  name: ldap-config
+                  key: base_dn
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 
 ---
 apiVersion: v1

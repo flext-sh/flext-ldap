@@ -55,8 +55,12 @@ class FlextLDAPEntities(FlextMixins.Loggable):
 
     # Base LDAP entry properties for compatibility
     dn: str = Field(..., description="Distinguished Name")
-    object_classes: list[str] = Field(default_factory=list, description="Object classes")
-    attributes: dict[str, list[str]] = Field(default_factory=dict, description="LDAP attributes")
+    object_classes: list[str] = Field(
+        default_factory=list, description="Object classes"
+    )
+    attributes: dict[str, list[str]] = Field(
+        default_factory=dict, description="LDAP attributes"
+    )
 
     # =========================================================================
     # ERROR MESSAGES - Constants for exception messages
@@ -103,8 +107,12 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         """Base LDAP entry with common properties."""
 
         dn: str = Field(..., description="Distinguished Name")
-        object_classes: list[str] = Field(default_factory=list, description="Object classes")
-        attributes: dict[str, list[str]] = Field(default_factory=dict, description="LDAP attributes")
+        object_classes: list[str] = Field(
+            default_factory=list, description="Object classes"
+        )
+        attributes: dict[str, list[str]] = Field(
+            default_factory=dict, description="LDAP attributes"
+        )
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate LDAP entry business rules."""

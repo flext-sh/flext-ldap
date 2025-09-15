@@ -13,11 +13,13 @@ This document provides comprehensive API reference for all public interfaces in 
 Factory function to get the main LDAP API instance.
 
 **Parameters:**
+
 - `config` (FlextLDAPConfig, optional): Configuration object. If None, uses default config.
 
 **Returns:** FlextLDAPApi instance
 
 **Example:**
+
 ```python
 from flext_ldap import get_flext_ldap_api
 
@@ -35,11 +37,13 @@ Main API facade providing high-level LDAP operations.
 Search LDAP directory entries.
 
 **Parameters:**
+
 - `request`: SearchRequest object with search criteria
 
 **Returns:** FlextResult containing list of matching entries
 
 **Example:**
+
 ```python
 search_request = FlextLDAPEntities.SearchRequest(
     base_dn="dc=example,dc=com",
@@ -58,12 +62,14 @@ if result.is_success:
 Authenticate user credentials against LDAP directory.
 
 **Parameters:**
+
 - `username` (str): User identifier
 - `password` (str): User password
 
 **Returns:** FlextResult containing authenticated user object
 
 **Example:**
+
 ```python
 result = await api.authenticate_user("john.doe", "password123")
 if result.is_success:
@@ -76,11 +82,13 @@ if result.is_success:
 Create a new user in LDAP directory.
 
 **Parameters:**
+
 - `request`: CreateUserRequest with user details
 
 **Returns:** FlextResult containing created user object
 
 **Example:**
+
 ```python
 user_request = FlextLDAPEntities.CreateUserRequest(
     dn="cn=jane.doe,ou=users,dc=example,dc=com",
@@ -100,6 +108,7 @@ Test LDAP server connectivity.
 **Returns:** FlextResult with connection status message
 
 **Example:**
+
 ```python
 result = await api.test_connection()
 if result.is_success:
@@ -119,6 +128,7 @@ Container for domain entities and request objects.
 Search criteria for LDAP operations.
 
 **Attributes:**
+
 - `base_dn` (str): Base distinguished name for search
 - `filter_str` (str): LDAP search filter
 - `scope` (str): Search scope ("base", "onelevel", "subtree")
@@ -131,6 +141,7 @@ Search criteria for LDAP operations.
 User creation request data.
 
 **Attributes:**
+
 - `dn` (str): Distinguished name for new user
 - `uid` (str): User identifier
 - `cn` (str): Common name
@@ -143,6 +154,7 @@ User creation request data.
 LDAP user entity.
 
 **Attributes:**
+
 - `dn` (str): Distinguished name
 - `uid` (str): User identifier
 - `cn` (str): Common name
@@ -152,6 +164,7 @@ LDAP user entity.
 - `member_of` (List[str], optional): Group memberships
 
 **Methods:**
+
 - `is_valid() -> bool`: Validate user data
 - `get_display_name() -> str`: Get display name
 
@@ -160,12 +173,14 @@ LDAP user entity.
 LDAP group entity.
 
 **Attributes:**
+
 - `dn` (str): Distinguished name
 - `cn` (str): Common name
 - `members` (List[str]): Member distinguished names
 - `description` (str, optional): Group description
 
 **Methods:**
+
 - `add_member(member_dn: str) -> None`: Add group member
 - `remove_member(member_dn: str) -> None`: Remove group member
 
@@ -182,13 +197,16 @@ Container for value objects.
 RFC 4514 compliant distinguished name.
 
 **Attributes:**
+
 - `value` (str): DN string value
 
 **Methods:**
+
 - `rdn() -> str`: Get relative distinguished name
 - `parent_dn() -> str`: Get parent DN
 
 **Example:**
+
 ```python
 dn = FlextLDAPValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
@@ -200,15 +218,18 @@ print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 LDAP search filter with validation.
 
 **Attributes:**
+
 - `expression` (str): Filter expression
 
 **Class Methods:**
+
 - `equals(attribute: str, value: str) -> LdapFilter`: Create equality filter
 - `object_class(object_class: str) -> LdapFilter`: Create objectClass filter
 - `and_filters(*filters) -> LdapFilter`: Combine filters with AND
 - `or_filters(*filters) -> LdapFilter`: Combine filters with OR
 
 **Example:**
+
 ```python
 # Create filters
 user_filter = FlextLDAPValueObjects.LdapFilter.equals("uid", "john.doe")
@@ -223,6 +244,7 @@ combined = FlextLDAPValueObjects.LdapFilter.and_filters(user_filter, person_filt
 Search scope enumeration.
 
 **Values:**
+
 - `BASE`: Search base object only
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
@@ -236,6 +258,7 @@ Search scope enumeration.
 LDAP connection configuration.
 
 **Attributes:**
+
 - `host` (str): LDAP server hostname
 - `port` (int): LDAP server port (default: 389)
 - `use_ssl` (bool): Use SSL connection (default: False)
@@ -246,6 +269,7 @@ LDAP connection configuration.
 - `pool_size` (int): Connection pool size (default: 5)
 
 **Example:**
+
 ```python
 from flext_ldap import FlextLDAPConfig, set_flext_ldap_config
 
@@ -274,6 +298,7 @@ Type guard functions for runtime type checking.
 Check if string is a valid distinguished name.
 
 **Example:**
+
 ```python
 from flext_ldap import FlextLDAPTypeGuards
 
@@ -290,6 +315,7 @@ Check if object is a valid LDAP entry.
 LDAP protocol constants.
 
 **Attributes:**
+
 - `DEFAULT_PORT`: Default LDAP port (389)
 - `DEFAULT_SSL_PORT`: Default LDAPS port (636)
 - `SCOPE_BASE`: Base search scope
@@ -309,6 +335,7 @@ LDAP-specific exception classes.
 Connection-related errors.
 
 **Attributes:**
+
 - `message` (str): Error description
 - `server` (str, optional): LDAP server address
 
@@ -317,6 +344,7 @@ Connection-related errors.
 Authentication failures.
 
 **Attributes:**
+
 - `message` (str): Error description
 - `username` (str, optional): Failed username
 
@@ -325,11 +353,13 @@ Authentication failures.
 Search operation errors.
 
 **Attributes:**
+
 - `message` (str): Error description
 - `base_dn` (str, optional): Search base DN
 - `filter_str` (str, optional): Search filter
 
 **Example:**
+
 ```python
 from flext_ldap import FlextLDAPExceptions
 
@@ -401,6 +431,7 @@ async def search_entries(
 ```
 
 Use mypy or similar tools for static type checking:
+
 ```bash
 mypy --strict your_code.py
 ```
@@ -408,6 +439,7 @@ mypy --strict your_code.py
 ---
 
 For more examples and advanced usage patterns, see:
+
 - **[Examples](examples/)** - Working code examples
 - **[Integration Guide](integration.md)** - FLEXT ecosystem integration
 - **[Architecture Guide](architecture.md)** - Understanding the design

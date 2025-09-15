@@ -96,12 +96,14 @@ PYTHONPATH=src pyright src/flext_ldap --level error
 ### Test Categories
 
 **Unit Tests** - Domain logic and value objects:
+
 ```bash
 pytest tests/unit/ -v
 pytest tests/unit/test_entities.py::TestFlextLDAPUser -v
 ```
 
 **Integration Tests** - Real LDAP operations:
+
 ```bash
 # Requires Docker LDAP server
 pytest tests/integration/ -v
@@ -109,6 +111,7 @@ pytest tests/integration/test_ldap_operations.py -v
 ```
 
 **End-to-End Tests** - Complete workflows:
+
 ```bash
 pytest tests/e2e/ -v
 pytest tests/e2e/test_enterprise_workflows.py -v
@@ -149,6 +152,7 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 ### Clean Architecture Layers
 
 **Domain Layer** (Business logic):
+
 ```python
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
@@ -157,12 +161,14 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 ```
 
 **Application Layer** (Use cases):
+
 ```python
 # src/flext_ldap/api.py
 # src/flext_ldap/services.py
 ```
 
 **Infrastructure Layer** (External concerns):
+
 ```python
 # src/flext_ldap/clients.py
 # src/flext_ldap/adapters.py
@@ -173,6 +179,7 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 ### Coding Standards
 
 **1. Single Responsibility Classes**
+
 ```python
 class FlextLDAPUserService:
     """Single responsibility - user operations only."""
@@ -187,6 +194,7 @@ class FlextLDAPUserService:
 ```
 
 **2. FlextResult Pattern**
+
 ```python
 # ✅ CORRECT - Explicit error handling
 async def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLDAPUser]:
@@ -209,6 +217,7 @@ async def create_user(self, request: CreateUserRequest) -> FlextLDAPUser | None:
 ```
 
 **3. Parameter Object Pattern**
+
 ```python
 # ✅ CORRECT - Parameter objects for complex operations
 @dataclass
@@ -230,6 +239,7 @@ async def search_entries(self, base_dn: str, filter_str: str, scope: str,
 ```
 
 **4. Value Object Validation**
+
 ```python
 @dataclass(frozen=True)
 class DistinguishedName:
@@ -548,6 +558,7 @@ class FlextLDAPApi:
 ### API Documentation
 
 All public APIs require comprehensive documentation including:
+
 - Purpose and responsibility
 - Parameter descriptions with types
 - Return value descriptions
@@ -609,11 +620,13 @@ results = await asyncio.gather(*[
 ### Pull Request Process
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/ldap-group-management
    ```
 
 2. **Implement Changes**
+
    ```bash
    # Follow development workflow
    make format
@@ -623,6 +636,7 @@ results = await asyncio.gather(*[
    ```
 
 3. **Validate Quality**
+
    ```bash
    make validate  # Must pass all gates
    ```
@@ -647,6 +661,7 @@ results = await asyncio.gather(*[
 ---
 
 For more development resources:
+
 - [Architecture Guide](architecture.md) - Understanding Clean Architecture
 - [API Reference](api-reference.md) - Complete API documentation
 - [Examples](examples/) - Working code examples
