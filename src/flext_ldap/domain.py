@@ -944,9 +944,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     return result or None
 
         @staticmethod
-        def safe_list(
-            value: object, default: list[str] | None = None
-        ) -> list[str]:
+        def safe_list(value: object, default: list[str] | None = None) -> list[str]:
             """Safely convert using Python 3.13 structural pattern matching."""
             match value:
                 case list() as items if items:

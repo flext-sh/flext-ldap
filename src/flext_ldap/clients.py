@@ -20,6 +20,7 @@ from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
@@ -210,8 +211,10 @@ class FlextLDAPClient(
             # Parse URI to get connection details
             parsed = urlparse(uri)
             use_ssl = parsed.scheme == "ldaps"
-            host = parsed.hostname or "localhost"
-            port = parsed.port or (636 if use_ssl else 389)
+            host = parsed.hostname or FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1]
+            port = parsed.port or (FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT
+                                 if use_ssl
+                                 else FlextLDAPConstants.LDAP.DEFAULT_PORT)
 
             # Create server
             self._server = ldap3.Server(
@@ -345,8 +348,8 @@ class FlextLDAPClient(
             filter_str=search_filter,
             scope=scope,
             attributes=None,  # Default value
-            size_limit=1000,  # Default value
-            time_limit=30,  # Default value
+            size_limit=FlextLDAPConstants.Connection.MAX_SIZE_LIMIT,  # Use constant
+            time_limit=FlextLDAPConstants.LDAP.DEFAULT_TIMEOUT,  # Use constant
         )
         # Delegate to the advanced method
         return await self.search_with_request(request)
@@ -467,7 +470,9 @@ class FlextLDAPClient(
             self.log_error("Unexpected add error", error=str(e), dn=dn)
             return FlextResult.fail(f"Add error: {e}")
 
-    async def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> FlextResult[None]:
+    async def modify(
+        self, dn: str, modifications: FlextTypes.Core.Dict
+    ) -> FlextResult[None]:
         """Modify existing LDAP entry following flext-core protocol.
 
         Returns:
@@ -594,8 +599,8 @@ class FlextLDAPClient(
         try:
             # Build connection string from server info
             scheme = "ldaps" if getattr(self._server, "ssl", False) else "ldap"
-            host = getattr(self._server, "host", "localhost")
-            port = getattr(self._server, "port", 389)
+            host = getattr(self._server, "host", FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1])
+            port = getattr(self._server, "port", FlextLDAPConstants.LDAP.DEFAULT_PORT)
             return f"{scheme}://{host}:{port}"
         except Exception:
             return "Connection string unavailable"

@@ -419,7 +419,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
         operations = operations_factory()
 
         # Use group operations to create group
-        create_result = await operations.groups.create_group(
+        create_result = await operations._groups.create_group(
             connection_id="default",
             dn=group.dn,
             cn=group.cn,
@@ -463,7 +463,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
             attributes=["cn", "description", "member"],
             size_limit=1,
         )
-        search_result = await operations.search.search_entries(search_params)
+        search_result = await operations._search.search_entries(search_params)
 
         if not search_result.is_success:
             return FlextResult.fail(
@@ -606,9 +606,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
             return FlextResult.fail(result.error or "Remove member failed")
         return FlextResult.ok(None)
 
-    async def get_members(
-        self, group_dn: str
-    ) -> FlextResult[list[str]]:
+    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
@@ -680,9 +678,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
         return FlextResult.ok(None)
 
-    def validate_object_classes(
-        self, object_classes: list[str]
-    ) -> FlextResult[None]:
+    def validate_object_classes(self, object_classes: list[str]) -> FlextResult[None]:
         """Validate LDAP object classes list."""
         if not object_classes:
             return FlextResult.fail("Object classes cannot be empty")
@@ -787,9 +783,7 @@ class FlextLDAPServices(FlextProcessing.Handler, FlextMixins.Loggable):
         updated_members = [m for m in group.members if m != member_dn]
         return await self.update_group(group_dn, {"member": updated_members})
 
-    async def get_group_members_list(
-        self, group_dn: str
-    ) -> FlextResult[list[str]]:
+    async def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members list."""
         group_result = await self.get_group(group_dn)
         if not group_result.is_success:

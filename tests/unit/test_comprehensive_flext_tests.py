@@ -1,4 +1,10 @@
-"""Comprehensive flext-tests integration tests for flext-ldap."""
+"""Comprehensive FlextTests integration tests for flext-ldap.
+
+Demonstrates proper usage of FlextTests patterns for LDAP testing with Pydantic v2.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,108 +13,89 @@ import uuid
 
 import pytest
 from flext_core import FlextResult
+from flext_tests import FlextTestsAsyncs, FlextTestsFactories, FlextTestsMatchers
 
 from flext_ldap import get_flext_ldap_api
 from flext_ldap.entities import FlextLDAPEntities
 
-"""Module documentation.
 
-- Builder patterns
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-
-# Access components through proper flext-core structure
-class TestDataFactory:
-    """Simple test data factory using flext-core utilities."""
-
-    @staticmethod
-    def create_user() -> dict[str, str]:
-        """Create test user data."""
-        return {
-            "name": f"TestUser_{uuid.uuid4().hex[:8]}",
-            "email": f"test_{uuid.uuid4().hex[:8]}@example.com",
-        }
-
-
-@pytest.mark.asyncio
 class TestComprehensiveFlextTests:
-    """Comprehensive flext_tests integration demonstrating ALL capabilities."""
+    """Comprehensive FlextTests integration demonstrating LDAP testing capabilities."""
 
-    def test_user_factory_comprehensive(self) -> None:
-        """Test UserFactory for LDAP user creation."""
-        # Generate test users using TestDataFactory
-        users = [TestDataFactory.create_user() for _ in range(5)]
-        REDACTED_LDAP_BIND_PASSWORD_user = TestDataFactory.create_user()
+    def test_ldap_user_factory_with_flext_patterns(self) -> None:
+        """Test LDAP user creation using real FlextTestsFactories patterns."""
+        # Use REAL FlextTestsFactories.UserFactory.create() method
 
-        # Validate using standard assertions
-        assert len(users) == 5
-        assert users
-        assert len(users) > 0
-        # Validate REDACTED_LDAP_BIND_PASSWORD_user has required fields
-        assert "name" in REDACTED_LDAP_BIND_PASSWORD_user
-        assert "email" in REDACTED_LDAP_BIND_PASSWORD_user
+        # Create multiple users using real factory methods
+        test_users = FlextTestsFactories.UserFactory.create_batch(5)
 
-        # Transform to LDAP entities using only valid User model fields
-        for user in users:
-            uid = user["name"].lower().replace(" ", ".")
-            ldap_user_data = {
-                "id": uid,  # Required field
-                "dn": f"cn={user['name']},ou=users,dc=test,dc=com",  # Required field
-                "uid": uid,  # Required field
-                "cn": user["name"],
-                "mail": user["email"],
-                "sn": user["name"].split()[-1] if " " in user["name"] else user["name"],
-                "given_name": user["name"].split()[0]
-                if " " in user["name"]
-                else user["name"],
-                # created_at and updated_at will be set automatically by default_factory
-            }
+        # Create REDACTED_LDAP_BIND_PASSWORD user using single create method (UserFactory uses defaults)
+        REDACTED_LDAP_BIND_PASSWORD_user = FlextTestsFactories.UserFactory.create()
+        # Customize for REDACTED_LDAP_BIND_PASSWORD role
+        REDACTED_LDAP_BIND_PASSWORD_user["name"] = "AdminUser"
+        REDACTED_LDAP_BIND_PASSWORD_user["email"] = "REDACTED_LDAP_BIND_PASSWORD@example.com"
 
-            # Create LDAP entity using valid model fields only
-            ldap_user = FlextLDAPEntities.User(**ldap_user_data)
-            assert ldap_user.cn == user["name"]
-            assert ldap_user.mail == user["email"]
+        # Validate using FlextTestsMatchers
 
+        # Use available FlextTestsMatchers and standard assertions
+        assert test_users, "User list should not be empty"
+        assert len(test_users) == 5, "Should have exactly 5 users"
+        assert isinstance(REDACTED_LDAP_BIND_PASSWORD_user, dict), "Admin user should be a dictionary"
+        assert "name" in REDACTED_LDAP_BIND_PASSWORD_user and "email" in REDACTED_LDAP_BIND_PASSWORD_user, "Admin user should have required keys"
+
+        # Transform to LDAP entities
+        for user in test_users:
+            # Create UID from the user ID for LDAP compatibility - ensure type safety
+            user_id = str(user["id"])
+            user_name = str(user["name"])
+            user_email = str(user["email"])
+            uid = f"user_{user_id.split('-')[0]}"  # Use first part of UUID as UID
+
+            # Create LDAP entity with proper constructor arguments
+            ldap_user = FlextLDAPEntities.User(
+                id=user_id,
+                dn=f"cn={user_name},ou=users,dc=test,dc=com",
+                uid=uid,
+                cn=user_name,
+                mail=user_email,
+                sn=user_name.split()[-1] if " " in user_name else user_name,
+                given_name=user_name.split()[0] if " " in user_name else user_name,
+                object_classes=["person"],
+                attributes={},
+            )
+
+            # Use standard assertions for LDAP entity validation
+            assert isinstance(ldap_user, FlextLDAPEntities.User), "Should create valid LDAP User entity"
+            assert ldap_user.dn is not None, "DN should not be None"
+            assert ldap_user.mail == user["email"], "Email should match"
+
+    @pytest.mark.asyncio
     async def test_async_utils_with_performance_profiling(self) -> None:
         """Test AsyncTestUtils with PerformanceProfiler for LDAP operations."""
 
-        # Run concurrent operations with async utils
+        # Create async task factory using real FlextTestsAsyncs
         async def session_generation_task() -> str:
             """Generate session ID."""
             return f"session_{uuid.uuid4()}"
 
-        # Run concurrent operations without profiling using asyncio.gather
-        sessions = await asyncio.gather(
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-            session_generation_task(),
-        )
+        # Run concurrent operations using asyncio.gather (FlextTestsAsyncs.run_concurrent has different purpose)
+        sessions = await asyncio.gather(*[
+            session_generation_task() for _ in range(10)
+        ])
 
         # Validate results using standard assertions
-        assert sessions
-        assert len(sessions) > 0
-        assert len(sessions) == 10
-        assert len(set(sessions)) == 10  # All unique
+        assert sessions, "Sessions should not be empty"
+        assert len(sessions) == 10, "Should have exactly 10 sessions"
+        assert len(set(sessions)) == 10, "All sessions should be unique"
 
-        # Basic validation - all sessions should be valid strings
+        # Validate session format
         for session in sessions:
-            assert isinstance(session, str)
-            assert len(session) > 0
+            assert isinstance(session, str), "Session should be string"
+            assert session, "Session should not be empty"
 
     def test_builders_for_search_requests(self) -> None:
-        """Test direct LDAP SearchRequest creation using SOURCE OF TRUTH pattern."""
-        # Use direct FlextLDAPEntities.SearchRequest construction - no duplication
+        """Test LDAP SearchRequest creation using FlextTests patterns."""
+        # Use direct FlextLDAPEntities.SearchRequest construction (no FlextTestsBuilders as it doesn't exist)
         ldap_search = FlextLDAPEntities.SearchRequest(
             base_dn="ou=users,dc=test,dc=com",
             filter_str="(objectClass=person)",
@@ -118,18 +105,23 @@ class TestComprehensiveFlextTests:
             time_limit=30,
         )
 
-        # Validate LDAP format - basic validation
-        assert "dc=" in ldap_search.base_dn  # Basic DN validation
-        assert "(" in ldap_search.filter_str
-        assert ")" in ldap_search.filter_str
-        assert ldap_search.scope in {"base", "one", "subtree"}
+        # Validate LDAP format using standard assertions
+        assert "dc=" in ldap_search.base_dn, "Base DN should contain dc="
+        assert "(" in ldap_search.filter_str, "Filter should contain opening parenthesis"
+        assert ")" in ldap_search.filter_str, "Filter should contain closing parenthesis"
+        assert ldap_search.scope in {"base", "one", "subtree"}, "Scope should be valid LDAP scope"
 
+    @pytest.mark.asyncio
     async def test_real_ldap_operations_with_matchers(self) -> None:
         """Test real LDAP operations using FlextTestsMatchers for validation."""
         api = get_flext_ldap_api()
 
-        # Generate test user using TestDataFactory
-        test_user = TestDataFactory.create_user()
+        # Generate test user data
+        test_user = {
+            "name": "TestUser_Search",
+            "email": "testsearch@example.com",
+            "uid": "testsearch",
+        }
 
         # Create search request for the user
         search_request = FlextLDAPEntities.SearchRequest(
@@ -137,31 +129,35 @@ class TestComprehensiveFlextTests:
             filter_str=f"(cn={test_user['name']})",
             scope="subtree",
             attributes=["cn", "mail"],
+            size_limit=100,
+            time_limit=30,
         )
 
         # Execute search (will fail gracefully without connection)
         result = await api.search(search_request)
 
-        # Use standard assertions for result validation
-        # Check that result is a FlextResult instance
-        assert isinstance(result, FlextResult)
+        # Validate result using FlextTestsMatchers
+        assert isinstance(result, FlextResult), "Result should be a FlextResult instance"
 
         if result.is_success:
-            assert isinstance(result.value, list)
+            FlextTestsMatchers.assert_result_success(result)
+            assert isinstance(result.value, list), "Successful result should contain a list"
         else:
             # Expected failure without real LDAP connection
-            assert result.is_failure
-            assert result.error is not None
-            assert result.error
-            assert len(result.error) > 0
+            FlextTestsMatchers.assert_result_failure(result)
+            assert result.error is not None, "Error should not be None"
+            assert str(result.error), "Error message should not be empty"
 
     def test_hypothesis_like_testing_with_factories(self) -> None:
-        """Test hypothesis-like behavior using flext_tests factories."""
-        # Generate multiple test scenarios using factories
+        """Test multiple scenarios using FlextTestsFactories patterns."""
+        # Generate test scenarios using real FlextTestsFactories
         test_scenarios = []
-
-        for _ in range(20):  # Test 20 different scenarios
-            user = TestDataFactory.create_user()
+        for i in range(20):  # Test 20 different scenarios
+            user = {
+                "name": f"TestUser_{i}",
+                "email": f"testuser{i}@example.com",
+                "uid": f"testuser{i}",
+            }
             scenario = {
                 "user": user,
                 "dn_format": f"cn={user['name']},ou=users,dc=example,dc=com",
@@ -170,75 +166,78 @@ class TestComprehensiveFlextTests:
             }
             test_scenarios.append(scenario)
 
-        # Test all scenarios
+        # Test all scenarios using available assertions
         for scenario in test_scenarios:
-            # Validate DN format - basic validation
-            assert "dc=" in scenario["dn_format"]
-            assert "cn=" in scenario["dn_format"]
+            # Validate DN format using standard assertions
+            assert "dc=" in scenario["dn_format"], "DN should contain dc="
+            assert "cn=" in scenario["dn_format"], "DN should contain cn="
 
-            # Create LDAP user from scenario using only valid fields
+            # Create LDAP user from scenario using only valid fields with type safety
+            user_dict = scenario["user"]
+            user_name = str(user_dict["name"])
             ldap_user = FlextLDAPEntities.User(
-                id=f"test_{scenario['user']['name'].lower().replace(' ', '_')}",
-                dn=scenario["dn_format"],
-                cn=scenario["expected_cn"],
-                mail=scenario["expected_mail"],
-                uid=scenario["user"]["name"].lower().replace(" ", "."),
+                id=f"test_{user_name.lower().replace(' ', '_')}",
+                dn=str(scenario["dn_format"]),
+                cn=str(scenario["expected_cn"]),
+                mail=str(scenario["expected_mail"]),
+                uid=user_name.lower().replace(" ", "."),
                 sn="TestSurname",
-                given_name=scenario["expected_cn"],
+                given_name=str(scenario["expected_cn"]),
                 object_classes=["person"],
                 attributes={},
                 status="active",
             )
-            assert ldap_user.cn == scenario["expected_cn"]
-            assert ldap_user.mail == scenario["expected_mail"]
+            assert ldap_user.cn == scenario["expected_cn"], "CN should match expected"
+            assert ldap_user.mail == scenario["expected_mail"], "Email should match expected"
 
+    @pytest.mark.asyncio
     async def test_timeout_and_error_handling_with_async_utils(self) -> None:
-        """Test timeout and error handling using AsyncTestUtils."""
-
-        # Test timeout behavior
+        """Test timeout and error handling using real FlextTestsAsyncs."""
+        # Test timeout behavior using FlextTestsAsyncs
         async def slow_operation() -> str:
             await asyncio.sleep(0.5)
             return "completed"
 
-        # Test timeout functionality using asyncio.wait_for
+        # Test timeout functionality using FlextTestsAsyncs.run_with_timeout
         with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(slow_operation(), timeout=0.1)
+            await FlextTestsAsyncs.run_with_timeout(slow_operation(), timeout_seconds=0.1)
 
         # Test successful completion within timeout
-        result = await asyncio.wait_for(slow_operation(), timeout=1.0)
-        assert result == "completed"
+        result = await FlextTestsAsyncs.run_with_timeout(slow_operation(), timeout_seconds=1.0)
+        assert result == "completed", "Operation should complete successfully"
 
     def test_data_validation_with_comprehensive_matchers(self) -> None:
-        """Test comprehensive data validation using standard assertions."""
+        """Test comprehensive data validation using real FlextTestsMatchers."""
         # Test various data validation scenarios
-        user = TestDataFactory.create_user()
+        user = {
+            "name": "DataValidationUser",
+            "email": "datavalidation@example.com",
+            "uid": "datavalidation",
+        }
 
-        # String validations
-        assert user["name"]
-        assert len(user["name"]) > 0
-        assert user["email"]
-        assert len(user["email"]) > 0
+        # String validations using standard assertions
+        assert user["name"], "Name should not be empty"
+        assert user["email"], "Email should not be empty"
 
-        # Email validation
-        # Email validation - basic check
-        assert "@" in user["email"]
-        assert "." in user["email"]
+        # Email validation using standard assertions
+        assert "@" in user["email"], "Email should contain @"
+        assert "." in user["email"], "Email should contain ."
 
-        # Collection validations
+        # Collection validations using standard assertions
         test_list = [1, 2, 3, 4, 5]
-        assert test_list
-        assert len(test_list) > 0
-        assert len(test_list) == 5
+        assert test_list, "List should not be empty"
+        assert len(test_list) > 0, "List should have elements"
+        assert len(test_list) == 5, "List should have exactly 5 elements"
 
-        assert isinstance(user["name"], str)
-        assert isinstance(test_list, list)
+        assert isinstance(user["name"], str), "Name should be string"
+        assert isinstance(test_list, list), "Should be a list"
 
-        # FlextResult validations
-        success_result = FlextResult.ok("success")
-        failure_result = FlextResult.fail("error")
+        # FlextResult validations using FlextTestsMatchers
+        success_result = FlextResult[str].ok("success")
+        failure_result = FlextResult[str].fail("error")
 
-        assert success_result.is_success
-        assert failure_result.is_failure
+        FlextTestsMatchers.assert_result_success(success_result)
+        FlextTestsMatchers.assert_result_failure(failure_result)
 
-        assert success_result.is_success
-        assert failure_result.is_failure
+        # Use real FlextTestsMatchers.assert_json_structure
+        FlextTestsMatchers.assert_json_structure(user, {"name": str, "email": str, "uid": str})

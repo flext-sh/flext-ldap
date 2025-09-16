@@ -10,7 +10,6 @@ import json
 from flext_cli import (
     FlextCliConfig,
     FlextCliContext,
-    FlextCliExecutionContext,
     FlextCliFormatters,
 )
 from flext_core import FlextResult, FlextTypes
@@ -35,7 +34,7 @@ class FlextLDAPCLI:
         """Listar usuários LDAP usando flext-cli."""
         try:
             # Simulação de conexão LDAP (sem servidor real)
-            execution_context = FlextCliExecutionContext(
+            execution_context = FlextCliContext(
                 command_name="list_users",
                 command_args={"base_dn": base_dn},
             )
@@ -64,7 +63,7 @@ class FlextLDAPCLI:
                 "base_dn": base_dn,
                 "users": users_data,
                 "count": len(users_data),
-                "execution_context": execution_context.get_execution_info(),
+                "execution_context": str(execution_context),
             }
 
             return FlextResult[FlextTypes.Core.Dict].ok(result)
@@ -82,7 +81,7 @@ class FlextLDAPCLI:
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Criar usuário LDAP usando flext-cli."""
         try:
-            execution_context = FlextCliExecutionContext(
+            execution_context = FlextCliContext(
                 command_name="create_user",
                 command_args={
                     "username": username,
@@ -123,7 +122,7 @@ class FlextLDAPCLI:
                     "sn": user_request.sn,
                     "mail": user_request.mail,
                 },
-                "execution_context": execution_context.get_execution_info(),
+                "execution_context": str(execution_context),
             }
 
             return FlextResult[FlextTypes.Core.Dict].ok(result)

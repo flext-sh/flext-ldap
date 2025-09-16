@@ -61,7 +61,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
     # ==========================================================================
 
     async def find_by_dn(self, dn: str) -> FlextResult[FlextLDAPEntities.Entry | None]:
-        """Find entry by DN - facade method delegating to repository."""
+        """Find entry by DN - facade method delegating to repository public interface."""
         return await self._base_repo.find_by_dn(dn)
 
     async def search(
@@ -71,20 +71,23 @@ class FlextLDAPRepositories(FlextMixins.Service):
         return await self._base_repo.search(request)
 
     async def save_async(self, entity: FlextLDAPEntities.Entry) -> FlextResult[None]:
-        """Save entry - facade method delegating to repository."""
+        """Save entry - facade method delegating to repository public interface."""
         return await self._base_repo.save_async(entity)
 
     async def delete_async(self, dn: str) -> FlextResult[None]:
-        """Delete entry - facade method delegating to repository."""
+        """Delete entry - facade method delegating to repository public interface."""
         return await self._base_repo.delete_async(dn)
 
     async def exists(self, dn: str) -> FlextResult[bool]:
-        """Check if entry exists - facade method delegating to repository."""
-        return await self._base_repo.exists(dn)
+        """Check if entry exists - facade method delegating to repository public interface."""
+        result = await self._base_repo.find_by_dn(dn)
+        if not result.is_success:
+            return FlextResult[bool].fail(result.error or "Find failed")
+        return FlextResult[bool].ok(result.value is not None)
 
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
-        return await self._base_repo.update(dn, attributes)
+        return await self._base_repo.update_attributes(dn, attributes)
 
     class Repository(
         FlextMixins.Service,
@@ -148,49 +151,30 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
 
         # ==========================================================================
-        # COMPATIBILITY ALIASES FOR TESTS
+        # PUBLIC ASYNC INTERFACE - SOLID Interface Segregation Principle
         # ==========================================================================
 
         async def save_async(
             self, entity: FlextLDAPEntities.Entry
         ) -> FlextResult[None]:
-            """Compatibility alias for _save_async - test compatibility."""
+            """Save entry - public async interface exposing private implementation."""
             return await self._save_async(entity)
+
+        async def find_by_dn(
+            self, dn: str
+        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            """Find entry by DN - public async interface exposing private implementation."""
+            return await self._find_by_dn_async(dn)
+
+        async def delete_async(self, dn: str) -> FlextResult[None]:
+            """Delete entry - public async interface exposing private implementation."""
+            return await self._delete_async(dn)
 
         async def update(
             self, dn: str, attributes: LdapAttributeDict
         ) -> FlextResult[None]:
-            """Update entry attributes - alias for test compatibility."""
-            # Get existing entry to preserve object classes
-            existing_entry_result = await self.find_by_dn(dn)
-            if not existing_entry_result.is_success:
-                return FlextResult.fail(
-                    f"Failed to find existing entry: {existing_entry_result.error}"
-                )
-
-            existing_entry = existing_entry_result.value
-            if not existing_entry:
-                return FlextResult.fail(f"Entry not found: {dn}")
-
-            # Merge existing attributes with updates (exclude objectClass from modification)
-            merged_attributes = dict(existing_entry.attributes)
-            merged_attributes.update(
-                {k: v for k, v in attributes.items() if k != "objectClass"}
-            )
-
-            # Use update_attributes method which calls LDAP modify directly
-            return await self.update_attributes(dn, merged_attributes)
-
-        async def delete_async(self, dn: str) -> FlextResult[None]:
-            """Delete entry by DN - public async method for facade."""
-            return await self._delete_async(dn)
-
-        async def exists(self, dn: str) -> FlextResult[bool]:
-            """Check if entry exists by DN - public async method for facade."""
-            result = await self._find_by_dn_async(dn)
-            if not result.is_success:
-                return FlextResult[bool].fail(result.error or "Find failed")
-            return FlextResult[bool].ok(result.value is not None)
+            """Update entry attributes - async method for Repository."""
+            return await self.update_attributes(dn, attributes)
 
         # ==========================================================================
         # PRIVATE ASYNC METHODS - LDAP-specific implementation details
@@ -322,12 +306,6 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 )
             return search_result
 
-        async def find_by_dn(
-            self, dn: str
-        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
-            """Find LDAP entry by DN directly."""
-            return await self._find_by_dn_async(dn)
-
         async def update_attributes(
             self, dn: str, attributes: LdapAttributeDict
         ) -> FlextResult[None]:
@@ -340,13 +318,13 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 )
 
             # Verify entry exists first
-            exists_result = await self.exists(dn)
-            if not exists_result.is_success:
+            find_result = await self._find_by_dn_async(dn)
+            if not find_result.is_success:
                 return FlextResult[None].fail(
-                    exists_result.error or "Exists check failed"
+                    find_result.error or "Entry lookup failed"
                 )
 
-            if not exists_result.value:
+            if not find_result.value:
                 return FlextResult[None].fail(f"Entry does not exist: {dn}")
 
             result = await self._client.modify_entry(dn, attributes)

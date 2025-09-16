@@ -916,7 +916,7 @@ class FlextLDAPOperations(FlextDomainService[object]):
                     return normalized
                 finally:
                     with contextlib.suppress(Exception):
-                        conn.unbind()
+                        conn.unbind()  # type: ignore[no-untyped-call]
             finally:
                 with contextlib.suppress(Exception):
                     await client.unbind()
@@ -2219,30 +2219,38 @@ class FlextLDAPOperations(FlextDomainService[object]):
         self._users = self.UserOperations()
         self._groups = self.GroupOperations()
 
+    # Public properties to expose private operation handlers
     @property
     def connections(self) -> ConnectionOperations:
-        """Access connections operations through consolidated interface."""
+        """Access to connection operations."""
         return self._connections
 
     @property
     def search(self) -> SearchOperations:
-        """Access search operations through consolidated interface."""
+        """Access to search operations."""
         return self._search
 
     @property
     def entries(self) -> EntryOperations:
-        """Access entry operations through consolidated interface."""
+        """Access to entry operations."""
         return self._entries
 
     @property
     def users(self) -> UserOperations:
-        """Access user operations through consolidated interface."""
+        """Access to user operations."""
         return self._users
 
     @property
     def groups(self) -> GroupOperations:
-        """Access group operations through consolidated interface."""
+        """Access to group operations."""
         return self._groups
+
+    # Convenience methods that delegate to operation handlers
+    def get_connection_info(
+        self, connection_id: ConnectionId
+    ) -> FlextResult[dict[str, object]]:
+        """Get connection information - delegates to connections handler."""
+        return self._connections.get_connection_info(connection_id)
 
     # High-level convenience methods - ELIMINATED DUPLICATION
     # Use FlextUtilities.Generators.generate_id() directly - NO WRAPPER METHODS
@@ -2254,7 +2262,7 @@ class FlextLDAPOperations(FlextDomainService[object]):
         bind_password: str | None = None,
     ) -> FlextResult[str]:
         """Create connection and perform bind operation."""
-        return await self.connections.create_connection(
+        return await self._connections.create_connection(
             server_uri=server_uri,
             bind_dn=bind_dn,
             _bind_password=bind_password,
@@ -2275,7 +2283,7 @@ class FlextLDAPOperations(FlextDomainService[object]):
             attributes=attributes,
             size_limit=1,
         )
-        search_result = await self.search.search_entries(search_params)
+        search_result = await self._search.search_entries(search_params)
 
         if not search_result.is_success:
             return FlextResult.fail(
@@ -2340,21 +2348,18 @@ class FlextLDAPOperations(FlextDomainService[object]):
             "timestamp": FlextUtilities.generate_iso_timestamp(),
             **kwargs,
         }
-        self.connections.log_info(
+        self._connections.log_info(
             f"LDAP {operation} completed successfully", extra=extra_context
         )
 
     async def cleanup_connection(self, connection_id: str) -> None:
         """Clean up connection resources."""
-        await self.connections.close_connection(connection_id)
+        await self._connections.close_connection(connection_id)
 
 
-# Export internal classes for external access (backward compatibility)
-# Export aliases eliminated - use FlextLDAPOperations.* directly following flext-core pattern
-
-# Compatibility aliases for nested classes
-LDAPCommandProcessor = FlextLDAPOperations.LDAPCommandProcessor
-UserConversionParams = FlextLDAPOperations.UserConversionParams
+# FLEXT ARCHITECTURE: Only FlextLDAP* classes exported
+# All nested functionality accessed through FlextLDAPOperations directly
+# No aliases, wrappers, or compatibility layers as per requirements
 
 
 # LDAPAttributeProcessor eliminated - ZERO TOLERANCE for duplicate classes

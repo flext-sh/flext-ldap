@@ -103,7 +103,7 @@ class TestFlextLDAPRepositoriesComprehensive:
             )
 
     async def test_save_async_without_connection(self) -> None:
-        """Test save_async without connection."""
+        """Test _save_async without connection."""
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
@@ -114,7 +114,7 @@ class TestFlextLDAPRepositoriesComprehensive:
             attributes={"cn": "test", "sn": "user"},
         )
 
-        result = await repo.save_async(entry)
+        result = await repo._save_async(entry)
 
         assert not result.is_success
         assert any(
@@ -127,7 +127,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
-        result = await repo.delete_async("cn=test,dc=example,dc=com")
+        result = await repo._delete_async("cn=test,dc=example,dc=com")
 
         assert not result.is_success
         assert any(
@@ -140,7 +140,14 @@ class TestFlextLDAPRepositoriesComprehensive:
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
-        result = await repo.exists("cn=test,dc=example,dc=com")
+        # Use internal method since exists is no longer a compatibility alias
+        result = await repo._find_by_dn_async("cn=test,dc=example,dc=com")
+        # Transform to boolean result like exists would
+        if result.is_success:
+            bool_result = FlextResult[bool].ok(result.value is not None)
+        else:
+            bool_result = FlextResult[bool].fail(result.error or "Find failed")
+        result = bool_result
 
         assert not result.is_success
         assert any(
@@ -155,7 +162,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         attributes: LdapAttributeDict = {"description": "Updated description"}
 
-        result = await repo.update("cn=test,dc=example,dc=com", attributes)
+        result = await repo.update_attributes("cn=test,dc=example,dc=com", attributes)
 
         assert not result.is_success
         assert any(

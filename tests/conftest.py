@@ -19,6 +19,7 @@ from functools import lru_cache
 import pytest
 from docker.models.containers import Container
 from flext_core import FlextLogger, FlextTypes
+from flext_tests import FlextTestsFactories
 
 from flext_ldap import (
     FlextLDAPClient,
@@ -438,12 +439,109 @@ async def temporary_ldap_entry(
             await client.delete(dn)
 
 
+# FlextTests-based fixtures for LDAP testing
+@pytest.fixture
+def ldap_test_constants() -> FlextTypes.Core.Dict:
+    """Provide all LDAP test constants."""
+    return {
+        "LDAP_SERVER_URL": TEST_ENV_VARS["LDAP_TEST_SERVER"],
+        "LDAP_BIND_DN": TEST_ENV_VARS["LDAP_TEST_BIND_DN"],
+        "LDAP_PASSWORD": TEST_ENV_VARS["LDAP_TEST_PASSWORD"],
+        "LDAP_BASE_DN": TEST_ENV_VARS["LDAP_TEST_BASE_DN"],
+        "LDAP_USERS_OU": f"ou=users,{TEST_ENV_VARS['LDAP_TEST_BASE_DN']}",
+        "LDAP_GROUPS_OU": f"ou=groups,{TEST_ENV_VARS['LDAP_TEST_BASE_DN']}",
+        "LDAP_SEARCH_TIMEOUT": 30,
+        "LDAP_CONNECTION_TIMEOUT": 10,
+        "LDAP_MAX_ENTRIES": 1000,
+        "TEST_USER_PREFIX": "testuser",
+        "TEST_GROUP_PREFIX": "testgroup",
+    }
+
+
+@pytest.fixture
+def ldap_test_data() -> FlextTypes.Core.Dict:
+    """Provide comprehensive LDAP test data using real FlextTestsFactories."""
+    # Use real FlextTestsFactories for user generation
+    test_users = FlextTestsFactories.UserFactory.create_batch(5)
+
+    # Customize users for LDAP testing
+    for i, user in enumerate(test_users, 1):
+        user["name"] = f"Test User {i}"
+        user["uid"] = f"testuser{i}"
+
+    # Create group data manually (no GroupFactory available)
+    test_groups = []
+    for i in range(1, 4):
+        group_data = {
+            "cn": f"testgroup{i}",
+            "description": f"Test Group {i}",
+            "members": [f"testuser{j}" for j in range(1, 4)]
+        }
+        test_groups.append(group_data)
+
+    return {
+        "test_users": test_users,
+        "test_groups": test_groups,
+        "test_ous": [
+            {
+                "ou": "users",
+                "description": "Test Users Organizational Unit",
+                "objectClass": ["organizationalUnit"],
+            },
+            {
+                "ou": "groups",
+                "description": "Test Groups Organizational Unit",
+                "objectClass": ["organizationalUnit"],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def ldap_search_requests() -> list[FlextLDAPEntities.SearchRequest]:
+    """Provide pre-built LDAP search requests."""
+    return [
+        FlextLDAPEntities.SearchRequest(
+            base_dn=TEST_ENV_VARS["LDAP_TEST_BASE_DN"],
+            filter_str="(objectClass=person)",
+            scope="subtree",
+            attributes=["uid", "cn", "mail", "sn"],
+            time_limit=30,
+            size_limit=100,
+        ),
+        FlextLDAPEntities.SearchRequest(
+            base_dn=f"ou=users,{TEST_ENV_VARS['LDAP_TEST_BASE_DN']}",
+            filter_str="(uid=testuser*)",
+            scope="onelevel",
+            attributes=["*"],
+            time_limit=10,
+            size_limit=50,
+        ),
+        FlextLDAPEntities.SearchRequest(
+            base_dn=f"ou=groups,{TEST_ENV_VARS['LDAP_TEST_BASE_DN']}",
+            filter_str="(objectClass=groupOfNames)",
+            scope="subtree",
+            attributes=["cn", "description", "member"],
+            time_limit=15,
+            size_limit=25,
+        ),
+    ]
+
+
 # Mark integration tests
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest markers."""
     config.addinivalue_line(
         "markers",
         "integration: marks tests as integration tests requiring Docker",
+    )
+    config.addinivalue_line(
+        "markers",
+        "ldap: marks tests as LDAP-specific tests",
+    )
+    config.addinivalue_line(
+        "markers",
+        "unit: marks tests as fast unit tests",
     )
 
 
@@ -455,3 +553,11 @@ def pytest_collection_modifyitems(
         # Mark tests in integration directory
         if "integration" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
+
+        # Mark LDAP-specific tests
+        if "ldap" in str(item.fspath).lower():
+            item.add_marker(pytest.mark.ldap)
+
+        # Mark unit tests
+        if "unit" in str(item.fspath):
+            item.add_marker(pytest.mark.unit)

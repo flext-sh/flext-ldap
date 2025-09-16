@@ -36,14 +36,9 @@ class TestRealFlextLDAPConfig:
 
     def test_flext_ldap_settings_with_custom_values(self) -> None:
         """Test FlextLDAPConfig with custom configuration values."""
-        custom_settings = {
-            "ldap_time_limit": 60,
-            "debug": True,
-        }
-
         # Try to create settings with custom values
         try:
-            settings = FlextLDAPConfig(**custom_settings)
+            settings = FlextLDAPConfig(ldap_time_limit=60, ldap_enable_debug=True)
             assert settings is not None
 
             # Verify custom values were applied

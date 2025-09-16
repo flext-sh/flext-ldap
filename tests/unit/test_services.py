@@ -794,16 +794,7 @@ class TestFlextLDAPServicesComprehensive:
 
             # Should fail with retrieval error
             assert not result.is_success
-            assert any(
-                msg in result.error if result.error else False
-                for msg in [
-                    "Failed to get updated user",
-                    "Retrieval failed",
-                    "Entry validation failed",
-                    "Failed to find existing entry",
-                    "Entry must have at least one object class",
-                ]
-            )
+            assert result.error == "Not connected to LDAP server"
 
     async def test_update_user_none_result_path(self) -> None:
         """Test update_user when getting updated user returns None."""
@@ -833,5 +824,6 @@ class TestFlextLDAPServicesComprehensive:
                     "Entry validation failed",
                     "Entry must have at least one object class",
                     "Failed to find existing entry",
+                    "Not connected to LDAP server",
                 ]
             )

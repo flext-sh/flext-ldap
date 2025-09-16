@@ -20,6 +20,7 @@ from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.exceptions import FlextLDAPExceptions
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
@@ -71,8 +72,8 @@ class FlextLDAPConfig(FlextConfig):
             "examples": [
                 {
                     "ldap_default_connection": {
-                        "server": "ldap://localhost",
-                        "port": 389,
+                        "server": FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI,
+                        "port": FlextLDAPConstants.LDAP.DEFAULT_PORT,
                         "use_ssl": False,
                     },
                     "ldap_bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
@@ -81,8 +82,8 @@ class FlextLDAPConfig(FlextConfig):
                 },
                 {
                     "ldap_default_connection": {
-                        "server": "ldaps://ldap.company.com",
-                        "port": 636,
+                        "server": FlextLDAPConstants.LDAP.DEFAULT_SSL_SERVER_URI,
+                        "port": FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT,
                         "use_ssl": True,
                     },
                     "ldap_bind_dn": "cn=service,ou=accounts,dc=company,dc=com",
@@ -690,8 +691,8 @@ class FlextLDAPConfig(FlextConfig):
 
         """
         connection_config = FlextLDAPConnectionConfig(
-            server="ldap://localhost",
-            port=389,
+            server=FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI,
+            port=FlextLDAPConstants.LDAP.DEFAULT_PORT,
         )
 
         config_data = {
@@ -730,8 +731,8 @@ class FlextLDAPConfig(FlextConfig):
 
         """
         connection_config = FlextLDAPConnectionConfig(
-            server="ldap://localhost",
-            port=3389,
+            server=FlextLDAPConstants.LDAP.DEFAULT_TEST_SERVER_URI,
+            port=FlextLDAPConstants.LDAP.DEFAULT_TEST_PORT,
         )
 
         config_data = {
@@ -770,8 +771,8 @@ class FlextLDAPConfig(FlextConfig):
 
         """
         connection_config = FlextLDAPConnectionConfig(
-            server="ldaps://ldap.company.com",
-            port=636,
+            server=FlextLDAPConstants.LDAP.DEFAULT_SSL_SERVER_URI,
+            port=FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT,
             use_ssl=True,
             verify_ssl=True,
         )
