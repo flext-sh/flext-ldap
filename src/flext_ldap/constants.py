@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from typing import Final, final
 
+from flext_core import FlextConstants
+
 
 @final
-class FlextLDAPConstants:
+class FlextLDAPConstants(FlextConstants):
     """LDAP Constants using SOURCE OF TRUTH pattern - FlextConstants.LDAP exclusively."""
 
     # LDAP constants - defined directly since FlextConstants.LDAP doesn't exist
@@ -21,9 +23,21 @@ class FlextLDAPConstants:
         DEFAULT_PORT = 389
         DEFAULT_SSL_PORT = 636
 
+        # Standard LDAP timeouts
+        DEFAULT_TIMEOUT = 30
+
         # Standard LDAP protocols
         PROTOCOL_LDAP = "ldap"
         PROTOCOL_LDAPS = "ldaps"
+
+        # Standard LDAP URIs - SINGLE SOURCE OF TRUTH
+        DEFAULT_SERVER_URI = "ldap://localhost"
+        DEFAULT_SSL_SERVER_URI = "ldaps://localhost"
+        DEFAULT_TEST_SERVER_URI = "ldap://localhost"
+
+        # Standard LDAP pool settings
+        DEFAULT_POOL_SIZE = 5
+        DEFAULT_TEST_PORT = 3389
 
         # Standard LDAP scopes
         SCOPE_BASE = "base"
@@ -151,32 +165,6 @@ class FlextLDAPConstants:
         VALID_LDAP_USER_NAME: Final[str] = "testuser"
         VALID_LDAP_USER_DESCRIPTION: Final[str] = "Test LDAP User"
 
-    # =========================================================================
-    # COMPATIBILITY ALIASES - For existing code using old constants
-    # =========================================================================
-
-    class Protocol:
-        """Protocol constants - aliases to FlextConstants.LDAP."""
-
-        DEFAULT_LDAP_PORT: Final[int] = 389
-        DEFAULT_LDAPS_PORT: Final[int] = 636
-        DEFAULT_GLOBAL_CATALOG_PORT: Final[int] = 3268
-        DEFAULT_GLOBAL_CATALOG_SSL_PORT: Final[int] = 3269
-        LDAP_VERSION_3: Final[int] = 3
-        LDAP_URL_PREFIX: Final[str] = "ldap://"
-        LDAPS_URL_PREFIX: Final[str] = "ldaps://"
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = 300
-        MAX_SEARCH_ENTRIES: Final[int] = 10000
-
-    class Connection:
-        """Connection constants - aliases to FlextConstants."""
-
-        DEFAULT_TIMEOUT: Final[int] = 30
-        MAX_RETRIES: Final[int] = 3
-        DEFAULT_PAGE_SIZE: Final[int] = 1000
-        DEFAULT_HOST: Final[str] = "localhost"
-        MAX_SIZE_LIMIT: Final[int] = 10000
-
     class Scopes:
         """LDAP search scope constants - string representation for LDAP protocol."""
 
@@ -203,6 +191,17 @@ class FlextLDAPConstants:
             "one": ONE,
             "sub": SUB,
         }
+
+    class Connection:
+        """LDAP connection constants."""
+
+        MAX_SIZE_LIMIT: Final[int] = 1000
+
+    class Protocol:
+        """LDAP protocol constants."""
+
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+        MAX_SEARCH_ENTRIES: Final[int] = 1000
 
     class LdapValidation:
         """LDAP validation constants for value objects."""

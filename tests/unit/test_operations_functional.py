@@ -22,11 +22,11 @@ from pydantic import ValidationError
 import flext_ldap
 import flext_ldap.operations as ops_module
 from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.operations import (
-    FlextLDAPOperations,
-    LDAPCommandProcessor,
-    UserConversionParams,
-)
+from flext_ldap.operations import FlextLDAPOperations
+
+# Use nested classes from FlextLDAPOperations directly
+LDAPCommandProcessor = FlextLDAPOperations.LDAPCommandProcessor
+UserConversionParams = FlextLDAPOperations.UserConversionParams
 
 
 class TestFlextLDAPOperationsFunctional:
@@ -220,7 +220,7 @@ class TestLDAPCommandProcessor:
                 connection_id="test_conn_123",
                 group_dn="cn=admins,ou=groups,dc=example,dc=com",
                 member_dn="cn=john,ou=users,dc=example,dc=com",
-                action="invalid_action",  # type: ignore[arg-type] # Testing invalid input
+                action="invalid_action",
             )
 
 
@@ -1297,10 +1297,10 @@ class TestUserConversionParamsDetailed:
 
         for config in edge_case_configs:
             params = UserConversionParams(
-                entries=config["entries"],  # type: ignore[arg-type] # Test data config
-                include_disabled=config["include_disabled"],  # type: ignore[arg-type] # Test data config
-                include_system=config["include_system"],  # type: ignore[arg-type] # Test data config
-                attribute_filter=config["attribute_filter"],  # type: ignore[arg-type] # Test data config
+                entries=config["entries"],
+                include_disabled=config["include_disabled"],
+                include_system=config["include_system"],
+                attribute_filter=config["attribute_filter"],
             )
 
             # Verify all configurations are valid

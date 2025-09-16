@@ -132,7 +132,7 @@ async def demonstrate_logging_integration() -> None:
 
     logger.debug(
         "Settings created successfully",
-        extra={"debug_enabled": settings.enable_debug_mode},
+        extra={"debug_enabled": settings.ldap_enable_debug_mode},
     )
 
     # Test validation with logging

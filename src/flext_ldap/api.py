@@ -215,9 +215,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
             if "objectClass" in typed_entry:
                 oc_value = typed_entry["objectClass"]
                 if isinstance(oc_value, list):
-                    typed_oc_list: list[str] = cast(
-                        "list[str]", oc_value
-                    )
+                    typed_oc_list: list[str] = cast("list[str]", oc_value)
                     object_classes = [str(oc) for oc in typed_oc_list]
                 else:
                     object_classes = [str(oc_value)]
@@ -426,9 +424,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
             # Handle members list safely
             members_raw = entry.get("member", [])
             members = (
-                cast("list[str]", members_raw)
-                if isinstance(members_raw, list)
-                else []
+                cast("list[str]", members_raw) if isinstance(members_raw, list) else []
             )
             group = FlextLDAPEntities.Group(
                 id=f"group_{cn}",
@@ -461,9 +457,7 @@ class FlextLDAPApi(FlextMixins.Loggable):
         """Remove member from group."""
         return await self._service.remove_member(group_dn, member_dn)
 
-    async def get_members(
-        self, group_dn: str
-    ) -> FlextResult[list[str]]:
+    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
         return await self._service.get_members(group_dn)
 

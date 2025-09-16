@@ -114,7 +114,7 @@ class FlextLDAPAdapters(FlextDomainService[object]):
         bind_dn: str | None = Field(None, description="Bind DN for authentication")
         bind_password: str | None = Field(None, description="Bind password")
         timeout: int = Field(
-            default=FlextLDAPConstants.Connection.DEFAULT_TIMEOUT,
+            default=FlextLDAPConstants.LDAP.DEFAULT_TIMEOUT,
             description="Connection timeout in seconds",
             gt=0,
             le=300,
@@ -603,16 +603,6 @@ class FlextLDAPAdapters(FlextDomainService[object]):
                 self._logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
-        async def _async_validation_wrapper(
-            self,
-            validation_func: Callable[[], str | None],
-        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
-            """Wrapper to make validation async compatible."""
-            error = validation_func()
-            if error:
-                return FlextResult[list[FlextLDAPEntities.Entry]].fail(error)
-            return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
-
         def _validate_modify_params(
             self,
             dn: str,
@@ -822,7 +812,7 @@ class FlextLDAPAdapters(FlextDomainService[object]):
             self.connection = FlextLDAPAdapters.ConnectionService(
                 client=FlextLDAPClient(),
                 config=FlextLDAPAdapters.ConnectionConfig(
-                    server="ldap://localhost:389",
+                    server=f"{FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI}:{FlextLDAPConstants.LDAP.DEFAULT_PORT}",
                     bind_dn="cn=admin,dc=example,dc=com",
                     bind_password=None,  # Use None for tests to avoid security warning
                 ),

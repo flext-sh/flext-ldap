@@ -15,6 +15,7 @@ from flext_core import FlextMixins, FlextResult, FlextTypes
 
 from flext_ldap.api import FlextLDAPApi
 from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.constants import FlextLDAPConstants
 
 # Python 3.13 type aliases for CLI operations
 type CliCommandResult = FlextResult[FlextTypes.Core.Dict]
@@ -67,7 +68,7 @@ class FlextLDAPCli(FlextMixins.Loggable):
         effective_server = server or (
             self._ldap_config.ldap_default_connection.server
             if self._ldap_config.ldap_default_connection
-            else "ldap://localhost"
+            else FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI
         )
         effective_bind_dn = (
             bind_dn or self._ldap_config.ldap_bind_dn or "cn=admin,dc=example,dc=com"

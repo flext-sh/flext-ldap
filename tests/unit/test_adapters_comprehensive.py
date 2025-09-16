@@ -814,13 +814,17 @@ class TestAdapterErrorHandling:
                             await method(None)  # Invalid parameter
                         except Exception as e:
                             logger = FlextLogger(__name__)
-                            logger.debug(f"Expected exception in async method {method_name}: {e}")
+                            logger.debug(
+                                f"Expected exception in async method {method_name}: {e}"
+                            )
                     else:
                         try:
                             method(None)  # Invalid parameter
                         except Exception as e:
                             logger = FlextLogger(__name__)
-                            logger.debug(f"Expected exception in sync method {method_name}: {e}")
+                            logger.debug(
+                                f"Expected exception in sync method {method_name}: {e}"
+                            )
                 except Exception as e:
                     # object exception provides coverage of error handling paths
                     logger = FlextLogger(__name__)

@@ -252,9 +252,7 @@ class FlextLDAPEntities(FlextMixins.Loggable):
         dn: str = Field(..., description="Distinguished Name")
         cn: str = Field(..., description="Group Common Name")
         description: str | None = Field(None, description="Group description")
-        members: list[str] = Field(
-            default_factory=list, description="Group member DNs"
-        )
+        members: list[str] = Field(default_factory=list, description="Group member DNs")
 
         @computed_field
         def member_count(self) -> int:

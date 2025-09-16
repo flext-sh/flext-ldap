@@ -10,6 +10,8 @@ from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
+from flext_ldap.constants import FlextLDAPConstants
+
 
 class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
@@ -27,13 +29,13 @@ class FlextLDAPConnectionConfig(FlextConfig):
 
     # Basic Connection Settings
     server: str = Field(
-        default="ldap://localhost",
+        default=FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI,
         description="LDAP server URI (e.g., 'ldap://host' or 'ldaps://host:636')",
         min_length=1,
     )
 
     port: int = Field(
-        default=389,
+        default=FlextLDAPConstants.LDAP.DEFAULT_PORT,
         description="LDAP server port (389 for LDAP, 636 for LDAPS)",
         ge=1,
         le=65535,
@@ -58,14 +60,14 @@ class FlextLDAPConnectionConfig(FlextConfig):
 
     # Connection Pool Settings
     timeout: int = Field(
-        default=30,
+        default=FlextLDAPConstants.LDAP.DEFAULT_TIMEOUT,
         description="Connection timeout in seconds",
         ge=1,
         le=300,
     )
 
     pool_size: int = Field(
-        default=5,
+        default=FlextLDAPConstants.LDAP.DEFAULT_POOL_SIZE,
         description="Maximum number of connections in pool",
         ge=1,
         le=50,
@@ -104,7 +106,8 @@ class FlextLDAPConnectionConfig(FlextConfig):
         v = v.strip()
 
         # Use basic pattern validation for URI validation
-        if not v.startswith(("ldap://", "ldaps://")):
+        if not v.startswith((FlextLDAPConstants.LDAP.PROTOCOL_LDAP + "://",
+                           FlextLDAPConstants.LDAP.PROTOCOL_LDAPS + "://")):
             msg = "LDAP URI must start with 'ldap://' or 'ldaps://'"
             raise ValueError(msg)
 
@@ -136,8 +139,10 @@ class FlextLDAPConnectionConfig(FlextConfig):
             # Server already includes port
             return self.server
 
-        # Add port if non-standard
-        standard_port = 636 if self.use_ssl else 389
+        # Add port if non-standard - use constants
+        standard_port = (FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT
+                        if self.use_ssl
+                        else FlextLDAPConstants.LDAP.DEFAULT_PORT)
         if self.port != standard_port:
             base_uri = self.server.rstrip("/")
             return f"{base_uri}:{self.port}"
