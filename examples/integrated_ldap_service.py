@@ -15,8 +15,7 @@ import os
 from urllib.parse import urlparse
 
 from flext_core import FlextLogger
-
-from flext_ldap import FlextLDAPApi, FlextLDAPConfig
+from flext_ldap import FlextLdapApi, FlextLdapConfig
 
 logger = FlextLogger(__name__)
 
@@ -36,7 +35,7 @@ async def main() -> None:
     await _demo_error_handling(ldap_service)
 
 
-async def _initialize_ldap_service() -> FlextLDAPApi:
+async def _initialize_ldap_service() -> FlextLdapApi:
     """Initialize LDAP service - Single Responsibility."""
     # Check if we're running with Docker environment variables
     if os.getenv("LDAP_TEST_SERVER"):
@@ -44,14 +43,14 @@ async def _initialize_ldap_service() -> FlextLDAPApi:
         urlparse(server_url)
 
         # Create service using current API
-        service = FlextLDAPApi(FlextLDAPConfig())
+        service = FlextLdapApi(FlextLdapConfig())
     else:
-        service = FlextLDAPApi()
+        service = FlextLdapApi()
 
     return service
 
 
-async def _verify_ldap_directory_structure(ldap_service: FlextLDAPApi) -> None:
+async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
     """Verify LDAP directory structure exists - CRITICAL for operations to work."""
     # Get connection parameters from environment
 
@@ -95,7 +94,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLDAPApi) -> None:
         logger.debug(f"Demo operation encountered exception: {e}")
 
 
-async def _demo_user_operations(ldap_service: FlextLDAPApi) -> None:
+async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
     """Demonstrate user operations - Single Responsibility."""
     # Focus on search operations which don't require special authentication
 
@@ -154,7 +153,7 @@ async def _demo_user_operations(ldap_service: FlextLDAPApi) -> None:
 
 
 async def _perform_user_search_validation(
-    ldap_service: FlextLDAPApi,
+    ldap_service: FlextLdapApi,
     _session_id: str,
 ) -> None:
     """Perform REAL user search validation with different filters."""
@@ -193,7 +192,7 @@ async def _perform_user_search_validation(
         entry.attributes.get("objectClass", [])
 
 
-async def _demo_group_operations(ldap_service: FlextLDAPApi) -> None:
+async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
     """Demonstrate group search operations - Single Responsibility."""
     # Get connection parameters from environment
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
@@ -244,7 +243,7 @@ async def _demo_group_operations(ldap_service: FlextLDAPApi) -> None:
 
 
 async def _perform_group_search_validation(
-    ldap_service: FlextLDAPApi,
+    ldap_service: FlextLdapApi,
     _session_id: str,
 ) -> None:
     """Perform REAL group search validation with different patterns."""
@@ -290,7 +289,7 @@ async def _perform_group_search_validation(
             entries = scope_result.value or []
 
 
-async def _demo_connection_management(ldap_service: FlextLDAPApi) -> None:
+async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     """Demonstrate connection management - Single Responsibility."""
     # Get connection parameters from environment
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
@@ -313,7 +312,7 @@ async def _demo_connection_management(ldap_service: FlextLDAPApi) -> None:
         logger.debug(f"Demo operation encountered exception: {e}")
 
 
-async def _demo_error_handling(_: FlextLDAPApi) -> None:
+async def _demo_error_handling(_: FlextLdapApi) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Demonstrate error handling with connection attempts
 

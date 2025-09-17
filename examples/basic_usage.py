@@ -14,7 +14,8 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_ldap import FlextLDAPApi, FlextLDAPEntities
+from flext_core import FlextLogger
+from flext_ldap import FlextLdapApi, FlextLdapModels
 
 
 async def demonstrate_basic_operations() -> None:
@@ -34,14 +35,14 @@ async def demonstrate_basic_operations() -> None:
     await _demo_error_handling(service)
 
 
-async def _initialize_ldap_service() -> FlextLDAPApi:
+async def _initialize_ldap_service() -> FlextLdapApi:
     """Initialize LDAP service - Single Responsibility."""
-    return FlextLDAPApi()
+    return FlextLdapApi()
 
 
-async def _demo_create_primary_user(_service: FlextLDAPApi) -> None:
+async def _demo_create_primary_user(_service: FlextLdapApi) -> None:
     """Create primary test user - Single Responsibility."""
-    FlextLDAPEntities.CreateUserRequest(
+    FlextLdapModels.CreateUserRequest(
         dn="cn=johndoe,ou=users,dc=example,dc=com",
         uid="johndoe",
         cn="John Doe",
@@ -57,23 +58,23 @@ async def _demo_create_primary_user(_service: FlextLDAPApi) -> None:
     # Simplified for compatibility - would normally use proper session management
 
 
-async def _demo_search_user(_service: FlextLDAPApi) -> None:
+async def _demo_search_user(_service: FlextLdapApi) -> None:
     """Search for user - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-async def _demo_update_user(_service: FlextLDAPApi) -> None:
+async def _demo_update_user(_service: FlextLdapApi) -> None:
     """Update user information - Single Responsibility."""
     # Split long line for readability
     # Simplified for compatibility - would normally use update_user() with session
 
 
-async def _demo_list_users(_service: FlextLDAPApi, context: str) -> None:
+async def _demo_list_users(_service: FlextLdapApi, context: str) -> None:
     """List all users with context - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
+async def _demo_create_additional_users(_service: FlextLdapApi) -> None:
     """Create additional test users - Single Responsibility."""
     # Split long lines for readability
     additional_users = [
@@ -87,7 +88,7 @@ async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
     ]
 
     for user_data in additional_users:
-        FlextLDAPEntities.CreateUserRequest(
+        FlextLdapModels.CreateUserRequest(
             dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
             uid=user_data["uid"],
             cn=user_data["cn"],
@@ -103,19 +104,19 @@ async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
         # Simplified for compatibility - would normally use create_user() with session
 
 
-async def _demo_delete_user(_service: FlextLDAPApi) -> None:
+async def _demo_delete_user(_service: FlextLdapApi) -> None:
     """Delete user demonstration - Single Responsibility."""
     # Simplified for compatibility - would normally use delete_user() with session
 
 
-async def _demo_error_handling(_service: FlextLDAPApi) -> None:
+async def _demo_error_handling(_service: FlextLdapApi) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Simplified for compatibility - would normally use proper error handling
 
 
 async def demonstrate_connection_handling() -> None:
     """Demonstrate connection handling capabilities."""
-    service = FlextLDAPApi()
+    service = FlextLdapApi()
 
     # Test connection to non-existent server (will fail gracefully)
     result = await service.connect(
@@ -131,7 +132,7 @@ async def demonstrate_connection_handling() -> None:
         await service.disconnect(session_id)
 
     # Show that operations still work in memory mode
-    FlextLDAPEntities.CreateUserRequest(
+    FlextLdapModels.CreateUserRequest(
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",
@@ -153,6 +154,7 @@ def print_library_info() -> None:
 
 async def main() -> None:
     """Run the main example function."""
+    logger = FlextLogger(__name__)
     print_library_info()
 
     try:
@@ -161,7 +163,10 @@ async def main() -> None:
 
     except Exception as e:
         # Graceful handling for demo purposes
-        print(f"Demo completed with handled exception: {type(e).__name__}")
+        logger.info(
+            "Demo completed with handled exception",
+            extra={"exception_type": type(e).__name__},
+        )
 
 
 if __name__ == "__main__":

@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from typing import Final, final
 
 from flext_core import FlextConstants
 
 
 @final
-class FlextLDAPConstants(FlextConstants):
+class FlextLdapConstants(FlextConstants):
     """LDAP Constants using SOURCE OF TRUTH pattern - FlextConstants.LDAP exclusively."""
 
     # LDAP constants - defined directly since FlextConstants.LDAP doesn't exist
@@ -29,6 +30,10 @@ class FlextLDAPConstants(FlextConstants):
         # Standard LDAP protocols
         PROTOCOL_LDAP = "ldap"
         PROTOCOL_LDAPS = "ldaps"
+
+        # Standard LDAP protocol prefixes for validation
+        PROTOCOL_PREFIX_LDAP = "ldap://"
+        PROTOCOL_PREFIX_LDAPS = "ldaps://"
 
         # Standard LDAP URIs - SINGLE SOURCE OF TRUTH
         DEFAULT_SERVER_URI = "ldap://localhost"
@@ -215,13 +220,26 @@ class FlextLDAPConstants(FlextConstants):
             r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
         )
         FILTER_PATTERN: Final[str] = r"^\(.+\)$"
-        EMAIL_PATTERN: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        # EMAIL_PATTERN removed - use FlextModels.EmailAddress instead
         MAX_FILTER_LENGTH: Final[int] = 8192
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
         REQUIRE_PASSWORD_COMPLEXITY: Final[bool] = True
 
+    class FeatureFlags:
+        """Feature toggles for progressive rollout."""
+
+        @staticmethod
+        def _env_enabled(flag_name: str, default: str = "0") -> bool:
+            value = os.environ.get(flag_name, default)
+            return value.lower() not in {"0", "false", "no"}
+
+        @classmethod
+        def dispatcher_enabled(cls) -> bool:
+            """Return True when dispatcher integration should be used."""
+            return cls._env_enabled("FLEXT_LDAP_ENABLE_DISPATCHER")
+
 
 __all__ = [
-    "FlextLDAPConstants",
+    "FlextLdapConstants",
 ]

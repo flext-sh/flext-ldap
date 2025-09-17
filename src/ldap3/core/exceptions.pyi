@@ -1,0 +1,3 @@
+class LDAPException(Exception): ...
+
+__all__ = ["LDAPException"]

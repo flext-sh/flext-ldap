@@ -63,16 +63,5 @@ __all__ = [
     "__version_tuple__",
 ]
 
-# Also expose string version on package attribute for convenience imports
-try:  # pragma: no cover - import-time convenience
-    import sys as _sys
-
-    _pkg = _sys.modules.get("flext_ldap")
-    if _pkg is not None:
-        setattr(_pkg, "__version__", __version__)
-        setattr(_pkg, "__version_info__", __version_info__)
-except Exception as e:
-    # Log version setting failure but don't raise to avoid import issues
-    import logging
-
-    logging.getLogger(__name__).debug(f"Failed to set version attributes: {e}")
+# Version attributes are available through explicit import:
+# from flext_ldap.__version__ import __version__, __version_info__

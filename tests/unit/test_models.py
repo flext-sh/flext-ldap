@@ -9,11 +9,10 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextTypes
+from flext_ldap import FlextLdapModels, FlextLdapValueObjects
 
-from flext_ldap import FlextLDAPEntities, FlextLDAPValueObjects
 
-
-class TestFlextLDAPDistinguishedName:
+class TestFlextLdapDistinguishedName:
     """Test DN value object with real validation logic."""
 
     def test_dn_creation_with_valid_dns(self) -> None:
@@ -27,7 +26,7 @@ class TestFlextLDAPDistinguishedName:
         ]
 
         for dn_str in valid_dns:
-            result = FlextLDAPValueObjects.DistinguishedName.create(dn_str)
+            result = FlextLdapValueObjects.DistinguishedName.create(dn_str)
             assert result.is_success, f"Valid DN should work: {dn_str} - {result.error}"
             # Use value since we verified is_success
             dn_obj = result.value
@@ -45,7 +44,7 @@ class TestFlextLDAPDistinguishedName:
         ]
 
         for invalid_dn in invalid_dns:
-            result = FlextLDAPValueObjects.DistinguishedName.create(invalid_dn)
+            result = FlextLdapValueObjects.DistinguishedName.create(invalid_dn)
             # Should either reject or handle gracefully
             if not result.is_success:
                 assert result.error  # Should have error message
@@ -54,20 +53,20 @@ class TestFlextLDAPDistinguishedName:
     def test_dn_equality_and_comparison(self) -> None:
         """Test DN equality and string representation."""
         dn_str = "cn=test,dc=example,dc=com"
-        dn1 = FlextLDAPValueObjects.DistinguishedName(value=dn_str)
-        dn2 = FlextLDAPValueObjects.DistinguishedName(value=dn_str)
+        dn1 = FlextLdapValueObjects.DistinguishedName(value=dn_str)
+        dn2 = FlextLdapValueObjects.DistinguishedName(value=dn_str)
 
         assert dn1.value == dn2.value
         assert str(dn1) == dn_str or repr(dn1)  # Should have string representation
 
 
-class TestFlextLDAPUser:
+class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
-    def create_test_user(self, **kwargs: object) -> FlextLDAPEntities.User:
+    def create_test_user(self, **kwargs: object) -> FlextLdapModels.User:
         """Helper to create test user with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
-        return FlextLDAPEntities.User(
+        return FlextLdapModels.User(
             id=str(kwargs.get("id", "test_user")),
             dn=str(kwargs.get("dn", "cn=testuser,ou=users,dc=example,dc=com")),
             uid=str(kwargs.get("uid", "testuser")),
@@ -125,13 +124,13 @@ class TestFlextLDAPUser:
 
         assert user.mail == "test@example.com"
         # Phone is stored in attributes dictionary, not as a direct field
-        phone_attr = user.get_attribute("telephoneNumber")
+        phone_attr = user.attributes.get("telephoneNumber", [])
         assert phone_attr == ["123-456-7890"]
 
         # Test getting attribute value
-        dept_attr = user.get_attribute("departmentNumber")
+        dept_attr = user.attributes.get("departmentNumber", [])
         assert dept_attr == ["100"]
-        assert user.get_attribute("nonexistent") is None
+        assert user.attributes.get("nonexistent", []) == []
 
         # Test getting multiple attribute values (objectClass should be in object_classes)
         assert "inetOrgPerson" in user.object_classes
@@ -159,13 +158,13 @@ class TestFlextLDAPUser:
         assert copied_user is not original_user
 
 
-class TestFlextLDAPGroup:
+class TestFlextLdapGroup:
     """Test LDAP group entity with real business logic."""
 
-    def create_test_group(self, **kwargs: object) -> FlextLDAPEntities.Group:
+    def create_test_group(self, **kwargs: object) -> FlextLdapModels.Group:
         """Helper to create test group with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
-        return FlextLDAPEntities.Group(
+        return FlextLdapModels.Group(
             id=str(kwargs.get("id", "test_group")),
             dn=str(kwargs.get("dn", "cn=testgroup,ou=groups,dc=example,dc=com")),
             cn=str(kwargs.get("cn", "Test Group")),
@@ -214,29 +213,25 @@ class TestFlextLDAPGroup:
         member_dn = "cn=user1,ou=users,dc=example,dc=com"
 
         # Initially no members
-        assert not group.has_member(member_dn)
+        assert member_dn not in group.members
         assert len(group.members) == 0
 
-        # Add member
-        add_result = group.add_member(member_dn)
-        assert add_result.is_success
-        assert group.has_member(member_dn)
-        assert len(group.members) == 1
+        # Add member by modifying the members list
+        group.members.append(member_dn)
         assert member_dn in group.members
+        assert len(group.members) == 1
 
         # Add second member
         member2_dn = "cn=user2,ou=users,dc=example,dc=com"
-        add_result2 = group.add_member(member2_dn)
-        assert add_result2.is_success
-        assert group.has_member(member_dn)
-        assert group.has_member(member2_dn)
+        group.members.append(member2_dn)
+        assert member_dn in group.members
+        assert member2_dn in group.members
         assert len(group.members) == 2
 
         # Remove member
-        remove_result = group.remove_member(member_dn)
-        assert remove_result.is_success
-        assert not group.has_member(member_dn)
-        assert group.has_member(member2_dn)
+        group.members.remove(member_dn)
+        assert member_dn not in group.members
+        assert member2_dn in group.members
         assert len(group.members) == 1
 
     def test_group_duplicate_member_handling(self) -> None:
@@ -259,13 +254,13 @@ class TestFlextLDAPGroup:
         assert group.members.count(member_dn) == 1
 
 
-class TestFlextLDAPEntities:
+class TestFlextLdapModels:
     """Test generic LDAP entry with real attribute handling."""
 
-    def create_test_entry(self, **kwargs: object) -> FlextLDAPEntities.Entry:
+    def create_test_entry(self, **kwargs: object) -> FlextLdapModels.Entry:
         """Helper to create test entry with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
-        return FlextLDAPEntities.Entry(
+        return FlextLdapModels.Entry(
             id=str(kwargs.get("id", "test_entry")),
             dn=str(kwargs.get("dn", "cn=testentry,dc=example,dc=com")),
             object_classes=cast(
@@ -346,12 +341,12 @@ class TestFlextLDAPEntities:
         assert "object class" in validation_result.error.lower()
 
 
-class TestFlextLDAPCreateUserRequest:
+class TestFlextLdapCreateUserRequest:
     """Test user creation request value object."""
 
     def test_create_user_request_basic_fields(self) -> None:
         """Test basic user creation request."""
-        request = FlextLDAPEntities.CreateUserRequest(
+        request = FlextLdapModels.CreateUserRequest(
             dn="cn=newuser,ou=users,dc=example,dc=com",
             uid="newuser",
             cn="New User",
@@ -367,7 +362,7 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_optional_fields(self) -> None:
         """Test user creation request with optional fields."""
-        request = FlextLDAPEntities.CreateUserRequest(
+        request = FlextLdapModels.CreateUserRequest(
             dn="cn=fulluser,ou=users,dc=example,dc=com",
             uid="fulluser",
             cn="Full User",
@@ -383,7 +378,7 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_to_user_entity(self) -> None:
         """Test converting user request to user entity."""
-        request = FlextLDAPEntities.CreateUserRequest(
+        request = FlextLdapModels.CreateUserRequest(
             dn="cn=convertuser,ou=users,dc=example,dc=com",
             uid="convertuser",
             cn="Convert User",
@@ -394,7 +389,7 @@ class TestFlextLDAPCreateUserRequest:
 
         user_entity = request.to_user_entity()
 
-        assert isinstance(user_entity, FlextLDAPEntities.User)
+        assert isinstance(user_entity, FlextLdapModels.User)
         assert user_entity.dn == request.dn
         assert user_entity.uid == request.uid
         assert user_entity.cn == request.cn
@@ -404,7 +399,7 @@ class TestFlextLDAPCreateUserRequest:
 
     def test_create_user_request_to_ldap_attributes(self) -> None:
         """Test converting user request to LDAP attributes dictionary."""
-        request = FlextLDAPEntities.CreateUserRequest(
+        request = FlextLdapModels.CreateUserRequest(
             dn="cn=ldapuser,ou=users,dc=example,dc=com",
             uid="ldapuser",
             cn="LDAP User",
@@ -424,7 +419,7 @@ class TestFlextLDAPCreateUserRequest:
     def test_create_user_request_validation(self) -> None:
         """Test user creation request validation."""
         # Valid request should pass
-        valid_request = FlextLDAPEntities.CreateUserRequest(
+        valid_request = FlextLdapModels.CreateUserRequest(
             dn="cn=validuser,ou=users,dc=example,dc=com",
             uid="validuser",
             cn="Valid User",
@@ -453,7 +448,7 @@ class TestBusinessRulesIntegration:
     def test_cross_entity_validation(self) -> None:
         """Test business rules that span multiple entities."""
         # Create user
-        user = FlextLDAPEntities.User(
+        user = FlextLdapModels.User(
             id="test_cross_user",
             dn="cn=crossuser,ou=users,dc=example,dc=com",
             uid="crossuser",
@@ -467,7 +462,7 @@ class TestBusinessRulesIntegration:
         )
 
         # Create group with user as member
-        group = FlextLDAPEntities.Group(
+        group = FlextLdapModels.Group(
             id="test_cross_group",
             dn="cn=crossgroup,ou=groups,dc=example,dc=com",
             cn="Cross Group",
@@ -489,7 +484,7 @@ class TestBusinessRulesIntegration:
     def test_domain_consistency_rules(self) -> None:
         """Test consistency rules within domain entities."""
         # Create user request
-        user_request = FlextLDAPEntities.CreateUserRequest(
+        user_request = FlextLdapModels.CreateUserRequest(
             dn="cn=consistent,ou=users,dc=example,dc=com",
             uid="consistent",
             cn="Consistent User",
@@ -559,7 +554,7 @@ class TestRealWorldScenarios:
 
         for user_data in realistic_users:
             # Create user entity with realistic data explicitly typed
-            user = FlextLDAPEntities.User(
+            user = FlextLdapModels.User(
                 id=f"test_{user_data['uid']}",
                 dn=str(user_data["dn"]),
                 uid=str(user_data["uid"]),
@@ -629,7 +624,7 @@ class TestRealWorldScenarios:
         for group_data in org_groups:
             # Create group with realistic organizational data
             cn_str = str(group_data["cn"])
-            group = FlextLDAPEntities.Group(
+            group = FlextLdapModels.Group(
                 id=f"test_group_{cn_str.lower().replace(' ', '_')}",
                 dn=str(group_data["dn"]),
                 cn=cn_str,

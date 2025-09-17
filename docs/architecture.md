@@ -52,11 +52,11 @@ FLEXT-LDAP implements Clean Architecture principles with clear separation of con
 
 ### **Core Entities**
 
-#### FlextLDAPUser
+#### FlextLdapUser
 
 ```python
 @dataclass
-class FlextLDAPUser:
+class FlextLdapUser:
     """LDAP user entity with business logic."""
     dn: str                    # Distinguished Name
     uid: str                   # User ID
@@ -74,11 +74,11 @@ class FlextLDAPUser:
         return [self._extract_cn_from_dn(dn) for dn in self.member_of]
 ```
 
-#### FlextLDAPGroup
+#### FlextLdapGroup
 
 ```python
 @dataclass
-class FlextLDAPGroup:
+class FlextLdapGroup:
     """LDAP group entity with membership management."""
     dn: str                    # Distinguished Name
     cn: str                    # Common Name
@@ -151,16 +151,16 @@ class LdapFilter:
 
 ### **API Facade**
 
-The `FlextLDAPApi` serves as the main entry point:
+The `FlextLdapApi` serves as the main entry point:
 
 ```python
-class FlextLDAPApi:
+class FlextLdapApi:
     """High-level LDAP API facade."""
 
-    def __init__(self, config: FlextLDAPConfig | None = None):
+    def __init__(self, config: FlextLdapConfig | None = None):
         self._config = config or get_flext_ldap_config()
-        self._container = FlextLDAPContainer().get_container()
-        self._service = FlextLDAPServices(self._container)
+        self._container = FlextLdapContainer().get_container()
+        self._service = FlextLdapServices(self._container)
 
     async def search_entries(
         self,
@@ -173,30 +173,30 @@ class FlextLDAPApi:
         self,
         username: str,
         password: str
-    ) -> FlextResult[FlextLDAPUser]:
+    ) -> FlextResult[FlextLdapUser]:
         """Authenticate user credentials."""
         return await self._service.authenticate_user(username, password)
 ```
 
 ### **Application Services**
 
-#### FlextLDAPServices
+#### FlextLdapServices
 
 Orchestrates domain operations:
 
 ```python
-class FlextLDAPServices:
+class FlextLdapServices:
     """Application services for LDAP operations."""
 
     def __init__(self, container: FlextContainer):
         self._container = container
-        self._user_repo = container.resolve(FlextLDAPUserRepository)
-        self._group_repo = container.resolve(FlextLDAPGroupRepository)
+        self._user_repo = container.resolve(FlextLdapUserRepository)
+        self._group_repo = container.resolve(FlextLdapGroupRepository)
 
     async def create_user(
         self,
         request: CreateUserRequest
-    ) -> FlextResult[FlextLDAPUser]:
+    ) -> FlextResult[FlextLdapUser]:
         """Create user with business validation."""
         # Domain validation
         user = self._create_user_entity(request)
@@ -216,28 +216,28 @@ class FlextLDAPServices:
 Abstract repositories define contracts:
 
 ```python
-class FlextLDAPUserRepository(ABC):
+class FlextLdapUserRepository(ABC):
     """Abstract user repository."""
 
     @abstractmethod
-    async def find_by_uid(self, uid: str) -> FlextResult[FlextLDAPUser]:
+    async def find_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
         """Find user by UID."""
 
     @abstractmethod
-    async def save(self, user: FlextLDAPUser) -> FlextResult[FlextLDAPUser]:
+    async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
         """Save user to directory."""
 ```
 
 Concrete implementations handle LDAP specifics:
 
 ```python
-class FlextLDAPUserRepositoryImpl(FlextLDAPUserRepository):
+class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
     """LDAP user repository implementation."""
 
-    def __init__(self, client: FlextLDAPClient):
+    def __init__(self, client: FlextLdapClient):
         self._client = client
 
-    async def find_by_uid(self, uid: str) -> FlextResult[FlextLDAPUser]:
+    async def find_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
         """Find user by UID with error handling."""
         search_result = await self._client.search(
             base_dn=self._get_users_base_dn(),
@@ -258,13 +258,13 @@ class FlextLDAPUserRepositoryImpl(FlextLDAPUserRepository):
 
 ### **LDAP Client Abstraction**
 
-The `FlextLDAPClient` abstracts ldap3 operations:
+The `FlextLdapClient` abstracts ldap3 operations:
 
 ```python
-class FlextLDAPClient:
+class FlextLdapClient:
     """LDAP client abstraction over ldap3."""
 
-    def __init__(self, config: FlextLDAPConfig):
+    def __init__(self, config: FlextLdapConfig):
         self._config = config
         self._connection: Optional[Connection] = None
 
@@ -341,20 +341,20 @@ Uses FlextContainer for service resolution:
 ```python
 # Container configuration
 container = FlextContainer()
-container.register(FlextLDAPClient, FlextLDAPClient)
-container.register(FlextLDAPUserRepository, FlextLDAPUserRepositoryImpl)
+container.register(FlextLdapClient, FlextLdapClient)
+container.register(FlextLdapUserRepository, FlextLdapUserRepositoryImpl)
 
 # Service resolution
-user_service = container.resolve(FlextLDAPUserService)
+user_service = container.resolve(FlextLdapUserService)
 ```
 
 ### **Configuration Management**
 
-Centralized configuration via FlextLDAPConfig:
+Centralized configuration via FlextLdapConfig:
 
 ```python
 @dataclass
-class FlextLDAPConfig:
+class FlextLdapConfig:
     """LDAP configuration with validation."""
     host: str
     port: int = 389

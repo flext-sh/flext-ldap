@@ -22,7 +22,7 @@ Enterprise LDAP Operations Library for FLEXT Framework - a production-ready LDAP
 - **Type Safety**: Strict MyPy configuration with zero tolerance for type errors
 - **Clean Architecture**: Domain, Application, Infrastructure layers properly separated
 - **FlextResult Pattern**: Railway-oriented error handling throughout
-- **Singleton Configuration**: FlextLDAPConfig as single source of truth
+- **Singleton Configuration**: FlextLdapConfig as single source of truth
 - **Docker Integration**: Real LDAP server testing with osixia/openldap
 
 ## Project Structure

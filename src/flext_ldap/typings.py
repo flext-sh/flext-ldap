@@ -12,8 +12,8 @@ from typing import Protocol
 from flext_core import FlextResult, FlextTypes
 
 
-class FlextLDAPTypes(FlextTypes):
-    """Single FlextLDAPTypes class inheriting from FlextTypes.
+class FlextLdapTypes(FlextTypes):
+    """Single FlextLdapTypes class inheriting from FlextTypes.
 
     Consolidates ALL LDAP types into a single class following FLEXT patterns.
     Everything from the previous type definitions is now available as
@@ -29,20 +29,20 @@ class FlextLDAPTypes(FlextTypes):
     Examples:
         Domain types::
 
-            dn: FlextLDAPTypes.LdapDomain.DistinguishedName = (
+            dn: FlextLdapTypes.LdapDomain.DistinguishedName = (
                 "cn=user,dc=example,dc=com"
             )
-            entry_id: FlextLDAPTypes.LdapDomain.EntityId = "user123"
+            entry_id: FlextLdapTypes.LdapDomain.EntityId = "user123"
 
         Search types::
 
-            filter_str: FlextLDAPTypes.Search.Filter = "(objectClass=person)"
-            scope: FlextLDAPTypes.Search.Scope = "subtree"
+            filter_str: FlextLdapTypes.Search.Filter = "(objectClass=person)"
+            scope: FlextLdapTypes.Search.Scope = "subtree"
 
         Entry types::
 
-            attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
-            value: FlextLDAPTypes.Entry.AttributeValue = ["admin", "user"]
+            attrs: FlextLdapTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
+            value: FlextLdapTypes.Entry.AttributeValue = ["admin", "user"]
 
     """
 
@@ -157,27 +157,7 @@ class FlextLDAPTypes(FlextTypes):
             ...
 
 
-# Core LDAP value types - only the ones used in code
-LdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
-LdapAttributeDict = FlextLDAPTypes.Entry.AttributeDict
-LdapSearchResult = FlextLDAPTypes.Entry.EntryResult
-
-# LDAP attribute and entry types - only used ones
-TLdapAttributes = FlextLDAPTypes.Entry.AttributeDict
-TLdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
-TLdapEntryData = FlextLDAPTypes.Entry.EntryData
-TLdapSearchResult = FlextLDAPTypes.Search.ResultList
-
-
 __all__ = [
-    # Main class following flext-core pattern
-    "FlextLDAPTypes",
-    "LdapAttributeDict",
-    # Essential aliases used in code
-    "LdapAttributeValue",
-    "LdapSearchResult",
-    "TLdapAttributeValue",
-    "TLdapAttributes",
-    "TLdapEntryData",
-    "TLdapSearchResult",
+    # Main class following flext-core pattern - NO ALIASES ALLOWED
+    "FlextLdapTypes",
 ]

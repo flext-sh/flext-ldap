@@ -45,11 +45,11 @@ FLEXT-LDAP serves as the centralized LDAP operations library for all directory s
 
 ```mermaid
 graph TB
-    A[FlextLDAPApi] --> B[FlextLDAPServices]
-    B --> C[FlextLDAPDomain]
-    B --> D[FlextLDAPRepositories]
-    D --> E[FlextLDAPOperations]
-    E --> F[FlextLDAPClient]
+    A[FlextLdapApi] --> B[FlextLdapServices]
+    B --> C[FlextLdapDomain]
+    B --> D[FlextLdapRepositories]
+    D --> E[FlextLdapOperations]
+    E --> F[FlextLdapClient]
     F --> G[ldap3 Library]
 
     subgraph "Clean Architecture Layers"
@@ -85,13 +85,13 @@ make validate  # Run quality checks
 
 ```python
 import asyncio
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 async def basic_ldap_search():
     """Basic LDAP search using FlextResult patterns."""
     api = get_flext_ldap_api()
 
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=person)",
         scope="subtree",

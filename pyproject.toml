@@ -60,6 +60,10 @@ flext-ldap = "flext_ldap.cli:main"
 extend = "../ruff-shared.toml"
 lint.isort.known-first-party = ["flext_ldap"]
 
+[tool.ruff.lint.per-file-ignores]
+"src/ldap3/core/exceptions.pyi" = ["N818"]  # LDAPException follows external library naming
+"src/flext_ldap/constants.py" = ["S105"]  # LDAP attribute names contain "password" string but are not secrets
+
 [tool.mypy]
 # Strict mode - enables all recommended checks
 strict = true
