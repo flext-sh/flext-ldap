@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.constants import FlextLdapConstants
 
 """Module documentation.
 
@@ -14,12 +14,12 @@ SPDX-License-Identifier: MIT
 """
 
 
-class TestFlextLDAPConstantsCoverage:
+class TestFlextLdapConstantsCoverage:
     """Test FLEXT LDAP constants for complete coverage."""
 
     def test_get_person_attributes(self) -> None:
         """Test get_person_attributes method."""
-        attributes = FlextLDAPConstants.Attributes.get_person_attributes()
+        attributes = FlextLdapConstants.Attributes.get_person_attributes()
 
         # Should return a list
         assert isinstance(attributes, list)
@@ -37,7 +37,7 @@ class TestFlextLDAPConstantsCoverage:
 
     def test_get_group_attributes(self) -> None:
         """Test get_group_attributes method."""
-        attributes = FlextLDAPConstants.Attributes.get_group_attributes()
+        attributes = FlextLdapConstants.Attributes.get_group_attributes()
 
         # Should return a list
         assert isinstance(attributes, list)
@@ -53,10 +53,10 @@ class TestFlextLDAPConstantsCoverage:
     def test_constants_module_structure(self) -> None:
         """Test that constants module has expected structure."""
         # Should have Attributes class
-        assert hasattr(FlextLDAPConstants, "Attributes")
+        assert hasattr(FlextLdapConstants, "Attributes")
 
         # Should have expected attribute constants
-        attrs = FlextLDAPConstants.Attributes
+        attrs = FlextLdapConstants.Attributes
         assert hasattr(attrs, "OBJECT_CLASS")
         assert hasattr(attrs, "COMMON_NAME")
         assert hasattr(attrs, "SURNAME")
@@ -69,7 +69,7 @@ class TestFlextLDAPConstantsCoverage:
 
     def test_attribute_values(self) -> None:
         """Test that attribute constants have expected values."""
-        attrs = FlextLDAPConstants.Attributes
+        attrs = FlextLdapConstants.Attributes
 
         # Test specific values
         assert attrs.OBJECT_CLASS == "objectClass"

@@ -16,17 +16,15 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict
+from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
-# Python 3.13 type aliases
-type LdapConnectionResult = FlextResult[Connection]
-type SearchResultDict = FlextTypes.Core.Dict
+# NO TYPE ALIASES ALLOWED - Use FlextResult[Connection] and FlextTypes.Core.Dict directly
 
 # FlextLogger available via FlextMixins.Service inheritance
 
@@ -45,12 +43,14 @@ SCOPE_MAP: dict[str, LdapScope] = {
 }
 
 
-# LDAPSearchStrategies ELIMINATED - consolidated into FlextLDAPClient nested classes
+# LDAPSearchStrategies ELIMINATED - consolidated into FlextLdapClient nested classes
 # Following flext-core consolidation pattern: ALL functionality within single class
 
 
-class FlextLDAPClient(
-    FlextMixins.Service, FlextMixins.Loggable, FlextProtocols.Infrastructure.Connection
+class FlextLdapClient(
+    FlextMixins.Service,
+    FlextMixins.Loggable,
+    FlextProtocols.Infrastructure.Connection,
 ):
     """UNIFIED LDAP client - consolidates all LDAP functionality in single class following SOLID."""
 
@@ -67,7 +67,7 @@ class FlextLDAPClient(
 
         def execute_search(
             self,
-            request: FlextLDAPEntities.SearchRequest,
+            request: FlextLdapModels.SearchRequest,
         ) -> FlextResult[FlextTypes.Core.Dict]:
             """Execute LDAP search using ldap3 connection."""
             if not self.connection or not getattr(self.connection, "bound", False):
@@ -130,9 +130,16 @@ class FlextLDAPClient(
                     if hasattr(entry, "entry_attributes") and entry.entry_attributes:
                         if isinstance(entry.entry_attributes, dict):
                             # Handle dict format (attribute names as keys)
-                            entry_attributes = list(entry.entry_attributes.keys())
+                            entry_attrs_dict = cast(
+                                "dict[str, object]",
+                                entry.entry_attributes,
+                            )
+                            entry_attributes = list(entry_attrs_dict.keys())
                             for attr_name in entry_attributes:
-                                attr_values = entry.entry_attributes.get(attr_name, [])
+                                attr_values = cast(
+                                    "list[object]",
+                                    entry_attrs_dict.get(attr_name, []),
+                                )
                                 if len(attr_values) == 1:
                                     entry_data[attr_name] = attr_values[0]
                                 elif attr_values:  # Only add non-empty lists
@@ -170,13 +177,13 @@ class FlextLDAPClient(
         def build_response(
             self,
             data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Build search response from entries and request data."""
             try:
                 entries = cast("list[dict[str, object]]", data.get("entries", []))
-                request = cast("FlextLDAPEntities.SearchRequest", data.get("request"))
+                request = cast("FlextLdapModels.SearchRequest", data.get("request"))
 
-                response = FlextLDAPEntities.SearchResponse(
+                response = FlextLdapModels.SearchResponse(
                     entries=entries,
                     total_count=len(entries),
                     has_more=len(entries) >= request.size_limit,
@@ -211,10 +218,15 @@ class FlextLDAPClient(
             # Parse URI to get connection details
             parsed = urlparse(uri)
             use_ssl = parsed.scheme == "ldaps"
-            host = parsed.hostname or FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1]
-            port = parsed.port or (FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT
-                                 if use_ssl
-                                 else FlextLDAPConstants.LDAP.DEFAULT_PORT)
+            host = (
+                parsed.hostname
+                or FlextLdapConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1]
+            )
+            port = parsed.port or (
+                FlextLdapConstants.LDAP.DEFAULT_SSL_PORT
+                if use_ssl
+                else FlextLdapConstants.LDAP.DEFAULT_PORT
+            )
 
             # Create server
             self._server = ldap3.Server(
@@ -324,7 +336,9 @@ class FlextLDAPClient(
 
         """
         return self._connection is not None and getattr(
-            self._connection, "bound", False
+            self._connection,
+            "bound",
+            False,
         )
 
     # =========================================================================
@@ -336,32 +350,32 @@ class FlextLDAPClient(
         base_dn: str,
         search_filter: str,
         scope: str = "subtree",
-    ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """LDAP search following flext-core protocol signature.
 
         This method follows the flext-core LdapConnection protocol.
         For advanced search operations, use search_with_request().
         """
         # Create SearchRequest from basic parameters
-        request = FlextLDAPEntities.SearchRequest(
+        request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
             filter_str=search_filter,
             scope=scope,
             attributes=None,  # Default value
-            size_limit=FlextLDAPConstants.Connection.MAX_SIZE_LIMIT,  # Use constant
-            time_limit=FlextLDAPConstants.LDAP.DEFAULT_TIMEOUT,  # Use constant
+            size_limit=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,  # Use constant
+            time_limit=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,  # Use constant
         )
         # Delegate to the advanced method
         return await self.search_with_request(request)
 
     async def search_with_request(
         self,
-        request: FlextLDAPEntities.SearchRequest,
-    ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
+        request: FlextLdapModels.SearchRequest,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Perform LDAP search with strategy pattern.
 
         Returns:
-            FlextResult[FlextLDAPEntities.SearchResponse]: Structured response with entries.
+            FlextResult[FlextLdapModels.SearchResponse]: Structured response with entries.
 
         """
         try:
@@ -409,7 +423,7 @@ class FlextLDAPClient(
                 base_dn=request.base_dn,
                 filter=request.filter_str,
                 count=len(
-                    cast("list[object]", entries_result.value.get("entries", []))
+                    cast("list[object]", entries_result.value.get("entries", [])),
                 ),
             )
 
@@ -435,12 +449,16 @@ class FlextLDAPClient(
             FlextResult[None]: Success or error result.
 
         """
-        # Convert to LdapAttributeDict and delegate to implementation
-        ldap_attributes: LdapAttributeDict = cast("LdapAttributeDict", dict(attributes))
+        # Convert to FlextLdapTypes.Entry.AttributeDict and delegate to implementation
+        ldap_attributes: FlextLdapTypes.Entry.AttributeDict = cast(
+            "FlextLdapTypes.Entry.AttributeDict", dict(attributes)
+        )
         return await self.add_entry(dn, ldap_attributes)
 
     async def add_entry(
-        self, dn: str, attributes: LdapAttributeDict
+        self,
+        dn: str,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Add new entry to LDAP directory.
 
@@ -471,7 +489,9 @@ class FlextLDAPClient(
             return FlextResult.fail(f"Add error: {e}")
 
     async def modify(
-        self, dn: str, modifications: FlextTypes.Core.Dict
+        self,
+        dn: str,
+        modifications: FlextTypes.Core.Dict,
     ) -> FlextResult[None]:
         """Modify existing LDAP entry following flext-core protocol.
 
@@ -479,14 +499,17 @@ class FlextLDAPClient(
             FlextResult[None]: Success or error result.
 
         """
-        # Convert to LdapAttributeDict and delegate to implementation
-        ldap_modifications: LdapAttributeDict = cast(
-            "LdapAttributeDict", dict(modifications)
+        # Convert to FlextLdapTypes.Entry.AttributeDict and delegate to implementation
+        ldap_modifications: FlextLdapTypes.Entry.AttributeDict = cast(
+            "FlextLdapTypes.Entry.AttributeDict",
+            dict(modifications),
         )
         return await self.modify_entry(dn, ldap_modifications)
 
     async def modify_entry(
-        self, dn: str, attributes: LdapAttributeDict
+        self,
+        dn: str,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Modify existing LDAP entry.
 
@@ -599,8 +622,12 @@ class FlextLDAPClient(
         try:
             # Build connection string from server info
             scheme = "ldaps" if getattr(self._server, "ssl", False) else "ldap"
-            host = getattr(self._server, "host", FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1])
-            port = getattr(self._server, "port", FlextLDAPConstants.LDAP.DEFAULT_PORT)
+            host = getattr(
+                self._server,
+                "host",
+                FlextLdapConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1],
+            )
+            port = getattr(self._server, "port", FlextLdapConstants.LDAP.DEFAULT_PORT)
             return f"{scheme}://{host}:{port}"
         except Exception:
             return "Connection string unavailable"
@@ -612,6 +639,6 @@ class FlextLDAPClient(
 
 __all__ = [
     "SCOPE_MAP",
-    "FlextLDAPClient",
+    "FlextLdapClient",
     "LdapScope",
 ]

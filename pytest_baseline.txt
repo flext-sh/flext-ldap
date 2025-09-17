@@ -10,47 +10,47 @@
   /home/marlonsc/flext/.venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: typeMap is deprecated. Please use TYPE_MAP instead.
     warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_validate_filter_invalid
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_validate_filter_invalid
   tests/unit/test_api_comprehensive.py:477: PytestWarning: The test <Function test_validate_filter_invalid> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_validate_filter_invalid(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_validate_dn_valid
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_validate_dn_valid
   tests/unit/test_api_comprehensive.py:426: PytestWarning: The test <Function test_validate_dn_valid> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_validate_dn_valid(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_validate_dn_invalid
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_validate_dn_invalid
   tests/unit/test_api_comprehensive.py:441: PytestWarning: The test <Function test_validate_dn_invalid> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_validate_dn_invalid(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_api_initialization_default
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_api_initialization_default
   tests/unit/test_api_comprehensive.py:21: PytestWarning: The test <Function test_api_initialization_default> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_api_initialization_default(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_factory_create_method
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_factory_create_method
   tests/unit/test_api_comprehensive.py:504: PytestWarning: The test <Function test_factory_create_method> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_factory_create_method(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_validate_filter_valid
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_validate_filter_valid
   tests/unit/test_api_comprehensive.py:461: PytestWarning: The test <Function test_validate_filter_valid> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_validate_filter_valid(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_generate_session_id
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_generate_session_id
   tests/unit/test_api_comprehensive.py:40: PytestWarning: The test <Function test_generate_session_id> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_generate_session_id(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_entry_attribute_handling_edge_cases
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_entry_attribute_handling_edge_cases
   tests/unit/test_api_comprehensive.py:634: PytestWarning: The test <Function test_entry_attribute_handling_edge_cases> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_entry_attribute_handling_edge_cases(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_get_entry_attribute_success
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_get_entry_attribute_success
   tests/unit/test_api_comprehensive.py:58: PytestWarning: The test <Function test_get_entry_attribute_success> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_get_entry_attribute_success(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_api_initialization_with_config
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_api_initialization_with_config
   tests/unit/test_api_comprehensive.py:31: PytestWarning: The test <Function test_api_initialization_with_config> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_api_initialization_with_config(self) -> None:
 
-tests/unit/test_api_comprehensive.py::TestFlextLDAPApiComprehensive::test_get_flext_ldap_api_function
+tests/unit/test_api_comprehensive.py::TestFlextLdapApiComprehensive::test_get_flext_ldap_api_function
   tests/unit/test_api_comprehensive.py:517: PytestWarning: The test <Function test_get_flext_ldap_api_function> is marked with '@pytest.mark.asyncio' but it is not an async function. Please remove the asyncio mark. If the test is not marked explicitly, check for global marks applied via 'pytestmark'.
     def test_get_flext_ldap_api_function(self) -> None:
 

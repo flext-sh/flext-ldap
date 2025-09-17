@@ -49,7 +49,7 @@ class UserService:
 
 ```python
 # Environment-based configuration following FLEXT patterns
-from flext_ldap import FlextLDAPConfig
+from flext_ldap import FlextLdapConfig
 from pydantic import BaseSettings
 
 class AppSettings(BaseSettings):
@@ -67,9 +67,9 @@ class AppSettings(BaseSettings):
     app_name: str = "flext-app"
     debug: bool = False
 
-    def get_ldap_config(self) -> FlextLDAPConfig:
+    def get_ldap_config(self) -> FlextLdapConfig:
         """Create LDAP configuration from app settings."""
-        return FlextLDAPConfig(
+        return FlextLdapConfig(
             host=self.ldap_host,
             port=self.ldap_port,
             use_ssl=self.ldap_use_ssl,
@@ -92,7 +92,7 @@ ldap_config = settings.get_ldap_config()
 ```python
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 from flext_core import FlextResult
 
 app = FastAPI(title="FLEXT LDAP API")
@@ -129,7 +129,7 @@ async def search_users(
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
         filter_str=filter_str,
         scope="subtree",
@@ -163,7 +163,7 @@ async def create_user(
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
-    create_request = FlextLDAPEntities.CreateUserRequest(
+    create_request = FlextLdapEntities.CreateUserRequest(
         dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
         uid=user_data["uid"],
         cn=user_data["cn"],
@@ -199,7 +199,7 @@ from django.contrib.auth.models import User
 from flext_ldap import get_flext_ldap_api
 import asyncio
 
-class FlextLDAPBackend(BaseBackend):
+class FlextLdapBackend(BaseBackend):
     """Django authentication backend using FLEXT-LDAP."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -257,7 +257,7 @@ class FlextLDAPBackend(BaseBackend):
 
 # settings.py
 AUTHENTICATION_BACKENDS = [
-    'myapp.auth.FlextLDAPBackend',
+    'myapp.auth.FlextLdapBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 ```
@@ -267,7 +267,7 @@ AUTHENTICATION_BACKENDS = [
 ```python
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 import asyncio
 
 class Command(BaseCommand):
@@ -291,7 +291,7 @@ class Command(BaseCommand):
         ldap_api = get_flext_ldap_api()
 
         # Search for all users
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapEntities.SearchRequest(
             base_dn="ou=users,dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -370,7 +370,7 @@ class Command(BaseCommand):
 ```python
 from flask import Flask, request, jsonify, g
 from functools import wraps
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 import asyncio
 
 app = Flask(__name__)
@@ -421,7 +421,7 @@ async def search_users():
 
     ldap_api = get_flext_ldap_api()
 
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
         filter_str=filter_str,
         scope="subtree",
@@ -458,7 +458,7 @@ if __name__ == '__main__':
 ```python
 import click
 import asyncio
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 @click.group()
 def ldap_cli():
@@ -493,7 +493,7 @@ def search(filter: str, base_dn: str, limit: int):
     async def search_entries():
         ldap_api = get_flext_ldap_api()
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapEntities.SearchRequest(
             base_dn=base_dn,
             filter_str=filter,
             scope="subtree",
@@ -523,7 +523,7 @@ def create_user(uid: str, cn: str, sn: str, mail: str):
     async def create():
         ldap_api = get_flext_ldap_api()
 
-        create_request = FlextLDAPEntities.CreateUserRequest(
+        create_request = FlextLdapEntities.CreateUserRequest(
             dn=f"cn={uid},ou=users,dc=example,dc=com",
             uid=uid,
             cn=cn,

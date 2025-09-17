@@ -12,7 +12,7 @@ from flext_core import FlextExceptions
 
 
 @final
-class FlextLDAPExceptions:
+class FlextLdapExceptions:
     """LDAP exceptions using FlextExceptions - ELIMINATES MASSIVE DUPLICATION.
 
     Simple aliases to FlextExceptions following SOURCE OF TRUTH pattern.
@@ -20,7 +20,7 @@ class FlextLDAPExceptions:
     """
 
     # =========================================================================
-    # DIRECT ALIASES TO FlextExceptions - NO DUPLICATION
+    # DIRECT ALIASES TO FlextExceptions
     # =========================================================================
 
     # Base exception types from FlextExceptions
@@ -40,5 +40,5 @@ class FlextLDAPExceptions:
 
 
 __all__ = [
-    "FlextLDAPExceptions",
+    "FlextLdapExceptions",
 ]

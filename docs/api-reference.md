@@ -14,9 +14,9 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLDAPConfig, optional): Configuration object. If None, uses default config.
+- `config` (FlextLdapConfig, optional): Configuration object. If None, uses default config.
 
-**Returns:** FlextLDAPApi instance
+**Returns:** FlextLdapApi instance
 
 **Example:**
 
@@ -28,7 +28,7 @@ api = get_flext_ldap_api()
 
 ---
 
-## 🏗️ FlextLDAPApi
+## 🏗️ FlextLdapApi
 
 Main API facade providing high-level LDAP operations.
 
@@ -45,7 +45,7 @@ Search LDAP directory entries.
 **Example:**
 
 ```python
-search_request = FlextLDAPEntities.SearchRequest(
+search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com",
     filter_str="(objectClass=person)",
     scope="subtree",
@@ -57,7 +57,7 @@ if result.is_success:
     entries = result.unwrap()
 ```
 
-### `async authenticate_user(username: str, password: str) -> FlextResult[FlextLDAPUser]`
+### `async authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`
 
 Authenticate user credentials against LDAP directory.
 
@@ -77,7 +77,7 @@ if result.is_success:
     print(f"Authenticated: {user.cn}")
 ```
 
-### `async create_user(request: CreateUserRequest) -> FlextResult[FlextLDAPUser]`
+### `async create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`
 
 Create a new user in LDAP directory.
 
@@ -90,7 +90,7 @@ Create a new user in LDAP directory.
 **Example:**
 
 ```python
-user_request = FlextLDAPEntities.CreateUserRequest(
+user_request = FlextLdapEntities.CreateUserRequest(
     dn="cn=jane.doe,ou=users,dc=example,dc=com",
     uid="jane.doe",
     cn="Jane Doe",
@@ -119,7 +119,7 @@ if result.is_success:
 
 ## 📊 Domain Entities
 
-### FlextLDAPEntities
+### FlextLdapEntities
 
 Container for domain entities and request objects.
 
@@ -149,7 +149,7 @@ User creation request data.
 - `mail` (str, optional): Email address
 - `object_classes` (List[str], optional): LDAP object classes
 
-#### FlextLDAPUser
+#### FlextLdapUser
 
 LDAP user entity.
 
@@ -168,7 +168,7 @@ LDAP user entity.
 - `is_valid() -> bool`: Validate user data
 - `get_display_name() -> str`: Get display name
 
-#### FlextLDAPGroup
+#### FlextLdapGroup
 
 LDAP group entity.
 
@@ -188,7 +188,7 @@ LDAP group entity.
 
 ## 🎯 Value Objects
 
-### FlextLDAPValueObjects
+### FlextLdapValueObjects
 
 Container for value objects.
 
@@ -208,7 +208,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-dn = FlextLDAPValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
+dn = FlextLdapValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
 print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 ```
@@ -232,11 +232,11 @@ LDAP search filter with validation.
 
 ```python
 # Create filters
-user_filter = FlextLDAPValueObjects.LdapFilter.equals("uid", "john.doe")
-person_filter = FlextLDAPValueObjects.LdapFilter.object_class("person")
+user_filter = FlextLdapValueObjects.LdapFilter.equals("uid", "john.doe")
+person_filter = FlextLdapValueObjects.LdapFilter.object_class("person")
 
 # Combine filters
-combined = FlextLDAPValueObjects.LdapFilter.and_filters(user_filter, person_filter)
+combined = FlextLdapValueObjects.LdapFilter.and_filters(user_filter, person_filter)
 ```
 
 #### LdapScope
@@ -253,7 +253,7 @@ Search scope enumeration.
 
 ## ⚙️ Configuration
 
-### FlextLDAPConfig
+### FlextLdapConfig
 
 LDAP connection configuration.
 
@@ -271,9 +271,9 @@ LDAP connection configuration.
 **Example:**
 
 ```python
-from flext_ldap import FlextLDAPConfig, set_flext_ldap_config
+from flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -289,7 +289,7 @@ set_flext_ldap_config(config)
 
 ## 🔧 Utilities
 
-### FlextLDAPTypeGuards
+### FlextLdapTypeGuards
 
 Type guard functions for runtime type checking.
 
@@ -300,17 +300,17 @@ Check if string is a valid distinguished name.
 **Example:**
 
 ```python
-from flext_ldap import FlextLDAPTypeGuards
+from flext_ldap import FlextLdapTypeGuards
 
-if FlextLDAPTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
+if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
     print("Valid DN")
 ```
 
-#### `is_ldap_entry(obj: Any) -> bool`
+#### `is_ldap_entry(obj: object) -> bool`
 
 Check if object is a valid LDAP entry.
 
-### FlextLDAPConstants
+### FlextLdapConstants
 
 LDAP protocol constants.
 
@@ -326,11 +326,11 @@ LDAP protocol constants.
 
 ## 🚨 Exceptions
 
-### FlextLDAPExceptions
+### FlextLdapExceptions
 
 LDAP-specific exception classes.
 
-#### FlextLDAPConnectionError
+#### FlextLdapConnectionError
 
 Connection-related errors.
 
@@ -339,7 +339,7 @@ Connection-related errors.
 - `message` (str): Error description
 - `server` (str, optional): LDAP server address
 
-#### FlextLDAPAuthenticationError
+#### FlextLdapAuthenticationError
 
 Authentication failures.
 
@@ -348,7 +348,7 @@ Authentication failures.
 - `message` (str): Error description
 - `username` (str, optional): Failed username
 
-#### FlextLDAPSearchError
+#### FlextLdapSearchError
 
 Search operation errors.
 
@@ -361,14 +361,14 @@ Search operation errors.
 **Example:**
 
 ```python
-from flext_ldap import FlextLDAPExceptions
+from flext_ldap import FlextLdapExceptions
 
 try:
     result = await api.search_entries(request)
     if result.is_failure:
         # Handle FlextResult error
         print(f"Search failed: {result.error}")
-except FlextLDAPExceptions.FlextLDAPConnectionError as e:
+except FlextLdapExceptions.FlextLdapConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 
@@ -425,8 +425,8 @@ All public APIs include comprehensive type annotations for IDE support and stati
 ```python
 async def search_entries(
     self,
-    request: FlextLDAPEntities.SearchRequest
-) -> FlextResult[List[FlextLDAPEntities.LdapEntry]]:
+    request: FlextLdapEntities.SearchRequest
+) -> FlextResult[List[FlextLdapEntities.LdapEntry]]:
     """Search LDAP entries with full type safety."""
 ```
 

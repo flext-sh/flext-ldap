@@ -15,11 +15,11 @@
 
 **ARCHITECTURAL EXCELLENCE** (Verified Implementation):
 
-- ✅ **FlextLDAPApi**: Enterprise API facade with comprehensive async operations
-- ✅ **FlextLDAPOperations** (2,370 lines): Sophisticated LDAP protocol implementation
-- ✅ **FlextLDAPDomain** (1,682 lines): Rich domain services and business logic
-- ✅ **FlextLDAPConfig** (900 lines): Enterprise configuration management
-- ✅ **FlextLDAPAdapters** (860 lines): Infrastructure adapters and integrations
+- ✅ **FlextLdapApi**: Enterprise API facade with comprehensive async operations
+- ✅ **FlextLdapOperations** (2,370 lines): Sophisticated LDAP protocol implementation
+- ✅ **FlextLdapDomain** (1,682 lines): Rich domain services and business logic
+- ✅ **FlextLdapConfig** (900 lines): Enterprise configuration management
+- ✅ **FlextLdapAdapters** (860 lines): Infrastructure adapters and integrations
 - ✅ **Complete Test Suite**: Unit, integration, e2e, and functional test coverage
 
 **ENTERPRISE INTEGRATION** (Production-Ready):
@@ -95,7 +95,7 @@ Priority: Building on the solid 11,242-line foundation
 
 **Objectives**:
 
-- [ ] **Large Module Optimization**: Refactor FlextLDAPOperations (2,370 lines) for maintainability
+- [ ] **Large Module Optimization**: Refactor FlextLdapOperations (2,370 lines) for maintainability
 - [ ] **Async Performance Tuning**: Optimize 120+ async methods for enterprise throughput
 - [ ] **Memory Profiling**: Profile and optimize memory usage for large directory operations
 - [ ] **Connection Pool Enhancement**: Implement advanced enterprise connection pooling strategies
@@ -173,7 +173,7 @@ Priority: Establishing flext-ldap as industry standard
 
 ```python
 # Enhanced domain modeling with 2025 patterns
-class FlextLDAPUser(FlextModels.AggregateRoot):
+class FlextLdapUser(FlextModels.AggregateRoot):
     """Enterprise user aggregate with business invariants."""
 
     def activate(self) -> FlextResult[UserActivatedEvent]:
@@ -192,7 +192,7 @@ class FlextLDAPUser(FlextModels.AggregateRoot):
 
 ```python
 # Enhanced service layer with advanced async patterns
-class FlextLDAPApplicationService:
+class FlextLdapApplicationService:
     """Enterprise application service with TaskGroup patterns."""
 
     async def bulk_user_provisioning(
@@ -315,7 +315,7 @@ make test                   # 90%+ coverage with real LDAP functionality
 **Current Integration** (Proven Working):
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 # Enterprise integration pattern
 api = get_flext_ldap_api()
@@ -328,10 +328,10 @@ if result.is_success:
 **Enhanced Integration** (2025 Vision):
 
 ```python
-from flext_ldap import FlextLDAPContext, FlextLDAPEvents
+from flext_ldap import FlextLdapContext, FlextLdapEvents
 
 # Advanced ecosystem integration
-async with FlextLDAPContext() as ldap:
+async with FlextLdapContext() as ldap:
     # Integrated observability
     # Automatic metrics collection
     # Event-driven integration

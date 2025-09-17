@@ -5,14 +5,16 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
+import os
+from typing import cast
 
 import docker
 import docker.errors
 import docker.models.containers
 import ldap3
-from flext_core import FlextLogger, FlextResult
 
-from flext_ldap import FlextLDAPConnectionConfig
+from flext_core import FlextLogger, FlextResult
+from flext_ldap import FlextLdapConnectionConfig
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
@@ -25,12 +27,14 @@ class LdapTestServer:
         self,
         container_name: str = "flext-ldap-test-server",
         port: int = 3390,
-        REDACTED_LDAP_BIND_PASSWORD_password: str = "REDACTED_LDAP_BIND_PASSWORD123",
+        REDACTED_LDAP_BIND_PASSWORD_password: str | None = None,
     ) -> None:
         """Initialize LDAP test server."""
         self.container_name = container_name
         self.port = port
-        self.REDACTED_LDAP_BIND_PASSWORD_password = REDACTED_LDAP_BIND_PASSWORD_password
+        self.REDACTED_LDAP_BIND_PASSWORD_password = REDACTED_LDAP_BIND_PASSWORD_password or os.getenv(
+            "LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"
+        )
         self.docker_client = docker.from_env()
         self._container: docker.models.containers.Container | None = None
 
@@ -168,7 +172,10 @@ class LdapTestServer:
             # Create organizational units first
             for ou_data in TEST_OUS:
                 try:
-                    conn.add(ou_data["dn"], attributes=ou_data["attributes"])
+                    conn.add(
+                        cast("str", ou_data["dn"]),
+                        attributes=cast("dict[str, object]", ou_data["attributes"]),
+                    )
                     logger.debug(f"Created OU: {ou_data['dn']}")
                 except Exception as e:
                     logger.debug(f"Failed to create OU {ou_data['dn']}: {e}")
@@ -176,7 +183,10 @@ class LdapTestServer:
             # Create test users
             for user_data in TEST_USERS:
                 try:
-                    conn.add(user_data["dn"], attributes=user_data["attributes"])
+                    conn.add(
+                        cast("str", user_data["dn"]),
+                        attributes=cast("dict[str, object]", user_data["attributes"]),
+                    )
                     logger.debug(f"Created user: {user_data['dn']}")
                 except Exception as e:
                     logger.debug(f"Failed to create user {user_data['dn']}: {e}")
@@ -184,7 +194,10 @@ class LdapTestServer:
             # Create test groups
             for group_data in TEST_GROUPS:
                 try:
-                    conn.add(group_data["dn"], attributes=group_data["attributes"])
+                    conn.add(
+                        cast("str", group_data["dn"]),
+                        attributes=cast("dict[str, object]", group_data["attributes"]),
+                    )
                     logger.debug(f"Created group: {group_data['dn']}")
                 except Exception as e:
                     logger.debug(f"Failed to create group {group_data['dn']}: {e}")
@@ -197,25 +210,24 @@ class LdapTestServer:
             logger.exception("Failed to setup test data")
             return FlextResult[bool].fail(f"Failed to setup test data: {e}")
 
-    def get_connection_config(self) -> FlextLDAPConnectionConfig:
+    def get_connection_config(self) -> FlextLdapConnectionConfig:
         """Get connection configuration for test server."""
-        return FlextLDAPConnectionConfig(
+        return FlextLdapConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             bind_password=self.REDACTED_LDAP_BIND_PASSWORD_password,
-            base_dn="dc=flext,dc=local",
             use_ssl=False,
             timeout=30,
         )
 
 
-def get_test_ldap_config() -> FlextLDAPConnectionConfig:
+def get_test_ldap_config() -> FlextLdapConnectionConfig:
     """Get test LDAP connection configuration."""
-    return FlextLDAPConnectionConfig(
+    REDACTED_LDAP_BIND_PASSWORD_password = os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123")
+    return FlextLdapConnectionConfig(
         server="ldap://localhost:3390",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        bind_password="REDACTED_LDAP_BIND_PASSWORD123",
-        base_dn="dc=flext,dc=local",
+        bind_password=REDACTED_LDAP_BIND_PASSWORD_password,
         use_ssl=False,
         timeout=30,
     )
@@ -243,7 +255,7 @@ async def wait_for_ldap_server(
                     conn = ldap3.Connection(
                         server=server,
                         user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-                        password="REDACTED_LDAP_BIND_PASSWORD123",
+                        password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
                         auto_bind=True,
                         authentication=ldap3.SIMPLE,
                     )

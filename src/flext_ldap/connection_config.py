@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from pathlib import Path
 
-from flext_core import FlextConfig, FlextLogger, FlextResult, FlextValidations
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_ldap.constants import FlextLDAPConstants
+from flext_core import FlextConfig, FlextLogger, FlextModels, FlextResult
+from flext_ldap.constants import FlextLdapConstants
 
 
-class FlextLDAPConnectionConfig(FlextConfig):
+class FlextLdapConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
     model_config = SettingsConfigDict(
@@ -29,14 +29,14 @@ class FlextLDAPConnectionConfig(FlextConfig):
 
     # Basic Connection Settings
     server: str = Field(
-        default=FlextLDAPConstants.LDAP.DEFAULT_SERVER_URI,
-        description="LDAP server URI (e.g., 'ldap://host' or 'ldaps://host:636')",
+        default=FlextLdapConstants.LDAP.DEFAULT_SERVER_URI,
+        description=f"LDAP server URI (e.g., '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAP}host' or '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAPS}host:{FlextLdapConstants.LDAP.DEFAULT_SSL_PORT}')",
         min_length=1,
     )
 
     port: int = Field(
-        default=FlextLDAPConstants.LDAP.DEFAULT_PORT,
-        description="LDAP server port (389 for LDAP, 636 for LDAPS)",
+        default=FlextLdapConstants.LDAP.DEFAULT_PORT,
+        description=f"LDAP server port ({FlextLdapConstants.LDAP.DEFAULT_PORT} for LDAP, {FlextLdapConstants.LDAP.DEFAULT_SSL_PORT} for LDAPS)",
         ge=1,
         le=65535,
     )
@@ -60,14 +60,14 @@ class FlextLDAPConnectionConfig(FlextConfig):
 
     # Connection Pool Settings
     timeout: int = Field(
-        default=FlextLDAPConstants.LDAP.DEFAULT_TIMEOUT,
+        default=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,
         description="Connection timeout in seconds",
         ge=1,
         le=300,
     )
 
     pool_size: int = Field(
-        default=FlextLDAPConstants.LDAP.DEFAULT_POOL_SIZE,
+        default=FlextLdapConstants.LDAP.DEFAULT_POOL_SIZE,
         description="Maximum number of connections in pool",
         ge=1,
         le=50,
@@ -97,18 +97,27 @@ class FlextLDAPConnectionConfig(FlextConfig):
     @field_validator("server")
     @classmethod
     def validate_server_uri(cls, v: str) -> str:
-        """Validate LDAP server URI format using FlextValidations - NO DUPLICATION."""
-        # Use FlextValidations instead of custom validation
-        if not FlextValidations.is_non_empty_string(v):
+        """Validate LDAP server URI format using FlextModels.Url validation."""
+        if not v or not v.strip():
             msg = "Server URI cannot be empty"
             raise ValueError(msg)
 
         v = v.strip()
 
-        # Use basic pattern validation for URI validation
-        if not v.startswith((FlextLDAPConstants.LDAP.PROTOCOL_LDAP + "://",
-                           FlextLDAPConstants.LDAP.PROTOCOL_LDAPS + "://")):
+        # Convert LDAP schemes to HTTP for FlextModels.Url validation
+        temp_url = v
+        if v.startswith("ldap://"):
+            temp_url = v.replace("ldap://", "http://", 1)
+        elif v.startswith("ldaps://"):
+            temp_url = v.replace("ldaps://", "https://", 1)
+        else:
             msg = "LDAP URI must start with 'ldap://' or 'ldaps://'"
+            raise ValueError(msg)
+
+        # Use FlextModels.Url for comprehensive validation
+        url_result = FlextModels.Url.create(temp_url)
+        if url_result.is_failure:
+            msg = f"Invalid LDAP URI format: {url_result.error}"
             raise ValueError(msg)
 
         return v
@@ -116,17 +125,17 @@ class FlextLDAPConnectionConfig(FlextConfig):
     @field_validator("ca_cert_file", "client_cert_file", "client_key_file")
     @classmethod
     def validate_cert_files(cls, v: Path | None) -> Path | None:
-        """Validate certificate files using FlextValidations - NO DUPLICATION."""
+        """Validate certificate files using direct validation."""
         if v is None:
             return v
 
-        # Use FlextValidations for file path validation
+        # Use direct validation for file path validation
         path_str = str(v)
-        if not FlextValidations.is_non_empty_string(path_str):
+        if not path_str or not path_str.strip():
             msg = "Certificate file path invalid"
             raise ValueError(msg)
 
-        # File existence validation - could be extended with FlextValidations.Rules.FileRules if available
+        # File existence validation
         if not v.exists():
             msg = f"Certificate file does not exist: {v}"
             raise ValueError(msg)
@@ -140,9 +149,11 @@ class FlextLDAPConnectionConfig(FlextConfig):
             return self.server
 
         # Add port if non-standard - use constants
-        standard_port = (FlextLDAPConstants.LDAP.DEFAULT_SSL_PORT
-                        if self.use_ssl
-                        else FlextLDAPConstants.LDAP.DEFAULT_PORT)
+        standard_port = (
+            FlextLdapConstants.LDAP.DEFAULT_SSL_PORT
+            if self.use_ssl
+            else FlextLdapConstants.LDAP.DEFAULT_PORT
+        )
         if self.port != standard_port:
             base_uri = self.server.rstrip("/")
             return f"{base_uri}:{self.port}"
@@ -160,7 +171,7 @@ class FlextLDAPConnectionConfig(FlextConfig):
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
                 self._logger.warning(
-                    "SSL verification enabled but no CA certificate file specified"
+                    "SSL verification enabled but no CA certificate file specified",
                 )
 
             return FlextResult.ok(None)
@@ -168,4 +179,4 @@ class FlextLDAPConnectionConfig(FlextConfig):
             return FlextResult.fail(f"Configuration validation failed: {e}")
 
 
-__all__ = ["FlextLDAPConnectionConfig"]
+__all__ = ["FlextLdapConnectionConfig"]

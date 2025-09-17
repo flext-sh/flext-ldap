@@ -12,82 +12,31 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar, cast, override
 
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+
 from flext_core import (
-    FlextCommands,
+    FlextDispatcher,
     FlextDomainService,
+    FlextHandlers,
+    FlextLogger,
     FlextMixins,
+    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValidations,
 )
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
-
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 # Advanced type definitions for domain
-type DomainEntity = (
-    FlextLDAPEntities.User | FlextLDAPEntities.Group | FlextLDAPEntities.Entry
-)
+type DomainEntity = FlextLdapModels.User | FlextLdapModels.Group | FlextLdapModels.Entry
 type ValidationResult = FlextResult[None]
 type DomainEvent = dict[str, object]
 
 
-class FlextLDAPDomain(FlextMixins.Loggable):
+class FlextLdapDomain(FlextMixins.Loggable):
     """LDAP domain functionality using FlextMixins.Loggable."""
-
-    # ==========================================================================
-    # CENTRALIZED VALIDATION USING FLEXTVALIDATIONS - ELIMINATE DUPLICATION
-    # ==========================================================================
-
-    class CentralizedValidations:
-        """Centralized validation using FlextValidations - SOURCE OF TRUTH for all LDAP validations."""
-
-        @staticmethod
-        def validate_dn(dn: str, context: str = "DN") -> FlextResult[None]:
-            """Centralized DN validation using FlextValidations - ELIMINATE ALL DUPLICATION."""
-            if not dn or not dn.strip():
-                return FlextResult[None].fail(f"{context} cannot be empty")
-
-            # Use simple validation for string
-            if not isinstance(dn, str) or len(dn.strip()) == 0:
-                return FlextResult[None].fail(f"{context} must be a non-empty string")
-
-            # Basic DN format validation (RFC 2253)
-            if not re.match(r"^[a-zA-Z0-9=,\s\-\.]+$", dn.strip()):
-                return FlextResult[None].fail(f"{context} contains invalid characters")
-
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_filter(filter_str: str) -> FlextResult[None]:
-            """Centralized LDAP filter validation - ELIMINATE ALL DUPLICATION."""
-            if not filter_str or not filter_str.strip():
-                return FlextResult[None].fail("Filter cannot be empty")
-
-            # Basic filter format validation
-            if not re.match(r"^[\(\)=&!|a-zA-Z0-9\s\-\.\*]+$", filter_str.strip()):
-                return FlextResult[None].fail("Filter contains invalid characters")
-
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_uri(uri: str) -> FlextResult[None]:
-            """Centralized URI validation - ELIMINATE ALL DUPLICATION."""
-            if not uri or not uri.strip():
-                return FlextResult[None].fail("URI cannot be empty")
-
-            # Validate LDAP URI format specifically
-            if not uri.strip().startswith(("ldap://", "ldaps://")):
-                return FlextResult[None].fail("URI must start with ldap:// or ldaps://")
-
-            return FlextResult[None].ok(None)
-
-    # ==========================================================================
-    # INTERNAL BASE CLASSES FOR DOMAIN PATTERNS
-    # ==========================================================================
 
     class DomainSpecification:
         """Internal base domain specification using flext-core patterns - ELIMINATE LOCAL ABC."""
@@ -116,8 +65,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         def __init__(self) -> None:
             """Initialize LDAP user specification with default values."""
             super().__init__(
-                name=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_NAME,
-                description=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_DESCRIPTION,
+                name=FlextLdapConstants.DefaultValues.VALID_LDAP_USER_NAME,
+                description=FlextLdapConstants.DefaultValues.VALID_LDAP_USER_DESCRIPTION,
             )
 
         @override
@@ -149,8 +98,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         def _validate_object_classes(self, object_classes: object) -> bool:
             """Validate object classes using pattern matching."""
             required_classes = [
-                FlextLDAPConstants.ObjectClasses.PERSON,
-                FlextLDAPConstants.ObjectClasses.TOP,
+                FlextLdapConstants.ObjectClasses.PERSON,
+                FlextLdapConstants.ObjectClasses.TOP,
             ]
 
             match object_classes:
@@ -191,8 +140,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Validate group attributes using Python 3.13 patterns."""
             object_classes = getattr(group, "object_classes", [])
             required_classes = [
-                FlextLDAPConstants.ObjectClasses.GROUP_OF_NAMES,
-                FlextLDAPConstants.ObjectClasses.TOP,
+                FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
+                FlextLdapConstants.ObjectClasses.TOP,
             ]
 
             match object_classes:
@@ -237,7 +186,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Validate DN string with length and pattern checks."""
             match len(dn_str):
                 case length if (
-                    length > FlextLDAPConstants.LdapValidation.MAX_FILTER_LENGTH
+                    length > FlextLdapConstants.LdapValidation.MAX_FILTER_LENGTH
                 ):
                     return False
                 case length if length == 0:
@@ -278,11 +227,11 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             # Use pattern matching for length validation
             match len(password):
                 case length if (
-                    length < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH
+                    length < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
                 ):
                     return False
                 case length if (
-                    length > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH
+                    length > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH
                 ):
                     return False
                 case _:
@@ -290,7 +239,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
         def _check_password_complexity(self, password: str) -> bool:
             """Check password complexity using enhanced patterns."""
-            match FlextLDAPConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
+            match FlextLdapConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
                 case False:
                     return True
                 case True:
@@ -313,10 +262,10 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Get detailed password validation error."""
             if not isinstance(candidate, str):
                 return "Password must be a string"
-            if len(candidate) < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-                return f"Password must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters"
-            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-                return f"Password cannot exceed {FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters"
+            if len(candidate) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
+                return f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters"
+            if len(candidate) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
+                return f"Password cannot exceed {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters"
             return "Password does not meet complexity requirements"
 
     class ActiveUserSpecification(DomainSpecification):
@@ -361,33 +310,35 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             return f"User account is not active: {status}"
 
     class EmailSpecification(DomainSpecification):
-        """Internal specification for email address validation."""
-
-        EMAIL_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            FlextLDAPConstants.LdapValidation.EMAIL_PATTERN,
-        )
+        """Email validation specification using FlextModels.EmailAddress."""
 
         def __init__(self) -> None:
-            """Initialize email specification with default values."""
+            """Initialize email specification using FlextModels validation."""
             super().__init__(
                 name="ValidEmail",
-                description="Validates email address format",
+                description="Validates email address format using FlextModels",
             )
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 pattern matching for email validation."""
+            """Check email validation using FlextModels.EmailAddress."""
             match candidate:
                 case str() as email_str if email_str.strip():
-                    return bool(self.EMAIL_PATTERN.match(email_str.strip()))
+                    email_result = FlextModels.EmailAddress.create(email_str.strip())
+                    return email_result.is_success
                 case _:
                     return False
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get email validation error."""
+            """Get email validation error using FlextModels."""
             if not isinstance(candidate, str):
                 return "Email must be a string"
+
+            email_result = FlextModels.EmailAddress.create(candidate)
+            if email_result.is_failure:
+                return f"Invalid email format: {email_result.error}"
+
             return f"Invalid email format: {candidate!r}"
 
     class CompleteUserSpecification(DomainSpecification):
@@ -399,17 +350,17 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 name="CompleteUser",
                 description="Validates complete user entity with all business rules",
             )
-            self._user_spec = FlextLDAPDomain.UserSpecification()
-            self._dn_spec = FlextLDAPDomain.DistinguishedNameSpecification()
-            self._active_spec = FlextLDAPDomain.ActiveUserSpecification()
+            self._user_spec = FlextLdapDomain.UserSpecification()
+            self._dn_spec = FlextLdapDomain.DistinguishedNameSpecification()
+            self._active_spec = FlextLdapDomain.ActiveUserSpecification()
 
         @property
-        def dn_spec(self) -> "FlextLDAPDomain.DistinguishedNameSpecification":
+        def dn_spec(self) -> "FlextLdapDomain.DistinguishedNameSpecification":
             """Access to DN specification for external validation."""
             return self._dn_spec
 
         @property
-        def active_spec(self) -> "FlextLDAPDomain.ActiveUserSpecification":
+        def active_spec(self) -> "FlextLdapDomain.ActiveUserSpecification":
             """Access to active user specification for external validation."""
             return self._active_spec
 
@@ -437,20 +388,20 @@ class FlextLDAPDomain(FlextMixins.Loggable):
     # INTERNAL DOMAIN SERVICE CLASSES
     # ==========================================================================
 
-    class UserManagementService(FlextDomainService[FlextLDAPEntities.User]):
+    class UserManagementService(FlextDomainService[FlextLdapModels.User]):
         """Internal domain service for user management business logic."""
 
         def __init__(self) -> None:
             """Initialize user management service with specifications."""
             super().__init__()
-            self._user_spec = FlextLDAPDomain.CompleteUserSpecification()
-            self._password_spec = FlextLDAPDomain.PasswordSpecification()
-            self._email_spec = FlextLDAPDomain.EmailSpecification()
+            self._user_spec = FlextLdapDomain.CompleteUserSpecification()
+            self._password_spec = FlextLdapDomain.PasswordSpecification()
+            self._email_spec = FlextLdapDomain.EmailSpecification()
 
-        def execute(self) -> FlextResult[FlextLDAPEntities.User]:
+        def execute(self) -> FlextResult[FlextLdapModels.User]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
             return FlextResult.ok(
-                FlextLDAPEntities.User(
+                FlextLdapModels.User(
                     id="default_user",
                     dn="cn=default,dc=example,dc=com",
                     uid="default",
@@ -467,7 +418,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate user creation business rules - REFACTORED to reduce returns."""
+            """Validate user creation business rules - to reduce returns."""
             try:
                 # Perform all validations in sequence
                 return self._perform_all_user_validations(user_data)
@@ -503,8 +454,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             required_fields = ["uid", "cn", "sn", "dn"]
             for field in required_fields:
                 if field not in user_data or not user_data[field]:
-                    return FlextResult.fail(f"Required field missing: {field}")
-            return FlextResult.ok(None)
+                    return FlextResult[object].fail(f"Required field missing: {field}")
+            return FlextResult[object].ok(None)
 
         def _validate_dn_field(
             self,
@@ -513,26 +464,24 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Validate DN field format."""
             dn = str(user_data["dn"])
             if not self._user_spec.dn_spec.is_satisfied_by(dn):
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     self._user_spec.dn_spec.get_validation_error(dn),
                 )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         def _validate_email_field(
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate email field using flext-core - SOURCE OF TRUTH."""
+            """Validate email field using FlextModels - SOURCE OF TRUTH."""
             if user_data.get("mail"):
                 email = str(user_data["mail"])
-                validation_result = FlextValidations.FieldValidators.validate_email(
-                    email
-                )
+                validation_result = FlextModels.create_validated_email(email)
                 if not validation_result.is_success:
-                    return FlextResult.fail(
-                        validation_result.error or "Email validation failed"
+                    return FlextResult[object].fail(
+                        validation_result.error or "Email validation failed",
                     )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         def _validate_password_field(
             self,
@@ -544,15 +493,15 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             if password_value:
                 password = str(password_value)
                 if not self._password_spec.is_satisfied_by(password):
-                    return FlextResult.fail(
+                    return FlextResult[object].fail(
                         self._password_spec.get_validation_error(password),
                     )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         def can_delete_user(
             self,
-            user: FlextLDAPEntities.User,
-            requesting_user: FlextLDAPEntities.User,
+            user: FlextLdapModels.User,
+            requesting_user: FlextLdapModels.User,
         ) -> FlextResult[bool]:
             """Check if user can be deleted by requesting user."""
             try:
@@ -601,7 +550,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
                 if (
                     len(username)
-                    < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH
+                    < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
                 ):  # MIN_USERNAME_LENGTH não existe, usar MIN_PASSWORD_LENGTH ou criar constante
                     return FlextResult.fail("Generated username too short")
 
@@ -611,19 +560,19 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 self.log_error("Username generation failed")
                 return FlextResult.fail(f"Username generation error: {e}")
 
-    class GroupManagementService(FlextDomainService[FlextLDAPEntities.Group]):
+    class GroupManagementService(FlextDomainService[FlextLdapModels.Group]):
         """Internal domain service for group management business logic."""
 
         def __init__(self) -> None:
             """Initialize group management service with specifications."""
             super().__init__()
-            self._group_spec = FlextLDAPDomain.GroupSpecification()
-            self._dn_spec = FlextLDAPDomain.DistinguishedNameSpecification()
+            self._group_spec = FlextLdapDomain.GroupSpecification()
+            self._dn_spec = FlextLdapDomain.DistinguishedNameSpecification()
 
-        def execute(self) -> FlextResult[FlextLDAPEntities.Group]:
+        def execute(self) -> FlextResult[FlextLdapModels.Group]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
             return FlextResult.ok(
-                FlextLDAPEntities.Group(
+                FlextLdapModels.Group(
                     id="default_group",
                     dn="cn=default,dc=example,dc=com",
                     cn="Default Group",
@@ -633,14 +582,14 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             )
 
         @property
-        def dn_spec(self) -> "FlextLDAPDomain.DistinguishedNameSpecification":
+        def dn_spec(self) -> "FlextLdapDomain.DistinguishedNameSpecification":
             """Access to DN specification for external validation."""
             return self._dn_spec
 
         def can_add_member(
             self,
-            group: FlextLDAPEntities.Group,
-            user: FlextLDAPEntities.User,
+            group: FlextLdapModels.Group,
+            user: FlextLdapModels.User,
             *,
             allow_inactive: bool = False,
         ) -> FlextResult[bool]:
@@ -654,7 +603,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
                 # Business rule: User must be active (unless explicitly allowed)
                 if not allow_inactive:
-                    active_spec = FlextLDAPDomain.ActiveUserSpecification()
+                    active_spec = FlextLdapDomain.ActiveUserSpecification()
                     if not active_spec.is_satisfied_by(user):
                         return FlextResult.fail(
                             "Only active users can be added to groups",
@@ -683,22 +632,22 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 required_fields = ["cn", "dn"]
                 for field in required_fields:
                     if field not in group_data or not group_data[field]:
-                        return FlextResult.fail(
+                        return FlextResult[object].fail(
                             f"Required field missing: {field}",
                         )
 
                 # Validate DN format
                 dn = str(group_data["dn"])
                 if not self._dn_spec.is_satisfied_by(dn):
-                    return FlextResult.fail(
+                    return FlextResult[object].fail(
                         self._dn_spec.get_validation_error(dn),
                     )
 
-                return FlextResult.ok(None)
+                return FlextResult[object].ok(None)
 
             except Exception as e:
                 self.log_error("Group validation failed")
-                return FlextResult.fail(f"Group validation error: {e}")
+                return FlextResult[object].fail(f"Group validation error: {e}")
 
     class PasswordService(FlextDomainService[str]):
         """Internal domain service for password management business logic."""
@@ -706,7 +655,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         def __init__(self) -> None:
             """Initialize password management service with specifications."""
             super().__init__()
-            self._password_spec = FlextLDAPDomain.PasswordSpecification()
+            self._password_spec = FlextLdapDomain.PasswordSpecification()
 
         def execute(self) -> FlextResult[str]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
@@ -721,21 +670,21 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             try:
                 # Validate new password strength
                 if not self._password_spec.is_satisfied_by(new_password):
-                    return FlextResult.fail(
+                    return FlextResult[object].fail(
                         self._password_spec.get_validation_error(new_password),
                     )
 
                 # Business rule: New password cannot be the same as current
                 if current_password == new_password:
-                    return FlextResult.fail(
+                    return FlextResult[object].fail(
                         "New password must be different from current",
                     )
 
-                return FlextResult.ok(None)
+                return FlextResult[object].ok(None)
 
             except Exception as e:
                 self.log_error("Password validation failed")
-                return FlextResult.fail(f"Password validation error: {e}")
+                return FlextResult[object].fail(f"Password validation error: {e}")
 
         def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
             """Generate a secure password following business rules - REFACTORED."""
@@ -754,10 +703,10 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
         def _validate_password_length(self, length: int) -> str | None:
             """Validate password length parameters - EXTRACTED METHOD."""
-            if length < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-                return f"Password length must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH}"
-            if length > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-                return f"Password length cannot exceed {FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH}"
+            if length < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
+                return f"Password length must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH}"
+            if length > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
+                return f"Password length cannot exceed {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH}"
             return None
 
         def _generate_password_with_retries(self, length: int) -> FlextResult[str]:
@@ -843,7 +792,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             user_id: str,
             user_dn: str,
             created_by: str,
-        ) -> "FlextLDAPDomain.UserCreatedEvent":
+        ) -> "FlextLdapDomain.UserCreatedEvent":
             """Create user created event using FlextModels.Event patterns."""
             return cls(
                 user_id=user_id,
@@ -864,7 +813,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             user_id: str,
             user_dn: str,
             deleted_by: str,
-        ) -> "FlextLDAPDomain.UserDeletedEvent":
+        ) -> "FlextLdapDomain.UserDeletedEvent":
             """Create user deleted event using FlextModels.Event patterns."""
             return cls(
                 user_id=user_id,
@@ -885,7 +834,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             group_dn: str,
             member_dn: str,
             added_by: str,
-        ) -> "FlextLDAPDomain.GroupMemberAddedEvent":
+        ) -> "FlextLdapDomain.GroupMemberAddedEvent":
             """Create group member added event using FlextModels.Event patterns."""
             return cls(
                 group_dn=group_dn,
@@ -906,7 +855,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             cls,
             user_dn: str,
             changed_by: str,
-        ) -> "FlextLDAPDomain.PasswordChangedEvent":
+        ) -> "FlextLdapDomain.PasswordChangedEvent":
             """Create password changed event using FlextModels.Event patterns."""
             return cls(
                 user_dn=user_dn,
@@ -968,11 +917,11 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     return {}
 
         @staticmethod
-        def safe_ldap_attributes(value: object) -> LdapAttributeDict:
+        def safe_ldap_attributes(value: object) -> FlextLdapTypes.Entry.AttributeDict:
             """Convert to LDAP attributes using Python 3.13 pattern matching."""
             match value:
                 case dict() as attrs:
-                    result: LdapAttributeDict = {}
+                    result: FlextLdapTypes.Entry.AttributeDict = {}
                     for k, v in attrs.items():
                         match v:
                             case None:
@@ -996,7 +945,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Initialize the instance."""
             self.params = params
             self.entity_type = entity_type
-            self.builder = FlextLDAPDomain.EntityParameterBuilder()
+            self.builder = FlextLdapDomain.EntityParameterBuilder()
 
         def build(self) -> object:
             """Template method for building entities - eliminates duplication."""
@@ -1056,7 +1005,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                         "given_name": self.builder.safe_str(optional.get("given_name")),
                         "mail": self.builder.safe_str(optional.get("mail")),
                         "user_password": self.builder.safe_str(
-                            optional.get("user_password")
+                            optional.get("user_password"),
                         ),
                     }
                 case _:
@@ -1066,19 +1015,20 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                         "cn": self.builder.safe_str(self.params.get("cn")) or "",
                         "sn": self.builder.safe_str(self.params.get("sn")) or "",
                         "given_name": self.builder.safe_str(
-                            self.params.get("given_name")
+                            self.params.get("given_name"),
                         ),
                         "mail": self.builder.safe_str(self.params.get("mail")),
                         "user_password": self.builder.safe_str(
-                            self.params.get("user_password")
+                            self.params.get("user_password"),
                         ),
                     }
 
         def _create_entity(
-            self, all_params: FlextTypes.Core.Dict
-        ) -> FlextLDAPEntities.User:
-            """Create FlextLDAPEntities.User entity."""
-            return FlextLDAPEntities.User(
+            self,
+            all_params: FlextTypes.Core.Dict,
+        ) -> FlextLdapModels.User:
+            """Create FlextLdapModels.User entity."""
+            return FlextLdapModels.User(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
                 uid=str(all_params["uid"]),
@@ -1096,13 +1046,18 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     for x in cast("list[object]", all_params.get("object_classes", []))
                 ],
                 attributes={
-                    str(k): v
+                    str(k): [str(item) for item in v]
+                    if isinstance(v, list)
+                    else [str(v)]
                     for k, v in cast(
-                        "LdapAttributeDict", all_params.get("attributes", {})
+                        "FlextLdapTypes.Entry.AttributeDict",
+                        all_params.get("attributes", {}),
                     ).items()
                 },
                 status=str(all_params.get("status", "active")),
-                modified_at=cast("datetime | None", all_params.get("modified_at")),
+                modified_at=str(all_params.get("modified_at"))
+                if all_params.get("modified_at")
+                else None,
             )
 
     class GroupEntityBuilder(_BaseEntityBuilder):
@@ -1119,7 +1074,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     return {
                         "cn": self.builder.safe_str(cn) or "",
                         "description": self.builder.safe_str(
-                            optional.get("description")
+                            optional.get("description"),
                         ),
                         "members": self.builder.safe_list(optional.get("members", [])),
                     }
@@ -1128,18 +1083,19 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     return {
                         "cn": self.builder.safe_str(self.params.get("cn")) or "",
                         "description": self.builder.safe_str(
-                            self.params.get("description")
+                            self.params.get("description"),
                         ),
                         "members": self.builder.safe_list(
-                            self.params.get("members", [])
+                            self.params.get("members", []),
                         ),
                     }
 
         def _create_entity(
-            self, all_params: FlextTypes.Core.Dict
-        ) -> FlextLDAPEntities.Group:
-            """Create FlextLDAPEntities.Group entity."""
-            return FlextLDAPEntities.Group(
+            self,
+            all_params: FlextTypes.Core.Dict,
+        ) -> FlextLdapModels.Group:
+            """Create FlextLdapModels.Group entity."""
+            return FlextLdapModels.Group(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
                 cn=str(all_params["cn"]),
@@ -1154,20 +1110,25 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     for x in cast("list[object]", all_params.get("object_classes", []))
                 ],
                 attributes={
-                    str(k): v
+                    str(k): [str(item) for item in v]
+                    if isinstance(v, list)
+                    else [str(v)]
                     for k, v in cast(
-                        "LdapAttributeDict", all_params.get("attributes", {})
+                        "FlextLdapTypes.Entry.AttributeDict",
+                        all_params.get("attributes", {}),
                     ).items()
                 },
                 status=str(all_params.get("status", "active")),
-                modified_at=cast("datetime | None", all_params.get("modified_at")),
+                modified_at=str(all_params.get("modified_at"))
+                if all_params.get("modified_at")
+                else None,
             )
 
     # ==========================================================================
-    # COMMAND PATTERNS - Using FlextCommands for complex operations
+    # COMMAND PATTERNS - Using Flext CQRS for complex operations
     # ==========================================================================
 
-    class CreateUserCommand(FlextCommands.Models.Command):
+    class CreateUserCommand(FlextModels.Command):
         """Command for creating users using CQRS pattern."""
 
         user_data: FlextTypes.Core.Dict
@@ -1182,94 +1143,140 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             """Validate user creation data using Python 3.13 match expression."""
             # Use structural pattern matching for validation
             match self.user_data:
-                case {"uid": uid, "cn": cn} if uid and cn:
-                    return FlextResult.ok(data=True)
+                case {"uid": str(uid), "cn": str(cn)} if uid.strip() and cn.strip():
+                    return FlextResult[bool].ok(data=True)
                 case data if not data.get("uid"):
-                    return FlextResult.fail("uid is required")
+                    return FlextResult[bool].fail("uid is required")
                 case data if not data.get("cn"):
-                    return FlextResult.fail("cn is required")
+                    return FlextResult[bool].fail("cn is required")
+                case data if (
+                    isinstance(data.get("uid"), str) and not str(data["uid"]).strip()
+                ):
+                    return FlextResult[bool].fail("uid cannot be empty or whitespace")
+                case data if (
+                    isinstance(data.get("cn"), str) and not str(data["cn"]).strip()
+                ):
+                    return FlextResult[bool].fail("cn cannot be empty or whitespace")
                 case _:
-                    return FlextResult.fail("Invalid user data structure")
+                    return FlextResult[bool].fail("Invalid user data structure")
 
-    class CreateUserCommandHandler(
-        FlextCommands.Handlers.CommandHandler[object, object]
-    ):
-        """Handler for user creation commands using FlextCommands pattern."""
+    class UserCreationDomainService(FlextMixins.Loggable):
+        """Domain service for user creation business logic - SOLID compliant.
+
+        Follows Single Responsibility: Only user creation business rules
+        Follows Dependency Inversion: No infrastructure dependencies
+        """
 
         def __init__(self) -> None:
-            """Initialize user creation handler with password service."""
+            """Initialize domain service."""
             super().__init__()
-            self._password_service = FlextLDAPDomain.PasswordService()
+            self._password_service = FlextLdapDomain.PasswordService()
 
-        def handle(
-            self,
-            command: object,
-        ) -> FlextResult[object]:
-            """Handle user creation command with full validation."""
-            cmd = cast("FlextLDAPDomain.CreateUserCommand", command)
-            validation_result = cmd.validate_command()
-            if not validation_result.is_success:
-                return FlextResult.fail(
-                    validation_result.error or "Validation failed",
-                )
+        def validate_user_creation_business_rules(
+            self, command: "FlextLdapDomain.CreateUserCommand"
+        ) -> FlextResult[None]:
+            """Validate business rules for user creation - pure domain logic."""
+            validation_result = command.validate_command()
+            if validation_result.is_success:
+                return FlextResult.ok(None)
+            return FlextResult.fail(validation_result.error or "Validation failed")
 
-            try:
-                # Extract and validate user parameters
-                user_params = self._extract_user_parameters(cmd.user_data)
-
-                # Create user entity using model_validate for type safety
-                user = FlextLDAPEntities.User.model_validate(user_params)
-                return FlextResult.ok(user)
-
-            except Exception as e:
-                error_msg = f"User creation command failed: {e!s}"
-                return FlextResult.fail(error_msg)
-
-        def _extract_user_parameters(
+        def extract_user_parameters(
             self,
             user_data: FlextTypes.Core.Dict,
-        ) -> FlextTypes.Core.Dict:
-            """Extract user parameters using Python 3.13 pattern matching."""
-            # Use structural pattern matching for cleaner parameter extraction
-            match user_data:
-                case {"uid": uid, "cn": cn, "dn": dn, **rest} if uid and cn and dn:
-                    return self._build_complete_user_params(
-                        str(uid), str(cn), str(dn), rest
-                    )
-                case {"uid": uid, "cn": cn, **rest} if uid and cn:
-                    # Generate DN if missing
-                    base_dn = rest.get("base_dn", "dc=example,dc=com")
-                    dn = f"uid={uid},ou=users,{base_dn}"
-                    return self._build_complete_user_params(
-                        str(uid), str(cn), str(dn), rest
-                    )
-                case _:
-                    # Fallback to safe extraction
-                    return self._extract_with_defaults(user_data)
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Extract user parameters - domain business logic only."""
+            try:
+                # Use structural pattern matching for cleaner parameter extraction
+                match user_data:
+                    case {"uid": uid, "cn": cn, "dn": dn, **rest} if uid and cn and dn:
+                        params = self._build_complete_user_params(
+                            str(uid),
+                            str(cn),
+                            str(dn),
+                            rest,
+                        )
+                    case {"uid": uid, "cn": cn, **rest} if uid and cn:
+                        # Generate DN if missing - business rule
+                        base_dn = rest.get("base_dn", "dc=example,dc=com")
+                        dn = f"uid={uid},ou=users,{base_dn}"
+                        params = self._build_complete_user_params(
+                            str(uid),
+                            str(cn),
+                            dn,
+                            rest,
+                        )
+                    case {"uid": uid, **rest} if uid:
+                        # Generate minimal parameters - business rule
+                        cn = rest.get("cn", uid)
+                        base_dn = rest.get("base_dn", "dc=example,dc=com")
+                        dn = f"uid={uid},ou=users,{base_dn}"
+                        params = self._build_complete_user_params(
+                            str(uid),
+                            str(cn),
+                            dn,
+                            rest,
+                        )
+                    case _:
+                        params = self._extract_with_defaults(user_data)
+
+                return FlextResult.ok(params)
+            except Exception as e:
+                return FlextResult.fail(f"Parameter extraction failed: {e}")
+
+        def create_user_entity(
+            self, user_params: FlextTypes.Core.Dict
+        ) -> FlextResult[FlextLdapModels.User]:
+            """Create user entity - pure domain logic."""
+            try:
+                # Map extracted parameters to User model fields
+                mapped_params = {
+                    "id": user_params.get("extract_uid", user_params.get("uid", "")),
+                    "dn": user_params.get("extract_dn", user_params.get("dn", "")),
+                    "uid": user_params.get("extract_uid", user_params.get("uid")),
+                    "cn": user_params.get("extract_cn", user_params.get("cn")),
+                    "sn": user_params.get("extract_sn", user_params.get("sn")),
+                    "mail": user_params.get("extract_mail", user_params.get("mail")),
+                    "object_classes": user_params.get(
+                        "extract_object_class", user_params.get("objectClass", [])
+                    ),
+                }
+                # Remove None values
+                mapped_params = {
+                    k: v for k, v in mapped_params.items() if v is not None
+                }
+
+                user = FlextLdapModels.User.model_validate(mapped_params)
+                return FlextResult.ok(user)
+            except Exception as e:
+                return FlextResult.fail(f"User entity creation failed: {e}")
 
         def _build_complete_user_params(
-            self, uid: str, cn: str, dn: str, rest: dict[str, object]
+            self,
+            uid: str,
+            cn: str,
+            dn: str,
+            additional_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Build complete user parameters with type safety."""
-            # Extract surname from common name if not provided
-            sn = str(rest.get("sn", cn.rsplit(maxsplit=1)[-1] if cn else ""))
-
+            """Build complete user parameters with business defaults."""
+            sn = additional_data.get("sn", cn.rsplit(maxsplit=1)[-1] if cn else "User")
             return {
                 "extract_uid": uid,
                 "extract_cn": cn,
                 "extract_sn": sn,
-                "extract_mail": str(rest.get("mail", "")),
+                "extract_mail": str(additional_data.get("mail", "")),
                 "extract_dn": dn,
-                "extract_object_class": rest.get(
+                "extract_object_class": additional_data.get(
                     "objectClass",
                     ["inetOrgPerson", "organizationalPerson", "person", "top"],
                 ),
             }
 
         def _extract_with_defaults(
-            self, user_data: FlextTypes.Core.Dict
+            self,
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Extract parameters with safe defaults."""
+            """Extract parameters with safe business defaults."""
             return {
                 "extract_uid": str(user_data.get("uid", "")),
                 "extract_cn": str(user_data.get("cn", "")),
@@ -1282,33 +1289,119 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 ),
             }
 
+    class CreateUserCommandHandler(
+        FlextHandlers["FlextLdapDomain.CreateUserCommand", FlextLdapModels.User]
+    ):
+        """Command handler for user creation using modern FlextHandlers pattern."""
+
+        # Inherit DEFAULT_MODE from parent class
+
+        def __init__(self) -> None:
+            """Initialize command handler with FlextHandlers base."""
+            super().__init__(handler_mode="command")
+            self._user_creation_service = FlextLdapDomain.UserCreationDomainService()
+
+        def handle(
+            self,
+            message: "FlextLdapDomain.CreateUserCommand",
+        ) -> FlextResult[FlextLdapModels.User]:
+            """Handle user creation command using domain service."""
+            # Validate command business rules
+            validation_result = (
+                self._user_creation_service.validate_user_creation_business_rules(
+                    message
+                )
+            )
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.User].fail(
+                    validation_result.error or "Command validation failed"
+                )
+
+            # Extract user parameters from command
+            params_result = self._user_creation_service.extract_user_parameters(
+                message.user_data
+            )
+            if params_result.is_failure:
+                return FlextResult[FlextLdapModels.User].fail(
+                    params_result.error or "Parameter extraction failed"
+                )
+
+            # Create user entity from parameters
+            creation_result = self._user_creation_service.create_user_entity(
+                params_result.unwrap()
+            )
+            if creation_result.is_failure:
+                return FlextResult[FlextLdapModels.User].fail(
+                    creation_result.error or "User creation failed"
+                )
+
+            return FlextResult[FlextLdapModels.User].ok(creation_result.unwrap())
+
     class DomainFactory(FlextMixins.Loggable):
         """Internal factory for creating domain objects with business rule validation.
 
-        Refactored to use FlextCommands pattern for complex operations to reduce
+        Refactored to use Flext CQRS pattern for complex operations to reduce
         complexity and follow CQRS architectural patterns.
         """
 
         def __init__(self) -> None:
-            """Initialize management handler with user and group services."""
-            self._user_service = FlextLDAPDomain.UserManagementService()
-            self._group_service = FlextLDAPDomain.GroupManagementService()
-            self._password_service = FlextLDAPDomain.PasswordService()
-            self._create_user_handler = FlextLDAPDomain.CreateUserCommandHandler()
+            """Initialize factory with domain services - SOLID compliant."""
+            super().__init__()
+            self._user_service = FlextLdapDomain.UserManagementService()
+            self._group_service = FlextLdapDomain.GroupManagementService()
+            self._password_service = FlextLdapDomain.PasswordService()
+            # Use proper command handler with FlextHandlers
+            self._create_user_handler = FlextLdapDomain.CreateUserCommandHandler()
+            self._logger = FlextLogger(__name__)
+            # Temporarily disable dispatcher due to command/handler matching issues
+            # This will be re-enabled once the dispatcher integration is fixed
+            self._dispatcher: FlextDispatcher | None = None
+            self._logger.debug(
+                "dispatcher_temporarily_disabled",
+                factory=self.__class__.__name__,
+                reason="command_handler_type_matching_issues",
+            )
 
         def create_user_from_data(
             self,
             user_data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLDAPEntities.User]:
-            """Create user entity using FlextCommands pattern for reduced complexity."""
-            # Use FlextCommands pattern to reduce complexity
-            command = FlextLDAPDomain.CreateUserCommand(
-                command_type="create_user", user_data=user_data
+        ) -> FlextResult[FlextLdapModels.User]:
+            """Create user entity using FlextHandlers command pattern."""
+            # Create command for CQRS pattern
+            command = FlextLdapDomain.CreateUserCommand(
+                command_type="create_user",
+                user_data=user_data,
             )
-            return cast(
-                "FlextResult[FlextLDAPEntities.User]",
-                self._create_user_handler.handle(command),
-            )
+
+            if self._dispatcher is not None:
+                try:
+                    dispatch_result = self._dispatcher.dispatch(command)
+                    if dispatch_result.is_success:
+                        handler_output = dispatch_result.unwrap()
+                        if isinstance(handler_output, FlextResult):
+                            return cast(
+                                "FlextResult[FlextLdapModels.User]",
+                                handler_output,
+                            )
+                        if isinstance(handler_output, FlextLdapModels.User):
+                            return FlextResult[FlextLdapModels.User].ok(handler_output)
+                        self._logger.error(
+                            "dispatcher_unexpected_payload",
+                            payload_type=handler_output.__class__.__name__,
+                        )
+                    else:
+                        self._logger.error(
+                            "dispatcher_command_failed",
+                            error=dispatch_result.error,
+                        )
+                except Exception as exc:  # pragma: no cover - defensive logging
+                    self._logger.exception(
+                        "dispatcher_execution_failed",
+                        error=str(exc),
+                    )
+
+            # Fallback to direct handler execution
+            return self._create_user_handler.handle(command)
 
         def _extract_user_parameters(
             self,
@@ -1350,7 +1443,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             # Validate required parameters using structural pattern matching
             match user_params:
                 case {"dn": str() as dn, "uid": str() as uid} if dn and uid:
-                    builder = FlextLDAPDomain.UserEntityBuilder(user_params)
+                    builder = FlextLdapDomain.UserEntityBuilder(user_params)
                     return builder.build()
                 case _:
                     msg = "User parameters missing required fields (dn, uid)"
@@ -1358,17 +1451,17 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
         def _validate_created_user(self, user: object) -> FlextResult[object]:
             """Validate created user against domain specifications."""
-            complete_spec = FlextLDAPDomain.CompleteUserSpecification()
+            complete_spec = FlextLdapDomain.CompleteUserSpecification()
             if not complete_spec.is_satisfied_by(user):
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     complete_spec.get_validation_error(user),
                 )
-            return FlextResult.ok(user)
+            return FlextResult[object].ok(user)
 
         def create_group_from_data(
             self,
             group_data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLDAPEntities.Group]:
+        ) -> FlextResult[FlextLdapModels.Group]:
             """Create group entity from data with full validation."""
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "validate": self._group_service.validate_group_creation,
@@ -1387,8 +1480,8 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                 return FlextResult.fail(
                     "Group creation returned None",
                 )
-            # Use imported FlextLDAPEntities from top of file
-            group_class = FlextLDAPEntities.Group
+            # Use imported FlextLdapModels from top of file
+            group_class = FlextLdapModels.Group
 
             if isinstance(created, group_class):
                 return FlextResult.ok(created)
@@ -1439,7 +1532,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             # Validate required parameters using structural pattern matching
             match group_params:
                 case {"dn": str() as dn, "cn": str() as cn} if dn and cn:
-                    builder = FlextLDAPDomain.GroupEntityBuilder(group_params)
+                    builder = FlextLdapDomain.GroupEntityBuilder(group_params)
                     return builder.build()
                 case _:
                     msg = "Group parameters missing required fields (dn, cn)"
@@ -1447,10 +1540,10 @@ class FlextLDAPDomain(FlextMixins.Loggable):
 
         def _validate_created_group(self, group: object) -> FlextResult[object]:
             """Validate created group against domain specifications."""
-            group_spec = FlextLDAPDomain.GroupSpecification()
+            group_spec = FlextLdapDomain.GroupSpecification()
             if not group_spec.is_satisfied_by(group):
-                return FlextResult.fail(group_spec.get_validation_error(group))
-            return FlextResult.ok(group)
+                return FlextResult[object].fail(group_spec.get_validation_error(group))
+            return FlextResult[object].ok(group)
 
         def _create_entity_from_data(
             self,
@@ -1514,7 +1607,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             match operations.get("validate"):
                 case None:
                     return FlextResult.fail(
-                        f"No validation operation for {entity_type}"
+                        f"No validation operation for {entity_type}",
                     )
                 case validate_fn:
                     result = self._execute_operation(
@@ -1524,7 +1617,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                     )
                     # Use modern railway pattern chaining
                     return result.flat_map(
-                        lambda _: FlextResult[FlextTypes.Core.Dict].ok(data)
+                        lambda _: FlextResult[FlextTypes.Core.Dict].ok(data),
                     )
 
         def _extract_parameters(
@@ -1584,11 +1677,13 @@ class FlextLDAPDomain(FlextMixins.Loggable):
             match operation:
                 case None:
                     return FlextResult.fail(
-                        f"Invalid operation function for {operation_name}"
+                        f"Invalid operation function for {operation_name}",
                     )
                 case callable_op:
                     return self._execute_callable_operation(
-                        callable_op, data, operation_name
+                        callable_op,
+                        data,
+                        operation_name,
                     )
 
         def _execute_callable_operation(
@@ -1608,7 +1703,7 @@ class FlextLDAPDomain(FlextMixins.Loggable):
                         result = operation(vars(obj))
                     case _:
                         return FlextResult.fail(
-                            f"Cannot convert data to dict for operation {operation_name}"
+                            f"Cannot convert data to dict for operation {operation_name}",
                         )
 
                 # Pattern match result type for proper wrapping
@@ -1673,8 +1768,6 @@ class FlextLDAPDomain(FlextMixins.Loggable):
         return self._password_service.generate_secure_password(length)
 
 
-# Export aliases eliminated - use FlextLDAPDomain.* directly following flext-core pattern
-
 __all__ = [
-    "FlextLDAPDomain",
+    "FlextLdapDomain",
 ]

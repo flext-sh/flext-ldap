@@ -4,16 +4,18 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import ldap3
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from typing import cast
 
-from flext_ldap import FlextLDAPConnectionConfig
+import ldap3
+
+from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_ldap import FlextLdapConnectionConfig
 
 logger = FlextLogger(__name__)
 
 
 async def create_test_user(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
@@ -47,7 +49,7 @@ async def create_test_user(
 
 
 async def create_test_group(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
@@ -81,7 +83,7 @@ async def create_test_group(
 
 
 async def cleanup_test_entries(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dns: FlextTypes.Core.StringList,
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
@@ -120,7 +122,7 @@ async def cleanup_test_entries(
 
 
 async def verify_entry_exists(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dn: str,
 ) -> FlextResult[bool]:
     """Verify that an entry exists in LDAP server."""
@@ -156,7 +158,7 @@ async def verify_entry_exists(
 
 
 async def get_entry_attributes(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dn: str,
 ) -> FlextResult[FlextTypes.Core.Dict]:
     """Get attributes of an LDAP entry."""
@@ -185,7 +187,7 @@ async def get_entry_attributes(
             entry = conn.entries[0]
             attributes = {attr: entry[attr].values for attr in entry.entry_attributes}
             conn.unbind()
-            return FlextResult.ok(attributes)
+            return FlextResult.ok(cast("FlextTypes.Core.Dict", attributes))
         conn.unbind()
         return FlextResult[FlextTypes.Core.Dict].fail(f"Entry not found: {dn}")
 
@@ -195,10 +197,10 @@ async def get_entry_attributes(
 
 
 async def search_entries(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     base_dn: str,
     search_filter: str,
-    scope: int = ldap3.SUBTREE,
+    scope: str = "subtree",
 ) -> FlextResult[list[FlextTypes.Core.Dict]]:
     """Search for entries in LDAP server."""
     try:
@@ -216,10 +218,18 @@ async def search_entries(
             authentication=ldap3.SIMPLE,
         )
 
+        # Map string scope to ldap3 integer scope
+        scope_map = {
+            "base": ldap3.BASE,
+            "onelevel": ldap3.LEVEL,
+            "subtree": ldap3.SUBTREE,
+        }
+        ldap_scope = scope_map.get(scope, ldap3.SUBTREE)
+
         success = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
-            search_scope=scope,
+            search_scope=ldap_scope,
         )
 
         results = []
@@ -234,7 +244,7 @@ async def search_entries(
                 results.append(entry_data)
 
         conn.unbind()
-        return FlextResult.ok(results)
+        return FlextResult.ok(cast("list[FlextTypes.Core.Dict]", results))
 
     except Exception as e:
         logger.exception("Error searching entries")
@@ -244,7 +254,7 @@ async def search_entries(
 
 
 async def modify_entry(
-    config: FlextLDAPConnectionConfig,
+    config: FlextLdapConnectionConfig,
     dn: str,
     changes: FlextTypes.Core.Dict,
 ) -> FlextResult[bool]:

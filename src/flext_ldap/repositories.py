@@ -5,7 +5,6 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
-from typing import cast
 
 from flext_core import (
     FlextLogger,
@@ -13,27 +12,20 @@ from flext_core import (
     FlextProtocols,
     FlextResult,
 )
-
-from flext_ldap.clients import FlextLDAPClient
-from flext_ldap.entities import FlextLDAPEntities
-from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.value_objects import FlextLDAPValueObjects
+from flext_ldap.clients import FlextLdapClient
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.value_objects import FlextLdapValueObjects
 
 # Python 3.13 type aliases
-type SearchResult = FlextResult[FlextLDAPEntities.Entry | None]
+type SearchResult = FlextResult[FlextLdapModels.Entry | None]
 type SaveResult = FlextResult[None]
 
-# FlextLogger available via FlextMixins.Service inheritance
 
+class FlextLdapRepositories(FlextMixins.Service):
+    """LDAP repositories container with nested repository classes."""
 
-class FlextLDAPRepositories(FlextMixins.Service):
-    """LDAP repositories container with nested repository classes.
-
-    Contains Repository, UserRepository, and GroupRepository classes.
-    Uses FlextMixins.Service for logging capabilities from flext-core.
-    """
-
-    def __init__(self, client: FlextLDAPClient, **data: object) -> None:
+    def __init__(self, client: FlextLdapClient, **data: object) -> None:
         """Initialize repositories container with LDAP client."""
         super().__init__(**data)
         self._client = client
@@ -42,17 +34,17 @@ class FlextLDAPRepositories(FlextMixins.Service):
         self._group_repo = self.GroupRepository(self._base_repo)
 
     @property
-    def repository(self) -> "FlextLDAPRepositories.Repository":
+    def repository(self) -> "FlextLdapRepositories.Repository":
         """Get base repository."""
         return self._base_repo
 
     @property
-    def users(self) -> "FlextLDAPRepositories.UserRepository":
+    def users(self) -> "FlextLdapRepositories.UserRepository":
         """Get user repository."""
         return self._user_repo
 
     @property
-    def groups(self) -> "FlextLDAPRepositories.GroupRepository":
+    def groups(self) -> "FlextLdapRepositories.GroupRepository":
         """Get group repository."""
         return self._group_repo
 
@@ -60,17 +52,18 @@ class FlextLDAPRepositories(FlextMixins.Service):
     # FACADE METHODS - Delegate to base repository for convenience
     # ==========================================================================
 
-    async def find_by_dn(self, dn: str) -> FlextResult[FlextLDAPEntities.Entry | None]:
+    async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
         """Find entry by DN - facade method delegating to repository public interface."""
         return await self._base_repo.find_by_dn(dn)
 
     async def search(
-        self, request: FlextLDAPEntities.SearchRequest
-    ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
+        self,
+        request: FlextLdapModels.SearchRequest,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search entries - facade method delegating to repository."""
         return await self._base_repo.search(request)
 
-    async def save_async(self, entity: FlextLDAPEntities.Entry) -> FlextResult[None]:
+    async def save_async(self, entity: FlextLdapModels.Entry) -> FlextResult[None]:
         """Save entry - facade method delegating to repository public interface."""
         return await self._base_repo.save_async(entity)
 
@@ -85,22 +78,19 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return FlextResult[bool].fail(result.error or "Find failed")
         return FlextResult[bool].ok(result.value is not None)
 
-    async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
+    async def update(
+        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+    ) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
         return await self._base_repo.update_attributes(dn, attributes)
 
     class Repository(
         FlextMixins.Service,
-        FlextProtocols.Domain.Repository[FlextLDAPEntities.Entry],
+        FlextProtocols.Domain.Repository[FlextLdapModels.Entry],
     ):
-        """Base LDAP repository implementing Domain.Repository protocol from flext-core.
+        """Base LDAP repository implementing Domain.Repository protocol from flext-core."""
 
-        Implements FlextProtocols.Domain.Repository[Entry] protocol correctly without duplication.
-        Uses FlextMixins.Service for logging capabilities from flext-core.
-        Single consolidated class
-        """
-
-        def __init__(self, client: FlextLDAPClient, **data: object) -> None:
+        def __init__(self, client: FlextLdapClient, **data: object) -> None:
             """Initialize repository with LDAP client and FlextMixins.Service."""
             super().__init__(**data)
             self._client = client
@@ -112,32 +102,33 @@ class FlextLDAPRepositories(FlextMixins.Service):
         # DOMAIN.REPOSITORY PROTOCOL IMPLEMENTATION - FlextProtocols.Domain.Repository
         # ==========================================================================
 
-        # Protocol methods from FlextProtocols.Domain.Repository[FlextLDAPEntities.Entry]
-        def get_by_id(self, entity_id: str) -> FlextResult[FlextLDAPEntities.Entry]:
+        # Protocol methods from FlextProtocols.Domain.Repository[FlextLdapModels.Entry]
+        def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapModels.Entry]:
             """Get entry by ID (DN) - implements FlextProtocols.Domain.Repository."""
             try:
                 result = asyncio.run(self._find_by_dn_async(entity_id))
                 if result.is_success and result.value:
-                    return FlextResult[FlextLDAPEntities.Entry].ok(result.value)
-                return FlextResult[FlextLDAPEntities.Entry].fail("Entry not found")
+                    return FlextResult[FlextLdapModels.Entry].ok(result.value)
+                return FlextResult[FlextLdapModels.Entry].fail("Entry not found")
             except Exception as e:
-                return FlextResult[FlextLDAPEntities.Entry].fail(
-                    f"Failed to get by ID: {e}"
+                return FlextResult[FlextLdapModels.Entry].fail(
+                    f"Failed to get by ID: {e}",
                 )
 
         def save(
-            self, entity: FlextLDAPEntities.Entry
-        ) -> FlextResult[FlextLDAPEntities.Entry]:
+            self,
+            entity: FlextLdapModels.Entry,
+        ) -> FlextResult[FlextLdapModels.Entry]:
             """Save entry - implements FlextProtocols.Domain.Repository."""
             try:
                 result = asyncio.run(self._save_async(entity))
                 if result.is_success:
-                    return FlextResult[FlextLDAPEntities.Entry].ok(entity)
-                return FlextResult[FlextLDAPEntities.Entry].fail(
-                    result.error or "Save failed"
+                    return FlextResult[FlextLdapModels.Entry].ok(entity)
+                return FlextResult[FlextLdapModels.Entry].fail(
+                    result.error or "Save failed",
                 )
             except Exception as e:
-                return FlextResult[FlextLDAPEntities.Entry].fail(f"Failed to save: {e}")
+                return FlextResult[FlextLdapModels.Entry].fail(f"Failed to save: {e}")
 
         def delete(self, entity_id: str) -> FlextResult[None]:
             """Delete entry by ID - implements FlextProtocols.Domain.Repository."""
@@ -146,23 +137,25 @@ class FlextLDAPRepositories(FlextMixins.Service):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to delete: {e}")
 
-        def find_all(self) -> FlextResult[list[FlextLDAPEntities.Entry]]:
+        def find_all(self) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Find all entries - not practical for LDAP, returns empty list."""
-            return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
+            return FlextResult[list[FlextLdapModels.Entry]].ok([])
 
         # ==========================================================================
         # PUBLIC ASYNC INTERFACE - SOLID Interface Segregation Principle
         # ==========================================================================
 
         async def save_async(
-            self, entity: FlextLDAPEntities.Entry
+            self,
+            entity: FlextLdapModels.Entry,
         ) -> FlextResult[None]:
             """Save entry - public async interface exposing private implementation."""
             return await self._save_async(entity)
 
         async def find_by_dn(
-            self, dn: str
-        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            self,
+            dn: str,
+        ) -> FlextResult[FlextLdapModels.Entry | None]:
             """Find entry by DN - public async interface exposing private implementation."""
             return await self._find_by_dn_async(dn)
 
@@ -171,7 +164,9 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return await self._delete_async(dn)
 
         async def update(
-            self, dn: str, attributes: LdapAttributeDict
+            self,
+            dn: str,
+            attributes: FlextLdapTypes.Entry.AttributeDict,
         ) -> FlextResult[None]:
             """Update entry attributes - async method for Repository."""
             return await self.update_attributes(dn, attributes)
@@ -181,16 +176,17 @@ class FlextLDAPRepositories(FlextMixins.Service):
         # ==========================================================================
 
         async def _find_by_dn_async(
-            self, dn: str
-        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            self,
+            dn: str,
+        ) -> FlextResult[FlextLdapModels.Entry | None]:
             """Find entry by DN - internal async implementation."""
             # Validate DN using value object
-            dn_validation = FlextLDAPValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult.fail(f"Invalid DN format: {dn_validation.error}")
 
             # Create search request for specific entry
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=dn,
                 scope="base",
                 filter_str="(objectClass=*)",
@@ -227,11 +223,16 @@ class FlextLDAPRepositories(FlextMixins.Service):
             # Create entry using domain entities
             attributes = {k: v for k, v in entry_data.items() if k != "dn"}
 
-            entry = FlextLDAPEntities.Entry(
+            entry = FlextLdapModels.Entry(
                 id=f"repo_{dn.replace(',', '_').replace('=', '_')}",
                 dn=dn,
                 object_classes=object_classes,
-                attributes=cast("LdapAttributeDict", attributes),
+                attributes={
+                    str(k): [str(item) for item in v]
+                    if isinstance(v, list)
+                    else [str(v)]
+                    for k, v in attributes.items()
+                },
                 modified_at=None,
             )
 
@@ -239,25 +240,26 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return FlextResult.ok(entry)
 
         async def _save_async(
-            self, entry: FlextLDAPEntities.Entry
+            self,
+            entry: FlextLdapModels.Entry,
         ) -> FlextResult[None]:
             """Save entry - internal async implementation."""
             # Validate entry business rules
             validation_result = entry.validate_business_rules()
             if not validation_result.is_success:
                 return FlextResult.fail(
-                    f"Entry validation failed: {validation_result.error}"
+                    f"Entry validation failed: {validation_result.error}",
                 )
 
             # Check if entry exists
             existing_result = await self._find_by_dn_async(entry.dn)
             if not existing_result.is_success:
                 return FlextResult.fail(
-                    f"Could not check if entry exists: {existing_result.error}"
+                    f"Could not check if entry exists: {existing_result.error}",
                 )
 
             # Prepare LDAP attributes
-            attributes: LdapAttributeDict = dict(entry.attributes)
+            attributes: FlextLdapTypes.Entry.AttributeDict = dict(entry.attributes)
             if entry.object_classes:
                 attributes["objectClass"] = entry.object_classes
 
@@ -276,7 +278,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
         async def _delete_async(self, dn: str) -> FlextResult[None]:
             """Delete entry - internal async implementation."""
             # Validate DN format
-            dn_validation = FlextLDAPValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult.fail(f"Invalid DN format: {dn_validation.error}")
 
@@ -291,8 +293,9 @@ class FlextLDAPRepositories(FlextMixins.Service):
         # ==========================================================================
 
         async def search(
-            self, request: FlextLDAPEntities.SearchRequest
-        ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
+            self,
+            request: FlextLdapModels.SearchRequest,
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Search LDAP entries directly."""
             search_result = await self._client.search_with_request(request)
             if search_result.is_success:
@@ -307,21 +310,23 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return search_result
 
         async def update_attributes(
-            self, dn: str, attributes: LdapAttributeDict
+            self,
+            dn: str,
+            attributes: FlextLdapTypes.Entry.AttributeDict,
         ) -> FlextResult[None]:
             """Update LDAP entry attributes directly."""
             # Validate DN format
-            dn_validation = FlextLDAPValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
-                    f"Invalid DN format: {dn_validation.error}"
+                    f"Invalid DN format: {dn_validation.error}",
                 )
 
             # Verify entry exists first
             find_result = await self._find_by_dn_async(dn)
             if not find_result.is_success:
                 return FlextResult[None].fail(
-                    find_result.error or "Entry lookup failed"
+                    find_result.error or "Entry lookup failed",
                 )
 
             if not find_result.value:
@@ -342,17 +347,21 @@ class FlextLDAPRepositories(FlextMixins.Service):
         """User-specific repository operations."""
 
         def __init__(
-            self, base_repo: "FlextLDAPRepositories.Repository", **data: object
+            self,
+            base_repo: "FlextLdapRepositories.Repository",
+            **data: object,
         ) -> None:
             """Initialize user repository with base repository."""
             super().__init__(**data)
             self._repo = base_repo
 
         async def find_user_by_uid(
-            self, uid: str, base_dn: str
-        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            self,
+            uid: str,
+            base_dn: str,
+        ) -> FlextResult[FlextLdapModels.Entry | None]:
             """Find user by UID."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=base_dn,
                 filter_str=f"(&(objectClass=person)(uid={uid}))",
                 scope="subtree",
@@ -363,36 +372,41 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    search_result.error or "Search failed"
+                return FlextResult[FlextLdapModels.Entry | None].fail(
+                    search_result.error or "Search failed",
                 )
 
             if not search_result.value.entries:
-                return FlextResult[FlextLDAPEntities.Entry | None].ok(None)
+                return FlextResult[FlextLdapModels.Entry | None].ok(None)
 
             # Convert first result to Entry
             entry_data = search_result.value.entries[0]
             dn_raw = entry_data.get("dn", "")
             dn = str(dn_raw) if dn_raw is not None else ""
 
-            entry = FlextLDAPEntities.Entry(
+            entry = FlextLdapModels.Entry(
                 id=f"user_{uid}",
                 dn=dn,
                 object_classes=["person", "organizationalPerson"],
-                attributes=cast(
-                    "LdapAttributeDict",
-                    {k: v for k, v in entry_data.items() if k != "dn"},
-                ),
+                attributes={
+                    str(k): [str(item) for item in v]
+                    if isinstance(v, list)
+                    else [str(v)]
+                    for k, v in entry_data.items()
+                    if k != "dn"
+                },
                 modified_at=None,
             )
 
-            return FlextResult[FlextLDAPEntities.Entry | None].ok(entry)
+            return FlextResult[FlextLdapModels.Entry | None].ok(entry)
 
         async def find_users_by_filter(
-            self, filter_str: str, base_dn: str
-        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
+            self,
+            filter_str: str,
+            base_dn: str,
+        ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Find users by custom filter."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=base_dn,
                 filter_str=filter_str,
                 scope="subtree",
@@ -403,8 +417,8 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[list[FlextLDAPEntities.Entry]].fail(
-                    search_result.error or "Search failed"
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    search_result.error or "Search failed",
                 )
 
             users = []
@@ -414,35 +428,42 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 uid_raw = entry_data.get("uid", "unknown")
                 uid = str(uid_raw) if uid_raw is not None else "unknown"
 
-                entry = FlextLDAPEntities.Entry(
+                entry = FlextLdapModels.Entry(
                     id=f"user_{uid}",
                     dn=dn,
                     object_classes=["person", "organizationalPerson"],
-                    attributes=cast(
-                        "LdapAttributeDict",
-                        {k: v for k, v in entry_data.items() if k != "dn"},
-                    ),
+                    attributes={
+                        str(k): [str(item) for item in v]
+                        if isinstance(v, list)
+                        else [str(v)]
+                        for k, v in entry_data.items()
+                        if k != "dn"
+                    },
                     modified_at=None,
                 )
                 users.append(entry)
 
-            return FlextResult[list[FlextLDAPEntities.Entry]].ok(users)
+            return FlextResult[list[FlextLdapModels.Entry]].ok(users)
 
     class GroupRepository(FlextMixins.Service):
         """Group-specific repository operations."""
 
         def __init__(
-            self, base_repo: "FlextLDAPRepositories.Repository", **data: object
+            self,
+            base_repo: "FlextLdapRepositories.Repository",
+            **data: object,
         ) -> None:
             """Initialize group repository with base repository."""
             super().__init__(**data)
             self._repo = base_repo
 
         async def find_group_by_cn(
-            self, cn: str, base_dn: str
-        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            self,
+            cn: str,
+            base_dn: str,
+        ) -> FlextResult[FlextLdapModels.Entry | None]:
             """Find group by common name."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=base_dn,
                 filter_str=f"(&(objectClass=groupOfNames)(cn={cn}))",
                 scope="subtree",
@@ -453,36 +474,41 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    search_result.error or "Search failed"
+                return FlextResult[FlextLdapModels.Entry | None].fail(
+                    search_result.error or "Search failed",
                 )
 
             if not search_result.value.entries:
-                return FlextResult[FlextLDAPEntities.Entry | None].ok(None)
+                return FlextResult[FlextLdapModels.Entry | None].ok(None)
 
             # Convert first result to Entry
             entry_data = search_result.value.entries[0]
             dn_raw = entry_data.get("dn", "")
             dn = str(dn_raw) if dn_raw is not None else ""
 
-            entry = FlextLDAPEntities.Entry(
+            entry = FlextLdapModels.Entry(
                 id=f"group_{cn}",
                 dn=dn,
                 object_classes=["groupOfNames"],
-                attributes=cast(
-                    "LdapAttributeDict",
-                    {k: v for k, v in entry_data.items() if k != "dn"},
-                ),
+                attributes={
+                    str(k): [str(item) for item in v]
+                    if isinstance(v, list)
+                    else [str(v)]
+                    for k, v in entry_data.items()
+                    if k != "dn"
+                },
                 modified_at=None,
             )
 
-            return FlextResult[FlextLDAPEntities.Entry | None].ok(entry)
+            return FlextResult[FlextLdapModels.Entry | None].ok(entry)
 
         async def find_groups_by_filter(
-            self, filter_str: str, base_dn: str
-        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
+            self,
+            filter_str: str,
+            base_dn: str,
+        ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Find groups by custom filter."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=base_dn,
                 filter_str=filter_str,
                 scope="subtree",
@@ -493,8 +519,8 @@ class FlextLDAPRepositories(FlextMixins.Service):
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[list[FlextLDAPEntities.Entry]].fail(
-                    search_result.error or "Search failed"
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    search_result.error or "Search failed",
                 )
 
             groups = []
@@ -504,24 +530,27 @@ class FlextLDAPRepositories(FlextMixins.Service):
                 cn_raw = entry_data.get("cn", "unknown")
                 cn = str(cn_raw) if cn_raw is not None else "unknown"
 
-                entry = FlextLDAPEntities.Entry(
+                entry = FlextLdapModels.Entry(
                     id=f"group_{cn}",
                     dn=dn,
                     object_classes=["groupOfNames"],
-                    attributes=cast(
-                        "LdapAttributeDict",
-                        {k: v for k, v in entry_data.items() if k != "dn"},
-                    ),
+                    attributes={
+                        str(k): [str(item) for item in v]
+                        if isinstance(v, list)
+                        else [str(v)]
+                        for k, v in entry_data.items()
+                        if k != "dn"
+                    },
                     modified_at=None,
                 )
                 groups.append(entry)
 
-            return FlextResult[list[FlextLDAPEntities.Entry]].ok(groups)
+            return FlextResult[list[FlextLdapModels.Entry]].ok(groups)
 
         async def get_group_members(self, group_dn: str) -> FlextResult[list[str]]:
             """Get group members using base repository - no duplication."""
             # Find the group first to get member list
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn=group_dn,
                 filter_str="(objectClass=groupOfNames)",
                 scope="base",
@@ -533,7 +562,7 @@ class FlextLDAPRepositories(FlextMixins.Service):
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
                 return FlextResult[list[str]].fail(
-                    search_result.error or "Failed to search group"
+                    search_result.error or "Failed to search group",
                 )
 
             if not search_result.value.entries:
@@ -555,14 +584,16 @@ class FlextLDAPRepositories(FlextMixins.Service):
             return FlextResult[list[str]].ok(members)
 
         async def add_member_to_group(
-            self, group_dn: str, member_dn: str
+            self,
+            group_dn: str,
+            member_dn: str,
         ) -> FlextResult[None]:
             """Add member to group using base repository - no duplication."""
             # First get current members
             current_members_result = await self.get_group_members(group_dn)
             if not current_members_result.is_success:
                 return FlextResult[None].fail(
-                    f"Failed to get current members: {current_members_result.error}"
+                    f"Failed to get current members: {current_members_result.error}",
                 )
 
             current_members = current_members_result.unwrap()
@@ -575,17 +606,17 @@ class FlextLDAPRepositories(FlextMixins.Service):
             updated_members = [*current_members, member_dn]
 
             # Update group with new member list
-            attributes: LdapAttributeDict = {"member": updated_members}
+            attributes: FlextLdapTypes.Entry.AttributeDict = {"member": updated_members}
             update_result = await self._repo.update(group_dn, attributes)
 
             if not update_result.is_success:
                 return FlextResult[None].fail(
-                    f"Failed to update group: {update_result.error}"
+                    f"Failed to update group: {update_result.error}",
                 )
 
             return FlextResult[None].ok(None)
 
 
 __all__ = [
-    "FlextLDAPRepositories",
+    "FlextLdapRepositories",
 ]

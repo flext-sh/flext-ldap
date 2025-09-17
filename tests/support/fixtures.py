@@ -8,9 +8,9 @@ import asyncio
 from collections.abc import AsyncGenerator, Generator
 
 import pytest
-from flext_core import FlextLogger, FlextTypes
 
-from flext_ldap import FlextLDAPApi, FlextLDAPConnectionConfig
+from flext_core import FlextLogger, FlextTypes
+from flext_ldap import FlextLdapApi, FlextLdapConnectionConfig
 
 from .helpers import cleanup_test_entries, search_entries
 from .ldap_server import LdapTestServer, get_test_ldap_config
@@ -46,15 +46,15 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
 @pytest.fixture
 async def ldap_connection(
     real_ldap_server: LdapTestServer,
-) -> AsyncGenerator[FlextLDAPConnectionConfig]:
+) -> FlextLdapConnectionConfig:
     """Get LDAP connection configuration for testing."""
     return real_ldap_server.get_connection_config()
 
 
 @pytest.fixture
-async def ldap_api() -> AsyncGenerator[FlextLDAPApi]:
+async def ldap_api() -> FlextLdapApi:
     """Get configured LDAP API instance."""
-    return FlextLDAPApi()
+    return FlextLdapApi()
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def multiple_test_groups() -> list[FlextTypes.Core.Dict]:
 
 
 @pytest.fixture
-def test_ldap_config() -> FlextLDAPConnectionConfig:
+def test_ldap_config() -> FlextLdapConnectionConfig:
     """Get test LDAP configuration."""
     return get_test_ldap_config()
 
@@ -100,7 +100,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop]:
 
 @pytest.fixture
 async def clean_ldap_state(
-    ldap_connection: FlextLDAPConnectionConfig,
+    ldap_connection: FlextLdapConnectionConfig,
 ) -> AsyncGenerator[None]:
     """Ensure clean LDAP state for each test."""
     # helpers already imported at top

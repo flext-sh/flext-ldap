@@ -1,4 +1,4 @@
-"""Tests for optimized FlextLDAPContainer with FlextModels validation.
+"""Tests for optimized FlextLdapContainer with FlextModels validation.
 
 Validates the container refactor that uses FlextContainer patterns directly.
 Uses Pydantic v2 models for test validation and removes ad-hoc assertions.
@@ -13,10 +13,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextContainer, FlextModels, FlextResult
 from pydantic import Field
 
-from flext_ldap import FlextLDAPClient, FlextLDAPConfig, FlextLDAPContainer
+from flext_core import FlextContainer, FlextModels, FlextResult
+from flext_ldap import FlextLdapClient, FlextLdapConfig, FlextLdapContainer
 
 
 # Test models using FlextModels for Pydantic v2 validation
@@ -35,7 +35,7 @@ class ContainerTestModels:
             """Validate the optimized container patterns."""
             if not self.is_initialized:
                 return FlextResult[None].fail("Container must be initialized")
-            if not isinstance(self.container_instance, FlextLDAPContainer):
+            if not isinstance(self.container_instance, FlextLdapContainer):
                 return FlextResult[None].fail("Invalid container instance type")
             return FlextResult[None].ok(None)
 
@@ -59,23 +59,23 @@ class ContainerTestModels:
             return FlextResult[None].ok(None)
 
 
-class TestOptimizedFlextLDAPContainer:
-    """Test optimized FlextLDAPContainer using FlextModels validation."""
+class TestOptimizedFlextLdapContainer:
+    """Test optimized FlextLdapContainer using FlextModels validation."""
 
     @pytest.fixture
-    def container(self) -> FlextLDAPContainer:
+    def container(self) -> FlextLdapContainer:
         """Create container instance for testing."""
-        return FlextLDAPContainer()
+        return FlextLdapContainer()
 
     @pytest.fixture
-    def config(self) -> FlextLDAPConfig:
+    def config(self) -> FlextLdapConfig:
         """Create test configuration."""
-        return FlextLDAPConfig()
+        return FlextLdapConfig()
 
     def test_optimized_container_initialization(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
-        """Test optimized FlextLDAPContainer initialization with FlextModels validation."""
+        """Test optimized FlextLdapContainer initialization with FlextModels validation."""
         # Create validation model for container state
         container_state = ContainerTestModels.ContainerState(
             is_initialized=True,
@@ -95,7 +95,7 @@ class TestOptimizedFlextLDAPContainer:
         assert isinstance(flext_container, FlextContainer)
 
     def test_optimized_container_uses_flext_container_directly(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
         """Test that optimized container uses FlextContainer patterns directly."""
         # Validate that old caching patterns are removed
@@ -115,7 +115,7 @@ class TestOptimizedFlextLDAPContainer:
         )
 
     def test_container_service_registration_with_models(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
         """Test service registration using FlextModels validation."""
         # Get FlextContainer and test service registration
@@ -146,21 +146,21 @@ class TestOptimizedFlextLDAPContainer:
             )
 
     def test_optimized_client_retrieval_via_flext_container(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
         """Test optimized client retrieval using FlextContainer patterns."""
         # Test that client is retrieved via FlextContainer, not custom caching
         client = container.get_client()
 
-        # Use FlextLDAPEntities to validate the client
-        assert isinstance(client, FlextLDAPClient)
+        # Use FlextLdapModels to validate the client
+        assert isinstance(client, FlextLdapClient)
 
         # Test that multiple calls return the same instance (FlextContainer singleton)
         client2 = container.get_client()
         assert client is client2, "FlextContainer should provide singleton behavior"
 
     def test_optimized_repository_retrieval_via_flext_container(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
         """Test optimized repository retrieval using FlextContainer patterns."""
         # Test that repository is retrieved via FlextContainer, not custom caching
@@ -174,7 +174,7 @@ class TestOptimizedFlextLDAPContainer:
         )
 
     def test_optimized_container_configuration_with_models(
-        self, container: FlextLDAPContainer, config: FlextLDAPConfig
+        self, container: FlextLdapContainer, config: FlextLdapConfig
     ) -> None:
         """Test container configuration using FlextModels validation."""
         # Test configuration with FlextResult validation
@@ -190,10 +190,10 @@ class TestOptimizedFlextLDAPContainer:
 
         # Validate the configuration instance using proper typing
         registered_config = settings_result.value
-        assert isinstance(registered_config, FlextLDAPConfig)
+        assert isinstance(registered_config, FlextLdapConfig)
 
     def test_container_validates_domain_boundaries(
-        self, container: FlextLDAPContainer
+        self, container: FlextLdapContainer
     ) -> None:
         """Test that container only provides LDAP domain services."""
         # Validate that only LDAP domain services are available

@@ -1,4 +1,4 @@
-"""Comprehensive API tests for FlextLDAPApi with 100% coverage target."""
+"""Comprehensive API tests for FlextLdapApi with 100% coverage target."""
 
 from __future__ import annotations
 
@@ -6,40 +6,40 @@ import uuid
 from typing import cast
 
 import pytest
-from flext_core import FlextLogger, FlextResult, FlextTypes
 
-from flext_ldap import FlextLDAPEntities, get_flext_ldap_api
-from flext_ldap.api import FlextLDAPApi
-from flext_ldap.config import FlextLDAPConfig
-from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_ldap import FlextLdapModels
+from flext_ldap.api import FlextLdapApi
+from flext_ldap.config import FlextLdapConfig
+from flext_ldap.connection_config import FlextLdapConnectionConfig
 
 
 @pytest.mark.asyncio
-class TestFlextLDAPApiComprehensive:
-    """Comprehensive tests for FlextLDAPApi with real functionality."""
+class TestFlextLdapApiComprehensive:
+    """Comprehensive tests for FlextLdapApi with real functionality."""
 
     def test_api_initialization_default(self) -> None:
         """Test API initialization with default settings using FlextTestsMatchers."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Use FlextTestsMatchers for better validation
-        assert isinstance(api._config, FlextLDAPConfig)
+        assert isinstance(api._config, FlextLdapConfig)
         assert api._container_manager is not None
         assert api._container is not None
         assert api._service is not None
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom config using FlextTestsMatchers."""
-        config = FlextLDAPConfig()
-        api = FlextLDAPApi(config)
+        config = FlextLdapConfig()
+        api = FlextLdapApi(config)
 
         # Use FlextTestsMatchers for identity validation
         assert api._config is config
-        assert isinstance(api._config, FlextLDAPConfig)
+        assert isinstance(api._config, FlextLdapConfig)
 
     def test_generate_session_id(self) -> None:
         """Test session ID generation using cached property from FlextUtilities."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test cached property access
         session_id1 = api.session_id
@@ -57,7 +57,7 @@ class TestFlextLDAPApiComprehensive:
 
     def test_get_entry_attribute_success(self) -> None:
         """Test _get_entry_attribute with valid data."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # _get_entry_attribute expects a dict, not a Pydantic Entry
         entry_dict = {
@@ -104,7 +104,7 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_connect_without_real_server(self) -> None:
         """Test connect method without real LDAP server using FlextTestsMatchers."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.connect(
             "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", "password"
@@ -124,7 +124,7 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_disconnect_without_session(self) -> None:
         """Test disconnect method without valid session."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.disconnect("invalid_session")
 
@@ -133,23 +133,16 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_connection_context_manager(self) -> None:
         """Test connection context manager."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test connection context manager pattern
         try:
             async with api.connection(
                 "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD", "pass"
-            ) as session_result:
-                assert isinstance(session_result, FlextResult)
-                if session_result.is_success:
-                    session_id = session_result.value
-                    assert session_id.startswith("session_")
-                else:
-                    # Expected failure without real server
-                    assert any(
-                        pattern in session_result.error.lower()
-                        for pattern in ["connection", "failed", "server", "refused"]
-                    )
+            ) as session_id:
+                # Context manager yields session ID string
+                assert isinstance(session_id, str)
+                assert session_id.startswith("session_")
         except Exception as e:
             # Context manager should handle exceptions gracefully
             # Expected behavior - no action needed
@@ -158,13 +151,15 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_search_without_connection(self) -> None:
         """Test search method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "uid"],
+            size_limit=100,
+            time_limit=30,
         )
 
         result = await api.search(search_request)
@@ -172,13 +167,13 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_search_simple_without_connection(self) -> None:
         """Test search_simple method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.search_simple(
             "dc=example,dc=com",
@@ -188,13 +183,13 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_search_users_without_connection(self) -> None:
         """Test search_users method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.search_users(
             "ou=users,dc=example,dc=com",
@@ -203,15 +198,15 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_create_user_without_connection(self) -> None:
         """Test create_user method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
-        create_request = FlextLDAPEntities.CreateUserRequest(
+        create_request = FlextLdapModels.CreateUserRequest(
             dn="cn=newuser,ou=users,dc=example,dc=com",
             uid="newuser",
             cn="New User",
@@ -223,13 +218,13 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_get_user_without_connection(self) -> None:
         """Test get_user method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.get_user("cn=testuser,ou=users,dc=example,dc=com")
 
@@ -237,29 +232,31 @@ class TestFlextLDAPApiComprehensive:
         # get_user doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_update_user_without_connection(self) -> None:
         """Test update_user method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         dn = "cn=testuser,ou=users,dc=example,dc=com"
-        attributes = {"description": "Updated user"}
+        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
+            "description": "Updated user"
+        }
 
         result = await api.update_user(dn, attributes)
 
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_delete_user_without_connection(self) -> None:
         """Test delete_user method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.delete_user("cn=testuser,ou=users,dc=example,dc=com")
 
@@ -267,13 +264,13 @@ class TestFlextLDAPApiComprehensive:
         # delete_user doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_search_users_by_filter_without_connection(self) -> None:
         """Test search_users_by_filter method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.search_users_by_filter(
             "(cn=test*)",
@@ -283,28 +280,25 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_create_group_without_connection(self) -> None:
         """Test create_group method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test with basic group attributes - no CreateGroupRequest entity exists
-        group_entry = FlextLDAPEntities.Entry(
-            id="testgroup",
-            dn="cn=testgroup,ou=groups,dc=example,dc=com",
-            object_classes=["groupOfNames", "top"],
-            attributes={"cn": "testgroup", "description": "Test group"},
-        )
+        dn = "cn=testgroup,ou=groups,dc=example,dc=com"
+        cn = "testgroup"
+        description = "Test group"
 
-        result = await api.create_group(group_entry)
+        result = await api.create_group(dn, cn, description)
 
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in [
                     "connection",
                     "not found",
@@ -318,7 +312,7 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_get_group_without_connection(self) -> None:
         """Test get_group method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.get_group("cn=testgroup,ou=groups,dc=example,dc=com")
 
@@ -326,30 +320,32 @@ class TestFlextLDAPApiComprehensive:
         # get_group doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_update_group_without_connection(self) -> None:
         """Test update_group method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Use basic update parameters - no UpdateGroupRequest entity exists
         group_dn = "cn=testgroup,ou=groups,dc=example,dc=com"
-        attributes = {"description": "Updated group"}
+        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
+            "description": "Updated group"
+        }
 
         result = await api.update_group(group_dn, attributes)
 
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
     async def test_delete_group_without_connection(self) -> None:
         """Test delete_group method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.delete_group("cn=testgroup,ou=groups,dc=example,dc=com")
 
@@ -357,13 +353,13 @@ class TestFlextLDAPApiComprehensive:
         # delete_group doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_add_member_without_connection(self) -> None:
         """Test add_member method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.add_member(
             "cn=testgroup,ou=groups,dc=example,dc=com",
@@ -374,13 +370,13 @@ class TestFlextLDAPApiComprehensive:
         # add_member doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_remove_member_without_connection(self) -> None:
         """Test remove_member method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.remove_member(
             "cn=testgroup,ou=groups,dc=example,dc=com",
@@ -391,13 +387,13 @@ class TestFlextLDAPApiComprehensive:
         # remove_member doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_get_members_without_connection(self) -> None:
         """Test get_members method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.get_members("cn=testgroup,ou=groups,dc=example,dc=com")
 
@@ -405,13 +401,13 @@ class TestFlextLDAPApiComprehensive:
         # get_members doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     async def test_delete_entry_without_connection(self) -> None:
         """Test delete_entry method without connection."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         result = await api.delete_entry("cn=test,dc=example,dc=com")
 
@@ -419,13 +415,13 @@ class TestFlextLDAPApiComprehensive:
         # delete_entry doesn't require session, so it should attempt the operation
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                result.error is not None and pattern in result.error.lower()
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
     def test_validate_dn_valid(self) -> None:
         """Test DN validation with valid DNs."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         valid_dns = [
             "cn=user,dc=example,dc=com",
@@ -440,7 +436,7 @@ class TestFlextLDAPApiComprehensive:
 
     def test_validate_dn_invalid(self) -> None:
         """Test DN validation with invalid DNs."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         invalid_dns = [
             "",  # Empty DN
@@ -454,13 +450,13 @@ class TestFlextLDAPApiComprehensive:
             result = api.validate_dn(dn)
             if not result.is_success:
                 assert any(
-                    pattern in result.error.lower()
+                    result.error is not None and pattern in result.error.lower()
                     for pattern in ["invalid", "empty", "format", "dn"]
                 )
 
     def test_validate_filter_valid(self) -> None:
         """Test filter validation with valid filters."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         valid_filters = [
             "(objectClass=person)",
@@ -476,7 +472,7 @@ class TestFlextLDAPApiComprehensive:
 
     def test_validate_filter_invalid(self) -> None:
         """Test filter validation with invalid filters."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         invalid_filters = [
             "",  # Empty filter
@@ -491,7 +487,7 @@ class TestFlextLDAPApiComprehensive:
             result = api.validate_filter(filter_str)
             if not result.is_success:
                 assert any(
-                    pattern in result.error.lower()
+                    result.error is not None and pattern in result.error.lower()
                     for pattern in [
                         "invalid",
                         "empty",
@@ -503,33 +499,33 @@ class TestFlextLDAPApiComprehensive:
 
     def test_factory_create_method(self) -> None:
         """Test factory create method."""
-        api1 = FlextLDAPApi.create()
-        api2 = FlextLDAPApi.create(None)
+        api1 = FlextLdapApi.create()
+        api2 = FlextLdapApi.create(None)
 
-        assert isinstance(api1, FlextLDAPApi)
-        assert isinstance(api2, FlextLDAPApi)
+        assert isinstance(api1, FlextLdapApi)
+        assert isinstance(api2, FlextLdapApi)
 
         # Test with custom config (use default settings without invalid fields)
-        config = FlextLDAPConfig()
-        api3 = FlextLDAPApi.create(config)
+        config = FlextLdapConfig()
+        api3 = FlextLdapApi.create(config)
         assert api3._config is config
 
-    def test_get_flext_ldap_api_function(self) -> None:
-        """Test get_flext_ldap_api function."""
-        api1 = get_flext_ldap_api()
-        api2 = get_flext_ldap_api(None)
+    def test_flext_ldap_api_instantiation(self) -> None:
+        """Test FlextLdapApi instantiation."""
+        api1 = FlextLdapApi()
+        api2 = FlextLdapApi(None)
 
-        assert isinstance(api1, FlextLDAPApi)
-        assert isinstance(api2, FlextLDAPApi)
+        assert isinstance(api1, FlextLdapApi)
+        assert isinstance(api2, FlextLdapApi)
 
         # Test with custom config - work around singleton pattern
-        connection_config = FlextLDAPConnectionConfig(
+        connection_config = FlextLdapConnectionConfig(
             server="ldap://factory.example.com"
         )
-        config = FlextLDAPConfig()
+        config = FlextLdapConfig()
         # Manually set the connection after creation
         config.ldap_default_connection = connection_config
-        api3 = get_flext_ldap_api(config)
+        api3 = FlextLdapApi(config)
 
         # The config should be properly set
         assert api3._config is not None
@@ -544,16 +540,18 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_search_with_different_scopes(self) -> None:
         """Test search operations with different LDAP scopes."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         scopes = ["base", "onelevel", "subtree"]
 
         for scope in scopes:
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapModels.SearchRequest(
                 base_dn="dc=example,dc=com",
                 filter_str="(objectClass=*)",
                 scope=scope,
                 attributes=["*"],
+                size_limit=100,
+                time_limit=30,
             )
 
             result = await api.search(search_request)
@@ -561,9 +559,9 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_search_with_size_and_time_limits(self) -> None:
         """Test search with size and time limits."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -577,10 +575,10 @@ class TestFlextLDAPApiComprehensive:
 
     async def test_user_operations_with_complex_data(self) -> None:
         """Test user operations with complex attribute data."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test create with comprehensive attributes
-        create_request = FlextLDAPEntities.CreateUserRequest(
+        create_request = FlextLdapModels.CreateUserRequest(
             dn="cn=complex.user,ou=users,dc=example,dc=com",
             uid="complex.user",
             cn="Complex User",
@@ -594,21 +592,21 @@ class TestFlextLDAPApiComprehensive:
 
         # Test update with multiple attributes
         dn = "cn=complex.user,ou=users,dc=example,dc=com"
-        attributes = {
+        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
             "description": "Updated complex user",
             "telephoneNumber": "+1-555-5678",
             "title": "Senior Developer",
         }
 
-        result = await api.update_user(dn, attributes)
-        assert isinstance(result, FlextResult)
+        update_result = await api.update_user(dn, attributes)
+        assert isinstance(update_result, FlextResult)
 
     async def test_group_operations_comprehensive(self) -> None:
         """Test comprehensive group operations."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test create group with members
-        create_request = FlextLDAPEntities.CreateGroupRequest(
+        create_request = FlextLdapModels.CreateGroupRequest(
             dn="cn=comprehensive.group,ou=groups,dc=example,dc=com",
             cn="comprehensive.group",
             description="Comprehensive test group",
@@ -622,21 +620,21 @@ class TestFlextLDAPApiComprehensive:
         assert isinstance(result, FlextResult)
 
         # Test update group
-        result = await api.update_group(
+        update_result = await api.update_group(
             dn="cn=comprehensive.group,ou=groups,dc=example,dc=com",
             attributes={
                 "description": "Updated comprehensive group",
                 "cn": "updated.group",
             },
         )
-        assert isinstance(result, FlextResult)
+        assert isinstance(update_result, FlextResult)
 
     def test_entry_attribute_handling_edge_cases(self) -> None:
         """Test _get_entry_attribute with various edge cases."""
-        api = FlextLDAPApi()
+        api = FlextLdapApi()
 
         # Test with entry that has empty attributes
-        entry_empty = FlextLDAPEntities.Entry(
+        entry_empty = FlextLdapModels.Entry(
             id="empty_id",
             dn="cn=empty,dc=example,dc=com",
             object_classes=[],
@@ -647,11 +645,11 @@ class TestFlextLDAPApiComprehensive:
         assert result == "Default"
 
         # Test with entry that has empty string attribute values
-        entry_empty_attrs = FlextLDAPEntities.Entry(
+        entry_empty_attrs = FlextLdapModels.Entry(
             id="empty_id",
             dn="cn=empty,dc=example,dc=com",
             object_classes=["person"],
-            attributes={"cn": "", "uid": "validuid"},
+            attributes={"cn": [""], "uid": ["validuid"]},
         )
 
         result = api._get_entry_attribute(entry_empty_attrs, "cn", "Default")

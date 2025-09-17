@@ -6,46 +6,46 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
 
-from flext_ldap import FlextLDAPClient, FlextLDAPEntities
-from flext_ldap.repositories import FlextLDAPRepositories
+from flext_core import FlextResult
+from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.typings import LdapAttributeDict
 
 
 @pytest.mark.asyncio
-class TestFlextLDAPRepositoriesComprehensive:
-    """Comprehensive tests for FlextLDAPRepositories with real functionality."""
+class TestFlextLdapRepositoriesComprehensive:
+    """Comprehensive tests for FlextLdapRepositories with real functionality."""
 
     def test_repositories_initialization(self) -> None:
         """Test repositories initialization using FlextTestsMatchers."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         # Use FlextTestsMatchers for comprehensive validation
         assert hasattr(repos, "_base_repo")
         assert hasattr(repos, "_user_repo")
         assert hasattr(repos, "_group_repo")
-        assert isinstance(repos._base_repo, FlextLDAPRepositories.Repository)
-        assert isinstance(repos._user_repo, FlextLDAPRepositories.UserRepository)
-        assert isinstance(repos._group_repo, FlextLDAPRepositories.GroupRepository)
+        assert isinstance(repos._base_repo, FlextLdapRepositories.Repository)
+        assert isinstance(repos._user_repo, FlextLdapRepositories.UserRepository)
+        assert isinstance(repos._group_repo, FlextLdapRepositories.GroupRepository)
 
     def test_repository_property_access(self) -> None:
         """Test repository property access using FlextTestsMatchers."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         # Test repository property with FlextTestsMatchers
         repo = repos.repository
-        assert isinstance(repo, FlextLDAPRepositories.Repository)
+        assert isinstance(repo, FlextLdapRepositories.Repository)
 
         # Test users property
         users = repos.users
-        assert isinstance(users, FlextLDAPRepositories.UserRepository)
+        assert isinstance(users, FlextLdapRepositories.UserRepository)
 
         # Test groups property
         groups = repos.groups
-        assert isinstance(groups, FlextLDAPRepositories.GroupRepository)
+        assert isinstance(groups, FlextLdapRepositories.GroupRepository)
 
     # =============================================================================
     # Repository Class Tests
@@ -53,15 +53,15 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_repository_init(self) -> None:
         """Test Repository initialization."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         assert repo._client is client
 
     async def test_find_by_dn_without_connection(self) -> None:
         """Test find_by_dn without connection using FlextTestsMatchers."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         result = await repo.find_by_dn("cn=test,dc=example,dc=com")
 
@@ -77,11 +77,11 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_search_without_connection(self) -> None:
         """Test search without connection using FlextTestsMatchers and TestBuilders."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         # Create search request directly with proper types
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -104,14 +104,14 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_save_async_without_connection(self) -> None:
         """Test _save_async without connection."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
-        entry = FlextLDAPEntities.Entry(
+        entry = FlextLdapModels.Entry(
             id="test_user",
             dn="cn=test,dc=example,dc=com",
             object_classes=["person", "top"],
-            attributes={"cn": "test", "sn": "user"},
+            attributes={"cn": ["test"], "sn": ["user"]},
         )
 
         result = await repo._save_async(entry)
@@ -124,8 +124,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_delete_async_without_connection(self) -> None:
         """Test delete_async without connection."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         result = await repo._delete_async("cn=test,dc=example,dc=com")
 
@@ -137,8 +137,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_exists_without_connection(self) -> None:
         """Test exists without connection."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         # Use internal method since exists is no longer a compatibility alias
         result = await repo._find_by_dn_async("cn=test,dc=example,dc=com")
@@ -147,18 +147,18 @@ class TestFlextLDAPRepositoriesComprehensive:
             bool_result = FlextResult[bool].ok(result.value is not None)
         else:
             bool_result = FlextResult[bool].fail(result.error or "Find failed")
-        result = bool_result
+        exists_result = bool_result
 
-        assert not result.is_success
+        assert not exists_result.is_success
         assert any(
-            pattern in ((result.error or "").lower())
+            pattern in ((exists_result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
     async def test_update_without_connection(self) -> None:
         """Test update without connection."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         attributes: LdapAttributeDict = {"description": "Updated description"}
 
@@ -172,8 +172,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_get_by_id_with_invalid_dn(self) -> None:
         """Test get_by_id with invalid DN returns failure result."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         # get_by_id is implemented as sync wrapper for async find_by_dn
         result = repo.get_by_id("invalid_dn")
@@ -188,8 +188,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_find_all_not_implemented(self) -> None:
         """Test find_all returns empty list (not practical for LDAP)."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         result = repo.find_all()
         # find_all returns empty list since it's not practical for LDAP
@@ -198,14 +198,14 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_save_not_implemented(self) -> None:
         """Test save raises NotImplementedError."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
-        entry = FlextLDAPEntities.Entry(
+        entry = FlextLdapModels.Entry(
             id="test_id",
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
-            attributes={"cn": "test"},
+            attributes={"cn": ["test"]},
         )
 
         result = repo.save(entry)
@@ -217,8 +217,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_delete_not_implemented(self) -> None:
         """Test delete raises NotImplementedError."""
-        client = FlextLDAPClient()
-        repo = FlextLDAPRepositories.Repository(client)
+        client = FlextLdapClient()
+        repo = FlextLdapRepositories.Repository(client)
 
         result = repo.delete("test_id")
         assert not result.is_success
@@ -233,17 +233,17 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_user_repository_init(self) -> None:
         """Test UserRepository initialization."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        user_repo = FlextLDAPRepositories.UserRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        user_repo = FlextLdapRepositories.UserRepository(base_repo)
 
         assert user_repo._repo is base_repo
 
     async def test_find_user_by_uid_without_connection(self) -> None:
         """Test find_user_by_uid without connection."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        user_repo = FlextLDAPRepositories.UserRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        user_repo = FlextLdapRepositories.UserRepository(base_repo)
 
         result = await user_repo.find_user_by_uid(
             "testuser", "ou=users,dc=example,dc=com"
@@ -258,9 +258,9 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_find_users_by_filter_without_connection(self) -> None:
         """Test find_users_by_filter without connection."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        user_repo = FlextLDAPRepositories.UserRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        user_repo = FlextLdapRepositories.UserRepository(base_repo)
 
         result = await user_repo.find_users_by_filter(
             "(objectClass=person)",
@@ -276,9 +276,9 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_find_users_by_filter_comprehensive(self) -> None:
         """Test find_users_by_filter with different filter patterns."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        user_repo = FlextLDAPRepositories.UserRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        user_repo = FlextLdapRepositories.UserRepository(base_repo)
 
         result = await user_repo.find_users_by_filter(
             "(cn=john*)",
@@ -298,17 +298,17 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_group_repository_init(self) -> None:
         """Test GroupRepository initialization."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        group_repo = FlextLDAPRepositories.GroupRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        group_repo = FlextLdapRepositories.GroupRepository(base_repo)
 
         assert group_repo._repo is base_repo
 
     async def test_find_group_by_cn_without_connection(self) -> None:
         """Test find_group_by_cn without connection."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        group_repo = FlextLDAPRepositories.GroupRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        group_repo = FlextLdapRepositories.GroupRepository(base_repo)
 
         result = await group_repo.find_group_by_cn(
             "testgroup", "ou=groups,dc=example,dc=com"
@@ -323,9 +323,9 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_get_group_members_without_connection(self) -> None:
         """Test get_group_members without connection."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        group_repo = FlextLDAPRepositories.GroupRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        group_repo = FlextLdapRepositories.GroupRepository(base_repo)
 
         result = await group_repo.get_group_members(
             "cn=testgroup,ou=groups,dc=example,dc=com"
@@ -340,9 +340,9 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_add_member_to_group_without_connection(self) -> None:
         """Test add_member_to_group without connection."""
-        client = FlextLDAPClient()
-        base_repo = FlextLDAPRepositories.Repository(client)
-        group_repo = FlextLDAPRepositories.GroupRepository(base_repo)
+        client = FlextLdapClient()
+        base_repo = FlextLdapRepositories.Repository(client)
+        group_repo = FlextLdapRepositories.GroupRepository(base_repo)
 
         result = await group_repo.add_member_to_group(
             "cn=testgroup,ou=groups,dc=example,dc=com",
@@ -357,13 +357,13 @@ class TestFlextLDAPRepositoriesComprehensive:
             )
 
     # =============================================================================
-    # Main FlextLDAPRepositories Facade Tests
+    # Main FlextLdapRepositories Facade Tests
     # =============================================================================
 
     async def test_main_repositories_find_by_dn(self) -> None:
         """Test main repositories find_by_dn facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         result = await repos.find_by_dn("cn=test,dc=example,dc=com")
 
@@ -376,10 +376,10 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_main_repositories_search(self) -> None:
         """Test main repositories search facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=*)",
             scope="subtree",
@@ -399,14 +399,14 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_main_repositories_save_async(self) -> None:
         """Test main repositories save_async facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
-        entry = FlextLDAPEntities.Entry(
+        entry = FlextLdapModels.Entry(
             id="facade_test",
             dn="cn=test,dc=example,dc=com",
             object_classes=["person", "top"],
-            attributes={"cn": "test", "sn": "user"},
+            attributes={"cn": ["test"], "sn": ["user"]},
         )
 
         result = await repos.save_async(entry)
@@ -419,8 +419,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_main_repositories_delete_async(self) -> None:
         """Test main repositories delete_async facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         result = await repos.delete_async("cn=test,dc=example,dc=com")
 
@@ -432,8 +432,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_main_repositories_exists(self) -> None:
         """Test main repositories exists facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         result = await repos.exists("cn=test,dc=example,dc=com")
 
@@ -445,8 +445,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     async def test_main_repositories_update(self) -> None:
         """Test main repositories update facade method."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         attributes: LdapAttributeDict = {"description": "Updated"}
 
@@ -460,8 +460,8 @@ class TestFlextLDAPRepositoriesComprehensive:
 
     def test_repository_property_caching(self) -> None:
         """Test that repository properties are properly cached."""
-        client = FlextLDAPClient()
-        repos = FlextLDAPRepositories(client)
+        client = FlextLdapClient()
+        repos = FlextLdapRepositories(client)
 
         # Test repository caching
         repo1 = repos.repository

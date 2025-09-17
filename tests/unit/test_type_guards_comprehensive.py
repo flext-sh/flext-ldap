@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.type_guards import FlextLDAPTypeGuards
+from flext_ldap.type_guards import FlextLdapTypeGuards
 
 
-class TestFlextLDAPTypeGuardsComprehensive:
+class TestFlextLdapTypeGuardsComprehensive:
     """Comprehensive functional tests for LDAP type guards."""
 
     def test_is_ldap_dn_valid_dns(self) -> None:
         """Test is_ldap_dn with valid DN formats."""
-        FlextLDAPTypeGuards()
+        FlextLdapTypeGuards()
 
         # Standard valid DNs
         valid_dns = [
@@ -33,7 +33,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for dn in valid_dns:
-            assert FlextLDAPTypeGuards.is_ldap_dn(dn), f"Should validate DN: {dn}"
+            assert FlextLdapTypeGuards.is_ldap_dn(dn), f"Should validate DN: {dn}"
 
     def test_is_ldap_dn_complex_valid_dns(self) -> None:
         """Test is_ldap_dn with complex but valid DN formats."""
@@ -47,7 +47,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for dn in complex_dns:
-            assert FlextLDAPTypeGuards.is_ldap_dn(dn), (
+            assert FlextLdapTypeGuards.is_ldap_dn(dn), (
                 f"Should validate complex DN: {dn}"
             )
 
@@ -67,7 +67,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for invalid_dn in invalid_dns:
-            assert not FlextLDAPTypeGuards.is_ldap_dn(invalid_dn), (
+            assert not FlextLdapTypeGuards.is_ldap_dn(invalid_dn), (
                 f"Should reject invalid DN: {invalid_dn}"
             )
 
@@ -86,7 +86,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for value in non_string_values:
-            assert not FlextLDAPTypeGuards.is_ldap_dn(value), (
+            assert not FlextLdapTypeGuards.is_ldap_dn(value), (
                 f"Should reject non-string: {type(value)}"
             )
 
@@ -104,7 +104,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for value in valid_strings:
-            assert FlextLDAPTypeGuards.is_ldap_attribute_value(value), (
+            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
                 f"Should accept string: {value}"
             )
 
@@ -118,7 +118,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for value in valid_bytes:
-            assert FlextLDAPTypeGuards.is_ldap_attribute_value(value), (
+            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
                 f"Should accept bytes: {value!r}"
             )
 
@@ -133,7 +133,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for value in valid_lists:
-            assert FlextLDAPTypeGuards.is_ldap_attribute_value(value), (
+            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
                 f"Should accept list: {value}"
             )
 
@@ -152,7 +152,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for value in invalid_values:
-            assert not FlextLDAPTypeGuards.is_ldap_attribute_value(value), (
+            assert not FlextLdapTypeGuards.is_ldap_attribute_value(value), (
                 f"Should reject type: {type(value)}"
             )
 
@@ -169,7 +169,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for attrs in valid_attrs:
-            assert FlextLDAPTypeGuards.is_ldap_attributes_dict(attrs), (
+            assert FlextLdapTypeGuards.is_ldap_attributes_dict(attrs), (
                 f"Should accept attributes: {attrs}"
             )
 
@@ -186,7 +186,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for attrs in invalid_attrs:
-            assert not FlextLDAPTypeGuards.is_ldap_attributes_dict(attrs), (
+            assert not FlextLdapTypeGuards.is_ldap_attributes_dict(attrs), (
                 f"Should reject attributes: {attrs}"
             )
 
@@ -205,7 +205,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for entry in valid_entries:
-            assert FlextLDAPTypeGuards.is_ldap_entry_data(entry), (
+            assert FlextLdapTypeGuards.is_ldap_entry_data(entry), (
                 f"Should accept entry: {entry}"
             )
 
@@ -232,7 +232,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for entry in invalid_entries:
-            assert not FlextLDAPTypeGuards.is_ldap_entry_data(entry), (
+            assert not FlextLdapTypeGuards.is_ldap_entry_data(entry), (
                 f"Should reject entry: {entry}"
             )
 
@@ -248,7 +248,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for result in valid_results:
-            assert FlextLDAPTypeGuards.is_ldap_search_result(result), (
+            assert FlextLdapTypeGuards.is_ldap_search_result(result), (
                 f"Should accept result: {result}"
             )
 
@@ -266,7 +266,7 @@ class TestFlextLDAPTypeGuardsComprehensive:
         ]
 
         for result in invalid_results:
-            assert not FlextLDAPTypeGuards.is_ldap_search_result(result), (
+            assert not FlextLdapTypeGuards.is_ldap_search_result(result), (
                 f"Should reject result: {result}"
             )
 
@@ -274,21 +274,21 @@ class TestFlextLDAPTypeGuardsComprehensive:
         """Test type guards with edge cases and boundary conditions."""
         # Test very long DN
         long_dn = "cn=" + "a" * 1000 + ",ou=test,dc=example,dc=com"
-        assert FlextLDAPTypeGuards.is_ldap_dn(long_dn), "Should accept very long DN"
+        assert FlextLdapTypeGuards.is_ldap_dn(long_dn), "Should accept very long DN"
 
         # Test DN with Unicode characters
         unicode_dn = "cn=José García,ou=users,dc=example,dc=com"
-        assert FlextLDAPTypeGuards.is_ldap_dn(unicode_dn), "Should accept Unicode DN"
+        assert FlextLdapTypeGuards.is_ldap_dn(unicode_dn), "Should accept Unicode DN"
 
         # Test attribute with very long value
         long_value = "a" * 10000
-        assert FlextLDAPTypeGuards.is_ldap_attribute_value(long_value), (
+        assert FlextLdapTypeGuards.is_ldap_attribute_value(long_value), (
             "Should accept very long value"
         )
 
         # Test attributes with many keys
         many_attrs = {f"attr{i}": [f"value{i}"] for i in range(100)}
-        assert FlextLDAPTypeGuards.is_ldap_attributes_dict(many_attrs), (
+        assert FlextLdapTypeGuards.is_ldap_attributes_dict(many_attrs), (
             "Should accept many attributes"
         )
 
@@ -304,13 +304,13 @@ class TestFlextLDAPTypeGuardsComprehensive:
         # Test DN validation consistency
         for value, expected in test_values[:2]:
             for _ in range(10):  # Multiple calls
-                result = FlextLDAPTypeGuards.is_ldap_dn(value)
+                result = FlextLdapTypeGuards.is_ldap_dn(value)
                 assert result == expected, f"Inconsistent result for DN: {value}"
 
         # Test attribute value validation consistency
         for value, expected in test_values[2:]:
             for _ in range(10):  # Multiple calls
-                result = FlextLDAPTypeGuards.is_ldap_attribute_value(value)
+                result = FlextLdapTypeGuards.is_ldap_attribute_value(value)
                 assert result == expected, (
                     f"Inconsistent result for attr value: {value}"
                 )

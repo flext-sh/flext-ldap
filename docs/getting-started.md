@@ -90,9 +90,9 @@ export FLEXT_LDAP_POOL_SIZE=5
 Create `flext_ldap_config.py`:
 
 ```python
-from flext_ldap import FlextLDAPConfig
+from flext_ldap import FlextLdapConfig
 
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -131,13 +131,13 @@ asyncio.run(test_connection())
 
 ```python
 import asyncio
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 async def basic_search():
     """Perform a basic directory search."""
     api = get_flext_ldap_api()
 
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=organizationalUnit)",
         scope="subtree",
