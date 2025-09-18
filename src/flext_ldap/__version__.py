@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 import importlib.metadata
 
-# Get metadata from the installed package
 _metadata = importlib.metadata.metadata("flext-ldap")
 __version__ = _metadata["Version"]
 __project__ = _metadata["Name"]

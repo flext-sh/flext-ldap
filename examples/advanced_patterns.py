@@ -130,7 +130,8 @@ async def demonstrate_comprehensive_configuration() -> None:
             size_limit=100,
             time_limit=30,
         )
-        search_request.validate_business_rules()
+        # SearchRequest uses Pydantic field validation automatically
+        logger.debug(f"Search configured for {search_request.base_dn}")
 
         # 3. Settings ready for usage
 
@@ -255,12 +256,14 @@ async def demonstrate_performance_patterns() -> None:
         # 3. Paging simulation
         page_size = 100
         total_entries = 1500
-        (total_entries + page_size - 1) // page_size
+        total_pages = (total_entries + page_size - 1) // page_size
+        logger.debug(f"Pagination: {total_pages} pages for {total_entries} entries")
 
         # 4. Caching simulation
         cache_hits = 8
         cache_misses = 2
-        cache_hits / (cache_hits + cache_misses) * 100
+        cache_hit_rate = cache_hits / (cache_hits + cache_misses) * 100
+        logger.debug(f"Cache performance: {cache_hit_rate:.1f}% hit rate")
 
     except Exception:
         logger.exception("Performance demonstration failed")

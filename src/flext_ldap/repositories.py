@@ -241,7 +241,7 @@ class FlextLdapRepositories(FlextMixins.Service):
 
         async def _save_async(
             self,
-            entry: FlextLdapModels.Entry,
+            entry: FlextLdapModels.Entry | FlextLdapModels.User,
         ) -> FlextResult[None]:
             """Save entry - internal async implementation."""
             # Validate entry business rules
@@ -258,10 +258,30 @@ class FlextLdapRepositories(FlextMixins.Service):
                     f"Could not check if entry exists: {existing_result.error}",
                 )
 
-            # Prepare LDAP attributes
+            # Prepare LDAP attributes from entry
             attributes: FlextLdapTypes.Entry.AttributeDict = dict(entry.attributes)
+
+            # Add object classes
             if entry.object_classes:
                 attributes["objectClass"] = entry.object_classes
+
+            # For User entities, convert model fields to LDAP attributes
+            if isinstance(entry, FlextLdapModels.User):
+                # After isinstance check, entry is known to be FlextLdapModels.User
+                if entry.cn:
+                    attributes["cn"] = [entry.cn]
+                if entry.sn:
+                    attributes["sn"] = [entry.sn]
+                if entry.uid:
+                    attributes["uid"] = [entry.uid]
+                if entry.given_name:
+                    attributes["givenName"] = [entry.given_name]
+                if entry.mail:
+                    attributes["mail"] = [entry.mail]
+                if entry.display_name:
+                    attributes["displayName"] = [entry.display_name]
+                if entry.user_password:
+                    attributes["userPassword"] = [entry.user_password]
 
             # Create or update entry
             if existing_result.value:

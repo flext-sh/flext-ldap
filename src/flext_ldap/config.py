@@ -16,13 +16,13 @@ from typing import ClassVar, Self, cast, final
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextResult, FlextTypes
+from flext_core import FlextConfig, FlextResult
 from flext_ldap.connection_config import FlextLdapConnectionConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.value_objects import FlextLdapValueObjects
 
 # Python 3.13 type aliases for LDAP configuration
-type LdapConfigDict = FlextTypes.Core.Dict
+type LdapConfigDict = dict[str, object]
 type LdapConnectionName = str
 type LdapConfigPath = str | Path
 
@@ -180,6 +180,11 @@ class FlextLdapConfig(FlextConfig):
         ge=0,
         le=60,
     )
+    ldap_enable_test_mode: bool = Field(
+        default=False,
+        description="Enable test mode for LDAP operations",
+        alias="enable_test_mode",
+    )
 
     # === VALIDATION METHODS ===
     @field_validator("ldap_bind_dn")
@@ -228,7 +233,7 @@ class FlextLdapConfig(FlextConfig):
 
         return self
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[misc]
     def _validate_configuration_consistency_model(self) -> Self:
         """Pydantic model validator that calls the runtime validation method."""
         return self.validate_configuration_consistency()
@@ -358,6 +363,225 @@ class FlextLdapConfig(FlextConfig):
 
         """
         return self.ldap_enable_debug
+
+    @classmethod
+    def create_development_ldap_config(
+        cls, **overrides: dict[str, object]
+    ) -> FlextResult[FlextLdapConfig]:
+        """Create development LDAP configuration with appropriate defaults.
+
+        Args:
+            **overrides: Additional configuration overrides
+
+        Returns:
+            FlextResult containing development configuration
+
+        """
+        try:
+            development_defaults: dict[str, object] = {
+                "environment": "development",
+                "debug": True,
+                "ldap_enable_debug": True,
+                "ldap_log_queries": True,
+                "ldap_log_responses": True,
+                "ldap_enable_caching": False,  # Disable caching in dev
+                "ldap_verify_certificates": False,  # Relaxed SSL in dev
+                "ldap_size_limit": 1000,
+                "ldap_time_limit": 60,
+            }
+            development_defaults.update(overrides)
+            config = cls(**development_defaults)  # type: ignore[arg-type]
+            return FlextResult["FlextLdapConfig"].ok(config)
+        except Exception as e:
+            return FlextResult["FlextLdapConfig"].fail(
+                f"Failed to create development config: {e}"
+            )
+
+    @classmethod
+    def create_test_ldap_config(
+        cls, **overrides: dict[str, object]
+    ) -> FlextResult[FlextLdapConfig]:
+        """Create test LDAP configuration with appropriate defaults.
+
+        Args:
+            **overrides: Additional configuration overrides
+
+        Returns:
+            FlextResult containing test configuration
+
+        """
+        try:
+            test_defaults: dict[str, object] = {
+                "environment": "test",
+                "debug": False,
+                "ldap_enable_debug": False,
+                "ldap_log_queries": False,
+                "ldap_log_responses": False,
+                "ldap_enable_caching": False,  # Disable caching in tests
+                "ldap_verify_certificates": False,  # Relaxed SSL for tests
+                "ldap_size_limit": 500,  # Smaller limits for tests
+                "ldap_time_limit": 30,
+                "ldap_enable_test_mode": True,  # Special test mode flag
+            }
+            test_defaults.update(overrides)
+            config = cls(**test_defaults)  # type: ignore[arg-type]
+            return FlextResult["FlextLdapConfig"].ok(config)
+        except Exception as e:
+            return FlextResult["FlextLdapConfig"].fail(
+                f"Failed to create test config: {e}"
+            )
+
+    @classmethod
+    def create_production_ldap_config(
+        cls, **overrides: dict[str, object]
+    ) -> FlextResult[FlextLdapConfig]:
+        """Create production LDAP configuration with appropriate defaults.
+
+        Args:
+            **overrides: Additional configuration overrides
+
+        Returns:
+            FlextResult containing production configuration
+
+        """
+        try:
+            production_defaults: dict[str, object] = {
+                "environment": "production",
+                "debug": False,
+                "ldap_enable_debug": False,
+                "ldap_log_queries": False,
+                "ldap_log_responses": False,
+                "ldap_enable_caching": True,  # Enable caching in production
+                "ldap_cache_ttl": 3600,  # 1 hour cache
+                "ldap_verify_certificates": True,  # Strict SSL in production
+                "ldap_size_limit": 5000,  # Higher limits for production
+                "ldap_time_limit": 120,
+                "ldap_pool_size": 10,  # Connection pooling
+            }
+            production_defaults.update(overrides)
+            config = cls.model_validate(production_defaults)
+            return FlextResult["FlextLdapConfig"].ok(config)
+        except Exception as e:
+            return FlextResult["FlextLdapConfig"].fail(
+                f"Failed to create production config: {e}"
+            )
+
+    def apply_ldap_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
+        """Apply LDAP configuration overrides to current instance.
+
+        Args:
+            overrides: Dictionary of configuration overrides
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            # Map override keys to actual field names
+            field_mapping = {
+                "size_limit": "ldap_size_limit",
+                "time_limit": "ldap_time_limit",
+                "enable_caching": "ldap_enable_caching",
+                "cache_ttl": "ldap_cache_ttl",
+                "log_queries": "ldap_log_queries",
+                "log_responses": "ldap_log_responses",
+                "structured_logging": "ldap_structured_logging",
+                "enable_debug": "ldap_enable_debug",
+                "verify_certificates": "ldap_verify_certificates",
+                "use_ssl": "ldap_use_ssl",
+                "pool_size": "ldap_pool_size",
+                "page_size": "ldap_page_size",
+                "retry_attempts": "ldap_retry_attempts",
+                "retry_delay": "ldap_retry_delay",
+            }
+
+            # Apply overrides using setattr
+            for key, value in overrides.items():
+                field_name = field_mapping.get(key, key)
+                if hasattr(self, field_name):
+                    setattr(self, field_name, value)
+                # Try direct field name for non-mapped fields
+                elif hasattr(self, key):
+                    setattr(self, key, value)
+                else:
+                    return FlextResult[None].fail(f"Unknown configuration field: {key}")
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to apply overrides: {e}")
+
+    def get_ldap_search_config(self) -> dict[str, object]:
+        """Get LDAP search-related configuration.
+
+        Returns:
+            Dictionary containing search configuration
+
+        """
+        return {
+            "size_limit": self.ldap_size_limit,
+            "time_limit": self.ldap_time_limit,
+            "page_size": self.ldap_page_size,
+        }
+
+    def get_ldap_performance_config(self) -> dict[str, object]:
+        """Get LDAP performance-related configuration.
+
+        Returns:
+            Dictionary containing performance configuration
+
+        """
+        return {
+            "enable_caching": self.ldap_enable_caching,
+            "cache_ttl": self.ldap_cache_ttl,
+            "pool_size": self.ldap_pool_size,
+            "pool_timeout": self.ldap_pool_timeout,
+            "retry_attempts": self.ldap_retry_attempts,
+            "retry_delay": self.ldap_retry_delay,
+        }
+
+    def get_ldap_logging_config(self) -> dict[str, object]:
+        """Get LDAP logging-related configuration.
+
+        Returns:
+            Dictionary containing logging configuration
+
+        """
+        return {
+            "log_queries": self.ldap_log_queries,
+            "log_responses": self.ldap_log_responses,
+            "structured_logging": self.ldap_structured_logging,
+            "enable_debug": self.ldap_enable_debug,
+        }
+
+    def get_effective_connection(self) -> dict[str, object] | None:
+        """Get effective connection configuration.
+
+        Returns:
+            Dictionary containing connection details or None
+
+        """
+        if not self.ldap_default_connection:
+            return None
+
+        return {
+            "server": self.ldap_default_connection.server,
+            "port": self.ldap_default_connection.port,
+            "use_ssl": self.ldap_use_ssl,
+            "verify_certificates": self.ldap_verify_certificates,
+        }
+
+    def get_effective_auth_config(self) -> dict[str, object]:
+        """Get effective authentication configuration.
+
+        Returns:
+            Dictionary containing authentication details
+
+        """
+        return {
+            "bind_dn": self.get_effective_bind_dn(),
+            "use_ssl": self.ldap_use_ssl,
+            "verify_certificates": self.ldap_verify_certificates,
+        }
 
 
 # NO GLOBAL FACTORY FUNCTIONS ALLOWED - Use FlextLdapConfig class methods directly

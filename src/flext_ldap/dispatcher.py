@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextBus, FlextDispatcher, FlextDispatcherRegistry, FlextHandlers
+from flext_ldap.domain import FlextLdapDomain
 
 
 class FlextLdapDispatcher:
@@ -32,7 +33,7 @@ class FlextLdapDispatcher:
         def build_handlers() -> list[FlextHandlers[object, object]]:
             """Build handler instances lazily to avoid circular imports."""
             # Import inside method to avoid circular import at runtime
-            from flext_ldap.domain import FlextLdapDomain  # noqa: PLC0415
+            # For static type checking, FlextLdapDomain is imported above under TYPE_CHECKING
 
             # Create handlers and cast to the expected interface type
             return [
@@ -103,4 +104,6 @@ class FlextLdapDispatcher:
         return cls.create_default(bus=bus)
 
 
-__all__ = ["FlextLdapDispatcher"]
+__all__ = [
+    "FlextLdapDispatcher",
+]

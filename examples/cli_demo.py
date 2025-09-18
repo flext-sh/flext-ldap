@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 
-from flext_ldap import get_flext_ldap_cli
+from flext_ldap import FlextLdapModels, get_flext_ldap_cli
 
 
 def demonstrate_cli_isolation() -> None:
@@ -60,8 +60,6 @@ def demonstrate_cli_isolation() -> None:
 
 def demonstrate_model_cli_separation() -> None:
     """Demonstrate the separation between FlextLdapModels and FlextLdapCli."""
-    from flext_ldap import FlextLdapModels
-
     # Data management (FlextLdapModels) - pure data operations
     print("=== Data Management (FlextLdapModels) ===")
 
@@ -85,7 +83,7 @@ def demonstrate_model_cli_separation() -> None:
     cli = get_flext_ldap_cli()
 
     # CLI handles user interaction and formatting
-    cli._formatters.display_message("Model vs CLI Separation Demo", "header")
+    cli._formatters.display_message("Model vs CLI Separation Demo", "info")
     cli._formatters.display_message(
         "✅ Data models handle pure data operations", "info"
     )

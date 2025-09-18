@@ -1060,8 +1060,11 @@ class FlextLdapOperations(FlextDomainService[object]):
                             else None,
                             user_password=None,  # Required field
                             modified_at=None,  # Required field
-                            attributes=FlextLdapOperations._normalize_ldap_attributes(
-                                processed_attrs
+                            attributes=cast(
+                                "dict[str, str | bytes | list[str] | list[bytes]]",
+                                FlextLdapOperations._normalize_ldap_attributes(
+                                    processed_attrs
+                                ),
                             ),
                         )
                         users.append(user)
@@ -1118,8 +1121,9 @@ class FlextLdapOperations(FlextDomainService[object]):
                             if isinstance(entry_dict.get("objectClass", []), list)
                             else []
                         ),
-                        attributes=FlextLdapOperations._normalize_ldap_attributes(
-                            entry_dict
+                        attributes=cast(
+                            "dict[str, str | bytes | list[str] | list[bytes]]",
+                            FlextLdapOperations._normalize_ldap_attributes(entry_dict),
                         ),
                         modified_at=None,
                     )
@@ -1194,7 +1198,10 @@ class FlextLdapOperations(FlextDomainService[object]):
                     if isinstance(entry_data.get("objectClass", []), list)
                     else []
                 ),
-                attributes=FlextLdapOperations._normalize_ldap_attributes(entry_data),
+                attributes=cast(
+                    "dict[str, str | bytes | list[str] | list[bytes]]",
+                    FlextLdapOperations._normalize_ldap_attributes(entry_data),
+                ),
                 modified_at=None,
             )
             return FlextResult.ok(entry)
@@ -1343,9 +1350,7 @@ class FlextLdapOperations(FlextDomainService[object]):
                     entry_obj = dn_or_entry
                     dn = entry_obj.dn
                     object_classes = entry_obj.object_classes
-                    attributes = cast(
-                        "FlextLdapTypes.Entry.AttributeDict", entry_obj.attributes
-                    )
+                    attributes = entry_obj.attributes
                 else:
                     # Use individual parameters
                     dn = dn_or_entry
@@ -1369,8 +1374,9 @@ class FlextLdapOperations(FlextDomainService[object]):
                     id=FlextUtilities.Generators.generate_id(),
                     dn=dn,
                     object_classes=object_classes,
-                    attributes=FlextLdapOperations._normalize_ldap_attributes(
-                        safe_attributes
+                    attributes=cast(
+                        "dict[str, str | bytes | list[str] | list[bytes]]",
+                        FlextLdapOperations._normalize_ldap_attributes(safe_attributes),
                     ),
                     modified_at=None,
                     # Note: no status field as FlextModels already has it
@@ -1715,7 +1721,10 @@ class FlextLdapOperations(FlextDomainService[object]):
                 id=user_id_str,
                 dn=user_request.dn,
                 object_classes=["inetOrgPerson", "person", "top"],
-                attributes=FlextLdapOperations._normalize_ldap_attributes(attributes),
+                attributes=cast(
+                    "dict[str, str | bytes | list[str] | list[bytes]]",
+                    FlextLdapOperations._normalize_ldap_attributes(attributes),
+                ),
                 uid=user_request.uid,
                 cn=user_request.cn,
                 sn=user_request.sn,
@@ -1970,7 +1979,10 @@ class FlextLdapOperations(FlextDomainService[object]):
                 id=group_id_str,
                 dn=dn,
                 object_classes=["groupOfNames", "top"],
-                attributes=FlextLdapOperations._normalize_ldap_attributes(attributes),
+                attributes=cast(
+                    "dict[str, str | bytes | list[str] | list[bytes]]",
+                    FlextLdapOperations._normalize_ldap_attributes(attributes),
+                ),
                 cn=cn,
                 description=description,
                 members=members,
@@ -2025,34 +2037,51 @@ class FlextLdapOperations(FlextDomainService[object]):
                     group_dn,
                 )
                 if group_result.is_failure:
-                    return FlextResult.fail(
-                        group_result.error or "Failed to get group",
+                    return FlextResult[None].fail(
+                        f"Failed to get group membership: {group_result.error}"
                     )
 
-                # Step 2: Extract and process members using simplified logic
-                current_members = self._extract_current_members(group_result.value)
-                updated_members_result = self._calculate_updated_members(
-                    current_members,
-                    member_dn,
-                    action,
+                group_entry = group_result.unwrap()
+
+                # Extract member list from the group entry
+                member_attr = group_entry.get_attribute_values("member")
+                current_members = [str(m) for m in member_attr] if member_attr else []
+
+                # Step 2: Check if member is already in group
+                member_exists = any(
+                    member.lower() == member_dn.lower() for member in current_members
                 )
 
-                if updated_members_result.is_failure:
-                    return FlextResult.fail(
-                        updated_members_result.error or "Failed to calculate members",
+                # Step 3: Validate action against current state
+                if action == "add" and member_exists:
+                    return FlextResult[None].fail(
+                        f"Member {member_dn} already exists in group {group_dn}"
                     )
 
-                # Step 3: Apply the change using existing method
+                if action == "remove" and not member_exists:
+                    return FlextResult[None].fail(
+                        f"Member {member_dn} does not exist in group {group_dn}"
+                    )
+
+                # Step 4: Calculate updated members list
+                updated_result = self._calculate_updated_members(
+                    current_members, member_dn, action
+                )
+                if updated_result.is_failure:
+                    return FlextResult[None].fail(
+                        f"Failed to calculate members: {updated_result.error}"
+                    )
+
+                updated_members = updated_result.unwrap()
+
+                # Step 5: Apply membership change with audit logging
                 return await self._apply_membership_change(
-                    connection_id,
-                    group_dn,
-                    updated_members_result.value,
-                    action,
-                    member_dn,
+                    connection_id, group_dn, updated_members, action, member_dn
                 )
+
             except Exception as e:
-                return FlextResult.fail(
-                    f"Membership command execution failed: {e}",
+                return FlextResult[None].fail(
+                    f"Membership command execution failed: {e!s}"
                 )
 
         def _extract_current_members(self, group_entry: object) -> list[str]:
@@ -2063,13 +2092,7 @@ class FlextLdapOperations(FlextDomainService[object]):
             current_members = getattr(group_entry, "get_attribute", lambda _: None)(
                 "member",
             )
-
-            # Simplified member extraction using Strategy Pattern
-            if current_members is None:
-                return []
-            if isinstance(current_members, list):
-                return [str(item) for item in current_members]
-            return [str(current_members)]
+            return current_members if isinstance(current_members, list) else []
 
         async def _get_group_membership(
             self,
@@ -2103,41 +2126,18 @@ class FlextLdapOperations(FlextDomainService[object]):
             action: str,
         ) -> FlextResult[list[str]]:
             """Calculate updated member list based on action."""
+            updated_members = current_members.copy()
+
             if action == "add":
-                return self._handle_add_member(current_members, member_dn)
-            if action == "remove":
-                return self._handle_remove_member(current_members, member_dn)
-            return FlextResult[list[str]].fail(f"Invalid action: {action}")
+                if member_dn not in updated_members:
+                    updated_members.append(member_dn)
+            elif action == "remove":
+                if member_dn in updated_members:
+                    updated_members.remove(member_dn)
+            else:
+                return FlextResult.fail(f"Unknown action: {action}")
 
-        def _handle_add_member(
-            self,
-            current_members: list[str],
-            member_dn: str,
-        ) -> FlextResult[list[str]]:
-            """Handle adding a member to the group."""
-            if member_dn in current_members:
-                return FlextResult[list[str]].fail(
-                    f"Member already exists in group: {member_dn}",
-                )
-            return FlextResult[list[str]].ok([*current_members, member_dn])
-
-        def _handle_remove_member(
-            self,
-            current_members: list[str],
-            member_dn: str,
-        ) -> FlextResult[list[str]]:
-            """Handle removing a member from the group."""
-            if member_dn not in current_members:
-                return FlextResult[list[str]].fail(
-                    f"Member not found in group: {member_dn}",
-                )
-
-            updated_members = [m for m in current_members if m != member_dn]
-            # Add dummy member if none left (LDAP groupOfNames requirement)
-            if not updated_members:
-                updated_members = ["cn=dummy,ou=temp,dc=example,dc=com"]
-
-            return FlextResult[list[str]].ok(updated_members)
+            return FlextResult.ok(updated_members)
 
         async def _apply_membership_change(
             self,
@@ -2160,10 +2160,8 @@ class FlextLdapOperations(FlextDomainService[object]):
             )
 
             if modify_result.is_success:
-                action_verb = "added to" if action == "add" else "removed from"
-                # Direct FlextMixins.Service logging
                 self.log_info(
-                    f"LDAP member {action_verb} group successfully",
+                    f"Group membership {action} successful",
                     extra={
                         "operation": f"member_{action}_group",
                         "connection_id": connection_id,
@@ -2274,7 +2272,10 @@ class FlextLdapOperations(FlextDomainService[object]):
                     if isinstance(entry_data.get("objectClass", []), list)
                     else []
                 ),
-                attributes=FlextLdapOperations._normalize_ldap_attributes(entry_data),
+                attributes=cast(
+                    "dict[str, str | bytes | list[str] | list[bytes]]",
+                    FlextLdapOperations._normalize_ldap_attributes(entry_data),
+                ),
                 modified_at=None,
             )
         else:

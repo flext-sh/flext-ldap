@@ -23,7 +23,6 @@ from flext_ldap import (
     FlextLdapApi,
     FlextLdapConfig,
     FlextLdapValueObjects,
-    get_flext_ldap_api,
 )
 
 logger = FlextLogger(__name__)
@@ -43,7 +42,8 @@ async def demonstrate_configuration() -> None:
 async def demonstrate_api_usage() -> FlextLdapApi:
     """Demonstrate API usage patterns."""
     # 1. Initialize API using factory function
-    api = get_flext_ldap_api()
+    # Use explicit factory create() to avoid Any-return typing for some loaders
+    api = FlextLdapApi.create()
 
     # 2. Connect (using demo server for example)
     try:
@@ -133,9 +133,10 @@ async def demonstrate_logging_integration() -> None:
     logger.debug("Creating LDAP settings")
     settings = FlextLdapConfig()
 
+    # Use the public field name defined in FlextLdapConfig
     logger.debug(
         "Settings created successfully",
-        extra={"debug_enabled": settings.ldap_enable_debug_mode},
+        extra={"debug_enabled": settings.ldap_enable_debug},
     )
 
     # Test validation with logging

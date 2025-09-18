@@ -161,3 +161,5 @@ __all__ = [
     # Main class following flext-core pattern - NO ALIASES ALLOWED
     "FlextLdapTypes",
 ]
+
+# NO LEGACY ALIASES ALLOWED - Use FlextLdapTypes.Entry.AttributeDict directly

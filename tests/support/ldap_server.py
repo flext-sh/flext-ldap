@@ -54,8 +54,8 @@ class LdapTestServer:
                 environment={
                     "LDAP_ORGANISATION": "Flext Test",
                     "LDAP_DOMAIN": "internal.invalid",
-                    "LDAP_ADMIN_PASSWORD": self.REDACTED_LDAP_BIND_PASSWORD_password,
-                    "LDAP_CONFIG_PASSWORD": self.REDACTED_LDAP_BIND_PASSWORD_password,
+                    "LDAP_ADMIN_PASSWORD": self.REDACTED_LDAP_BIND_PASSWORD_password or "REDACTED_LDAP_BIND_PASSWORD123",
+                    "LDAP_CONFIG_PASSWORD": self.REDACTED_LDAP_BIND_PASSWORD_password or "REDACTED_LDAP_BIND_PASSWORD123",
                     "LDAP_READONLY_USER": "false",
                     "LDAP_RFC2307BIS_SCHEMA": "false",
                     "LDAP_BACKEND": "mdb",
@@ -215,7 +215,7 @@ class LdapTestServer:
         return FlextLdapConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            bind_password=self.REDACTED_LDAP_BIND_PASSWORD_password,
+            bind_password=self.REDACTED_LDAP_BIND_PASSWORD_password or "REDACTED_LDAP_BIND_PASSWORD123",
             use_ssl=False,
             timeout=30,
         )

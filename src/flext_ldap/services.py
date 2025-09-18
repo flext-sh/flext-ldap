@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 from datetime import UTC, datetime
 from functools import cached_property
-from typing import cast
 
+# Python 3.13 type aliases
 from flext_core import (
     FlextContainer,
     FlextMixins,
@@ -18,14 +19,16 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.container import FlextLdapContainer
+from flext_ldap.dispatcher import FlextLdapDispatcher
+from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.operations import FlextLdapOperations
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
-# Python 3.13 type aliases
 type LDAPRequest = FlextTypes.Core.Dict
 type LDAPDomain = object
 type LDAPResult = FlextTypes.Core.Dict
@@ -192,9 +195,27 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 result = self.validate_filter(str(value))
                 return FlextResult.ok({"valid": result.is_success, "target": target})
             case "attributes":
-                result = self.validate_attributes(
-                    cast("FlextLdapTypes.Entry.AttributeDict", value)
-                )
+                # Validate that value is a proper attributes dictionary
+                if not isinstance(value, dict):
+                    return FlextResult.fail(
+                        f"Attributes must be a dictionary, got {type(value)}"
+                    )
+
+                # Convert to proper AttributeDict format
+                validated_attributes: FlextLdapTypes.Entry.AttributeDict = {}
+                for key, val in value.items():
+                    if not isinstance(key, str):
+                        return FlextResult.fail(
+                            f"Attribute key must be string, got {type(key)}"
+                        )
+
+                    # Convert values to list format as required by AttributeDict
+                    if isinstance(val, list):
+                        validated_attributes[key] = val
+                    else:
+                        validated_attributes[key] = [str(val)]
+
+                result = self.validate_attributes(validated_attributes)
                 return FlextResult.ok({"valid": result.is_success, "target": target})
             case _:
                 return FlextResult.fail(f"Unknown validation target: {target}")
@@ -267,14 +288,66 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.User]:
         """Create new LDAP user."""
-        user_entity = request.to_user_entity()
+        user_entity: FlextLdapModels.User | None = None
 
-        # Validate user business rules
-        validation_result = user_entity.validate_business_rules()
-        if not validation_result.is_success:
-            return FlextResult.fail(
-                f"User validation failed: {validation_result.error}",
+        if FlextLdapConstants.FeatureFlags.dispatcher_enabled():
+            try:
+                dispatcher = FlextLdapDispatcher.get_global_dispatcher()
+                command = FlextLdapDomain.CreateUserCommand(
+                    command_type="create_user",
+                    user_data=request.model_dump(mode="python"),
+                )
+                dispatch_result = dispatcher.dispatch(command)
+                if dispatch_result.is_success:
+                    payload = dispatch_result.unwrap()
+                    if isinstance(payload, FlextResult):
+                        if payload.is_failure:
+                            return FlextResult.fail(
+                                payload.error or "User creation failed",
+                            )
+                        user_entity = payload.unwrap()
+                    elif isinstance(payload, FlextLdapModels.User):
+                        user_entity = payload
+                    else:
+                        self.log_warning(
+                            "dispatcher_unexpected_payload",
+                            payload_type=type(payload).__name__,
+                        )
+                else:
+                    self.log_warning(
+                        "dispatcher_create_user_failed",
+                        error=dispatch_result.error,
+                    )
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self.log_error(
+                    "dispatcher_create_user_error",
+                    error=str(exc),
+                )
+
+        if user_entity is None:
+            # Create user entity using FlextResult pattern instead of legacy method
+            user_entity = FlextLdapModels.User(
+                id=f"user_{request.uid}",
+                dn=request.dn,
+                uid=request.uid,
+                cn=request.cn,
+                sn=request.sn,
+                given_name=request.given_name,
+                mail=request.mail,
+                user_password=request.user_password,
+                object_classes=request.object_classes or ["inetOrgPerson", "person"],
+                attributes={},
+                status="active",
+                created_at=datetime.now(UTC).isoformat(),
+                modified_at=datetime.now(UTC).isoformat(),
             )
+
+            # Validate user business rules
+            validation_result = user_entity.validate_business_rules()
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    f"User validation failed: {validation_result.error}",
+                )
 
         # Use cached repository for performance
         repository = self._repository
@@ -318,22 +391,32 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Convert entry to user using Python 3.13 pattern matching for attribute extraction
         entry = entry_result.value
 
-        # Extract string attributes safely using Python 3.13 pattern matching
+        # Extract string attributes safely - handle both list and string values
         def safe_str_attr(attr_name: str) -> str | None:
-            """Extract string attribute safely using Python 3.13 patterns."""
+            """Extract string attribute safely - handle various data formats."""
             value = entry.get_attribute(attr_name)
-            if not value:
+            if not value:  # None or empty list
                 return None
 
-            # Handle list values by taking the first element
-            if isinstance(value, list):
-                if len(value) > 0 and value[0]:
-                    return str(value[0])
-                return None
+            # get_attribute() returns list[str] | None, so process the list
+            if isinstance(value, list) and len(value) > 0:
+                first_val = value[0]
+                if isinstance(first_val, str) and first_val.strip():
+                    # If it looks like a string representation of a list, try to parse it
+                    if first_val.startswith("[") and first_val.endswith("]"):
+                        try:
+                            parsed_list = ast.literal_eval(first_val)
+                            if isinstance(parsed_list, list) and len(parsed_list) > 0:
+                                return str(parsed_list[0]).strip()
+                        except (ValueError, SyntaxError):
+                            # If parsing fails, just use the original string
+                            pass
+                    return first_val.strip()
 
-            # Handle single values
-            str_value = str(value).strip()
-            return str_value or None
+            return None
+
+        # Generate created_at timestamp if not available (Entry model doesn't have this field)
+        current_time = datetime.now(UTC).isoformat()
 
         user_entity = FlextLdapModels.User(
             id=entry.id,
@@ -346,8 +429,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             given_name=safe_str_attr("givenName"),
             mail=safe_str_attr("mail"),
             user_password=safe_str_attr("userPassword"),
-            created_at=entry.created_at,
-            modified_at=entry.modified_at,
+            created_at=current_time,  # Generate timestamp since Entry doesn't have created_at
+            modified_at=entry.modified_at
+            or current_time,  # Use Entry's modified_at or generate
         )
         return FlextResult.ok(user_entity)
 
@@ -362,7 +446,12 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         update_method = getattr(repository, "update", None)
         if update_method is None:
             return FlextResult.fail("Repository does not support update method")
-        update_result = await update_method(dn, cast("dict[str, object]", updates))
+        # Convert AttributeDict to dict[str, object] format expected by repository
+        converted_updates: dict[str, object] = {
+            key: value if isinstance(value, list) else [value]
+            for key, value in updates.items()
+        }
+        update_result = await update_method(dn, converted_updates)
 
         if not update_result.is_success:
             return FlextResult.fail(
@@ -422,7 +511,14 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             return FlextResult.fail(
                 f"LDAP operations not available: {operations_result.error}",
             )
-        operations = cast("FlextLdapOperations", operations_result.value)
+
+        # Validate that the result value is FlextLdapOperations
+        if not isinstance(operations_result.value, FlextLdapOperations):
+            return FlextResult.fail(
+                f"Expected FlextLdapOperations, got {type(operations_result.value)}"
+            )
+
+        operations = operations_result.value
 
         # Use group operations to create group
         create_result = await operations._groups.create_group(
@@ -455,7 +551,12 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             return FlextResult.fail(
                 f"LDAP operations not available: {operations_result.error}",
             )
-        operations = cast("FlextLdapOperations", operations_result.value)
+        # Validate operations result value type
+        if not isinstance(operations_result.value, FlextLdapOperations):
+            return FlextResult.fail(
+                f"Invalid operations type: expected FlextLdapOperations, got {type(operations_result.value)}"
+            )
+        operations = operations_result.value
 
         # Use search operations to find group
         search_params = FlextLdapModels.SearchRequest(
@@ -524,7 +625,14 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         update_method = getattr(repository, "update", None)
         if update_method is None:
             return FlextResult.fail("Repository does not support update method")
-        result = await update_method(dn, cast("dict[str, object]", attributes))
+        # Convert attributes to proper dict[str, object] format
+        converted_attributes: dict[str, object] = {}
+        for key, value in attributes.items():
+            if isinstance(value, list):
+                converted_attributes[key] = value
+            else:
+                converted_attributes[key] = [str(value)]
+        result = await update_method(dn, converted_attributes)
         if not result.is_success:
             return FlextResult.fail(result.error or "Update failed")
         return FlextResult.ok(None)
@@ -549,10 +657,12 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 f"Repository access failed: {repository_result.error}",
             )
 
-        base_repository = cast(
-            "FlextLdapRepositories",
-            repository_result.value,
-        )
+        # Validate repository result value type
+        if not isinstance(repository_result.value, FlextLdapRepositories):
+            return FlextResult.fail(
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+            )
+        base_repository = repository_result.value
         # Use base repository directly - no need to create new instance
         group_repository = base_repository
         # Use update_attributes to modify group membership
@@ -575,10 +685,12 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 f"Repository access failed: {repository_result.error}",
             )
 
-        base_repository = cast(
-            "FlextLdapRepositories",
-            repository_result.value,
-        )
+        # Validate repository result value type
+        if not isinstance(repository_result.value, FlextLdapRepositories):
+            return FlextResult.fail(
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+            )
+        base_repository = repository_result.value
         # Use base repository directly
         group_repository = base_repository
 
@@ -603,7 +715,14 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         update_method = getattr(base_repository, "update", None)
         if update_method is None:
             return FlextResult.fail("Repository does not support update method")
-        result = await update_method(group_dn, cast("dict[str, object]", attributes))
+        # Convert attributes to proper dict[str, object] format
+        converted_attributes: dict[str, object] = {}
+        for key, value in attributes.items():
+            if isinstance(value, list):
+                converted_attributes[key] = value
+            else:
+                converted_attributes[key] = [str(value)]
+        result = await update_method(group_dn, converted_attributes)
         if not result.is_success:
             return FlextResult.fail(result.error or "Remove member failed")
         return FlextResult.ok(None)
@@ -616,10 +735,12 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 f"Repository access failed: {repository_result.error}",
             )
 
-        base_repository = cast(
-            "FlextLdapRepositories",
-            repository_result.value,
-        )
+        # Validate repository result value type
+        if not isinstance(repository_result.value, FlextLdapRepositories):
+            return FlextResult[list[str]].fail(
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+            )
+        base_repository = repository_result.value
         # Use base repository directly to get group entry
         group_repository = base_repository
         find_method = getattr(group_repository, "_find_by_dn_async", None)

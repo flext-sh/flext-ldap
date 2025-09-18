@@ -98,11 +98,11 @@ async def search_users(api: FlextLdapApi) -> None:
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
-            cn = user.get_attribute("cn") or "Unknown"
-            mail = user.get_attribute("mail") or "No email"
-            # Handle bytes values properly
-            cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
-            mail_str = mail.decode("utf-8") if isinstance(mail, bytes) else str(mail)
+            cn = user.get_attribute("cn") or ["Unknown"]
+            mail = user.get_attribute("mail") or ["No email"]
+            # get_attribute returns list[str] | None, so take first element
+            cn_str = cn[0] if cn else "Unknown"
+            mail_str = mail[0] if mail else "No email"
             logger.info(f"  - {cn_str} ({mail_str})")
     else:
         logger.error(f"❌ Search failed: {result.error}")
@@ -148,8 +148,8 @@ async def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
-    # Get FlextLdapApi instance
-    api = FlextLdapApi()
+    # Get FlextLdapApi instance via explicit factory to ensure proper typing
+    api = FlextLdapApi.create()
 
     try:
         # CREATE: Add sample users
