@@ -11,11 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import traceback
 
 from flext_ldap import FlextLdapModels, get_flext_ldap_cli
 
 
-def demonstrate_cli_isolation() -> None:
+async def demonstrate_cli_isolation() -> None:
     """Demonstrate CLI isolation patterns similar to FlextCli."""
     # Get CLI instance using factory function (following FlextCli patterns)
     cli = get_flext_ldap_cli()
@@ -29,14 +30,14 @@ def demonstrate_cli_isolation() -> None:
     bind_password = os.getenv("LDAP_BIND_PASSWORD", "demo_password")
 
     # Connect to LDAP
-    connection_result = cli.connect_to_ldap(server_uri, bind_dn, bind_password)
+    connection_result = await cli.connect_to_ldap(server_uri, bind_dn, bind_password)
     if connection_result.is_success:
         print(f"✅ Connection successful: {connection_result.value}")
     else:
         print(f"❌ Connection failed: {connection_result.error}")
 
     # Demonstrate search
-    search_result = cli.search_ldap(
+    search_result = await cli.search_ldap(
         base_dn="dc=example,dc=com", filter_str="(objectClass=person)", scope="subtree"
     )
     if search_result.is_success:
@@ -45,7 +46,7 @@ def demonstrate_cli_isolation() -> None:
         print(f"❌ Search failed: {search_result.error}")
 
     # Demonstrate user creation
-    user_result = cli.create_user(
+    user_result = await cli.create_user(
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",
@@ -125,29 +126,33 @@ def demonstrate_unified_class_pattern() -> None:
 
 
 if __name__ == "__main__":
+    import asyncio
+
     print("FLEXT-LDAP CLI Isolation Demo")
     print("=" * 40)
 
-    try:
-        demonstrate_cli_isolation()
-        print("\n" + "=" * 40)
+    async def main() -> None:
+        """Main async function to run demonstrations."""
+        try:
+            await demonstrate_cli_isolation()
+            print("\n" + "=" * 40)
 
-        demonstrate_model_cli_separation()
-        print("\n" + "=" * 40)
+            demonstrate_model_cli_separation()
+            print("\n" + "=" * 40)
 
-        demonstrate_unified_class_pattern()
-        print("\n" + "=" * 40)
+            demonstrate_unified_class_pattern()
+            print("\n" + "=" * 40)
 
-        print("✅ All demonstrations completed successfully!")
-        print("\nKey Benefits:")
-        print("✅ Same level of isolation as FlextModel and FlextCli patterns")
-        print("✅ Unified class pattern with nested helpers")
-        print("✅ Clear separation between data management and CLI functionality")
-        print("✅ Factory function pattern for CLI instance creation")
-        print("✅ Comprehensive CLI operations with proper error handling")
+            print("✅ All demonstrations completed successfully!")
+            print("\nKey Benefits:")
+            print("✅ Same level of isolation as FlextModel and FlextCli patterns")
+            print("✅ Unified class pattern with nested helpers")
+            print("✅ Clear separation between data management and CLI functionality")
+            print("✅ Factory function pattern for CLI instance creation")
+            print("✅ Comprehensive CLI operations with proper error handling")
 
-    except Exception as e:
-        print(f"❌ Error during demonstration: {e}")
-        import traceback
+        except Exception as e:
+            print(f"❌ Error during demonstration: {e}")
+            traceback.print_exc()
 
-        traceback.print_exc()
+    asyncio.run(main())

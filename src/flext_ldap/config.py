@@ -48,12 +48,12 @@ class FlextLdapConfig(FlextConfig):
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
         env_file_encoding="utf-8",
+        extra="ignore",  # Allow extra environment variables from other projects
         case_sensitive=False,
         arbitrary_types_allowed=True,
         populate_by_name=True,
         validate_assignment=True,
         use_enum_values=True,
-        extra="forbid",
     )
 
     # SINGLETON pattern implementation - use global instance
@@ -233,8 +233,8 @@ class FlextLdapConfig(FlextConfig):
 
         return self
 
-    @model_validator(mode="after")  # type: ignore[misc]
-    def _validate_configuration_consistency_model(self) -> Self:
+    @model_validator(mode="after")
+    def _validate_configuration_consistency_model(self) -> FlextLdapConfig:
         """Pydantic model validator that calls the runtime validation method."""
         return self.validate_configuration_consistency()
 
@@ -366,7 +366,7 @@ class FlextLdapConfig(FlextConfig):
 
     @classmethod
     def create_development_ldap_config(
-        cls, **overrides: dict[str, object]
+        cls, **overrides: str | float | bool | None
     ) -> FlextResult[FlextLdapConfig]:
         """Create development LDAP configuration with appropriate defaults.
 
@@ -378,20 +378,26 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            development_defaults: dict[str, object] = {
-                "environment": "development",
-                "debug": True,
-                "ldap_enable_debug": True,
-                "ldap_log_queries": True,
-                "ldap_log_responses": True,
-                "ldap_enable_caching": False,  # Disable caching in dev
-                "ldap_verify_certificates": False,  # Relaxed SSL in dev
-                "ldap_size_limit": 1000,
-                "ldap_time_limit": 60,
-            }
-            development_defaults.update(overrides)
-            config = cls(**development_defaults)  # type: ignore[arg-type]
-            return FlextResult["FlextLdapConfig"].ok(config)
+            # Create config with typed keyword arguments
+            config = cls(
+                environment="development",
+                debug=True,
+                ldap_enable_debug=True,
+                ldap_log_queries=True,
+                ldap_log_responses=True,
+                ldap_enable_caching=False,
+                ldap_verify_certificates=False,
+                ldap_size_limit=1000,
+                ldap_time_limit=60,
+            )
+
+            # Apply overrides if any
+            if overrides:
+                for key, value in overrides.items():
+                    if hasattr(config, key):
+                        setattr(config, key, value)
+
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
             return FlextResult["FlextLdapConfig"].fail(
                 f"Failed to create development config: {e}"
@@ -399,7 +405,7 @@ class FlextLdapConfig(FlextConfig):
 
     @classmethod
     def create_test_ldap_config(
-        cls, **overrides: dict[str, object]
+        cls, **overrides: str | float | bool | None
     ) -> FlextResult[FlextLdapConfig]:
         """Create test LDAP configuration with appropriate defaults.
 
@@ -411,21 +417,27 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            test_defaults: dict[str, object] = {
-                "environment": "test",
-                "debug": False,
-                "ldap_enable_debug": False,
-                "ldap_log_queries": False,
-                "ldap_log_responses": False,
-                "ldap_enable_caching": False,  # Disable caching in tests
-                "ldap_verify_certificates": False,  # Relaxed SSL for tests
-                "ldap_size_limit": 500,  # Smaller limits for tests
-                "ldap_time_limit": 30,
-                "ldap_enable_test_mode": True,  # Special test mode flag
-            }
-            test_defaults.update(overrides)
-            config = cls(**test_defaults)  # type: ignore[arg-type]
-            return FlextResult["FlextLdapConfig"].ok(config)
+            # Create config with typed keyword arguments
+            config = cls(
+                environment="test",
+                debug=False,
+                ldap_enable_debug=False,
+                ldap_log_queries=False,
+                ldap_log_responses=False,
+                ldap_enable_caching=False,
+                ldap_verify_certificates=False,
+                ldap_size_limit=500,
+                ldap_time_limit=30,
+                ldap_enable_test_mode=True,
+            )
+
+            # Apply overrides if any
+            if overrides:
+                for key, value in overrides.items():
+                    if hasattr(config, key):
+                        setattr(config, key, value)
+
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
             return FlextResult["FlextLdapConfig"].fail(
                 f"Failed to create test config: {e}"

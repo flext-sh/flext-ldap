@@ -14,7 +14,7 @@ from flext_ldap import FlextLdapConnectionConfig
 logger = FlextLogger(__name__)
 
 
-async def create_test_user(
+def create_test_user(
     config: FlextLdapConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
@@ -48,7 +48,7 @@ async def create_test_user(
         return FlextResult[bool].fail(f"Error creating test user: {e}")
 
 
-async def create_test_group(
+def create_test_group(
     config: FlextLdapConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
@@ -82,7 +82,7 @@ async def create_test_group(
         return FlextResult[bool].fail(f"Error creating test group: {e}")
 
 
-async def cleanup_test_entries(
+def cleanup_test_entries(
     config: FlextLdapConnectionConfig,
     dns: FlextTypes.Core.StringList,
 ) -> FlextResult[int]:
@@ -121,7 +121,7 @@ async def cleanup_test_entries(
         return FlextResult[int].fail(f"Error during cleanup: {e}")
 
 
-async def verify_entry_exists(
+def verify_entry_exists(
     config: FlextLdapConnectionConfig,
     dn: str,
 ) -> FlextResult[bool]:
@@ -157,7 +157,7 @@ async def verify_entry_exists(
         return FlextResult[bool].fail(f"Error verifying entry: {e}")
 
 
-async def get_entry_attributes(
+def get_entry_attributes(
     config: FlextLdapConnectionConfig,
     dn: str,
 ) -> FlextResult[FlextTypes.Core.Dict]:
@@ -196,7 +196,7 @@ async def get_entry_attributes(
         return FlextResult[FlextTypes.Core.Dict].fail(f"Error getting attributes: {e}")
 
 
-async def search_entries(
+def search_entries(
     config: FlextLdapConnectionConfig,
     base_dn: str,
     search_filter: str,
@@ -253,7 +253,7 @@ async def search_entries(
         )
 
 
-async def modify_entry(
+def modify_entry(
     config: FlextLdapConnectionConfig,
     dn: str,
     changes: FlextTypes.Core.Dict,

@@ -195,7 +195,7 @@ def demonstrate_direct_singleton_usage() -> None:
         "=== Direct FlextLdapConfig Singleton Usage Demo ===", "info"
     )
 
-    # Create a custom configuration
+    # Create a custom configuration using type: ignore for Pydantic model limitations
     custom_config = FlextLdapConfig(
         app_name="custom-ldap-app",
         ldap_bind_dn="cn=custom,dc=example,dc=com",

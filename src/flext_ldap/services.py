@@ -36,10 +36,32 @@ type RepositoryInstance = FlextLdapRepositories.Repository
 
 
 class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
-    """LDAP operations service using FlextProcessing.Handler pattern."""
+    """LDAP operations service implementing FlextProcessing.Handler pattern.
+
+    This service class provides comprehensive LDAP operations including user
+    management, group management, search operations, and validation. It uses
+    the FlextProcessing.Handler pattern for request processing and FlextMixins.Loggable
+    for structured logging.
+
+    The service integrates with the flext-core ecosystem and provides a clean
+    interface for LDAP operations with proper error handling and type safety.
+
+    Attributes:
+        _ldap_container: LDAP-specific container manager.
+        _container: Dependency injection container.
+
+    """
 
     def __init__(self, container: FlextContainer | None = None) -> None:
-        """Initialize LDAP services using FlextProcessing patterns."""
+        """Initialize LDAP services with dependency injection container.
+
+        Sets up the service with FlextProcessing.Handler capabilities and
+        dependency injection container for managing LDAP operations.
+
+        Args:
+            container: Optional dependency injection container. If None, creates new one.
+
+        """
         # Initialize FlextProcessing.Handler
         super().__init__()
         self._ldap_container = FlextLdapContainer()

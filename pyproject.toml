@@ -36,6 +36,7 @@ dependencies = [
     "ldap3 (>=2.9.1)",
     "cryptography (>=45.0.5)",
     "structlog (>=25.4.0)",
+    "flext-core @ file:///home/marlonsc/flext/flext-core",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -215,7 +216,6 @@ output = "reports/coverage.xml"
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
-flext-core = { path = "../flext-core", develop = true }
 flext-cli = { path = "../flext-cli", develop = true }
 flext-ldif = { path = "../flext-ldif", develop = true }
 pydantic = ">=2.11.7,<3.0.0"

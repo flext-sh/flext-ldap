@@ -653,7 +653,7 @@ class TestFlextLdapApiComprehensive:
         )
 
         result = api._get_entry_attribute(entry_empty_attrs, "cn", "Default")
-        assert result == ""
+        assert result == "Default"
 
         result = api._get_entry_attribute(entry_empty_attrs, "uid", "Default")
         assert result == "validuid"

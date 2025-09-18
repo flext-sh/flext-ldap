@@ -23,7 +23,7 @@ logger = FlextLogger(__name__)
 async def main() -> None:
     """Demonstrate LDAP service usage using Single Responsibility Principle."""
     # Initialize service using helper method
-    ldap_service = await _initialize_ldap_service()
+    ldap_service = _initialize_ldap_service()
 
     # CRITICAL: Verify LDAP directory structure exists (OUs already exist)
     await _verify_ldap_directory_structure(ldap_service)
@@ -35,7 +35,7 @@ async def main() -> None:
     await _demo_error_handling(ldap_service)
 
 
-async def _initialize_ldap_service() -> FlextLdapApi:
+def _initialize_ldap_service() -> FlextLdapApi:
     """Initialize LDAP service - Single Responsibility."""
     # Check if we're running with Docker environment variables
     if os.getenv("LDAP_TEST_SERVER"):

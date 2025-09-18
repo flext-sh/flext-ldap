@@ -52,24 +52,55 @@ class FlextLdapClient(
     FlextMixins.Loggable,
     FlextProtocols.Infrastructure.Connection,
 ):
-    """UNIFIED LDAP client - consolidates all LDAP functionality in single class following SOLID."""
+    """Unified LDAP client consolidating all LDAP functionality in single class.
+
+    This class follows SOLID principles and provides a unified interface for
+    LDAP operations including connection management, search operations, and
+    CRUD operations. It uses the ldap3 library directly without wrappers.
+
+    Attributes:
+        _connection: Active LDAP connection instance.
+        _server: LDAP server configuration instance.
+
+    """
 
     # =========================================================================
     # NESTED STRATEGY CLASSES - Following single class pattern with nesting
     # =========================================================================
 
     class SearchExecutionStrategy:
-        """LDAP search execution strategy - nested within unified client."""
+        """LDAP search execution strategy nested within unified client.
+
+        This strategy handles the execution of LDAP search operations
+        using the provided connection instance.
+
+        Args:
+            connection: LDAP connection instance for search operations.
+
+        """
 
         def __init__(self, connection: Connection | None) -> None:
-            """Initialize search strategy with LDAP connection."""
+            """Initialize search strategy with LDAP connection.
+
+            Args:
+                connection: LDAP connection instance for search operations.
+
+            """
             self.connection = connection
 
         def execute_search(
             self,
             request: FlextLdapModels.SearchRequest,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Execute LDAP search using ldap3 connection."""
+            """Execute LDAP search using ldap3 connection.
+
+            Args:
+                request: Search request containing base DN, filter, and parameters.
+
+            Returns:
+                FlextResult containing search execution status and connection data.
+
+            """
             if not self.connection or not getattr(self.connection, "bound", False):
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     "Not connected to LDAP server",
@@ -110,13 +141,25 @@ class FlextLdapClient(
                 return FlextResult[FlextTypes.Core.Dict].fail(f"Search error: {e}")
 
     class EntryConversionStrategy:
-        """LDAP entry conversion strategy - nested within unified client."""
+        """LDAP entry conversion strategy nested within unified client.
+
+        This strategy handles the conversion of ldap3 entries to structured
+        format suitable for the application layer.
+        """
 
         def convert_entries(
             self,
             connection: Connection,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Convert ldap3 entries to structured format."""
+            """Convert ldap3 entries to structured format.
+
+            Args:
+                connection: LDAP connection with search results.
+
+            Returns:
+                FlextResult containing converted entries in structured format.
+
+            """
             try:
                 entries: list[FlextTypes.Core.Dict] = []
                 connection_entries = connection.entries if connection else []
@@ -172,13 +215,25 @@ class FlextLdapClient(
                 )
 
     class ResponseBuilderStrategy:
-        """Search response builder strategy - nested within unified client."""
+        """Search response builder strategy nested within unified client.
+
+        This strategy handles the construction of search responses from
+        converted entries and request data.
+        """
 
         def build_response(
             self,
             data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.SearchResponse]:
-            """Build search response from entries and request data."""
+            """Build search response from entries and request data.
+
+            Args:
+                data: Dictionary containing entries and request information.
+
+            Returns:
+                FlextResult containing structured search response.
+
+            """
             try:
                 entries = cast("list[dict[str, object]]", data.get("entries", []))
                 request = cast("FlextLdapModels.SearchRequest", data.get("request"))
@@ -197,7 +252,11 @@ class FlextLdapClient(
                 )
 
     def __init__(self) -> None:
-        """Initialize LDAP client with flext-core logging capabilities."""
+        """Initialize LDAP client with flext-core logging capabilities.
+
+        Sets up the client with logging capabilities from FlextMixins.Service
+        and initializes connection and server attributes to None.
+        """
         # Initialize FlextMixins.Service for logging capabilities
         super().__init__()
         self._connection: Connection | None = None
@@ -209,6 +268,14 @@ class FlextLdapClient(
 
     async def connect(self, uri: str, bind_dn: str, password: str) -> FlextResult[None]:
         """Connect to LDAP server.
+
+        Establishes connection to LDAP server using provided URI and credentials.
+        Supports both LDAP and LDAPS protocols with SSL/TLS configuration.
+
+        Args:
+            uri: LDAP server URI (ldap:// or ldaps://).
+            bind_dn: Distinguished name for authentication.
+            password: Password for authentication.
 
         Returns:
             FlextResult[None]: Success or error result.
@@ -274,6 +341,13 @@ class FlextLdapClient(
     async def bind(self, bind_dn: str, password: str) -> FlextResult[None]:
         """Bind with different credentials.
 
+        Re-authenticates with the LDAP server using new credentials while
+        maintaining the existing connection.
+
+        Args:
+            bind_dn: Distinguished name for authentication.
+            password: Password for authentication.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -304,6 +378,9 @@ class FlextLdapClient(
     async def unbind(self) -> FlextResult[None]:
         """Unbind from server and cleanup connections.
 
+        Closes the LDAP connection and cleans up associated resources.
+        Safe to call multiple times - returns success if already unbound.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -312,9 +389,8 @@ class FlextLdapClient(
             return FlextResult.ok(None)  # Already unbound
 
         try:
-            # Safe method call using getattr for untyped ldap3
-            unbind_method = getattr(self._connection, "unbind", lambda: None)
-            unbind_method()
+            # Direct method call - ldap3 Connection has unbind method (returns bool)
+            self._connection.unbind()
             self._connection = None
             self._server = None
 
@@ -329,17 +405,16 @@ class FlextLdapClient(
             return FlextResult.fail(f"Unbind error: {e}")
 
     def is_connected(self) -> bool:
-        """Check if connected and bound to LDAP server - protocol method.
+        """Check if connected and bound to LDAP server.
+
+        Implements the protocol method required by FlextProtocols.Infrastructure.Connection.
+        Verifies both connection existence and binding status.
 
         Returns:
-            bool: True when a bound connection exists.
+            bool: True when a bound connection exists, False otherwise.
 
         """
-        return self._connection is not None and getattr(
-            self._connection,
-            "bound",
-            False,
-        )
+        return self._connection is not None and self._connection.bound
 
     # =========================================================================
     # SEARCH OPERATIONS - Consolidated search functionality
@@ -351,10 +426,20 @@ class FlextLdapClient(
         search_filter: str,
         scope: str = "subtree",
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
-        """LDAP search following flext-core protocol signature.
+        """Perform LDAP search following flext-core protocol signature.
 
-        This method follows the flext-core LdapConnection protocol.
-        For advanced search operations, use search_with_request().
+        Executes a basic LDAP search operation with simplified parameters.
+        This method follows the flext-core LdapConnection protocol interface.
+        For advanced search operations with more control, use search_with_request().
+
+        Args:
+            base_dn: Base distinguished name for search.
+            search_filter: LDAP search filter expression.
+            scope: Search scope (base, one, subtree). Defaults to subtree.
+
+        Returns:
+            FlextResult containing search response with entries.
+
         """
         # Create SearchRequest from basic parameters
         request = FlextLdapModels.SearchRequest(
@@ -374,8 +459,16 @@ class FlextLdapClient(
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Perform LDAP search with strategy pattern.
 
+        Executes LDAP search using the strategy pattern with three phases:
+        1. Search execution using ldap3 connection
+        2. Entry conversion to structured format
+        3. Response building with metadata
+
+        Args:
+            request: Complete search request with all parameters.
+
         Returns:
-            FlextResult[FlextLdapModels.SearchResponse]: Structured response with entries.
+            FlextResult containing structured search response with entries.
 
         """
         try:
@@ -445,6 +538,13 @@ class FlextLdapClient(
     async def add(self, dn: str, attributes: Mapping[str, object]) -> FlextResult[None]:
         """Add new entry to LDAP directory following flext-core protocol.
 
+        Creates a new LDAP entry with the specified distinguished name and
+        attributes. Follows the flext-core protocol interface for consistency.
+
+        Args:
+            dn: Distinguished name for the new entry.
+            attributes: Dictionary of attributes to set on the entry.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -462,6 +562,13 @@ class FlextLdapClient(
     ) -> FlextResult[None]:
         """Add new entry to LDAP directory.
 
+        Internal implementation method that performs the actual LDAP add operation
+        using the ldap3 library directly.
+
+        Args:
+            dn: Distinguished name for the new entry.
+            attributes: Typed attribute dictionary for the entry.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -472,9 +579,8 @@ class FlextLdapClient(
         try:
             # Convert attributes to ldap3-compatible format
             ldap3_attributes = dict(attributes)
-            # Safe method call using getattr for untyped ldap3
-            add_method = getattr(self._connection, "add", lambda *_a, **_k: False)
-            success = add_method(dn, attributes=ldap3_attributes)
+            # Direct method call - ldap3 Connection has add method (returns bool)
+            success: bool = self._connection.add(dn, attributes=ldap3_attributes)
             if not success:
                 return FlextResult.fail(f"Add failed: {self._connection.result}")
 
@@ -495,6 +601,13 @@ class FlextLdapClient(
     ) -> FlextResult[None]:
         """Modify existing LDAP entry following flext-core protocol.
 
+        Updates an existing LDAP entry with new attribute values.
+        Follows the flext-core protocol interface for consistency.
+
+        Args:
+            dn: Distinguished name of the entry to modify.
+            modifications: Dictionary of attribute modifications.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -513,6 +626,13 @@ class FlextLdapClient(
     ) -> FlextResult[None]:
         """Modify existing LDAP entry.
 
+        Internal implementation method that performs the actual LDAP modify operation
+        using the ldap3 library directly with MODIFY_REPLACE operations.
+
+        Args:
+            dn: Distinguished name of the entry to modify.
+            attributes: Typed attribute dictionary with new values.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -528,9 +648,8 @@ class FlextLdapClient(
 
             # Convert changes to ldap3-compatible format
             ldap3_changes = dict(changes)
-            # Safe method call using getattr for untyped ldap3
-            modify_method = getattr(self._connection, "modify", lambda *_a, **_k: False)
-            success = modify_method(dn, ldap3_changes)
+            # Direct method call - ldap3 Connection has modify method (returns bool)
+            success: bool = self._connection.modify(dn, ldap3_changes)
             if not success:
                 return FlextResult.fail(
                     f"Modify failed: {self._connection.result}",
@@ -553,6 +672,12 @@ class FlextLdapClient(
     async def delete(self, dn: str) -> FlextResult[None]:
         """Delete entry from LDAP directory.
 
+        Removes an LDAP entry by its distinguished name.
+        This operation is irreversible and should be used with caution.
+
+        Args:
+            dn: Distinguished name of the entry to delete.
+
         Returns:
             FlextResult[None]: Success or error result.
 
@@ -561,9 +686,8 @@ class FlextLdapClient(
             return FlextResult.fail("Not connected to LDAP server")
 
         try:
-            # Safe method call using getattr for untyped ldap3
-            delete_method = getattr(self._connection, "delete", lambda *_a, **_k: False)
-            success = delete_method(dn)
+            # Direct method call - ldap3 Connection has delete method (returns bool)
+            success: bool = self._connection.delete(dn)
             if not success:
                 return FlextResult.fail(
                     f"Delete failed: {self._connection.result}",
@@ -584,44 +708,70 @@ class FlextLdapClient(
             return FlextResult.fail(f"Delete error: {e}")
 
     def __del__(self) -> None:
-        """Cleanup on destruction."""
+        """Cleanup on destruction.
+
+        Ensures proper cleanup of LDAP connection when the client instance
+        is garbage collected. Uses contextlib.suppress to handle any cleanup errors.
+        """
         if self._connection and self._connection.bound:
             with contextlib.suppress(Exception):
-                # Safe method call in cleanup context
-                unbind_method = getattr(self._connection, "unbind", lambda: None)
-                unbind_method()
+                # Direct method call in cleanup context (returns bool)
+                _: bool = self._connection.unbind()
 
     # =========================================================================
     # PROTOCOL METHODS - Required by FlextProtocols.Infrastructure.Connection
     # =========================================================================
 
     def __call__(self, *_args: object, **_kwargs: object) -> bool:
-        """Callable interface for connection - protocol requirement."""
+        """Callable interface for connection - protocol requirement.
+
+        Implements the callable interface required by flext-core protocols.
+        Returns the current connection status when the client is called.
+
+        Returns:
+            bool: True if connected and bound, False otherwise.
+
+        """
         # Return connection status for callable interface
         return self.is_connected()
 
     def test_connection(self) -> FlextResult[str]:
-        """Test connection to LDAP server - protocol requirement."""
+        """Test connection to LDAP server - protocol requirement.
+
+        Implements the protocol method required by flext-core connection protocols.
+        Performs a basic connectivity test by checking the binding status.
+
+        Returns:
+            FlextResult[str]: Success message or error description.
+
+        """
         if not self._connection:
             return FlextResult.fail("No connection established")
 
         try:
             # Test connection by performing a simple bind check
-            is_bound = getattr(self._connection, "bound", False)
-            if is_bound:
+            if self._connection.bound:
                 return FlextResult.ok("Connection test successful")
             return FlextResult.fail("Connection not bound")
         except Exception as e:
             return FlextResult.fail(f"Connection test failed: {e}")
 
     def get_connection_string(self) -> str:
-        """Get connection string for LDAP server - protocol requirement."""
+        """Get connection string for LDAP server - protocol requirement.
+
+        Implements the protocol method required by flext-core connection protocols.
+        Returns a human-readable connection string for the current server configuration.
+
+        Returns:
+            str: Connection string in format scheme://host:port or error message.
+
+        """
         if not self._server:
             return "No server configured"
 
         try:
-            # Build connection string from server info
-            scheme = "ldaps" if getattr(self._server, "ssl", False) else "ldap"
+            # Build connection string from server info using getattr for type safety
+            scheme = "ldaps" if getattr(self._server, "use_ssl", False) else "ldap"
             host = getattr(
                 self._server,
                 "host",
@@ -633,7 +783,15 @@ class FlextLdapClient(
             return "Connection string unavailable"
 
     async def close_connection(self) -> FlextResult[None]:
-        """Close connection to LDAP server - required by flext-core protocol."""
+        """Close connection to LDAP server - required by flext-core protocol.
+
+        Implements the protocol method required by flext-core connection protocols.
+        Delegates to the unbind method for actual connection cleanup.
+
+        Returns:
+            FlextResult[None]: Success or error result from unbind operation.
+
+        """
         return await self.unbind()  # Protocol compliance - delegates to domain method
 
 

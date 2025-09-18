@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 import re
 import secrets
 import string
+from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -46,10 +47,10 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self.name = name
             self.description = description
 
+        @abstractmethod
         def is_satisfied_by(self, candidate: object) -> bool:
             """Check if specification is satisfied by candidate - implement in subclasses."""
-            error_msg = "Subclasses must implement is_satisfied_by"
-            raise NotImplementedError(error_msg)
+            ...
 
         def get_validation_error(self, candidate: object) -> str:
             """Get descriptive validation error message."""
@@ -977,15 +978,15 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 "modified_at": None,
             }
 
+        @abstractmethod
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
             """Template method - subclasses implement entity-specific parameters."""
-            error_msg = "Subclasses must implement _extract_specific_parameters"
-            raise NotImplementedError(error_msg)
+            ...
 
+        @abstractmethod
         def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
             """Template method - subclasses implement entity creation."""
-            error_msg = "Subclasses must implement _create_entity"
-            raise NotImplementedError(error_msg)
+            ...
 
     class UserEntityBuilder(_BaseEntityBuilder):
         """User entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""

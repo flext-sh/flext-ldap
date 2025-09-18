@@ -230,7 +230,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
             try:
                 req = cast("FlextLdapModels.SearchRequest", request)
                 # Validate search filter is not empty
-                if not req.filter_str or req.filter_str.strip() == "":
+                if not req.filter_str or not req.filter_str.strip():
                     return FlextResult[object].fail(
                         "Search filter cannot be empty",
                     )

@@ -10,12 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+from typing import cast
 
 import pytest
 
 import flext_ldap.adapters as adapters_module
 from flext_core import FlextLogger, FlextModels, FlextResult
-from flext_ldap import FlextLdapAdapters, FlextLdapClient, FlextLdapModels
+from flext_ldap import FlextLdapAdapters, FlextLdapClient, FlextLdapModels, FlextLdapTypes
 
 
 @pytest.fixture
@@ -208,12 +209,12 @@ class TestAdapterModels:
         )
 
         # Test search result with proper entries (convert to dict format)
-        entry1_dict = {
+        entry1_dict: dict[str, object] = {
             "id": entry1.id,
             "dn": entry1.dn,
             "attributes": entry1.attributes,
         }
-        entry2_dict = {
+        entry2_dict: dict[str, object] = {
             "id": entry2.id,
             "dn": entry2.dn,
             "attributes": entry2.attributes,
@@ -544,7 +545,7 @@ class TestAdapterErrorHandling:
             valid_data = test_case["valid_data"]
 
             # Test valid data creates model successfully
-            instance = model_class(**valid_data)
+            instance = model_class(**valid_data)  # type: ignore[operator]
             assert instance is not None
 
     def test_service_error_handling(self, test_client: FlextLdapClient) -> None:
@@ -758,27 +759,31 @@ class TestAdapterErrorHandling:
                 "server": "ldap://valid.example.com:389",
                 "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
                 "bind_password": "valid_password",
+                "timeout": 30,
+                "use_tls": False,
             },
             # LDAPS configuration
             {
                 "server": "ldaps://secure.example.com:636",
                 "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=secure,dc=com",
                 "bind_password": "secure_password",
+                "timeout": 60,
+                "use_tls": True,
             },
             # Configuration with port variations
             {
                 "server": "ldap://custom.example.com:1389",
                 "bind_dn": "uid=REDACTED_LDAP_BIND_PASSWORD,dc=custom,dc=org",
                 "bind_password": "custom_pass",
+                "timeout": 45,
+                "use_tls": False,
             },
         ]
 
         for config_data in config_scenarios:
             try:
-                # Type-safe config creation without cast
-                if not isinstance(config_data, dict):
-                    continue
-                config = FlextLdapAdapters.ConnectionConfig(**config_data)
+                # Type-safe config creation
+                config = FlextLdapAdapters.ConnectionConfig(**config_data)  # type: ignore[arg-type]
                 # Configuration should be created successfully
                 assert config.server == config_data["server"]
                 assert config.bind_dn == config_data["bind_dn"]
@@ -844,22 +849,25 @@ class TestAdapterErrorHandling:
         # Test edge cases for adapter models
         model_edge_cases = [
             # DirectoryEntry with minimal data
-            {"dn": "cn=minimal,dc=test", "attributes": {}},
+            {
+                "dn": "cn=minimal,dc=test",
+                "attributes": cast("FlextLdapTypes.Entry.AttributeDict", {}),
+            },
             # DirectoryEntry with complex attributes
             {
                 "dn": "cn=complex,ou=users,dc=example,dc=com",
-                "attributes": {
+                "attributes": cast("FlextLdapTypes.Entry.AttributeDict", {
                     "objectClass": ["person", "organizationalPerson"],
                     "cn": ["Complex User"],
                     "description": ["Multi-line\nDescription\nWith\nBreaks"],
-                },
+                }),
             },
         ]
 
         for case_data in model_edge_cases:
             try:
                 # Test DirectoryEntry creation with edge case data
-                entry = FlextLdapAdapters.DirectoryEntry(**case_data)
+                entry = FlextLdapAdapters.DirectoryEntry(**case_data)  # type: ignore[arg-type]
                 assert entry.dn == case_data["dn"]
                 # Validation code paths are exercised (lines 414-433)
             except Exception as e:

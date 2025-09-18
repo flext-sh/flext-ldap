@@ -49,7 +49,7 @@ src/flext_ldap/
 
 ## Current Status
 
-- **Version**: 0.9.0
+- **Version**: 0.9.9 RC
 - **Test Coverage**: 33% (targeting 90%+)
 - **Quality**: MyPy strict mode enabled, Ruff linting
 - **Architecture**: Clean Architecture foundation established
