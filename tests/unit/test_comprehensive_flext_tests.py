@@ -83,6 +83,7 @@ class TestComprehensiveFlextTests:
         # Create async task factory using real FlextTestsAsyncs
         async def session_generation_task() -> str:
             """Generate session ID."""
+            await asyncio.sleep(0)  # Make it truly async
             return f"session_{uuid.uuid4()}"
 
         # Run concurrent operations using asyncio.gather (FlextTestsAsyncs.run_concurrent has different purpose)

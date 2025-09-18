@@ -28,7 +28,7 @@ from flext_ldap import (
 logger = FlextLogger(__name__)
 
 
-async def demonstrate_configuration() -> None:
+def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
     # 1. Settings configuration using FlextLdapConfig
     FlextLdapConfig()
@@ -122,7 +122,7 @@ async def demonstrate_error_handling() -> None:
         logger.debug(f"Connection test failed in demo: {e}")
 
 
-async def demonstrate_logging_integration() -> None:
+def demonstrate_logging_integration() -> None:
     """Demonstrate logging integration with flext-core."""
     # Enable TRACE logging for this demo
     os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
@@ -153,7 +153,7 @@ async def main() -> None:
     """Run the main demonstration function."""
     try:
         # 1. Configuration management
-        await demonstrate_configuration()
+        demonstrate_configuration()
 
         # 2. API usage
         api = await demonstrate_api_usage()
@@ -165,7 +165,7 @@ async def main() -> None:
         await demonstrate_error_handling()
 
         # 5. Logging integration
-        await demonstrate_logging_integration()
+        demonstrate_logging_integration()
 
     except Exception:
         logger.exception("Demonstration failed with exception")

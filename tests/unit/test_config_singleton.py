@@ -10,6 +10,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -130,7 +131,7 @@ class TestFlextLdapConfigSingleton:
             config_result = FlextLdapConfig.load_from_file(config_file)
             assert config_result.is_success
 
-            config = config_result.value
+            config = cast("FlextLdapConfig", config_result.value)
             assert config.app_name == "file-app"
             # config is already a FlextLdapConfig instance
             assert config.ldap_bind_dn == "cn=file,dc=example,dc=com"

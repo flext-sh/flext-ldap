@@ -7,7 +7,9 @@ import importlib
 import re
 import sys
 import time
+from collections.abc import Sequence
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
@@ -1306,10 +1308,10 @@ class TestUserConversionParamsDetailed:
 
         for config in edge_case_configs:
             params = UserConversionParams(
-                entries=config["entries"],
-                include_disabled=config["include_disabled"],
-                include_system=config["include_system"],
-                attribute_filter=config["attribute_filter"],
+                entries=cast("Sequence[dict[str, object]]", config["entries"]),
+                include_disabled=cast("bool", config["include_disabled"]),
+                include_system=cast("bool", config["include_system"]),
+                attribute_filter=cast("list[str] | None", config["attribute_filter"]),
             )
 
             # Verify all configurations are valid

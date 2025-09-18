@@ -271,7 +271,7 @@ class TestFlextLdapModels:
                 "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
                 kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]}),
             ),
-            status=str(kwargs.get("status", "active")),
+            # Removed status parameter - not part of Entry model definition
         )
 
     def test_entry_creation_and_attribute_access(self) -> None:

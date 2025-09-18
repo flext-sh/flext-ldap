@@ -39,7 +39,7 @@ FLEXT-LDAP serves as the centralized LDAP operations library for all directory s
 | **FlextContainer**  | 🟡 60%  | Dependency injection in progress      |
 | **Domain Patterns** | 🟢 85%  | Entities, value objects, repositories |
 
-> **Status**: 🔴 Critical | 🟡 Partial | 🟢 Complete
+> **Status**: 🔴 Critical · 1.0.0 Release Preparation | 🟡 Partial | 🟢 Complete
 
 ### **Architecture Diagram**
 
@@ -182,7 +182,7 @@ make ldap-test-server-stop   # Stop test container
 
 ## 🗺️ Roadmap
 
-### **Current Version (0.9.0)**
+### **Current Version (0.9.9)**
 
 - Clean Architecture foundation complete
 - FlextResult pattern implementation
@@ -244,6 +244,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**flext-ldap v0.9.0** - LDAP directory services enabling authentication and user management across the FLEXT ecosystem.
+**flext-ldap v0.9.9** - LDAP directory services enabling authentication and user management across the FLEXT ecosystem.
 
 **Mission**: Provide reliable LDAP operations with Clean Architecture patterns for enterprise directory service integration.

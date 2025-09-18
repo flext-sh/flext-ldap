@@ -93,7 +93,7 @@ async def ldap_session(
             )
 
 
-async def demonstrate_value_objects() -> None:
+def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
@@ -115,7 +115,7 @@ async def demonstrate_value_objects() -> None:
         logger.exception("Value object demonstration failed")
 
 
-async def demonstrate_comprehensive_configuration() -> None:
+def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
@@ -242,7 +242,7 @@ async def demonstrate_error_recovery() -> None:
         logger.exception("Error handling patterns demonstration failed")
 
 
-async def demonstrate_performance_patterns() -> None:
+def demonstrate_performance_patterns() -> None:
     """Demonstrate performance optimization patterns."""
     try:
         # 1. Connection pooling simulation
@@ -273,10 +273,10 @@ async def main() -> None:
     """Run the main demonstration function."""
     try:
         # 1. Value objects
-        await demonstrate_value_objects()
+        demonstrate_value_objects()
 
         # 2. Comprehensive configuration
-        await demonstrate_comprehensive_configuration()
+        demonstrate_comprehensive_configuration()
 
         # 3. Async patterns
         await demonstrate_async_patterns()
@@ -285,7 +285,7 @@ async def main() -> None:
         await demonstrate_error_recovery()
 
         # 5. Performance patterns
-        await demonstrate_performance_patterns()
+        demonstrate_performance_patterns()
 
     except Exception:
         logger.exception("Advanced patterns demonstration failed")

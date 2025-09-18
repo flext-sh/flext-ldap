@@ -28,10 +28,91 @@ from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdapApi(FlextMixins.Loggable):
-    """High-level LDAP API facade using FlextMixins.Loggable for logging and utilities."""
+    """High-level LDAP API facade providing unified interface for LDAP operations.
+
+    This class serves as the main entry point for LDAP operations in the flext-ldap
+    library. It provides a high-level API that abstracts away the complexity of
+    LDAP operations while maintaining full functionality and type safety.
+
+    The API uses FlextMixins.Loggable for structured logging and integrates with
+    the flext-core ecosystem for configuration management and dependency injection.
+
+    Attributes:
+        _config: LDAP configuration instance.
+        _container_manager: Container manager for dependency injection.
+        _container: Dependency injection container.
+        _service: Core LDAP service instance.
+
+    """
+
+    class _Formatters:
+        """Nested formatter helper class for CLI output - unified class pattern."""
+
+        @staticmethod
+        def display_message(message: str, level: str = "info") -> None:
+            """Display formatted message."""
+            prefix = "ℹ️" if level == "info" else "⚠️" if level == "warning" else "❌"
+            print(f"{prefix} {message}")
+
+        @staticmethod
+        def print_success(message: str) -> None:
+            """Print success message."""
+            print(f"✅ {message}")
+
+    class _ConnectionHelper:
+        """Nested connection helper class - unified class pattern."""
+
+        @staticmethod
+        def format_connection_info(server_uri: str, bind_dn: str) -> str:
+            """Format connection information for display."""
+            return f"Server: {server_uri}\nBind DN: {bind_dn}"
+
+    class _SearchHelper:
+        """Nested search helper class - unified class pattern."""
+
+        @staticmethod
+        def create_search_request(base_dn: str, filter_str: str) -> FlextLdapModels.SearchRequest:
+            """Create search request with default parameters."""
+            return FlextLdapModels.SearchRequest(
+                base_dn=base_dn,
+                filter_str=filter_str,
+                scope="subtree",
+                attributes=None,
+                size_limit=1000,
+                time_limit=30,
+            )
+
+    class _UserManagementHelper:
+        """Nested user management helper class - unified class pattern."""
+
+        @staticmethod
+        def create_user_request(dn: str, uid: str, cn: str, sn: str) -> FlextLdapModels.CreateUserRequest:
+            """Create user request with standard parameters."""
+            return FlextLdapModels.CreateUserRequest(
+                dn=dn,
+                uid=uid,
+                cn=cn,
+                sn=sn,
+                mail=None,
+                object_classes=["person", "organizationalPerson"],
+            )
+
+        @staticmethod
+        def format_user_info(user: FlextLdapModels.User) -> str:
+            """Format user information for display."""
+            return f"User: {user.uid}\nDN: {user.dn}\nCN: {user.cn}"
 
     def __init__(self, config: FlextLdapConfig | None = None) -> None:
-        """Initialize API using FlextMixins.Loggable patterns with FlextLdapConfig singleton."""
+        """Initialize API with configuration and dependency injection.
+
+        Sets up the API instance with logging capabilities, configuration management,
+        and dependency injection container. Uses singleton pattern for configuration
+        when no specific config is provided.
+
+        Args:
+            config: Optional LDAP configuration. If None, uses global singleton.
+
+        """
         # Initialize FlextMixins.Loggable
         super().__init__()
         # Use provided config directly if given, otherwise use singleton
@@ -43,6 +124,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         self._container = self._container_manager.get_container()
         self._service = FlextLdapServices(self._container)
 
+        # CLI helper instances for unified class pattern
+        self._formatters = self._Formatters()
+        self._ConnectionHelper = self._ConnectionHelper()
+        self._SearchHelper = self._SearchHelper()
+        self._UserManagementHelper = self._UserManagementHelper()
+
         self.log_info(
             "FlextLdapApi initialized with FlextLdapConfig singleton",
             api="FlextLdapApi",
@@ -50,7 +137,15 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     @cached_property
     def session_id(self) -> str:
-        """Generate session ID using Python stdlib SOURCE OF TRUTH."""
+        """Generate unique session ID using Python standard library.
+
+        Creates a unique session identifier using UUID4 for tracking
+        API operations and maintaining session state.
+
+        Returns:
+            str: Unique session identifier in format 'session_{uuid}'.
+
+        """
         return f"session_{uuid.uuid4()}"
 
     def _get_entry_attribute(
@@ -73,14 +168,14 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         # Convert value to string with type safety
         if isinstance(raw_value, str):
-            return raw_value
+            return raw_value or default
         if isinstance(raw_value, bytes):
             return raw_value.decode("utf-8", errors="replace")
         if isinstance(raw_value, list):
             if len(raw_value) > 0:
-                # Check if first element is None
+                # Check if first element is None or empty string
                 first_element = raw_value[0]
-                if first_element is None:
+                if first_element is None or first_element == "":
                     return default
                 try:
                     return str(first_element)
@@ -103,6 +198,44 @@ class FlextLdapApi(FlextMixins.Loggable):
             except (ValueError, TypeError):
                 return default
 
+    # CLI Methods for compatibility with examples
+
+    def show_configuration(self) -> None:
+        """Show current LDAP configuration - CLI method."""
+        print("=== LDAP Configuration ===")
+        print(f"Server URI: {getattr(self._config, 'server_uri', 'Not configured')}")
+        print(f"Base DN: {getattr(self._config, 'base_dn', 'Not configured')}")
+        print(f"Bind DN: {getattr(self._config, 'bind_dn', 'Not configured')}")
+        print("Configuration loaded successfully!")
+
+    async def connect_to_ldap(
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
+    ) -> FlextResult[str]:
+        """Connect to LDAP server - CLI method wrapper."""
+        return await self.connect(server_uri, bind_dn, bind_password)
+
+    async def search_ldap(
+        self,
+        base_dn: str,
+        filter_str: str = "(objectClass=*)",
+        scope: str = "subtree",
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
+        """Search LDAP directory - CLI method."""
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn,
+            filter_str=filter_str,
+            scope=scope,
+            attributes=None,
+            size_limit=1000,
+            time_limit=30,
+        )
+        search_result = await self._service.search(search_request)
+        return search_result
+
+
     # Connection Management
 
     async def connect(
@@ -111,15 +244,18 @@ class FlextLdapApi(FlextMixins.Loggable):
         bind_dn: str,
         bind_password: str,
     ) -> FlextResult[str]:
-        """Connect to LDAP server.
+        """Connect to LDAP server and establish session.
+
+        Establishes connection to the specified LDAP server using provided
+        credentials. Returns a session ID for tracking the connection.
 
         Args:
-            server_uri: LDAP server URI
-            bind_dn: Distinguished name for binding
-            bind_password: Password for binding
+            server_uri: LDAP server URI (ldap:// or ldaps://).
+            bind_dn: Distinguished name for authentication.
+            bind_password: Password for authentication.
 
         Returns:
-            FlextResult containing session ID or error
+            FlextResult[str]: Success with session ID or error result.
 
         """
         # Use cached session_id property from FlextUtilities
@@ -181,11 +317,15 @@ class FlextLdapApi(FlextMixins.Loggable):
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute LDAP search using validated request entity.
 
+        Performs LDAP search operation using the provided search request.
+        The request is validated and processed through the service layer
+        to ensure proper error handling and result formatting.
+
         Args:
-            search_request: Encapsulated search parameters with validation
+            search_request: Encapsulated search parameters with validation.
 
         Returns:
-            FlextResult containing search results or error
+            FlextResult[list[FlextLdapModels.Entry]]: Search results or error.
 
         """
         # Execute search via service - eliminates parameter mapping duplication
@@ -272,12 +412,50 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     # User Operations
 
+    @overload
     async def create_user(
         self,
         user_request: FlextLdapModels.CreateUserRequest,
+    ) -> FlextResult[FlextLdapModels.User]: ...
+
+    @overload
+    async def create_user(
+        self,
+        dn: str,
+        uid: str,
+        cn: str,
+        sn: str,
+        mail: str | None = None,
+    ) -> FlextResult[FlextLdapModels.User]: ...
+
+    async def create_user(
+        self,
+        user_request_or_dn: FlextLdapModels.CreateUserRequest | str,
+        uid: str | None = None,
+        cn: str | None = None,
+        sn: str | None = None,
+        mail: str | None = None,
     ) -> FlextResult[FlextLdapModels.User]:
-        """Create user using proper service layer."""
-        return await self._service.create_user(user_request)
+        """Create user using proper service layer - supports both request object and individual parameters."""
+        # Handle both request object and individual parameters
+        if isinstance(user_request_or_dn, FlextLdapModels.CreateUserRequest):
+            request = user_request_or_dn
+        else:
+            # Individual parameters provided
+            dn = user_request_or_dn
+            if uid is None or cn is None or sn is None:
+                return FlextResult[FlextLdapModels.User].fail(
+                    "uid, cn, and sn are required when using individual parameters"
+                )
+            request = FlextLdapModels.CreateUserRequest(
+                dn=dn,
+                uid=uid,
+                cn=cn,
+                sn=sn,
+                mail=mail,
+                object_classes=["person", "organizationalPerson"],
+            )
+        return await self._service.create_user(request)
 
     async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
         """Get user by DN."""
@@ -492,13 +670,13 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         Factory method following flext-core pattern for consistent API access
         across the FLEXT ecosystem. Uses FlextLdapConfig singleton as single
-        source of truth for configuration.
+        source of truth for configuration when no specific config is provided.
 
         Args:
             config: Optional LDAP configuration. If None, uses FlextLdapConfig singleton.
 
         Returns:
-            Configured FlextLdapApi instance ready for LDAP operations.
+            FlextLdapApi: Configured API instance ready for LDAP operations.
 
         Example:
             >>> api = FlextLdapApi.create()

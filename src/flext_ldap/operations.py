@@ -902,7 +902,7 @@ class FlextLdapOperations(FlextDomainService[object]):
                     return normalized
                 finally:
                     with contextlib.suppress(Exception):
-                        conn.unbind()
+                        _: bool = conn.unbind()
             finally:
                 with contextlib.suppress(Exception):
                     await client.unbind()
@@ -2089,9 +2089,10 @@ class FlextLdapOperations(FlextDomainService[object]):
             if not hasattr(group_entry, "get_attribute"):
                 return []
 
-            current_members = getattr(group_entry, "get_attribute", lambda _: None)(
-                "member",
-            )
+            # Use getattr to safely call method with type checking
+            current_members: object = getattr(
+                group_entry, "get_attribute", lambda _: []
+            )("member")
             return current_members if isinstance(current_members, list) else []
 
         async def _get_group_membership(
