@@ -10,7 +10,7 @@ import pytest
 from flext_core import FlextResult
 from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.typings import FlextLdapTypes
 
 
 @pytest.mark.asyncio
@@ -160,7 +160,9 @@ class TestFlextLdapRepositoriesComprehensive:
         client = FlextLdapClient()
         repo = FlextLdapRepositories.Repository(client)
 
-        attributes: LdapAttributeDict = {"description": "Updated description"}
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
+            "description": "Updated description"
+        }
 
         result = await repo.update_attributes("cn=test,dc=example,dc=com", attributes)
 
@@ -448,7 +450,7 @@ class TestFlextLdapRepositoriesComprehensive:
         client = FlextLdapClient()
         repos = FlextLdapRepositories(client)
 
-        attributes: LdapAttributeDict = {"description": "Updated"}
+        attributes: FlextLdapTypes.Entry.AttributeDict = {"description": "Updated"}
 
         result = await repos.update("cn=test,dc=example,dc=com", attributes)
 

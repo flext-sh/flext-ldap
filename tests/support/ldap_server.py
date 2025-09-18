@@ -54,8 +54,8 @@ class LdapTestServer:
                 environment={
                     "LDAP_ORGANISATION": "Flext Test",
                     "LDAP_DOMAIN": "flext.local",
-                    "LDAP_ADMIN_PASSWORD": self.admin_password,
-                    "LDAP_CONFIG_PASSWORD": self.admin_password,
+                    "LDAP_ADMIN_PASSWORD": self.admin_password or "admin123",
+                    "LDAP_CONFIG_PASSWORD": self.admin_password or "admin123",
                     "LDAP_READONLY_USER": "false",
                     "LDAP_RFC2307BIS_SCHEMA": "false",
                     "LDAP_BACKEND": "mdb",
@@ -215,7 +215,7 @@ class LdapTestServer:
         return FlextLdapConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=admin,dc=flext,dc=local",
-            bind_password=self.admin_password,
+            bind_password=self.admin_password or "admin123",
             use_ssl=False,
             timeout=30,
         )

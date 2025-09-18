@@ -22,7 +22,7 @@ from flext_ldap import (
     FlextLdapServices,
     FlextLdapValueObjects,
 )
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.typings import FlextLdapTypes
 
 
 # Helper function to replace create_ldap_attributes
@@ -118,13 +118,13 @@ class TestLdapClientRealOperations:
         }
         ou_attributes = create_ldap_attributes(ou_attrs_raw)
         _ = await connected_ldap_client.add(
-            ou_dn, cast("LdapAttributeDict", ou_attributes)
+            ou_dn, cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes)
         )
         # Ignore if OU already exists (error code 68)
 
         # ADD: Create user entry
         add_result = await connected_ldap_client.add(
-            test_dn, cast("LdapAttributeDict", user_attributes)
+            test_dn, cast("FlextLdapTypes.Entry.AttributeDict", user_attributes)
         )
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
@@ -134,7 +134,9 @@ class TestLdapClientRealOperations:
             "description": ["Updated user description"],
         }
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
-        modify_result = await connected_ldap_client.modify(test_dn, modify_attributes)
+        modify_result = await connected_ldap_client.modify(
+            test_dn, cast("dict[str, object]", modify_attributes)
+        )
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
         # SEARCH: Verify modifications
@@ -206,7 +208,7 @@ class TestLdapServiceRealOperations:
         }
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         await client.add(
-            ou_dn, cast("LdapAttributeDict", ou_attributes_2)
+            ou_dn, cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_2)
         )  # Ignore if exists
 
         # Test user creation
@@ -271,7 +273,7 @@ class TestLdapServiceRealOperations:
         update_attributes = create_ldap_attributes(update_attrs_raw)
         update_result = await ldap_service.update_user(
             user_request.dn,
-            cast("LdapAttributeDict", update_attributes),
+            cast("FlextLdapTypes.Entry.AttributeDict", update_attributes),
         )
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
@@ -351,7 +353,7 @@ class TestLdapServiceRealOperations:
             }
             ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
             await client.add(
-                ou_dn, cast("LdapAttributeDict", ou_attributes_3)
+                ou_dn, cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_3)
             )  # Ignore if exists
 
         # Create test user for group membership
@@ -365,7 +367,9 @@ class TestLdapServiceRealOperations:
             "uid": [f"groupuser-{uuid4().hex[:8]}"],
         }
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
-        await client.add(user_dn, cast("LdapAttributeDict", user_attributes_4))
+        await client.add(
+            user_dn, cast("FlextLdapTypes.Entry.AttributeDict", user_attributes_4)
+        )
 
         # Test group creation
         group_id = uuid4().hex[:8]
@@ -412,7 +416,7 @@ class TestLdapServiceRealOperations:
         }
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
         update_result = await ldap_service.update_group(
-            group.dn, cast("LdapAttributeDict", update_attributes_5)
+            group.dn, cast("FlextLdapTypes.Entry.AttributeDict", update_attributes_5)
         )
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
@@ -428,7 +432,9 @@ class TestLdapServiceRealOperations:
             "uid": [f"groupuser2-{uuid4().hex[:8]}"],
         }
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
-        await client.add(user2_dn, cast("LdapAttributeDict", user2_attributes_6))
+        await client.add(
+            user2_dn, cast("FlextLdapTypes.Entry.AttributeDict", user2_attributes_6)
+        )
 
         # Add member
         add_member_result = await ldap_service.add_member(group.dn, user2_dn)
@@ -538,7 +544,9 @@ class TestLdapValidationRealOperations:
             "ou": ["validation-test"],
         }
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
-        await client.add(ou_dn, cast("LdapAttributeDict", ou_attributes_7))
+        await client.add(
+            ou_dn, cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_7)
+        )
 
         # Test user with valid business rules
         valid_user_request = FlextLdapModels.CreateUserRequest(
@@ -660,7 +668,7 @@ class TestLdapErrorHandlingReal:
         invalid_attributes = create_ldap_attributes(invalid_attrs_raw)
 
         add_result = await connected_ldap_client.add(
-            invalid_dn, cast("LdapAttributeDict", invalid_attributes)
+            invalid_dn, cast("FlextLdapTypes.Entry.AttributeDict", invalid_attributes)
         )
         # Should fail with appropriate error
         assert not add_result.is_success

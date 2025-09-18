@@ -10,18 +10,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Final, Literal
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
     SecretStr,
+    ValidationInfo,
     field_validator,
 )
 
 from flext_core import (
-    FlextEntities,
+    FlextModels,
     FlextResult,
 )
 from flext_ldap.typings import FlextLdapTypes
@@ -37,8 +38,11 @@ type EntityResult[T] = FlextResult[T]
 type EntityStatus = Literal["active", "inactive", "disabled", "pending"]
 type ObjectClassList = list[str]
 
+# Constants
+MAX_PORT: Final[int] = 65535
 
-class FlextLdapEntities(FlextEntities):
+
+class FlextLdapEntities(FlextModels):
     """Single FlextLdapEntities class consolidating ALL LDAP entities.
 
     Consolidates ALL LDAP entity types into a single class following FLEXT patterns.
@@ -47,10 +51,10 @@ class FlextLdapEntities(FlextEntities):
 
     This class follows SOLID principles:
         - Single Responsibility: All LDAP entities in one place
-        - Open/Closed: Extends FlextEntities without modification
-        - Liskov Substitution: Can be used anywhere FlextEntities is expected
+        - Open/Closed: Extends FlextModels without modification
+        - Liskov Substitution: Can be used anywhere FlextModels is expected
         - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextEntities abstraction
+        - Dependency Inversion: Depends on FlextModels abstraction
 
     Examples:
         Basic entities::
@@ -68,7 +72,7 @@ class FlextLdapEntities(FlextEntities):
 
             search: FlextLdapEntities.SearchRequest = FlextLdapEntities.SearchRequest(
                 base_dn="ou=users,dc=example,dc=com",
-                filter_str="(objectClass=person)",
+                filter="(objectClass=person)",
                 scope="subtree",
             )
 
@@ -141,10 +145,12 @@ class FlextLdapEntities(FlextEntities):
         @classmethod
         def validate_dn(cls, v: str) -> str:
             """Validate Distinguished Name format."""
+            msg_empty = "DN cannot be empty"
+            msg_missing_attr = "DN must contain at least one attribute=value pair"
             if not v or not v.strip():
-                raise ValueError("DN cannot be empty")
+                raise ValueError(msg_empty)
             if "=" not in v:
-                raise ValueError("DN must contain at least one attribute=value pair")
+                raise ValueError(msg_missing_attr)
             return v.strip()
 
         @field_validator("object_classes")
@@ -152,7 +158,8 @@ class FlextLdapEntities(FlextEntities):
         def validate_object_classes(cls, v: list[str]) -> list[str]:
             """Validate object classes."""
             if not v:
-                raise ValueError("At least one object class is required")
+                msg = "At least one object class is required"
+                raise ValueError(msg)
             return v
 
         def get_attribute(
@@ -231,7 +238,8 @@ class FlextLdapEntities(FlextEntities):
         def validate_dn(cls, v: str) -> str:
             """Validate Distinguished Name format."""
             if not v or not v.strip():
-                raise ValueError("DN cannot be empty")
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
             return v.strip()
 
         def add_member(self, member_dn: str) -> None:
@@ -285,8 +293,8 @@ class FlextLdapEntities(FlextEntities):
         @classmethod
         def validate_dn(cls, v: str) -> str:
             """Validate Distinguished Name format."""
+            msg = "DN cannot be empty"
             if not v or not v.strip():
-                msg = "DN cannot be empty"
                 raise ValueError(msg)
             return v.strip()
 
@@ -325,7 +333,7 @@ class FlextLdapEntities(FlextEntities):
 
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter", alias="filter")
+        filter: str = Field(..., description="LDAP search filter")
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
@@ -368,10 +376,11 @@ class FlextLdapEntities(FlextEntities):
         def validate_base_dn(cls, v: str) -> str:
             """Validate base DN format."""
             if not v or not v.strip():
-                raise ValueError("Base DN cannot be empty")
+                msg = "Base DN cannot be empty"
+                raise ValueError(msg)
             return v.strip()
 
-        @field_validator("filter_str")
+        @field_validator("filter")
         @classmethod
         def validate_filter(cls, v: str) -> str:
             """Validate LDAP filter format."""
@@ -392,10 +401,16 @@ class FlextLdapEntities(FlextEntities):
             attributes: list[str] | None = None,
         ) -> FlextLdapEntities.SearchRequest:
             """Factory method for user search."""
-            return cls(
-                base_dn=base_dn,
-                filter_str=f"(&(objectClass=person)(uid={uid}))",
-                attributes=attributes or ["uid", "cn", "mail", "sn"],
+            # Use model_validate to avoid positional/keyword check issues and
+            # to make construction explicit for Pydantic v2
+            return cls.model_validate(
+                {
+                    "base_dn": base_dn,
+                    "filter": f"(&(objectClass=person)(uid={uid}))",
+                    "attributes": attributes or ["uid", "cn", "mail", "sn"],
+                    "page_size": None,
+                    "paged_cookie": None,
+                }
             )
 
         @classmethod
@@ -406,10 +421,14 @@ class FlextLdapEntities(FlextEntities):
             attributes: list[str] | None = None,
         ) -> FlextLdapEntities.SearchRequest:
             """Factory method for group search."""
-            return cls(
-                base_dn=base_dn,
-                filter_str=f"(&(objectClass=groupOfNames)(cn={cn}))",
-                attributes=attributes or ["cn", "member", "description"],
+            return cls.model_validate(
+                {
+                    "base_dn": base_dn,
+                    "filter": f"(&(objectClass=groupOfNames)(cn={cn}))",
+                    "attributes": attributes or ["cn", "member", "description"],
+                    "page_size": None,
+                    "paged_cookie": None,
+                }
             )
 
     class SearchResult(BaseModel):
@@ -444,7 +463,8 @@ class FlextLdapEntities(FlextEntities):
         def set_entries_returned(cls, v: int, info: ValidationInfo) -> int:
             """Auto-calculate entries returned from entries list."""
             if info.data and "entries" in info.data:
-                return len(info.data["entries"])
+                entries = info.data["entries"]
+                return len(entries) if isinstance(entries, list) else 0
             return v
 
     class CreateUserRequest(BaseModel):
@@ -489,7 +509,8 @@ class FlextLdapEntities(FlextEntities):
         def validate_dn(cls, v: str) -> str:
             """Validate DN format."""
             if not v or not v.strip():
-                raise ValueError("DN cannot be empty")
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
             return v.strip()
 
         @field_validator("uid", "cn", "sn")
@@ -497,25 +518,31 @@ class FlextLdapEntities(FlextEntities):
         def validate_required_string(cls, v: str) -> str:
             """Validate required string fields."""
             if not v or not v.strip():
-                raise ValueError("Required field cannot be empty")
+                msg = "Required field cannot be empty"
+                raise ValueError(msg)
             return v.strip()
 
         def to_user_entity(self) -> FlextLdapEntities.User:
             """Convert to User entity."""
-            return FlextLdapEntities.User(
-                dn=self.dn,
-                uid=self.uid,
-                cn=self.cn,
-                sn=self.sn,
-                given_name=self.given_name,
-                mail=self.mail,
-                user_password=self.user_password,
-                telephone_number=self.telephone_number,
-                department=self.department,
-                title=self.title,
-                organization=self.organization,
-                object_classes=self.object_classes,
-                additional_attributes=self.additional_attributes,
+            # Build using aliases so the constructed model matches the User
+            # field aliases (Pydantic v2 behavior). Use model_validate with a
+            # mapping to avoid signature mismatches reported by static checkers.
+            return FlextLdapEntities.User.model_validate(
+                {
+                    "dn": self.dn,
+                    "cn": self.cn,
+                    "uid": self.uid,
+                    "sn": self.sn,
+                    "givenName": self.given_name,
+                    "mail": self.mail,
+                    "userPassword": self.user_password,
+                    "telephoneNumber": self.telephone_number,
+                    "department": self.department,
+                    "title": self.title,
+                    "o": self.organization,
+                    "objectClass": self.object_classes,
+                    "additional_attributes": self.additional_attributes,
+                }
             )
 
     # =========================================================================
@@ -533,9 +560,9 @@ class FlextLdapEntities(FlextEntities):
 
         # Connection details
         server: str = Field(..., description="LDAP server hostname/IP")
-        port: int = Field(389, description="LDAP server port", ge=1, le=65535)
-        use_ssl: bool = Field(False, description="Use SSL/TLS encryption")
-        use_tls: bool = Field(False, description="Use StartTLS")
+        port: int = Field(389, description="LDAP server port", ge=1, le=MAX_PORT)
+        use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
+        use_tls: bool = Field(default=False, description="Use StartTLS")
 
         # Authentication
         bind_dn: str | None = Field(None, description="Bind Distinguished Name")
@@ -547,7 +574,9 @@ class FlextLdapEntities(FlextEntities):
         pool_keepalive: int = Field(3600, description="Pool keepalive in seconds", ge=0)
 
         # SSL/TLS options
-        verify_certificates: bool = Field(True, description="Verify SSL certificates")
+        verify_certificates: bool = Field(
+            default=True, description="Verify SSL certificates"
+        )
         ca_certs_file: str | None = Field(None, description="CA certificates file path")
 
         @field_validator("server")
@@ -555,15 +584,17 @@ class FlextLdapEntities(FlextEntities):
         def validate_server(cls, v: str) -> str:
             """Validate server hostname/IP."""
             if not v or not v.strip():
-                raise ValueError("Server cannot be empty")
+                msg = "Server cannot be empty"
+                raise ValueError(msg)
             return v.strip()
 
         @field_validator("port")
         @classmethod
         def validate_port(cls, v: int) -> int:
             """Validate port number."""
-            if v <= 0 or v > 65535:
-                raise ValueError("Port must be between 1 and 65535")
+            if v <= 0 or v > MAX_PORT:
+                msg = f"Port must be between 1 and {MAX_PORT}"
+                raise ValueError(msg)
             return v
 
     # =========================================================================
@@ -589,7 +620,7 @@ class FlextLdapEntities(FlextEntities):
         target_dn: str = Field("", description="Target DN")
 
         # Additional details
-        server_info: dict[str, Any] = Field(
+        server_info: dict[str, object] = Field(
             default_factory=dict, description="Server information"
         )
 
@@ -603,7 +634,8 @@ class FlextLdapEntities(FlextEntities):
         def validate_error_code(cls, v: int) -> int:
             """Validate LDAP error code."""
             if v < 0:
-                raise ValueError("Error code must be non-negative")
+                msg = "Error code must be non-negative"
+                raise ValueError(msg)
             return v
 
     class OperationResult(BaseModel):
@@ -630,7 +662,7 @@ class FlextLdapEntities(FlextEntities):
         )
 
         # Additional data
-        data: dict[str, Any] = Field(
+        data: dict[str, object] = Field(
             default_factory=dict, description="Additional result data"
         )
 
@@ -644,7 +676,7 @@ class FlextLdapEntities(FlextEntities):
             cls,
             operation_type: str,
             target_dn: str = "",
-            data: dict[str, Any] | None = None,
+            data: dict[str, object] | None = None,
             duration_ms: float = 0.0,
         ) -> FlextLdapEntities.OperationResult:
             """Create success result."""
@@ -685,10 +717,11 @@ FlextLdapEntities.User.model_rebuild()
 FlextLdapEntities.Group.model_rebuild()
 FlextLdapEntities.Entry.model_rebuild()
 FlextLdapEntities.SearchRequest.model_rebuild()
-FlextLdapEntities.SearchResponse.model_rebuild()
+FlextLdapEntities.SearchResult.model_rebuild()
 FlextLdapEntities.CreateUserRequest.model_rebuild()
-FlextLdapEntities.CreateGroupRequest.model_rebuild()
-FlextLdapEntities.UpdateGroupRequest.model_rebuild()
+FlextLdapEntities.ConnectionInfo.model_rebuild()
+FlextLdapEntities.LdapError.model_rebuild()
+FlextLdapEntities.OperationResult.model_rebuild()
 
 
 __all__ = [

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from flext_core import FlextModels, FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 __all__ = ["FlextLdapModels"]
@@ -99,7 +100,7 @@ class FlextLdapModels(FlextModels):
             default_factory=list,
             description="Object classes",
         )
-        attributes: dict[str, list[str]] = Field(
+        attributes: FlextLdapTypes.Entry.AttributeDict = Field(
             default_factory=dict,
             description="Entry attributes",
         )
@@ -119,16 +120,28 @@ class FlextLdapModels(FlextModels):
 
         def get_attribute_value(self, attribute_name: str) -> str | None:
             """Get single attribute value."""
-            values = self.attributes.get(attribute_name, [])
-            return values[0] if values else None
+            attr_value = self.attributes.get(attribute_name)
+            if isinstance(attr_value, list) and attr_value:
+                return str(attr_value[0])
+            if isinstance(attr_value, (str, bytes)):
+                return str(attr_value)
+            return None
 
         def get_attribute_values(self, attribute_name: str) -> list[str]:
             """Get all attribute values."""
-            return self.attributes.get(attribute_name, [])
+            attr_value = self.attributes.get(attribute_name, [])
+            if isinstance(attr_value, list):
+                return [str(v) for v in attr_value]
+            return [str(attr_value)]
 
         def get_attribute(self, attribute_name: str) -> list[str] | None:
             """Get attribute value (for backward compatibility)."""
-            return self.attributes.get(attribute_name)
+            attr_value = self.attributes.get(attribute_name)
+            if attr_value is None:
+                return None
+            if isinstance(attr_value, list):
+                return [str(v) for v in attr_value]
+            return [str(attr_value)]
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate entry business rules."""
@@ -162,7 +175,7 @@ class FlextLdapModels(FlextModels):
             default_factory=list,
             description="Object classes",
         )
-        attributes: dict[str, list[str]] = Field(
+        attributes: FlextLdapTypes.Entry.AttributeDict = Field(
             default_factory=dict,
             description="User attributes",
         )
@@ -217,7 +230,7 @@ class FlextLdapModels(FlextModels):
             default_factory=list,
             description="Object classes",
         )
-        attributes: dict[str, list[str]] = Field(
+        attributes: FlextLdapTypes.Entry.AttributeDict = Field(
             default_factory=dict,
             description="Group attributes",
         )

@@ -11,12 +11,12 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import BaseModel
 
+import flext_ldap.dispatcher as dispatcher_module
 import flext_ldap.domain as domain_module
 from flext_core import FlextDomainService, FlextResult
+from flext_ldap.dispatcher import FlextLdapDispatcher
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
-
-# Import the target module for coverage
 
 
 class TestFlextLdapDomainFunctional:
@@ -233,9 +233,7 @@ class TestDomainDispatcherIntegration:
         """Ensure dispatcher path handles command when enabled."""
         monkeypatch.setenv("FLEXT_LDAP_ENABLE_DISPATCHER", "1")
 
-        from flext_ldap.dispatcher import reset_dispatcher_cache
-
-        reset_dispatcher_cache()
+        FlextLdapDispatcher().reset_dispatcher_cache()
 
         factory = FlextLdapDomain.DomainFactory()
 
@@ -243,7 +241,7 @@ class TestDomainDispatcherIntegration:
         monkeypatch.setattr(
             factory._create_user_handler,
             "handle",
-            lambda command: FlextResult[FlextLdapModels.User].fail(
+            lambda _command: FlextResult[FlextLdapModels.User].fail(
                 "fallback should not be used",
             ),
             raising=False,
@@ -264,14 +262,12 @@ class TestDomainDispatcherIntegration:
         """Verify legacy handler executes when feature flag is disabled."""
         monkeypatch.delenv("FLEXT_LDAP_ENABLE_DISPATCHER", raising=False)
 
-        import flext_ldap.dispatcher as dispatcher_module
-
-        dispatcher_module.reset_dispatcher_cache()
+        FlextLdapDispatcher().reset_dispatcher_cache()
 
         # Raise if dispatcher were incorrectly invoked with flag disabled.
         monkeypatch.setattr(
             dispatcher_module,
-            "get_dispatcher",
+            "get_global_dispatcher",
             lambda: (_ for _ in ()).throw(
                 RuntimeError("dispatcher should not be used")
             ),
@@ -524,7 +520,9 @@ class TestDomainEvents:
 
         user_created_event = FlextLdapDomain.UserCreatedEvent(
             actor=str(event_data["actor"]),
-            occurred_at=event_data["occurred_at"],
+            occurred_at=event_data["occurred_at"]
+            if isinstance(event_data["occurred_at"], datetime)
+            else datetime.now(UTC),
             user_id=str(event_data["user_id"]),
             user_dn=str(event_data["user_dn"]),
         )
@@ -546,7 +544,9 @@ class TestDomainEvents:
 
         user_deleted_event = FlextLdapDomain.UserDeletedEvent(
             actor=str(event_data["actor"]),
-            occurred_at=event_data["occurred_at"],
+            occurred_at=event_data["occurred_at"]
+            if isinstance(event_data["occurred_at"], datetime)
+            else datetime.now(UTC),
             user_id=str(event_data["user_id"]),
             user_dn=str(event_data["user_dn"]),
         )
@@ -606,7 +606,9 @@ class TestDomainIntegration:
 
         user_event = FlextLdapDomain.UserCreatedEvent(
             actor=str(event_data["actor"]),
-            occurred_at=event_data["occurred_at"],
+            occurred_at=event_data["occurred_at"]
+            if isinstance(event_data["occurred_at"], datetime)
+            else datetime.now(UTC),
             user_id=str(event_data["user_id"]),
             user_dn=str(event_data["user_dn"]),
         )

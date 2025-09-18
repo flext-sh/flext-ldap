@@ -14,14 +14,15 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapServices,
 )
+from flext_ldap.dispatcher import FlextLdapDispatcher
 from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.typings import FlextLdapTypes
 
 
-@pytest.mark.asyncio
 class TestFlextLdapServicesComprehensive:
     """Comprehensive tests for FlextLdapServices with real functionality."""
 
+    @pytest.mark.asyncio
     async def test_init_with_container(self) -> None:
         """Test service initialization with provided container using standard assertions."""
         container = FlextLdapContainer().get_container()
@@ -32,6 +33,7 @@ class TestFlextLdapServicesComprehensive:
         assert service._ldap_container is not None
         assert isinstance(service, FlextLdapServices)
 
+    @pytest.mark.asyncio
     async def test_init_without_container(self) -> None:
         """Test service initialization without container creates default using standard assertions."""
         service = FlextLdapServices()
@@ -41,6 +43,7 @@ class TestFlextLdapServicesComprehensive:
         assert service._ldap_container is not None
         assert isinstance(service, FlextLdapServices)
 
+    @pytest.mark.asyncio
     async def test_process_base_implementation(self) -> None:
         """Test process method base implementation using FlextTestsMatchers."""
         service = FlextLdapServices()
@@ -52,6 +55,7 @@ class TestFlextLdapServicesComprehensive:
         assert result.is_success
         assert result.value == request
 
+    @pytest.mark.asyncio
     async def test_build_with_dict_domain(self) -> None:
         """Test build method with dictionary domain object using TestBuilders."""
         service = FlextLdapServices()
@@ -68,6 +72,7 @@ class TestFlextLdapServicesComprehensive:
         assert result
         assert len(result) > 0
 
+    @pytest.mark.asyncio
     async def test_build_with_non_dict_domain(self) -> None:
         """Test build method with non-dictionary domain object."""
         service = FlextLdapServices()
@@ -79,6 +84,7 @@ class TestFlextLdapServicesComprehensive:
         assert result["result"] == domain
         assert result["correlation_id"] == correlation_id
 
+    @pytest.mark.asyncio
     async def test_get_repository(self) -> None:
         """Test repository retrieval from container using FlextTestsMatchers."""
         service = FlextLdapServices()
@@ -89,6 +95,7 @@ class TestFlextLdapServicesComprehensive:
         assert result.is_success
         assert isinstance(result.value, FlextLdapRepositories.Repository)
 
+    @pytest.mark.asyncio
     async def test_initialize(self) -> None:
         """Test service initialization."""
         service = FlextLdapServices()
@@ -98,6 +105,7 @@ class TestFlextLdapServicesComprehensive:
         assert result.is_success
         assert result.value is None
 
+    @pytest.mark.asyncio
     async def test_cleanup(self) -> None:
         """Test service cleanup with container reset."""
         service = FlextLdapServices()
@@ -106,6 +114,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert result.is_success
 
+    @pytest.mark.asyncio
     async def test_cleanup_with_container_without_reset(self) -> None:
         """Test cleanup when container has no reset method."""
 
@@ -122,6 +131,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert result.is_success
 
+    @pytest.mark.asyncio
     async def test_cleanup_with_container_without_clear(self) -> None:
         """Test cleanup when container has neither reset nor clear."""
 
@@ -136,6 +146,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert result.is_success
 
+    @pytest.mark.asyncio
     async def test_create_user_validation_failure(self) -> None:
         """Test user creation with validation failure."""
         service = FlextLdapServices()
@@ -157,6 +168,7 @@ class TestFlextLdapServicesComprehensive:
             # Expected failure case - validation or repository issues
             assert result.error is not None
 
+    @pytest.mark.asyncio
     async def test_create_user_with_valid_request(
         self,
     ) -> None:
@@ -191,6 +203,76 @@ class TestFlextLdapServicesComprehensive:
                 ]
             )
 
+    @pytest.mark.asyncio
+    async def test_create_user_dispatcher_short_circuits_to_domain(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Ensure dispatcher path avoids legacy entity creation pipeline when enabled."""
+        monkeypatch.setenv("FLEXT_LDAP_ENABLE_DISPATCHER", "1")
+        FlextLdapDispatcher().reset_dispatcher_cache()
+
+        service = FlextLdapServices()
+        request = FlextLdapModels.CreateUserRequest(
+            dn="cn=dispatcher,ou=users,dc=flext,dc=local",
+            uid="dispatcher",
+            cn="Dispatcher User",
+            sn="User",
+        )
+
+        expected_user = FlextLdapModels.User(
+            id="user_dispatcher",
+            dn=request.dn,
+            uid=request.uid,
+            cn=request.cn,
+            sn=request.sn,
+            object_classes=["person", "top"],
+            attributes={},
+        )
+
+        class StubDispatcher:
+            def __init__(self) -> None:
+                self.commands: list[object] = []
+
+            def dispatch(self, command: object) -> FlextResult[object]:
+                self.commands.append(command)
+                return FlextResult[object].ok(
+                    FlextResult[FlextLdapModels.User].ok(expected_user)
+                )
+
+        stub_dispatcher = StubDispatcher()
+
+        monkeypatch.setattr(
+            "flext_ldap.dispatcher.FlextLdapDispatcher.get_global_dispatcher",
+            lambda: stub_dispatcher,
+            raising=False,
+        )
+
+        def _raise_to_user_entity(_self: FlextLdapModels.CreateUserRequest) -> None:
+            msg = "legacy path should not execute"
+            raise AssertionError(msg)
+
+        monkeypatch.setattr(
+            FlextLdapModels.CreateUserRequest,
+            "to_user_entity",
+            _raise_to_user_entity,
+            raising=False,
+        )
+
+        result = await service.create_user(request)
+
+        assert stub_dispatcher.commands, "dispatcher was not invoked"
+        if result.is_success:
+            assert isinstance(result.value, FlextLdapModels.User)
+            assert result.value.uid == "dispatcher"
+        else:
+            error_message = result.error or ""
+            assert "not connected" in error_message.lower()
+
+        monkeypatch.delenv("FLEXT_LDAP_ENABLE_DISPATCHER", raising=False)
+        FlextLdapDispatcher().reset_dispatcher_cache()
+
+    @pytest.mark.asyncio
     async def test_get_user_repository_failure(self) -> None:
         """Test get_user when repository access fails."""
         service = FlextLdapServices()
@@ -215,6 +297,7 @@ class TestFlextLdapServicesComprehensive:
         # Restore original method using setattr
         setattr(service, "_get_repository", original_get_repo)
 
+    @pytest.mark.asyncio
     async def test_get_user_with_valid_dn(self) -> None:
         """Test get_user with valid DN."""
         service = FlextLdapServices()
@@ -236,12 +319,13 @@ class TestFlextLdapServicesComprehensive:
                 ]
             )
 
+    @pytest.mark.asyncio
     async def test_update_user_validation_failure(self) -> None:
         """Test update_user with validation failure."""
         service = FlextLdapServices()
 
         # Invalid attributes (empty)
-        attributes: LdapAttributeDict = {}
+        attributes: FlextLdapTypes.Entry.AttributeDict = {}
 
         result = await service.update_user("cn=test,dc=test,dc=com", attributes)
 
@@ -251,11 +335,12 @@ class TestFlextLdapServicesComprehensive:
             for pattern in ["validation failed", "not connected", "ldap server"]
         )
 
+    @pytest.mark.asyncio
     async def test_update_user_with_valid_attributes(self) -> None:
         """Test update_user with valid attributes."""
         service = FlextLdapServices()
 
-        attributes: LdapAttributeDict = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "mail": "updated@example.com",
             "description": "Updated user",
         }
@@ -277,6 +362,7 @@ class TestFlextLdapServicesComprehensive:
                 ]
             )
 
+    @pytest.mark.asyncio
     async def test_delete_user(self) -> None:
         """Test delete_user operation."""
         service = FlextLdapServices()
@@ -286,6 +372,7 @@ class TestFlextLdapServicesComprehensive:
         # Should handle gracefully
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_create_group_validation_failure(self) -> None:
         """Test create_group with validation failure."""
         service = FlextLdapServices()
@@ -306,6 +393,7 @@ class TestFlextLdapServicesComprehensive:
             # Expected failure case - validation or repository issues
             assert result.error is not None
 
+    @pytest.mark.asyncio
     async def test_create_group_with_valid_request(self) -> None:
         """Test create_group with valid request."""
         service = FlextLdapServices()
@@ -322,6 +410,7 @@ class TestFlextLdapServicesComprehensive:
         # Should handle gracefully even if LDAP is not available
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_get_group(self) -> None:
         """Test get_group operation."""
         service = FlextLdapServices()
@@ -330,11 +419,12 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_update_group(self) -> None:
         """Test update_group operation."""
         service = FlextLdapServices()
 
-        attributes: LdapAttributeDict = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "description": "Updated group description",
         }
 
@@ -344,6 +434,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_delete_group(self) -> None:
         """Test delete_group operation."""
         service = FlextLdapServices()
@@ -352,6 +443,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_add_member(self) -> None:
         """Test add_member operation."""
         service = FlextLdapServices()
@@ -363,6 +455,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_remove_member(self) -> None:
         """Test remove_member operation."""
         service = FlextLdapServices()
@@ -374,6 +467,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_get_members(self) -> None:
         """Test get_members operation."""
         service = FlextLdapServices()
@@ -445,6 +539,7 @@ class TestFlextLdapServicesComprehensive:
             for word in ["invalid", "format", "pattern", "match"]
         )
 
+    @pytest.mark.asyncio
     async def test_search(self) -> None:
         """Test search operation."""
         service = FlextLdapServices()
@@ -466,7 +561,7 @@ class TestFlextLdapServicesComprehensive:
         """Test attributes validation with valid attributes."""
         service = FlextLdapServices()
 
-        attributes: LdapAttributeDict = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "cn": "Test User",
             "mail": "test@example.com",
         }
@@ -479,7 +574,7 @@ class TestFlextLdapServicesComprehensive:
         """Test attributes validation with empty attributes."""
         service = FlextLdapServices()
 
-        attributes: LdapAttributeDict = {}
+        attributes: FlextLdapTypes.Entry.AttributeDict = {}
 
         result = service.validate_attributes(attributes)
 
@@ -511,6 +606,7 @@ class TestFlextLdapServicesComprehensive:
             (result.error or "").lower()
         )
 
+    @pytest.mark.asyncio
     async def test_search_users(self) -> None:
         """Test search_users operation."""
         service = FlextLdapServices()
@@ -519,6 +615,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_user_exists(self) -> None:
         """Test user_exists check."""
         service = FlextLdapServices()
@@ -530,6 +627,7 @@ class TestFlextLdapServicesComprehensive:
         if result.is_success:
             assert isinstance(result.value, bool)
 
+    @pytest.mark.asyncio
     async def test_group_exists(self) -> None:
         """Test group_exists check."""
         service = FlextLdapServices()
@@ -541,6 +639,7 @@ class TestFlextLdapServicesComprehensive:
         if result.is_success:
             assert isinstance(result.value, bool)
 
+    @pytest.mark.asyncio
     async def test_add_member_to_group(self) -> None:
         """Test add_member_to_group operation."""
         service = FlextLdapServices()
@@ -552,6 +651,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_remove_member_from_group(self) -> None:
         """Test remove_member_from_group operation."""
         service = FlextLdapServices()
@@ -563,6 +663,7 @@ class TestFlextLdapServicesComprehensive:
 
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_get_group_members_list(self) -> None:
         """Test get_group_members_list operation."""
         service = FlextLdapServices()
@@ -575,6 +676,7 @@ class TestFlextLdapServicesComprehensive:
             assert isinstance(result.value, list)
 
     @pytest.mark.integration
+    @pytest.mark.asyncio
     async def test_full_user_lifecycle_with_docker(
         self,
     ) -> None:
@@ -609,6 +711,7 @@ class TestFlextLdapServicesComprehensive:
         assert isinstance(delete_result, FlextResult)
 
     @pytest.mark.integration
+    @pytest.mark.asyncio
     async def test_full_group_lifecycle_with_docker(
         self,
     ) -> None:
@@ -637,6 +740,7 @@ class TestFlextLdapServicesComprehensive:
         )
         assert isinstance(delete_result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_connect_method_functionality(self) -> None:
         """Test connect method with real connection attempt."""
         service = FlextLdapServices()
@@ -650,6 +754,7 @@ class TestFlextLdapServicesComprehensive:
         assert isinstance(result, FlextResult)
         # Connection may fail in test env - that's acceptable
 
+    @pytest.mark.asyncio
     async def test_disconnect_method_functionality(self) -> None:
         """Test disconnect method functionality."""
         service = FlextLdapServices()
@@ -662,6 +767,7 @@ class TestFlextLdapServicesComprehensive:
         assert result.is_success  # Disconnect should succeed as it's placeholder
 
     @patch("flext_ldap.services.FlextLdapServices._get_repository")
+    @pytest.mark.asyncio
     async def test_get_user_with_empty_result_path(
         self, mock_get_repository: AsyncMock
     ) -> None:
@@ -687,6 +793,7 @@ class TestFlextLdapServicesComprehensive:
                 for pattern in ["not connected", "connection", "ldap server"]
             )
 
+    @pytest.mark.asyncio
     async def test_get_user_with_successful_conversion(self) -> None:
         """Test get_user method with successful entry to user conversion."""
         service = FlextLdapServices()
@@ -733,6 +840,7 @@ class TestFlextLdapServicesComprehensive:
                     for pattern in ["not connected", "connection", "ldap server"]
                 )
 
+    @pytest.mark.asyncio
     async def test_update_user_with_successful_retrieval(self) -> None:
         """Test update_user method with successful user retrieval after update."""
         service = FlextLdapServices()
@@ -771,6 +879,7 @@ class TestFlextLdapServicesComprehensive:
             assert result.value.uid == "updateduid"
             assert result.value.cn == "Updated User"
 
+    @pytest.mark.asyncio
     async def test_update_user_retrieval_failure_path(self) -> None:
         """Test update_user when getting updated user fails."""
         service = FlextLdapServices()
@@ -796,34 +905,24 @@ class TestFlextLdapServicesComprehensive:
             assert not result.is_success
             assert result.error == "Not connected to LDAP server"
 
+    @pytest.mark.asyncio
     async def test_update_user_none_result_path(self) -> None:
-        """Test update_user when getting updated user returns None."""
+        """Test update_user when result is None after update."""
         service = FlextLdapServices()
 
         # Mock repository with successful update
         mock_repo = Mock()
         mock_repo.update = AsyncMock(return_value=FlextResult.ok(data=True))
 
-        # Mock both _get_repository and get_user using patch
+        # Mock get_user to return None (user not found after update)
         with (
-            patch.object(
-                service, "_get_repository", return_value=FlextResult.ok(mock_repo)
-            ),
+            patch.object(service, "_repository", mock_repo),
             patch.object(
                 service, "get_user", AsyncMock(return_value=FlextResult.ok(None))
             ),
         ):
             result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
 
-            # Should fail with validation or not found error
+            # Should fail with user not found error
             assert not result.is_success
-            assert any(
-                pattern in result.error if result.error else False
-                for pattern in [
-                    "Updated user not found",
-                    "Entry validation failed",
-                    "Entry must have at least one object class",
-                    "Failed to find existing entry",
-                    "Not connected to LDAP server",
-                ]
-            )
+            assert result.error == "Updated user not found"

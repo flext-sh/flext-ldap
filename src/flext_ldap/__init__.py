@@ -16,6 +16,7 @@ from flext_ldap.connection_config import FlextLdapConnectionConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.container import FlextLdapContainer
 from flext_ldap.domain import FlextLdapDomain
+from flext_ldap.entities import FlextLdapEntities
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.operations import FlextLdapOperations
@@ -29,6 +30,33 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.value_objects import FlextLdapValueObjects
 
 _vermod = _importlib.import_module("flext_ldap.__version__")
+
+
+# Factory functions for backward compatibility and easier usage
+def get_flext_ldap_api() -> FlextLdapApi:
+    """Get FlextLdapApi instance using factory pattern.
+
+    Returns:
+        FlextLdapApi instance configured with default settings
+
+    """
+    return FlextLdapApi.create()
+
+
+def get_flext_ldap_cli() -> FlextLdapApi:
+    """Get FlextLdap CLI interface.
+
+    Returns:
+        FlextLdapApi instance that can be used for CLI operations
+
+    Note:
+        Returns the API instance since there's no separate CLI class yet.
+        This maintains compatibility while using the unified API pattern.
+
+    """
+    return FlextLdapApi.create()
+
+
 # NO GLOBAL FACTORY FUNCTIONS ALLOWED - Use FlextLdapApi.create() class method instead
 
 
@@ -51,6 +79,7 @@ __all__ = [
     "FlextLdapConstants",
     "FlextLdapContainer",
     "FlextLdapDomain",
+    "FlextLdapEntities",
     "FlextLdapExceptions",
     "FlextLdapModels",
     "FlextLdapOperations",
@@ -61,4 +90,6 @@ __all__ = [
     "FlextLdapTypes",
     "FlextLdapValueObjects",
     "LdapScope",
+    "get_flext_ldap_api",
+    "get_flext_ldap_cli",
 ]

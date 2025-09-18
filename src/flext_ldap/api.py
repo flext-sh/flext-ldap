@@ -26,10 +26,6 @@ from flext_ldap.services import FlextLdapServices
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
-# NO TYPE ALIASES ALLOWED - Use FlextTypes.Core.Dict and FlextResult[object] directly
-
-# FlextLogger available via FlextMixins.Loggable inheritance
-
 
 class FlextLdapApi(FlextMixins.Loggable):
     """High-level LDAP API facade using FlextMixins.Loggable for logging and utilities."""

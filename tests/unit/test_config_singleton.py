@@ -132,12 +132,11 @@ class TestFlextLdapConfigSingleton:
 
             config = config_result.value
             assert config.app_name == "file-app"
-            # Convert to FlextLdapConfig to access LDAP-specific attributes
-            ldap_config = FlextLdapConfig.model_validate(config.model_dump())
-            assert ldap_config.ldap_bind_dn == "cn=file,dc=example,dc=com"
-            assert ldap_config.ldap_bind_password is not None
-            assert ldap_config.ldap_bind_password.get_secret_value() == "file123"
-            assert ldap_config.ldap_use_ssl is False
+            # config is already a FlextLdapConfig instance
+            assert config.ldap_bind_dn == "cn=file,dc=example,dc=com"
+            assert config.ldap_bind_password is not None
+            assert config.ldap_bind_password.get_secret_value() == "file123"
+            assert config.ldap_use_ssl is False
 
         finally:
             Path(config_file).unlink()

@@ -59,10 +59,7 @@ flext-ldap = "flext_ldap.cli:main"
 [tool.ruff]
 extend = "../ruff-shared.toml"
 lint.isort.known-first-party = ["flext_ldap"]
-
-[tool.ruff.lint.per-file-ignores]
-"src/ldap3/core/exceptions.pyi" = ["N818"]  # LDAPException follows external library naming
-"src/flext_ldap/constants.py" = ["S105"]  # LDAP attribute names contain "password" string but are not secrets
+extend-exclude = ["src/ldap3/"]
 
 [tool.mypy]
 # Strict mode - enables all recommended checks
@@ -72,7 +69,7 @@ strict = true
 check_untyped_defs = true
 disallow_any_decorated = false
 disallow_any_explicit = false
-disallow_any_expr = false          # Too restrictive for real-world usage
+disallow_any_expr = false           # Too restrictive for real-world usage
 disallow_any_generics = false
 disallow_any_unimported = false
 disallow_incomplete_defs = true
@@ -194,13 +191,7 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-    "*/venv/*",
-    "*/.venv/*",
-]
+omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*", "*/.venv/*"]
 
 [tool.coverage.report]
 exclude_lines = [
