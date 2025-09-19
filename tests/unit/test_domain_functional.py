@@ -223,7 +223,7 @@ class TestDomainDispatcherIntegration:
         }
 
     @pytest.mark.skip(
-        reason="Dispatcher temporarily disabled due to command/handler type matching issues"
+        reason="Dispatcher temporarily disabled due to command/handler type matching issues",
     )
     def test_factory_uses_dispatcher_when_feature_flag_enabled(
         self,
@@ -269,7 +269,7 @@ class TestDomainDispatcherIntegration:
             dispatcher_module,
             "get_global_dispatcher",
             lambda: (_ for _ in ()).throw(
-                RuntimeError("dispatcher should not be used")
+                RuntimeError("dispatcher should not be used"),
             ),
             raising=False,
         )
@@ -500,7 +500,7 @@ class TestDomainServices:
 
         for current_pass, new_pass in test_password_changes:
             validation_result = password_service.validate_password_change(
-                current_pass, new_pass
+                current_pass, new_pass,
             )
             assert isinstance(validation_result, FlextResult)
 

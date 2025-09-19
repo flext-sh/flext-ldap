@@ -94,7 +94,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 return FlextResult[object].ok(request)
 
     def build(
-        self, domain: FlextLdapDomain, *, correlation_id: str
+        self, domain: FlextLdapDomain, *, correlation_id: str,
     ) -> FlextResult[object]:
         """Build final LDAP result from domain object - implements ServiceProcessor.build()."""
         if isinstance(domain, dict):
@@ -162,17 +162,17 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             )
         except Exception as e:
             return FlextResult[object].fail(
-                f"User creation processing failed: {e}"
+                f"User creation processing failed: {e}",
             )
 
     def _process_user_read(self, dn: str) -> FlextResult[object]:
         """Process user read with DN validation."""
         if not dn.strip():
             return FlextResult[object].fail(
-                "Invalid DN for user read operation"
+                "Invalid DN for user read operation",
             )
         return FlextResult[object].ok(
-            {"status": "user_read_initiated", "dn": dn}
+            {"status": "user_read_initiated", "dn": dn},
         )
 
     def _process_group_creation(
@@ -190,7 +190,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             )
         except Exception as e:
             return FlextResult[object].fail(
-                f"Group creation processing failed: {e}"
+                f"Group creation processing failed: {e}",
             )
 
     def _process_search_operation(
@@ -219,18 +219,18 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
             case "dn":
                 result = self.validate_dn(str(value))
                 return FlextResult[object].ok(
-                    {"valid": result.is_success, "target": target}
+                    {"valid": result.is_success, "target": target},
                 )
             case "filter":
                 result = self.validate_filter(str(value))
                 return FlextResult[object].ok(
-                    {"valid": result.is_success, "target": target}
+                    {"valid": result.is_success, "target": target},
                 )
             case "attributes":
                 # Validate that value is a proper attributes dictionary
                 if not isinstance(value, dict):
                     return FlextResult[object].fail(
-                        f"Attributes must be a dictionary, got {type(value)}"
+                        f"Attributes must be a dictionary, got {type(value)}",
                     )
 
                 # Convert to proper AttributeDict format
@@ -238,7 +238,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 for key, val in value.items():
                     if not isinstance(key, str):
                         return FlextResult[object].fail(
-                            f"Attribute key must be string, got {type(key)}"
+                            f"Attribute key must be string, got {type(key)}",
                         )
 
                     # Convert values to list format as required by AttributeDict
@@ -249,11 +249,11 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
                 result = self.validate_attributes(validated_attributes)
                 return FlextResult[object].ok(
-                    {"valid": result.is_success, "target": target}
+                    {"valid": result.is_success, "target": target},
                 )
             case _:
                 return FlextResult[object].fail(
-                    f"Unknown validation target: {target}"
+                    f"Unknown validation target: {target}",
                 )
 
     @cached_property
@@ -445,8 +445,8 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                             if isinstance(parsed_list, list) and len(parsed_list) > 0:
                                 return str(parsed_list[0]).strip()
                         except (ValueError, SyntaxError):
-                            # If parsing fails, just use the original string
-                            pass
+                            # If parsing fails, use original string value
+                            return first_val.strip()
                     return first_val.strip()
 
             return None
@@ -551,13 +551,13 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Validate that the result value is FlextLdapOperations
         if not isinstance(operations_result.value, FlextLdapOperations):
             return FlextResult.fail(
-                f"Expected FlextLdapOperations, got {type(operations_result.value)}"
+                f"Expected FlextLdapOperations, got {type(operations_result.value)}",
             )
 
         # Use group operations to create group
         # IMPLEMENTATION: Group creation through registry pending (#123)
         create_result = FlextResult[FlextLdapModels.Group].fail(
-            "Group creation not implemented"
+            "Group creation not implemented",
         )
 
         if not create_result.is_success:
@@ -586,7 +586,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Validate operations result value type
         if not isinstance(operations_result.value, FlextLdapOperations):
             return FlextResult.fail(
-                f"Invalid operations type: expected FlextLdapOperations, got {type(operations_result.value)}"
+                f"Invalid operations type: expected FlextLdapOperations, got {type(operations_result.value)}",
             )
         # Use search operations to find group
         # IMPLEMENTATION: Search through registry pending (#124)
@@ -636,7 +636,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult.fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
         # Use base repository directly - no need to create new instance
@@ -664,7 +664,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult.fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
 
@@ -709,7 +709,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult[list[str]].fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}"
+                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
         # Use base repository directly to get group entry
@@ -766,7 +766,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
     # =========================================================================
 
     def validate_attributes(
-        self, attributes: FlextLdapTypes.Entry.AttributeDict
+        self, attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Validate LDAP attributes dictionary."""
         if not attributes:

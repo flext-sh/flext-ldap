@@ -33,7 +33,7 @@ class LdapTestServer:
         self.container_name = container_name
         self.port = port
         self.REDACTED_LDAP_BIND_PASSWORD_password = REDACTED_LDAP_BIND_PASSWORD_password or os.getenv(
-            "LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"
+            "LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123",
         )
         self.docker_client = docker.from_env()
         self._container: docker.models.containers.Container | None = None

@@ -59,7 +59,7 @@ class FlextLdapValidations:
         email_result = FlextModels.EmailAddress.create(email)
         if email_result.is_failure:
             return FlextResult[None].fail(
-                f"Email validation failed: {email_result.error or 'invalid format'}"
+                f"Email validation failed: {email_result.error or 'invalid format'}",
             )
 
         return FlextResult[None].ok(None)
@@ -72,12 +72,12 @@ class FlextLdapValidations:
 
         if len(password) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters"
+                f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
             )
 
         if len(password) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be no more than {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters"
+                f"Password must be no more than {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters",
             )
 
         return FlextResult[None].ok(None)

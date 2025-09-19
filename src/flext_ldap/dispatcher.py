@@ -40,7 +40,7 @@ class FlextLdapDispatcher:
                 cast(
                     "FlextHandlers[object, object]",
                     FlextLdapDomain.CreateUserCommandHandler(),
-                )
+                ),
             ]
 
     def build_dispatcher(self, bus: FlextBus | None = None) -> FlextDispatcher:

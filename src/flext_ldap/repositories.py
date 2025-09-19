@@ -74,7 +74,7 @@ class FlextLdapRepositories(FlextMixins.Service):
         return FlextResult[bool].ok(result.value is not None)
 
     async def update(
-        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
         return await self._base_repo.update_attributes(dn, attributes)

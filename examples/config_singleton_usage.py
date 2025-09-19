@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Example demonstrating FlextLdapConfig singleton usage.
+"""Example demonstrating FlextLdapConfigs singleton usage.
 
-This example shows how to use the FlextLdapConfig singleton as the single
+This example shows how to use the FlextLdapConfigs singleton as the single
 source of truth for LDAP configuration, with parameter overrides to change
 behavior at runtime.
 
@@ -17,23 +17,23 @@ import traceback
 from pydantic import SecretStr
 
 from flext_cli import FlextCliFormatters
-from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs
 
 
 def demonstrate_singleton_pattern() -> None:
     """Demonstrate the singleton pattern functionality."""
     formatters = FlextCliFormatters()
-    formatters.display_message("FlextLdapConfig Singleton Pattern Demo", "info")
+    formatters.display_message("FlextLdapConfigs Singleton Pattern Demo", "info")
 
     # Clear any existing instance
-    FlextLdapConfig.reset_global_instance()
+    FlextLdapConfigs.reset_global_instance()
 
     # Get first instance
-    config1 = FlextLdapConfig.get_global_instance()
+    config1 = FlextLdapConfigs.get_global_instance()
     formatters.display_message(f"First instance ID: {id(config1)}", "info")
 
     # Get second instance - should be the same
-    config2 = FlextLdapConfig.get_global_instance()
+    config2 = FlextLdapConfigs.get_global_instance()
     formatters.display_message(f"Second instance ID: {id(config2)}", "info")
 
     # Verify they are the same instance
@@ -57,22 +57,22 @@ def demonstrate_environment_loading() -> None:
             "FLEXT_LDAP_SIZE_LIMIT": "5000",
             "FLEXT_LDAP_ENABLE_CACHING": "true",
             "FLEXT_LDAP_CACHE_TTL": "900",
-        }
+        },
     )
 
     # Clear and reload to pick up environment variables
-    FlextLdapConfig.reset_global_instance()
-    config = FlextLdapConfig.get_global_instance()
+    FlextLdapConfigs.reset_global_instance()
+    config = FlextLdapConfigs.get_global_instance()
 
     formatters.display_message(
-        f"Bind DN from environment: {config.ldap_bind_dn}", "info"
+        f"Bind DN from environment: {config.ldap_bind_dn}", "info",
     )
     formatters.display_message(
-        f"Use SSL from environment: {config.ldap_use_ssl}", "info"
+        f"Use SSL from environment: {config.ldap_use_ssl}", "info",
     )
     formatters.display_message(f"Size limit from environment: {config.ldap_size_limit}")
     formatters.display_message(
-        f"Caching enabled from environment: {config.ldap_enable_caching}"
+        f"Caching enabled from environment: {config.ldap_enable_caching}",
     )
     formatters.display_message(f"Cache TTL from environment: {config.ldap_cache_ttl}")
     formatters.display_message("✅ Environment variables loaded successfully\n", "info")
@@ -84,7 +84,7 @@ def demonstrate_factory_methods() -> None:
     formatters.display_message("=== Factory Methods Demo ===", "info")
 
     # Development configuration
-    dev_result = FlextLdapConfig.create_development_ldap_config()
+    dev_result = FlextLdapConfigs.create_development_ldap_config()
     if dev_result.is_success:
         dev_config = dev_result.value
         formatters.display_message("Development Configuration:", "info")
@@ -93,25 +93,25 @@ def demonstrate_factory_methods() -> None:
         formatters.display_message(f"  Bind DN: {dev_config.ldap_bind_dn}", "info")
         formatters.display_message(f"  SSL enabled: {dev_config.ldap_use_ssl}", "info")
         formatters.display_message(
-            f"  Query logging: {dev_config.ldap_log_queries}", "info"
+            f"  Query logging: {dev_config.ldap_log_queries}", "info",
         )
         formatters.display_message("", "info")
 
     # Test configuration
-    test_result = FlextLdapConfig.create_test_ldap_config()
+    test_result = FlextLdapConfigs.create_test_ldap_config()
     if test_result.is_success:
         test_config = test_result.value
         formatters.display_message("Test Configuration:", "info")
         formatters.display_message(f"  Environment: {test_config.environment}", "info")
         formatters.display_message(
-            f"  Test mode: {test_config.ldap_enable_test_mode}", "info"
+            f"  Test mode: {test_config.ldap_enable_test_mode}", "info",
         )
         formatters.display_message(f"  Bind DN: {test_config.ldap_bind_dn}", "info")
         formatters.display_message(f"  SSL enabled: {test_config.ldap_use_ssl}", "info")
         formatters.display_message("", "info")
 
     # Production configuration
-    prod_result = FlextLdapConfig.create_production_ldap_config()
+    prod_result = FlextLdapConfigs.create_production_ldap_config()
     if prod_result.is_success:
         prod_config = prod_result.value
         formatters.display_message("Production Configuration:", "info")
@@ -123,7 +123,7 @@ def demonstrate_factory_methods() -> None:
             "info",
         )
         formatters.display_message(
-            f"  Caching enabled: {prod_config.ldap_enable_caching}", "info"
+            f"  Caching enabled: {prod_config.ldap_enable_caching}", "info",
         )
         formatters.display_message(f"  Cache TTL: {prod_config.ldap_cache_ttl}", "info")
         formatters.display_message("", "info")
@@ -137,7 +137,7 @@ def demonstrate_parameter_overrides() -> None:
     formatters.display_message("=== Parameter Overrides Demo ===", "info")
 
     # Get default configuration using proper FLEXT pattern
-    config = FlextLdapConfig.get_global_instance()
+    config = FlextLdapConfigs.get_global_instance()
     formatters.display_message("Default Configuration:", "info")
     formatters.display_message(f"  Size limit: {config.ldap_size_limit}", "info")
     formatters.display_message(f"  Time limit: {config.ldap_time_limit}", "info")
@@ -164,10 +164,10 @@ def demonstrate_parameter_overrides() -> None:
         formatters.display_message(f"  Caching: {config.ldap_enable_caching}", "info")
         formatters.display_message(f"  Cache TTL: {config.ldap_cache_ttl}", "info")
         formatters.display_message(
-            f"  Query logging: {config.ldap_log_queries}", "info"
+            f"  Query logging: {config.ldap_log_queries}", "info",
         )
         formatters.display_message(
-            f"  Response logging: {config.ldap_log_responses}", "info"
+            f"  Response logging: {config.ldap_log_responses}", "info",
         )
         formatters.display_message("", "info")
 
@@ -189,10 +189,10 @@ def demonstrate_parameter_overrides() -> None:
 
 
 def demonstrate_direct_singleton_usage() -> None:
-    """Demonstrate direct FlextLdapConfig singleton usage (recommended approach)."""
+    """Demonstrate direct FlextLdapConfigs singleton usage (recommended approach)."""
     formatters = FlextCliFormatters()
     formatters.display_message(
-        "=== Direct FlextLdapConfig Singleton Usage Demo ===", "info"
+        "=== Direct FlextLdapConfigs Singleton Usage Demo ===", "info",
     )
 
     # Create a custom configuration using model_validate for proper type handling
@@ -203,22 +203,22 @@ def demonstrate_direct_singleton_usage() -> None:
         "ldap_use_ssl": True,
         "ldap_size_limit": 2000,
     }
-    custom_config = FlextLdapConfig.model_validate(config_data)
+    custom_config = FlextLdapConfigs.model_validate(config_data)
 
     # Set as global singleton using proper FLEXT pattern
-    FlextLdapConfig.set_global_instance(custom_config)
+    FlextLdapConfigs.set_global_instance(custom_config)
 
     # Use singleton directly (recommended approach)
-    config = FlextLdapConfig.get_global_instance()
+    config = FlextLdapConfigs.get_global_instance()
 
     formatters.display_message("Direct Singleton Usage:", "info")
     formatters.display_message(
-        f"  Config references singleton: {config is custom_config}", "info"
+        f"  Config references singleton: {config is custom_config}", "info",
     )
     formatters.display_message(f"  Bind DN from config: {config.ldap_bind_dn}", "info")
     formatters.display_message(f"  SSL from config: {config.ldap_use_ssl}", "info")
     formatters.display_message(
-        f"  Size limit from config: {config.ldap_size_limit}", "info"
+        f"  Size limit from config: {config.ldap_size_limit}", "info",
     )
     formatters.display_message("", "info")
 
@@ -229,10 +229,10 @@ def demonstrate_direct_singleton_usage() -> None:
     formatters.display_message("Effective Configuration:", "info")
     if effective_conn:
         formatters.display_message(
-            f"  Connection server: {effective_conn.get('server', 'N/A')}", "info"
+            f"  Connection server: {effective_conn.get('server', 'N/A')}", "info",
         )
         formatters.display_message(
-            f"  Connection port: {effective_conn.get('port', 'N/A')}", "info"
+            f"  Connection port: {effective_conn.get('port', 'N/A')}", "info",
         )
     if auth_config:
         formatters.display_message(f"  Auth bind DN: {auth_config['bind_dn']}", "info")
@@ -248,19 +248,19 @@ def demonstrate_runtime_behavior_changes() -> None:
     formatters.display_message("=== Runtime Behavior Changes Demo ===", "info")
 
     # Start with development configuration
-    dev_result = FlextLdapConfig.create_development_ldap_config()
+    dev_result = FlextLdapConfigs.create_development_ldap_config()
     if not dev_result.is_success:
         error_msg = f"Failed to create development config: {dev_result.error}"
         raise RuntimeError(error_msg)
     dev_config = dev_result.value
 
     # Set as global singleton using proper FLEXT pattern
-    FlextLdapConfig.set_global_instance(dev_config)
+    FlextLdapConfigs.set_global_instance(dev_config)
 
     formatters.display_message("Initial Development Configuration:", "info")
     formatters.display_message(f"  Debug mode: {dev_config.debug}", "info")
     formatters.display_message(
-        f"  Query logging: {dev_config.ldap_log_queries}", "info"
+        f"  Query logging: {dev_config.ldap_log_queries}", "info",
     )
     formatters.display_message(f"  Caching: {dev_config.ldap_enable_caching}", "info")
     formatters.display_message("", "info")
@@ -283,45 +283,45 @@ def demonstrate_runtime_behavior_changes() -> None:
         formatters.display_message(f"  Debug mode: {dev_config.debug}", "info")
         formatters.display_message(f"  Log level: {dev_config.log_level}", "info")
         formatters.display_message(
-            f"  Query logging: {dev_config.ldap_log_queries}", "info"
+            f"  Query logging: {dev_config.ldap_log_queries}", "info",
         )
         formatters.display_message(
-            f"  Response logging: {dev_config.ldap_log_responses}", "info"
+            f"  Response logging: {dev_config.ldap_log_responses}", "info",
         )
         formatters.display_message(
-            f"  Caching: {dev_config.ldap_enable_caching}", "info"
+            f"  Caching: {dev_config.ldap_enable_caching}", "info",
         )
         formatters.display_message(f"  Cache TTL: {dev_config.ldap_cache_ttl}", "info")
         formatters.display_message(
-            f"  Size limit: {dev_config.ldap_size_limit}", "info"
+            f"  Size limit: {dev_config.ldap_size_limit}", "info",
         )
         formatters.display_message(
-            f"  Time limit: {dev_config.ldap_time_limit}", "info"
+            f"  Time limit: {dev_config.ldap_time_limit}", "info",
         )
         formatters.display_message("", "info")
 
         # Show how this affects different aspects of the system
         formatters.display_message("System Behavior Changes:", "info")
         formatters.display_message(
-            f"  Search performance: {dev_config.get_ldap_search_config()}", "info"
+            f"  Search performance: {dev_config.get_ldap_search_config()}", "info",
         )
         formatters.display_message(
-            f"  Caching behavior: {dev_config.get_ldap_performance_config()}", "info"
+            f"  Caching behavior: {dev_config.get_ldap_performance_config()}", "info",
         )
         formatters.display_message(
-            f"  Logging behavior: {dev_config.get_ldap_logging_config()}", "info"
+            f"  Logging behavior: {dev_config.get_ldap_logging_config()}", "info",
         )
         formatters.display_message("", "info")
 
     formatters.display_message(
-        "✅ Runtime behavior changes working correctly\n", "info"
+        "✅ Runtime behavior changes working correctly\n", "info",
     )
 
 
 def main() -> None:
     """Run all demonstrations."""
     formatters = FlextCliFormatters()
-    formatters.display_message("FlextLdapConfig Singleton Usage Examples", "info")
+    formatters.display_message("FlextLdapConfigs Singleton Usage Examples", "info")
     formatters.display_message("=" * 50, "info")
     formatters.display_message("", "info")
 
@@ -334,15 +334,15 @@ def main() -> None:
         demonstrate_runtime_behavior_changes()
 
         formatters.display_message(
-            "🎉 All demonstrations completed successfully!", "info"
+            "🎉 All demonstrations completed successfully!", "info",
         )
         formatters.display_message("\nKey Benefits:", "info")
         formatters.display_message(
-            "✅ Single source of truth for LDAP configuration", "info"
+            "✅ Single source of truth for LDAP configuration", "info",
         )
         formatters.display_message("✅ Environment variable integration", "info")
         formatters.display_message(
-            "✅ Factory methods for different environments", "info"
+            "✅ Factory methods for different environments", "info",
         )
         formatters.display_message("✅ Runtime parameter overrides", "info")
         formatters.display_message("✅ Clean Architecture with delegation", "info")

@@ -15,7 +15,7 @@ import os
 from urllib.parse import urlparse
 
 from flext_core import FlextLogger
-from flext_ldap import FlextLdapApi, FlextLdapConfig
+from flext_ldap import FlextLdapApi, FlextLdapConfigs
 
 logger = FlextLogger(__name__)
 
@@ -43,7 +43,7 @@ def _initialize_ldap_service() -> FlextLdapApi:
         urlparse(server_url)
 
         # Create service using current API
-        service = FlextLdapApi(FlextLdapConfig())
+        service = FlextLdapApi(FlextLdapConfigs())
     else:
         service = FlextLdapApi()
 
@@ -123,8 +123,8 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             if search_result.is_success and search_result.value:
                 entries = search_result.value
                 for user_entry in entries:
-                    uid = user_entry.get_attribute("uid") or "N/A"
-                    cn = user_entry.get_attribute("cn") or "N/A"
+                    uid = user_entry.attributes.get("uid", ["N/A"])[0]
+                    cn = user_entry.attributes.get("cn", ["N/A"])[0]
                     logger.debug(f"Found user: {uid} ({cn})")
 
                 # Perform user search validation
@@ -219,9 +219,9 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             if search_result.is_success and search_result.value:
                 entries = search_result.value
                 for group_entry in entries:
-                    cn = group_entry.get_attribute("cn") or "N/A"
+                    cn = group_entry.attributes.get("cn", ["N/A"])[0]
                     description = (
-                        group_entry.get_attribute("description") or "No description"
+                        group_entry.attributes.get("description", ["No description"])[0]
                     )
                     logger.debug(f"Found group: {cn} - {description}")
 
@@ -262,8 +262,8 @@ async def _perform_group_search_validation(
     if all_groups_result.is_success:
         entries = all_groups_result.value or []
         for group_entry in entries:
-            cn = group_entry.get_attribute("cn") or "Unknown"
-            object_class = group_entry.get_attribute("objectClass")
+            cn = group_entry.attributes.get("cn", ["Unknown"])[0]
+            object_class = group_entry.attributes.get("objectClass", [])
             logger.debug(f"Group: {cn}, Class: {object_class}")
 
     # Test 2: Search groups with wildcards

@@ -22,14 +22,7 @@ from flext_core import (
     FlextUtilities,
 )
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.operations import (
-    FlextLdapOperations,
-    GroupAttributeExtractor,
-    LDAPCommandProcessor,
-    OperationsService,
-    UserAttributeExtractor,
-    UserConversionParams,
-)
+from flext_ldap.operations import FlextLdapOperations
 
 
 class TestFlextLdapOperationsFunctional:
@@ -446,7 +439,7 @@ class TestConnectionOperations:
             # Expected to fail without real server, but method should exist
             logger = FlextLogger(__name__)
             logger.debug(
-                f"Expected to fail without real server, but method should exist: {e}"
+                f"Expected to fail without real server, but method should exist: {e}",
             )
 
     def test_cleanup_connection_method(self) -> None:
@@ -599,7 +592,7 @@ class TestConnectionManagement:
             # If validation throws exceptions, that's also valid error handling
             logger = FlextLogger(__name__)
             logger.debug(
-                f"If validation throws exceptions, that's also valid error handling: {e}"
+                f"If validation throws exceptions, that's also valid error handling: {e}",
             )
 
 
@@ -829,7 +822,7 @@ class TestConnectionOperationsDetailed:
             # Expected to fail without real connection, but method should exist
             logger = FlextLogger(__name__)
             logger.debug(
-                f"Expected to fail without real connection, but method should exist: {e}"
+                f"Expected to fail without real connection, but method should exist: {e}",
             )
 
     def test_list_active_connections_method(self) -> None:
@@ -928,7 +921,7 @@ class TestLDAPEntryProcessing:
 
         # Test with minimal attributes
         minimal_entry = SimpleNamespace(
-            attributes={"cn": ["Minimal User"], "objectClass": ["person"]}
+            attributes={"cn": ["Minimal User"], "objectClass": ["person"]},
         )
 
         result = user_extractor.process_data(minimal_entry)
@@ -946,7 +939,7 @@ class TestLDAPEntryProcessing:
                 "departmentNumber": ["IT"],
                 "title": ["Software Engineer"],
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
-            }
+            },
         )
 
         result = user_extractor.process_data(comprehensive_entry)
@@ -958,7 +951,7 @@ class TestLDAPEntryProcessing:
 
         # Test with simple group
         simple_group = SimpleNamespace(
-            attributes={"cn": ["Simple Group"], "objectClass": ["group"]}
+            attributes={"cn": ["Simple Group"], "objectClass": ["group"]},
         )
 
         result = group_extractor.process_data(simple_group)
@@ -976,7 +969,7 @@ class TestLDAPEntryProcessing:
                 ],
                 "uniqueMember": ["uid=user1,ou=people,dc=example,dc=com"],
                 "objectClass": ["group", "groupOfNames", "groupOfUniqueNames"],
-            }
+            },
         )
 
         result = group_extractor.process_data(complex_group)
@@ -1079,7 +1072,7 @@ class TestCommandObjectExecution:
                 # Other exceptions are also fine - we've executed the code path
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Other exceptions are also fine - we've executed the code path: {e}"
+                    f"Other exceptions are also fine - we've executed the code path: {e}",
                 )
 
 
@@ -1209,7 +1202,7 @@ class TestDetailedAttributeExtraction:
                     "cn": ["Test Group"],
                     "member": members,
                     "objectClass": ["group", "groupOfNames"],
-                }
+                },
             )
 
             result = extractor.process_data(mock_entry)
@@ -1369,7 +1362,7 @@ class TestAdvancedExecutionPaths:
                 # Some formats may not be supported - that's fine, we covered the path
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Some formats may not be supported - that's fine, we covered the path: {e}"
+                    f"Some formats may not be supported - that's fine, we covered the path: {e}",
                 )
 
     def test_search_operations_ldap_filter_escaping(self) -> None:
@@ -1445,7 +1438,7 @@ class TestAdvancedExecutionPaths:
                 # Some classes may not accept arbitrary parameters - that's fine
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Some classes may not accept arbitrary parameters - that's fine: {e}"
+                    f"Some classes may not accept arbitrary parameters - that's fine: {e}",
                 )
 
 
@@ -1591,13 +1584,13 @@ class TestOperationsServiceDetailed:
                     # Even exceptions are fine - we've covered the execution path
                     logger = FlextLogger(__name__)
                     logger.debug(
-                        f"Even exceptions are fine - we've covered the execution path: {e}"
+                        f"Even exceptions are fine - we've covered the execution path: {e}",
                     )
             except Exception as e:
                 # object exception is fine - method was executed and path covered
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"object exception is fine - method was executed and path covered: {e}"
+                    f"object exception is fine - method was executed and path covered: {e}",
                 )
 
     def test_entry_operations_advanced_functionality(self) -> None:
@@ -1631,7 +1624,7 @@ class TestOperationsServiceDetailed:
                 # Exceptions are expected for many methods without proper parameters
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Exceptions are expected for many methods without proper parameters: {e}"
+                    f"Exceptions are expected for many methods without proper parameters: {e}",
                 )
 
 
@@ -1732,7 +1725,7 @@ class TestAttributeExtractionAdvanced:
                 created_at=datetime.datetime.now(datetime.UTC),
                 bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test",
                 is_authenticated=True,
-            )
+            ),
         }
 
         # Test successful cleanup_connection
@@ -1865,7 +1858,7 @@ class TestAttributeExtractionAdvanced:
             # Test entry deletion methods
             if hasattr(entry_ops, "delete_entry"):
                 result = await entry_ops.delete_entry(
-                    "test_delete_conn", "cn=testuser,ou=users,dc=example,dc=com"
+                    "test_delete_conn", "cn=testuser,ou=users,dc=example,dc=com",
                 )
                 assert hasattr(result, "is_success")
             # Note: remove_entry method doesn't exist in EntryOperations, only delete_entry
@@ -1881,7 +1874,7 @@ class TestAttributeExtractionAdvanced:
             # Test _handle_exception_with_context if it exists
             if hasattr(operations, "_handle_exception_with_context"):
                 error_msg = operations._handle_exception_with_context(
-                    "test operation", test_exception, "test_context"
+                    "test operation", test_exception, "test_context",
                 )
                 assert isinstance(error_msg, str)
                 assert len(error_msg) > 0
@@ -1889,7 +1882,7 @@ class TestAttributeExtractionAdvanced:
             # If method doesn't exist or fails, that's acceptable for coverage
             logger = FlextLogger(__name__)
             logger.debug(
-                f"If method doesn't exist or fails, that's acceptable for coverage: {e}"
+                f"If method doesn't exist or fails, that's acceptable for coverage: {e}",
             )
 
         # Test duration calculation if exists (method is on ConnectionOperations)
@@ -1917,7 +1910,7 @@ class TestAttributeExtractionAdvanced:
                 # If method fails, that's still acceptable for coverage
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"If method fails, that's still acceptable for coverage: {e}"
+                    f"If method fails, that's still acceptable for coverage: {e}",
                 )
 
     @pytest.mark.asyncio

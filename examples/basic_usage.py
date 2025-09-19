@@ -13,9 +13,21 @@ from __future__ import annotations
 
 import asyncio
 import os
+from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger
-from flext_ldap import FlextLdapApi, FlextLdapModels
+
+if TYPE_CHECKING:
+    # For static type checkers only
+    from flext_ldap import FlextLdapApi, FlextLdapModels
+else:
+    # Runtime: try to import library but fall back to harmless placeholders
+    try:
+        from flext_ldap import FlextLdapApi, FlextLdapModels
+    except Exception:  # pragma: no cover - example fallback for local editing
+        # type ignored: these placeholders are only for editor/static-checker convenience
+        FlextLdapApi = object  # type: ignore[attr-defined]
+        FlextLdapModels = object  # type: ignore[attr-defined]
 
 
 async def demonstrate_basic_operations() -> None:

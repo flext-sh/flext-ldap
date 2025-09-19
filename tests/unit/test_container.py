@@ -16,7 +16,7 @@ import pytest
 from pydantic import Field
 
 from flext_core import FlextContainer, FlextModels, FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapConfig, FlextLdapContainer
+from flext_ldap import FlextLdapClient, FlextLdapConfigs, FlextLdapContainer
 
 
 # Test models using FlextModels for Pydantic v2 validation
@@ -50,11 +50,11 @@ class ContainerTestModels:
             """Validate service registration using FlextContainer patterns."""
             if not self.is_registered:
                 return FlextResult[None].fail(
-                    f"Service {self.service_name} not registered"
+                    f"Service {self.service_name} not registered",
                 )
             if self.service_type not in {"client", "repository", "operations"}:
                 return FlextResult[None].fail(
-                    f"Invalid service type: {self.service_type}"
+                    f"Invalid service type: {self.service_type}",
                 )
             return FlextResult[None].ok(None)
 
@@ -68,12 +68,12 @@ class TestOptimizedFlextLdapContainer:
         return FlextLdapContainer()
 
     @pytest.fixture
-    def config(self) -> FlextLdapConfig:
+    def config(self) -> FlextLdapConfigs:
         """Create test configuration."""
-        return FlextLdapConfig()
+        return FlextLdapConfigs()
 
     def test_optimized_container_initialization(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test optimized FlextLdapContainer initialization with FlextModels validation."""
         # Create validation model for container state
@@ -95,7 +95,7 @@ class TestOptimizedFlextLdapContainer:
         assert isinstance(flext_container, FlextContainer)
 
     def test_optimized_container_uses_flext_container_directly(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test that optimized container uses FlextContainer patterns directly."""
         # Validate that old caching patterns are removed
@@ -115,7 +115,7 @@ class TestOptimizedFlextLdapContainer:
         )
 
     def test_container_service_registration_with_models(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test service registration using FlextModels validation."""
         # Get FlextContainer and test service registration
@@ -146,7 +146,7 @@ class TestOptimizedFlextLdapContainer:
             )
 
     def test_optimized_client_retrieval_via_flext_container(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test optimized client retrieval using FlextContainer patterns."""
         # Test that client is retrieved via FlextContainer, not custom caching
@@ -160,7 +160,7 @@ class TestOptimizedFlextLdapContainer:
         assert client is client2, "FlextContainer should provide singleton behavior"
 
     def test_optimized_repository_retrieval_via_flext_container(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test optimized repository retrieval using FlextContainer patterns."""
         # Test that repository is retrieved via FlextContainer, not custom caching
@@ -174,7 +174,7 @@ class TestOptimizedFlextLdapContainer:
         )
 
     def test_optimized_container_configuration_with_models(
-        self, container: FlextLdapContainer, config: FlextLdapConfig
+        self, container: FlextLdapContainer, config: FlextLdapConfigs,
     ) -> None:
         """Test container configuration using FlextModels validation."""
         # Test configuration with FlextResult validation
@@ -190,10 +190,10 @@ class TestOptimizedFlextLdapContainer:
 
         # Validate the configuration instance using proper typing
         registered_config = settings_result.value
-        assert isinstance(registered_config, FlextLdapConfig)
+        assert isinstance(registered_config, FlextLdapConfigs)
 
     def test_container_validates_domain_boundaries(
-        self, container: FlextLdapContainer
+        self, container: FlextLdapContainer,
     ) -> None:
         """Test that container only provides LDAP domain services."""
         # Validate that only LDAP domain services are available

@@ -265,14 +265,14 @@ class FlextLdapProtocols(FlextProtocols):
 
         @abstractmethod
         def validate_attributes(
-            self, attributes: FlextTypes.Core.Dict
+            self, attributes: FlextTypes.Core.Dict,
         ) -> FlextResult[None]:
             """Validate LDAP attributes."""
             ...
 
         @abstractmethod
         def validate_object_classes(
-            self, object_classes: list[str]
+            self, object_classes: list[str],
         ) -> FlextResult[None]:
             """Validate object classes."""
             ...
@@ -312,7 +312,7 @@ class FlextLdapProtocols(FlextProtocols):
 
         @abstractmethod
         def set(
-            self, key: str, value: object, ttl: int | None = None
+            self, key: str, value: object, ttl: int | None = None,
         ) -> FlextResult[None]:
             """Set value in cache."""
             ...
@@ -525,7 +525,7 @@ class FlextLdapProtocols(FlextProtocols):
         """Validate that instance implements Connection protocol."""
         if not isinstance(instance, cls.Connection):
             return FlextResult[None].fail(
-                f"Instance does not implement Connection protocol: {type(instance)}"
+                f"Instance does not implement Connection protocol: {type(instance)}",
             )
         return FlextResult[None].ok(None)
 
@@ -534,7 +534,7 @@ class FlextLdapProtocols(FlextProtocols):
         """Validate that instance implements Service protocol."""
         if not isinstance(instance, cls.Service):
             return FlextResult[None].fail(
-                f"Instance does not implement Service protocol: {type(instance)}"
+                f"Instance does not implement Service protocol: {type(instance)}",
             )
         return FlextResult[None].ok(None)
 
@@ -543,7 +543,7 @@ class FlextLdapProtocols(FlextProtocols):
         """Validate that instance implements Repository protocol."""
         if not isinstance(instance, cls.Repository):
             return FlextResult[None].fail(
-                f"Instance does not implement Repository protocol: {type(instance)}"
+                f"Instance does not implement Repository protocol: {type(instance)}",
             )
         return FlextResult[None].ok(None)
 

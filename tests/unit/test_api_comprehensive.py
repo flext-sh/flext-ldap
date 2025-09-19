@@ -65,12 +65,16 @@ class TestFlextLdapApiComprehensive:
         }
 
         result = api._get_entry_attribute(
-            cast("FlextTypes.Core.Dict", entry_dict), "cn", "Unknown"
+            cast("FlextTypes.Core.Dict", entry_dict),
+            "cn",
+            "Unknown",
         )
         assert result == "Test User"
 
         result = api._get_entry_attribute(
-            cast("FlextTypes.Core.Dict", entry_dict), "sn", "Unknown"
+            cast("FlextTypes.Core.Dict", entry_dict),
+            "sn",
+            "Unknown",
         )
         assert result == "Unknown"
 
@@ -85,7 +89,9 @@ class TestFlextLdapApiComprehensive:
         }
 
         result = api._get_entry_attribute(
-            cast("FlextTypes.Core.Dict", entry_single), "cn", "Unknown"
+            cast("FlextTypes.Core.Dict", entry_single),
+            "cn",
+            "Unknown",
         )
         assert result == "Single User"
 
@@ -96,7 +102,9 @@ class TestFlextLdapApiComprehensive:
         }
 
         result = api._get_entry_attribute(
-            cast("FlextTypes.Core.Dict", entry_empty), "cn", "Default"
+            cast("FlextTypes.Core.Dict", entry_empty),
+            "cn",
+            "Default",
         )
         assert result == "Default"
 
@@ -106,7 +114,9 @@ class TestFlextLdapApiComprehensive:
         api = FlextLdapApi()
 
         result = await api.connect(
-            "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", "password"
+            "ldap://localhost:389",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test",
+            "password",
         )
 
         # Use basic assertions for result validation
@@ -139,7 +149,9 @@ class TestFlextLdapApiComprehensive:
         # Test connection context manager pattern
         try:
             async with api.connection(
-                "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD", "pass"
+                "ldap://localhost:389",
+                "cn=REDACTED_LDAP_BIND_PASSWORD",
+                "pass",
             ) as session_id:
                 # Context manager yields session ID string
                 assert isinstance(session_id, str)
@@ -249,7 +261,7 @@ class TestFlextLdapApiComprehensive:
 
         dn = "cn=testuser,ou=users,dc=example,dc=com"
         attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
-            "description": "Updated user"
+            "description": "Updated user",
         }
 
         result = await api.update_user(dn, attributes)
@@ -343,7 +355,7 @@ class TestFlextLdapApiComprehensive:
         # Use basic update parameters - no UpdateGroupRequest entity exists
         group_dn = "cn=testgroup,ou=groups,dc=example,dc=com"
         attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
-            "description": "Updated group"
+            "description": "Updated group",
         }
 
         result = await api.update_group(group_dn, attributes)
@@ -537,7 +549,7 @@ class TestFlextLdapApiComprehensive:
 
         # Test with custom config - work around singleton pattern
         connection_config = FlextLdapModels.ConnectionConfig(
-            server="ldap://factory.example.com"
+            server="ldap://factory.example.com",
         )
         config = FlextLdapConfigs()
         # Manually set the connection after creation
