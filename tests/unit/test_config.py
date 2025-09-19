@@ -267,7 +267,7 @@ class TestRealConfigDocumentation:
 
         # Should be able to inspect the model
         assert hasattr(settings, "__class__")
-        assert settings.__class__.__name__ == "FlextLdapConfig"
+        assert settings.__class__.__name__ == "FlextLdapConfigs"
 
         # Should support Pydantic introspection
         schema = settings.model_json_schema()

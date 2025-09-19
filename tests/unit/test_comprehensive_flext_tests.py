@@ -220,12 +220,14 @@ class TestComprehensiveFlextTests:
         # Test timeout functionality using FlextTestsAsyncs.run_with_timeout
         with pytest.raises(asyncio.TimeoutError):
             await FlextTestsAsyncs.run_with_timeout(
-                slow_operation(), timeout_seconds=0.1,
+                slow_operation(),
+                timeout_seconds=0.1,
             )
 
         # Test successful completion within timeout
         result = await FlextTestsAsyncs.run_with_timeout(
-            slow_operation(), timeout_seconds=1.0,
+            slow_operation(),
+            timeout_seconds=1.0,
         )
         assert result == "completed", "Operation should complete successfully"
 

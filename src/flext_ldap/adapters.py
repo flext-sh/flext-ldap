@@ -151,6 +151,64 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 return FlextResult.fail("Timeout must be positive")
             return FlextResult.ok(None)
 
+    class ConnectionRequest(FlextModels.Entity):
+        """Connection request configuration."""
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            frozen=True,
+        )
+
+        server_uri: str
+        bind_dn: str
+        bind_password: str
+        use_tls: bool = True
+        timeout: int = 30
+        operation_type: str | None = None
+
+    class ConnectionResult:
+        """Connection operation result wrapper - provides FlextResult-like interface."""
+
+        @classmethod
+        def ok(cls, connection_data: object) -> FlextResult[object]:
+            """Create successful connection result."""
+            return FlextResult[object].ok(connection_data)
+
+        @classmethod
+        def fail(cls, error_message: str) -> FlextResult[object]:
+            """Create failed connection result."""
+            return FlextResult[object].fail(error_message)
+
+    class SearchRequest(FlextModels.Entity):
+        """Search request configuration."""
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            frozen=True,
+        )
+
+        base_dn: str
+        filter_str: str
+        scope: str = "subtree"
+        attributes: list[str] = Field(default_factory=list)
+        size_limit: int = 1000
+        time_limit: int = 60
+
+    class SearchResult:
+        """Search operation result wrapper - provides FlextResult-like interface."""
+
+        @classmethod
+        def ok(cls, search_response: object) -> FlextResult[object]:
+            """Create successful search result."""
+            return FlextResult[object].ok(search_response)
+
+        @classmethod
+        def fail(cls, error_message: str) -> FlextResult[object]:
+            """Create failed search result."""
+            return FlextResult[object].fail(error_message)
+
     # =========================================================================
     # SERVICE PROCESSORS - Advanced service processor patterns
     # =========================================================================
@@ -369,11 +427,9 @@ class FlextLdapAdapters(FlextDomainService[object]):
             return await self.execute_with_processor(request)
 
         def is_connected(self) -> bool:
-            """Check if client is connected - simplified method."""
+            """Check if client is connected using public method."""
             try:
-                return hasattr(self.client, "_connection") and bool(
-                    self.client._connection,
-                )
+                return self.client.is_connected()
             except Exception:
                 return False
 
@@ -513,8 +569,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
                     entry.attributes,
                 )
 
-                # Convert to LDAP attributes using Python standard conversion
-                ldap_attrs = {
+                # Convert to LDAP attributes using the broader type that client expects
+                ldap_attrs: FlextLdapTypes.Entry.AttributeDict = {
                     k: [str(v)]
                     if not isinstance(v, list)
                     else [str(item) for item in v]
@@ -522,7 +578,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
                     if v is not None
                 }
 
-                # Type is already correct - no cast needed
+                # Type is now correct for the client interface
                 return await self.client.add_entry(dn, ldap_attrs)
 
             except Exception as e:
@@ -541,15 +597,15 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 if validation_error:
                     return FlextResult.fail(validation_error)
 
-                # Convert modifications to proper LDAP attribute format using Python standard
-                ldap_modifications = {}
+                # Convert modifications to proper LDAP attribute format using the correct type
+                ldap_modifications: FlextLdapTypes.Entry.AttributeDict = {}
                 for key, value in modifications.items():
                     if isinstance(value, list):
                         ldap_modifications[key] = [str(item) for item in value]
                     else:
                         ldap_modifications[key] = [str(value)]
 
-                # Type is already correct - no cast needed
+                # Type is now correct for the client interface
                 return await self.client.modify_entry(dn, ldap_modifications)
 
             except Exception as e:

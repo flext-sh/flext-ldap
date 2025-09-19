@@ -563,7 +563,8 @@ class TestRealWorldScenarios:
                 given_name=str(user_data["given_name"]),
                 mail=str(user_data["mail"]),
                 object_classes=cast(
-                    "FlextTypes.Core.StringList", user_data["object_classes"],
+                    "FlextTypes.Core.StringList",
+                    user_data["object_classes"],
                 ),
                 attributes=cast(
                     "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
@@ -630,10 +631,12 @@ class TestRealWorldScenarios:
                 cn=cn_str,
                 description=str(group_data.get("description", "")),
                 object_classes=cast(
-                    "FlextTypes.Core.StringList", group_data["object_classes"],
+                    "FlextTypes.Core.StringList",
+                    group_data["object_classes"],
                 ),
                 members=cast(
-                    "FlextTypes.Core.StringList", group_data.get("members", []),
+                    "FlextTypes.Core.StringList",
+                    group_data.get("members", []),
                 ),
                 attributes={},
                 status="active",

@@ -65,10 +65,12 @@ def demonstrate_environment_loading() -> None:
     config = FlextLdapConfigs.get_global_instance()
 
     formatters.display_message(
-        f"Bind DN from environment: {config.ldap_bind_dn}", "info",
+        f"Bind DN from environment: {config.ldap_bind_dn}",
+        "info",
     )
     formatters.display_message(
-        f"Use SSL from environment: {config.ldap_use_ssl}", "info",
+        f"Use SSL from environment: {config.ldap_use_ssl}",
+        "info",
     )
     formatters.display_message(f"Size limit from environment: {config.ldap_size_limit}")
     formatters.display_message(
@@ -93,7 +95,8 @@ def demonstrate_factory_methods() -> None:
         formatters.display_message(f"  Bind DN: {dev_config.ldap_bind_dn}", "info")
         formatters.display_message(f"  SSL enabled: {dev_config.ldap_use_ssl}", "info")
         formatters.display_message(
-            f"  Query logging: {dev_config.ldap_log_queries}", "info",
+            f"  Query logging: {dev_config.ldap_log_queries}",
+            "info",
         )
         formatters.display_message("", "info")
 
@@ -104,7 +107,8 @@ def demonstrate_factory_methods() -> None:
         formatters.display_message("Test Configuration:", "info")
         formatters.display_message(f"  Environment: {test_config.environment}", "info")
         formatters.display_message(
-            f"  Test mode: {test_config.ldap_enable_test_mode}", "info",
+            f"  Test mode: {test_config.ldap_enable_test_mode}",
+            "info",
         )
         formatters.display_message(f"  Bind DN: {test_config.ldap_bind_dn}", "info")
         formatters.display_message(f"  SSL enabled: {test_config.ldap_use_ssl}", "info")
@@ -123,7 +127,8 @@ def demonstrate_factory_methods() -> None:
             "info",
         )
         formatters.display_message(
-            f"  Caching enabled: {prod_config.ldap_enable_caching}", "info",
+            f"  Caching enabled: {prod_config.ldap_enable_caching}",
+            "info",
         )
         formatters.display_message(f"  Cache TTL: {prod_config.ldap_cache_ttl}", "info")
         formatters.display_message("", "info")
@@ -164,10 +169,12 @@ def demonstrate_parameter_overrides() -> None:
         formatters.display_message(f"  Caching: {config.ldap_enable_caching}", "info")
         formatters.display_message(f"  Cache TTL: {config.ldap_cache_ttl}", "info")
         formatters.display_message(
-            f"  Query logging: {config.ldap_log_queries}", "info",
+            f"  Query logging: {config.ldap_log_queries}",
+            "info",
         )
         formatters.display_message(
-            f"  Response logging: {config.ldap_log_responses}", "info",
+            f"  Response logging: {config.ldap_log_responses}",
+            "info",
         )
         formatters.display_message("", "info")
 
@@ -192,7 +199,8 @@ def demonstrate_direct_singleton_usage() -> None:
     """Demonstrate direct FlextLdapConfigs singleton usage (recommended approach)."""
     formatters = FlextCliFormatters()
     formatters.display_message(
-        "=== Direct FlextLdapConfigs Singleton Usage Demo ===", "info",
+        "=== Direct FlextLdapConfigs Singleton Usage Demo ===",
+        "info",
     )
 
     # Create a custom configuration using model_validate for proper type handling
@@ -213,12 +221,14 @@ def demonstrate_direct_singleton_usage() -> None:
 
     formatters.display_message("Direct Singleton Usage:", "info")
     formatters.display_message(
-        f"  Config references singleton: {config is custom_config}", "info",
+        f"  Config references singleton: {config is custom_config}",
+        "info",
     )
     formatters.display_message(f"  Bind DN from config: {config.ldap_bind_dn}", "info")
     formatters.display_message(f"  SSL from config: {config.ldap_use_ssl}", "info")
     formatters.display_message(
-        f"  Size limit from config: {config.ldap_size_limit}", "info",
+        f"  Size limit from config: {config.ldap_size_limit}",
+        "info",
     )
     formatters.display_message("", "info")
 
@@ -229,10 +239,12 @@ def demonstrate_direct_singleton_usage() -> None:
     formatters.display_message("Effective Configuration:", "info")
     if effective_conn:
         formatters.display_message(
-            f"  Connection server: {effective_conn.get('server', 'N/A')}", "info",
+            f"  Connection server: {effective_conn.get('server', 'N/A')}",
+            "info",
         )
         formatters.display_message(
-            f"  Connection port: {effective_conn.get('port', 'N/A')}", "info",
+            f"  Connection port: {effective_conn.get('port', 'N/A')}",
+            "info",
         )
     if auth_config:
         formatters.display_message(f"  Auth bind DN: {auth_config['bind_dn']}", "info")
@@ -260,7 +272,8 @@ def demonstrate_runtime_behavior_changes() -> None:
     formatters.display_message("Initial Development Configuration:", "info")
     formatters.display_message(f"  Debug mode: {dev_config.debug}", "info")
     formatters.display_message(
-        f"  Query logging: {dev_config.ldap_log_queries}", "info",
+        f"  Query logging: {dev_config.ldap_log_queries}",
+        "info",
     )
     formatters.display_message(f"  Caching: {dev_config.ldap_enable_caching}", "info")
     formatters.display_message("", "info")
@@ -283,38 +296,47 @@ def demonstrate_runtime_behavior_changes() -> None:
         formatters.display_message(f"  Debug mode: {dev_config.debug}", "info")
         formatters.display_message(f"  Log level: {dev_config.log_level}", "info")
         formatters.display_message(
-            f"  Query logging: {dev_config.ldap_log_queries}", "info",
+            f"  Query logging: {dev_config.ldap_log_queries}",
+            "info",
         )
         formatters.display_message(
-            f"  Response logging: {dev_config.ldap_log_responses}", "info",
+            f"  Response logging: {dev_config.ldap_log_responses}",
+            "info",
         )
         formatters.display_message(
-            f"  Caching: {dev_config.ldap_enable_caching}", "info",
+            f"  Caching: {dev_config.ldap_enable_caching}",
+            "info",
         )
         formatters.display_message(f"  Cache TTL: {dev_config.ldap_cache_ttl}", "info")
         formatters.display_message(
-            f"  Size limit: {dev_config.ldap_size_limit}", "info",
+            f"  Size limit: {dev_config.ldap_size_limit}",
+            "info",
         )
         formatters.display_message(
-            f"  Time limit: {dev_config.ldap_time_limit}", "info",
+            f"  Time limit: {dev_config.ldap_time_limit}",
+            "info",
         )
         formatters.display_message("", "info")
 
         # Show how this affects different aspects of the system
         formatters.display_message("System Behavior Changes:", "info")
         formatters.display_message(
-            f"  Search performance: {dev_config.get_ldap_search_config()}", "info",
+            f"  Search performance: {dev_config.get_ldap_search_config()}",
+            "info",
         )
         formatters.display_message(
-            f"  Caching behavior: {dev_config.get_ldap_performance_config()}", "info",
+            f"  Caching behavior: {dev_config.get_ldap_performance_config()}",
+            "info",
         )
         formatters.display_message(
-            f"  Logging behavior: {dev_config.get_ldap_logging_config()}", "info",
+            f"  Logging behavior: {dev_config.get_ldap_logging_config()}",
+            "info",
         )
         formatters.display_message("", "info")
 
     formatters.display_message(
-        "✅ Runtime behavior changes working correctly\n", "info",
+        "✅ Runtime behavior changes working correctly\n",
+        "info",
     )
 
 
@@ -334,15 +356,18 @@ def main() -> None:
         demonstrate_runtime_behavior_changes()
 
         formatters.display_message(
-            "🎉 All demonstrations completed successfully!", "info",
+            "🎉 All demonstrations completed successfully!",
+            "info",
         )
         formatters.display_message("\nKey Benefits:", "info")
         formatters.display_message(
-            "✅ Single source of truth for LDAP configuration", "info",
+            "✅ Single source of truth for LDAP configuration",
+            "info",
         )
         formatters.display_message("✅ Environment variable integration", "info")
         formatters.display_message(
-            "✅ Factory methods for different environments", "info",
+            "✅ Factory methods for different environments",
+            "info",
         )
         formatters.display_message("✅ Runtime parameter overrides", "info")
         formatters.display_message("✅ Clean Architecture with delegation", "info")

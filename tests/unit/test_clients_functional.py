@@ -23,7 +23,9 @@ class TestFlextLdapClientFunctional:
         """Test connection failure without server."""
         client = FlextLdapClient()
         result = await client.connect(
-            "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", "password",
+            "ldap://localhost:389",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            "password",
         )
         assert isinstance(result, FlextResult)
 
@@ -48,7 +50,8 @@ class TestFlextLdapClientFunctional:
         """Test add operation without connection."""
         client = FlextLdapClient()
         result = await client.add(
-            "cn=test,dc=test,dc=com", {"cn": "test", "objectClass": ["person"]},
+            "cn=test,dc=test,dc=com",
+            {"cn": "test", "objectClass": ["person"]},
         )
         assert not result.is_success
         assert result.error is not None

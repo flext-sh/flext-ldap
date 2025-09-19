@@ -500,7 +500,8 @@ class TestDomainServices:
 
         for current_pass, new_pass in test_password_changes:
             validation_result = password_service.validate_password_change(
-                current_pass, new_pass,
+                current_pass,
+                new_pass,
             )
             assert isinstance(validation_result, FlextResult)
 

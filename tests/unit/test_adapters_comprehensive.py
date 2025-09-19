@@ -182,7 +182,8 @@ class TestAdapterModels:
 
         # Test minimal search request
         minimal_search = FlextLdapAdapters.SearchRequest(
-            base_dn="dc=example,dc=com", filter_str="(objectClass=*)",
+            base_dn="dc=example,dc=com",
+            filter_str="(objectClass=*)",
         )
 
         assert minimal_search.base_dn == "dc=example,dc=com"
@@ -247,7 +248,8 @@ class TestOperationExecutor:
     """Test OperationExecutor base class functionality."""
 
     def test_operation_executor_instantiation(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test OperationExecutor base class can be instantiated."""
         executor = FlextLdapAdapters.OperationExecutor(test_client)
@@ -262,7 +264,8 @@ class TestOperationExecutor:
         assert len(executor_methods) >= 0  # Should have some public methods
 
     def test_operation_executor_serviceprocessor_integration(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test OperationExecutor ServiceProcessor integration patterns."""
         executor = FlextLdapAdapters.OperationExecutor(test_client)
@@ -282,7 +285,8 @@ class TestConnectionService:
     ) -> None:
         """Test ConnectionService creation and basic functionality."""
         connection_service = FlextLdapAdapters.ConnectionService(
-            test_client, test_config,
+            test_client,
+            test_config,
         )
         assert connection_service is not None
 
@@ -296,7 +300,8 @@ class TestConnectionService:
     ) -> None:
         """Test ConnectionService has expected methods for connection operations."""
         connection_service = FlextLdapAdapters.ConnectionService(
-            test_client, test_config,
+            test_client,
+            test_config,
         )
 
         # Test that service has connection-related methods
@@ -323,7 +328,8 @@ class TestSearchService:
         assert isinstance(search_service, FlextLdapAdapters.OperationExecutor)
 
     def test_search_service_methods_existence(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test SearchService has expected methods for search operations."""
         search_service = FlextLdapAdapters.SearchService(test_client)
@@ -369,14 +375,16 @@ class TestDirectoryService:
     """Test DirectoryService high-level directory operations."""
 
     def test_directory_service_instantiation(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryService creation and basic functionality."""
         directory_service = FlextLdapAdapters.DirectoryService(test_client)
         assert directory_service is not None
 
     def test_directory_service_comprehensive_operations(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryService comprehensive LDAP operations."""
         directory_service = FlextLdapAdapters.DirectoryService(test_client)
@@ -393,7 +401,8 @@ class TestDirectoryService:
         assert len(service_methods) >= 0
 
     def test_directory_service_integration_patterns(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryService integration with other adapter components."""
         directory_service = FlextLdapAdapters.DirectoryService(test_client)
@@ -407,14 +416,16 @@ class TestDirectoryAdapter:
     """Test DirectoryAdapter main orchestration class."""
 
     def test_directory_adapter_instantiation(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryAdapter creation and basic functionality."""
         directory_adapter = FlextLdapAdapters.DirectoryAdapter(test_client)
         assert directory_adapter is not None
 
     def test_directory_adapter_orchestration_capability(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryAdapter orchestrates all LDAP operations."""
         directory_adapter = FlextLdapAdapters.DirectoryAdapter(test_client)
@@ -431,7 +442,8 @@ class TestDirectoryAdapter:
         assert len(adapter_methods) >= 0
 
     def test_directory_adapter_component_integration(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test DirectoryAdapter integration with all adapter components."""
         directory_adapter = FlextLdapAdapters.DirectoryAdapter(test_client)
@@ -463,7 +475,9 @@ class TestAdapterIntegration:
 
         # Verify DirectoryEntry uses FlextModels.Entity
         entry = FlextLdapAdapters.DirectoryEntry(
-            id="test_id", dn="cn=test,dc=example,dc=com", attributes={},
+            id="test_id",
+            dn="cn=test,dc=example,dc=com",
+            attributes={},
         )
         assert isinstance(entry, FlextModels.Entity)
 
@@ -578,7 +592,8 @@ class TestAdapterErrorHandling:
 
     @pytest.mark.asyncio
     async def test_connection_operation_types_comprehensive(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test connection operation types - covers lines 200-214."""
         connection_service = FlextLdapAdapters.ConnectionService(
@@ -610,7 +625,8 @@ class TestAdapterErrorHandling:
 
     @pytest.mark.asyncio
     async def test_search_results_processing_comprehensive(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test search results processing - covers lines 457-497."""
         search_service = FlextLdapAdapters.SearchService(test_client)
@@ -656,7 +672,8 @@ class TestAdapterErrorHandling:
             pass  # Method exercises the code paths for coverage
 
     async def test_entry_processing_edge_cases(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test entry processing edge cases - covers lines 460-490."""
         entry_service = FlextLdapAdapters.EntryService(test_client)
@@ -712,7 +729,8 @@ class TestAdapterErrorHandling:
 
     @pytest.mark.asyncio
     async def test_directory_service_operations_comprehensive(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test directory service operations - covers lines 511-540."""
         directory_service = FlextLdapAdapters.DirectoryService(test_client)
@@ -742,7 +760,8 @@ class TestAdapterErrorHandling:
 
     @pytest.mark.asyncio
     async def test_adapter_integration_comprehensive(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test adapter integration - covers lines 660-684, 691-715."""
         directory_adapter = FlextLdapAdapters.DirectoryAdapter(test_client)
@@ -824,7 +843,8 @@ class TestAdapterErrorHandling:
                 logger.debug(f"Configuration validation error: {e}")
 
     async def test_service_error_exception_handling(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test service exception handling - covers lines 333-340, 346-353."""
         # Create services for testing exception handling
@@ -910,7 +930,8 @@ class TestAdapterErrorHandling:
                 logger.debug(f"Model validation edge case error: {e}")
 
     async def test_search_scope_and_filter_processing(
-        self, test_client: FlextLdapClient,
+        self,
+        test_client: FlextLdapClient,
     ) -> None:
         """Test search scope and filter processing - covers lines 574-584."""
         search_service = FlextLdapAdapters.SearchService(test_client)
@@ -936,7 +957,8 @@ class TestAdapterErrorHandling:
                 try:
                     # Test the actual search method
                     _ = await search_service.simple_search(
-                        "dc=test,dc=com", "(objectClass=person)",
+                        "dc=test,dc=com",
+                        "(objectClass=person)",
                     )
                     # Should process search (covers processing logic)
                     # Test successful method execution

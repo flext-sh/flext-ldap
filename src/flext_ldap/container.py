@@ -15,7 +15,7 @@ from flext_core import (
 )
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfigs
-from flext_ldap.operations import FlextLdapOperations
+from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLdapRepositories
 
 
@@ -148,7 +148,7 @@ class FlextLdapContainer(FlextMixins.Loggable):
             # Register operations
             operations_result = container.register(
                 "ldap_operations",
-                FlextLdapOperations(),
+                FlextLDAPOperations(),
             )
             if not operations_result.is_success:
                 return FlextResult.fail(

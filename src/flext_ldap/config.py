@@ -384,7 +384,8 @@ class FlextLdapConfigs(FlextConfig):
 
     @classmethod
     def create_development_ldap_config(
-        cls, **overrides: str | float | bool | None,
+        cls,
+        **overrides: str | float | bool | None,
     ) -> FlextResult[FlextLdapConfigs]:
         """Create development LDAP configuration with appropriate defaults.
 
@@ -423,7 +424,8 @@ class FlextLdapConfigs(FlextConfig):
 
     @classmethod
     def create_test_ldap_config(
-        cls, **overrides: str | float | bool | None,
+        cls,
+        **overrides: str | float | bool | None,
     ) -> FlextResult[FlextLdapConfigs]:
         """Create test LDAP configuration with appropriate defaults.
 
@@ -463,7 +465,8 @@ class FlextLdapConfigs(FlextConfig):
 
     @classmethod
     def create_production_ldap_config(
-        cls, **overrides: dict[str, object],
+        cls,
+        **overrides: dict[str, object],
     ) -> FlextResult[FlextLdapConfigs]:
         """Create production LDAP configuration with appropriate defaults.
 
@@ -623,7 +626,9 @@ class FlextLdapConfigs(FlextConfig):
         )
 
         def model_post_init(
-            self, __context: dict[str, object] | None = None, /,
+            self,
+            __context: dict[str, object] | None = None,
+            /,
         ) -> None:
             """Post-initialization setup for LDAP configuration."""
             super().model_post_init(__context)
@@ -781,6 +786,9 @@ class FlextLdapConfigs(FlextConfig):
                 return FlextResult.fail(f"Configuration validation failed: {e}")
 
 
+# Backward compatibility alias
+FlextLdapConfig = FlextLdapConfigs
 __all__ = [
+    "FlextLdapConfig",  # Backward compatibility alias
     "FlextLdapConfigs",
 ]

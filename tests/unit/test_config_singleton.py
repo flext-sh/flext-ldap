@@ -122,7 +122,10 @@ class TestFlextLdapConfigSingleton:
         }
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as f:
             json.dump(config_data, f)
             config_file = f.name

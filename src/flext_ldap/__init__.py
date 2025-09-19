@@ -16,7 +16,7 @@ from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.entities import FlextLdapEntities
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.operations import FlextLdapOperations
+from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.services import FlextLdapServices
@@ -24,6 +24,7 @@ from flext_ldap.type_guards import FlextLdapTypeGuards
 from flext_ldap.typings import FlextLdapTypes
 
 __all__ = [
+    "FlextLDAPOperations",
     "FlextLdapAdapters",
     "FlextLdapApi",
     "FlextLdapClient",
@@ -34,7 +35,6 @@ __all__ = [
     "FlextLdapEntities",
     "FlextLdapExceptions",
     "FlextLdapModels",
-    "FlextLdapOperations",
     "FlextLdapProtocols",
     "FlextLdapRepositories",
     "FlextLdapServices",

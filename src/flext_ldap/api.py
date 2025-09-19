@@ -69,7 +69,8 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         @staticmethod
         def create_search_request(
-            base_dn: str, filter_str: str,
+            base_dn: str,
+            filter_str: str,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request with default parameters."""
             return FlextLdapModels.SearchRequest(
@@ -86,7 +87,10 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         @staticmethod
         def create_user_request(
-            dn: str, uid: str, cn: str, sn: str,
+            dn: str,
+            uid: str,
+            cn: str,
+            sn: str,
         ) -> FlextLdapModels.CreateUserRequest:
             """Create user request with standard parameters."""
             return FlextLdapModels.CreateUserRequest(
@@ -204,6 +208,42 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     def show_configuration(self) -> None:
         """Show current LDAP configuration - CLI method."""
+
+    # Public helper methods to avoid private member access violations
+
+    def display_message(self, message: str, level: str = "info") -> None:
+        """Display formatted message using internal formatter."""
+        self._formatters.display_message(message, level)
+
+    def print_success(self, message: str) -> None:
+        """Print success message using internal formatter."""
+        self._formatters.print_success(message)
+
+    def format_connection_info(self, server_uri: str, bind_dn: str) -> str:
+        """Format connection information for display using internal helper."""
+        return self._connection_helper.format_connection_info(server_uri, bind_dn)
+
+    def create_search_request(
+        self,
+        base_dn: str,
+        filter_str: str,
+    ) -> FlextLdapModels.SearchRequest:
+        """Create search request with default parameters using internal helper."""
+        return self._search_helper.create_search_request(base_dn, filter_str)
+
+    def create_user_request(
+        self,
+        dn: str,
+        uid: str,
+        cn: str,
+        sn: str,
+    ) -> FlextLdapModels.CreateUserRequest:
+        """Create user request with standard parameters using internal helper."""
+        return self._user_management_helper.create_user_request(dn, uid, cn, sn)
+
+    def format_user_info(self, user: FlextLdapModels.User) -> str:
+        """Format user information for display using internal helper."""
+        return self._user_management_helper.format_user_info(user)
 
     async def connect_to_ldap(
         self,

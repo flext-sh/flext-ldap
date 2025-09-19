@@ -65,7 +65,8 @@ class FlextLdapModels(FlextModels):
         def validate_base_dn(cls, value: str) -> str:
             """Validate base DN using centralized validation."""
             validation_result = FlextLdapValidations.validate_dn(
-                value.strip(), "Base DN",
+                value.strip(),
+                "Base DN",
             )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -84,7 +85,9 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def create_user_search(
-            cls, base_dn: str, uid: str | None = None,
+            cls,
+            base_dn: str,
+            uid: str | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Factory method for common user search patterns."""
             filter_str = (
@@ -139,6 +142,38 @@ class FlextLdapModels(FlextModels):
                 )
 
             return FlextResult[None].ok(None)
+
+        def get_attribute(self, name: str) -> list[str] | None:
+            """Get attribute values from entry attributes.
+
+            Args:
+                name: Attribute name to retrieve
+
+            Returns:
+                List of attribute values, None if attribute not found
+
+            """
+            if name not in self.attributes:
+                return None
+
+            attribute_value = self.attributes[name]
+
+            # Ensure return type is always a list of strings
+            # AttributeDict values can only be: list[str] | list[bytes] | str | bytes
+            if isinstance(attribute_value, str):
+                return [attribute_value]
+            if isinstance(attribute_value, bytes):
+                return [attribute_value.decode("utf-8")]
+            if isinstance(attribute_value, list):
+                # Convert all items to strings
+                return [
+                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                    for item in attribute_value
+                ]
+            # All possible types are handled above based on AttributeDict type definition
+            # This line should never be reached, but included for completeness
+            # Type checker doesn't understand that all cases are covered
+            return [str(attribute_value)]  # type: ignore[unreachable]
 
     class User(BaseModel):
         """LDAP User Model - actively used in API."""
@@ -358,7 +393,8 @@ class FlextLdapModels(FlextModels):
         dn: str = Field(description="Distinguished Name of group to update")
         cn: str | None = Field(default=None, description="New Common Name")
         description: str | None = Field(
-            default=None, description="New group description",
+            default=None,
+            description="New group description",
         )
         member_dns: list[str] | None = Field(
             default=None,
@@ -387,7 +423,8 @@ class FlextLdapModels(FlextModels):
 
         server_uri: str = Field(description="LDAP server URI")
         bind_dn: str | None = Field(
-            default=None, description="Bind DN for authentication",
+            default=None,
+            description="Bind DN for authentication",
         )
         bind_password: str | None = Field(default=None, description="Bind password")
         operation_type: str = Field(
@@ -399,6 +436,37 @@ class FlextLdapModels(FlextModels):
             gt=0,
             le=300,
         )
+
+    # Utility methods for type conversion
+    @staticmethod
+    def _convert_to_str(value: str | bytes | int | None) -> str | None:
+        """Convert LDAP attribute value to string."""
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="ignore")
+        if isinstance(value, int):
+            return str(value)
+        return str(value)
+
+    @staticmethod
+    def _convert_to_str_list(
+        value: list[str] | list[bytes] | str | bytes | None,
+    ) -> list[str]:
+        """Convert LDAP member list to list of strings."""
+        if value is None:
+            return []
+        if isinstance(value, (str, bytes)):
+            # Single value, convert to list
+            converted = FlextLdapModels._convert_to_str(value)
+            return [converted] if converted is not None else []
+        # Must be a list due to type constraints
+        result = []
+        for item in value:
+            converted = FlextLdapModels._convert_to_str(item)
+            if converted is not None:
+                result.append(converted)
+        return result
 
     # Factory methods for creating models
     @classmethod
@@ -430,16 +498,32 @@ class FlextLdapModels(FlextModels):
             object_classes=entry.object_classes,
             attributes=entry.attributes,
             modified_at=entry.modified_at,
-            uid=entry.attributes.get(FlextLdapConstants.Attributes.USER_ID, [None])[0],
-            cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
-            sn=entry.attributes.get(FlextLdapConstants.Attributes.SURNAME, [None])[0],
-            given_name=entry.attributes.get(
-                FlextLdapConstants.Attributes.GIVEN_NAME, [None],
-            )[0],
-            mail=entry.attributes.get(FlextLdapConstants.Attributes.MAIL, [None])[0],
-            display_name=entry.attributes.get(
-                FlextLdapConstants.Attributes.DISPLAY_NAME, [None],
-            )[0],
+            uid=cls._convert_to_str(
+                entry.attributes.get(FlextLdapConstants.Attributes.USER_ID, [None])[0],
+            ),
+            cn=cls._convert_to_str(
+                entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[
+                    0
+                ],
+            ),
+            sn=cls._convert_to_str(
+                entry.attributes.get(FlextLdapConstants.Attributes.SURNAME, [None])[0],
+            ),
+            given_name=cls._convert_to_str(
+                entry.attributes.get(
+                    FlextLdapConstants.Attributes.GIVEN_NAME,
+                    [None],
+                )[0],
+            ),
+            mail=cls._convert_to_str(
+                entry.attributes.get(FlextLdapConstants.Attributes.MAIL, [None])[0],
+            ),
+            display_name=cls._convert_to_str(
+                entry.attributes.get(
+                    FlextLdapConstants.Attributes.DISPLAY_NAME,
+                    [None],
+                )[0],
+            ),
         )
 
     @classmethod
@@ -451,11 +535,20 @@ class FlextLdapModels(FlextModels):
             object_classes=entry.object_classes,
             attributes=entry.attributes,
             modified_at=entry.modified_at,
-            cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
-            description=entry.attributes.get(
-                FlextLdapConstants.Attributes.DESCRIPTION, [None],
-            )[0],
-            members=entry.attributes.get(FlextLdapConstants.Attributes.MEMBER, []),
+            cn=cls._convert_to_str(
+                entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[
+                    0
+                ],
+            ),
+            description=cls._convert_to_str(
+                entry.attributes.get(
+                    FlextLdapConstants.Attributes.DESCRIPTION,
+                    [None],
+                )[0],
+            ),
+            members=cls._convert_to_str_list(
+                entry.attributes.get(FlextLdapConstants.Attributes.MEMBER, []),
+            ),
         )
 
     class ValueObjects(FlextDomainService[object]):
@@ -577,7 +670,8 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def create(
-                cls, scope: str,
+                cls,
+                scope: str,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
                 """Create scope value object with validation."""
                 try:
@@ -667,7 +761,8 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def create(
-                cls, value: str,
+                cls,
+                value: str,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Filter]:
                 """Create filter from string with validation."""
                 try:
@@ -680,7 +775,9 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def equals(
-                cls, attribute: str, value: str,
+                cls,
+                attribute: str,
+                value: str,
             ) -> FlextLdapModels.ValueObjects.Filter:
                 """Create equality filter."""
                 return cls(value=f"({attribute}={value})")
@@ -696,7 +793,8 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def object_class(
-                cls, object_class: str,
+                cls,
+                object_class: str,
             ) -> FlextLdapModels.ValueObjects.Filter:
                 """Create object class filter."""
                 return cls(value=f"(objectClass={object_class})")
@@ -775,7 +873,8 @@ class FlextLdapModels(FlextModels):
             le=65535,
         )
         bind_dn: str | None = Field(
-            default=None, description="Bind DN for authentication",
+            default=None,
+            description="Bind DN for authentication",
         )
         bind_password: str | None = Field(default=None, description="Bind password")
         timeout: int = Field(

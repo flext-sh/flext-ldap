@@ -254,7 +254,8 @@ class TestFlextLdapRepositoriesComprehensive:
         user_repo = FlextLdapRepositories.UserRepository(base_repo)
 
         result = await user_repo.find_user_by_uid(
-            "testuser", "ou=users,dc=example,dc=com",
+            "testuser",
+            "ou=users,dc=example,dc=com",
         )
 
         assert isinstance(result, FlextResult)
@@ -322,7 +323,8 @@ class TestFlextLdapRepositoriesComprehensive:
         group_repo = FlextLdapRepositories.GroupRepository(base_repo)
 
         result = await group_repo.find_group_by_cn(
-            "testgroup", "ou=groups,dc=example,dc=com",
+            "testgroup",
+            "ou=groups,dc=example,dc=com",
         )
 
         assert isinstance(result, FlextResult)
