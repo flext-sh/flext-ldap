@@ -73,8 +73,8 @@
       Type parameter "_VT@dict" is invariant, but "list[str]" is not the same as "object"
       Consider switching from "dict" to "Mapping" which is covariant in the value type (reportArgumentType)
 /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py
-  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:51:12 - error: Type "FlextLdapConnectionConfig" is not assignable to return type "AsyncGenerator[FlextLdapConnectionConfig, None]"
-    "FlextLdapConnectionConfig" is incompatible with protocol "AsyncGenerator[FlextLdapConnectionConfig, None]"
+  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:51:12 - error: Type "FlextLdapModels.ConnectionConfig" is not assignable to return type "AsyncGenerator[FlextLdapModels.ConnectionConfig, None]"
+    "FlextLdapModels.ConnectionConfig" is incompatible with protocol "AsyncGenerator[FlextLdapModels.ConnectionConfig, None]"
       "__anext__" is not present
       "asend" is not present
       "athrow" is not present

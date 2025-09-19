@@ -9,6 +9,8 @@ from __future__ import annotations
 import os
 from typing import Final, final
 
+from ldap3 import LEVEL
+
 from flext_core import FlextConstants
 
 
@@ -23,6 +25,7 @@ class FlextLdapConstants(FlextConstants):
         # Standard LDAP ports
         DEFAULT_PORT = 389
         DEFAULT_SSL_PORT = 636
+        MAX_PORT = 65535
 
         # Standard LDAP timeouts
         DEFAULT_TIMEOUT = 30
@@ -197,6 +200,17 @@ class FlextLdapConstants(FlextConstants):
             "sub": SUB,
         }
 
+        # SCOPE_MAP - moved from clients.py to unified constants
+        SCOPE_MAP: Final[dict[str, str]] = {
+            "base": BASE,
+            "ldap3.BASE": BASE,
+            "one": LEVEL,
+            "onelevel": LEVEL,
+            "sub": SUBTREE,
+            "subtree": SUBTREE,
+            "subordinates": SUBTREE,
+        }
+
     class Connection:
         """LDAP connection constants."""
 
@@ -238,6 +252,14 @@ class FlextLdapConstants(FlextConstants):
         def dispatcher_enabled(cls) -> bool:
             """Return True when dispatcher integration should be used."""
             return cls._env_enabled("FLEXT_LDAP_ENABLE_DISPATCHER")
+
+    class ErrorMessages:
+        """Error message constants following TRY003 and EM101/EM102 rules."""
+
+        INVALID_EMAIL_FORMAT = "Invalid email format"
+        EMAIL_VALIDATION_FAILED = "Invalid email format: {error}"
+        DN_CANNOT_BE_EMPTY = "DN cannot be empty"
+        INVALID_DN_FORMAT = "Invalid DN format"
 
 
 __all__ = [

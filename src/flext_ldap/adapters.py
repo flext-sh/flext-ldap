@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import ClassVar, cast
+from typing import cast
 
 from pydantic import ConfigDict, Field, field_validator
 
@@ -23,13 +23,7 @@ from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
-
-# Advanced type aliases using Python 3.13
-type ConnectionId = str
-type ServerUri = str
-type OperationType = str
-type AdapterResult[T] = FlextResult[T]
-type ProcessorHandler[T, R] = Callable[[T], AdapterResult[R]]
+from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdapAdapters(FlextDomainService[object]):
@@ -87,11 +81,11 @@ class FlextLdapAdapters(FlextDomainService[object]):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using direct validation - SOURCE OF TRUTH."""
-            if not v or not v.strip():
-                error_msg = FlextLdapAdapters.ErrorMessages.DN_CANNOT_BE_EMPTY
-                raise ValueError(error_msg)
-            return v
+            """Validate DN format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error)
+            return v.strip()
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate entry business rules."""
@@ -430,9 +424,9 @@ class FlextLdapAdapters(FlextDomainService[object]):
         async def simple_search(
             self,
             base_dn: str,
-            filter_str: str = "(objectClass=*)",
+            filter_str: str,
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Simple search returning entries directly for backward compatibility."""
+            """Simple search returning entries directly."""
             result = await self.search_entries(base_dn, filter_str)
             if result.is_success:
                 return FlextResult[list[FlextLdapModels.Entry]].ok(
@@ -528,13 +522,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
                     if v is not None
                 }
 
-                # Cast to proper type for client
-                # cast already imported at top
-
-                typed_ldap_attrs = cast(
-                    "FlextLdapTypes.Entry.AttributeDict", ldap_attrs
-                )
-                return await self.client.add_entry(dn, typed_ldap_attrs)
+                # Type is already correct - no cast needed
+                return await self.client.add_entry(dn, ldap_attrs)
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
@@ -560,13 +549,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
                     else:
                         ldap_modifications[key] = [str(value)]
 
-                # Cast to proper type for client
-                # cast already imported at top
-
-                typed_modifications = cast(
-                    "FlextLdapTypes.Entry.AttributeDict", ldap_modifications
-                )
-                return await self.client.modify_entry(dn, typed_modifications)
+                # Type is already correct - no cast needed
+                return await self.client.modify_entry(dn, ldap_modifications)
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
@@ -713,7 +697,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             attributes: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Normalize entry attributes for protocol compatibility."""
+            """Normalize entry attributes for protocol compliance."""
             # Convert attributes using Python standard conversion
             ldap_attrs = {
                 k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
@@ -832,29 +816,6 @@ class FlextLdapAdapters(FlextDomainService[object]):
             return FlextResult[list[FlextLdapModels.Entry]].fail(
                 result.error or "Search failed",
             )
-
-    # =========================================================================
-    # MODEL ALIASES - For test compatibility and API consistency
-    # =========================================================================
-
-    # Import model classes from FlextLdapModels for test compatibility
-    ConnectionRequest: ClassVar[type[FlextLdapModels.ConnectionRequest]] = (
-        FlextLdapModels.ConnectionRequest
-    )
-    SearchRequest: ClassVar[type[FlextLdapModels.SearchRequest]] = (
-        FlextLdapModels.SearchRequest
-    )
-    SearchResponse: ClassVar[type[FlextLdapModels.SearchResponse]] = (
-        FlextLdapModels.SearchResponse
-    )
-
-    # Alias common result types for adapter operations
-    ConnectionResult: ClassVar[type[FlextResult[bool]]] = FlextResult[
-        bool
-    ]  # Connection success/failure
-    SearchResult: ClassVar[type[FlextResult[FlextLdapModels.SearchResponse]]] = (
-        FlextResult[FlextLdapModels.SearchResponse]
-    )  # Search result wrapper
 
 
 __all__ = [

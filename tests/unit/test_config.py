@@ -7,7 +7,7 @@ import time
 import pytest
 from pydantic import ValidationError
 
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
 
 
 class TestRealFlextLdapConfig:
@@ -38,7 +38,8 @@ class TestRealFlextLdapConfig:
         """Test FlextLdapConfig with custom configuration values."""
         # Try to create settings with custom values
         try:
-            settings = FlextLdapConfig(ldap_time_limit=60, ldap_enable_debug=True)
+            config_data = {"ldap_time_limit": 60, "ldap_enable_debug": True}
+            settings = FlextLdapConfig.model_validate(config_data)
             assert settings is not None
 
             # Verify custom values were applied

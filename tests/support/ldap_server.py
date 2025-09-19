@@ -14,7 +14,7 @@ import docker.models.containers
 import ldap3
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldap import FlextLdapConnectionConfig
+from flext_ldap import FlextLdapModels
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
@@ -210,9 +210,9 @@ class LdapTestServer:
             logger.exception("Failed to setup test data")
             return FlextResult[bool].fail(f"Failed to setup test data: {e}")
 
-    def get_connection_config(self) -> FlextLdapConnectionConfig:
+    def get_connection_config(self) -> FlextLdapModels.ConnectionConfig:
         """Get connection configuration for test server."""
-        return FlextLdapConnectionConfig(
+        return FlextLdapModels.ConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             bind_password=self.REDACTED_LDAP_BIND_PASSWORD_password or "REDACTED_LDAP_BIND_PASSWORD123",
@@ -221,10 +221,10 @@ class LdapTestServer:
         )
 
 
-def get_test_ldap_config() -> FlextLdapConnectionConfig:
+def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:
     """Get test LDAP connection configuration."""
     REDACTED_LDAP_BIND_PASSWORD_password = os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123")
-    return FlextLdapConnectionConfig(
+    return FlextLdapModels.ConnectionConfig(
         server="ldap://localhost:3390",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
         bind_password=REDACTED_LDAP_BIND_PASSWORD_password,

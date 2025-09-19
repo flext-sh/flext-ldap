@@ -6,160 +6,99 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Protocol
+from typing import Literal
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextTypes
 
 
 class FlextLdapTypes(FlextTypes):
-    """Single FlextLdapTypes class inheriting from FlextTypes.
+    """Unified type definitions for FLEXT LDAP ecosystem.
 
-    Consolidates ALL LDAP types into a single class following FLEXT patterns.
-    Everything from the previous type definitions is now available as
-    internal properties with full backward compatibility.
-
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP types in one place
-        - Open/Closed: Extends FlextTypes without modification
-        - Liskov Substitution: Can be used anywhere FlextTypes is expected
-        - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextTypes abstraction
-
-    Examples:
-        Domain types::
-
-            dn: FlextLdapTypes.LdapDomain.DistinguishedName = (
-                "cn=user,dc=example,dc=com"
-            )
-            entry_id: FlextLdapTypes.LdapDomain.EntityId = "user123"
-
-        Search types::
-
-            filter_str: FlextLdapTypes.Search.Filter = "(objectClass=person)"
-            scope: FlextLdapTypes.Search.Scope = "subtree"
-
-        Entry types::
-
-            attrs: FlextLdapTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
-            value: FlextLdapTypes.Entry.AttributeValue = ["REDACTED_LDAP_BIND_PASSWORD", "user"]
-
+    Provides comprehensive type system for domain operations, search parameters,
+    client configurations, entry structures, and connection management. All types
+    are organized into logical namespaces following Clean Architecture patterns with
+    internal properties with full type safety.
     """
 
-    # =========================================================================
-    # DOMAIN TYPES - LDAP Domain-Specific Types
-    # =========================================================================
+    class Domain:
+        """Domain-level type definitions for LDAP entities."""
 
-    class LdapDomain:
-        """LDAP domain-specific types extending FlextTypes."""
-
-        # Distinguished Name types
         DistinguishedName = str
         Dn = str
-
-        # LDAP URI and connection types
-        Uri = str
-        ConnectionString = str
-
-        # Entity identification
-        EntityId = str
-        UserId = str
-        GroupId = str
-
-        # LDAP-specific identifiers
-        SessionId = str
+        ValidatedDn = str
+        LdapDn = str
+        BaseDn = str
+        Rdn = str
+        AttributeName = str
+        AttributeValue = str | int | bool | bytes
+        ObjectClass = str
         ConnectionId = str
 
-    # =========================================================================
-    # SEARCH TYPES - LDAP Search Operations
-    # =========================================================================
-
     class Search:
-        """LDAP search operation types."""
+        """Search operation type definitions."""
 
-        # Search parameters
         Filter = str
-        Scope = str
-        Base = str
-
-        # Search limits
+        FilterString = str
+        LdapFilter = str
+        SearchScope = str
+        ScopeType = Literal["BASE", "LEVEL", "SUBTREE"]
+        SearchResult = dict[str, object]
+        ResultEntry = dict[str, object]
+        ResultList = list[dict[str, object]]
+        SearchAttributes = list[str] | None
         SizeLimit = int
         TimeLimit = int
-        PageSize = int
 
-        # Search results
-        ResultList = list[FlextTypes.Core.Dict]
-        ResultDict = FlextTypes.Core.Dict
+    class Client:
+        """Client configuration and connection types."""
 
-    # =========================================================================
-    # ENTRY TYPES - LDAP Entry and Attribute Types
-    # =========================================================================
+        LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
+        ServerUri = str
+        Port = int
+        UseSSL = bool
+        UseTLS = bool
+        Username = str
+        Password = str
+        BindDn = str
+        Timeout = int
 
     class Entry:
-        """LDAP entry and attribute types."""
+        """LDAP entry structure types."""
 
-        # Attribute value types
-        AttributeValue = str | bytes | list[str] | list[bytes]
-        AttributeDict = dict[str, AttributeValue]
-        AttributeName = str
-
-        # Entry types
-        EntryData = dict[str, AttributeValue]
-        EntryResult = FlextTypes.Core.Dict
-
-        # Modification types
-        ModificationDict = FlextTypes.Core.Dict
-        OperationType = str
-
-    # =========================================================================
-    # CONNECTION TYPES - LDAP Connection Management
-    # =========================================================================
+        EntryDict = dict[str, object]
+        AttributeDict = dict[str, list[str]]
+        AttributeValue = str | int | bool | bytes | object
+        EntryData = dict[str, object]
+        RawEntry = dict[str, object]
+        NormalizedEntry = dict[str, object]
 
     class Connection:
-        """LDAP connection and configuration types."""
+        """Connection management types."""
 
-        # Connection configuration
-        Config = FlextTypes.Core.Dict
-        AuthConfig = FlextTypes.Core.Dict
-        ConnectionConfig = FlextTypes.Core.Dict
+        type ConnectionId = str
+        ConnectionState = Literal["UNBOUND", "BOUND", "CLOSED"]
+        ConnectionPool = dict[str, object]
+        SessionId = str
+        ConnectionConfig = dict[str, object]
 
-        # Connection state
-        State = str
-        Status = str
-        Health = bool
+    class Operation:
+        """LDAP operation types."""
 
-    # =========================================================================
-    # PROTOCOL TYPES - LDAP Protocol Extensions
-    # =========================================================================
+        OperationType = Literal["ADD", "DELETE", "MODIFY", "SEARCH", "BIND"]
+        OperationResult = dict[str, object]
+        ModifyType = Literal["ADD", "DELETE", "REPLACE"]
+        ModifyOperation = dict[str, object]
 
-    class LdapProtocol:
-        """LDAP protocol types extending FlextTypes protocols."""
+    class Request:
+        """Request parameter types."""
 
-        # Advanced Python 3.13 service protocols with proper bounds
-        Service = object
-        Repository = object  # Bounded to entities only
-        Handler = object  # Bounded type parameters
-
-        # LDAP-specific protocols with semantic bounds
-        Connection = object
-        Auth = object
-        Validator = Callable[[object], FlextResult[None]]  # Proper validator signature
-
-    # =========================================================================
-    # PROTOCOLS - Async and callable patterns
-    # =========================================================================
-
-    class AsyncCallable(Protocol):
-        """Async callable protocol for LDAP operations."""
-
-        def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
-            """Execute async callable with arbitrary arguments."""
-            ...
+        SearchRequest = dict[str, object]
+        ModifyRequest = dict[str, object]
+        AddRequest = dict[str, object]
+        DeleteRequest = dict[str, object]
+        BindRequest = dict[str, object]
 
 
 __all__ = [
-    # Main class following flext-core pattern - NO ALIASES ALLOWED
     "FlextLdapTypes",
 ]
-
-# NO LEGACY ALIASES ALLOWED - Use FlextLdapTypes.Entry.AttributeDict directly

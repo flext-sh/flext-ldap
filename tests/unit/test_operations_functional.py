@@ -13,7 +13,6 @@ from typing import cast
 
 import pytest
 
-import flext_ldap
 import flext_ldap.operations as ops_module
 from flext_core import (
     FlextLogger,
@@ -23,11 +22,14 @@ from flext_core import (
     FlextUtilities,
 )
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.operations import FlextLdapOperations
-
-# Use nested classes from FlextLdapOperations directly
-LDAPCommandProcessor = FlextLdapOperations.LDAPCommandProcessor
-UserConversionParams = FlextLdapOperations.UserConversionParams
+from flext_ldap.operations import (
+    FlextLdapOperations,
+    GroupAttributeExtractor,
+    LDAPCommandProcessor,
+    OperationsService,
+    UserAttributeExtractor,
+    UserConversionParams,
+)
 
 
 class TestFlextLdapOperationsFunctional:
@@ -381,7 +383,7 @@ class TestFlextLdapOperationsPerformance:
         start_time = time.time()
 
         # Re-import to test performance
-        importlib.reload(flext_ldap.operations)
+        importlib.reload(ops_module)
 
         end_time = time.time()
         import_time = end_time - start_time
@@ -407,14 +409,14 @@ class TestConnectionOperations:
 
     def test_connection_operations_creation(self) -> None:
         """Test ConnectionOperations can be created."""
-        operations = FlextLdapOperations()
-        connection_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        connection_ops = operations_instance.connections
         assert connection_ops is not None
 
     def test_connection_operations_methods(self) -> None:
         """Test ConnectionOperations has expected methods."""
-        operations = FlextLdapOperations()
-        connection_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        connection_ops = operations_instance.connections
 
         # Check for connection-related methods
         connection_methods = [
@@ -426,13 +428,14 @@ class TestConnectionOperations:
         # Should have some connection methods
         assert len(connection_methods) >= 0
 
-    def test_operations_create_connection_and_bind(self) -> None:
+    @pytest.mark.asyncio
+    async def test_operations_create_connection_and_bind(self) -> None:
         """Test create_connection_and_bind method."""
         operations = FlextLdapOperations()
 
         # Test connection creation (will fail without server, but tests method exists)
         try:
-            result = operations.create_connection_and_bind(
+            result = await operations.create_connection_and_bind(
                 server_uri="ldap://localhost:389",
                 bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                 bind_password="REDACTED_LDAP_BIND_PASSWORD123",
@@ -539,9 +542,9 @@ class TestLDAPModificationOperations:
 
     def test_entry_validation_methods(self) -> None:
         """Test entry validation methods exist and work."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
         # Get the nested OperationsService class
-        service = operations.OperationsService()
+        service = OperationsService()
 
         # Test validation methods that should exist
         validation_methods = [
@@ -583,13 +586,14 @@ class TestConnectionManagement:
 
     def test_connection_error_handling(self) -> None:
         """Test connection error handling patterns."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
 
         # Test invalid connection parameters
         try:
             # This should test error handling paths
-            connection_ops = operations.ConnectionOperations()
-            result = connection_ops.validate_uri_string("")
+            # Use OperationsService which has validate_uri_string method
+            operations_service = OperationsService()
+            result = operations_service.validate_uri_string("")
             assert hasattr(result, "is_success")
         except Exception as e:
             # If validation throws exceptions, that's also valid error handling
@@ -658,46 +662,45 @@ class TestUserOperations:
     """Test UserOperations nested class functionality."""
 
     def test_user_operations_creation(self) -> None:
-        """Test UserOperations can be created."""
+        """Test EntityOperations can be created for user operations."""
         operations = FlextLdapOperations()
-        user_ops = operations.UserOperations()
-        assert user_ops is not None
+        entity_ops = operations.entities
+        assert entity_ops is not None
 
     def test_user_operations_methods(self) -> None:
-        """Test UserOperations has expected methods."""
+        """Test EntityOperations has expected methods for user operations."""
         operations = FlextLdapOperations()
-        user_ops = operations.UserOperations()
+        entity_ops = operations.entities
 
-        # Check for user-related methods
-        user_methods = [
+        # Check for entity-related methods
+        entity_methods = [
             attr
-            for attr in dir(user_ops)
-            if not attr.startswith("_") and callable(getattr(user_ops, attr))
+            for attr in dir(entity_ops)
+            if not attr.startswith("_") and callable(getattr(entity_ops, attr))
         ]
 
-        # Should have some user methods
-        assert len(user_methods) >= 0
+        # Should have some entity methods
+        assert len(entity_methods) >= 0
 
 
 class TestGroupOperations:
     """Test GroupOperations nested class functionality."""
 
     def test_group_operations_creation(self) -> None:
-        """Test GroupOperations can be created."""
+        """Test EntityOperations can be created for group operations."""
         operations = FlextLdapOperations()
-        group_ops = operations.GroupOperations()
-        assert group_ops is not None
+        entity_ops = operations.entities
+        assert entity_ops is not None
 
     def test_group_operations_methods(self) -> None:
-        """Test GroupOperations has expected methods."""
+        """Test EntityOperations has expected methods for group operations."""
         operations = FlextLdapOperations()
-        group_ops = operations.GroupOperations()
 
         # Check for group-related methods
         group_methods = [
             attr
-            for attr in dir(group_ops)
-            if not attr.startswith("_") and callable(getattr(group_ops, attr))
+            for attr in dir(operations)
+            if not attr.startswith("_") and callable(getattr(operations, attr))
         ]
 
         # Should have some group methods
@@ -734,14 +737,12 @@ class TestOperationsService:
 
     def test_operations_service_creation(self) -> None:
         """Test OperationsService can be created."""
-        operations = FlextLdapOperations()
-        ops_service = operations.OperationsService()
+        ops_service = OperationsService()
         assert ops_service is not None
 
     def test_operations_service_methods(self) -> None:
         """Test OperationsService has expected methods."""
-        operations = FlextLdapOperations()
-        ops_service = operations.OperationsService()
+        ops_service = OperationsService()
 
         # Check for service-related methods
         service_methods = [
@@ -813,8 +814,8 @@ class TestConnectionOperationsDetailed:
 
     def test_get_connection_info_method(self) -> None:
         """Test get_connection_info method."""
-        operations = FlextLdapOperations()
-        conn_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        conn_ops = operations_instance.connections
 
         # Test method exists
         assert hasattr(conn_ops, "get_connection_info")
@@ -833,8 +834,8 @@ class TestConnectionOperationsDetailed:
 
     def test_list_active_connections_method(self) -> None:
         """Test list_active_connections method."""
-        operations = FlextLdapOperations()
-        conn_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        conn_ops = operations_instance.connections
 
         # Test method exists
         assert hasattr(conn_ops, "list_active_connections")
@@ -872,7 +873,7 @@ class TestOperationsValidationMethods:
 
     def test_server_uri_validation_coverage(self) -> None:
         """Test URI validation specifically."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
 
         # Test URI validation with valid URIs
         valid_uris = [
@@ -881,7 +882,8 @@ class TestOperationsValidationMethods:
             "ldap://192.168.1.100:389",
         ]
 
-        connection_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        connection_ops = operations_instance.connections
         for uri in valid_uris:
             result = connection_ops.validate_uri_string(uri)
             assert hasattr(result, "is_success")
@@ -922,7 +924,7 @@ class TestLDAPEntryProcessing:
     def test_attribute_extraction_scenarios(self) -> None:
         """Test attribute extraction in various scenarios."""
         # Test UserAttributeExtractor with different attribute combinations
-        user_extractor = FlextLdapOperations.UserAttributeExtractor()
+        user_extractor = UserAttributeExtractor()
 
         # Test with minimal attributes
         minimal_entry = SimpleNamespace(
@@ -952,7 +954,7 @@ class TestLDAPEntryProcessing:
 
     def test_group_attribute_extraction_scenarios(self) -> None:
         """Test group attribute extraction in various scenarios."""
-        group_extractor = FlextLdapOperations.GroupAttributeExtractor()
+        group_extractor = GroupAttributeExtractor()
 
         # Test with simple group
         simple_group = SimpleNamespace(
@@ -1033,8 +1035,8 @@ class TestCommandObjectExecution:
 
     def test_connection_operations_real_execution(self) -> None:
         """Test ConnectionOperations real method execution paths."""
-        operations = FlextLdapOperations()
-        conn_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        conn_ops = operations_instance.connections
 
         # Test list_active_connections execution path
         connections_result = conn_ops.list_active_connections()
@@ -1046,8 +1048,8 @@ class TestCommandObjectExecution:
 
     def test_operations_service_execution_paths(self) -> None:
         """Test OperationsService method execution paths."""
-        operations = FlextLdapOperations()
-        ops_service = operations.OperationsService()
+        FlextLdapOperations()
+        ops_service = OperationsService()
 
         # Test that OperationsService has callable methods
         service_methods = [
@@ -1099,7 +1101,7 @@ class TestOperationsInternalMethods:
 
     def test_validation_methods_with_edge_cases(self) -> None:
         """Test validation methods with edge cases to increase coverage."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
 
         # Test URI validation with various formats
         uri_test_cases = [
@@ -1110,9 +1112,10 @@ class TestOperationsInternalMethods:
             "ldaps://complex.sub.domain.example.org:636",
         ]
 
-        connection_ops = operations.ConnectionOperations()
+        # Use OperationsService which has validate_uri_string method
+        operations_service = OperationsService()
         for uri in uri_test_cases:
-            result = connection_ops.validate_uri_string(uri)
+            result = operations_service.validate_uri_string(uri)
             # Executes validation logic paths
             assert hasattr(result, "is_success")
 
@@ -1184,7 +1187,7 @@ class TestDetailedAttributeExtraction:
 
     def test_group_extractor_member_extraction(self) -> None:
         """Test GroupAttributeExtractor member extraction methods."""
-        extractor = FlextLdapOperations.GroupAttributeExtractor()
+        extractor = GroupAttributeExtractor()
 
         # Test _extract_member_list with various member formats
         member_test_cases = [
@@ -1215,8 +1218,8 @@ class TestDetailedAttributeExtraction:
 
     def test_attribute_extraction_error_paths(self) -> None:
         """Test attribute extraction error handling paths."""
-        user_extractor = FlextLdapOperations.UserAttributeExtractor()
-        group_extractor = FlextLdapOperations.GroupAttributeExtractor()
+        user_extractor = UserAttributeExtractor()
+        group_extractor = GroupAttributeExtractor()
 
         # Test with malformed entries to cover error paths
         error_test_cases = [
@@ -1325,8 +1328,8 @@ class TestAdvancedExecutionPaths:
 
     async def test_connection_operations_close_connection(self) -> None:
         """Test ConnectionOperations.close_connection method execution."""
-        operations = FlextLdapOperations()
-        conn_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        conn_ops = operations_instance.connections
 
         # Test close_connection with various connection IDs
         connection_ids = [
@@ -1345,8 +1348,8 @@ class TestAdvancedExecutionPaths:
 
     def test_connection_operations_calculate_duration(self) -> None:
         """Test ConnectionOperations._calculate_duration method."""
-        operations = FlextLdapOperations()
-        conn_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        conn_ops = operations_instance.connections
 
         # Test duration calculation with various timestamps
         test_timestamps = [
@@ -1426,7 +1429,7 @@ class TestAdvancedExecutionPaths:
             operations.UserOperations,
             operations.GroupOperations,
             operations.EntryOperations,
-            operations.OperationsService,
+            OperationsService,
         ]
 
         for cls in nested_classes:
@@ -1451,9 +1454,9 @@ class TestComprehensiveValidationScenarios:
 
     def test_ldap_dn_validation_complex_cases(self) -> None:
         """Test DN validation with complex real-world scenarios."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
         # Get the nested OperationsService class
-        service = operations.OperationsService()
+        service = OperationsService()
 
         # Test complex DN structures that should be valid
         complex_dns = [
@@ -1472,9 +1475,9 @@ class TestComprehensiveValidationScenarios:
 
     def test_ldap_filter_validation_comprehensive(self) -> None:
         """Test LDAP filter validation with comprehensive real-world filters."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
         # Get the nested OperationsService class
-        service = operations.OperationsService()
+        service = OperationsService()
 
         # Test complex LDAP filters used in production
         production_filters = [
@@ -1505,7 +1508,7 @@ class TestComprehensiveValidationScenarios:
 
     def test_uri_validation_comprehensive_schemes(self) -> None:
         """Test URI validation with comprehensive scheme and format coverage."""
-        operations = FlextLdapOperations()
+        FlextLdapOperations()
 
         # Test various URI schemes and formats
         comprehensive_uris = [
@@ -1530,7 +1533,8 @@ class TestComprehensiveValidationScenarios:
             "ldap://dev.server:10389",
         ]
 
-        connection_ops = operations.ConnectionOperations()
+        operations_instance = FlextLdapOperations()
+        connection_ops = operations_instance.connections
         for uri in comprehensive_uris:
             result = connection_ops.validate_uri_string(uri)
             assert hasattr(result, "is_success")
@@ -1542,8 +1546,8 @@ class TestOperationsServiceDetailed:
 
     def test_operations_service_advanced_methods(self) -> None:
         """Test OperationsService advanced method execution."""
-        operations = FlextLdapOperations()
-        ops_service = operations.OperationsService()
+        FlextLdapOperations()
+        ops_service = OperationsService()
 
         # Test service-level operations
         service_attrs = [
@@ -1636,8 +1640,8 @@ class TestAttributeExtractionAdvanced:
 
     def test_extract_optional_string_attribute_comprehensive(self) -> None:
         """Test _extract_optional_string_attribute with comprehensive cases."""
-        user_extractor = FlextLdapOperations.UserAttributeExtractor()
-        group_extractor = FlextLdapOperations.GroupAttributeExtractor()
+        user_extractor = UserAttributeExtractor()
+        group_extractor = GroupAttributeExtractor()
 
         # Test various optional attribute scenarios
         optional_test_cases = [
@@ -1824,9 +1828,7 @@ class TestAttributeExtractionAdvanced:
             if hasattr(entry_ops, "create_entry"):
                 result = await entry_ops.create_entry("test_conn", test_entry)
                 assert hasattr(result, "is_success")
-            elif hasattr(entry_ops, "add_entry"):
-                result = await entry_ops.add_entry("test_conn", test_entry)
-                assert hasattr(result, "is_success")
+            # Note: add_entry method doesn't exist in EntryOperations, only create_entry
 
     @pytest.mark.asyncio
     async def test_update_entry_operations_comprehensive(self) -> None:
@@ -1849,13 +1851,7 @@ class TestAttributeExtractionAdvanced:
                     },
                 )
                 assert hasattr(result, "is_success")
-            elif hasattr(entry_ops, "update_entry"):
-                result = await entry_ops.update_entry(
-                    "test_update_conn",
-                    "cn=testuser,ou=users,dc=example,dc=com",
-                    {"mail": ["newemail@example.com"]},
-                )
-                assert hasattr(result, "is_success")
+            # Note: update_entry method doesn't exist in EntryOperations, only modify_entry
 
     @pytest.mark.asyncio
     async def test_delete_entry_operations_comprehensive(self) -> None:
@@ -1872,11 +1868,7 @@ class TestAttributeExtractionAdvanced:
                     "test_delete_conn", "cn=testuser,ou=users,dc=example,dc=com"
                 )
                 assert hasattr(result, "is_success")
-            elif hasattr(entry_ops, "remove_entry"):
-                result = await entry_ops.remove_entry(
-                    "test_delete_conn", "cn=testuser,ou=users,dc=example,dc=com"
-                )
-                assert hasattr(result, "is_success")
+            # Note: remove_entry method doesn't exist in EntryOperations, only delete_entry
 
     def test_exception_handling_helpers_comprehensive(self) -> None:
         """Test exception handling helper methods - covers utility gaps."""
@@ -1900,10 +1892,12 @@ class TestAttributeExtractionAdvanced:
                 f"If method doesn't exist or fails, that's acceptable for coverage: {e}"
             )
 
-        # Test duration calculation if exists
-        if hasattr(operations, "_calculate_duration"):
-            duration = operations._calculate_duration("2025-01-01T00:00:00Z")
-            assert duration is None or isinstance(duration, (int, float))
+        # Test duration calculation if exists (method is on ConnectionOperations)
+        if hasattr(operations, "connections"):
+            conn_ops = operations.connections
+            if hasattr(conn_ops, "_calculate_duration"):
+                duration = conn_ops._calculate_duration("2025-01-01T00:00:00Z")
+                assert duration is None or isinstance(duration, (int, float))
 
     def test_logging_operation_helpers_comprehensive(self) -> None:
         """Test logging operation helper methods - covers logging gaps."""
@@ -1933,17 +1927,16 @@ class TestAttributeExtractionAdvanced:
 
         # Test ConnectionOperations bind if available
         if hasattr(operations, "ConnectionOperations"):
-            conn_ops = operations.ConnectionOperations()
+            operations_instance = FlextLdapOperations()
+            conn_ops = operations_instance.connections
 
-            # Test bind authentication methods
-            if hasattr(conn_ops, "bind_connection"):
-                result = await conn_ops.bind_connection(
-                    "test_bind_conn", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD123"
-                )
-                assert hasattr(result, "is_success")
-            elif hasattr(conn_ops, "authenticate"):
-                result = await conn_ops.authenticate(
-                    "test_bind_conn", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD123"
+            # Test connection creation method (actual method available)
+            if hasattr(conn_ops, "create_connection"):
+                result = await conn_ops.create_connection(
+                    server_uri="ldap://test.example.com:389",
+                    bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                    _bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+                    timeout_seconds=30,
                 )
                 assert hasattr(result, "is_success")
 
@@ -1952,15 +1945,17 @@ class TestAttributeExtractionAdvanced:
         """Test modify_password method - covers password operation gaps."""
         operations = FlextLdapOperations()
 
-        # Test password modification if method exists
-        if hasattr(operations, "modify_password"):
-            result = await operations.modify_password(
-                connection_id="test_pwd_conn",
-                user_dn="cn=testuser,ou=users,dc=example,dc=com",
-                old_password="oldpass123",
-                new_password="newpass456",
-            )
-            assert hasattr(result, "is_success")
+        # Test password modification if method exists (might be on UserOperations)
+        if hasattr(operations, "users"):
+            user_ops = operations.users
+            # Test methods that actually exist on UserOperations
+            if hasattr(user_ops, "update_user_password"):
+                result = await user_ops.update_user_password(
+                    connection_id="test_pwd_conn",
+                    user_dn="cn=testuser,ou=users,dc=example,dc=com",
+                    new_password="newpass456",
+                )
+                assert hasattr(result, "is_success")
 
     def test_connection_info_retrieval_comprehensive(self) -> None:
         """Test get_connection_info method - covers connection info gaps."""

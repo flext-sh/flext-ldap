@@ -22,7 +22,7 @@ from flext_core import FlextLogger
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapConfig,
-    FlextLdapValueObjects,
+    FlextLdapModels,
 )
 
 logger = FlextLogger(__name__)
@@ -42,7 +42,7 @@ def demonstrate_configuration() -> None:
 async def demonstrate_api_usage() -> FlextLdapApi:
     """Demonstrate API usage patterns."""
     # 1. Initialize API using factory function
-    # Use explicit factory create() to avoid Any-return typing for some loaders
+    # Use explicit factory create() to avoid object-return typing for some loaders
     api = FlextLdapApi.create()
 
     # 2. Connect (using demo server for example)
@@ -93,12 +93,12 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
 async def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result = FlextLdapValueObjects.DistinguishedName.create("")
+    dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create("")
     if not dn_result.is_success:
         pass
 
     # 2. Filter validation errors
-    filter_result = FlextLdapValueObjects.Filter.create("invalid-filter-format")
+    filter_result = FlextLdapModels.ValueObjects.Filter.create("invalid-filter-format")
     if not filter_result.is_success:
         pass
 

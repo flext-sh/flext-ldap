@@ -14,11 +14,9 @@ from flext_core import (
     FlextResult,
 )
 from flext_ldap.clients import FlextLdapClient
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs
 from flext_ldap.operations import FlextLdapOperations
 from flext_ldap.repositories import FlextLdapRepositories
-
-# NO TYPE ALIASES ALLOWED - Use FlextLdapContainer class methods directly
 
 
 @final
@@ -83,7 +81,7 @@ class FlextLdapContainer(FlextMixins.Loggable):
 
     # Removed unnecessary alias methods - use get_repository() directly per SOURCE OF TRUTH
 
-    def configure(self, config: FlextLdapConfig) -> FlextResult[None]:
+    def configure(self, config: FlextLdapConfigs) -> FlextResult[None]:
         """Configure container with LDAP settings.
 
         Args:

@@ -123,8 +123,9 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             if search_result.is_success and search_result.value:
                 entries = search_result.value
                 for user_entry in entries:
-                    user_entry.get_attribute("uid") or "N/A"
-                    user_entry.get_attribute("cn") or "N/A"
+                    uid = user_entry.get_attribute("uid") or "N/A"
+                    cn = user_entry.get_attribute("cn") or "N/A"
+                    logger.debug(f"Found user: {uid} ({cn})")
 
                 # Perform user search validation
                 await _perform_user_search_validation(ldap_service, session_id)
@@ -218,8 +219,11 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             if search_result.is_success and search_result.value:
                 entries = search_result.value
                 for group_entry in entries:
-                    group_entry.get_attribute("cn") or "N/A"
-                    (group_entry.get_attribute("description") or "No description")
+                    cn = group_entry.get_attribute("cn") or "N/A"
+                    description = (
+                        group_entry.get_attribute("description") or "No description"
+                    )
+                    logger.debug(f"Found group: {cn} - {description}")
 
                 # Perform group search validation
                 await _perform_group_search_validation(ldap_service, session_id)
@@ -258,8 +262,9 @@ async def _perform_group_search_validation(
     if all_groups_result.is_success:
         entries = all_groups_result.value or []
         for group_entry in entries:
-            group_entry.get_attribute("cn") or "Unknown"
-            group_entry.get_attribute("objectClass")
+            cn = group_entry.get_attribute("cn") or "Unknown"
+            object_class = group_entry.get_attribute("objectClass")
+            logger.debug(f"Group: {cn}, Class: {object_class}")
 
     # Test 2: Search groups with wildcards
     wildcard_result = await ldap_service.search_simple(

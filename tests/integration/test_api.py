@@ -20,7 +20,6 @@ from flext_ldap import (
     FlextLdapContainer,
     FlextLdapModels,
     FlextLdapServices,
-    FlextLdapValueObjects,
 )
 from flext_ldap.typings import FlextLdapTypes
 
@@ -504,7 +503,7 @@ class TestLdapValidationRealOperations:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
         valid_dn = f"cn=validuser,ou=users,{clean_ldap_container['base_dn']}"
-        dn_result = FlextLdapValueObjects.DistinguishedName.create(valid_dn)
+        dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create(valid_dn)
         assert dn_result.is_success, f"Valid DN should work: {dn_result.error}"
 
         # Test invalid DN formats - should fail validation
@@ -515,7 +514,7 @@ class TestLdapValidationRealOperations:
         ]
 
         for invalid_dn in invalid_dns:
-            dn_result = FlextLdapValueObjects.DistinguishedName.create(invalid_dn)
+            dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create(invalid_dn)
             if not dn_result.is_success:
                 # Validation correctly rejected invalid DN
                 assert True
@@ -604,9 +603,9 @@ class TestLdapErrorHandlingReal:
         """Test handling of real connection failures."""
         client = FlextLdapClient()
 
-        # Test connection to non-existent server
+        # Test connection to non-existent server (use localhost with invalid port to avoid DNS hangs)
         bad_result = await client.connect(
-            "ldap://nonexistent-server:389",
+            "ldap://127.0.0.1:9999",
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             "password",
         )

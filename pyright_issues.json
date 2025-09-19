@@ -469,7 +469,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/support/fixtures.py",
       "severity": "error",
-      "message": "Type \"FlextLdapConnectionConfig\" is not assignable to return type \"AsyncGenerator[FlextLdapConnectionConfig, None]\"\n  \"FlextLdapConnectionConfig\" is incompatible with protocol \"AsyncGenerator[FlextLdapConnectionConfig, None]\"\n    \"__anext__\" is not present\n    \"asend\" is not present\n    \"athrow\" is not present\n    \"aclose\" is not present\n    \"__aiter__\" is not present",
+      "message": "Type \"FlextLdapModels.ConnectionConfig\" is not assignable to return type \"AsyncGenerator[FlextLdapModels.ConnectionConfig, None]\"\n  \"FlextLdapModels.ConnectionConfig\" is incompatible with protocol \"AsyncGenerator[FlextLdapModels.ConnectionConfig, None]\"\n    \"__anext__\" is not present\n    \"asend\" is not present\n    \"athrow\" is not present\n    \"aclose\" is not present\n    \"__aiter__\" is not present",
       "range": {
         "start": {
           "line": 50,

@@ -653,7 +653,9 @@ class TestDomainFactoriesAndUtilities:
             service_methods = [
                 method
                 for method in dir(service)
-                if not method.startswith("_") and callable(getattr(service, method))
+                if not method.startswith("_")
+                and method not in {"model_fields", "model_computed_fields"}
+                and callable(getattr(service, method))
             ]
             assert len(service_methods) > 0
 

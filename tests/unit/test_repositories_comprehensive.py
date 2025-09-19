@@ -13,7 +13,6 @@ from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.typings import FlextLdapTypes
 
 
-@pytest.mark.asyncio
 class TestFlextLdapRepositoriesComprehensive:
     """Comprehensive tests for FlextLdapRepositories with real functionality."""
 
@@ -58,6 +57,7 @@ class TestFlextLdapRepositoriesComprehensive:
 
         assert repo._client is client
 
+    @pytest.mark.asyncio
     async def test_find_by_dn_without_connection(self) -> None:
         """Test find_by_dn without connection using FlextTestsMatchers."""
         client = FlextLdapClient()
@@ -75,6 +75,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_search_without_connection(self) -> None:
         """Test search without connection using FlextTestsMatchers and TestBuilders."""
         client = FlextLdapClient()
@@ -102,6 +103,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_save_async_without_connection(self) -> None:
         """Test _save_async without connection."""
         client = FlextLdapClient()
@@ -122,6 +124,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_delete_async_without_connection(self) -> None:
         """Test delete_async without connection."""
         client = FlextLdapClient()
@@ -135,6 +138,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_exists_without_connection(self) -> None:
         """Test exists without connection."""
         client = FlextLdapClient()
@@ -155,6 +159,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_update_without_connection(self) -> None:
         """Test update without connection."""
         client = FlextLdapClient()
@@ -241,6 +246,7 @@ class TestFlextLdapRepositoriesComprehensive:
 
         assert user_repo._repo is base_repo
 
+    @pytest.mark.asyncio
     async def test_find_user_by_uid_without_connection(self) -> None:
         """Test find_user_by_uid without connection."""
         client = FlextLdapClient()
@@ -258,6 +264,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_find_users_by_filter_without_connection(self) -> None:
         """Test find_users_by_filter without connection."""
         client = FlextLdapClient()
@@ -276,6 +283,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_find_users_by_filter_comprehensive(self) -> None:
         """Test find_users_by_filter with different filter patterns."""
         client = FlextLdapClient()
@@ -306,6 +314,7 @@ class TestFlextLdapRepositoriesComprehensive:
 
         assert group_repo._repo is base_repo
 
+    @pytest.mark.asyncio
     async def test_find_group_by_cn_without_connection(self) -> None:
         """Test find_group_by_cn without connection."""
         client = FlextLdapClient()
@@ -323,6 +332,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_get_group_members_without_connection(self) -> None:
         """Test get_group_members without connection."""
         client = FlextLdapClient()
@@ -340,6 +350,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_add_member_to_group_without_connection(self) -> None:
         """Test add_member_to_group without connection."""
         client = FlextLdapClient()
@@ -362,6 +373,7 @@ class TestFlextLdapRepositoriesComprehensive:
     # Main FlextLdapRepositories Facade Tests
     # =============================================================================
 
+    @pytest.mark.asyncio
     async def test_main_repositories_find_by_dn(self) -> None:
         """Test main repositories find_by_dn facade method."""
         client = FlextLdapClient()
@@ -376,6 +388,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_main_repositories_search(self) -> None:
         """Test main repositories search facade method."""
         client = FlextLdapClient()
@@ -399,6 +412,7 @@ class TestFlextLdapRepositoriesComprehensive:
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_main_repositories_save_async(self) -> None:
         """Test main repositories save_async facade method."""
         client = FlextLdapClient()
@@ -419,6 +433,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_main_repositories_delete_async(self) -> None:
         """Test main repositories delete_async facade method."""
         client = FlextLdapClient()
@@ -432,6 +447,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_main_repositories_exists(self) -> None:
         """Test main repositories exists facade method."""
         client = FlextLdapClient()
@@ -445,6 +461,7 @@ class TestFlextLdapRepositoriesComprehensive:
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
+    @pytest.mark.asyncio
     async def test_main_repositories_update(self) -> None:
         """Test main repositories update facade method."""
         client = FlextLdapClient()

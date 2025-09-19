@@ -17,7 +17,7 @@ import traceback
 from pydantic import SecretStr
 
 from flext_cli import FlextCliFormatters
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
 
 
 def demonstrate_singleton_pattern() -> None:
@@ -195,14 +195,15 @@ def demonstrate_direct_singleton_usage() -> None:
         "=== Direct FlextLdapConfig Singleton Usage Demo ===", "info"
     )
 
-    # Create a custom configuration using type: ignore for Pydantic model limitations
-    custom_config = FlextLdapConfig(
-        app_name="custom-ldap-app",
-        ldap_bind_dn="cn=custom,dc=example,dc=com",
-        ldap_bind_password=SecretStr("custom-password"),
-        ldap_use_ssl=True,
-        ldap_size_limit=2000,
-    )
+    # Create a custom configuration using model_validate for proper type handling
+    config_data = {
+        "app_name": "custom-ldap-app",
+        "ldap_bind_dn": "cn=custom,dc=example,dc=com",
+        "ldap_bind_password": SecretStr("custom-password"),
+        "ldap_use_ssl": True,
+        "ldap_size_limit": 2000,
+    }
+    custom_config = FlextLdapConfig.model_validate(config_data)
 
     # Set as global singleton using proper FLEXT pattern
     FlextLdapConfig.set_global_instance(custom_config)

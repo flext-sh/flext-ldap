@@ -30,11 +30,6 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
-# Advanced type definitions for domain
-type DomainEntity = FlextLdapModels.User | FlextLdapModels.Group | FlextLdapModels.Entry
-type ValidationResult = FlextResult[None]
-type DomainEvent = dict[str, object]
-
 
 class FlextLdapDomain(FlextMixins.Loggable):
     """LDAP domain functionality using FlextMixins.Loggable."""

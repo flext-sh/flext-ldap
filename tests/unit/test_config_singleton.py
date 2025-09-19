@@ -16,8 +16,8 @@ from unittest.mock import patch
 import pytest
 from pydantic import SecretStr
 
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
+from flext_ldap.models import FlextLdapModels
 
 
 class TestFlextLdapConfigSingleton:
@@ -53,12 +53,13 @@ class TestFlextLdapConfigSingleton:
 
     def test_set_global_instance(self) -> None:
         """Test setting a custom global instance."""
-        # Create custom config
-        custom_config = FlextLdapConfig(
-            app_name="test-app",
-            ldap_bind_dn="cn=test,dc=example,dc=com",
-            ldap_bind_password=SecretStr("test123"),
-        )
+        # Create custom config using model_validate
+        config_data = {
+            "app_name": "test-app",
+            "ldap_bind_dn": "cn=test,dc=example,dc=com",
+            "ldap_bind_password": SecretStr("test123"),
+        }
+        custom_config = FlextLdapConfig.model_validate(config_data)
 
         # Set as global
         FlextLdapConfig.set_global_instance(custom_config)
@@ -155,7 +156,7 @@ class TestFlextLdapConfigSingleton:
     def test_ldap_specific_methods(self) -> None:
         """Test LDAP-specific configuration methods."""
         config = FlextLdapConfig()
-        config.ldap_default_connection = FlextLdapConnectionConfig(
+        config.ldap_default_connection = FlextLdapModels.ConnectionConfig(
             server="ldap://test.example.com",
             port=389,
         )
@@ -179,11 +180,12 @@ class TestFlextLdapConfigSingleton:
 
     def test_config_field_modifications(self) -> None:
         """Test modifying LDAP configuration fields."""
-        config = FlextLdapConfig(
-            ldap_size_limit=100,
-            ldap_time_limit=30,
-            ldap_enable_caching=False,
-        )
+        config_data = {
+            "ldap_size_limit": 100,
+            "ldap_time_limit": 30,
+            "ldap_enable_caching": False,
+        }
+        config = FlextLdapConfig.model_validate(config_data)
 
         # Check initial values
         assert config.ldap_size_limit == 100
@@ -206,7 +208,7 @@ class TestFlextLdapConfigSingleton:
         """Test assigning connection configuration."""
         config = FlextLdapConfig()
 
-        new_connection = FlextLdapConnectionConfig(
+        new_connection = FlextLdapModels.ConnectionConfig(
             server="ldaps://new.example.com",
             port=636,
             use_ssl=True,
@@ -223,23 +225,25 @@ class TestFlextLdapConfigSingleton:
     def test_validation_business_rules(self) -> None:
         """Test LDAP-specific business rule validation."""
         # Valid configuration
-        valid_config = FlextLdapConfig(
-            ldap_size_limit=1000,
-            ldap_time_limit=30,
-            ldap_page_size=100,
-            ldap_enable_caching=True,
-            ldap_cache_ttl=300,
-        )
+        valid_config_data = {
+            "ldap_size_limit": 1000,
+            "ldap_time_limit": 30,
+            "ldap_page_size": 100,
+            "ldap_enable_caching": True,
+            "ldap_cache_ttl": 300,
+        }
+        valid_config = FlextLdapConfig.model_validate(valid_config_data)
 
         result = valid_config.validate_business_rules()
         assert result.is_success
 
         # Test business rules validation with valid configuration
         # The validation_business_rules method should handle edge cases
-        valid_config_with_cache = FlextLdapConfig(
-            ldap_enable_caching=True,
-            ldap_cache_ttl=300,  # Valid value
-        )
+        cache_config_data = {
+            "ldap_enable_caching": True,
+            "ldap_cache_ttl": 300,  # Valid value
+        }
+        valid_config_with_cache = FlextLdapConfig.model_validate(cache_config_data)
 
         result = valid_config_with_cache.validate_business_rules()
         assert result.is_success
@@ -247,26 +251,30 @@ class TestFlextLdapConfigSingleton:
     def test_field_validation(self) -> None:
         """Test LDAP-specific field validation."""
         # Valid bind DN
-        config = FlextLdapConfig(ldap_bind_dn="cn=test,dc=example,dc=com")
+        config_data = {"ldap_bind_dn": "cn=test,dc=example,dc=com"}
+        config = FlextLdapConfig.model_validate(config_data)
         assert config.ldap_bind_dn == "cn=test,dc=example,dc=com"
 
         # None bind DN is valid
-        config_none = FlextLdapConfig(ldap_bind_dn=None)
+        config_none_data = {"ldap_bind_dn": None}
+        config_none = FlextLdapConfig.model_validate(config_none_data)
         assert config_none.ldap_bind_dn is None
 
         # Invalid bind DN - malformed DN format
+        invalid_dn_data = {"ldap_bind_dn": "invalid-dn-format"}
         with pytest.raises(ValueError, match="Invalid LDAP bind DN format"):
-            FlextLdapConfig(ldap_bind_dn="invalid-dn-format")
+            FlextLdapConfig.model_validate(invalid_dn_data)
 
     def test_model_validation_consistency(self) -> None:
         """Test cross-field validation consistency."""
         # Valid configuration
-        config = FlextLdapConfig(
-            ldap_use_ssl=True,
-            ldap_verify_certificates=True,
-            ldap_enable_caching=True,
-            ldap_cache_ttl=300,
-        )
+        valid_config_data = {
+            "ldap_use_ssl": True,
+            "ldap_verify_certificates": True,
+            "ldap_enable_caching": True,
+            "ldap_cache_ttl": 300,
+        }
+        config = FlextLdapConfig.model_validate(valid_config_data)
         assert config.ldap_use_ssl is True
 
         # Test business rules validation

@@ -10,12 +10,12 @@ FlextLdapProtocols to maintain the clean architecture and single-class-per-modul
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
+
+from ldap3 import SUBTREE
 
 from flext_core import FlextProtocols, FlextResult, FlextTypes
-
-if TYPE_CHECKING:
-    from flext_ldap.models import FlextLdapModels
+from flext_ldap.models import FlextLdapModels
 
 __all__ = ["FlextLdapProtocols"]
 
@@ -24,7 +24,7 @@ class FlextLdapProtocols(FlextProtocols):
     """LDAP Protocols class."""
 
     @runtime_checkable
-    class ConnectionProtocol(Protocol):
+    class Connection(Protocol):
         """Protocol for LDAP connection management."""
 
         @abstractmethod
@@ -48,7 +48,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class AuthenticationProtocol(Protocol):
+    class Authentication(Protocol):
         """Protocol for LDAP authentication operations."""
 
         @abstractmethod
@@ -67,7 +67,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class SearchProtocol(Protocol):
+    class Search(Protocol):
         """Protocol for LDAP search operations."""
 
         @abstractmethod
@@ -102,7 +102,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class CrudProtocol(Protocol):
+    class Crud(Protocol):
         """Protocol for LDAP CRUD operations."""
 
         @abstractmethod
@@ -135,7 +135,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class UserManagementProtocol(Protocol):
+    class UserManagement(Protocol):
         """Protocol for LDAP user management operations."""
 
         @abstractmethod
@@ -176,7 +176,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class GroupManagementProtocol(Protocol):
+    class GroupManagement(Protocol):
         """Protocol for LDAP group management operations."""
 
         @abstractmethod
@@ -226,7 +226,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class RepositoryProtocol(Protocol):
+    class Repository(Protocol):
         """Protocol for LDAP repository operations."""
 
         @abstractmethod
@@ -250,7 +250,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class ValidationProtocol(Protocol):
+    class Validation(Protocol):
         """Protocol for LDAP validation operations."""
 
         @abstractmethod
@@ -278,20 +278,20 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class ConfigurationProtocol(Protocol):
+    class Configuration(Protocol):
         """Protocol for LDAP configuration management."""
 
         @abstractmethod
         def get_connection_config(
             self,
-        ) -> FlextResult[FlextLdapModels.ConnectionConfig]:
+        ) -> FlextResult[object]:
             """Get connection configuration."""
             ...
 
         @abstractmethod
         def update_connection_config(
             self,
-            config: FlextLdapModels.ConnectionConfig,
+            config: object,
         ) -> FlextResult[None]:
             """Update connection configuration."""
             ...
@@ -302,7 +302,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class CacheProtocol(Protocol):
+    class Cache(Protocol):
         """Protocol for LDAP caching operations."""
 
         @abstractmethod
@@ -333,7 +333,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class LoggingProtocol(Protocol):
+    class Logging(Protocol):
         """Protocol for LDAP logging operations."""
 
         @abstractmethod
@@ -364,7 +364,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class ClientProtocol(Protocol):
+    class Client(Protocol):
         """Protocol for LDAP client operations."""
 
         @abstractmethod
@@ -387,7 +387,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class AdapterProtocol(Protocol):
+    class Adapter(Protocol):
         """Protocol for LDAP adapter operations."""
 
         @abstractmethod
@@ -406,7 +406,7 @@ class FlextLdapProtocols(FlextProtocols):
             ...
 
     @runtime_checkable
-    class ServiceProtocol(Protocol):
+    class Service(Protocol):
         """Protocol for LDAP service operations."""
 
         @abstractmethod
@@ -426,59 +426,124 @@ class FlextLdapProtocols(FlextProtocols):
 
     # Composite Protocols for common use cases
     @runtime_checkable
-    class LdapClientProtocol(
-        ConnectionProtocol,
-        AuthenticationProtocol,
-        SearchProtocol,
-        CrudProtocol,
+    class LdapClient(
+        Connection,
+        Authentication,
+        Search,
+        Crud,
         Protocol,
     ):
         """Composite protocol for full LDAP client functionality."""
 
     @runtime_checkable
-    class LdapServiceProtocol(
-        UserManagementProtocol,
-        GroupManagementProtocol,
-        ValidationProtocol,
-        ServiceProtocol,
+    class LdapService(
+        UserManagement,
+        GroupManagement,
+        Validation,
+        Service,
         Protocol,
     ):
         """Composite protocol for LDAP service functionality."""
 
     @runtime_checkable
-    class LdapRepositoryProtocol(
-        RepositoryProtocol,
-        SearchProtocol,
-        CrudProtocol,
+    class LdapRepository(
+        Repository,
+        Search,
+        Crud,
         Protocol,
     ):
         """Composite protocol for LDAP repository functionality."""
 
+    class LdapEntry(Protocol):
+        """Protocol for LDAP entry objects (ldap3.Entry or compatible)."""
+
+        entry_dn: str
+        entry_attributes: dict[str, object] | list[str]
+
+    class LdapConnection(Protocol):
+        """Protocol for LDAP connection objects (ldap3.Connection or compatible).
+
+        This Protocol defines the interface for LDAP connections, providing type safety
+        for external library calls while maintaining FLEXT zero tolerance policies.
+        """
+
+        # Attributes that are accessed on the connection
+        bound: bool
+        entries: list[FlextLdapProtocols.LdapEntry]
+        result: dict[str, object]
+
+        def unbind(self) -> bool:
+            """Unbind from LDAP server."""
+            ...
+
+        def rebind(self, user: str | None, password: str | None) -> bool:
+            """Rebind with different credentials."""
+            ...
+
+        def add(
+            self,
+            dn: str,
+            object_classes: list[str] | None = None,
+            attributes: dict[str, object] | None = None,
+        ) -> bool:
+            """Add LDAP entry."""
+            ...
+
+        def modify(self, dn: str, changes: dict[str, object]) -> bool:
+            """Modify LDAP entry."""
+            ...
+
+        def delete(self, dn: str) -> bool:
+            """Delete LDAP entry."""
+            ...
+
+        def search(
+            self,
+            search_base: str,
+            search_filter: str,
+            search_scope: str = SUBTREE,
+            dereference_aliases: str = "NEVER",
+            attributes: list[str]
+            | str
+            | None = None,  # Allow ALL_ATTRIBUTES which is a string
+            size_limit: int = 0,
+            time_limit: int = 0,
+            *,
+            types_only: bool = False,
+            get_operational_attributes: bool = False,
+            controls: list[object] | None = None,
+            paged_size: int | None = None,
+            paged_criticality: bool = False,
+            paged_cookie: bytes | None = None,
+        ) -> bool:
+            """Search LDAP entries."""
+            ...
+
     # Factory methods for protocol validation
     @classmethod
     def validate_connection_implementation(cls, instance: object) -> FlextResult[None]:
-        """Validate that instance implements ConnectionProtocol."""
-        if not isinstance(instance, cls.ConnectionProtocol):
+        """Validate that instance implements Connection protocol."""
+        if not isinstance(instance, cls.Connection):
             return FlextResult[None].fail(
-                f"Instance does not implement ConnectionProtocol: {type(instance)}"
+                f"Instance does not implement Connection protocol: {type(instance)}"
             )
         return FlextResult[None].ok(None)
 
     @classmethod
     def validate_service_implementation(cls, instance: object) -> FlextResult[None]:
-        """Validate that instance implements ServiceProtocol."""
-        if not isinstance(instance, cls.ServiceProtocol):
+        """Validate that instance implements Service protocol."""
+        if not isinstance(instance, cls.Service):
             return FlextResult[None].fail(
-                f"Instance does not implement ServiceProtocol: {type(instance)}"
+                f"Instance does not implement Service protocol: {type(instance)}"
             )
         return FlextResult[None].ok(None)
 
     @classmethod
     def validate_repository_implementation(cls, instance: object) -> FlextResult[None]:
-        """Validate that instance implements RepositoryProtocol."""
-        if not isinstance(instance, cls.RepositoryProtocol):
+        """Validate that instance implements Repository protocol."""
+        if not isinstance(instance, cls.Repository):
             return FlextResult[None].fail(
-                f"Instance does not implement RepositoryProtocol: {type(instance)}"
+                f"Instance does not implement Repository protocol: {type(instance)}"
             )
         return FlextResult[None].ok(None)
 
@@ -486,21 +551,95 @@ class FlextLdapProtocols(FlextProtocols):
     def get_protocol_registry(cls) -> dict[str, type]:
         """Get registry of all available protocols."""
         return {
-            "connection": cls.ConnectionProtocol,
-            "authentication": cls.AuthenticationProtocol,
-            "search": cls.SearchProtocol,
-            "crud": cls.CrudProtocol,
-            "user_management": cls.UserManagementProtocol,
-            "group_management": cls.GroupManagementProtocol,
-            "repository": cls.RepositoryProtocol,
-            "validation": cls.ValidationProtocol,
-            "configuration": cls.ConfigurationProtocol,
-            "cache": cls.CacheProtocol,
-            "logging": cls.LoggingProtocol,
-            "client": cls.ClientProtocol,
-            "adapter": cls.AdapterProtocol,
-            "service": cls.ServiceProtocol,
-            "ldap_client": cls.LdapClientProtocol,
-            "ldap_service": cls.LdapServiceProtocol,
-            "ldap_repository": cls.LdapRepositoryProtocol,
+            "connection": cls.Connection,
+            "authentication": cls.Authentication,
+            "search": cls.Search,
+            "crud": cls.Crud,
+            "user_management": cls.UserManagement,
+            "group_management": cls.GroupManagement,
+            "repository": cls.Repository,
+            "validation": cls.Validation,
+            "configuration": cls.Configuration,
+            "cache": cls.Cache,
+            "logging": cls.Logging,
+            "client": cls.Client,
+            "adapter": cls.Adapter,
+            "service": cls.Service,
+            "ldap_client": cls.LdapClient,
+            "ldap_service": cls.LdapService,
+            "ldap_repository": cls.LdapRepository,
         }
+
+    # =========================================================================
+    # PROTOCOL TYPES - LDAP Protocol Extensions (moved from typings.py)
+    # =========================================================================
+
+    class LdapProtocol(Protocol):
+        """LDAP protocol that defines the interface for ldap3.Connection or compatible objects.
+
+        This Protocol provides type safety for external library calls while maintaining
+        FLEXT zero tolerance policies. It defines the attributes and methods that must
+        be available on LDAP connection objects.
+        """
+
+        # Required attributes that are accessed on the connection
+        bound: bool
+        entries: list[FlextLdapProtocols.LdapEntry]
+        result: dict[str, object]
+
+        def unbind(self) -> bool:
+            """Unbind from LDAP server."""
+            ...
+
+        def rebind(self, user: str | None, password: str | None) -> bool:
+            """Rebind with different credentials."""
+            ...
+
+        def add(
+            self,
+            dn: str,
+            object_classes: list[str] | None = None,
+            attributes: dict[str, object] | None = None,
+        ) -> bool:
+            """Add LDAP entry."""
+            ...
+
+        def modify(self, dn: str, changes: dict[str, object]) -> bool:
+            """Modify LDAP entry."""
+            ...
+
+        def delete(self, dn: str) -> bool:
+            """Delete LDAP entry."""
+            ...
+
+        def search(
+            self,
+            search_base: str,
+            search_filter: str,
+            search_scope: str = SUBTREE,
+            dereference_aliases: str = "NEVER",
+            attributes: list[str] | str | None = None,
+            size_limit: int = 0,
+            time_limit: int = 0,
+            *,
+            types_only: bool = False,
+            get_operational_attributes: bool = False,
+            controls: list[object] | None = None,
+            paged_size: int | None = None,
+            paged_criticality: bool = False,
+            paged_cookie: bytes | None = None,
+        ) -> bool:
+            """Search LDAP entries."""
+            ...  # Proper validator signature
+
+    # =========================================================================
+    # ASYNC PROTOCOLS - Async and callable patterns (moved from typings.py)
+    # =========================================================================
+
+    @runtime_checkable
+    class AsyncCallable(Protocol):
+        """Async callable protocol for LDAP operations."""
+
+        def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
+            """Execute async callable with arbitrary arguments."""
+            ...
