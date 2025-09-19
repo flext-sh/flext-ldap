@@ -73,7 +73,8 @@ class TestOptimizedFlextLdapContainer:
         return FlextLdapConfigs()
 
     def test_optimized_container_initialization(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test optimized FlextLdapContainer initialization with FlextModels validation."""
         # Create validation model for container state
@@ -95,7 +96,8 @@ class TestOptimizedFlextLdapContainer:
         assert isinstance(flext_container, FlextContainer)
 
     def test_optimized_container_uses_flext_container_directly(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test that optimized container uses FlextContainer patterns directly."""
         # Validate that old caching patterns are removed
@@ -115,7 +117,8 @@ class TestOptimizedFlextLdapContainer:
         )
 
     def test_container_service_registration_with_models(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test service registration using FlextModels validation."""
         # Get FlextContainer and test service registration
@@ -146,7 +149,8 @@ class TestOptimizedFlextLdapContainer:
             )
 
     def test_optimized_client_retrieval_via_flext_container(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test optimized client retrieval using FlextContainer patterns."""
         # Test that client is retrieved via FlextContainer, not custom caching
@@ -160,7 +164,8 @@ class TestOptimizedFlextLdapContainer:
         assert client is client2, "FlextContainer should provide singleton behavior"
 
     def test_optimized_repository_retrieval_via_flext_container(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test optimized repository retrieval using FlextContainer patterns."""
         # Test that repository is retrieved via FlextContainer, not custom caching
@@ -174,7 +179,9 @@ class TestOptimizedFlextLdapContainer:
         )
 
     def test_optimized_container_configuration_with_models(
-        self, container: FlextLdapContainer, config: FlextLdapConfigs,
+        self,
+        container: FlextLdapContainer,
+        config: FlextLdapConfigs,
     ) -> None:
         """Test container configuration using FlextModels validation."""
         # Test configuration with FlextResult validation
@@ -193,7 +200,8 @@ class TestOptimizedFlextLdapContainer:
         assert isinstance(registered_config, FlextLdapConfigs)
 
     def test_container_validates_domain_boundaries(
-        self, container: FlextLdapContainer,
+        self,
+        container: FlextLdapContainer,
     ) -> None:
         """Test that container only provides LDAP domain services."""
         # Validate that only LDAP domain services are available

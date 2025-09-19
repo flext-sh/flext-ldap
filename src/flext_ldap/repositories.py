@@ -74,7 +74,9 @@ class FlextLdapRepositories(FlextMixins.Service):
         return FlextResult[bool].ok(result.value is not None)
 
     async def update(
-        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict,
+        self,
+        dn: str,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update entry attributes - facade method delegating to repository."""
         return await self._base_repo.update_attributes(dn, attributes)
@@ -258,6 +260,7 @@ class FlextLdapRepositories(FlextMixins.Service):
 
             # Add object classes
             if entry.object_classes:
+                # Type cast to satisfy MyPy - object_classes is list[str] which is compatible with AttributeDict
                 attributes["objectClass"] = entry.object_classes
 
             # For User entities, convert model fields to LDAP attributes

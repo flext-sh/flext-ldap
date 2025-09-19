@@ -48,7 +48,9 @@ class TestFlextLdapValueObjectsCoverage:
         result1 = FlextLdapModels.ValueObjects.DistinguishedName.create(
             "cn=test,ou=users,dc=example,dc=com",
         )
-        result2 = FlextLdapModels.ValueObjects.DistinguishedName.create("dc=example,dc=com")
+        result2 = FlextLdapModels.ValueObjects.DistinguishedName.create(
+            "dc=example,dc=com"
+        )
         assert result1.is_success
         assert result2.is_success
 

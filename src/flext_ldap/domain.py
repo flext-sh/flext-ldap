@@ -1169,7 +1169,8 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self._password_service = FlextLdapDomain.PasswordService()
 
         def validate_user_creation_business_rules(
-            self, command: "FlextLdapDomain.CreateUserCommand",
+            self,
+            command: "FlextLdapDomain.CreateUserCommand",
         ) -> FlextResult[None]:
             """Validate business rules for user creation - pure domain logic."""
             validation_result = command.validate_command()
@@ -1221,7 +1222,8 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 return FlextResult.fail(f"Parameter extraction failed: {e}")
 
         def create_user_entity(
-            self, user_params: FlextTypes.Core.Dict,
+            self,
+            user_params: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.User]:
             """Create user entity - pure domain logic."""
             try:
@@ -1234,7 +1236,8 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "sn": user_params.get("extract_sn", user_params.get("sn")),
                     "mail": user_params.get("extract_mail", user_params.get("mail")),
                     "object_classes": user_params.get(
-                        "extract_object_class", user_params.get("objectClass", []),
+                        "extract_object_class",
+                        user_params.get("objectClass", []),
                     ),
                 }
                 # Remove None values

@@ -106,7 +106,9 @@ def demonstrate_value_objects() -> None:
         filter_result = FlextLdapModels.ValueObjects.Filter.create(complex_filter)
 
         if filter_result.is_success:
-            default_filter = FlextLdapModels.ValueObjects.Filter(value="(objectClass=*)")
+            default_filter = FlextLdapModels.ValueObjects.Filter(
+                value="(objectClass=*)"
+            )
             filter_obj = filter_result.unwrap_or(default_filter)
             filter_obj.validate_business_rules()
 
@@ -143,7 +145,9 @@ async def demonstrate_async_patterns() -> None:
     try:
         # 1. Context manager usage
         async with ldap_session(
-            "ldap://demo.example.com:389", "cn=admin,dc=example,dc=com", "password",
+            "ldap://demo.example.com:389",
+            "cn=admin,dc=example,dc=com",
+            "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
             tasks: list[Awaitable[FlextResult[list[FlextLdapModels.Entry]]]] = []

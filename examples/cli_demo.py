@@ -39,7 +39,9 @@ async def demonstrate_cli_isolation() -> None:
 
     # Demonstrate search
     search_result = await cli.search_ldap(
-        base_dn="dc=example,dc=com", filter_str="(objectClass=person)", scope="subtree",
+        base_dn="dc=example,dc=com",
+        filter_str="(objectClass=person)",
+        scope="subtree",
     )
     if search_result.is_success:
         print(f"✅ Search successful: {search_result.value.total_count} entries found")
@@ -67,7 +69,9 @@ def demonstrate_model_cli_separation() -> None:
 
     # Create models directly
     search_request = FlextLdapModels.SearchRequest(
-        base_dn="dc=example,dc=com", filter_str="(objectClass=person)", scope="subtree",
+        base_dn="dc=example,dc=com",
+        filter_str="(objectClass=person)",
+        scope="subtree",
     )
     print(f"Search Request: {search_request.base_dn}")
 
@@ -86,14 +90,16 @@ def demonstrate_model_cli_separation() -> None:
     cli = FlextLdapApi()
 
     # CLI handles user interaction and formatting
-    cli._formatters.display_message("Model vs CLI Separation Demo", "info")
-    cli._formatters.display_message(
-        "✅ Data models handle pure data operations", "info",
+    cli.display_message("Model vs CLI Separation Demo", "info")
+    cli.display_message(
+        "✅ Data models handle pure data operations",
+        "info",
     )
-    cli._formatters.display_message(
-        "✅ CLI handles user interaction and formatting", "info",
+    cli.display_message(
+        "✅ CLI handles user interaction and formatting",
+        "info",
     )
-    cli._formatters.print_success("Perfect separation achieved!")
+    cli.print_success("Perfect separation achieved!")
 
 
 def demonstrate_unified_class_pattern() -> None:
@@ -105,26 +111,42 @@ def demonstrate_unified_class_pattern() -> None:
 
     # Show that CLI has nested helper classes
     print("FlextLdapCli nested helper classes:")
-    print(f"  - _ConnectionHelper: {hasattr(cli, '_ConnectionHelper')}")
-    print(f"  - _SearchHelper: {hasattr(cli, '_SearchHelper')}")
-    print(f"  - _UserManagementHelper: {hasattr(cli, '_UserManagementHelper')}")
+    print(f"  - _ConnectionHelper: {hasattr(cli, '_connection_helper')}")
+    print(f"  - _SearchHelper: {hasattr(cli, '_search_helper')}")
+    print(f"  - _UserManagementHelper: {hasattr(cli, '_user_management_helper')}")
 
-    # Demonstrate helper usage
-    connection_info = cli._ConnectionHelper.format_connection_info(
-        "ldap://example.com:389", "cn=admin,dc=example,dc=com",
+    # Demonstrate helper usage through public methods
+    connection_info = cli.format_connection_info(
+        "ldap://example.com:389",
+        "cn=admin,dc=example,dc=com",
     )
     print(f"\nConnection Helper Output:\n{connection_info}")
 
-    search_request = cli._SearchHelper.create_search_request(
-        "dc=example,dc=com", "(objectClass=person)",
+    search_request = cli.create_search_request(
+        "dc=example,dc=com",
+        "(objectClass=person)",
     )
     print(f"\nSearch Helper Output: {search_request.base_dn}")
 
-    user_info = cli._UserManagementHelper.format_user_info(
-        cli._UserManagementHelper.create_user_request(
-            "cn=test,dc=example,dc=com", "test", "Test", "User",
-        ).to_user_entity(),
+    user_request = cli.create_user_request(
+        "cn=test,dc=example,dc=com",
+        "test",
+        "Test",
+        "User",
     )
+    # Convert to user entity for formatting
+    user_entity = FlextLdapModels.User(
+        id=f"user_{user_request.uid}",
+        dn=user_request.dn,
+        uid=user_request.uid,
+        cn=user_request.cn,
+        sn=user_request.sn,
+        modified_at=None,
+        given_name=None,
+        mail=user_request.mail,
+        user_password=None,
+    )
+    user_info = cli.format_user_info(user_entity)
     print(f"\nUser Management Helper Output:\n{user_info}")
 
 

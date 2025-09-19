@@ -8,7 +8,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_ldap import FlextLdapModels
+from flext_ldap import FlextLdapModels, FlextLdapTypes
 from flext_ldap.api import FlextLdapApi
 from flext_ldap.config import FlextLdapConfigs
 
@@ -260,7 +260,7 @@ class TestFlextLdapApiComprehensive:
         api = FlextLdapApi()
 
         dn = "cn=testuser,ou=users,dc=example,dc=com"
-        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "description": "Updated user",
         }
 
@@ -354,7 +354,7 @@ class TestFlextLdapApiComprehensive:
 
         # Use basic update parameters - no UpdateGroupRequest entity exists
         group_dn = "cn=testgroup,ou=groups,dc=example,dc=com"
-        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "description": "Updated group",
         }
 
@@ -624,7 +624,7 @@ class TestFlextLdapApiComprehensive:
 
         # Test update with multiple attributes
         dn = "cn=complex.user,ou=users,dc=example,dc=com"
-        attributes: dict[str, str | bytes | list[str] | list[bytes]] = {
+        attributes: FlextLdapTypes.Entry.AttributeDict = {
             "description": "Updated complex user",
             "telephoneNumber": "+1-555-5678",
             "title": "Senior Developer",
@@ -653,12 +653,13 @@ class TestFlextLdapApiComprehensive:
         assert isinstance(result, FlextResult)
 
         # Test update group
+        group_attributes: FlextLdapTypes.Entry.AttributeDict = {
+            "description": "Updated comprehensive group",
+            "cn": "updated.group",
+        }
         update_result = await api.update_group(
             dn="cn=comprehensive.group,ou=groups,dc=example,dc=com",
-            attributes={
-                "description": "Updated comprehensive group",
-                "cn": "updated.group",
-            },
+            attributes=group_attributes,
         )
         assert isinstance(update_result, FlextResult)
 

@@ -26,8 +26,8 @@ else:
         from flext_ldap import FlextLdapApi, FlextLdapModels
     except Exception:  # pragma: no cover - example fallback for local editing
         # type ignored: these placeholders are only for editor/static-checker convenience
-        FlextLdapApi = object  # type: ignore[attr-defined]
-        FlextLdapModels = object  # type: ignore[attr-defined]
+        FlextLdapApi = object
+        FlextLdapModels = object
 
 
 async def demonstrate_basic_operations() -> None:

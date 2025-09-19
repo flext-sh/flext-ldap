@@ -66,7 +66,13 @@ class FlextLdapTypes(FlextTypes):
         """LDAP entry structure types."""
 
         EntryDict = dict[str, object]
-        AttributeDict = dict[str, list[str]]
+        # Accept both single values (str/bytes) and lists of strings/bytes for
+        # attribute dictionaries to match different callsites and LDAP client
+        # expectations used throughout examples and tests.
+        AttributeDict = dict[
+            str,
+            list[str] | list[bytes] | str | bytes,
+        ]
         AttributeValue = str | int | bool | bytes | object
         EntryData = dict[str, object]
         RawEntry = dict[str, object]

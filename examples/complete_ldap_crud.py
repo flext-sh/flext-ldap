@@ -68,7 +68,8 @@ async def create_sample_users(api: FlextLdapApi) -> None:
             user_password=None,
         )
         create_result: FlextResult[object] = cast(
-            "FlextResult[object]", await api.create_user(request),
+            "FlextResult[object]",
+            await api.create_user(request),
         )
 
         if create_result.is_success:
@@ -103,6 +104,15 @@ async def search_users(api: FlextLdapApi) -> None:
             # get_attribute returns list[str] | None, so take first element
             cn_str = cn[0] if cn else "Unknown"
             mail_str = mail[0] if mail else "No email"
+            # Ensure values are strings, not bytes
+            cn_str = (
+                cn_str.decode("utf-8") if isinstance(cn_str, bytes) else str(cn_str)
+            )
+            mail_str = (
+                mail_str.decode("utf-8")
+                if isinstance(mail_str, bytes)
+                else str(mail_str)
+            )
             logger.info(f"  - {cn_str} ({mail_str})")
     else:
         logger.error(f"❌ Search failed: {result.error}")

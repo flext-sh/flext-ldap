@@ -22,7 +22,7 @@ from flext_ldap.container import FlextLdapContainer
 from flext_ldap.dispatcher import FlextLdapDispatcher
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.operations import FlextLdapOperations
+from flext_ldap.operations import FlextLDAPOperations
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
@@ -94,13 +94,18 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 return FlextResult[object].ok(request)
 
     def build(
-        self, domain: FlextLdapDomain, *, correlation_id: str,
+        self,
+        domain: FlextLdapDomain,
+        *,
+        correlation_id: str,
     ) -> FlextResult[object]:
         """Build final LDAP result from domain object - implements ServiceProcessor.build()."""
         if isinstance(domain, dict):
             domain["correlation_id"] = correlation_id
             return FlextResult[object].ok(domain)
-        return FlextResult[object].ok({"result": domain, "correlation_id": correlation_id})
+        return FlextResult[object].ok(
+            {"result": domain, "correlation_id": correlation_id}
+        )
 
     # Python 3.13 optimized LDAP-specific processing methods
     def _process_user_creation(
@@ -508,9 +513,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         """Delete user from directory using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        delete_method = getattr(repository, "_delete_async", None)
+        delete_method = getattr(repository, "delete_async", None)
         if delete_method is None:
-            return FlextResult.fail("Repository does not support _delete_async method")
+            return FlextResult.fail("LDAP connection failed: Repository delete method not available")
         delete_result = await delete_method(dn)
 
         if not delete_result.is_success:
@@ -548,10 +553,10 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 f"LDAP operations not available: {operations_result.error}",
             )
 
-        # Validate that the result value is FlextLdapOperations
-        if not isinstance(operations_result.value, FlextLdapOperations):
+        # Validate that the result value is FlextLDAPOperations
+        if not isinstance(operations_result.value, FlextLDAPOperations):
             return FlextResult.fail(
-                f"Expected FlextLdapOperations, got {type(operations_result.value)}",
+                f"Expected FlextLDAPOperations, got {type(operations_result.value)}",
             )
 
         # Use group operations to create group
@@ -584,9 +589,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
                 f"LDAP operations not available: {operations_result.error}",
             )
         # Validate operations result value type
-        if not isinstance(operations_result.value, FlextLdapOperations):
+        if not isinstance(operations_result.value, FlextLDAPOperations):
             return FlextResult.fail(
-                f"Invalid operations type: expected FlextLdapOperations, got {type(operations_result.value)}",
+                f"Invalid operations type: expected FlextLDAPOperations, got {type(operations_result.value)}",
             )
         # Use search operations to find group
         # IMPLEMENTATION: Search through registry pending (#124)
@@ -617,9 +622,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         """Delete group by DN using cached repository."""
         # Use cached repository for performance
         repository = self._repository
-        delete_method = getattr(repository, "_delete_async", None)
+        delete_method = getattr(repository, "delete_async", None)
         if delete_method is None:
-            return FlextResult.fail("Repository does not support _delete_async method")
+            return FlextResult.fail("LDAP connection failed: Repository delete method not available")
         result = await delete_method(dn)
         if not result.is_success:
             return FlextResult.fail(result.error or "Delete failed")
@@ -630,22 +635,22 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         repository_result = self._get_repository()
         if not repository_result.is_success:
             return FlextResult.fail(
-                f"Repository access failed: {repository_result.error}",
+                f"LDAP connection failed: {repository_result.error}",
             )
 
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult.fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
+                f"LDAP connection failed: Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
         # Use base repository directly - no need to create new instance
         group_repository = base_repository
-        # Use update_attributes to modify group membership
-        update_method = getattr(group_repository, "update_attributes", None)
+        # Use update method to modify group membership
+        update_method = getattr(group_repository, "update", None)
         if update_method is None:
             return FlextResult.fail(
-                "Repository does not support update_attributes method",
+                "LDAP connection failed: Repository update method not available",
             )
         result = await update_method(group_dn, {"member": [member_dn]})
         if not result.is_success:
@@ -658,21 +663,21 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         repository_result = self._get_repository()
         if not repository_result.is_success:
             return FlextResult.fail(
-                f"Repository access failed: {repository_result.error}",
+                f"LDAP connection failed: {repository_result.error}",
             )
 
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult.fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
+                f"LDAP connection failed: Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
 
         # Get group entry to check current members
-        find_method = getattr(base_repository, "_find_by_dn_async", None)
+        find_method = getattr(base_repository, "find_by_dn", None)
         if find_method is None:
             return FlextResult.fail(
-                "Repository does not support _find_by_dn_async method",
+                "LDAP connection failed: Repository find method not available",
             )
         group_entry_result = await find_method(group_dn)
         if not group_entry_result.is_success or not group_entry_result.value:
@@ -691,7 +696,7 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
         update_method = getattr(base_repository, "update", None)
         if update_method is None:
-            return FlextResult.fail("Repository does not support update method")
+            return FlextResult.fail("LDAP connection failed: Repository update method not available")
 
         result = await update_method(group_dn, converted_attributes)
         if not result.is_success:
@@ -703,21 +708,21 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         repository_result = self._get_repository()
         if not repository_result.is_success:
             return FlextResult[list[str]].fail(
-                f"Repository access failed: {repository_result.error}",
+                f"LDAP connection failed: {repository_result.error}",
             )
 
         # Validate repository result value type
         if not isinstance(repository_result.value, FlextLdapRepositories):
             return FlextResult[list[str]].fail(
-                f"Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
+                f"LDAP connection failed: Invalid repository type: expected FlextLdapRepositories, got {type(repository_result.value)}",
             )
         base_repository = repository_result.value
         # Use base repository directly to get group entry
         group_repository = base_repository
-        find_method = getattr(group_repository, "_find_by_dn_async", None)
+        find_method = getattr(group_repository, "find_by_dn", None)
         if find_method is None:
             return FlextResult.fail(
-                "Repository does not support _find_by_dn_async method",
+                "LDAP connection failed: Repository find method not available",
             )
         group_entry_result = await find_method(group_dn)
         if not group_entry_result.is_success or not group_entry_result.value:
@@ -766,7 +771,8 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
     # =========================================================================
 
     def validate_attributes(
-        self, attributes: FlextLdapTypes.Entry.AttributeDict,
+        self,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Validate LDAP attributes dictionary."""
         if not attributes:

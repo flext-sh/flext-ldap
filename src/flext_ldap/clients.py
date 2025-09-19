@@ -91,7 +91,8 @@ class FlextLdapClient(
             try:
                 # Map scope to ldap3 constant
                 scope = FlextLdapConstants.Scopes.SCOPE_MAP.get(
-                    request.scope.lower(), SUBTREE,
+                    request.scope.lower(),
+                    SUBTREE,
                 )
 
                 # Execute search using ldap3 directly
@@ -539,7 +540,8 @@ class FlextLdapClient(
         """
         # Convert to FlextLdapTypes.Entry.AttributeDict and delegate to implementation
         ldap_attributes: FlextLdapTypes.Entry.AttributeDict = cast(
-            "FlextLdapTypes.Entry.AttributeDict", dict(attributes),
+            "FlextLdapTypes.Entry.AttributeDict",
+            dict(attributes),
         )
         return await self.add_entry(dn, ldap_attributes)
 

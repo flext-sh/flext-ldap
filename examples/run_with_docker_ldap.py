@@ -129,7 +129,8 @@ async def run_examples_with_docker() -> None:
     try:
         integrated_path = Path(__file__).parent / "integrated_ldap_service.py"
         integrated_module: types.ModuleType = _load_module_spec(
-            "integrated_ldap_service", integrated_path,
+            "integrated_ldap_service",
+            integrated_path,
         )
         main_func = integrated_module.main
         await main_func()
@@ -140,7 +141,8 @@ async def run_examples_with_docker() -> None:
     try:
         simple_path = Path(__file__).parent / "03_ldap_simple_client.py"
         simple_module: types.ModuleType = _load_module_spec(
-            "ldap_simple_client", simple_path,
+            "ldap_simple_client",
+            simple_path,
         )
         main_func = simple_module.main
         await main_func()

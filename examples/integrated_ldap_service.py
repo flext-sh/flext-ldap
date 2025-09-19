@@ -125,7 +125,12 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                 for user_entry in entries:
                     uid = user_entry.attributes.get("uid", ["N/A"])[0]
                     cn = user_entry.attributes.get("cn", ["N/A"])[0]
-                    logger.debug(f"Found user: {uid} ({cn})")
+                    # Ensure string conversion for safe f-string interpolation
+                    uid_str = (
+                        uid.decode("utf-8") if isinstance(uid, bytes) else str(uid)
+                    )
+                    cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
+                    logger.debug(f"Found user: {uid_str} ({cn_str})")
 
                 # Perform user search validation
                 await _perform_user_search_validation(ldap_service, session_id)
@@ -220,10 +225,18 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 entries = search_result.value
                 for group_entry in entries:
                     cn = group_entry.attributes.get("cn", ["N/A"])[0]
-                    description = (
-                        group_entry.attributes.get("description", ["No description"])[0]
+                    description = group_entry.attributes.get(
+                        "description",
+                        ["No description"],
+                    )[0]
+                    # Ensure string conversion for safe f-string interpolation
+                    cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
+                    description_str = (
+                        description.decode("utf-8")
+                        if isinstance(description, bytes)
+                        else str(description)
                     )
-                    logger.debug(f"Found group: {cn} - {description}")
+                    logger.debug(f"Found group: {cn_str} - {description_str}")
 
                 # Perform group search validation
                 await _perform_group_search_validation(ldap_service, session_id)
@@ -264,7 +277,12 @@ async def _perform_group_search_validation(
         for group_entry in entries:
             cn = group_entry.attributes.get("cn", ["Unknown"])[0]
             object_class = group_entry.attributes.get("objectClass", [])
-            logger.debug(f"Group: {cn}, Class: {object_class}")
+            # Ensure string conversion for safe f-string interpolation
+            cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
+            object_class_str = str(
+                object_class
+            )  # object_class is already a list, convert to string representation
+            logger.debug(f"Group: {cn_str}, Class: {object_class_str}")
 
     # Test 2: Search groups with wildcards
     wildcard_result = await ldap_service.search_simple(

@@ -26,7 +26,8 @@ class TestFlextLdapDistinguishedName:
     def test_dn_validation_with_short_value(self) -> None:
         """Test DN validation with too short value."""
         with pytest.raises(
-            (ValueError, Exception), match="String should have at least 3 characters",
+            (ValueError, Exception),
+            match="String should have at least 3 characters",
         ):
             FlextLdapModels.ValueObjects.DistinguishedName(value="x")
 

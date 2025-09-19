@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Any, Protocol
 
 from pydantic import (
     ConfigDict,
@@ -19,12 +18,18 @@ from flext_core import (
     FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextUtilities,
 )
-from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapOperations(FlextDomainService[dict[str, object]]):
-    """LDAP operations service providing comprehensive LDAP functionality.
+class LDAPEntryProtocol(Protocol):
+    """Protocol for LDAP entry objects with attributes."""
+
+    attributes: dict[str, Any]
+
+
+class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
+    """Unified LDAP operations service providing comprehensive LDAP functionality.
 
     This unified service follows FLEXT patterns and provides:
     - Connection management with pooling
@@ -32,17 +37,21 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
     - Entity management (users, groups, OUs)
     - Batch operations for efficiency
     - Schema validation and introspection
+    - Attribute extraction and processing
+
+    Follows Clean Architecture with Domain-Driven Design patterns.
+    Zero tolerance for try/except fallbacks - uses explicit FlextResult patterns.
     """
 
     model_config = ConfigDict(
-        frozen=False,  # Override parent's frozen=True to allow operation handler assignment
+        frozen=False,  # Allow operation handler assignment
         validate_assignment=True,
         extra="allow",  # Allow dynamic assignment of operation handlers
         arbitrary_types_allowed=True,
     )
 
-    class ConnectionOperations:
-        """Connection management operations nested within FlextLdapOperations."""
+    class _ConnectionOperations:
+        """Connection management operations - nested helper class."""
 
         @dataclass
         class ConnectionMetadata:
@@ -53,302 +62,468 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
             bind_dn: str
             created_at: datetime
             last_used: datetime
-            is_active: bool = True
-            connection_pool_size: int = 1
+            is_bound: bool = False
+            operation_count: int = 0
 
-        @dataclass
-        class ConnectionConfig:
-            """Connection configuration for LDAP connections."""
+            def __post_init__(self) -> None:
+                """Initialize timestamps if not provided."""
+                if not self.created_at:
+                    self.created_at = datetime.now(UTC)
+                if not self.last_used:
+                    self.last_used = datetime.now(UTC)
 
-            server_uri: str
-            bind_dn: str
-            bind_password: str
-            use_tls: bool = True
-            connection_timeout: int = 30
-            search_timeout: int = 60
-            pool_size: int = 5
-            auto_bind: bool = True
-
-        def __init__(self, parent: FlextLdapOperations) -> None:
+        def __init__(self, parent_operations: FlextLDAPOperations) -> None:
             """Initialize connection operations with parent reference."""
-            self._parent = parent
+            self._parent = parent_operations
             self._logger = FlextLogger(__name__)
 
-        def create_connection(
-            self, config: ConnectionConfig,
-        ) -> FlextResult[FlextLdapTypes.Connection.ConnectionId]:
-            """Create a new LDAP connection with the provided configuration."""
-            try:
-                connection_id = str(uuid.uuid4())
+        def create_connection_and_bind(self, server_uri: str, bind_dn: str, bind_password: str) -> FlextResult[str]:
+            """Create connection and bind with explicit error handling."""
+            if not server_uri or not server_uri.strip():
+                return FlextResult[str].fail("Server URI cannot be empty")
 
-                # Create connection metadata
-                metadata = self.ConnectionMetadata(
-                    connection_id=connection_id,
-                    server_uri=config.server_uri,
-                    bind_dn=config.bind_dn,
-                    created_at=datetime.now(UTC),
-                    last_used=datetime.now(UTC),
-                    connection_pool_size=config.pool_size,
-                )
+            if not bind_dn or not bind_dn.strip():
+                return FlextResult[str].fail("Bind DN cannot be empty")
 
-                # Store connection metadata
-                self._parent._active_connections[connection_id] = metadata
+            if not bind_password:
+                return FlextResult[str].fail("Bind password cannot be empty")
 
-                self._logger.info(f"Created LDAP connection: {connection_id}")
-                return FlextResult[FlextLdapTypes.Connection.ConnectionId].ok(
-                    connection_id,
-                )
+            # Generate unique connection ID
+            connection_id = f"conn_{FlextUtilities.Generators.generate_uuid()}"
 
-            except Exception as e:
-                self._logger.exception("Failed to create LDAP connection")
-                return FlextResult[FlextLdapTypes.Connection.ConnectionId].fail(
-                    f"Connection creation failed: {e}",
-                )
+            # Create connection metadata
+            metadata = self.ConnectionMetadata(
+                connection_id=connection_id,
+                server_uri=server_uri,
+                bind_dn=bind_dn,
+                created_at=datetime.now(UTC),
+                last_used=datetime.now(UTC),
+                is_bound=True
+            )
 
-        def close_connection(
-            self, connection_id: FlextLdapTypes.Connection.ConnectionId,
-        ) -> FlextResult[None]:
-            """Close an active LDAP connection."""
-            try:
-                if connection_id in self._parent._active_connections:
-                    del self._parent._active_connections[connection_id]
-                    self._logger.info(f"Closed LDAP connection: {connection_id}")
-                    return FlextResult[None].ok(None)
-                return FlextResult[None].fail(f"Connection not found: {connection_id}")
+            # Store connection (implementation would use real LDAP connection)
+            self._parent.set_active_connection(connection_id, metadata)
 
-            except Exception as e:
-                self._logger.exception(f"Failed to close connection {connection_id}")
-                return FlextResult[None].fail(f"Connection close failed: {e}")
+            self._logger.info(
+                "LDAP connection created and bound successfully",
+                connection_id=connection_id,
+                server_uri=server_uri,
+                bind_dn=bind_dn
+            )
 
-    class SearchOperations:
-        """Search operations nested within FlextLdapOperations."""
+            return FlextResult[str].ok(connection_id)
 
-        @dataclass
-        class SearchConfig:
-            """Configuration for LDAP search operations."""
+        def cleanup_connection(self, connection_id: str) -> FlextResult[None]:
+            """Clean up connection with explicit error handling."""
+            if not self._parent.has_active_connection(connection_id):
+                return FlextResult[None].fail(f"Connection {connection_id} not found")
 
-            base_dn: str
-            search_filter: str
-            attributes: list[str] | None = None
-            scope: str = "SUBTREE"
-            size_limit: int = 1000
-            time_limit: int = 60
-            page_size: int = 100
+            # Remove connection
+            self._parent.remove_active_connection(connection_id)
 
-        @dataclass
-        class SearchResult:
-            """Result of an LDAP search operation."""
+            self._logger.info("LDAP connection cleaned up", connection_id=connection_id)
+            return FlextResult[None].ok(None)
 
-            entries: list[dict[str, object]]
-            total_count: int
-            has_more: bool = False
-            next_page_token: str | None = None
+        def get_connection_status(self, connection_id: str) -> FlextResult[dict[str, object]]:
+            """Get connection status with explicit error handling."""
+            if not self._parent.has_active_connection(connection_id):
+                return FlextResult[dict[str, object]].fail(f"Connection {connection_id} not found")
 
-        def __init__(self, parent: FlextLdapOperations) -> None:
-            """Initialize search operations with parent reference."""
-            self._parent = parent
-            self._logger = FlextLogger(__name__)
+            metadata = self._parent.get_active_connections()[connection_id]
 
-        def search_entries(
-            self,
-            connection_id: FlextLdapTypes.Connection.ConnectionId,
-            config: SearchConfig,
-        ) -> FlextResult[FlextLdapOperations.SearchOperations.SearchResult]:
-            """Perform LDAP search with pagination support."""
-            try:
-                if connection_id not in self._parent._active_connections:
-                    return FlextResult[
-                        FlextLdapOperations.SearchOperations.SearchResult
-                    ].fail(f"Connection not found: {connection_id}")
-
-                # Mock search implementation for now
-                mock_entries: list[dict[str, object]] = [
-                    {
-                        "dn": f"uid=user{i},ou=people,dc=example,dc=com",
-                        "uid": f"user{i}",
-                    }
-                    for i in range(min(config.size_limit, 10))
-                ]
-
-                result = self.SearchResult(
-                    entries=mock_entries, total_count=len(mock_entries), has_more=False,
-                )
-
-                self._logger.info(
-                    f"Search completed: {len(mock_entries)} entries found",
-                )
-                return FlextResult[
-                    FlextLdapOperations.SearchOperations.SearchResult
-                ].ok(result)
-
-            except Exception as e:
-                self._logger.exception("Search failed")
-                return FlextResult[
-                    FlextLdapOperations.SearchOperations.SearchResult
-                ].fail(f"Search operation failed: {e}")
-
-    class EntityOperations:
-        """Entity management operations nested within FlextLdapOperations."""
-
-        @dataclass
-        class EntityConfig:
-            """Configuration for entity operations."""
-
-            entity_type: Literal["user", "group", "ou"]
-            base_dn: str
-            attributes: dict[str, object]
-
-        def __init__(self, parent: FlextLdapOperations) -> None:
-            """Initialize entity operations with parent reference."""
-            self._parent = parent
-            self._logger = FlextLogger(__name__)
-
-        def create_entity(
-            self,
-            connection_id: FlextLdapTypes.Connection.ConnectionId,
-            config: EntityConfig,
-        ) -> FlextResult[str]:
-            """Create a new LDAP entity."""
-            try:
-                if connection_id not in self._parent._active_connections:
-                    return FlextResult[str].fail(
-                        f"Connection not found: {connection_id}",
-                    )
-
-                # Mock entity creation
-                entity_dn = (
-                    f"cn={config.attributes.get('cn', 'unknown')},{config.base_dn}"
-                )
-
-                self._logger.info(f"Created {config.entity_type} entity: {entity_dn}")
-                return FlextResult[str].ok(entity_dn)
-
-            except Exception as e:
-                self._logger.exception("Entity creation failed")
-                return FlextResult[str].fail(f"Entity creation failed: {e}")
-
-        def update_entity(
-            self,
-            connection_id: FlextLdapTypes.Connection.ConnectionId,
-            entity_dn: str,
-            attributes: dict[str, object],
-        ) -> FlextResult[None]:
-            """Update an existing LDAP entity."""
-            try:
-                if connection_id not in self._parent._active_connections:
-                    return FlextResult[None].fail(
-                        f"Connection not found: {connection_id}",
-                    )
-
-                # Mock entity update - use attributes parameter
-                attr_count = len(attributes) if attributes else 0
-                self._logger.info(
-                    f"Updated entity: {entity_dn} with {attr_count} attributes",
-                )
-                return FlextResult[None].ok(None)
-
-            except Exception as e:
-                self._logger.exception("Entity update failed")
-                return FlextResult[None].fail(f"Entity update failed: {e}")
-
-        def delete_entity(
-            self, connection_id: FlextLdapTypes.Connection.ConnectionId, entity_dn: str,
-        ) -> FlextResult[None]:
-            """Delete an LDAP entity."""
-            try:
-                if connection_id not in self._parent._active_connections:
-                    return FlextResult[None].fail(
-                        f"Connection not found: {connection_id}",
-                    )
-
-                # Mock entity deletion
-                self._logger.info(f"Deleted entity: {entity_dn}")
-                return FlextResult[None].ok(None)
-
-            except Exception as e:
-                self._logger.exception("Entity deletion failed")
-                return FlextResult[None].fail(f"Entity deletion failed: {e}")
-
-    def __init__(self, **data: object) -> None:
-        """Initialize LDAP operations service."""
-        # Initialize FlextDomainService with required datetime fields
-        now = datetime.now(UTC)
-        super().__init__(created_at=now, updated_at=now, **data)
-        self._logger = FlextLogger(__name__)
-        self._active_connections: dict[
-            FlextLdapTypes.Connection.ConnectionId,
-            FlextLdapOperations.ConnectionOperations.ConnectionMetadata,
-        ] = {}
-
-        # Initialize nested operation handlers (now allowed since frozen=False)
-        self.connections = self.ConnectionOperations(self)
-        self.search = self.SearchOperations(self)
-        self.entities = self.EntityOperations(self)
-
-    def get_connection_status(
-        self, connection_id: FlextLdapTypes.Connection.ConnectionId,
-    ) -> FlextResult[dict[str, object]]:
-        """Get status information for a connection."""
-        try:
-            if connection_id not in self._active_connections:
-                return FlextResult[dict[str, object]].fail(
-                    f"Connection not found: {connection_id}",
-                )
-
-            metadata = self._active_connections[connection_id]
             status = {
                 "connection_id": metadata.connection_id,
                 "server_uri": metadata.server_uri,
                 "bind_dn": metadata.bind_dn,
-                "is_active": metadata.is_active,
+                "is_bound": metadata.is_bound,
                 "created_at": metadata.created_at.isoformat(),
                 "last_used": metadata.last_used.isoformat(),
-                "pool_size": metadata.connection_pool_size,
+                "operation_count": metadata.operation_count
             }
 
             return FlextResult[dict[str, object]].ok(status)
 
-        except Exception as e:
-            self._logger.exception("Failed to get connection status")
-            return FlextResult[dict[str, object]].fail(f"Status retrieval failed: {e}")
+        def list_active_connections(self) -> FlextResult[list[ConnectionMetadata]]:
+            """List all active connections with explicit error handling."""
+            try:
+                active_connections = list(self._parent.get_active_connections().values())
+                return FlextResult[list[ConnectionMetadata]].ok(active_connections)
+            except Exception as e:
+                return FlextResult[list[ConnectionMetadata]].fail(f"Failed to list active connections: {e}")
 
-    def list_active_connections(
-        self,
-    ) -> FlextResult[list[FlextLdapTypes.Connection.ConnectionId]]:
-        """List all active connection IDs."""
-        try:
-            active_ids = list(self._active_connections.keys())
-            return FlextResult[list[FlextLdapTypes.Connection.ConnectionId]].ok(
-                active_ids,
-            )
-        except Exception as e:
-            self._logger.exception("Failed to list connections")
-            return FlextResult[list[FlextLdapTypes.Connection.ConnectionId]].fail(
-                f"Connection listing failed: {e}",
+    class _SearchOperations:
+        """Search operations - nested helper class."""
+
+        def __init__(self, parent_operations: FlextLDAPOperations) -> None:
+            """Initialize search operations with parent reference."""
+            self._parent = parent_operations
+            self._logger = FlextLogger(__name__)
+
+        def execute_search(self, base_dn: str, filter_str: str, scope: str = "subtree") -> FlextResult[list[dict[str, object]]]:
+            """Execute LDAP search with explicit error handling."""
+            # Validate parameters
+            if not base_dn or not base_dn.strip():
+                return FlextResult[list[dict[str, object]]].fail("Base DN cannot be empty")
+
+            if not filter_str or not filter_str.strip():
+                return FlextResult[list[dict[str, object]]].fail("Filter cannot be empty")
+
+            # Validate filter format
+            filter_validation = self._parent.get_validations_helper().validate_filter_string(filter_str)
+            if filter_validation.is_failure:
+                return FlextResult[list[dict[str, object]]].fail(f"Invalid filter: {filter_validation.error}")
+
+            # Mock implementation for now - real implementation would use LDAP client
+            mock_results: list[dict[str, object]] = [
+                {
+                    "dn": f"uid=user1,{base_dn}",
+                    "cn": ["User One"],
+                    "uid": ["user1"],
+                    "objectClass": ["person", "organizationalPerson"]
+                },
+                {
+                    "dn": f"uid=user2,{base_dn}",
+                    "cn": ["User Two"],
+                    "uid": ["user2"],
+                    "objectClass": ["person", "organizationalPerson"]
+                }
+            ]
+
+            self._logger.info(
+                "LDAP search executed successfully",
+                base_dn=base_dn,
+                filter_str=filter_str,
+                scope=scope,
+                result_count=len(mock_results)
             )
 
-    def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute domain service with operation summary."""
-        try:
-            summary = {
-                "service": "FlextLdapOperations",
-                "active_connections": len(self._active_connections),
-                "operations_available": [
-                    "connection_management",
-                    "search_operations",
-                    "entity_operations",
-                ],
-                "status": "operational",
+            return FlextResult[list[dict[str, object]]].ok(mock_results)
+
+    class _EntityOperations:
+        """Entity operations for users, groups, OUs - nested helper class."""
+
+        def __init__(self, parent_operations: FlextLDAPOperations) -> None:
+            """Initialize entity operations with parent reference."""
+            self._parent = parent_operations
+            self._logger = FlextLogger(__name__)
+
+        def create_user(self, dn: str, attributes: dict[str, object]) -> FlextResult[None]:
+            """Create user with explicit error handling."""
+            # Validate DN
+            dn_validation = self._parent.get_validations_helper().validate_dn_string(dn)
+            if dn_validation.is_failure:
+                return FlextResult[None].fail(f"Invalid DN: {dn_validation.error}")
+
+            # Validate attributes
+            attr_validation = self._parent.get_validations_helper().validate_entry_attributes(attributes)
+            if attr_validation.is_failure:
+                return FlextResult[None].fail(f"Invalid attributes: {attr_validation.error}")
+
+            # Mock implementation - real implementation would use LDAP client
+            self._logger.info("User created successfully", dn=dn, attributes=list(attributes.keys()))
+            return FlextResult[None].ok(None)
+
+        def create_group(self, dn: str, attributes: dict[str, object]) -> FlextResult[None]:
+            """Create group with explicit error handling."""
+            # Validate DN
+            dn_validation = self._parent.get_validations_helper().validate_dn_string(dn)
+            if dn_validation.is_failure:
+                return FlextResult[None].fail(f"Invalid DN: {dn_validation.error}")
+
+            # Validate attributes
+            attr_validation = self._parent.get_validations_helper().validate_entry_attributes(attributes)
+            if attr_validation.is_failure:
+                return FlextResult[None].fail(f"Invalid attributes: {attr_validation.error}")
+
+            # Mock implementation - real implementation would use LDAP client
+            self._logger.info("Group created successfully", dn=dn, attributes=list(attributes.keys()))
+            return FlextResult[None].ok(None)
+
+        def delete_entry(self, dn: str) -> FlextResult[None]:
+            """Delete LDAP entry with explicit error handling."""
+            # Validate DN
+            dn_validation = self._parent.get_validations_helper().validate_dn_string(dn)
+            if dn_validation.is_failure:
+                return FlextResult[None].fail(f"Invalid DN: {dn_validation.error}")
+
+            # Mock implementation - real implementation would use LDAP client
+            self._logger.info("Entry deleted successfully", dn=dn)
+            return FlextResult[None].ok(None)
+
+    class _ValidationOperations:
+        """Validation operations - nested helper class."""
+
+        def __init__(self, parent: FlextLDAPOperations) -> None:
+            """Initialize validation operations with parent reference."""
+            self._parent = parent
+
+        def validate_ldap_uri(self, uri: str) -> FlextResult[str]:
+            """Validate LDAP URI format with explicit error handling."""
+            if not uri or not uri.strip():
+                return FlextResult[str].fail("URI cannot be empty")
+
+            if not uri.startswith(("ldap://", "ldaps://")):
+                return FlextResult[str].fail("URI must start with ldap:// or ldaps://")
+
+            return FlextResult[str].ok("Valid LDAP URI")
+
+        def validate_dn_string(self, dn: str) -> FlextResult[str]:
+            """Validate Distinguished Name string format with explicit error handling."""
+            if not dn or not dn.strip():
+                return FlextResult[str].fail("DN cannot be empty")
+
+            # Basic DN validation - should contain = and may contain commas
+            if "=" not in dn:
+                return FlextResult[str].fail("DN must contain attribute-value pairs (=)")
+
+            return FlextResult[str].ok("Valid DN format")
+
+        def validate_entry_attributes(self, attributes: dict[str, object]) -> FlextResult[str]:
+            """Validate entry attributes dictionary with explicit error handling."""
+            if not attributes:
+                return FlextResult[str].fail("Attributes cannot be empty")
+
+            return FlextResult[str].ok("Valid attributes")
+
+        def validate_filter_string(self, filter_str: str) -> FlextResult[str]:
+            """Validate LDAP filter string format with explicit error handling."""
+            if not filter_str or not filter_str.strip():
+                return FlextResult[str].fail("Filter cannot be empty")
+
+            # Basic filter validation - should contain parentheses
+            if not (filter_str.startswith("(") and filter_str.endswith(")")):
+                return FlextResult[str].fail("Filter must be enclosed in parentheses")
+
+            return FlextResult[str].ok("Valid filter format")
+
+    class _AttributeExtractorOperations:
+        """Attribute extraction operations - nested helper class."""
+
+        def __init__(self, parent_operations: FlextLDAPOperations) -> None:
+            """Initialize attribute extractor operations with parent reference."""
+            self._parent = parent_operations
+            self._logger = FlextLogger(__name__)
+
+        def extract_user_attribute(self, entry: dict[str, object], attr: str) -> str:
+            """Extract attribute from user entry."""
+            value = entry.get(attr, "")
+            if isinstance(value, list) and value:
+                return str(value[0])
+            return str(value)
+
+        def extract_group_members(self, entry: dict[str, object]) -> list[str]:
+            """Extract members from group entry."""
+            members = entry.get("member", [])
+            if isinstance(members, list):
+                return [str(member) for member in members]
+            return [str(members)] if members else []
+
+        def process_group_data(self, group_entry: LDAPEntryProtocol) -> FlextResult[dict[str, object]]:
+            """Process group data and extract attributes with explicit error handling."""
+            if not hasattr(group_entry, "attributes"):
+                return FlextResult[dict[str, object]].fail("Group entry missing attributes")
+
+            attributes = group_entry.attributes
+            members = self.extract_group_members(attributes)
+
+            result_data = {
+                "group_name": attributes.get("cn", ["Unknown"])[0]
+                if attributes.get("cn")
+                else "Unknown",
+                "members": members,
+                "object_class": attributes.get("objectClass", []),
+                "member_count": len(members),
             }
 
-            self._logger.info("LDAP operations service executed successfully")
-            return FlextResult[dict[str, object]].ok(summary)
+            return FlextResult[dict[str, object]].ok(result_data)
 
-        except Exception as e:
-            self._logger.exception("Service execution failed")
-            return FlextResult[dict[str, object]].fail(f"Service execution failed: {e}")
+    class _CommandProcessor:
+        """Command processing operations - nested helper class."""
+
+        def __init__(self, parent_operations: FlextLDAPOperations) -> None:
+            """Initialize command processor with parent reference."""
+            self._parent = parent_operations
+            self._logger = FlextLogger(__name__)
+
+        def execute_command(self, command_type: str, parameters: dict[str, object]) -> FlextResult[dict[str, object]]:
+            """Execute LDAP command with explicit error handling."""
+            if not command_type or not command_type.strip():
+                return FlextResult[dict[str, object]].fail("Command type cannot be empty")
+
+            if not parameters or not isinstance(parameters, dict):
+                return FlextResult[dict[str, object]].fail("Parameters must be a non-empty dictionary")
+
+            # Route command to appropriate handler
+            if command_type == "search":
+                return self._execute_search_command(parameters)
+            if command_type == "create_user":
+                return self._execute_create_user_command(parameters)
+            if command_type == "create_group":
+                return self._execute_create_group_command(parameters)
+            return FlextResult[dict[str, object]].fail(f"Unknown command type: {command_type}")
+
+        def _execute_search_command(self, parameters: dict[str, object]) -> FlextResult[dict[str, object]]:
+            """Execute search command with explicit error handling."""
+            base_dn = parameters.get("base_dn")
+            filter_str = parameters.get("filter", "(objectClass=*)")
+            scope = parameters.get("scope", "subtree")
+
+            if not base_dn:
+                return FlextResult[dict[str, object]].fail("base_dn parameter required for search")
+
+            search_result = self._parent.get_search_helper().execute_search(str(base_dn), str(filter_str), str(scope))
+            if search_result.is_failure:
+                return FlextResult[dict[str, object]].fail(f"Search failed: {search_result.error}")
+
+            return FlextResult[dict[str, object]].ok({"results": search_result.value, "count": len(search_result.value)})
+
+        def _execute_create_user_command(self, parameters: dict[str, object]) -> FlextResult[dict[str, object]]:
+            """Execute create user command with explicit error handling."""
+            dn = parameters.get("dn")
+            attributes = parameters.get("attributes")
+
+            if not dn:
+                return FlextResult[dict[str, object]].fail("dn parameter required for create_user")
+
+            if not attributes or not isinstance(attributes, dict):
+                return FlextResult[dict[str, object]].fail("attributes parameter required for create_user")
+
+            create_result = self._parent.get_entities_helper().create_user(str(dn), attributes)
+            if create_result.is_failure:
+                return FlextResult[dict[str, object]].fail(f"User creation failed: {create_result.error}")
+
+            return FlextResult[dict[str, object]].ok({"status": "created", "dn": str(dn)})
+
+        def _execute_create_group_command(self, parameters: dict[str, object]) -> FlextResult[dict[str, object]]:
+            """Execute create group command with explicit error handling."""
+            dn = parameters.get("dn")
+            attributes = parameters.get("attributes")
+
+            if not dn:
+                return FlextResult[dict[str, object]].fail("dn parameter required for create_group")
+
+            if not attributes or not isinstance(attributes, dict):
+                return FlextResult[dict[str, object]].fail("attributes parameter required for create_group")
+
+            create_result = self._parent.get_entities_helper().create_group(str(dn), attributes)
+            if create_result.is_failure:
+                return FlextResult[dict[str, object]].fail(f"Group creation failed: {create_result.error}")
+
+            return FlextResult[dict[str, object]].ok({"status": "created", "dn": str(dn)})
+
+    def __init__(self) -> None:
+        """Initialize LDAP operations service with nested helper instances."""
+        # Initialize FlextDomainService with timestamps
+        super().__init__()
+        self._logger = FlextLogger(__name__)
+        self._active_connections: dict[str, FlextLDAPOperations._ConnectionOperations.ConnectionMetadata] = {}
+
+        # Initialize nested helper instances
+        self._connections = self._ConnectionOperations(self)
+        self._search = self._SearchOperations(self)
+        self._entities = self._EntityOperations(self)
+        self._validations = self._ValidationOperations(self)
+        self._extractors = self._AttributeExtractorOperations(self)
+        self._commands = self._CommandProcessor(self)
+
+        # Legacy property aliases for backward compatibility - will be removed
+        self.connections = self._connections
+        self.search = self._search
+        self.entities = self._entities
+
+    # Public accessor methods for nested classes to avoid SLF001 violations
+    def get_active_connections(self) -> dict[str, FlextLDAPOperations._ConnectionOperations.ConnectionMetadata]:
+        """Get active connections dictionary for nested operations."""
+        return self._active_connections
+
+    def set_active_connection(self, connection_id: str, metadata: FlextLDAPOperations._ConnectionOperations.ConnectionMetadata) -> None:
+        """Set active connection metadata for nested operations."""
+        self._active_connections[connection_id] = metadata
+
+    def remove_active_connection(self, connection_id: str) -> None:
+        """Remove active connection for nested operations."""
+        if connection_id in self._active_connections:
+            del self._active_connections[connection_id]
+
+    def has_active_connection(self, connection_id: str) -> bool:
+        """Check if connection exists for nested operations."""
+        return connection_id in self._active_connections
+
+    def get_validations_helper(self) -> FlextLDAPOperations._ValidationOperations:
+        """Get validation operations helper for nested classes."""
+        return self._validations
+
+    def get_search_helper(self) -> FlextLDAPOperations._SearchOperations:
+        """Get search operations helper for nested classes."""
+        return self._search
+
+    def get_entities_helper(self) -> FlextLDAPOperations._EntityOperations:
+        """Get entity operations helper for nested classes."""
+        return self._entities
+
+    def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute the main LDAP operations service with result contract."""
+        self._logger.info("Executing LDAP operations service")
+
+        # Return service status and available operations
+        status = {
+            "service": "FlextLDAPOperations",
+            "status": "ready",
+            "active_connections": len(self._active_connections),
+            "available_operations": [
+                "create_connection_and_bind",
+                "cleanup_connection",
+                "get_connection_status",
+                "execute_search",
+                "create_user",
+                "create_group",
+                "execute_command"
+            ]
+        }
+
+        return FlextResult[dict[str, object]].ok(status)
+
+    def get_connection_status(self, connection_id: str) -> FlextResult[dict[str, object]]:
+        """Get connection status using nested helper."""
+        return self._connections.get_connection_status(connection_id)
+
+    def list_active_connections(self) -> FlextResult[list[str]]:
+        """List active connections with explicit error handling."""
+        if not self._active_connections:
+            return FlextResult[list[str]].ok([])
+
+        connection_ids = list(self._active_connections.keys())
+        self._logger.info("Listed active connections", count=len(connection_ids))
+        return FlextResult[list[str]].ok(connection_ids)
+
+    def execute_command(self, command_type: str, parameters: dict[str, object]) -> FlextResult[dict[str, object]]:
+        """Execute LDAP command using nested command processor."""
+        return self._commands.execute_command(command_type, parameters)
+
+    def entry_operations(self) -> FlextLDAPOperations._EntityOperations:
+        """Get entity operations helper."""
+        return self._entities
+
+    async def create_connection_and_bind(self, server_uri: str, bind_dn: str, bind_password: str) -> FlextResult[str]:
+        """Create connection and bind using nested helper."""
+        return self._connections.create_connection_and_bind(server_uri, bind_dn, bind_password)
+
+    async def cleanup_connection(self, connection_id: str) -> FlextResult[None]:
+        """Clean up connection using nested helper."""
+        return self._connections.cleanup_connection(connection_id)
+
+    @property
+    def entries(self) -> list[dict[str, object]]:
+        """Get entries property for compatibility."""
+        # Return empty list as placeholder - real implementation would track entries
+        return []
+
+    def generate_id(self) -> str:
+        """Generate unique ID using FlextUtilities."""
+        return FlextUtilities.Generators.generate_uuid()
+
 
 
 __all__ = [
-    "FlextLdapOperations",
+    "FlextLDAPOperations",
 ]
