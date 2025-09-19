@@ -143,13 +143,13 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
 
             return FlextResult[dict[str, object]].ok(status)
 
-        def list_active_connections(self) -> FlextResult[list[ConnectionMetadata]]:
+        def list_active_connections(self) -> FlextResult[list[object]]:
             """List all active connections with explicit error handling."""
             try:
-                active_connections = list(self._parent.get_active_connections().values())
-                return FlextResult[list[ConnectionMetadata]].ok(active_connections)
+                active_connections: list[object] = list(self._parent.get_active_connections().values())
+                return FlextResult[list[object]].ok(active_connections)
             except Exception as e:
-                return FlextResult[list[ConnectionMetadata]].fail(f"Failed to list active connections: {e}")
+                return FlextResult[list[object]].fail(f"Failed to list active connections: {e}")
 
     class _SearchOperations:
         """Search operations - nested helper class."""

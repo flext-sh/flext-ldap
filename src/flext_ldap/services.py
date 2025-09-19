@@ -515,7 +515,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         repository = self._repository
         delete_method = getattr(repository, "delete_async", None)
         if delete_method is None:
-            return FlextResult.fail("LDAP connection failed: Repository delete method not available")
+            return FlextResult.fail(
+                "LDAP connection failed: Repository delete method not available"
+            )
         delete_result = await delete_method(dn)
 
         if not delete_result.is_success:
@@ -624,7 +626,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
         repository = self._repository
         delete_method = getattr(repository, "delete_async", None)
         if delete_method is None:
-            return FlextResult.fail("LDAP connection failed: Repository delete method not available")
+            return FlextResult.fail(
+                "LDAP connection failed: Repository delete method not available"
+            )
         result = await delete_method(dn)
         if not result.is_success:
             return FlextResult.fail(result.error or "Delete failed")
@@ -696,7 +700,9 @@ class FlextLdapServices(FlextProcessing.Handler, FlextMixins.Loggable):
 
         update_method = getattr(base_repository, "update", None)
         if update_method is None:
-            return FlextResult.fail("LDAP connection failed: Repository update method not available")
+            return FlextResult.fail(
+                "LDAP connection failed: Repository update method not available"
+            )
 
         result = await update_method(group_dn, converted_attributes)
         if not result.is_success:
