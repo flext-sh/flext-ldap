@@ -20,7 +20,7 @@ class FlextLdapTypes(FlextTypes):
     internal properties with full type safety.
     """
 
-    class Domain:
+    class LdapDomain:
         """Domain-level type definitions for LDAP entities."""
 
         DistinguishedName = str

@@ -133,10 +133,10 @@ class TestExceptionFactoryMethods:
         """Test connection error creation with different parameters."""
         # Create connection errors with different parameters
         error1 = FlextLdapExceptions.LdapConnectionError(
-            "Connection timeout to server1"
+            "Connection timeout to server1",
         )
         error2 = FlextLdapExceptions.LdapConnectionError(
-            "Port error connecting to server2"
+            "Port error connecting to server2",
         )
 
         assert isinstance(error1, FlextLdapExceptions.LdapConnectionError)
@@ -148,21 +148,21 @@ class TestExceptionFactoryMethods:
         """Test exception creation with LDAP result codes."""
         # Create authentication error with result code
         auth_error = FlextLdapExceptions.AuthenticationError(
-            "Authentication failed for cn=user (LDAP result code: 49)"
+            "Authentication failed for cn=user (LDAP result code: 49)",
         )
         assert isinstance(auth_error, FlextLdapExceptions.AuthenticationError)
         assert "49" in str(auth_error)
 
         # Create search error with result code
         search_error = FlextLdapExceptions.SearchError(
-            "Search failed for ou=users with filter (uid=test), error: Not found (LDAP result code: 32)"
+            "Search failed for ou=users with filter (uid=test), error: Not found (LDAP result code: 32)",
         )
         assert isinstance(search_error, FlextLdapExceptions.SearchError)
         assert "32" in str(search_error)
 
         # Create user error with uid and code
         user_error = FlextLdapExceptions.UserError(
-            "User creation failed for cn=newuser (uid: newuser, LDAP result code: 68)"
+            "User creation failed for cn=newuser (uid: newuser, LDAP result code: 68)",
         )
         assert isinstance(user_error, FlextLdapExceptions.UserError)
         assert "newuser" in str(user_error)
@@ -170,13 +170,13 @@ class TestExceptionFactoryMethods:
 
         # Create validation error
         val_error = FlextLdapExceptions.ValidationError(
-            "Validation failed for field: error"
+            "Validation failed for field: error",
         )
         assert isinstance(val_error, FlextLdapExceptions.ValidationError)
 
         # Create configuration error with section
         config_error = FlextLdapExceptions.ConfigurationError(
-            "Configuration error in section 'section' for key: error"
+            "Configuration error in section 'section' for key: error",
         )
         assert isinstance(config_error, FlextLdapExceptions.ConfigurationError)
         assert "section" in str(config_error)

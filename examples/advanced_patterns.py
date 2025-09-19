@@ -26,7 +26,7 @@ from contextlib import asynccontextmanager
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
     FlextLdapApi,
-    FlextLdapConfig,
+    FlextLdapConfigs,
     FlextLdapModels,
 )
 
@@ -97,7 +97,7 @@ def demonstrate_value_objects() -> None:
     try:
         # 1. Distinguished Names
         dn = FlextLdapModels.ValueObjects.DistinguishedName(
-            value="cn=admin,ou=users,dc=example,dc=com"
+            value="cn=admin,ou=users,dc=example,dc=com",
         )
         dn.validate_business_rules()
 
@@ -118,7 +118,7 @@ def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLdapConfig()
+        _settings = FlextLdapConfigs()
 
         # 2. Create search request using FlextLdapSearchRequest
         search_request = FlextLdapModels.SearchRequest(
@@ -143,7 +143,7 @@ async def demonstrate_async_patterns() -> None:
     try:
         # 1. Context manager usage
         async with ldap_session(
-            "ldap://demo.example.com:389", "cn=admin,dc=example,dc=com", "password"
+            "ldap://demo.example.com:389", "cn=admin,dc=example,dc=com", "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
             tasks: list[Awaitable[FlextResult[list[FlextLdapModels.Entry]]]] = []

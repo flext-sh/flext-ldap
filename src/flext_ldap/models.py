@@ -65,7 +65,7 @@ class FlextLdapModels(FlextModels):
         def validate_base_dn(cls, value: str) -> str:
             """Validate base DN using centralized validation."""
             validation_result = FlextLdapValidations.validate_dn(
-                value.strip(), "Base DN"
+                value.strip(), "Base DN",
             )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -84,7 +84,7 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def create_user_search(
-            cls, base_dn: str, uid: str | None = None
+            cls, base_dn: str, uid: str | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Factory method for common user search patterns."""
             filter_str = (
@@ -135,7 +135,7 @@ class FlextLdapModels(FlextModels):
             # LDAP entries must have at least one object class
             if not self.object_classes:
                 return FlextResult[None].fail(
-                    "Entry must have at least one object class"
+                    "Entry must have at least one object class",
                 )
 
             return FlextResult[None].ok(None)
@@ -236,7 +236,7 @@ class FlextLdapModels(FlextModels):
             # Group-specific validations
             if "groupOfNames" not in self.object_classes:
                 return FlextResult[None].fail(
-                    "Group must have 'groupOfNames' object class"
+                    "Group must have 'groupOfNames' object class",
                 )
 
             return FlextResult[None].ok(None)
@@ -358,7 +358,7 @@ class FlextLdapModels(FlextModels):
         dn: str = Field(description="Distinguished Name of group to update")
         cn: str | None = Field(default=None, description="New Common Name")
         description: str | None = Field(
-            default=None, description="New group description"
+            default=None, description="New group description",
         )
         member_dns: list[str] | None = Field(
             default=None,
@@ -387,11 +387,11 @@ class FlextLdapModels(FlextModels):
 
         server_uri: str = Field(description="LDAP server URI")
         bind_dn: str | None = Field(
-            default=None, description="Bind DN for authentication"
+            default=None, description="Bind DN for authentication",
         )
         bind_password: str | None = Field(default=None, description="Bind password")
         operation_type: str = Field(
-            description="Operation type: test, connect, bind, terminate"
+            description="Operation type: test, connect, bind, terminate",
         )
         timeout: int = Field(
             default=30,
@@ -434,11 +434,11 @@ class FlextLdapModels(FlextModels):
             cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
             sn=entry.attributes.get(FlextLdapConstants.Attributes.SURNAME, [None])[0],
             given_name=entry.attributes.get(
-                FlextLdapConstants.Attributes.GIVEN_NAME, [None]
+                FlextLdapConstants.Attributes.GIVEN_NAME, [None],
             )[0],
             mail=entry.attributes.get(FlextLdapConstants.Attributes.MAIL, [None])[0],
             display_name=entry.attributes.get(
-                FlextLdapConstants.Attributes.DISPLAY_NAME, [None]
+                FlextLdapConstants.Attributes.DISPLAY_NAME, [None],
             )[0],
         )
 
@@ -453,7 +453,7 @@ class FlextLdapModels(FlextModels):
             modified_at=entry.modified_at,
             cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
             description=entry.attributes.get(
-                FlextLdapConstants.Attributes.DESCRIPTION, [None]
+                FlextLdapConstants.Attributes.DESCRIPTION, [None],
             )[0],
             members=entry.attributes.get(FlextLdapConstants.Attributes.MEMBER, []),
         )
@@ -577,7 +577,7 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def create(
-                cls, scope: str
+                cls, scope: str,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
                 """Create scope value object with validation."""
                 try:
@@ -667,7 +667,7 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def create(
-                cls, value: str
+                cls, value: str,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Filter]:
                 """Create filter from string with validation."""
                 try:
@@ -680,7 +680,7 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def equals(
-                cls, attribute: str, value: str
+                cls, attribute: str, value: str,
             ) -> FlextLdapModels.ValueObjects.Filter:
                 """Create equality filter."""
                 return cls(value=f"({attribute}={value})")
@@ -696,7 +696,7 @@ class FlextLdapModels(FlextModels):
 
             @classmethod
             def object_class(
-                cls, object_class: str
+                cls, object_class: str,
             ) -> FlextLdapModels.ValueObjects.Filter:
                 """Create object class filter."""
                 return cls(value=f"(objectClass={object_class})")
@@ -756,6 +756,58 @@ class FlextLdapModels(FlextModels):
                 or self.include_system
                 or bool(self.attribute_filter)
             )
+
+    class ConnectionConfig(BaseModel):
+        """LDAP Connection Configuration Model - consolidated from scattered definitions."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
+            str_strip_whitespace=True,
+        )
+
+        server: str = Field(description="LDAP server URI")
+        port: int = Field(
+            default=389,
+            description="LDAP server port",
+            gt=0,
+            le=65535,
+        )
+        bind_dn: str | None = Field(
+            default=None, description="Bind DN for authentication",
+        )
+        bind_password: str | None = Field(default=None, description="Bind password")
+        timeout: int = Field(
+            default=30,
+            description="Connection timeout in seconds",
+            gt=0,
+            le=300,
+        )
+        use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
+
+        @field_validator("server")
+        @classmethod
+        def validate_server(cls, value: str) -> str:
+            """Validate server URI format."""
+            if not value or not value.strip():
+                msg = "Server URI cannot be empty"
+                raise ValueError(msg)
+
+            value = value.strip()
+            if not (value.startswith(("ldap://", "ldaps://"))):
+                msg = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
+                raise ValueError(msg)
+
+            return value
+
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate connection config business rules."""
+            if not self.server:
+                return FlextResult[None].fail("Server cannot be empty")
+            if self.timeout <= 0:
+                return FlextResult[None].fail("Timeout must be positive")
+            return FlextResult[None].ok(None)
 
 
 __all__ = ["FlextLdapModels"]

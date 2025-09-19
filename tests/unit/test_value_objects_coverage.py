@@ -22,7 +22,7 @@ class TestFlextLdapValueObjectsCoverage:
         """Test DN rdn property (covers line 92)."""
         # Create valid DN and test rdn extraction
         result = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "cn=test,ou=users,dc=example,dc=com"
+            "cn=test,ou=users,dc=example,dc=com",
         )
         assert result.is_success
         dn = result.unwrap()
@@ -33,7 +33,7 @@ class TestFlextLdapValueObjectsCoverage:
         """Test is_descendant_of with string input (covers lines 99-100)."""
         # Create DN and test descendant check with string
         result = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "cn=test,ou=users,dc=example,dc=com"
+            "cn=test,ou=users,dc=example,dc=com",
         )
         assert result.is_success
         dn = result.unwrap()
@@ -46,7 +46,7 @@ class TestFlextLdapValueObjectsCoverage:
         """Test is_descendant_of with DN object input."""
         # Create DN and test descendant check with DN object
         result1 = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "cn=test,ou=users,dc=example,dc=com"
+            "cn=test,ou=users,dc=example,dc=com",
         )
         result2 = FlextLdapModels.ValueObjects.DistinguishedName.create("dc=example,dc=com")
         assert result1.is_success

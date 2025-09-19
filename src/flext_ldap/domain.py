@@ -1169,7 +1169,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self._password_service = FlextLdapDomain.PasswordService()
 
         def validate_user_creation_business_rules(
-            self, command: "FlextLdapDomain.CreateUserCommand"
+            self, command: "FlextLdapDomain.CreateUserCommand",
         ) -> FlextResult[None]:
             """Validate business rules for user creation - pure domain logic."""
             validation_result = command.validate_command()
@@ -1221,7 +1221,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 return FlextResult.fail(f"Parameter extraction failed: {e}")
 
         def create_user_entity(
-            self, user_params: FlextTypes.Core.Dict
+            self, user_params: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.User]:
             """Create user entity - pure domain logic."""
             try:
@@ -1234,7 +1234,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "sn": user_params.get("extract_sn", user_params.get("sn")),
                     "mail": user_params.get("extract_mail", user_params.get("mail")),
                     "object_classes": user_params.get(
-                        "extract_object_class", user_params.get("objectClass", [])
+                        "extract_object_class", user_params.get("objectClass", []),
                     ),
                 }
                 # Remove None values
@@ -1286,7 +1286,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
             }
 
     class CreateUserCommandHandler(
-        FlextHandlers["FlextLdapDomain.CreateUserCommand", FlextLdapModels.User]
+        FlextHandlers["FlextLdapDomain.CreateUserCommand", FlextLdapModels.User],
     ):
         """Command handler for user creation using modern FlextHandlers pattern."""
 
@@ -1305,30 +1305,30 @@ class FlextLdapDomain(FlextMixins.Loggable):
             # Validate command business rules
             validation_result = (
                 self._user_creation_service.validate_user_creation_business_rules(
-                    message
+                    message,
                 )
             )
             if validation_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
-                    validation_result.error or "Command validation failed"
+                    validation_result.error or "Command validation failed",
                 )
 
             # Extract user parameters from command
             params_result = self._user_creation_service.extract_user_parameters(
-                message.user_data
+                message.user_data,
             )
             if params_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
-                    params_result.error or "Parameter extraction failed"
+                    params_result.error or "Parameter extraction failed",
                 )
 
             # Create user entity from parameters
             creation_result = self._user_creation_service.create_user_entity(
-                params_result.unwrap()
+                params_result.unwrap(),
             )
             if creation_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
-                    creation_result.error or "User creation failed"
+                    creation_result.error or "User creation failed",
                 )
 
             return FlextResult[FlextLdapModels.User].ok(creation_result.unwrap())

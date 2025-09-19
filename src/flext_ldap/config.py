@@ -11,11 +11,9 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import ClassVar, Self, cast, final
+from typing import TYPE_CHECKING, ClassVar, Self, cast, final
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
     Field,
     SecretStr,
     field_validator,
@@ -26,6 +24,12 @@ from pydantic_settings import SettingsConfigDict
 from flext_core import FlextConfig, FlextLogger, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+
+# Type alias for ConnectionConfig - clean separation of types and runtime
+if TYPE_CHECKING:
+    ConnectionConfigType = FlextLdapModels.ConnectionConfig
+else:
+    ConnectionConfigType = object  # Runtime placeholder
 
 
 @final
@@ -71,38 +75,12 @@ class FlextLdapConfigs(FlextConfig):
         ConnectionName = str
         ConfigPath = str | Path
 
-    class ConnectionConfig(BaseModel):
-        """LDAP Connection Configuration Model."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            validate_assignment=True,
-            str_strip_whitespace=True,
-        )
-
-        server: str = Field(description="LDAP server URI")
-        port: int = Field(
-            default=389,
-            description="LDAP server port",
-            gt=0,
-            le=65535,
-        )
-        bind_dn: str | None = Field(
-            default=None, description="Bind DN for authentication"
-        )
-        bind_password: str | None = Field(default=None, description="Bind password")
-        timeout: int = Field(
-            default=30,
-            description="Connection timeout in seconds",
-            gt=0,
-            le=300,
-        )
-        use_tls: bool = Field(default=False, description="Use TLS encryption")
+    # NOTE: ConnectionConfig type alias is defined at module level, not class level
+    # Access runtime ConnectionConfig through FlextLdapModels.ConnectionConfig
 
     # === LDAP CONNECTION CONFIGURATION ===
     # Connection to LDAP servers (can be a single or multiple connections)
-    ldap_default_connection: ConnectionConfig | None = Field(
+    ldap_default_connection: ConnectionConfigType | None = Field(
         default=None,
         description="Default LDAP connection configuration",
         alias="ldap_connection",
@@ -249,7 +227,7 @@ class FlextLdapConfigs(FlextConfig):
             # Create default connection if not provided
             default_server = FlextLdapConstants.LDAP.DEFAULT_SERVER_URI
             try:
-                self.ldap_default_connection = self.ConnectionConfig(
+                self.ldap_default_connection = FlextLdapModels.ConnectionConfig(
                     server=default_server,
                 )
             except Exception as e:
@@ -406,7 +384,7 @@ class FlextLdapConfigs(FlextConfig):
 
     @classmethod
     def create_development_ldap_config(
-        cls, **overrides: str | float | bool | None
+        cls, **overrides: str | float | bool | None,
     ) -> FlextResult[FlextLdapConfigs]:
         """Create development LDAP configuration with appropriate defaults.
 
@@ -440,12 +418,12 @@ class FlextLdapConfigs(FlextConfig):
             return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
             return FlextResult["FlextLdapConfigs"].fail(
-                f"Failed to create development config: {e}"
+                f"Failed to create development config: {e}",
             )
 
     @classmethod
     def create_test_ldap_config(
-        cls, **overrides: str | float | bool | None
+        cls, **overrides: str | float | bool | None,
     ) -> FlextResult[FlextLdapConfigs]:
         """Create test LDAP configuration with appropriate defaults.
 
@@ -480,12 +458,12 @@ class FlextLdapConfigs(FlextConfig):
             return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
             return FlextResult["FlextLdapConfigs"].fail(
-                f"Failed to create test config: {e}"
+                f"Failed to create test config: {e}",
             )
 
     @classmethod
     def create_production_ldap_config(
-        cls, **overrides: dict[str, object]
+        cls, **overrides: dict[str, object],
     ) -> FlextResult[FlextLdapConfigs]:
         """Create production LDAP configuration with appropriate defaults.
 
@@ -515,7 +493,7 @@ class FlextLdapConfigs(FlextConfig):
             return FlextResult["FlextLdapConfigs"].ok(config)
         except Exception as e:
             return FlextResult["FlextLdapConfigs"].fail(
-                f"Failed to create production config: {e}"
+                f"Failed to create production config: {e}",
             )
 
     def apply_ldap_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
@@ -645,7 +623,7 @@ class FlextLdapConfigs(FlextConfig):
         )
 
         def model_post_init(
-            self, __context: dict[str, object] | None = None, /
+            self, __context: dict[str, object] | None = None, /,
         ) -> None:
             """Post-initialization setup for LDAP configuration."""
             super().model_post_init(__context)

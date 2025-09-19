@@ -75,7 +75,7 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
             self._logger = FlextLogger(__name__)
 
         def create_connection(
-            self, config: ConnectionConfig
+            self, config: ConnectionConfig,
         ) -> FlextResult[FlextLdapTypes.Connection.ConnectionId]:
             """Create a new LDAP connection with the provided configuration."""
             try:
@@ -96,17 +96,17 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
 
                 self._logger.info(f"Created LDAP connection: {connection_id}")
                 return FlextResult[FlextLdapTypes.Connection.ConnectionId].ok(
-                    connection_id
+                    connection_id,
                 )
 
             except Exception as e:
                 self._logger.exception("Failed to create LDAP connection")
                 return FlextResult[FlextLdapTypes.Connection.ConnectionId].fail(
-                    f"Connection creation failed: {e}"
+                    f"Connection creation failed: {e}",
                 )
 
         def close_connection(
-            self, connection_id: FlextLdapTypes.Connection.ConnectionId
+            self, connection_id: FlextLdapTypes.Connection.ConnectionId,
         ) -> FlextResult[None]:
             """Close an active LDAP connection."""
             try:
@@ -171,11 +171,11 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
                 ]
 
                 result = self.SearchResult(
-                    entries=mock_entries, total_count=len(mock_entries), has_more=False
+                    entries=mock_entries, total_count=len(mock_entries), has_more=False,
                 )
 
                 self._logger.info(
-                    f"Search completed: {len(mock_entries)} entries found"
+                    f"Search completed: {len(mock_entries)} entries found",
                 )
                 return FlextResult[
                     FlextLdapOperations.SearchOperations.SearchResult
@@ -212,7 +212,7 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
             try:
                 if connection_id not in self._parent._active_connections:
                     return FlextResult[str].fail(
-                        f"Connection not found: {connection_id}"
+                        f"Connection not found: {connection_id}",
                     )
 
                 # Mock entity creation
@@ -237,13 +237,13 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
             try:
                 if connection_id not in self._parent._active_connections:
                     return FlextResult[None].fail(
-                        f"Connection not found: {connection_id}"
+                        f"Connection not found: {connection_id}",
                     )
 
                 # Mock entity update - use attributes parameter
                 attr_count = len(attributes) if attributes else 0
                 self._logger.info(
-                    f"Updated entity: {entity_dn} with {attr_count} attributes"
+                    f"Updated entity: {entity_dn} with {attr_count} attributes",
                 )
                 return FlextResult[None].ok(None)
 
@@ -252,13 +252,13 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
                 return FlextResult[None].fail(f"Entity update failed: {e}")
 
         def delete_entity(
-            self, connection_id: FlextLdapTypes.Connection.ConnectionId, entity_dn: str
+            self, connection_id: FlextLdapTypes.Connection.ConnectionId, entity_dn: str,
         ) -> FlextResult[None]:
             """Delete an LDAP entity."""
             try:
                 if connection_id not in self._parent._active_connections:
                     return FlextResult[None].fail(
-                        f"Connection not found: {connection_id}"
+                        f"Connection not found: {connection_id}",
                     )
 
                 # Mock entity deletion
@@ -286,13 +286,13 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
         self.entities = self.EntityOperations(self)
 
     def get_connection_status(
-        self, connection_id: FlextLdapTypes.Connection.ConnectionId
+        self, connection_id: FlextLdapTypes.Connection.ConnectionId,
     ) -> FlextResult[dict[str, object]]:
         """Get status information for a connection."""
         try:
             if connection_id not in self._active_connections:
                 return FlextResult[dict[str, object]].fail(
-                    f"Connection not found: {connection_id}"
+                    f"Connection not found: {connection_id}",
                 )
 
             metadata = self._active_connections[connection_id]
@@ -319,12 +319,12 @@ class FlextLdapOperations(FlextDomainService[dict[str, object]]):
         try:
             active_ids = list(self._active_connections.keys())
             return FlextResult[list[FlextLdapTypes.Connection.ConnectionId]].ok(
-                active_ids
+                active_ids,
             )
         except Exception as e:
             self._logger.exception("Failed to list connections")
             return FlextResult[list[FlextLdapTypes.Connection.ConnectionId]].fail(
-                f"Connection listing failed: {e}"
+                f"Connection listing failed: {e}",
             )
 
     def execute(self) -> FlextResult[dict[str, object]]:

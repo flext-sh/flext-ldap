@@ -21,7 +21,7 @@ import os
 from flext_core import FlextLogger
 from flext_ldap import (
     FlextLdapApi,
-    FlextLdapConfig,
+    FlextLdapConfigs,
     FlextLdapModels,
 )
 
@@ -30,8 +30,8 @@ logger = FlextLogger(__name__)
 
 def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
-    # 1. Settings configuration using FlextLdapConfig
-    FlextLdapConfig()
+    # 1. Settings configuration using FlextLdapConfigs
+    FlextLdapConfigs()
 
     # 2. Connection info - will be passed to API methods
 
@@ -106,7 +106,7 @@ async def demonstrate_error_handling() -> None:
     api = FlextLdapApi()
     try:
         test_password = os.getenv(
-            "LDAP_TEST_PASSWORD", "demo_password_not_for_production"
+            "LDAP_TEST_PASSWORD", "demo_password_not_for_production",
         )
         connection_result = await api.connect(
             server_uri="ldap://nonexistent.server:389",
@@ -131,9 +131,9 @@ def demonstrate_logging_integration() -> None:
 
     # Create settings with logging
     logger.debug("Creating LDAP settings")
-    settings = FlextLdapConfig()
+    settings = FlextLdapConfigs()
 
-    # Use the public field name defined in FlextLdapConfig
+    # Use the public field name defined in FlextLdapConfigs
     logger.debug(
         "Settings created successfully",
         extra={"debug_enabled": settings.ldap_enable_debug},

@@ -79,15 +79,15 @@ class FlextLdapEntities(FlextModels):
 
         # Additional attributes as flexible dict
         additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
-            default_factory=dict, description="Additional LDAP attributes"
+            default_factory=dict, description="Additional LDAP attributes",
         )
 
         # Timestamps
         created_timestamp: datetime | None = Field(
-            None, description="Creation timestamp"
+            None, description="Creation timestamp",
         )
         modified_timestamp: datetime | None = Field(
-            None, description="Last modification timestamp"
+            None, description="Last modification timestamp",
         )
 
         @field_validator("dn")
@@ -109,13 +109,13 @@ class FlextLdapEntities(FlextModels):
             return v
 
         def get_attribute(
-            self, name: str
+            self, name: str,
         ) -> FlextLdapTypes.Entry.AttributeValue | None:
             """Get attribute value by name."""
             return self.additional_attributes.get(name)
 
         def set_attribute(
-            self, name: str, value: FlextLdapTypes.Entry.AttributeValue
+            self, name: str, value: FlextLdapTypes.Entry.AttributeValue,
         ) -> None:
             """Set attribute value by name."""
             self.additional_attributes[name] = value
@@ -163,15 +163,15 @@ class FlextLdapEntities(FlextModels):
 
         # Additional attributes
         additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
-            default_factory=dict, description="Additional LDAP attributes"
+            default_factory=dict, description="Additional LDAP attributes",
         )
 
         # Timestamps
         created_timestamp: datetime | None = Field(
-            None, description="Creation timestamp"
+            None, description="Creation timestamp",
         )
         modified_timestamp: datetime | None = Field(
-            None, description="Last modification timestamp"
+            None, description="Last modification timestamp",
         )
 
         @field_validator("dn")
@@ -212,7 +212,7 @@ class FlextLdapEntities(FlextModels):
 
         # LDAP attributes as flexible dict
         attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
-            default_factory=dict, description="LDAP entry attributes"
+            default_factory=dict, description="LDAP entry attributes",
         )
 
         # LDAP metadata
@@ -223,10 +223,10 @@ class FlextLdapEntities(FlextModels):
 
         # Timestamps
         created_timestamp: datetime | None = Field(
-            None, description="Creation timestamp"
+            None, description="Creation timestamp",
         )
         modified_timestamp: datetime | None = Field(
-            None, description="Last modification timestamp"
+            None, description="Last modification timestamp",
         )
 
         @field_validator("dn")
@@ -239,13 +239,13 @@ class FlextLdapEntities(FlextModels):
             return v.strip()
 
         def get_attribute(
-            self, name: str
+            self, name: str,
         ) -> FlextLdapTypes.Entry.AttributeValue | None:
             """Get attribute value by name."""
             return self.attributes.get(name)
 
         def set_attribute(
-            self, name: str, value: FlextLdapTypes.Entry.AttributeValue
+            self, name: str, value: FlextLdapTypes.Entry.AttributeValue,
         ) -> None:
             """Set attribute value by name."""
             self.attributes[name] = value
@@ -282,28 +282,28 @@ class FlextLdapEntities(FlextModels):
 
         # Attribute selection
         attributes: list[str] = Field(
-            default_factory=list, description="Attributes to return (empty = all)"
+            default_factory=list, description="Attributes to return (empty = all)",
         )
 
         # Search limits
         size_limit: int = Field(
-            default=1000, description="Maximum number of entries to return", ge=0
+            default=1000, description="Maximum number of entries to return", ge=0,
         )
         time_limit: int = Field(
-            default=60, description="Search timeout in seconds", ge=0
+            default=60, description="Search timeout in seconds", ge=0,
         )
 
         # Paging
         page_size: int | None = Field(
-            None, description="Page size for paged results", ge=1
+            None, description="Page size for paged results", ge=1,
         )
         paged_cookie: bytes | None = Field(
-            None, description="Paging cookie for continuation"
+            None, description="Paging cookie for continuation",
         )
 
         # Advanced options
         types_only: bool = Field(
-            default=False, description="Return attribute types only (no values)"
+            default=False, description="Return attribute types only (no values)",
         )
         deref_aliases: str = Field(
             default="never",
@@ -350,7 +350,7 @@ class FlextLdapEntities(FlextModels):
                     "attributes": attributes or ["uid", "cn", "mail", "sn"],
                     "page_size": None,
                     "paged_cookie": None,
-                }
+                },
             )
 
         @classmethod
@@ -368,7 +368,7 @@ class FlextLdapEntities(FlextModels):
                     "attributes": attributes or ["cn", "member", "description"],
                     "page_size": None,
                     "paged_cookie": None,
-                }
+                },
             )
 
     class SearchResult(BaseModel):
@@ -382,7 +382,7 @@ class FlextLdapEntities(FlextModels):
 
         # Results
         entries: list[FlextLdapEntities.Entry] = Field(
-            default_factory=list, description="Search result entries"
+            default_factory=list, description="Search result entries",
         )
 
         # Result metadata
@@ -441,7 +441,7 @@ class FlextLdapEntities(FlextModels):
 
         # Additional attributes
         additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
-            default_factory=dict, description="Additional LDAP attributes"
+            default_factory=dict, description="Additional LDAP attributes",
         )
 
         @field_validator("dn")
@@ -482,7 +482,7 @@ class FlextLdapEntities(FlextModels):
                     "o": self.organization,
                     "objectClass": self.object_classes,
                     "additional_attributes": self.additional_attributes,
-                }
+                },
             )
 
     # =========================================================================
@@ -520,7 +520,7 @@ class FlextLdapEntities(FlextModels):
 
         # SSL/TLS options
         verify_certificates: bool = Field(
-            default=True, description="Verify SSL certificates"
+            default=True, description="Verify SSL certificates",
         )
         ca_certs_file: str | None = Field(None, description="CA certificates file path")
 
@@ -566,12 +566,12 @@ class FlextLdapEntities(FlextModels):
 
         # Additional details
         server_info: dict[str, object] = Field(
-            default_factory=dict, description="Server information"
+            default_factory=dict, description="Server information",
         )
 
         # Timestamp
         timestamp: datetime = Field(
-            default_factory=datetime.now, description="Error timestamp"
+            default_factory=datetime.now, description="Error timestamp",
         )
 
         @field_validator("error_code")
@@ -603,17 +603,17 @@ class FlextLdapEntities(FlextModels):
 
         # Performance metrics
         duration_ms: float = Field(
-            0.0, description="Operation duration in milliseconds"
+            0.0, description="Operation duration in milliseconds",
         )
 
         # Additional data
         data: dict[str, object] = Field(
-            default_factory=dict, description="Additional result data"
+            default_factory=dict, description="Additional result data",
         )
 
         # Timestamp
         timestamp: datetime = Field(
-            default_factory=datetime.now, description="Operation timestamp"
+            default_factory=datetime.now, description="Operation timestamp",
         )
 
         @classmethod

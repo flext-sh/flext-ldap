@@ -237,7 +237,7 @@ class TestFlextLdapServicesComprehensive:
             def dispatch(self, command: object) -> FlextResult[object]:
                 self.commands.append(command)
                 return FlextResult[object].ok(
-                    FlextResult[FlextLdapModels.User].ok(expected_user)
+                    FlextResult[FlextLdapModels.User].ok(expected_user),
                 )
 
         stub_dispatcher = StubDispatcher()
@@ -429,7 +429,7 @@ class TestFlextLdapServicesComprehensive:
         }
 
         result = await service.update_group(
-            "cn=testgroup,dc=flext,dc=local", attributes
+            "cn=testgroup,dc=flext,dc=local", attributes,
         )
 
         assert isinstance(result, FlextResult)
@@ -700,13 +700,13 @@ class TestFlextLdapServicesComprehensive:
 
         # Try to get user
         get_result = await service.get_user(
-            "cn=lifecycle_user,ou=users,dc=flext,dc=local"
+            "cn=lifecycle_user,ou=users,dc=flext,dc=local",
         )
         assert isinstance(get_result, FlextResult)
 
         # Try to delete user
         delete_result = await service.delete_user(
-            "cn=lifecycle_user,ou=users,dc=flext,dc=local"
+            "cn=lifecycle_user,ou=users,dc=flext,dc=local",
         )
         assert isinstance(delete_result, FlextResult)
 
@@ -731,12 +731,12 @@ class TestFlextLdapServicesComprehensive:
 
         # Test group operations
         get_result = await service.get_group(
-            "cn=lifecycle_group,ou=groups,dc=flext,dc=local"
+            "cn=lifecycle_group,ou=groups,dc=flext,dc=local",
         )
         assert isinstance(get_result, FlextResult)
 
         delete_result = await service.delete_group(
-            "cn=lifecycle_group,ou=groups,dc=flext,dc=local"
+            "cn=lifecycle_group,ou=groups,dc=flext,dc=local",
         )
         assert isinstance(delete_result, FlextResult)
 
@@ -747,7 +747,7 @@ class TestFlextLdapServicesComprehensive:
 
         # Test connection attempt (may fail gracefully in test environment)
         result = await service.connect(
-            "ldap://localhost:3890", "cn=admin,dc=flext,dc=local", "admin123"
+            "ldap://localhost:3890", "cn=admin,dc=flext,dc=local", "admin123",
         )
 
         # Verify FlextResult returned and method executed
@@ -769,7 +769,7 @@ class TestFlextLdapServicesComprehensive:
     @patch("flext_ldap.services.FlextLdapServices._get_repository")
     @pytest.mark.asyncio
     async def test_get_user_with_empty_result_path(
-        self, mock_get_repository: AsyncMock
+        self, mock_get_repository: AsyncMock,
     ) -> None:
         """Test get_user method when repository returns None/empty result."""
         service = FlextLdapServices()
@@ -812,7 +812,7 @@ class TestFlextLdapServicesComprehensive:
                 "givenName": "Test",
                 "mail": "test@example.com",
                 "userPassword": "password123",
-            }.get
+            }.get,
         )
 
         mock_entry.created_at = datetime.now(UTC)
@@ -824,7 +824,7 @@ class TestFlextLdapServicesComprehensive:
 
         # Mock _get_repository to return our mock
         with patch.object(
-            service, "_get_repository", return_value=FlextResult.ok(mock_repo)
+            service, "_get_repository", return_value=FlextResult.ok(mock_repo),
         ):
             result = await service.get_user("cn=test,dc=example,dc=com")
 
@@ -862,7 +862,7 @@ class TestFlextLdapServicesComprehensive:
         with (
             patch.object(service, "_repository", mock_repo),
             patch.object(
-                service, "get_user", AsyncMock(return_value=FlextResult.ok(test_user))
+                service, "get_user", AsyncMock(return_value=FlextResult.ok(test_user)),
             ),
         ):
             result = await service.update_user(
@@ -891,7 +891,7 @@ class TestFlextLdapServicesComprehensive:
         # Mock both _get_repository and get_user using patch
         with (
             patch.object(
-                service, "_get_repository", return_value=FlextResult.ok(mock_repo)
+                service, "_get_repository", return_value=FlextResult.ok(mock_repo),
             ),
             patch.object(
                 service,
@@ -918,7 +918,7 @@ class TestFlextLdapServicesComprehensive:
         with (
             patch.object(service, "_repository", mock_repo),
             patch.object(
-                service, "get_user", AsyncMock(return_value=FlextResult.ok(None))
+                service, "get_user", AsyncMock(return_value=FlextResult.ok(None)),
             ),
         ):
             result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})

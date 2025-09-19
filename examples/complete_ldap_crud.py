@@ -68,14 +68,14 @@ async def create_sample_users(api: FlextLdapApi) -> None:
             user_password=None,
         )
         create_result: FlextResult[object] = cast(
-            "FlextResult[object]", await api.create_user(request)
+            "FlextResult[object]", await api.create_user(request),
         )
 
         if create_result.is_success:
             logger.info(f"✅ Created user: {user_data['cn']}")
         else:
             logger.error(
-                f"❌ Failed to create user {user_data['cn']}: {create_result.error}"
+                f"❌ Failed to create user {user_data['cn']}: {create_result.error}",
             )
 
 
@@ -98,8 +98,8 @@ async def search_users(api: FlextLdapApi) -> None:
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
-            cn = user.get_attribute("cn") or ["Unknown"]
-            mail = user.get_attribute("mail") or ["No email"]
+            cn = user.attributes.get("cn", ["Unknown"])
+            mail = user.attributes.get("mail", ["No email"])
             # get_attribute returns list[str] | None, so take first element
             cn_str = cn[0] if cn else "Unknown"
             mail_str = mail[0] if mail else "No email"

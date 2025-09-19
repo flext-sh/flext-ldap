@@ -249,7 +249,7 @@ def search_entries(
     except Exception as e:
         logger.exception("Error searching entries")
         return FlextResult[list[FlextTypes.Core.Dict]].fail(
-            f"Error searching entries: {e}"
+            f"Error searching entries: {e}",
         )
 
 

@@ -69,7 +69,7 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         @staticmethod
         def create_search_request(
-            base_dn: str, filter_str: str
+            base_dn: str, filter_str: str,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request with default parameters."""
             return FlextLdapModels.SearchRequest(
@@ -86,7 +86,7 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         @staticmethod
         def create_user_request(
-            dn: str, uid: str, cn: str, sn: str
+            dn: str, uid: str, cn: str, sn: str,
         ) -> FlextLdapModels.CreateUserRequest:
             """Create user request with standard parameters."""
             return FlextLdapModels.CreateUserRequest(
@@ -425,7 +425,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             dn = user_request_or_dn
             if uid is None or cn is None or sn is None:
                 return FlextResult[FlextLdapModels.User].fail(
-                    "uid, cn, and sn are required when using individual parameters"
+                    "uid, cn, and sn are required when using individual parameters",
                 )
             request = FlextLdapModels.CreateUserRequest(
                 dn=dn,

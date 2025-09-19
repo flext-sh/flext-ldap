@@ -14,7 +14,6 @@ import os
 import pytest
 
 from flext_ldap.api import FlextLdapApi
-from flext_ldap.connection_config import FlextLdapModels
 from flext_ldap.models import FlextLdapModels
 
 

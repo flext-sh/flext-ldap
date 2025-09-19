@@ -87,7 +87,7 @@ class TestFlextLdapConfigSingleton:
         assert config1 is not config2
 
     @pytest.mark.skip(
-        reason="Environment variable loading needs investigation - FlextConfig inheritance issue"
+        reason="Environment variable loading needs investigation - FlextConfig inheritance issue",
     )
     def test_environment_variable_loading(self) -> None:
         """Test loading configuration from environment variables."""
@@ -122,7 +122,7 @@ class TestFlextLdapConfigSingleton:
         }
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(config_data, f)
             config_file = f.name

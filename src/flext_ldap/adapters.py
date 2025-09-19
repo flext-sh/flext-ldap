@@ -510,7 +510,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 dn = entry.dn
                 # Convert to the expected type
                 entry_attributes: FlextLdapTypes.Entry.AttributeDict = dict(
-                    entry.attributes
+                    entry.attributes,
                 )
 
                 # Convert to LDAP attributes using Python standard conversion
