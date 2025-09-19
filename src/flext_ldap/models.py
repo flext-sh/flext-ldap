@@ -8,14 +8,22 @@ Contains only the actively used models from the FLEXT-LDAP project.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+import re
+from collections.abc import Sequence
+from typing import ClassVar, final
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+
+from flext_core import (
+    FlextDomainService,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
-
-__all__ = ["FlextLdapModels"]
 
 
 class FlextLdapModels(FlextModels):
@@ -117,31 +125,6 @@ class FlextLdapModels(FlextModels):
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return value.strip()
-
-        def get_attribute_value(self, attribute_name: str) -> str | None:
-            """Get single attribute value."""
-            attr_value = self.attributes.get(attribute_name)
-            if isinstance(attr_value, list) and attr_value:
-                return str(attr_value[0])
-            if isinstance(attr_value, (str, bytes)):
-                return str(attr_value)
-            return None
-
-        def get_attribute_values(self, attribute_name: str) -> list[str]:
-            """Get all attribute values."""
-            attr_value = self.attributes.get(attribute_name, [])
-            if isinstance(attr_value, list):
-                return [str(v) for v in attr_value]
-            return [str(attr_value)]
-
-        def get_attribute(self, attribute_name: str) -> list[str] | None:
-            """Get attribute value (for backward compatibility)."""
-            attr_value = self.attributes.get(attribute_name)
-            if attr_value is None:
-                return None
-            if isinstance(attr_value, list):
-                return [str(v) for v in attr_value]
-            return [str(attr_value)]
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate entry business rules."""
@@ -399,22 +382,6 @@ class FlextLdapModels(FlextModels):
             description="Search execution time in ms",
         )
 
-    class ConnectionConfig(BaseModel):
-        """LDAP Connection Configuration Model - used in protocols."""
-
-        server: str = Field(description="LDAP server URI")
-        bind_dn: str | None = Field(
-            default=None, description="Bind DN for authentication"
-        )
-        bind_password: str | None = Field(default=None, description="Bind password")
-        timeout: int = Field(
-            default=30,
-            description="Connection timeout in seconds",
-            gt=0,
-            le=300,
-        )
-        use_tls: bool = Field(default=False, description="Use TLS encryption")
-
     class ConnectionRequest(BaseModel):
         """LDAP Connection Request Model - used for operational requests."""
 
@@ -432,8 +399,6 @@ class FlextLdapModels(FlextModels):
             gt=0,
             le=300,
         )
-
-    # NO ALIASES ALLOWED - Use Entry class directly
 
     # Factory methods for creating models
     @classmethod
@@ -465,16 +430,16 @@ class FlextLdapModels(FlextModels):
             object_classes=entry.object_classes,
             attributes=entry.attributes,
             modified_at=entry.modified_at,
-            uid=entry.get_attribute_value(FlextLdapConstants.Attributes.USER_ID),
-            cn=entry.get_attribute_value(FlextLdapConstants.Attributes.COMMON_NAME),
-            sn=entry.get_attribute_value(FlextLdapConstants.Attributes.SURNAME),
-            given_name=entry.get_attribute_value(
-                FlextLdapConstants.Attributes.GIVEN_NAME,
-            ),
-            mail=entry.get_attribute_value(FlextLdapConstants.Attributes.MAIL),
-            display_name=entry.get_attribute_value(
-                FlextLdapConstants.Attributes.DISPLAY_NAME,
-            ),
+            uid=entry.attributes.get(FlextLdapConstants.Attributes.USER_ID, [None])[0],
+            cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
+            sn=entry.attributes.get(FlextLdapConstants.Attributes.SURNAME, [None])[0],
+            given_name=entry.attributes.get(
+                FlextLdapConstants.Attributes.GIVEN_NAME, [None]
+            )[0],
+            mail=entry.attributes.get(FlextLdapConstants.Attributes.MAIL, [None])[0],
+            display_name=entry.attributes.get(
+                FlextLdapConstants.Attributes.DISPLAY_NAME, [None]
+            )[0],
         )
 
     @classmethod
@@ -486,17 +451,311 @@ class FlextLdapModels(FlextModels):
             object_classes=entry.object_classes,
             attributes=entry.attributes,
             modified_at=entry.modified_at,
-            cn=entry.get_attribute_value(FlextLdapConstants.Attributes.COMMON_NAME),
-            description=entry.get_attribute_value(
-                FlextLdapConstants.Attributes.DESCRIPTION,
-            ),
-            members=entry.get_attribute_values(FlextLdapConstants.Attributes.MEMBER),
+            cn=entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[0],
+            description=entry.attributes.get(
+                FlextLdapConstants.Attributes.DESCRIPTION, [None]
+            )[0],
+            members=entry.attributes.get(FlextLdapConstants.Attributes.MEMBER, []),
         )
 
-    class ErrorMessages:
-        """Error message constants following TRY003 and EM101/EM102 rules."""
+    class ValueObjects(FlextDomainService[object]):
+        """Single FlextLdapModels.ValueObjects class with all LDAP value objects.
 
-        INVALID_EMAIL_FORMAT = "Invalid email format"
-        EMAIL_VALIDATION_FAILED = "Invalid email format: {error}"
-        DN_CANNOT_BE_EMPTY = "DN cannot be empty"
-        INVALID_DN_FORMAT = "Invalid DN format"
+        Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
+        Everything from DN validation to filter creation is available as internal classes
+        with full backward compatibility and domain-driven design principles.
+        """
+
+        def execute(self) -> FlextResult[object]:
+            """Execute domain operation - required by FlextDomainService."""
+            return FlextResult[object].ok({"status": "value_objects_available"})
+
+        # =========================================================================
+        # DISTINGUISHED NAME - DN value object with RFC 2253 compliance
+        # =========================================================================
+
+        @final
+        class DistinguishedName(FlextModels.Value):
+            """LDAP Distinguished Name value object with RFC 2253 compliance."""
+
+            model_config = ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+                str_strip_whitespace=True,
+                frozen=True,
+            )
+
+            value: str = Field(
+                ...,
+                description="RFC 2253 compliant Distinguished Name",
+                min_length=FlextLdapConstants.LdapValidation.MIN_DN_LENGTH,
+                max_length=FlextLdapConstants.LdapValidation.MAX_DN_LENGTH,
+            )
+
+            # DN validation pattern from SOURCE OF TRUTH
+            DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+                FlextLdapConstants.LdapValidation.DN_PATTERN,
+            )
+
+            @field_validator("value")
+            @classmethod
+            def validate_dn_format(cls, value: str) -> str:
+                """Validate DN using direct validation - ELIMINATE local duplication."""
+                # Use direct validation instead of FlextValidations
+                if not value or not value.strip():
+                    error_msg = "Distinguished Name cannot be empty"
+                    raise ValueError(error_msg)
+
+                # Direct pattern validation for DN format
+                if not re.match(r"^[a-zA-Z]+=.+", value):
+                    error_msg = f"Invalid DN format: {value}"
+                    raise ValueError(error_msg)
+
+                return value.strip()
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for DN."""
+                # DN is validated in field_validator, no additional business rules
+                return FlextResult.ok(None)
+
+            @property
+            def rdn(self) -> str:
+                """Get the Relative Distinguished Name (first component)."""
+                return self.value.split(",", 1)[0].strip()
+
+            def is_descendant_of(
+                self,
+                parent_dn: str | FlextLdapModels.ValueObjects.DistinguishedName,
+            ) -> bool:
+                """Check if this DN is a descendant of the given parent DN."""
+                parent_str = (
+                    parent_dn if isinstance(parent_dn, str) else parent_dn.value
+                )
+                return self.value.lower().endswith(parent_str.lower())
+
+            @classmethod
+            def create(
+                cls,
+                value: str,
+            ) -> FlextResult[FlextLdapModels.ValueObjects.DistinguishedName]:
+                """Create DN from string with validation."""
+                try:
+                    dn = cls(value=value)
+                    return FlextResult.ok(dn)
+                except ValueError as e:
+                    return FlextResult.fail(str(e))
+                except TypeError as e:
+                    return FlextResult.fail(f"Invalid input type: {e}")
+
+        # =========================================================================
+        # SCOPE - LDAP search scope value object
+        # =========================================================================
+
+        @final
+        class Scope(FlextModels.Value):
+            """LDAP search scope value object."""
+
+            scope: str = Field(..., description="LDAP search scope")
+
+            # Valid LDAP scopes from SOURCE OF TRUTH
+            VALID_SCOPES: ClassVar[set[str]] = FlextLdapConstants.Scopes.VALID_SCOPES
+
+            @field_validator("scope")
+            @classmethod
+            def validate_scope(cls, value: str) -> str:
+                """Validate LDAP scope value."""
+                normalized = value.lower()
+                if normalized not in cls.VALID_SCOPES:
+                    msg = f"Invalid LDAP scope: {value}. Must be one of {cls.VALID_SCOPES}"
+                    raise ValueError(msg)
+                return normalized
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules."""
+                # Scope is validated in field_validator, no additional business rules
+                return FlextResult.ok(None)
+
+            @classmethod
+            def create(
+                cls, scope: str
+            ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
+                """Create scope value object with validation."""
+                try:
+                    scope_obj = cls(scope=scope)
+                    return FlextResult.ok(scope_obj)
+                except ValueError as e:
+                    return FlextResult.fail(str(e))
+
+            @classmethod
+            def base(cls) -> FlextLdapModels.ValueObjects.Scope:
+                """Create base scope (search only the entry itself)."""
+                return cls(scope=FlextLdapConstants.Scopes.BASE)
+
+            @classmethod
+            def one(cls) -> FlextLdapModels.ValueObjects.Scope:
+                """Create one-level scope (search direct children only)."""
+                return cls(scope=FlextLdapConstants.Scopes.ONE)
+
+            @classmethod
+            def sub(cls) -> FlextLdapModels.ValueObjects.Scope:
+                """Create subtree scope (search entry and all descendants)."""
+                return cls(scope=FlextLdapConstants.Scopes.SUB)
+
+            @classmethod
+            def subtree(cls) -> FlextLdapModels.ValueObjects.Scope:
+                """Create subtree scope (alias for sub)."""
+                return cls(scope=FlextLdapConstants.Scopes.SUB)
+
+            @classmethod
+            def onelevel(cls) -> FlextLdapModels.ValueObjects.Scope:
+                """Create one level scope (alias for one)."""
+                return cls(scope=FlextLdapConstants.Scopes.ONE)
+
+        # =========================================================================
+        # FILTER - LDAP filter value object with RFC 4515 compliance
+        # =========================================================================
+
+        @final
+        class Filter(FlextModels.Value):
+            """LDAP filter value object with RFC 4515 compliance."""
+
+            model_config = ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+                str_strip_whitespace=True,
+                frozen=True,
+            )
+
+            value: str = Field(
+                ...,
+                description="RFC 4515 compliant LDAP filter",
+                min_length=FlextLdapConstants.LdapValidation.MIN_FILTER_LENGTH,
+                max_length=FlextLdapConstants.LdapValidation.MAX_FILTER_LENGTH_VALUE_OBJECTS,
+            )
+
+            # LDAP filter validation pattern from SOURCE OF TRUTH
+            FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+                FlextLdapConstants.LdapValidation.FILTER_PATTERN,
+            )
+
+            @field_validator("value")
+            @classmethod
+            def validate_filter_format(cls, value: str) -> str:
+                """Validate LDAP filter using centralized validation - ELIMINATE local duplication."""
+                # Use centralized validation from validations module
+                validation_result = FlextLdapValidations.validate_filter(value)
+                if validation_result.is_failure:
+                    raise ValueError(validation_result.error)
+
+                # Clean text using FlextUtilities (keep this as it's domain-specific)
+                clean_value = FlextUtilities.TextProcessor.clean_text(value)
+                if not clean_value:
+                    error_msg = "LDAP filter cannot be empty after cleaning"
+                    raise ValueError(error_msg)
+
+                # Must start and end with parentheses
+                if not (clean_value.startswith("(") and clean_value.endswith(")")):
+                    msg = f"LDAP filter must be enclosed in parentheses: {clean_value}"
+                    raise ValueError(msg)
+
+                return clean_value
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for filter."""
+                # Filter is validated in field_validator, no additional business rules
+                return FlextResult.ok(None)
+
+            @classmethod
+            def create(
+                cls, value: str
+            ) -> FlextResult[FlextLdapModels.ValueObjects.Filter]:
+                """Create filter from string with validation."""
+                try:
+                    filter_obj = cls(value=value)
+                    return FlextResult.ok(filter_obj)
+                except ValueError as e:
+                    return FlextResult.fail(str(e))
+                except TypeError as e:
+                    return FlextResult.fail(f"Invalid input type: {e}")
+
+            @classmethod
+            def equals(
+                cls, attribute: str, value: str
+            ) -> FlextLdapModels.ValueObjects.Filter:
+                """Create equality filter."""
+                return cls(value=f"({attribute}={value})")
+
+            @classmethod
+            def starts_with(
+                cls,
+                attribute: str,
+                value: str,
+            ) -> FlextLdapModels.ValueObjects.Filter:
+                """Create starts-with filter."""
+                return cls(value=f"({attribute}={value}*)")
+
+            @classmethod
+            def object_class(
+                cls, object_class: str
+            ) -> FlextLdapModels.ValueObjects.Filter:
+                """Create object class filter."""
+                return cls(value=f"(objectClass={object_class})")
+
+            @classmethod
+            def all_objects(cls) -> FlextLdapModels.ValueObjects.Filter:
+                """Create filter that matches all objects."""
+                return cls(value="(objectClass=*)")
+
+    class UserConversionParams(BaseModel):
+        """User conversion parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,  # Immutable for safety
+            extra="forbid",  # Strict validation
+            validate_assignment=True,
+            str_strip_whitespace=True,
+        )
+
+        entries: Sequence[FlextLdapTypes.Search.ResultEntry] = Field(
+            description="LDAP entries to convert",
+            min_length=0,
+        )
+        include_disabled: bool = Field(
+            default=False,
+            description="Include disabled user accounts",
+        )
+        include_system: bool = Field(
+            default=False,
+            description="Include system accounts",
+        )
+        attribute_filter: list[str] | None = Field(
+            default=None,
+            description="Filter specific attributes",
+            min_length=0,  # Allow empty lists
+        )
+
+        @field_validator("entries")
+        @classmethod
+        def validate_entries(
+            cls,
+            v: Sequence[FlextLdapTypes.Search.ResultEntry],
+        ) -> Sequence[FlextLdapTypes.Search.ResultEntry]:
+            """Validate entries structure."""
+            return v
+
+        @computed_field
+        def entry_count(self) -> int:
+            """Computed field for entry count."""
+            return len(self.entries)
+
+        @computed_field
+        def has_filters(self) -> bool:
+            """Check if object filters are applied."""
+            return (
+                self.include_disabled
+                or self.include_system
+                or bool(self.attribute_filter)
+            )
+
+
+__all__ = ["FlextLdapModels"]

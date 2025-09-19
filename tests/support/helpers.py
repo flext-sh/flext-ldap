@@ -9,13 +9,13 @@ from typing import cast
 import ldap3
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_ldap import FlextLdapConnectionConfig
+from flext_ldap import FlextLdapModels
 
 logger = FlextLogger(__name__)
 
 
 def create_test_user(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
@@ -49,7 +49,7 @@ def create_test_user(
 
 
 def create_test_group(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dn: str,
     attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
@@ -83,7 +83,7 @@ def create_test_group(
 
 
 def cleanup_test_entries(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dns: FlextTypes.Core.StringList,
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
@@ -122,7 +122,7 @@ def cleanup_test_entries(
 
 
 def verify_entry_exists(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dn: str,
 ) -> FlextResult[bool]:
     """Verify that an entry exists in LDAP server."""
@@ -158,7 +158,7 @@ def verify_entry_exists(
 
 
 def get_entry_attributes(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dn: str,
 ) -> FlextResult[FlextTypes.Core.Dict]:
     """Get attributes of an LDAP entry."""
@@ -197,7 +197,7 @@ def get_entry_attributes(
 
 
 def search_entries(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     base_dn: str,
     search_filter: str,
     scope: str = "subtree",
@@ -254,7 +254,7 @@ def search_entries(
 
 
 def modify_entry(
-    config: FlextLdapConnectionConfig,
+    config: FlextLdapModels.ConnectionConfig,
     dn: str,
     changes: FlextTypes.Core.Dict,
 ) -> FlextResult[bool]:

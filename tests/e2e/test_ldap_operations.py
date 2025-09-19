@@ -14,7 +14,7 @@ import os
 import pytest
 
 from flext_ldap.api import FlextLdapApi
-from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.connection_config import FlextLdapModels
 from flext_ldap.models import FlextLdapModels
 
 
@@ -33,7 +33,7 @@ class TestLdapE2EOperations:
         api = FlextLdapApi()
 
         # Test configuration
-        FlextLdapConnectionConfig(
+        FlextLdapModels.ConnectionConfig(
             server="ldap://localhost",
             port=3389,  # Test port for Docker LDAP server
         )
@@ -118,7 +118,7 @@ class TestLdapE2EOperations:
 
         # Test connection to non-existent server
         result = await api.connect(
-            server_uri="ldap://nonexistent.server.test:389",
+            server_uri="ldap://127.0.0.1:9999",
             bind_dn="cn=admin,dc=test,dc=local",
             bind_password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
         )
@@ -132,7 +132,7 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
 
-        FlextLdapConnectionConfig(
+        FlextLdapModels.ConnectionConfig(
             server="ldaps://test.ldap.server",
             port=636,
             timeout=60,

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextTypes
-from flext_ldap import FlextLdapModels, FlextLdapValueObjects
+from flext_ldap import FlextLdapModels
 
 
 class TestFlextLdapDistinguishedName:
@@ -26,7 +26,7 @@ class TestFlextLdapDistinguishedName:
         ]
 
         for dn_str in valid_dns:
-            result = FlextLdapValueObjects.DistinguishedName.create(dn_str)
+            result = FlextLdapModels.ValueObjects.DistinguishedName.create(dn_str)
             assert result.is_success, f"Valid DN should work: {dn_str} - {result.error}"
             # Use value since we verified is_success
             dn_obj = result.value
@@ -44,7 +44,7 @@ class TestFlextLdapDistinguishedName:
         ]
 
         for invalid_dn in invalid_dns:
-            result = FlextLdapValueObjects.DistinguishedName.create(invalid_dn)
+            result = FlextLdapModels.ValueObjects.DistinguishedName.create(invalid_dn)
             # Should either reject or handle gracefully
             if not result.is_success:
                 assert result.error  # Should have error message
@@ -53,8 +53,8 @@ class TestFlextLdapDistinguishedName:
     def test_dn_equality_and_comparison(self) -> None:
         """Test DN equality and string representation."""
         dn_str = "cn=test,dc=example,dc=com"
-        dn1 = FlextLdapValueObjects.DistinguishedName(value=dn_str)
-        dn2 = FlextLdapValueObjects.DistinguishedName(value=dn_str)
+        dn1 = FlextLdapModels.ValueObjects.DistinguishedName(value=dn_str)
+        dn2 = FlextLdapModels.ValueObjects.DistinguishedName(value=dn_str)
 
         assert dn1.value == dn2.value
         assert str(dn1) == dn_str or repr(dn1)  # Should have string representation

@@ -13,22 +13,23 @@ import threading
 from pathlib import Path
 from typing import ClassVar, Self, cast, final
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextResult
-from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_core import FlextConfig, FlextLogger, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.value_objects import FlextLdapValueObjects
-
-# Python 3.13 type aliases for LDAP configuration
-type LdapConfigDict = dict[str, object]
-type LdapConnectionName = str
-type LdapConfigPath = str | Path
+from flext_ldap.models import FlextLdapModels
 
 
 @final
-class FlextLdapConfig(FlextConfig):
+class FlextLdapConfigs(FlextConfig):
     """FLEXT-LDAP Configuration singleton extending FlextConfig with LDAP-specific fields.
 
     This class provides a singleton configuration instance for LDAP operations,
@@ -42,6 +43,7 @@ class FlextLdapConfig(FlextConfig):
     - Environment variable integration with FLEXT_LDAP_ prefix
     - Parameter override support for runtime behavior changes
     - Clean Architecture integration with flext-core patterns
+    - Unified type definitions within the class
     """
 
     # Pydantic model configuration
@@ -60,9 +62,47 @@ class FlextLdapConfig(FlextConfig):
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
+    # === TYPE DEFINITIONS (CONSOLIDATED) ===
+    # These replace the loose type aliases from module level
+    class Types:
+        """Unified type definitions for LDAP configuration."""
+
+        ConfigDict = dict[str, object]
+        ConnectionName = str
+        ConfigPath = str | Path
+
+    class ConnectionConfig(BaseModel):
+        """LDAP Connection Configuration Model."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
+            str_strip_whitespace=True,
+        )
+
+        server: str = Field(description="LDAP server URI")
+        port: int = Field(
+            default=389,
+            description="LDAP server port",
+            gt=0,
+            le=65535,
+        )
+        bind_dn: str | None = Field(
+            default=None, description="Bind DN for authentication"
+        )
+        bind_password: str | None = Field(default=None, description="Bind password")
+        timeout: int = Field(
+            default=30,
+            description="Connection timeout in seconds",
+            gt=0,
+            le=300,
+        )
+        use_tls: bool = Field(default=False, description="Use TLS encryption")
+
     # === LDAP CONNECTION CONFIGURATION ===
     # Connection to LDAP servers (can be a single or multiple connections)
-    ldap_default_connection: FlextLdapConnectionConfig | None = Field(
+    ldap_default_connection: ConnectionConfig | None = Field(
         default=None,
         description="Default LDAP connection configuration",
         alias="ldap_connection",
@@ -195,7 +235,7 @@ class FlextLdapConfig(FlextConfig):
             return value
 
         # Basic DN validation using value objects
-        dn_result = FlextLdapValueObjects.DistinguishedName.create(value)
+        dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create(value)
         if dn_result.is_failure:
             msg = f"Invalid LDAP bind DN format: {value}"
             raise ValueError(msg)
@@ -209,7 +249,7 @@ class FlextLdapConfig(FlextConfig):
             # Create default connection if not provided
             default_server = FlextLdapConstants.LDAP.DEFAULT_SERVER_URI
             try:
-                self.ldap_default_connection = FlextLdapConnectionConfig(
+                self.ldap_default_connection = self.ConnectionConfig(
                     server=default_server,
                 )
             except Exception as e:
@@ -234,25 +274,25 @@ class FlextLdapConfig(FlextConfig):
         return self
 
     @model_validator(mode="after")
-    def _validate_configuration_consistency_model(self) -> FlextLdapConfig:
+    def _validate_configuration_consistency_model(self) -> FlextLdapConfigs:
         """Pydantic model validator that calls the runtime validation method."""
         return self.validate_configuration_consistency()
 
     # === SINGLETON PATTERN IMPLEMENTATION ===
     @classmethod
-    def get_global_instance(cls) -> FlextLdapConfig:
+    def get_global_instance(cls) -> FlextLdapConfigs:
         """Get or create the global singleton instance.
 
         Returns:
-            The global FlextLdapConfig instance
+            The global FlextLdapConfigs instance
 
         """
         if cls._global_instance is None:
             with cls._lock:
                 if cls._global_instance is None:
                     cls._global_instance = cls()
-        # Type cast is safe since we ensure it's FlextLdapConfig
-        return cast("FlextLdapConfig", cls._global_instance)
+        # Type cast is safe since we ensure it's FlextLdapConfigs
+        return cast("FlextLdapConfigs", cls._global_instance)
 
     @classmethod
     def set_global_instance(cls, config: FlextConfig) -> None:
@@ -262,8 +302,8 @@ class FlextLdapConfig(FlextConfig):
             config: New FlextConfig instance to set as global
 
         """
-        if not isinstance(config, FlextLdapConfig):
-            msg = f"Expected FlextLdapConfig, got {type(config)}"
+        if not isinstance(config, FlextLdapConfigs):
+            msg = f"Expected FlextLdapConfigs, got {type(config)}"
             raise TypeError(msg)
         with cls._lock:
             cls._global_instance = config
@@ -367,7 +407,7 @@ class FlextLdapConfig(FlextConfig):
     @classmethod
     def create_development_ldap_config(
         cls, **overrides: str | float | bool | None
-    ) -> FlextResult[FlextLdapConfig]:
+    ) -> FlextResult[FlextLdapConfigs]:
         """Create development LDAP configuration with appropriate defaults.
 
         Args:
@@ -378,35 +418,35 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            # Create config with typed keyword arguments
-            config = cls(
-                environment="development",
-                debug=True,
-                ldap_enable_debug=True,
-                ldap_log_queries=True,
-                ldap_log_responses=True,
-                ldap_enable_caching=False,
-                ldap_verify_certificates=False,
-                ldap_size_limit=1000,
-                ldap_time_limit=60,
-            )
+            # Create config data with typed values
+            config_data: dict[str, object] = {
+                "environment": "development",
+                "debug": True,
+                "ldap_enable_debug": True,
+                "ldap_log_queries": True,
+                "ldap_log_responses": True,
+                "ldap_enable_caching": False,
+                "ldap_verify_certificates": False,
+                "ldap_size_limit": 1000,
+                "ldap_time_limit": 60,
+            }
 
             # Apply overrides if any
             if overrides:
-                for key, value in overrides.items():
-                    if hasattr(config, key):
-                        setattr(config, key, value)
+                config_data.update(overrides)
 
-            return FlextResult[FlextLdapConfig].ok(config)
+            # Use model_validate for proper type handling
+            config = cls.model_validate(config_data)
+            return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
-            return FlextResult["FlextLdapConfig"].fail(
+            return FlextResult["FlextLdapConfigs"].fail(
                 f"Failed to create development config: {e}"
             )
 
     @classmethod
     def create_test_ldap_config(
         cls, **overrides: str | float | bool | None
-    ) -> FlextResult[FlextLdapConfig]:
+    ) -> FlextResult[FlextLdapConfigs]:
         """Create test LDAP configuration with appropriate defaults.
 
         Args:
@@ -417,36 +457,36 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            # Create config with typed keyword arguments
-            config = cls(
-                environment="test",
-                debug=False,
-                ldap_enable_debug=False,
-                ldap_log_queries=False,
-                ldap_log_responses=False,
-                ldap_enable_caching=False,
-                ldap_verify_certificates=False,
-                ldap_size_limit=500,
-                ldap_time_limit=30,
-                ldap_enable_test_mode=True,
-            )
+            # Create config data with typed values
+            config_data: dict[str, object] = {
+                "environment": "test",
+                "debug": False,
+                "ldap_enable_debug": False,
+                "ldap_log_queries": False,
+                "ldap_log_responses": False,
+                "ldap_enable_caching": False,
+                "ldap_verify_certificates": False,
+                "ldap_size_limit": 500,
+                "ldap_time_limit": 30,
+                "ldap_enable_test_mode": True,
+            }
 
             # Apply overrides if any
             if overrides:
-                for key, value in overrides.items():
-                    if hasattr(config, key):
-                        setattr(config, key, value)
+                config_data.update(overrides)
 
-            return FlextResult[FlextLdapConfig].ok(config)
+            # Use model_validate for proper type handling
+            config = cls.model_validate(config_data)
+            return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
-            return FlextResult["FlextLdapConfig"].fail(
+            return FlextResult["FlextLdapConfigs"].fail(
                 f"Failed to create test config: {e}"
             )
 
     @classmethod
     def create_production_ldap_config(
         cls, **overrides: dict[str, object]
-    ) -> FlextResult[FlextLdapConfig]:
+    ) -> FlextResult[FlextLdapConfigs]:
         """Create production LDAP configuration with appropriate defaults.
 
         Args:
@@ -472,9 +512,9 @@ class FlextLdapConfig(FlextConfig):
             }
             production_defaults.update(overrides)
             config = cls.model_validate(production_defaults)
-            return FlextResult["FlextLdapConfig"].ok(config)
+            return FlextResult["FlextLdapConfigs"].ok(config)
         except Exception as e:
-            return FlextResult["FlextLdapConfig"].fail(
+            return FlextResult["FlextLdapConfigs"].fail(
                 f"Failed to create production config: {e}"
             )
 
@@ -565,7 +605,7 @@ class FlextLdapConfig(FlextConfig):
             "enable_debug": self.ldap_enable_debug,
         }
 
-    def get_effective_connection(self) -> dict[str, object] | None:
+    def get_effective_connection(self) -> Types.ConfigDict | None:
         """Get effective connection configuration.
 
         Returns:
@@ -595,9 +635,174 @@ class FlextLdapConfig(FlextConfig):
             "verify_certificates": self.ldap_verify_certificates,
         }
 
+    class LdapConnection(FlextConfig):
+        """LDAP connection configuration with validation."""
 
-# NO GLOBAL FACTORY FUNCTIONS ALLOWED - Use FlextLdapConfig class methods directly
+        model_config = SettingsConfigDict(
+            extra="ignore",  # Allow ALGAR and other project-specific environment variables
+            validate_assignment=True,
+            str_strip_whitespace=True,
+        )
+
+        def model_post_init(
+            self, __context: dict[str, object] | None = None, /
+        ) -> None:
+            """Post-initialization setup for LDAP configuration."""
+            super().model_post_init(__context)
+            self._logger = FlextLogger(__name__)
+
+        # Basic Connection Settings
+        server: str = Field(
+            default=FlextLdapConstants.LDAP.DEFAULT_SERVER_URI,
+            description=f"LDAP server URI (e.g., '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAP}host' or '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAPS}host:{FlextLdapConstants.LDAP.DEFAULT_SSL_PORT}')",
+            min_length=1,
+        )
+
+        port: int = Field(
+            default=FlextLdapConstants.LDAP.DEFAULT_PORT,
+            description=f"LDAP server port ({FlextLdapConstants.LDAP.DEFAULT_PORT} for LDAP, {FlextLdapConstants.LDAP.DEFAULT_SSL_PORT} for LDAPS)",
+            ge=1,
+            le=65535,
+        )
+
+        use_ssl: bool = Field(
+            default=False,
+            description="Use SSL/TLS encryption (LDAPS)",
+        )
+
+        # Authentication Settings
+        bind_dn: str = Field(
+            default="",
+            description="Bind Distinguished Name for authentication",
+        )
+
+        bind_password: str = Field(
+            default="",
+            description="Password for bind DN",
+            repr=False,  # Hide password in repr
+        )
+
+        # Connection Pool Settings
+        timeout: int = Field(
+            default=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,
+            description="Connection timeout in seconds",
+            ge=1,
+            le=300,
+        )
+
+        pool_size: int = Field(
+            default=FlextLdapConstants.LDAP.DEFAULT_POOL_SIZE,
+            description="Maximum number of connections in pool",
+            ge=1,
+            le=50,
+        )
+
+        # TLS/SSL Settings
+        ca_cert_file: Path | None = Field(
+            default=None,
+            description="Path to CA certificate file for SSL verification",
+        )
+
+        client_cert_file: Path | None = Field(
+            default=None,
+            description="Path to client certificate file",
+        )
+
+        client_key_file: Path | None = Field(
+            default=None,
+            description="Path to client private key file",
+        )
+
+        verify_ssl: bool = Field(
+            default=True,
+            description="Verify SSL certificates",
+        )
+
+        @field_validator("server")
+        @classmethod
+        def validate_server_uri(cls, v: str) -> str:
+            """Validate LDAP server URI format using FlextModels.Url validation."""
+            if not v or not v.strip():
+                msg = "Server URI cannot be empty"
+                raise ValueError(msg)
+
+            v = v.strip()
+
+            # Convert LDAP schemes to HTTP for FlextModels.Url validation
+            temp_url = v
+            if v.startswith("ldap://"):
+                temp_url = v.replace("ldap://", "http://", 1)
+            elif v.startswith("ldaps://"):
+                temp_url = v.replace("ldaps://", "https://", 1)
+            else:
+                msg = "LDAP URI must start with 'ldap://' or 'ldaps://'"
+                raise ValueError(msg)
+
+            # Use FlextModels.Url for comprehensive validation
+            url_result = FlextModels.Url.create(temp_url)
+            if url_result.is_failure:
+                msg = f"Invalid LDAP URI format: {url_result.error}"
+                raise ValueError(msg)
+
+            return v
+
+        @field_validator("ca_cert_file", "client_cert_file", "client_key_file")
+        @classmethod
+        def validate_cert_files(cls, v: Path | None) -> Path | None:
+            """Validate certificate files using direct validation."""
+            if v is None:
+                return v
+
+            # Use direct validation for file path validation
+            path_str = str(v)
+            if not path_str or not path_str.strip():
+                msg = "Certificate file path invalid"
+                raise ValueError(msg)
+
+            # File existence validation
+            if not v.exists():
+                msg = f"Certificate file does not exist: {v}"
+                raise ValueError(msg)
+
+            return v
+
+        def get_server_uri(self) -> str:
+            """Get complete server URI including port if non-standard."""
+            if ":" in self.server and not self.server.endswith(f":{self.port}"):
+                # Server already includes port
+                return self.server
+
+            # Add port if non-standard - use constants
+            standard_port = (
+                FlextLdapConstants.LDAP.DEFAULT_SSL_PORT
+                if self.use_ssl
+                else FlextLdapConstants.LDAP.DEFAULT_PORT
+            )
+            if self.port != standard_port:
+                base_uri = self.server.rstrip("/")
+                return f"{base_uri}:{self.port}"
+
+            return self.server
+
+        def validate_configuration(self) -> FlextResult[None]:
+            """Validate the complete configuration.
+
+            Returns:
+                str:: Description of return value.
+
+            """
+            try:
+                # Additional validation logic here
+                if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
+                    self._logger.warning(
+                        "SSL verification enabled but no CA certificate file specified",
+                    )
+
+                return FlextResult.ok(None)
+            except Exception as e:
+                return FlextResult.fail(f"Configuration validation failed: {e}")
+
 
 __all__ = [
-    "FlextLdapConfig",
+    "FlextLdapConfigs",
 ]

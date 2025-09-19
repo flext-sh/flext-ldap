@@ -188,7 +188,7 @@ LDAP group entity.
 
 ## 🎯 Value Objects
 
-### FlextLdapValueObjects
+### FlextLdapModels.ValueObjects
 
 Container for value objects.
 
@@ -208,7 +208,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-dn = FlextLdapValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
+dn = FlextLdapModels.ValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
 print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 ```
@@ -232,11 +232,11 @@ LDAP search filter with validation.
 
 ```python
 # Create filters
-user_filter = FlextLdapValueObjects.LdapFilter.equals("uid", "john.doe")
-person_filter = FlextLdapValueObjects.LdapFilter.object_class("person")
+user_filter = FlextLdapModels.ValueObjects.LdapFilter.equals("uid", "john.doe")
+person_filter = FlextLdapModels.ValueObjects.LdapFilter.object_class("person")
 
 # Combine filters
-combined = FlextLdapValueObjects.LdapFilter.and_filters(user_filter, person_filter)
+combined = FlextLdapModels.ValueObjects.LdapFilter.and_filters(user_filter, person_filter)
 ```
 
 #### LdapScope

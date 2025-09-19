@@ -45,13 +45,13 @@ async def demonstrate_cli_isolation() -> None:
     else:
         print(f"❌ Search failed: {search_result.error}")
 
-    # Demonstrate user creation
+    # Demonstrate user creation with positional arguments
     user_result = await cli.create_user(
-        dn="cn=testuser,ou=users,dc=example,dc=com",
-        uid="testuser",
-        cn="Test User",
-        sn="User",
-        mail="testuser@example.com",
+        "cn=testuser,ou=users,dc=example,dc=com",  # dn as first positional argument
+        "testuser",  # uid
+        "Test User",  # cn
+        "User",  # sn
+        "testuser@example.com",  # mail
     )
     if user_result.is_success:
         print(f"✅ User created successfully: {user_result.value.uid}")

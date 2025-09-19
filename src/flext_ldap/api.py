@@ -10,7 +10,7 @@ import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import cached_property
-from typing import cast, overload
+from typing import cast
 
 from flext_core import (
     FlextExceptions,
@@ -18,7 +18,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
 from flext_ldap.container import FlextLdapContainer
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
@@ -51,13 +51,10 @@ class FlextLdapApi(FlextMixins.Loggable):
         @staticmethod
         def display_message(message: str, level: str = "info") -> None:
             """Display formatted message."""
-            prefix = "ℹ️" if level == "info" else "⚠️" if level == "warning" else "❌"
-            print(f"{prefix} {message}")
 
         @staticmethod
         def print_success(message: str) -> None:
             """Print success message."""
-            print(f"✅ {message}")
 
     class _ConnectionHelper:
         """Nested connection helper class - unified class pattern."""
@@ -71,7 +68,9 @@ class FlextLdapApi(FlextMixins.Loggable):
         """Nested search helper class - unified class pattern."""
 
         @staticmethod
-        def create_search_request(base_dn: str, filter_str: str) -> FlextLdapModels.SearchRequest:
+        def create_search_request(
+            base_dn: str, filter_str: str
+        ) -> FlextLdapModels.SearchRequest:
             """Create search request with default parameters."""
             return FlextLdapModels.SearchRequest(
                 base_dn=base_dn,
@@ -86,7 +85,9 @@ class FlextLdapApi(FlextMixins.Loggable):
         """Nested user management helper class - unified class pattern."""
 
         @staticmethod
-        def create_user_request(dn: str, uid: str, cn: str, sn: str) -> FlextLdapModels.CreateUserRequest:
+        def create_user_request(
+            dn: str, uid: str, cn: str, sn: str
+        ) -> FlextLdapModels.CreateUserRequest:
             """Create user request with standard parameters."""
             return FlextLdapModels.CreateUserRequest(
                 dn=dn,
@@ -126,9 +127,9 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         # CLI helper instances for unified class pattern
         self._formatters = self._Formatters()
-        self._ConnectionHelper = self._ConnectionHelper()
-        self._SearchHelper = self._SearchHelper()
-        self._UserManagementHelper = self._UserManagementHelper()
+        self._connection_helper = self._ConnectionHelper()
+        self._search_helper = self._SearchHelper()
+        self._user_management_helper = self._UserManagementHelper()
 
         self.log_info(
             "FlextLdapApi initialized with FlextLdapConfig singleton",
@@ -158,7 +159,8 @@ class FlextLdapApi(FlextMixins.Loggable):
         # Get raw value from entry based on union type
         raw_value: object
         if isinstance(entry, FlextLdapModels.Entry):
-            raw_value = entry.get_attribute_value(key)
+            attr_values = entry.attributes.get(key, [])
+            raw_value = attr_values[0] if attr_values else None
         else:  # Must be dict due to union type constraint
             raw_value = entry.get(key)
 
@@ -202,11 +204,6 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     def show_configuration(self) -> None:
         """Show current LDAP configuration - CLI method."""
-        print("=== LDAP Configuration ===")
-        print(f"Server URI: {getattr(self._config, 'server_uri', 'Not configured')}")
-        print(f"Base DN: {getattr(self._config, 'base_dn', 'Not configured')}")
-        print(f"Bind DN: {getattr(self._config, 'bind_dn', 'Not configured')}")
-        print("Configuration loaded successfully!")
 
     async def connect_to_ldap(
         self,
@@ -232,9 +229,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             size_limit=1000,
             time_limit=30,
         )
-        search_result = await self._service.search(search_request)
-        return search_result
-
+        return await self._service.search(search_request)
 
     # Connection Management
 
@@ -412,22 +407,6 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     # User Operations
 
-    @overload
-    async def create_user(
-        self,
-        user_request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextResult[FlextLdapModels.User]: ...
-
-    @overload
-    async def create_user(
-        self,
-        dn: str,
-        uid: str,
-        cn: str,
-        sn: str,
-        mail: str | None = None,
-    ) -> FlextResult[FlextLdapModels.User]: ...
-
     async def create_user(
         self,
         user_request_or_dn: FlextLdapModels.CreateUserRequest | str,
@@ -439,9 +418,10 @@ class FlextLdapApi(FlextMixins.Loggable):
         """Create user using proper service layer - supports both request object and individual parameters."""
         # Handle both request object and individual parameters
         if isinstance(user_request_or_dn, FlextLdapModels.CreateUserRequest):
+            # First overload: request object only - validate no extra params provided
             request = user_request_or_dn
         else:
-            # Individual parameters provided
+            # Second overload: individual parameters (uid, cn, sn are required)
             dn = user_request_or_dn
             if uid is None or cn is None or sn is None:
                 return FlextResult[FlextLdapModels.User].fail(
@@ -515,21 +495,6 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[list[FlextLdapModels.User]].ok([])
 
     # Group Operations
-
-    @overload
-    async def create_group(
-        self,
-        dn_or_request: FlextLdapModels.CreateGroupRequest,
-    ) -> FlextResult[FlextLdapModels.Group]: ...
-
-    @overload
-    async def create_group(
-        self,
-        dn_or_request: str,
-        cn: str,
-        description: str | None = None,
-        members: list[str] | None = None,
-    ) -> FlextResult[FlextLdapModels.Group]: ...
 
     async def create_group(
         self,
@@ -690,7 +655,6 @@ class FlextLdapApi(FlextMixins.Loggable):
         return cls(config)
 
 
-# Export main API following flext-core pattern
 __all__ = [
     "FlextLdapApi",
 ]

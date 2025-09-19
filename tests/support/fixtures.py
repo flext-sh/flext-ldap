@@ -10,7 +10,7 @@ from collections.abc import AsyncGenerator, Generator
 import pytest
 
 from flext_core import FlextLogger, FlextTypes
-from flext_ldap import FlextLdapApi, FlextLdapConnectionConfig
+from flext_ldap import FlextLdapApi, FlextLdapModels
 
 from .helpers import cleanup_test_entries, search_entries
 from .ldap_server import LdapTestServer, get_test_ldap_config
@@ -46,7 +46,7 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
 @pytest.fixture
 def ldap_connection(
     real_ldap_server: LdapTestServer,
-) -> FlextLdapConnectionConfig:
+) -> FlextLdapModels.ConnectionConfig:
     """Get LDAP connection configuration for testing."""
     return real_ldap_server.get_connection_config()
 
@@ -82,7 +82,7 @@ def multiple_test_groups() -> list[FlextTypes.Core.Dict]:
 
 
 @pytest.fixture
-def test_ldap_config() -> FlextLdapConnectionConfig:
+def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
     """Get test LDAP configuration."""
     return get_test_ldap_config()
 
@@ -100,13 +100,13 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop]:
 
 @pytest.fixture
 async def clean_ldap_state(
-    ldap_connection: FlextLdapConnectionConfig,
+    ldap_connection: FlextLdapModels.ConnectionConfig,
 ) -> AsyncGenerator[None]:
     """Ensure clean LDAP state for each test."""
     # helpers already imported at top
 
     # Clean up before test
-    search_result = await search_entries(
+    search_result = search_entries(
         ldap_connection,
         "dc=flext,dc=local",
         "(|(objectClass=person)(objectClass=groupOfNames))",
@@ -115,12 +115,12 @@ async def clean_ldap_state(
     if search_result.is_success:
         dns_to_cleanup: list[str] = [str(entry["dn"]) for entry in search_result.value]
         if dns_to_cleanup:
-            await cleanup_test_entries(ldap_connection, dns_to_cleanup)
+            cleanup_test_entries(ldap_connection, dns_to_cleanup)
 
     yield
 
     # Clean up after test
-    search_result = await search_entries(
+    search_result = search_entries(
         ldap_connection,
         "dc=flext,dc=local",
         "(|(objectClass=person)(objectClass=groupOfNames))",
@@ -131,4 +131,4 @@ async def clean_ldap_state(
             str(entry["dn"]) for entry in search_result.value
         ]
         if dns_to_cleanup_after:
-            await cleanup_test_entries(ldap_connection, dns_to_cleanup_after)
+            cleanup_test_entries(ldap_connection, dns_to_cleanup_after)

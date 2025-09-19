@@ -15,11 +15,6 @@ from flext_core import (
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.value_objects import FlextLdapValueObjects
-
-# Python 3.13 type aliases
-type SearchResult = FlextResult[FlextLdapModels.Entry | None]
-type SaveResult = FlextResult[None]
 
 
 class FlextLdapRepositories(FlextMixins.Service):
@@ -181,7 +176,7 @@ class FlextLdapRepositories(FlextMixins.Service):
         ) -> FlextResult[FlextLdapModels.Entry | None]:
             """Find entry by DN - internal async implementation."""
             # Validate DN using value object
-            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapModels.ValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult.fail(f"Invalid DN format: {dn_validation.error}")
 
@@ -298,7 +293,7 @@ class FlextLdapRepositories(FlextMixins.Service):
         async def _delete_async(self, dn: str) -> FlextResult[None]:
             """Delete entry - internal async implementation."""
             # Validate DN format
-            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapModels.ValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult.fail(f"Invalid DN format: {dn_validation.error}")
 
@@ -336,7 +331,7 @@ class FlextLdapRepositories(FlextMixins.Service):
         ) -> FlextResult[None]:
             """Update LDAP entry attributes directly."""
             # Validate DN format
-            dn_validation = FlextLdapValueObjects.DistinguishedName.create(dn)
+            dn_validation = FlextLdapModels.ValueObjects.DistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
                     f"Invalid DN format: {dn_validation.error}",

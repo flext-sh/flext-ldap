@@ -28,7 +28,6 @@ from flext_ldap import (
     FlextLdapApi,
     FlextLdapConfig,
     FlextLdapModels,
-    FlextLdapValueObjects,
 )
 
 logger = FlextLogger(__name__)
@@ -97,17 +96,17 @@ def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
-        dn = FlextLdapValueObjects.DistinguishedName(
+        dn = FlextLdapModels.ValueObjects.DistinguishedName(
             value="cn=admin,ou=users,dc=example,dc=com"
         )
         dn.validate_business_rules()
 
         # 2. LDAP Filters - Using correct FlextLdapFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_result = FlextLdapValueObjects.Filter.create(complex_filter)
+        filter_result = FlextLdapModels.ValueObjects.Filter.create(complex_filter)
 
         if filter_result.is_success:
-            default_filter = FlextLdapValueObjects.Filter(value="(objectClass=*)")
+            default_filter = FlextLdapModels.ValueObjects.Filter(value="(objectClass=*)")
             filter_obj = filter_result.unwrap_or(default_filter)
             filter_obj.validate_business_rules()
 

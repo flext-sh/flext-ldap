@@ -186,8 +186,6 @@ class FlextLdapTypeGuards:
         return hasattr(obj, "is_success")
 
 
-# Constants and functions eliminated - use FlextLdapTypeGuards directly following flext-core pattern
-
 __all__ = [
     "FlextLdapTypeGuards",
 ]

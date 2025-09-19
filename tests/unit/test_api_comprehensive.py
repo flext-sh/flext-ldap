@@ -10,11 +10,9 @@ import pytest
 from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldap import FlextLdapModels
 from flext_ldap.api import FlextLdapApi
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.config import FlextLdapConfigs
 
 
-@pytest.mark.asyncio
 class TestFlextLdapApiComprehensive:
     """Comprehensive tests for FlextLdapApi with real functionality."""
 
@@ -23,19 +21,19 @@ class TestFlextLdapApiComprehensive:
         api = FlextLdapApi()
 
         # Use FlextTestsMatchers for better validation
-        assert isinstance(api._config, FlextLdapConfig)
+        assert isinstance(api._config, FlextLdapConfigs)
         assert api._container_manager is not None
         assert api._container is not None
         assert api._service is not None
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom config using FlextTestsMatchers."""
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
         api = FlextLdapApi(config)
 
         # Use FlextTestsMatchers for identity validation
         assert api._config is config
-        assert isinstance(api._config, FlextLdapConfig)
+        assert isinstance(api._config, FlextLdapConfigs)
 
     def test_generate_session_id(self) -> None:
         """Test session ID generation using cached property from FlextUtilities."""
@@ -102,6 +100,7 @@ class TestFlextLdapApiComprehensive:
         )
         assert result == "Default"
 
+    @pytest.mark.asyncio
     async def test_connect_without_real_server(self) -> None:
         """Test connect method without real LDAP server using FlextTestsMatchers."""
         api = FlextLdapApi()
@@ -122,6 +121,7 @@ class TestFlextLdapApiComprehensive:
             # Expected failure without real LDAP connection
             assert not result.is_success
 
+    @pytest.mark.asyncio
     async def test_disconnect_without_session(self) -> None:
         """Test disconnect method without valid session."""
         api = FlextLdapApi()
@@ -131,6 +131,7 @@ class TestFlextLdapApiComprehensive:
         # Should handle gracefully regardless of session validity
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_connection_context_manager(self) -> None:
         """Test connection context manager."""
         api = FlextLdapApi()
@@ -149,6 +150,7 @@ class TestFlextLdapApiComprehensive:
             logger = FlextLogger(__name__)
             logger.debug(f"Expected test behavior for connection failures: {e}")
 
+    @pytest.mark.asyncio
     async def test_search_without_connection(self) -> None:
         """Test search method without connection."""
         api = FlextLdapApi()
@@ -171,6 +173,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_search_simple_without_connection(self) -> None:
         """Test search_simple method without connection."""
         api = FlextLdapApi()
@@ -187,6 +190,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_search_users_without_connection(self) -> None:
         """Test search_users method without connection."""
         api = FlextLdapApi()
@@ -202,6 +206,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_create_user_without_connection(self) -> None:
         """Test create_user method without connection."""
         api = FlextLdapApi()
@@ -222,6 +227,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_get_user_without_connection(self) -> None:
         """Test get_user method without connection."""
         api = FlextLdapApi()
@@ -236,6 +242,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_update_user_without_connection(self) -> None:
         """Test update_user method without connection."""
         api = FlextLdapApi()
@@ -254,6 +261,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_delete_user_without_connection(self) -> None:
         """Test delete_user method without connection."""
         api = FlextLdapApi()
@@ -268,6 +276,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_search_users_by_filter_without_connection(self) -> None:
         """Test search_users_by_filter method without connection."""
         api = FlextLdapApi()
@@ -284,6 +293,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_create_group_without_connection(self) -> None:
         """Test create_group method without connection."""
         api = FlextLdapApi()
@@ -310,6 +320,7 @@ class TestFlextLdapApiComprehensive:
                 ]
             )
 
+    @pytest.mark.asyncio
     async def test_get_group_without_connection(self) -> None:
         """Test get_group method without connection."""
         api = FlextLdapApi()
@@ -324,6 +335,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_update_group_without_connection(self) -> None:
         """Test update_group method without connection."""
         api = FlextLdapApi()
@@ -343,6 +355,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "not found", "failed", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_delete_group_without_connection(self) -> None:
         """Test delete_group method without connection."""
         api = FlextLdapApi()
@@ -357,6 +370,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_add_member_without_connection(self) -> None:
         """Test add_member method without connection."""
         api = FlextLdapApi()
@@ -374,6 +388,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_remove_member_without_connection(self) -> None:
         """Test remove_member method without connection."""
         api = FlextLdapApi()
@@ -391,6 +406,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_get_members_without_connection(self) -> None:
         """Test get_members method without connection."""
         api = FlextLdapApi()
@@ -405,6 +421,7 @@ class TestFlextLdapApiComprehensive:
                 for pattern in ["connection", "failed", "not found", "ldap"]
             )
 
+    @pytest.mark.asyncio
     async def test_delete_entry_without_connection(self) -> None:
         """Test delete_entry method without connection."""
         api = FlextLdapApi()
@@ -506,7 +523,7 @@ class TestFlextLdapApiComprehensive:
         assert isinstance(api2, FlextLdapApi)
 
         # Test with custom config (use default settings without invalid fields)
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
         api3 = FlextLdapApi.create(config)
         assert api3._config is config
 
@@ -519,10 +536,10 @@ class TestFlextLdapApiComprehensive:
         assert isinstance(api2, FlextLdapApi)
 
         # Test with custom config - work around singleton pattern
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLdapModels.ConnectionConfig(
             server="ldap://factory.example.com"
         )
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
         # Manually set the connection after creation
         config.ldap_default_connection = connection_config
         api3 = FlextLdapApi(config)
@@ -538,6 +555,7 @@ class TestFlextLdapApiComprehensive:
     # Error Handling and Edge Cases
     # =============================================================================
 
+    @pytest.mark.asyncio
     async def test_search_with_different_scopes(self) -> None:
         """Test search operations with different LDAP scopes."""
         api = FlextLdapApi()
@@ -557,6 +575,7 @@ class TestFlextLdapApiComprehensive:
             result = await api.search(search_request)
             assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_search_with_size_and_time_limits(self) -> None:
         """Test search with size and time limits."""
         api = FlextLdapApi()
@@ -573,6 +592,7 @@ class TestFlextLdapApiComprehensive:
         result = await api.search(search_request)
         assert isinstance(result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_user_operations_with_complex_data(self) -> None:
         """Test user operations with complex attribute data."""
         api = FlextLdapApi()
@@ -601,6 +621,7 @@ class TestFlextLdapApiComprehensive:
         update_result = await api.update_user(dn, attributes)
         assert isinstance(update_result, FlextResult)
 
+    @pytest.mark.asyncio
     async def test_group_operations_comprehensive(self) -> None:
         """Test comprehensive group operations."""
         api = FlextLdapApi()
@@ -658,6 +679,7 @@ class TestFlextLdapApiComprehensive:
         result = api._get_entry_attribute(entry_empty_attrs, "uid", "Default")
         assert result == "validuid"
 
+    @pytest.mark.asyncio
     async def test_session_id_consistency(self) -> None:
         """Test that session IDs are generated consistently."""
         session_ids = [f"session_{uuid.uuid4()}" for _ in range(10)]

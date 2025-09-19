@@ -12,36 +12,18 @@ from __future__ import annotations
 import contextlib
 import ssl
 from collections.abc import Mapping
-from typing import Literal, cast
+from typing import cast
 from urllib.parse import urlparse
 
 import ldap3
-from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
+from ldap3 import ALL_ATTRIBUTES, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
 from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
-
-# NO TYPE ALIASES ALLOWED - Use FlextResult[Connection] and FlextTypes.Core.Dict directly
-
-# FlextLogger available via FlextMixins.Service inheritance
-
-# Valid LDAP scope literals for ldap3
-LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
-
-# Scope mapping - ldap3 constants
-SCOPE_MAP: dict[str, LdapScope] = {
-    "base": cast("LdapScope", BASE),
-    "ldap3.BASE": cast("LdapScope", BASE),
-    "one": cast("LdapScope", LEVEL),
-    "onelevel": cast("LdapScope", LEVEL),
-    "sub": cast("LdapScope", SUBTREE),
-    "subtree": cast("LdapScope", SUBTREE),
-    "subordinates": cast("LdapScope", SUBTREE),
-}
-
 
 # LDAPSearchStrategies ELIMINATED - consolidated into FlextLdapClient nested classes
 # Following flext-core consolidation pattern: ALL functionality within single class
@@ -79,7 +61,7 @@ class FlextLdapClient(
 
         """
 
-        def __init__(self, connection: Connection | None) -> None:
+        def __init__(self, connection: FlextLdapProtocols.LdapProtocol | None) -> None:
             """Initialize search strategy with LDAP connection.
 
             Args:
@@ -108,15 +90,23 @@ class FlextLdapClient(
 
             try:
                 # Map scope to ldap3 constant
-                scope = SCOPE_MAP.get(request.scope.lower(), SUBTREE)
+                scope = FlextLdapConstants.Scopes.SCOPE_MAP.get(
+                    request.scope.lower(), SUBTREE
+                )
 
                 # Execute search using ldap3 directly
                 connection_obj = self.connection
+                # Ensure attributes is correct type for protocol
+                search_attributes: list[str] | str | None
+                if request.attributes is not None:
+                    search_attributes = request.attributes
+                else:
+                    search_attributes = cast("str", ALL_ATTRIBUTES)
                 success: bool = connection_obj.search(
                     search_base=request.base_dn,
                     search_filter=request.filter_str,
                     search_scope=scope,
-                    attributes=request.attributes or ALL_ATTRIBUTES,
+                    attributes=search_attributes,
                     size_limit=request.size_limit,
                     time_limit=request.time_limit,
                 )
@@ -149,7 +139,7 @@ class FlextLdapClient(
 
         def convert_entries(
             self,
-            connection: Connection,
+            connection: FlextLdapProtocols.LdapProtocol,
         ) -> FlextResult[FlextTypes.Core.Dict]:
             """Convert ldap3 entries to structured format.
 
@@ -173,10 +163,7 @@ class FlextLdapClient(
                     if hasattr(entry, "entry_attributes") and entry.entry_attributes:
                         if isinstance(entry.entry_attributes, dict):
                             # Handle dict format (attribute names as keys)
-                            entry_attrs_dict = cast(
-                                "dict[str, object]",
-                                entry.entry_attributes,
-                            )
+                            entry_attrs_dict = entry.entry_attributes
                             entry_attributes = list(entry_attrs_dict.keys())
                             for attr_name in entry_attributes:
                                 attr_values = cast(
@@ -259,7 +246,7 @@ class FlextLdapClient(
         """
         # Initialize FlextMixins.Service for logging capabilities
         super().__init__()
-        self._connection: Connection | None = None
+        self._connection: FlextLdapProtocols.LdapProtocol | None = None
         self._server: ldap3.Server | None = None
 
     # =========================================================================
@@ -304,14 +291,15 @@ class FlextLdapClient(
                 tls=ldap3.Tls(validate=ssl.CERT_NONE) if use_ssl else None,
             )
 
-            # Create connection
-            self._connection = ldap3.Connection(
+            # Create connection and cast to Protocol for type safety
+            connection = ldap3.Connection(
                 self._server,
                 user=bind_dn,
                 password=password,
                 auto_bind=True,
                 raise_exceptions=True,
             )
+            self._connection = cast("FlextLdapProtocols.LdapProtocol", connection)
 
             if not self._connection.bound:
                 return FlextResult.fail("Failed to bind to LDAP server")
@@ -578,7 +566,7 @@ class FlextLdapClient(
 
         try:
             # Convert attributes to ldap3-compatible format
-            ldap3_attributes = dict(attributes)
+            ldap3_attributes: dict[str, object] = dict(attributes)
             # Direct method call - ldap3 Connection has add method (returns bool)
             success: bool = self._connection.add(dn, attributes=ldap3_attributes)
             if not success:
@@ -647,7 +635,7 @@ class FlextLdapClient(
                 changes[attr_name] = [(ldap3.MODIFY_REPLACE, attr_value)]
 
             # Convert changes to ldap3-compatible format
-            ldap3_changes = dict(changes)
+            ldap3_changes: dict[str, object] = dict(changes)
             # Direct method call - ldap3 Connection has modify method (returns bool)
             success: bool = self._connection.modify(dn, ldap3_changes)
             if not success:
@@ -796,7 +784,5 @@ class FlextLdapClient(
 
 
 __all__ = [
-    "SCOPE_MAP",
     "FlextLdapClient",
-    "LdapScope",
 ]
