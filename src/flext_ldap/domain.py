@@ -61,8 +61,8 @@ class FlextLdapDomain(FlextMixins.Loggable):
         def __init__(self) -> None:
             """Initialize LDAP user specification with default values."""
             super().__init__(
-                name=FlextLdapConstants.DefaultValues.VALID_LDAP_USER_NAME,
-                description=FlextLdapConstants.DefaultValues.VALID_LDAP_USER_DESCRIPTION,
+                name=FlextLdapConstants.Defaults.VALID_LDAP_USER_NAME,
+                description=FlextLdapConstants.Defaults.VALID_LDAP_USER_DESCRIPTION,
             )
 
         @override
@@ -181,9 +181,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
         def _validate_dn_string(self, dn_str: str) -> bool:
             """Validate DN string with length and pattern checks."""
             match len(dn_str):
-                case length if (
-                    length > FlextLdapConstants.LdapValidation.MAX_FILTER_LENGTH
-                ):
+                case length if length > FlextLdapConstants.Validation.MAX_FILTER_LENGTH:
                     return False
                 case length if length == 0:
                     return False
@@ -223,11 +221,11 @@ class FlextLdapDomain(FlextMixins.Loggable):
             # Use pattern matching for length validation
             match len(password):
                 case length if (
-                    length < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
+                    length < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
                 ):
                     return False
                 case length if (
-                    length > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH
+                    length > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
                 ):
                     return False
                 case _:
@@ -235,7 +233,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         def _check_password_complexity(self, password: str) -> bool:
             """Check password complexity using enhanced patterns."""
-            match FlextLdapConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
+            match FlextLdapConstants.Validation.REQUIRE_PASSWORD_COMPLEXITY:
                 case False:
                     return True
                 case True:
@@ -258,10 +256,10 @@ class FlextLdapDomain(FlextMixins.Loggable):
             """Get detailed password validation error."""
             if not isinstance(candidate, str):
                 return "Password must be a string"
-            if len(candidate) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-                return f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters"
-            if len(candidate) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-                return f"Password cannot exceed {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters"
+            if len(candidate) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
+                return f"Password must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters"
+            if len(candidate) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
+                return f"Password cannot exceed {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters"
             return "Password does not meet complexity requirements"
 
     class ActiveUserSpecification(DomainSpecification):
@@ -414,13 +412,10 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate user creation business rules - to reduce returns."""
-            try:
-                # Perform all validations in sequence
-                return self._perform_all_user_validations(user_data)
-            except Exception as e:
-                self.log_error("User validation failed")
-                return FlextResult.fail(f"User validation error: {e}")
+            """Validate user creation business rules - explicit error handling."""
+            # Direct call to validation chain - no try/except fallback
+            # _perform_all_user_validations already returns FlextResult
+            return self._perform_all_user_validations(user_data)
 
         def _perform_all_user_validations(
             self,
@@ -499,62 +494,50 @@ class FlextLdapDomain(FlextMixins.Loggable):
             user: FlextLdapModels.User,
             requesting_user: FlextLdapModels.User,
         ) -> FlextResult[bool]:
-            """Check if user can be deleted by requesting user."""
-            try:
-                # Business rule: Users cannot delete themselves
-                if user.uid == requesting_user.uid:
-                    return FlextResult.fail("Users cannot delete themselves")
+            """Check if user can be deleted by requesting user - explicit error handling."""
+            # Business rule: Users cannot delete themselves
+            if user.uid == requesting_user.uid:
+                return FlextResult.fail("Users cannot delete themselves")
 
-                # Business rule: Only active users can perform deletions
-                if not self._user_spec.active_spec.is_satisfied_by(requesting_user):
-                    return FlextResult.fail(
-                        "Only active users can delete other users",
-                    )
+            # Business rule: Only active users can perform deletions
+            if not self._user_spec.active_spec.is_satisfied_by(requesting_user):
+                return FlextResult.fail(
+                    "Only active users can delete other users",
+                )
 
-                success = True
-                return FlextResult.ok(success)
-
-            except Exception as e:
-                self.log_error("User deletion check failed")
-                return FlextResult.fail(f"User deletion check error: {e}")
+            return FlextResult.ok(True)
 
         def generate_username(
             self,
             first_name: str,
             last_name: str,
         ) -> FlextResult[str]:
-            """Generate username following business rules - USES FLEXT-CORE."""
-            try:
-                # Validate inputs using FlextUtilities
-                if not FlextUtilities.TypeGuards.is_string_non_empty(
-                    first_name,
-                ) or not FlextUtilities.TypeGuards.is_string_non_empty(last_name):
-                    return FlextResult.fail("First name and last name required")
+            """Generate username following business rules - explicit error handling."""
+            # Validate inputs using FlextUtilities
+            if not FlextUtilities.TypeGuards.is_string_non_empty(
+                first_name,
+            ) or not FlextUtilities.TypeGuards.is_string_non_empty(last_name):
+                return FlextResult.fail("First name and last name required")
 
-                # Clean text using FlextUtilities
-                clean_first = FlextUtilities.TextProcessor.clean_text(first_name)
-                clean_last = FlextUtilities.TextProcessor.clean_text(last_name)
+            # Clean text using FlextUtilities
+            clean_first = FlextUtilities.TextProcessor.clean_text(first_name)
+            clean_last = FlextUtilities.TextProcessor.clean_text(last_name)
 
-                if not clean_first or not clean_last:
-                    return FlextResult.fail("Invalid names provided")
+            if not clean_first or not clean_last:
+                return FlextResult.fail("Invalid names provided")
 
-                # Business rule: username = first initial + last name, lowercase
-                username = f"{clean_first[0].lower()}{clean_last.lower()}"
+            # Business rule: username = first initial + last name, lowercase
+            username = f"{clean_first[0].lower()}{clean_last.lower()}"
 
-                # Slugify using FlextUtilities (removes invalid characters)
-                username = FlextUtilities.TextProcessor.slugify(username)
+            # Slugify using FlextUtilities (removes invalid characters)
+            username = FlextUtilities.TextProcessor.slugify(username)
 
-                if (
-                    len(username)
-                    < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
-                ):  # MIN_USERNAME_LENGTH não existe, usar MIN_PASSWORD_LENGTH ou criar constante
-                    return FlextResult.fail("Generated username too short")
+            if (
+                len(username) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
+            ):  # MIN_USERNAME_LENGTH não existe, usar MIN_PASSWORD_LENGTH ou criar constante
+                return FlextResult.fail("Generated username too short")
 
-                return FlextResult.ok(username)
-
-            except Exception as e:
-                self.log_error("Username generation failed")
-                return FlextResult.fail(f"Username generation error: {e}")
+            return FlextResult.ok(username)
 
     class GroupManagementService(FlextDomainService[FlextLdapModels.Group]):
         """Internal domain service for group management business logic."""
@@ -589,61 +572,50 @@ class FlextLdapDomain(FlextMixins.Loggable):
             *,
             allow_inactive: bool = False,
         ) -> FlextResult[bool]:
-            """Check if user can be added to group."""
-            try:
-                # Validate group
-                if not self._group_spec.is_satisfied_by(group):
+            """Check if user can be added to group - explicit error handling."""
+            # Validate group
+            if not self._group_spec.is_satisfied_by(group):
+                return FlextResult.fail(
+                    self._group_spec.get_validation_error(group),
+                )
+
+            # Business rule: User must be active (unless explicitly allowed)
+            if not allow_inactive:
+                active_spec = FlextLdapDomain.ActiveUserSpecification()
+                if not active_spec.is_satisfied_by(user):
                     return FlextResult.fail(
-                        self._group_spec.get_validation_error(group),
+                        "Only active users can be added to groups",
                     )
 
-                # Business rule: User must be active (unless explicitly allowed)
-                if not allow_inactive:
-                    active_spec = FlextLdapDomain.ActiveUserSpecification()
-                    if not active_spec.is_satisfied_by(user):
-                        return FlextResult.fail(
-                            "Only active users can be added to groups",
-                        )
+            # Business rule: User cannot be added if already a member
+            if user.dn in group.members:
+                return FlextResult.fail(
+                    "User is already a member of this group",
+                )
 
-                # Business rule: User cannot be added if already a member
-                if user.dn in group.members:
-                    return FlextResult.fail(
-                        "User is already a member of this group",
-                    )
-
-                success = True
-                return FlextResult.ok(success)
-
-            except Exception as e:
-                self.log_error("Group membership check failed")
-                return FlextResult.fail(f"Group membership check error: {e}")
+            return FlextResult.ok(True)
 
         def validate_group_creation(
             self,
             group_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate group creation business rules."""
-            try:
-                # Check required fields
-                required_fields = ["cn", "dn"]
-                for field in required_fields:
-                    if field not in group_data or not group_data[field]:
-                        return FlextResult[object].fail(
-                            f"Required field missing: {field}",
-                        )
-
-                # Validate DN format
-                dn = str(group_data["dn"])
-                if not self._dn_spec.is_satisfied_by(dn):
+            """Validate group creation business rules - explicit error handling."""
+            # Check required fields
+            required_fields = ["cn", "dn"]
+            for field in required_fields:
+                if field not in group_data or not group_data[field]:
                     return FlextResult[object].fail(
-                        self._dn_spec.get_validation_error(dn),
+                        f"Required field missing: {field}",
                     )
 
-                return FlextResult[object].ok(None)
+            # Validate DN format
+            dn = str(group_data["dn"])
+            if not self._dn_spec.is_satisfied_by(dn):
+                return FlextResult[object].fail(
+                    self._dn_spec.get_validation_error(dn),
+                )
 
-            except Exception as e:
-                self.log_error("Group validation failed")
-                return FlextResult[object].fail(f"Group validation error: {e}")
+            return FlextResult[object].ok(None)
 
     class PasswordService(FlextDomainService[str]):
         """Internal domain service for password management business logic."""
@@ -662,47 +634,37 @@ class FlextLdapDomain(FlextMixins.Loggable):
             current_password: str,
             new_password: str,
         ) -> FlextResult[object]:
-            """Validate password change business rules."""
-            try:
-                # Validate new password strength
-                if not self._password_spec.is_satisfied_by(new_password):
-                    return FlextResult[object].fail(
-                        self._password_spec.get_validation_error(new_password),
-                    )
+            """Validate password change business rules - explicit error handling."""
+            # Validate new password strength
+            if not self._password_spec.is_satisfied_by(new_password):
+                return FlextResult[object].fail(
+                    self._password_spec.get_validation_error(new_password),
+                )
 
-                # Business rule: New password cannot be the same as current
-                if current_password == new_password:
-                    return FlextResult[object].fail(
-                        "New password must be different from current",
-                    )
+            # Business rule: New password cannot be the same as current
+            if current_password == new_password:
+                return FlextResult[object].fail(
+                    "New password must be different from current",
+                )
 
-                return FlextResult[object].ok(None)
-
-            except Exception as e:
-                self.log_error("Password validation failed")
-                return FlextResult[object].fail(f"Password validation error: {e}")
+            return FlextResult[object].ok(None)
 
         def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
-            """Generate a secure password following business rules - REFACTORED."""
-            try:
-                # Validate parameters in single check
-                validation_error = self._validate_password_length(length)
-                if validation_error:
-                    return FlextResult.fail(validation_error)
+            """Generate a secure password following business rules - explicit error handling."""
+            # Validate parameters in single check
+            validation_error = self._validate_password_length(length)
+            if validation_error:
+                return FlextResult.fail(validation_error)
 
-                # Generate password with retry logic
-                return self._generate_password_with_retries(length)
-
-            except Exception as e:
-                self.log_error("Password generation failed")
-                return FlextResult.fail(f"Password generation error: {e}")
+            # Generate password with retry logic
+            return self._generate_password_with_retries(length)
 
         def _validate_password_length(self, length: int) -> str | None:
             """Validate password length parameters - EXTRACTED METHOD."""
-            if length < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-                return f"Password length must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH}"
-            if length > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-                return f"Password length cannot exceed {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH}"
+            if length < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
+                return f"Password length must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH}"
+            if length > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
+                return f"Password length cannot exceed {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH}"
             return None
 
         def _generate_password_with_retries(self, length: int) -> FlextResult[str]:

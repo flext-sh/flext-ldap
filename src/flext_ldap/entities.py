@@ -33,7 +33,7 @@ class FlextLdapEntities(FlextModels):
 
     Consolidates ALL LDAP entity types into a single class following FLEXT patterns.
     Everything from the previous entity definitions is now available as
-    internal classes with full backward compatibility.
+    internal classes with NO legacy compatibility.
     """
 
     # =========================================================================
@@ -530,7 +530,7 @@ class FlextLdapEntities(FlextModels):
             389,
             description="LDAP server port",
             ge=1,
-            le=FlextLdapConstants.LDAP.MAX_PORT,
+            le=FlextLdapConstants.Protocol.MAX_PORT,
         )
         use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
         use_tls: bool = Field(default=False, description="Use StartTLS")
@@ -564,8 +564,10 @@ class FlextLdapEntities(FlextModels):
         @classmethod
         def validate_port(cls, v: int) -> int:
             """Validate port number."""
-            if v <= 0 or v > FlextLdapConstants.LDAP.MAX_PORT:
-                msg = f"Port must be between 1 and {FlextLdapConstants.LDAP.MAX_PORT}"
+            if v <= 0 or v > FlextLdapConstants.Protocol.MAX_PORT:
+                msg = (
+                    f"Port must be between 1 and {FlextLdapConstants.Protocol.MAX_PORT}"
+                )
                 raise ValueError(msg)
             return v
 

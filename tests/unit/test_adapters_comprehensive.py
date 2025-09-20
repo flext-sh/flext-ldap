@@ -20,6 +20,7 @@ from flext_ldap import (
     FlextLdapAdapters,
     FlextLdapClient,
     FlextLdapModels,
+    FlextLdapTypes,
 )
 
 
@@ -609,7 +610,7 @@ class TestAdapterErrorHandling:
         operation_types = ["test", "connect", "bind", "terminate"]
 
         for op_type in operation_types:
-            connection_request = FlextLdapAdapters.ConnectionRequest(
+            connection_request = FlextLdapModels.ConnectionRequest(
                 operation_type=op_type,
                 server_uri="ldap://test.com:389",
                 bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test",
@@ -712,11 +713,19 @@ class TestAdapterErrorHandling:
                     # Convert dict to DirectoryEntry format for validation
                     # Type safe access - entry_data is dict from test cases
                     typed_entry_data: dict[str, object] = entry_data
+                    # Convert to proper AttributeDict format
+                    attributes: FlextLdapTypes.Entry.AttributeDict = {}
+                    for k, v in typed_entry_data.items():
+                        if k != "dn":
+                            if isinstance(v, (list, str, bytes)):
+                                attributes[k] = v
+                            else:
+                                # Convert other types to string
+                                attributes[k] = str(v)
+
                     directory_entry = FlextLdapAdapters.DirectoryEntry(
                         dn=str(typed_entry_data["dn"]),
-                        attributes={
-                            k: v for k, v in typed_entry_data.items() if k != "dn"
-                        },
+                        attributes=attributes,
                     )
                     _ = entry_service._validate_entry(directory_entry)
                     # Method should handle edge cases gracefully
@@ -826,11 +835,19 @@ class TestAdapterErrorHandling:
             try:
                 # Type-safe config creation with explicit type conversion
                 typed_config: dict[str, object] = config_data
+                # Type-safe conversion for timeout
+                timeout_value = typed_config["timeout"]
+                timeout_int = (
+                    int(timeout_value)
+                    if isinstance(timeout_value, (int, str, float))
+                    else 30
+                )
+
                 config = FlextLdapAdapters.ConnectionConfig(
                     server=str(typed_config["server"]),
                     bind_dn=str(typed_config["bind_dn"]),
                     bind_password=str(typed_config["bind_password"]),
-                    timeout=int(typed_config["timeout"]),
+                    timeout=timeout_int,
                     use_tls=bool(typed_config["use_tls"]),
                 )
                 # Configuration should be created successfully
@@ -918,9 +935,21 @@ class TestAdapterErrorHandling:
             try:
                 # Test DirectoryEntry creation with explicit field assignment
                 typed_case_data: dict[str, object] = case_data
+                # Convert attributes to proper AttributeDict format
+                raw_attributes = typed_case_data["attributes"]
+                if isinstance(raw_attributes, dict):
+                    attributes: FlextLdapTypes.Entry.AttributeDict = {}
+                    for k, v in raw_attributes.items():
+                        if isinstance(v, (list, str, bytes)):
+                            attributes[k] = v
+                        else:
+                            attributes[k] = str(v)
+                else:
+                    attributes = {}
+
                 entry = FlextLdapAdapters.DirectoryEntry(
                     dn=str(typed_case_data["dn"]),
-                    attributes=typed_case_data["attributes"],
+                    attributes=attributes,
                 )
                 assert entry.dn == case_data["dn"]
                 # Validation code paths are exercised (lines 414-433)

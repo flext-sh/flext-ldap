@@ -24,7 +24,7 @@ class TestFlextLdapApiComprehensive:
         assert isinstance(api._config, FlextLdapConfigs)
         assert api._container_manager is not None
         assert api._container is not None
-        assert api._service is not None
+        assert api._client is not None
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom config using FlextTestsMatchers."""

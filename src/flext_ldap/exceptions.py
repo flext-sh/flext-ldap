@@ -1,4 +1,4 @@
-"""LDAP exceptions module.
+"""LDAP exceptions module - Direct FlextExceptions usage (ZERO aliases).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,39 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import final
-
+# Direct imports from FlextExceptions - NO wrapper classes or aliases
 from flext_core import FlextExceptions
 
-
-@final
-class FlextLdapExceptions:
-    """LDAP exceptions using FlextExceptions - ELIMINATES MASSIVE DUPLICATION.
-
-    Simple aliases to FlextExceptions following SOURCE OF TRUTH pattern.
-    NO custom exception classes - uses flext-core exceptions directly.
-    """
-
-    # =========================================================================
-    # DIRECT ALIASES TO FlextExceptions
-    # =========================================================================
-
-    # Base exception types from FlextExceptions
-    Error = FlextExceptions.BaseError
-    OperationError = FlextExceptions.OperationError
-    UserError = FlextExceptions.UserError
-    ValidationError = FlextExceptions.ValidationError
-    ConfigurationError = FlextExceptions.ConfigurationError
-    TypeError = FlextExceptions.TypeError
-
-    # LDAP-specific aliases using FlextExceptions patterns
-    LdapConnectionError = FlextExceptions.ConnectionError
-    AuthenticationError = FlextExceptions.AuthenticationError
-    SearchError = FlextExceptions.OperationError
-    GroupError = FlextExceptions.OperationError
-    LdapTypeError = FlextExceptions.TypeError
-
-
+# Export FlextExceptions directly - ELIMINATES wrapper pattern
 __all__ = [
-    "FlextLdapExceptions",
+    "FlextExceptions",
 ]

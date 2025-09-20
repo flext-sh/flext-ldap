@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Self, cast, final
+from typing import ClassVar, Self, cast, final
 
 from pydantic import (
     Field,
@@ -25,11 +25,7 @@ from flext_core import FlextConfig, FlextLogger, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
-# Type alias for ConnectionConfig - clean separation of types and runtime
-if TYPE_CHECKING:
-    ConnectionConfigType = FlextLdapModels.ConnectionConfig
-else:
-    ConnectionConfigType = object  # Runtime placeholder
+# NO type aliases - use FlextLdapModels.ConnectionConfig directly
 
 
 @final
@@ -75,12 +71,11 @@ class FlextLdapConfigs(FlextConfig):
         ConnectionName = str
         ConfigPath = str | Path
 
-    # NOTE: ConnectionConfig type alias is defined at module level, not class level
-    # Access runtime ConnectionConfig through FlextLdapModels.ConnectionConfig
+    # LDAP configuration fields using FlextLdapModels.ConnectionConfig directly
 
     # === LDAP CONNECTION CONFIGURATION ===
     # Connection to LDAP servers (can be a single or multiple connections)
-    ldap_default_connection: ConnectionConfigType | None = Field(
+    ldap_default_connection: FlextLdapModels.ConnectionConfig | None = Field(
         default=None,
         description="Default LDAP connection configuration",
         alias="ldap_connection",
@@ -225,7 +220,7 @@ class FlextLdapConfigs(FlextConfig):
         # Validation 1: Connection configuration consistency
         if self.ldap_default_connection is None:
             # Create default connection if not provided
-            default_server = FlextLdapConstants.LDAP.DEFAULT_SERVER_URI
+            default_server = FlextLdapConstants.Protocol.DEFAULT_SERVER_URI
             try:
                 self.ldap_default_connection = FlextLdapModels.ConnectionConfig(
                     server=default_server,
@@ -340,7 +335,7 @@ class FlextLdapConfigs(FlextConfig):
         """
         if self.ldap_default_connection and self.ldap_default_connection.server:
             return self.ldap_default_connection.server
-        return FlextLdapConstants.LDAP.DEFAULT_SERVER_URI
+        return FlextLdapConstants.Protocol.DEFAULT_SERVER_URI
 
     def get_effective_bind_dn(self) -> str | None:
         """Get the effective bind DN for authentication.
@@ -636,14 +631,14 @@ class FlextLdapConfigs(FlextConfig):
 
         # Basic Connection Settings
         server: str = Field(
-            default=FlextLdapConstants.LDAP.DEFAULT_SERVER_URI,
-            description=f"LDAP server URI (e.g., '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAP}host' or '{FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAPS}host:{FlextLdapConstants.LDAP.DEFAULT_SSL_PORT}')",
+            default=FlextLdapConstants.Protocol.DEFAULT_SERVER_URI,
+            description=f"LDAP server URI (e.g., '{FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP}host' or '{FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS}host:{FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}')",
             min_length=1,
         )
 
         port: int = Field(
-            default=FlextLdapConstants.LDAP.DEFAULT_PORT,
-            description=f"LDAP server port ({FlextLdapConstants.LDAP.DEFAULT_PORT} for LDAP, {FlextLdapConstants.LDAP.DEFAULT_SSL_PORT} for LDAPS)",
+            default=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            description=f"LDAP server port ({FlextLdapConstants.Protocol.DEFAULT_PORT} for LDAP, {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT} for LDAPS)",
             ge=1,
             le=65535,
         )
@@ -667,14 +662,14 @@ class FlextLdapConfigs(FlextConfig):
 
         # Connection Pool Settings
         timeout: int = Field(
-            default=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,
+            default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
             description="Connection timeout in seconds",
             ge=1,
             le=300,
         )
 
         pool_size: int = Field(
-            default=FlextLdapConstants.LDAP.DEFAULT_POOL_SIZE,
+            default=FlextLdapConstants.Protocol.DEFAULT_POOL_SIZE,
             description="Maximum number of connections in pool",
             ge=1,
             le=50,
@@ -757,9 +752,9 @@ class FlextLdapConfigs(FlextConfig):
 
             # Add port if non-standard - use constants
             standard_port = (
-                FlextLdapConstants.LDAP.DEFAULT_SSL_PORT
+                FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
                 if self.use_ssl
-                else FlextLdapConstants.LDAP.DEFAULT_PORT
+                else FlextLdapConstants.Protocol.DEFAULT_PORT
             )
             if self.port != standard_port:
                 base_uri = self.server.rstrip("/")
@@ -786,9 +781,7 @@ class FlextLdapConfigs(FlextConfig):
                 return FlextResult.fail(f"Configuration validation failed: {e}")
 
 
-# Backward compatibility alias
-FlextLdapConfig = FlextLdapConfigs
+# Removed backward compatibility alias - use FlextLdapConfigs directly
 __all__ = [
-    "FlextLdapConfig",  # Backward compatibility alias
     "FlextLdapConfigs",
 ]

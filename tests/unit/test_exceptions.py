@@ -8,15 +8,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap.exceptions import FlextExceptions
 
 
 class TestExceptionStringRepresentations:
     """Test exception string representations - covers missing __str__ branches."""
 
     def test_ldap_error_with_operation_and_code(self) -> None:
-        """Test FlextLdapExceptions.Error basic functionality."""
-        error = FlextLdapExceptions.Error(
+        """Test FlextExceptions.Error basic functionality."""
+        error = FlextExceptions.Error(
             "Base error",
             context={"operation": "test_operation", "ldap_result_code": "50"},
         )
@@ -26,8 +26,8 @@ class TestExceptionStringRepresentations:
         assert "[GENERIC_ERROR]" in result_str
 
     def test_connection_error_with_ldap_code(self) -> None:
-        """Test FlextLdapExceptions.LdapConnectionError basic functionality."""
-        error = FlextLdapExceptions.LdapConnectionError(
+        """Test FlextExceptions.ConnectionError basic functionality."""
+        error = FlextExceptions.ConnectionError(
             "Connection failed",
             server_uri="ldap://test.com:389",
         )
@@ -37,8 +37,8 @@ class TestExceptionStringRepresentations:
         assert "[CONNECTION_ERROR]" in result_str
 
     def test_authentication_error_branches(self) -> None:
-        """Test FlextLdapExceptions.AuthenticationError basic functionality."""
-        error = FlextLdapExceptions.AuthenticationError(
+        """Test FlextExceptions.AuthenticationError basic functionality."""
+        error = FlextExceptions.AuthenticationError(
             "Auth failed",
             bind_dn="cn=user,dc=test",
             ldap_result_code="49",
@@ -49,8 +49,8 @@ class TestExceptionStringRepresentations:
         assert "[AUTHENTICATION_ERROR]" in result_str
 
     def test_search_error_with_context(self) -> None:
-        """Test FlextLdapExceptions.SearchError (OperationError alias) basic functionality."""
-        error = FlextLdapExceptions.SearchError(
+        """Test FlextExceptions.OperationError (OperationError alias) basic functionality."""
+        error = FlextExceptions.OperationError(
             "Search failed",
             base_dn="ou=users,dc=test",
             search_filter="(uid=test)",
@@ -62,8 +62,8 @@ class TestExceptionStringRepresentations:
         assert "[OPERATION_ERROR]" in result_str
 
     def test_operation_error_with_target(self) -> None:
-        """Test FlextLdapExceptions.OperationError basic functionality."""
-        error = FlextLdapExceptions.OperationError(
+        """Test FlextExceptions.OperationError basic functionality."""
+        error = FlextExceptions.OperationError(
             "Operation failed",
             operation_type="modify",
             target_dn="cn=test,ou=users",
@@ -75,8 +75,8 @@ class TestExceptionStringRepresentations:
         assert "[OPERATION_ERROR]" in result_str
 
     def test_user_error_with_all_fields(self) -> None:
-        """Test FlextLdapExceptions.UserError basic functionality."""
-        error = FlextLdapExceptions.UserError(
+        """Test FlextExceptions.UserError basic functionality."""
+        error = FlextExceptions.UserError(
             "User error",
             user_dn="cn=test,ou=users",
             uid="testuser",
@@ -88,8 +88,8 @@ class TestExceptionStringRepresentations:
         assert "[TYPE_ERROR]" in result_str
 
     def test_validation_error_with_field_details(self) -> None:
-        """Test FlextLdapExceptions.ValidationError basic functionality."""
-        error = FlextLdapExceptions.ValidationError(
+        """Test FlextExceptions.ValidationError basic functionality."""
+        error = FlextExceptions.ValidationError(
             "Validation failed",
             field_name="email",
             field_value="invalid@",
@@ -101,8 +101,8 @@ class TestExceptionStringRepresentations:
         assert "[VALIDATION_ERROR]" in result_str
 
     def test_type_error_with_type_info(self) -> None:
-        """Test FlextLdapExceptions.LdapTypeError (TypeError alias) basic functionality."""
-        error = FlextLdapExceptions.LdapTypeError(
+        """Test FlextExceptions.TypeError (TypeError alias) basic functionality."""
+        error = FlextExceptions.TypeError(
             "Type error",
             expected_type="int",
             actual_type="str",
@@ -114,8 +114,8 @@ class TestExceptionStringRepresentations:
         assert "[TYPE_ERROR]" in result_str
 
     def test_configuration_error_with_section(self) -> None:
-        """Test FlextLdapExceptions.ConfigurationError basic functionality."""
-        error = FlextLdapExceptions.ConfigurationError(
+        """Test FlextExceptions.ConfigurationError basic functionality."""
+        error = FlextExceptions.ConfigurationError(
             "Config error",
             config_key="server",
             config_section="ldap",
@@ -127,58 +127,58 @@ class TestExceptionStringRepresentations:
 
 
 class TestExceptionFactoryMethods:
-    """Test FlextLdapExceptions.Factory methods - covers factory method branches."""
+    """Test FlextExceptions.Factory methods - covers factory method branches."""
 
     def test_connection_failed_with_different_params(self) -> None:
         """Test connection error creation with different parameters."""
         # Create connection errors with different parameters
-        error1 = FlextLdapExceptions.LdapConnectionError(
+        error1 = FlextExceptions.ConnectionError(
             "Connection timeout to server1",
         )
-        error2 = FlextLdapExceptions.LdapConnectionError(
+        error2 = FlextExceptions.ConnectionError(
             "Port error connecting to server2",
         )
 
-        assert isinstance(error1, FlextLdapExceptions.LdapConnectionError)
-        assert isinstance(error2, FlextLdapExceptions.LdapConnectionError)
+        assert isinstance(error1, FlextExceptions.ConnectionError)
+        assert isinstance(error2, FlextExceptions.ConnectionError)
         assert "server1" in str(error1)
         assert "server2" in str(error2)
 
     def test_factory_with_ldap_result_codes(self) -> None:
         """Test exception creation with LDAP result codes."""
         # Create authentication error with result code
-        auth_error = FlextLdapExceptions.AuthenticationError(
+        auth_error = FlextExceptions.AuthenticationError(
             "Authentication failed for cn=user (LDAP result code: 49)",
         )
-        assert isinstance(auth_error, FlextLdapExceptions.AuthenticationError)
+        assert isinstance(auth_error, FlextExceptions.AuthenticationError)
         assert "49" in str(auth_error)
 
         # Create search error with result code
-        search_error = FlextLdapExceptions.SearchError(
+        search_error = FlextExceptions.OperationError(
             "Search failed for ou=users with filter (uid=test), error: Not found (LDAP result code: 32)",
         )
-        assert isinstance(search_error, FlextLdapExceptions.SearchError)
+        assert isinstance(search_error, FlextExceptions.OperationError)
         assert "32" in str(search_error)
 
         # Create user error with uid and code
-        user_error = FlextLdapExceptions.UserError(
+        user_error = FlextExceptions.UserError(
             "User creation failed for cn=newuser (uid: newuser, LDAP result code: 68)",
         )
-        assert isinstance(user_error, FlextLdapExceptions.UserError)
+        assert isinstance(user_error, FlextExceptions.UserError)
         assert "newuser" in str(user_error)
         assert "68" in str(user_error)
 
         # Create validation error
-        val_error = FlextLdapExceptions.ValidationError(
+        val_error = FlextExceptions.ValidationError(
             "Validation failed for field: error",
         )
-        assert isinstance(val_error, FlextLdapExceptions.ValidationError)
+        assert isinstance(val_error, FlextExceptions.ValidationError)
 
         # Create configuration error with section
-        config_error = FlextLdapExceptions.ConfigurationError(
+        config_error = FlextExceptions.ConfigurationError(
             "Configuration error in section 'section' for key: error",
         )
-        assert isinstance(config_error, FlextLdapExceptions.ConfigurationError)
+        assert isinstance(config_error, FlextExceptions.ConfigurationError)
         assert "section" in str(config_error)
 
 
@@ -186,22 +186,22 @@ class TestExceptionInheritance:
     """Test exception inheritance and isinstance checks."""
 
     def test_all_exceptions_inherit_from_base(self) -> None:
-        """Test that all custom exceptions inherit from FlextLdapExceptions.Error."""
+        """Test that all custom exceptions inherit from FlextExceptions.Error."""
         exceptions = [
-            FlextLdapExceptions.LdapConnectionError("test"),
-            FlextLdapExceptions.AuthenticationError("test"),
-            FlextLdapExceptions.SearchError(
+            FlextExceptions.ConnectionError("test"),
+            FlextExceptions.AuthenticationError("test"),
+            FlextExceptions.OperationError(
                 "test",
                 base_dn="base",
                 search_filter="filter",
             ),
-            FlextLdapExceptions.OperationError("test"),
-            FlextLdapExceptions.UserError("test"),
-            FlextLdapExceptions.ValidationError("test"),
-            FlextLdapExceptions.LdapTypeError("test"),
-            FlextLdapExceptions.ConfigurationError("test", config_key="key"),
+            FlextExceptions.OperationError("test"),
+            FlextExceptions.UserError("test"),
+            FlextExceptions.ValidationError("test"),
+            FlextExceptions.TypeError("test"),
+            FlextExceptions.ConfigurationError("test", config_key="key"),
         ]
 
         for exception in exceptions:
-            assert isinstance(exception, FlextLdapExceptions.Error)
+            assert isinstance(exception, FlextExceptions.BaseError)
             assert isinstance(exception, Exception)
