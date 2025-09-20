@@ -505,7 +505,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "Only active users can delete other users",
                 )
 
-            return FlextResult.ok(True)
+            return FlextResult[bool].ok(True)
 
         def generate_username(
             self,
@@ -513,31 +513,47 @@ class FlextLdapDomain(FlextMixins.Loggable):
             last_name: str,
         ) -> FlextResult[str]:
             """Generate username following business rules - explicit error handling."""
-            # Validate inputs using FlextUtilities
-            if not FlextUtilities.TypeGuards.is_string_non_empty(
-                first_name,
-            ) or not FlextUtilities.TypeGuards.is_string_non_empty(last_name):
-                return FlextResult.fail("First name and last name required")
+            # Validate inputs using FlextUtilities.Validation
+            first_validation = FlextUtilities.Validation.validate_string_not_empty(
+                first_name, "first_name"
+            )
+            if first_validation.is_failure:
+                return FlextResult[str].fail(f"First name validation failed: {first_validation.error}")
 
-            # Clean text using FlextUtilities
-            clean_first = FlextUtilities.TextProcessor.clean_text(first_name)
-            clean_last = FlextUtilities.TextProcessor.clean_text(last_name)
+            last_validation = FlextUtilities.Validation.validate_string_not_empty(
+                last_name, "last_name"
+            )
+            if last_validation.is_failure:
+                return FlextResult[str].fail(f"Last name validation failed: {last_validation.error}")
+
+            # Clean text using FlextUtilities.TextProcessor
+            clean_first_result = FlextUtilities.TextProcessor.clean_text(first_name)
+            clean_last_result = FlextUtilities.TextProcessor.clean_text(last_name)
+
+            if clean_first_result.is_failure:
+                return FlextResult[str].fail(f"First name cleaning failed: {clean_first_result.error}")
+            if clean_last_result.is_failure:
+                return FlextResult[str].fail(f"Last name cleaning failed: {clean_last_result.error}")
+
+            clean_first = clean_first_result.unwrap()
+            clean_last = clean_last_result.unwrap()
 
             if not clean_first or not clean_last:
-                return FlextResult.fail("Invalid names provided")
+                return FlextResult[str].fail("Invalid names provided after cleaning")
 
             # Business rule: username = first initial + last name, lowercase
             username = f"{clean_first[0].lower()}{clean_last.lower()}"
 
-            # Slugify using FlextUtilities (removes invalid characters)
-            username = FlextUtilities.TextProcessor.slugify(username)
+            # Remove invalid characters and validate length
+            # Note: FlextUtilities.TextProcessor doesn't have slugify, use basic sanitization
+            username = re.sub(r"[^a-zA-Z0-9]", "", username)
 
             if (
                 len(username) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
-            ):  # MIN_USERNAME_LENGTH não existe, usar MIN_PASSWORD_LENGTH ou criar constante
-                return FlextResult.fail("Generated username too short")
+            ):  # MIN_USERNAME_LENGTH doesn't exist, use MIN_PASSWORD_LENGTH or create constant
+                return FlextResult[str].fail("Generated username too short")
 
-            return FlextResult.ok(username)
+            return FlextResult[str].ok(username)
 
     class GroupManagementService(FlextDomainService[FlextLdapModels.Group]):
         """Internal domain service for group management business logic."""
@@ -593,7 +609,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "User is already a member of this group",
                 )
 
-            return FlextResult.ok(True)
+            return FlextResult[bool].ok(True)
 
         def validate_group_creation(
             self,
@@ -721,7 +737,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
         def event_id(self) -> str:
             """Generate unique event identifier using FlextUtilities SOURCE OF TRUTH - ELIMINATE timestamp duplication."""
             # Use FlextUtilities instead of local timestamp logic - SOLID compliance
-            return FlextUtilities.Generators.generate_entity_id()
+            return FlextUtilities.Generators.generate_id()
 
         @field_validator("actor")
         @classmethod
@@ -842,13 +858,13 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return None
                 case str() as text if text.strip():
                     result = FlextUtilities.TextProcessor.clean_text(text)
-                    return result or None
+                    return result.unwrap() if result.is_success else None
                 case int() | float() | bool() as primitive:
                     result = FlextUtilities.TextProcessor.clean_text(str(primitive))
-                    return result or None
+                    return result.unwrap() if result.is_success else None
                 case _:
                     result = FlextUtilities.TextProcessor.clean_text(str(value))
-                    return result or None
+                    return result.unwrap() if result.is_success else None
 
         @staticmethod
         def safe_list(value: object, default: list[str] | None = None) -> list[str]:
@@ -921,7 +937,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         def _generate_entity_id(self) -> str:
             """Generate entity ID using FlextUtilities SOURCE OF TRUTH - ELIMINATE local duplication."""
-            return FlextUtilities.Generators.generate_entity_id()
+            return FlextUtilities.Generators.generate_id()
 
         def _extract_base_parameters(self, entity_id: str) -> FlextTypes.Core.Dict:
             """Extract parameters common to all entities."""
