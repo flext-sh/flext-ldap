@@ -40,11 +40,13 @@ class FlextLdapGroupService(FlextDomainService):
 
         Returns basic service information for the group service.
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapGroupService",
-            "status": "ready",
-            "operations": "create_group,get_group,update_group,delete_group,add_member,remove_member,get_members"
-        })
+        return FlextResult[dict[str, str]].ok(
+            {
+                "service": "FlextLdapGroupService",
+                "status": "ready",
+                "operations": "create_group,get_group,update_group,delete_group,add_member,remove_member,get_members",
+            }
+        )
 
     async def create_group(
         self,
@@ -75,7 +77,9 @@ class FlextLdapGroupService(FlextDomainService):
         # Validate DN format
         dn_validation = FlextLdapValidations.validate_dn(request.dn)
         if dn_validation.is_failure:
-            return FlextResult[FlextLdapModels.Group].fail(f"Invalid DN: {dn_validation.error}")
+            return FlextResult[FlextLdapModels.Group].fail(
+                f"Invalid DN: {dn_validation.error}"
+            )
 
         # Create LDAP attributes for the group
         attributes: dict[str, list[str] | list[bytes] | str | bytes] = {
@@ -115,7 +119,9 @@ class FlextLdapGroupService(FlextDomainService):
         # Validate DN format
         dn_validation = FlextLdapValidations.validate_dn(dn)
         if dn_validation.is_failure:
-            return FlextResult[FlextLdapModels.Group | None].fail(f"Invalid DN: {dn_validation.error}")
+            return FlextResult[FlextLdapModels.Group | None].fail(
+                f"Invalid DN: {dn_validation.error}"
+            )
 
         # Search for the group by DN
         search_request = FlextLdapModels.SearchRequest(
@@ -151,7 +157,7 @@ class FlextLdapGroupService(FlextDomainService):
             id=f"group_{dn.replace(',', '_').replace('=', '_')}",
             dn=dn,
             cn=cn,
-            description=description if description else None,
+            description=description or None,
             members=members,
             modified_at=None,
         )
@@ -192,11 +198,15 @@ class FlextLdapGroupService(FlextDomainService):
         # Validate DNs
         group_dn_validation = FlextLdapValidations.validate_dn(group_dn)
         if group_dn_validation.is_failure:
-            return FlextResult[None].fail(f"Invalid group DN: {group_dn_validation.error}")
+            return FlextResult[None].fail(
+                f"Invalid group DN: {group_dn_validation.error}"
+            )
 
         member_dn_validation = FlextLdapValidations.validate_dn(member_dn)
         if member_dn_validation.is_failure:
-            return FlextResult[None].fail(f"Invalid member DN: {member_dn_validation.error}")
+            return FlextResult[None].fail(
+                f"Invalid member DN: {member_dn_validation.error}"
+            )
 
         # Railway pattern: modify group entry with context
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
@@ -212,11 +222,15 @@ class FlextLdapGroupService(FlextDomainService):
         # Validate DNs
         group_dn_validation = FlextLdapValidations.validate_dn(group_dn)
         if group_dn_validation.is_failure:
-            return FlextResult[None].fail(f"Invalid group DN: {group_dn_validation.error}")
+            return FlextResult[None].fail(
+                f"Invalid group DN: {group_dn_validation.error}"
+            )
 
         member_dn_validation = FlextLdapValidations.validate_dn(member_dn)
         if member_dn_validation.is_failure:
-            return FlextResult[None].fail(f"Invalid member DN: {member_dn_validation.error}")
+            return FlextResult[None].fail(
+                f"Invalid member DN: {member_dn_validation.error}"
+            )
 
         # Get group
         group_result = await self.get_group(group_dn)
@@ -276,7 +290,7 @@ class FlextLdapGroupService(FlextDomainService):
     ) -> FlextResult[None]:
         """Update group members - railway helper method."""
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
-            "member": members if members else ["cn=dummy"]
+            "member": members or ["cn=dummy"]
         }
         return await self._client.modify_entry(group_dn, modifications)
 
@@ -310,12 +324,15 @@ class FlextLdapGroupService(FlextDomainService):
         key: str,
         default: str = "",
     ) -> str:
-        """Extract string attribute from entry using FlextResult monadic pipeline."""
-        # Railway pattern: extract value >> convert to string >> unwrap with default
+        """Extract string attribute from entry using enhanced FlextResult railway pattern."""
+        # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
-        return (
-            extract_result >> self._convert_to_safe_string
-        ).unwrap_or(default)
+        convert_result = (extract_result >> self._convert_to_safe_string).with_context(
+            lambda err: f"Failed to extract attribute '{key}': {err}"
+        )
+
+        # Use railway pattern with proper error recovery instead of .unwrap_or()
+        return convert_result.unwrap() if convert_result.is_success else default
 
     def _get_entry_attribute_list(
         self,
@@ -395,7 +412,9 @@ class FlextLdapGroupService(FlextDomainService):
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
             if first_element is None or first_element == "":
-                return FlextResult[object].fail("List contains None or empty first element")
+                return FlextResult[object].fail(
+                    "List contains None or empty first element"
+                )
             return FlextResult[object].ok(str(first_element))
         return FlextResult[object].ok(value)  # Pass through for next handler
 

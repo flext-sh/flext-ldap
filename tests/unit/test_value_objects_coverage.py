@@ -2,6 +2,9 @@
 
 This module provides surgical test coverage for specific uncovered lines
 in value_objects.py to achieve 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from flext_ldap.value_objects import FlextLdapValueObjects

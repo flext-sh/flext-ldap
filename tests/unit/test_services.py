@@ -1,4 +1,8 @@
-"""Test module for flext-ldap functionality."""
+"""Test module for flext-ldap functionality.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -778,10 +782,12 @@ class TestFlextLdapApiComprehensive:
 
         # Mock client search to return empty response
         mock_client = Mock()
-        mock_client.search_with_request = AsyncMock(return_value=FlextResult.ok(mock_response))
+        mock_client.search_with_request = AsyncMock(
+            return_value=FlextResult.ok(mock_response)
+        )
 
         with patch.object(service, "_client", mock_client):
-            result = await service.get_user("cn=nonexistent,dc=test")
+            await service.get_user("cn=nonexistent,dc=test")
 
             # Should succeed but return None since no entries found
             mock_client.search_with_request.assert_called_once()
@@ -797,17 +803,24 @@ class TestFlextLdapApiComprehensive:
         # Create mock search response with entries
         mock_entry = Mock()
         mock_entry.dn = "cn=test,dc=example,dc=com"
-        mock_entry.attributes = {"cn": ["Test User"], "uid": ["testuid"], "sn": ["User"], "mail": ["test@example.com"]}
+        mock_entry.attributes = {
+            "cn": ["Test User"],
+            "uid": ["testuid"],
+            "sn": ["User"],
+            "mail": ["test@example.com"],
+        }
 
         mock_response = Mock()
         mock_response.entries = [mock_entry]
 
         # Mock client search to return successful response
         mock_client = Mock()
-        mock_client.search_with_request = AsyncMock(return_value=FlextResult.ok(mock_response))
+        mock_client.search_with_request = AsyncMock(
+            return_value=FlextResult.ok(mock_response)
+        )
 
         with patch.object(service, "_client", mock_client):
-            result = await service.get_user("cn=test,dc=example,dc=com")
+            await service.get_user("cn=test,dc=example,dc=com")
 
             # Should succeed and return a User or handle connection errors gracefully
             mock_client.search_with_request.assert_called_once()
@@ -841,7 +854,7 @@ class TestFlextLdapApiComprehensive:
                 {
                     "cn": ["Updated User"],
                     "objectClass": ["person", "organizationalPerson"],
-                }
+                },
             )
 
     @pytest.mark.asyncio
@@ -851,7 +864,9 @@ class TestFlextLdapApiComprehensive:
 
         # Mock client with failing modify
         mock_client = Mock()
-        mock_client.modify_entry = AsyncMock(return_value=FlextResult[None].fail("Modify failed"))
+        mock_client.modify_entry = AsyncMock(
+            return_value=FlextResult[None].fail("Modify failed")
+        )
 
         with patch.object(service, "_client", mock_client):
             result = await service.update_user("cn=test,dc=test", {"cn": ["Test"]})
@@ -859,7 +874,9 @@ class TestFlextLdapApiComprehensive:
             # Should fail with modify error
             assert not result.is_success
             assert "Failed to update user" in result.error
-            mock_client.modify_entry.assert_called_once_with("cn=test,dc=test", {"cn": ["Test"]})
+            mock_client.modify_entry.assert_called_once_with(
+                "cn=test,dc=test", {"cn": ["Test"]}
+            )
 
     @pytest.mark.asyncio
     async def test_update_user_success(self) -> None:
@@ -876,4 +893,6 @@ class TestFlextLdapApiComprehensive:
             # Should succeed since modify_entry succeeded
             assert result.is_success
             assert result.data is None
-            mock_client.modify_entry.assert_called_once_with("cn=test,dc=test", {"cn": ["Test"]})
+            mock_client.modify_entry.assert_called_once_with(
+                "cn=test,dc=test", {"cn": ["Test"]}
+            )

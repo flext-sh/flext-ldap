@@ -4,6 +4,9 @@ This module provides unified Pydantic models for FLEXT-LDAP, following the FLEXT
 of having a single unified class per module that inherits from FlextModels.
 
 Contains only the actively used models from the FLEXT-LDAP project.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -170,6 +173,7 @@ class FlextLdapModels(FlextModels):
                     item.decode("utf-8") if isinstance(item, bytes) else str(item)
                     for item in attribute_value
                 ]
+            return None
             # All possible types are handled above based on AttributeDict type definition
             # MyPy correctly identifies that all cases are covered, so no fallback needed
 

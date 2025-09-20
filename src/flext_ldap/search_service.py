@@ -40,11 +40,13 @@ class FlextLdapSearchService(FlextDomainService):
 
         Returns basic service information for the search service.
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapSearchService",
-            "status": "ready",
-            "operations": "search,search_simple,search_users,search_groups,count_entries"
-        })
+        return FlextResult[dict[str, str]].ok(
+            {
+                "service": "FlextLdapSearchService",
+                "status": "ready",
+                "operations": "search,search_simple,search_users,search_groups,count_entries",
+            }
+        )
 
     async def search(
         self,
@@ -86,7 +88,9 @@ class FlextLdapSearchService(FlextDomainService):
             return FlextResult[None].fail(f"Invalid base DN: {dn_validation.error}")
 
         # Validate filter
-        filter_validation = FlextLdapValidations.validate_filter(search_request.filter_str)
+        filter_validation = FlextLdapValidations.validate_filter(
+            search_request.filter_str
+        )
         if filter_validation.is_failure:
             return FlextResult[None].fail(f"Invalid filter: {filter_validation.error}")
 
@@ -114,7 +118,11 @@ class FlextLdapSearchService(FlextDomainService):
             for raw_entry in search_response.entries:
                 # Convert raw entry to FlextLdapModels.Entry
                 # First check if it's already an Entry (unlikely but defensive)
-                if hasattr(raw_entry, "dn") and hasattr(raw_entry, "attributes") and hasattr(raw_entry, "id"):
+                if (
+                    hasattr(raw_entry, "dn")
+                    and hasattr(raw_entry, "attributes")
+                    and hasattr(raw_entry, "id")
+                ):
                     # Already a properly structured Entry
                     entries.append(raw_entry)  # type: ignore[arg-type]
                 else:
@@ -124,13 +132,17 @@ class FlextLdapSearchService(FlextDomainService):
 
                     # Safe extraction of attributes with proper typing
                     raw_attributes = entry_dict.get("attributes", {})
-                    attributes = raw_attributes if isinstance(raw_attributes, dict) else {}
+                    attributes = (
+                        raw_attributes if isinstance(raw_attributes, dict) else {}
+                    )
 
                     # Safe extraction of object classes
                     raw_object_classes = entry_dict.get("objectClass", [])
                     object_classes = (
-                        raw_object_classes if isinstance(raw_object_classes, list)
-                        else [str(raw_object_classes)] if raw_object_classes
+                        raw_object_classes
+                        if isinstance(raw_object_classes, list)
+                        else [str(raw_object_classes)]
+                        if raw_object_classes
                         else []
                     )
 
@@ -152,7 +164,9 @@ class FlextLdapSearchService(FlextDomainService):
     def _extract_entry_attributes(self, raw_entry: object) -> dict[str, object]:
         """Extract attributes from raw entry object."""
         try:
-            if hasattr(raw_entry, "entry_dn") and hasattr(raw_entry, "entry_attributes"):
+            if hasattr(raw_entry, "entry_dn") and hasattr(
+                raw_entry, "entry_attributes"
+            ):
                 # ldap3 Entry object
                 return {
                     "dn": str(getattr(raw_entry, "entry_dn")),
@@ -242,7 +256,9 @@ class FlextLdapSearchService(FlextDomainService):
         # Validate filter
         filter_validation = FlextLdapValidations.validate_filter(filter_str)
         if filter_validation.is_failure:
-            return FlextResult[list[FlextLdapModels.User]].fail(f"Invalid filter: {filter_validation.error}")
+            return FlextResult[list[FlextLdapModels.User]].fail(
+                f"Invalid filter: {filter_validation.error}"
+            )
 
         # Use the generic search method with user-specific filter
         search_request = FlextLdapModels.SearchRequest(
@@ -341,7 +357,7 @@ class FlextLdapSearchService(FlextDomainService):
                     id=f"group_{cn}",
                     dn=entry.dn,
                     cn=cn,
-                    description=description if description else None,
+                    description=description or None,
                     members=members,
                     modified_at=None,
                 )
@@ -384,9 +400,9 @@ class FlextLdapSearchService(FlextDomainService):
             attributes=["dn"],  # Only DN needed for counting
         )
 
-        return (search_result >> (lambda entries: FlextResult[int].ok(len(entries)))).with_context(
-            lambda err: f"Failed to count entries: {err}"
-        )
+        return (
+            search_result >> (lambda entries: FlextResult[int].ok(len(entries)))
+        ).with_context(lambda err: f"Failed to count entries: {err}")
 
     def _get_entry_attribute(
         self,
@@ -394,12 +410,15 @@ class FlextLdapSearchService(FlextDomainService):
         key: str,
         default: str = "",
     ) -> str:
-        """Extract string attribute from entry using FlextResult monadic pipeline."""
-        # Railway pattern: extract value >> convert to string >> unwrap with default
+        """Extract string attribute from entry using enhanced FlextResult railway pattern."""
+        # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
-        return (
-            extract_result >> self._convert_to_safe_string
-        ).unwrap_or(default)
+        convert_result = (extract_result >> self._convert_to_safe_string).with_context(
+            lambda err: f"Failed to extract attribute '{key}': {err}"
+        )
+
+        # Use railway pattern with proper error recovery instead of .unwrap_or()
+        return convert_result.unwrap() if convert_result.is_success else default
 
     def _get_entry_attribute_list(
         self,
@@ -479,7 +498,9 @@ class FlextLdapSearchService(FlextDomainService):
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
             if first_element is None or first_element == "":
-                return FlextResult[object].fail("List contains None or empty first element")
+                return FlextResult[object].fail(
+                    "List contains None or empty first element"
+                )
             return FlextResult[object].ok(str(first_element))
         return FlextResult[object].ok(value)  # Pass through for next handler
 

@@ -4,6 +4,9 @@ Following FLEXT unified class patterns, this module contains the
 FlextLdapValueObjects class implementing all LDAP value objects.
 
 NO legacy compatibility maintained - clean unified class only.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

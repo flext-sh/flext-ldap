@@ -579,7 +579,6 @@ class FlextLdapAdapters(FlextDomainService[object]):
                     if not isinstance(v, list)
                     else [str(item) for item in v]
                     for k, v in entry_attributes.items()
-                    if v is not None
                 }
 
                 # Type is now correct for the client interface
