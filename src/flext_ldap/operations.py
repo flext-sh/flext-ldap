@@ -79,18 +79,25 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
         def create_connection_and_bind(
             self, server_uri: str, bind_dn: str, bind_password: str
         ) -> FlextResult[str]:
-            """Create connection and bind with explicit error handling."""
-            if not server_uri or not server_uri.strip():
+            """Create connection and bind using FlextUtilities composition validation."""
+            # Use FlextUtilities for consistent validation patterns
+            # Validate server URI
+            server_validation = FlextUtilities.Validation.validate_string_not_empty(server_uri, "server_uri")
+            if server_validation.is_failure:
                 return FlextResult[str].fail("Server URI cannot be empty")
 
-            if not bind_dn or not bind_dn.strip():
+            # Validate bind DN
+            dn_validation = FlextUtilities.Validation.validate_string_not_empty(bind_dn, "bind_dn")
+            if dn_validation.is_failure:
                 return FlextResult[str].fail("Bind DN cannot be empty")
 
-            if not bind_password:
+            # Validate bind password
+            password_validation = FlextUtilities.Validation.validate_string_not_empty(bind_password, "bind_password")
+            if password_validation.is_failure:
                 return FlextResult[str].fail("Bind password cannot be empty")
 
             # Generate unique connection ID
-            connection_id = f"conn_{FlextUtilities.Generators.generate_uuid()}"
+            connection_id = f"conn_{FlextUtilities.Generators.generate_id()}"
 
             # Create connection metadata
             metadata = self.ConnectionMetadata(
@@ -171,14 +178,18 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
         def execute_search(
             self, base_dn: str, filter_str: str, scope: str = "subtree"
         ) -> FlextResult[list[dict[str, object]]]:
-            """Execute LDAP search with explicit error handling."""
-            # Validate parameters
-            if not base_dn or not base_dn.strip():
+            """Execute LDAP search using FlextUtilities composition validation."""
+            # Use FlextUtilities for consistent validation patterns
+            # Validate base DN
+            base_dn_validation = FlextUtilities.Validation.validate_string_not_empty(base_dn, "base_dn")
+            if base_dn_validation.is_failure:
                 return FlextResult[list[dict[str, object]]].fail(
                     "Base DN cannot be empty"
                 )
 
-            if not filter_str or not filter_str.strip():
+            # Validate filter string
+            filter_validation = FlextUtilities.Validation.validate_string_not_empty(filter_str, "filter_str")
+            if filter_validation.is_failure:
                 return FlextResult[list[dict[str, object]]].fail(
                     "Filter cannot be empty"
                 )
@@ -290,28 +301,31 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
             return FlextResult[None].ok(None)
 
     class _ValidationOperations:
-        """Validation operations - nested helper class."""
+        """Validation operations - nested helper using FlextUtilities composition."""
 
         def __init__(self, parent: FlextLDAPOperations) -> None:
             """Initialize validation operations with parent reference."""
             self._parent = parent
 
         def validate_ldap_uri(self, uri: str) -> FlextResult[str]:
-            """Validate LDAP URI format with explicit error handling."""
-            if not uri or not uri.strip():
+            """Validate LDAP URI format using FlextUtilities composition."""
+            # Use FlextUtilities for basic string validation
+            if not FlextUtilities.Validation.validate_string_not_empty(uri, "field").is_success:
                 return FlextResult[str].fail("URI cannot be empty")
 
+            # LDAP-specific validation
             if not uri.startswith(("ldap://", "ldaps://")):
                 return FlextResult[str].fail("URI must start with ldap:// or ldaps://")
 
             return FlextResult[str].ok("Valid LDAP URI")
 
         def validate_dn_string(self, dn: str) -> FlextResult[str]:
-            """Validate Distinguished Name string format with explicit error handling."""
-            if not dn or not dn.strip():
+            """Validate Distinguished Name string format using FlextUtilities composition."""
+            # Use FlextUtilities for basic string validation
+            if not FlextUtilities.Validation.validate_string_not_empty(dn, "field").is_success:
                 return FlextResult[str].fail("DN cannot be empty")
 
-            # Basic DN validation - should contain = and may contain commas
+            # LDAP DN-specific validation
             if "=" not in dn:
                 return FlextResult[str].fail(
                     "DN must contain attribute-value pairs (=)"
@@ -322,18 +336,20 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
         def validate_entry_attributes(
             self, attributes: dict[str, object]
         ) -> FlextResult[str]:
-            """Validate entry attributes dictionary with explicit error handling."""
-            if not attributes:
+            """Validate entry attributes dictionary using FlextUtilities composition."""
+            # Use basic validation for dictionary - FlextUtilities focused on strings
+            if not attributes or not isinstance(attributes, dict):
                 return FlextResult[str].fail("Attributes cannot be empty")
 
             return FlextResult[str].ok("Valid attributes")
 
         def validate_filter_string(self, filter_str: str) -> FlextResult[str]:
-            """Validate LDAP filter string format with explicit error handling."""
-            if not filter_str or not filter_str.strip():
+            """Validate LDAP filter string format using FlextUtilities composition."""
+            # Use FlextUtilities for basic string validation
+            if not FlextUtilities.Validation.validate_string_not_empty(filter_str, "field").is_success:
                 return FlextResult[str].fail("Filter cannot be empty")
 
-            # Basic filter validation - should contain parentheses
+            # LDAP filter-specific validation
             if not (filter_str.startswith("(") and filter_str.endswith(")")):
                 return FlextResult[str].fail("Filter must be enclosed in parentheses")
 
@@ -658,7 +674,7 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
 
     def generate_id(self) -> str:
         """Generate unique ID using FlextUtilities."""
-        return FlextUtilities.Generators.generate_uuid()
+        return FlextUtilities.Generators.generate_id()
 
 
 __all__ = [

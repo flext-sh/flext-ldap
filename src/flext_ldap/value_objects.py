@@ -24,6 +24,7 @@ class FlextLdapValueObjects(FlextModels):
         value: str
 
         def __post_init__(self) -> None:
+            """Validate Distinguished Name format and content."""
             if not self.value or not self.value.strip():
                 msg = "Distinguished Name cannot be empty"
                 raise ValueError(msg)
@@ -49,6 +50,7 @@ class FlextLdapValueObjects(FlextModels):
         expression: str
 
         def __post_init__(self) -> None:
+            """Validate LDAP filter syntax and format."""
             if not self.expression or not self.expression.strip():
                 msg = "LDAP filter cannot be empty"
                 raise ValueError(msg)
@@ -85,6 +87,7 @@ class FlextLdapValueObjects(FlextModels):
         SUBTREE: Final[str] = "subtree"
 
         def __post_init__(self) -> None:
+            """Validate LDAP search scope value."""
             valid_scopes = {self.BASE, self.ONELEVEL, self.SUBTREE}
             if self.value not in valid_scopes:
                 msg = f"Invalid scope: {self.value}. Must be one of {valid_scopes}"

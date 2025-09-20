@@ -171,9 +171,7 @@ class FlextLdapModels(FlextModels):
                     for item in attribute_value
                 ]
             # All possible types are handled above based on AttributeDict type definition
-            # This line should never be reached, but included for completeness
-            # Type checker doesn't understand that all cases are covered
-            return [str(attribute_value)]  # type: ignore[unreachable]
+            # MyPy correctly identifies that all cases are covered, so no fallback needed
 
     class User(BaseModel):
         """LDAP User Model - actively used in API."""
@@ -734,7 +732,12 @@ class FlextLdapModels(FlextModels):
                     raise ValueError(validation_result.error)
 
                 # Clean text using FlextUtilities (keep this as it's domain-specific)
-                clean_value = FlextUtilities.TextProcessor.clean_text(value)
+                clean_result = FlextUtilities.TextProcessor.clean_text(value)
+                if clean_result.is_failure:
+                    error_msg = "LDAP filter cannot be empty after cleaning"
+                    raise ValueError(error_msg)
+
+                clean_value = clean_result.unwrap()
                 if not clean_value:
                     error_msg = "LDAP filter cannot be empty after cleaning"
                     raise ValueError(error_msg)
