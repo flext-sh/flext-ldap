@@ -518,22 +518,30 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 first_name, "first_name"
             )
             if first_validation.is_failure:
-                return FlextResult[str].fail(f"First name validation failed: {first_validation.error}")
+                return FlextResult[str].fail(
+                    f"First name validation failed: {first_validation.error}"
+                )
 
             last_validation = FlextUtilities.Validation.validate_string_not_empty(
                 last_name, "last_name"
             )
             if last_validation.is_failure:
-                return FlextResult[str].fail(f"Last name validation failed: {last_validation.error}")
+                return FlextResult[str].fail(
+                    f"Last name validation failed: {last_validation.error}"
+                )
 
             # Clean text using FlextUtilities.TextProcessor
             clean_first_result = FlextUtilities.TextProcessor.clean_text(first_name)
             clean_last_result = FlextUtilities.TextProcessor.clean_text(last_name)
 
             if clean_first_result.is_failure:
-                return FlextResult[str].fail(f"First name cleaning failed: {clean_first_result.error}")
+                return FlextResult[str].fail(
+                    f"First name cleaning failed: {clean_first_result.error}"
+                )
             if clean_last_result.is_failure:
-                return FlextResult[str].fail(f"Last name cleaning failed: {clean_last_result.error}")
+                return FlextResult[str].fail(
+                    f"Last name cleaning failed: {clean_last_result.error}"
+                )
 
             clean_first = clean_first_result.unwrap()
             clean_last = clean_last_result.unwrap()

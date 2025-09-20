@@ -1,4 +1,8 @@
-"""Test module for flext-ldap functionality."""
+"""Test module for flext-ldap functionality.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -917,7 +921,10 @@ class TestLDAPEntryProcessing:
 
         # Test with minimal attributes
         minimal_entry = MockLDAPEntryImpl(
-            {"cn": ["Minimal User"], "objectClass": ["person"]}
+            {
+                "cn": ["Minimal User"],
+                "objectClass": ["person"],
+            }
         )
 
         # Test actual available method - extract_user_attribute (expects dict, not SimpleNamespace)
@@ -951,7 +958,10 @@ class TestLDAPEntryProcessing:
 
         # Test with simple group
         simple_group = MockLDAPEntryImpl(
-            {"cn": ["Simple Group"], "objectClass": ["group"]}
+            {
+                "cn": ["Simple Group"],
+                "objectClass": ["group"],
+            }
         )
 
         # Test actual available method - process_group_data

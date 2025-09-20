@@ -42,11 +42,13 @@ class FlextLdapConnectionService(FlextDomainService):
 
         Returns basic service information for the connection service.
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapConnectionService",
-            "status": "ready",
-            "operations": "connect,disconnect,test_connection,reconnect,validate_server_uri,get_connection_info,is_connected"
-        })
+        return FlextResult[dict[str, str]].ok(
+            {
+                "service": "FlextLdapConnectionService",
+                "status": "ready",
+                "operations": "connect,disconnect,test_connection,reconnect,validate_server_uri,get_connection_info,is_connected",
+            }
+        )
 
     @property
     def session_id(self) -> str:
@@ -120,8 +122,7 @@ class FlextLdapConnectionService(FlextDomainService):
         """Perform actual LDAP connection through client."""
         try:
             # Use client to establish connection
-            bind_result = await self._client.connect(server_uri, bind_dn, bind_password)
-            return bind_result
+            return await self._client.connect(server_uri, bind_dn, bind_password)
         except Exception as e:
             return FlextResult[None].fail(f"LDAP connection failed: {e}")
 
@@ -241,7 +242,9 @@ class FlextLdapConnectionService(FlextDomainService):
                 try:
                     port = int(parts[1].split("/")[0])
                     if port < 1 or port > 65535:
-                        return FlextResult[None].fail("Port must be between 1 and 65535")
+                        return FlextResult[None].fail(
+                            "Port must be between 1 and 65535"
+                        )
                 except ValueError:
                     return FlextResult[None].fail("Invalid port number")
 
@@ -261,13 +264,17 @@ class FlextLdapConnectionService(FlextDomainService):
             # Return basic info since client doesn't provide detailed connection info method
             basic_info = {
                 "session_id": self.session_id,
-                "status": "connected" if hasattr(self._client, "_connection") else "disconnected",
+                "status": "connected"
+                if hasattr(self._client, "_connection")
+                else "disconnected",
                 "client_type": type(self._client).__name__,
             }
             return FlextResult[dict[str, str]].ok(basic_info)
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(f"Failed to get connection info: {e}")
+            return FlextResult[dict[str, str]].fail(
+                f"Failed to get connection info: {e}"
+            )
 
     def is_connected(self) -> FlextResult[bool]:
         """Check if currently connected to LDAP server.
@@ -322,6 +329,4 @@ class FlextLdapConnectionService(FlextDomainService):
 
         # Connect
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
-        return connect_result.with_context(
-            lambda err: f"Reconnection failed: {err}"
-        )
+        return connect_result.with_context(lambda err: f"Reconnection failed: {err}")

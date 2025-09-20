@@ -8,6 +8,9 @@ This example demonstrates COMPLETE LDAP functionality using flext-ldap:
 - DELETE operations
 
 Uses current flext-ldap API without legacy patterns or direct ldap3 usage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import asyncio

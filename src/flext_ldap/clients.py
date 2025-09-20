@@ -767,7 +767,9 @@ class FlextLdapClient(
                 "host",
                 FlextLdapConstants.Protocol.DEFAULT_SERVER_URI.split("://")[1],
             )
-            port = getattr(self._server, "port", FlextLdapConstants.Protocol.DEFAULT_PORT)
+            port = getattr(
+                self._server, "port", FlextLdapConstants.Protocol.DEFAULT_PORT
+            )
             return f"{scheme}://{host}:{port}"
         except Exception:
             return "Connection string unavailable"

@@ -101,10 +101,15 @@ class FlextLdapApi(FlextMixins.Loggable):
         key: str,
         default: str = "",
     ) -> str:
-        """Extract string attribute from entry using FlextResult monadic pipeline."""
-        # Railway pattern: extract value >> convert to string >> unwrap with default
+        """Extract string attribute from entry using enhanced FlextResult railway pattern."""
+        # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
-        return (extract_result >> self._convert_to_safe_string).unwrap_or(default)
+        convert_result = (extract_result >> self._convert_to_safe_string).with_context(
+            lambda err: f"Failed to extract attribute '{key}': {err}"
+        )
+
+        # Use railway pattern with proper error recovery instead of .unwrap_or()
+        return convert_result.unwrap() if convert_result.is_success else default
 
     def _extract_entry_value(
         self, entry: FlextTypes.Core.Dict | FlextLdapModels.Entry, key: str
@@ -931,7 +936,9 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         return FlextResult[None].ok(None)
 
-    def _prepare_delete_method(self, repository: object) -> FlextResult[Callable[[str], Awaitable[FlextResult[None]]]]:
+    def _prepare_delete_method(
+        self, repository: object
+    ) -> FlextResult[Callable[[str], Awaitable[FlextResult[None]]]]:
         """Prepare delete method from repository - railway helper method."""
         typed_repository = cast("FlextLdapRepositories", repository)
         delete_method = getattr(typed_repository, "_delete_async", None)
@@ -939,7 +946,9 @@ class FlextLdapApi(FlextMixins.Loggable):
             return FlextResult[Callable[[str], Awaitable[FlextResult[None]]]].fail(
                 "Repository does not support _delete_async method"
             )
-        return FlextResult[Callable[[str], Awaitable[FlextResult[None]]]].ok(delete_method)
+        return FlextResult[Callable[[str], Awaitable[FlextResult[None]]]].ok(
+            delete_method
+        )
 
     async def _execute_delete(
         self, delete_method: Callable[[str], Awaitable[FlextResult[None]]], dn: str
@@ -948,9 +957,7 @@ class FlextLdapApi(FlextMixins.Loggable):
         try:
             result = await delete_method(dn)
             # Type annotation guarantees result is FlextResult[None]
-            return result.with_context(
-                lambda err: f"Delete operation failed: {err}"
-            )
+            return result.with_context(lambda err: f"Delete operation failed: {err}")
         except Exception as e:
             return FlextResult[None].fail(
                 f"Delete operation failed with exception: {e}"
@@ -1178,29 +1185,45 @@ class FlextLdapApi(FlextMixins.Loggable):
                 dict,
             ):
                 return FlextResult[object].ok(
-                    {"status": "user_create_processed", "data": user_data}
+                    {
+                        "status": "user_create_processed",
+                        "data": user_data,
+                    }
                 )
             case {"operation": "user_read", "dn": dn} if isinstance(dn, str):
                 return FlextResult[object].ok(
-                    {"status": "user_read_processed", "dn": dn}
+                    {
+                        "status": "user_read_processed",
+                        "dn": dn,
+                    }
                 )
             case {"operation": "group_create", "data": group_data} if isinstance(
                 group_data,
                 dict,
             ):
                 return FlextResult[object].ok(
-                    {"status": "group_create_processed", "data": group_data}
+                    {
+                        "status": "group_create_processed",
+                        "data": group_data,
+                    }
                 )
             case {"operation": "search", "params": search_params} if isinstance(
                 search_params,
                 dict,
             ):
                 return FlextResult[object].ok(
-                    {"status": "search_processed", "params": search_params}
+                    {
+                        "status": "search_processed",
+                        "params": search_params,
+                    }
                 )
             case {"operation": "validate", "target": str(target), "value": value}:
                 return FlextResult[object].ok(
-                    {"status": "validate_processed", "target": target, "value": value}
+                    {
+                        "status": "validate_processed",
+                        "target": target,
+                        "value": value,
+                    }
                 )
             case _:
                 return FlextResult[object].ok(request)
