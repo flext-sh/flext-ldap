@@ -9,75 +9,87 @@ from __future__ import annotations
 import os
 from typing import Final, final
 
-from ldap3 import LEVEL
-
 from flext_core import FlextConstants
 
 
 @final
-class FlextLdapConstants(FlextConstants):
-    """LDAP Constants using SOURCE OF TRUTH pattern - FlextConstants.LDAP exclusively."""
+class FlextLdapConstants:
+    """LDAP domain-specific constants only - universal constants imported from flext-core."""
 
-    # LDAP constants - defined directly since FlextConstants.LDAP doesn't exist
-    class LDAP:
-        """Standard LDAP constants."""
+    # Import universal constants from flext-core (single source of truth)
 
-        # Standard LDAP ports
-        DEFAULT_PORT = 389
-        DEFAULT_SSL_PORT = 636
-        MAX_PORT = 65535
-
-        # Standard LDAP timeouts
-        DEFAULT_TIMEOUT = 30
-
-        # Standard LDAP protocols
-        PROTOCOL_LDAP = "ldap"
-        PROTOCOL_LDAPS = "ldaps"
-
-        # Standard LDAP protocol prefixes for validation
-        PROTOCOL_PREFIX_LDAP = "ldap://"
-        PROTOCOL_PREFIX_LDAPS = "ldaps://"
-
-        # Standard LDAP URIs - SINGLE SOURCE OF TRUTH
-        DEFAULT_SERVER_URI = "ldap://localhost"
-        DEFAULT_SSL_SERVER_URI = "ldaps://localhost"
-        DEFAULT_TEST_SERVER_URI = "ldap://localhost"
-
-        # Standard LDAP pool settings
-        DEFAULT_POOL_SIZE = 5
-        DEFAULT_TEST_PORT = 3389
-
-        # Standard LDAP scopes
-        SCOPE_BASE = "base"
-        SCOPE_ONELEVEL = "onelevel"
-        SCOPE_SUBTREE = "subtree"
-
-        # Standard LDAP object classes
-        OBJECT_CLASS_PERSON = "person"
-        OBJECT_CLASS_ORGANIZATIONAL_PERSON = "organizationalPerson"
-        OBJECT_CLASS_INET_ORG_PERSON = "inetOrgPerson"
-        OBJECT_CLASS_GROUP = "group"
-        OBJECT_CLASS_GROUP_OF_NAMES = "groupOfNames"
-        OBJECT_CLASS_GROUP_OF_UNIQUE_NAMES = "groupOfUniqueNames"
-
-        # Standard LDAP attributes
-        ATTR_CN = "cn"
-        ATTR_SN = "sn"
-        ATTR_GIVEN_NAME = "givenName"
-        ATTR_MAIL = "mail"
-        ATTR_UID = "uid"
-        ATTR_USER_PASSWORD = "userPassword"  # nosec B105 - LDAP attribute name, not password
-        ATTR_OBJECT_CLASS = "objectClass"
-        ATTR_DISTINGUISHED_NAME = "distinguishedName"
+    # Use universal constants instead of duplicating
+    DEFAULT_TIMEOUT = FlextConstants.Network.DEFAULT_TIMEOUT  # Use from flext-core
+    VALIDATION_ERROR_BASE = (
+        FlextConstants.Errors.VALIDATION_ERROR
+    )  # Base error for extensions
 
     # =========================================================================
-    # LDAP-SPECIFIC EXTENSIONS - Only what FlextConstants.LDAP doesn't provide
+    # LDAP-SPECIFIC CONSTANTS ONLY - No universal duplications
     # =========================================================================
+
+    class Protocol:
+        """LDAP protocol-specific constants."""
+
+        # LDAP ports
+        DEFAULT_PORT: Final[int] = 389
+        DEFAULT_SSL_PORT: Final[int] = 636
+        MAX_PORT: Final[int] = 65535
+
+        # LDAP protocols
+        LDAP: Final[str] = "ldap"
+        LDAPS: Final[str] = "ldaps"
+
+        # LDAP protocol prefixes
+        PROTOCOL_PREFIX_LDAP: Final[str] = "ldap://"
+        PROTOCOL_PREFIX_LDAPS: Final[str] = "ldaps://"
+
+        # LDAP URIs
+        DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
+        DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
+
+        # LDAP pool settings
+        DEFAULT_POOL_SIZE: Final[int] = 5
+        DEFAULT_TEST_PORT: Final[int] = 3389
+
+        # LDAP timeouts
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+
+    class Connection:
+        """LDAP connection-specific constants."""
+
+        # LDAP connection limits
+        MAX_SIZE_LIMIT: Final[int] = 1000
+        DEFAULT_PAGE_SIZE: Final[int] = 100
+
+    class Scopes:
+        """LDAP search scope constants."""
+
+        BASE: Final[str] = "base"
+        ONELEVEL: Final[str] = "onelevel"
+        SUBTREE: Final[str] = "subtree"
+        CHILDREN: Final[str] = "children"
+
+        # Legacy aliases for compatibility
+        ONE: Final[str] = ONELEVEL
+        SUB: Final[str] = SUBTREE
+
+        VALID_SCOPES: Final[set[str]] = {BASE, ONELEVEL, SUBTREE, CHILDREN}
+
+        # Scope mapping for legacy code
+        SCOPE_MAP: Final[dict[str, str]] = {
+            "base": BASE,
+            "onelevel": ONELEVEL,
+            "one": ONELEVEL,
+            "subtree": SUBTREE,
+            "sub": SUBTREE,
+            "children": CHILDREN,
+        }
 
     class Attributes:
-        """Standard LDAP attribute names - only non-standard extensions."""
+        """Standard LDAP attribute names."""
 
-        # Core Attributes (use SOURCE OF TRUTH patterns)
+        # Core Attributes
         OBJECT_CLASS: Final[str] = "objectClass"
         COMMON_NAME: Final[str] = "cn"
         SURNAME: Final[str] = "sn"
@@ -86,7 +98,7 @@ class FlextLdapConstants(FlextConstants):
         DESCRIPTION: Final[str] = "description"
         USER_ID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
-        USER_PASSWORD: Final[str] = "userPassword"  # nosec B105 - LDAP attribute name, not password
+        USER_PASSWORD: Final[str] = "userPassword"  # nosec B105 - LDAP attribute name
 
         # Group Attributes
         MEMBER: Final[str] = "member"
@@ -127,10 +139,33 @@ class FlextLdapConstants(FlextConstants):
         PERSON: Final[str] = "person"
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
 
-    class ValidationMessages:
-        """Validation and error message constants."""
+    class Validation:
+        """LDAP-specific validation constants."""
 
+        # LDAP DN validation
+        MIN_DN_PARTS: Final[int] = 2
+        MIN_DN_LENGTH: Final[int] = 3
+        MAX_DN_LENGTH: Final[int] = 2048
+        DN_PATTERN: Final[str] = (
+            r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
+        )
+
+        # LDAP filter validation
+        MIN_FILTER_LENGTH: Final[int] = 1
+        MAX_FILTER_LENGTH: Final[int] = 8192
+        FILTER_PATTERN: Final[str] = r"^\(.+\)$"
+
+        # LDAP password validation
+        MIN_PASSWORD_LENGTH: Final[int] = 8
+        MAX_PASSWORD_LENGTH: Final[int] = 128
+        REQUIRE_PASSWORD_COMPLEXITY: Final[bool] = True
+
+    class Messages:
+        """LDAP-specific error and validation messages."""
+
+        # LDAP validation messages
         HOST_CANNOT_BE_EMPTY: Final[str] = "Host cannot be empty"
         CONNECTION_FAILED: Final[str] = "Connection failed"
         FIELD_CANNOT_BE_EMPTY: Final[str] = "{0} cannot be empty"
@@ -139,109 +174,42 @@ class FlextLdapConstants(FlextConstants):
         CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed: {0}"
         OPERATION_FAILED: Final[str] = "Operation {0} failed"
 
-    class Operations:
-        """Operation status and logging message constants."""
+        # LDAP error messages following FLEXT standards
+        INVALID_EMAIL_FORMAT: Final[str] = "Invalid email format"
+        EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
+        DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 
-        CONNECTION_OPERATION: Final[str] = "connection"
-        LDAP_CODE_CONTEXT: Final[str] = "LDAP Code: {ldap_code}"
-        OPERATION_CONTEXT: Final[str] = "Operation: {operation}"
+    class Errors:
+        """LDAP-specific error codes - extend universal error codes."""
 
-    class DefaultValues:
-        """Default values - minimal LDAP-specific only."""
+        # Base universal error from flext-core
+        VALIDATION_ERROR: Final[str] = f"LDAP_{FlextConstants.Errors.VALIDATION_ERROR}"
+        CONNECTION_ERROR: Final[str] = f"LDAP_{FlextConstants.Errors.CONNECTION_ERROR}"
+
+        # LDAP-specific errors
+        LDAP_BIND_ERROR: Final[str] = "LDAP_BIND_ERROR"
+        LDAP_SEARCH_ERROR: Final[str] = "LDAP_SEARCH_ERROR"
+        LDAP_ADD_ERROR: Final[str] = "LDAP_ADD_ERROR"
+        LDAP_MODIFY_ERROR: Final[str] = "LDAP_MODIFY_ERROR"
+        LDAP_DELETE_ERROR: Final[str] = "LDAP_DELETE_ERROR"
+        LDAP_INVALID_DN: Final[str] = "LDAP_INVALID_DN"
+        LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
+
+    class Defaults:
+        """LDAP-specific default values."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
         DEFAULT_SEARCH_BASE: Final[str] = ""
         DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
         DEFAULT_SERVICE_VERSION: Final[str] = "1.0.0"
+        MAX_SEARCH_ENTRIES: Final[int] = 1000
 
-        # Field type constants
-        STRING_FIELD_TYPE: Final[str] = "string"
-        INTEGER_FIELD_TYPE: Final[str] = "integer"
-        BOOLEAN_FIELD_TYPE: Final[str] = "boolean"
-        BINARY_FIELD_TYPE: Final[str] = "binary"
-        DATETIME_FIELD_TYPE: Final[str] = "datetime"
-        DN_FIELD_TYPE: Final[str] = "dn"
-        EMAIL_FIELD_TYPE: Final[str] = "email"
-        PHONE_FIELD_TYPE: Final[str] = "phone"
-        UUID_FIELD_TYPE: Final[str] = "uuid"
-        URL_FIELD_TYPE: Final[str] = "url"
-        IP_ADDRESS_FIELD_TYPE: Final[str] = "ip_address"
-        MAC_ADDRESS_FIELD_TYPE: Final[str] = "mac_address"
-        CERTIFICATE_FIELD_TYPE: Final[str] = "certificate"
-
-        # LDAP domain-specific constants
+        # Valid LDAP user for testing
         VALID_LDAP_USER_NAME: Final[str] = "testuser"
         VALID_LDAP_USER_DESCRIPTION: Final[str] = "Test LDAP User"
 
-    class Scopes:
-        """LDAP search scope constants - string representation for LDAP protocol."""
-
-        BASE: Final[str] = "base"
-        ONE: Final[str] = "onelevel"
-        SUB: Final[str] = "subtree"
-        SUBTREE: Final[str] = "subtree"
-        CHILDREN: Final[str] = "children"
-
-        # Valid scopes set for validation
-        VALID_SCOPES: Final[set[str]] = {
-            BASE,
-            "one",
-            ONE,
-            "sub",
-            SUB,
-            SUBTREE,
-            CHILDREN,
-        }
-
-        # Mapping from flext-core integer scopes to string scopes
-        SCOPE_INT_TO_STRING: Final[dict[str, str]] = {
-            "base": BASE,
-            "one": ONE,
-            "sub": SUB,
-        }
-
-        # SCOPE_MAP - moved from clients.py to unified constants
-        SCOPE_MAP: Final[dict[str, str]] = {
-            "base": BASE,
-            "ldap3.BASE": BASE,
-            "one": LEVEL,
-            "onelevel": LEVEL,
-            "sub": SUBTREE,
-            "subtree": SUBTREE,
-            "subordinates": SUBTREE,
-        }
-
-    class Connection:
-        """LDAP connection constants."""
-
-        MAX_SIZE_LIMIT: Final[int] = 1000
-
-    class Protocol:
-        """LDAP protocol constants."""
-
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-        MAX_SEARCH_ENTRIES: Final[int] = 1000
-
-    class LdapValidation:
-        """LDAP validation constants for value objects."""
-
-        MIN_DN_PARTS: Final[int] = 2
-        MIN_DN_LENGTH: Final[int] = 3
-        MAX_DN_LENGTH: Final[int] = 2048
-        MIN_FILTER_LENGTH: Final[int] = 1
-        MAX_FILTER_LENGTH_VALUE_OBJECTS: Final[int] = 4096
-        DN_PATTERN: Final[str] = (
-            r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
-        )
-        FILTER_PATTERN: Final[str] = r"^\(.+\)$"
-        # EMAIL_PATTERN removed - use FlextModels.EmailAddress instead
-        MAX_FILTER_LENGTH: Final[int] = 8192
-        MIN_PASSWORD_LENGTH: Final[int] = 8
-        MAX_PASSWORD_LENGTH: Final[int] = 128
-        REQUIRE_PASSWORD_COMPLEXITY: Final[bool] = True
-
     class FeatureFlags:
-        """Feature toggles for progressive rollout."""
+        """LDAP-specific feature toggles."""
 
         @staticmethod
         def _env_enabled(flag_name: str, default: str = "0") -> bool:
@@ -252,14 +220,6 @@ class FlextLdapConstants(FlextConstants):
         def dispatcher_enabled(cls) -> bool:
             """Return True when dispatcher integration should be used."""
             return cls._env_enabled("FLEXT_LDAP_ENABLE_DISPATCHER")
-
-    class ErrorMessages:
-        """Error message constants following TRY003 and EM101/EM102 rules."""
-
-        INVALID_EMAIL_FORMAT = "Invalid email format"
-        EMAIL_VALIDATION_FAILED = "Invalid email format: {error}"
-        DN_CANNOT_BE_EMPTY = "DN cannot be empty"
-        INVALID_DN_FORMAT = "Invalid DN format"
 
 
 __all__ = [

@@ -28,7 +28,7 @@ class FlextLdapTypeGuards:
 
         # Check for basic DN format: attr=value
         parts = value.split("=")
-        if len(parts) < FlextLdapConstants.LdapValidation.MIN_DN_PARTS:
+        if len(parts) < FlextLdapConstants.Validation.MIN_DN_PARTS:
             return False
 
         # Must have non-empty attribute name and value

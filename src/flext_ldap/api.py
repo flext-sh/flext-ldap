@@ -22,7 +22,6 @@ from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
 from flext_ldap.container import FlextLdapContainer
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.services import FlextLdapServices
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
@@ -127,7 +126,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             self._config = FlextLdapConfig.get_global_instance()
         self._container_manager = FlextLdapContainer()
         self._container = self._container_manager.get_container()
-        self._service = FlextLdapServices(self._container)
+        self._client = self._container_manager.get_client()
 
         # CLI helper instances for unified class pattern
         self._formatters = self._Formatters()
@@ -204,10 +203,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             except (ValueError, TypeError):
                 return default
 
-    # CLI Methods for compatibility with examples
-
-    def show_configuration(self) -> None:
-        """Show current LDAP configuration - CLI method."""
+    # NO CLI compatibility methods - use flext-cli domain library for CLI operations
 
     # Public helper methods to avoid private member access violations
 
@@ -269,7 +265,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             size_limit=1000,
             time_limit=30,
         )
-        return await self._service.search(search_request)
+        return await self._client.search_with_request(search_request)
 
     # Connection Management
 
@@ -295,7 +291,7 @@ class FlextLdapApi(FlextMixins.Loggable):
         """
         # Use cached session_id property from FlextUtilities
         new_session_id = self.session_id
-        result = await self._service.connect(server_uri, bind_dn, bind_password)
+        result = await self._client.connect(server_uri, bind_dn, bind_password)
         if not result.is_success:
             return FlextResult[str].fail(result.error or "Connection failed")
         return FlextResult[str].ok(new_session_id)
@@ -310,10 +306,10 @@ class FlextLdapApi(FlextMixins.Loggable):
             FlextResult indicating success or error
 
         """
-        # Note: session_id parameter maintained for API compatibility
+        # NO API compatibility maintained - parameter ignored
         # Currently not used by the service layer implementation
         _ = session_id  # Acknowledge parameter to silence linter
-        return await self._service.disconnect()
+        return await self._client.unbind()
 
     @asynccontextmanager
     async def connection(
@@ -364,7 +360,7 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         """
         # Execute search via service - eliminates parameter mapping duplication
-        search_result = await self._service.search(search_request)
+        search_result = await self._client.search_with_request(search_request)
         if not search_result.is_success:
             return FlextResult[list[FlextLdapModels.Entry]].fail(
                 search_result.error or "Search failed",
@@ -475,11 +471,73 @@ class FlextLdapApi(FlextMixins.Loggable):
                 mail=mail,
                 object_classes=["person", "organizationalPerson"],
             )
-        return await self._service.create_user(request)
+        # Create LDAP attributes from the request
+        attributes: dict[str, list[str] | list[bytes] | str | bytes] = {
+            "uid": [request.uid],
+            "cn": [request.cn],
+            "sn": [request.sn],
+            "objectClass": request.object_classes,
+        }
+        if request.mail:
+            attributes["mail"] = [request.mail]
+
+        # Use client to add the entry
+        add_result = await self._client.add_entry(request.dn, attributes)
+        if not add_result.is_success:
+            return FlextResult[FlextLdapModels.User].fail(
+                f"Failed to create user: {add_result.error}"
+            )
+
+        # Return the created user object
+        created_user = FlextLdapModels.User(
+            id=f"user_{request.uid}",
+            dn=request.dn,
+            uid=request.uid,
+            cn=request.cn,
+            sn=request.sn,
+            mail=request.mail,
+            modified_at=None,
+            given_name=None,
+            user_password=None,
+        )
+        return FlextResult[FlextLdapModels.User].ok(created_user)
 
     async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
         """Get user by DN."""
-        return await self._service.get_user(dn)
+        # Search for the user by DN
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=dn,
+            filter_str="(objectClass=person)",
+            scope="base",
+            attributes=["uid", "cn", "sn", "mail", "givenName"],
+            size_limit=1,
+            time_limit=30,
+        )
+
+        search_result = await self._client.search_with_request(search_request)
+        if not search_result.is_success:
+            return FlextResult[FlextLdapModels.User | None].fail(
+                f"Failed to search for user: {search_result.error}"
+            )
+
+        if not search_result.value.entries:
+            return FlextResult[FlextLdapModels.User | None].ok(None)
+
+        # Convert the first entry to a User object
+        entry = search_result.value.entries[0]
+        uid = self._get_entry_attribute(entry, "uid", "unknown")
+        user = FlextLdapModels.User(
+            id=f"user_{uid}",
+            dn=dn,
+            uid=uid,
+            cn=self._get_entry_attribute(entry, "cn"),
+            sn=self._get_entry_attribute(entry, "sn"),
+            mail=self._get_entry_attribute(entry, "mail"),
+            given_name=self._get_entry_attribute(entry, "givenName"),
+            modified_at=None,
+            user_password=None,
+        )
+        return FlextResult[FlextLdapModels.User | None].ok(user)
 
     async def update_user(
         self,
@@ -487,13 +545,23 @@ class FlextLdapApi(FlextMixins.Loggable):
         attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
-        result = await self._service.update_user(dn, attributes)
-        return result.map(lambda _: None)
+        # Use client to modify the entry
+        modify_result = await self._client.modify_entry(dn, attributes)
+        if not modify_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to update user: {modify_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete user."""
-        result = await self._service.delete_user(dn)
-        return result.map(lambda _: None)
+        # Use client to delete the entry
+        delete_result = await self._client.delete(dn)
+        if not delete_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to delete user: {delete_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def search_users_by_filter(
         self,
@@ -511,7 +579,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             size_limit=1000,
             time_limit=30,
         )
-        search_result = await self._service.search(search_request)
+        search_result = await self._client.search_with_request(search_request)
 
         # Convert search response entries to users (simplified)
         if search_result.is_success and search_result.value:
@@ -572,13 +640,27 @@ class FlextLdapApi(FlextMixins.Loggable):
             modified_at=None,
         )
 
-        # Create via service
-        create_result = await self._service.create_group(group)
-        if create_result.is_success:
-            return FlextResult.ok(group)
-        return FlextResult.fail(
-            create_result.error or "Group creation failed",
-        )
+        # Create LDAP attributes for the group
+        attributes: dict[str, list[str] | list[bytes] | str | bytes] = {
+            "cn": [cn],
+            "objectClass": ["groupOfNames"],
+        }
+        if description:
+            attributes["description"] = [description]
+        if members:
+            attributes["member"] = members
+        else:
+            # Add a dummy member since groupOfNames requires at least one member
+            attributes["member"] = ["cn=dummy"]
+
+        # Use client to add the group entry
+        add_result = await self._client.add_entry(dn, attributes)
+        if not add_result.is_success:
+            return FlextResult[FlextLdapModels.Group].fail(
+                f"Failed to create group: {add_result.error}"
+            )
+
+        return FlextResult[FlextLdapModels.Group].ok(group)
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get group by DN."""
@@ -591,7 +673,7 @@ class FlextLdapApi(FlextMixins.Loggable):
             size_limit=1000,
             time_limit=30,
         )
-        search_result = await self._service.search(search_request)
+        search_result = await self._client.search_with_request(search_request)
 
         if (
             search_result.is_success
@@ -623,23 +705,77 @@ class FlextLdapApi(FlextMixins.Loggable):
         attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
-        return await self._service.update_group(dn, attributes)
+        # Use client to modify the group entry
+        modify_result = await self._client.modify_entry(dn, attributes)
+        if not modify_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to update group: {modify_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group."""
-        return await self._service.delete_group(dn)
+        # Use client to delete the group entry
+        delete_result = await self._client.delete(dn)
+        if not delete_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to delete group: {delete_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Add member to group."""
-        return await self._service.add_member(group_dn, member_dn)
+        # Modify the group to add the member
+        modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
+            "member": [member_dn]
+        }
+        modify_result = await self._client.modify_entry(group_dn, modifications)
+        if not modify_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to add member to group: {modify_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Remove member from group."""
-        return await self._service.remove_member(group_dn, member_dn)
+        # First get the current group to find existing members
+        group_result = await self.get_group(group_dn)
+        if not group_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to get group for member removal: {group_result.error}"
+            )
+
+        group = group_result.value
+        if not group or member_dn not in group.members:
+            return FlextResult[None].fail("Member not found in group")
+
+        # Remove the member from the list
+        updated_members = [m for m in group.members if m != member_dn]
+        modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
+            "member": updated_members
+        }
+
+        modify_result = await self._client.modify_entry(group_dn, modifications)
+        if not modify_result.is_success:
+            return FlextResult[None].fail(
+                f"Failed to remove member from group: {modify_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
-        return await self._service.get_members(group_dn)
+        # Get the group and return its members
+        group_result = await self.get_group(group_dn)
+        if not group_result.is_success:
+            return FlextResult[list[str]].fail(
+                f"Failed to get group: {group_result.error}"
+            )
+
+        group = group_result.value
+        if not group:
+            return FlextResult[list[str]].fail("Group not found")
+
+        return FlextResult[list[str]].ok(group.members or [])
 
     # Entry Operations
 
@@ -668,6 +804,109 @@ class FlextLdapApi(FlextMixins.Loggable):
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP search filter using centralized validation - SOURCE OF TRUTH."""
         return FlextLdapValidations.validate_filter(filter_str)
+
+    def validate_attributes(
+        self,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
+    ) -> FlextResult[None]:
+        """Validate LDAP attributes dictionary."""
+        if not attributes:
+            return FlextResult.fail("Attributes cannot be empty")
+
+        return FlextResult.ok(None)
+
+    def validate_object_classes(
+        self,
+        object_classes: list[str],
+    ) -> FlextResult[None]:
+        """Validate LDAP object classes list."""
+        if not object_classes:
+            return FlextResult.fail("Object classes cannot be empty")
+        return FlextResult.ok(None)
+
+    async def user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists at DN."""
+        user_result = await self.get_user(dn)
+        if not user_result.is_success:
+            return FlextResult.fail(user_result.error or "Failed to get user")
+
+        return FlextResult.ok(user_result.value is not None)
+
+    async def group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists at DN."""
+        group_result = await self.get_group(dn)
+        if not group_result.is_success:
+            return FlextResult.fail(group_result.error or "Failed to get group")
+
+        return FlextResult.ok(group_result.value is not None)
+
+    async def add_member_to_group(
+        self, group_dn: str, member_dn: str
+    ) -> FlextResult[None]:
+        """Add member to group (alternative implementation)."""
+        return await self.add_member(group_dn, member_dn)
+
+    async def remove_member_from_group(
+        self, group_dn: str, member_dn: str
+    ) -> FlextResult[None]:
+        """Remove member from group (alternative implementation)."""
+        return await self.remove_member(group_dn, member_dn)
+
+    async def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get group members as list of DNs."""
+        members_result = await self.get_members(group_dn)
+        if not members_result.is_success:
+            return FlextResult.fail(members_result.error or "Failed to get members")
+
+        # Convert to list of DNs
+        members = members_result.value or []
+        return FlextResult.ok([str(member) for member in members])
+
+    async def initialize(self) -> FlextResult[None]:
+        """Initialize service using FlextProcessors logging."""
+        self.log_info("LDAP service initializing", service="FlextLdapApi")
+        return FlextResult[None].ok(None)
+
+    async def cleanup(self) -> FlextResult[None]:
+        """Cleanup service resources."""
+        self.log_info("LDAP service cleanup", service="FlextLdapApi")
+        return FlextResult[None].ok(None)
+
+    def process(self, request: object) -> FlextResult[object]:
+        """Process LDAP request using Python 3.13 pattern matching."""
+        # Python 3.13 structural pattern matching for LDAP request dispatch
+        match request:
+            case {"operation": "user_create", "data": user_data} if isinstance(
+                user_data,
+                dict,
+            ):
+                return FlextResult[object].ok(
+                    {"status": "user_create_processed", "data": user_data}
+                )
+            case {"operation": "user_read", "dn": dn} if isinstance(dn, str):
+                return FlextResult[object].ok(
+                    {"status": "user_read_processed", "dn": dn}
+                )
+            case {"operation": "group_create", "data": group_data} if isinstance(
+                group_data,
+                dict,
+            ):
+                return FlextResult[object].ok(
+                    {"status": "group_create_processed", "data": group_data}
+                )
+            case {"operation": "search", "params": search_params} if isinstance(
+                search_params,
+                dict,
+            ):
+                return FlextResult[object].ok(
+                    {"status": "search_processed", "params": search_params}
+                )
+            case {"operation": "validate", "target": str(target), "value": value}:
+                return FlextResult[object].ok(
+                    {"status": "validate_processed", "target": target, "value": value}
+                )
+            case _:
+                return FlextResult[object].ok(request)
 
     @classmethod
     def create(cls, config: FlextLdapConfig | None = None) -> FlextLdapApi:

@@ -106,7 +106,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
         bind_dn: str | None = Field(None, description="Bind DN for authentication")
         bind_password: str | None = Field(None, description="Bind password")
         timeout: int = Field(
-            default=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,
+            default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
             description="Connection timeout in seconds",
             gt=0,
             le=300,
@@ -200,14 +200,18 @@ class FlextLdapAdapters(FlextDomainService[object]):
         """Search operation result wrapper - provides FlextResult-like interface."""
 
         @classmethod
-        def ok(cls, search_response: object) -> FlextResult[object]:
+        def ok(
+            cls, search_response: FlextLdapModels.SearchResponse
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Create successful search result."""
-            return FlextResult[object].ok(search_response)
+            return FlextResult[FlextLdapModels.SearchResponse].ok(search_response)
 
         @classmethod
-        def fail(cls, error_message: str) -> FlextResult[object]:
+        def fail(
+            cls, error_message: str
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Create failed search result."""
-            return FlextResult[object].fail(error_message)
+            return FlextResult[FlextLdapModels.SearchResponse].fail(error_message)
 
     # =========================================================================
     # SERVICE PROCESSORS - Advanced service processor patterns
@@ -836,7 +840,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self.connection = FlextLdapAdapters.ConnectionService(
                 client=FlextLdapClient(),
                 config=FlextLdapAdapters.ConnectionConfig(
-                    server=f"{FlextLdapConstants.LDAP.DEFAULT_SERVER_URI}:{FlextLdapConstants.LDAP.DEFAULT_PORT}",
+                    server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
                     bind_dn="cn=admin,dc=example,dc=com",
                     bind_password=None,  # Use None for tests to avoid security warning
                 ),

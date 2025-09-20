@@ -275,12 +275,12 @@ class FlextLdapClient(
             use_ssl = parsed.scheme == "ldaps"
             host = (
                 parsed.hostname
-                or FlextLdapConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1]
+                or FlextLdapConstants.Protocol.DEFAULT_SERVER_URI.split("://")[1]
             )
             port = parsed.port or (
-                FlextLdapConstants.LDAP.DEFAULT_SSL_PORT
+                FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
                 if use_ssl
-                else FlextLdapConstants.LDAP.DEFAULT_PORT
+                else FlextLdapConstants.Protocol.DEFAULT_PORT
             )
 
             # Create server
@@ -437,7 +437,7 @@ class FlextLdapClient(
             scope=scope,
             attributes=None,  # Default value
             size_limit=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,  # Use constant
-            time_limit=FlextLdapConstants.LDAP.DEFAULT_TIMEOUT,  # Use constant
+            time_limit=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,  # Use constant
         )
         # Delegate to the advanced method
         return await self.search_with_request(request)
@@ -765,9 +765,9 @@ class FlextLdapClient(
             host = getattr(
                 self._server,
                 "host",
-                FlextLdapConstants.LDAP.DEFAULT_SERVER_URI.split("://")[1],
+                FlextLdapConstants.Protocol.DEFAULT_SERVER_URI.split("://")[1],
             )
-            port = getattr(self._server, "port", FlextLdapConstants.LDAP.DEFAULT_PORT)
+            port = getattr(self._server, "port", FlextLdapConstants.Protocol.DEFAULT_PORT)
             return f"{scheme}://{host}:{port}"
         except Exception:
             return "Connection string unavailable"

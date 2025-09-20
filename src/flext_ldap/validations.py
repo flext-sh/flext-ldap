@@ -70,14 +70,14 @@ class FlextLdapValidations:
         if password is None:
             return FlextResult[None].ok(None)
 
-        if len(password) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
+        if len(password) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
+                f"Password must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters",
             )
 
-        if len(password) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
+        if len(password) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be no more than {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters",
+                f"Password must be no more than {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters",
             )
 
         return FlextResult[None].ok(None)
@@ -91,12 +91,12 @@ class FlextLdapValidations:
         # Validate LDAP URI format specifically
         if not uri.strip().startswith(
             (
-                FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAP,
-                FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAPS,
+                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP,
+                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS,
             ),
         ):
             return FlextResult[None].fail(
-                f"URI must start with {FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAP} or {FlextLdapConstants.LDAP.PROTOCOL_PREFIX_LDAPS}",
+                f"URI must start with {FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP} or {FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS}",
             )
 
         return FlextResult[None].ok(None)

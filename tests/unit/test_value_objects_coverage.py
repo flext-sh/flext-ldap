@@ -1,77 +1,100 @@
-"""Test coverage for FlextLdapModels.ValueObjects missing lines.
+"""Test coverage for FlextLdapValueObjects missing lines.
 
 This module provides surgical test coverage for specific uncovered lines
 in value_objects.py to achieve 100% coverage.
 """
 
-from flext_ldap.value_objects import FlextLdapModels
+from flext_ldap.value_objects import FlextLdapValueObjects
 
 
 class TestFlextLdapValueObjectsCoverage:
     """Test class for covering missing value objects lines."""
 
-    def test_execute_method_coverage(self) -> None:
-        """Test execute method (covers line 39)."""
-        # Create instance and call execute method
-        service = FlextLdapModels.ValueObjects()
-        result = service.execute()
-        assert result.is_success
-        assert result.data == {"status": "value_objects_available"}
-
     def test_dn_rdn_property(self) -> None:
-        """Test DN rdn property (covers line 92)."""
+        """Test DN rdn property (covers line 38)."""
         # Create valid DN and test rdn extraction
-        result = FlextLdapModels.ValueObjects.DistinguishedName.create(
+        dn = FlextLdapValueObjects.DistinguishedName.create(
             "cn=test,ou=users,dc=example,dc=com",
         )
-        assert result.is_success
-        dn = result.unwrap()
         rdn = dn.rdn
         assert rdn == "cn=test"
 
-    def test_dn_is_descendant_of_string_input(self) -> None:
-        """Test is_descendant_of with string input (covers lines 99-100)."""
-        # Create DN and test descendant check with string
-        result = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "cn=test,ou=users,dc=example,dc=com",
-        )
-        assert result.is_success
-        dn = result.unwrap()
+    def test_dn_validation_empty_error(self) -> None:
+        """Test DN validation with empty value."""
+        try:
+            FlextLdapValueObjects.DistinguishedName(value="")
+            msg = "Expected ValueError for empty DN"
+            raise AssertionError(msg)
+        except ValueError as e:
+            assert "Distinguished Name cannot be empty" in str(e)
 
-        # Test with string parent DN
-        is_descendant = dn.is_descendant_of("dc=example,dc=com")
-        assert is_descendant
+    def test_dn_validation_missing_equals_error(self) -> None:
+        """Test DN validation with missing equals sign."""
+        try:
+            FlextLdapValueObjects.DistinguishedName(value="invalid_dn_format")
+            msg = "Expected ValueError for invalid DN format"
+            raise AssertionError(msg)
+        except ValueError as e:
+            assert "Invalid DN format - missing attribute=value pairs" in str(e)
 
-    def test_dn_is_descendant_of_dn_object(self) -> None:
-        """Test is_descendant_of with DN object input."""
-        # Create DN and test descendant check with DN object
-        result1 = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "cn=test,ou=users,dc=example,dc=com",
-        )
-        result2 = FlextLdapModels.ValueObjects.DistinguishedName.create(
-            "dc=example,dc=com"
-        )
-        assert result1.is_success
-        assert result2.is_success
+    def test_filter_empty_expression_error(self) -> None:
+        """Test Filter validation with empty expression."""
+        try:
+            FlextLdapValueObjects.Filter(expression="")
+            msg = "Expected ValueError for empty filter"
+            raise AssertionError(msg)
+        except ValueError as e:
+            assert "LDAP filter cannot be empty" in str(e)
 
-        dn = result1.unwrap()
-        parent_dn = result2.unwrap()
+    def test_filter_missing_parentheses_error(self) -> None:
+        """Test Filter validation with missing parentheses."""
+        try:
+            FlextLdapValueObjects.Filter(expression="uid=test")
+            msg = "Expected ValueError for missing parentheses"
+            raise AssertionError(msg)
+        except ValueError as e:
+            assert "LDAP filter must be enclosed in parentheses" in str(e)
 
-        # Test with DN object parent
-        is_descendant = dn.is_descendant_of(parent_dn)
-        assert is_descendant
+    def test_filter_factory_methods(self) -> None:
+        """Test Filter factory methods."""
+        # Test equals factory
+        equals_filter = FlextLdapValueObjects.Filter.equals("uid", "testuser")
+        assert equals_filter.expression == "(uid=testuser)"
+
+        # Test starts_with factory
+        starts_filter = FlextLdapValueObjects.Filter.starts_with("cn", "test")
+        assert starts_filter.expression == "(cn=test*)"
+
+        # Test object_class factory
+        class_filter = FlextLdapValueObjects.Filter.object_class("person")
+        assert class_filter.expression == "(objectClass=person)"
 
     def test_scope_invalid_value_error(self) -> None:
         """Test Scope with invalid value."""
-        # This should trigger scope validation error
-        result = FlextLdapModels.ValueObjects.Scope.create("invalid_scope")
-        assert result.is_failure
-        assert result.error is not None
-        assert "Invalid LDAP scope" in result.error
+        try:
+            FlextLdapValueObjects.Scope(value="invalid_scope")
+            msg = "Expected ValueError"
+            raise AssertionError(msg)
+        except ValueError as e:
+            assert "Invalid scope" in str(e)
+
+    def test_scope_factory_methods(self) -> None:
+        """Test Scope factory methods."""
+        # Test base scope factory
+        base_scope = FlextLdapValueObjects.Scope.base()
+        assert base_scope.value == "base"
+
+        # Test onelevel scope factory
+        onelevel_scope = FlextLdapValueObjects.Scope.onelevel()
+        assert onelevel_scope.value == "onelevel"
+
+        # Test subtree scope factory
+        subtree_scope = FlextLdapValueObjects.Scope.subtree()
+        assert subtree_scope.value == "subtree"
 
     def test_scope_valid_values(self) -> None:
         """Test Scope with valid values."""
-        # Test valid scope values based on error message
-        for scope in ["base", "one", "sub", "subtree", "onelevel", "children"]:
-            result = FlextLdapModels.ValueObjects.Scope.create(scope)
-            assert result.is_success, f"Should accept scope: {scope}"
+        # Test valid scope values based on the constants in value_objects.py
+        for scope in ["base", "onelevel", "subtree"]:
+            scope_obj = FlextLdapValueObjects.Scope(value=scope)
+            assert scope_obj.value == scope, f"Should accept scope: {scope}"

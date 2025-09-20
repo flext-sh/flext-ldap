@@ -38,7 +38,7 @@ class FlextLdapModels(FlextModels):
 
         base_dn: str = Field(description="Base DN for search")
         filter_str: str = Field(
-            default=FlextLdapConstants.DefaultValues.DEFAULT_SEARCH_FILTER,
+            default=FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
             description="LDAP search filter",
         )
         scope: str = Field(
@@ -473,7 +473,7 @@ class FlextLdapModels(FlextModels):
     def create_search_request(
         cls,
         base_dn: str,
-        filter_str: str = FlextLdapConstants.DefaultValues.DEFAULT_SEARCH_FILTER,
+        filter_str: str = FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
         scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: list[str] | None = None,
         size_limit: int = FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
@@ -556,7 +556,7 @@ class FlextLdapModels(FlextModels):
 
         Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
         Everything from DN validation to filter creation is available as internal classes
-        with full backward compatibility and domain-driven design principles.
+        with NO legacy compatibility and domain-driven design principles.
         """
 
         def execute(self) -> FlextResult[object]:
@@ -581,13 +581,13 @@ class FlextLdapModels(FlextModels):
             value: str = Field(
                 ...,
                 description="RFC 2253 compliant Distinguished Name",
-                min_length=FlextLdapConstants.LdapValidation.MIN_DN_LENGTH,
-                max_length=FlextLdapConstants.LdapValidation.MAX_DN_LENGTH,
+                min_length=FlextLdapConstants.Validation.MIN_DN_LENGTH,
+                max_length=FlextLdapConstants.Validation.MAX_DN_LENGTH,
             )
 
             # DN validation pattern from SOURCE OF TRUTH
             DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-                FlextLdapConstants.LdapValidation.DN_PATTERN,
+                FlextLdapConstants.Validation.DN_PATTERN,
             )
 
             @field_validator("value")
@@ -695,15 +695,7 @@ class FlextLdapModels(FlextModels):
                 """Create subtree scope (search entry and all descendants)."""
                 return cls(scope=FlextLdapConstants.Scopes.SUB)
 
-            @classmethod
-            def subtree(cls) -> FlextLdapModels.ValueObjects.Scope:
-                """Create subtree scope (alias for sub)."""
-                return cls(scope=FlextLdapConstants.Scopes.SUB)
-
-            @classmethod
-            def onelevel(cls) -> FlextLdapModels.ValueObjects.Scope:
-                """Create one level scope (alias for one)."""
-                return cls(scope=FlextLdapConstants.Scopes.ONE)
+            # NO aliases - use sub() and one() methods directly
 
         # =========================================================================
         # FILTER - LDAP filter value object with RFC 4515 compliance
@@ -723,13 +715,13 @@ class FlextLdapModels(FlextModels):
             value: str = Field(
                 ...,
                 description="RFC 4515 compliant LDAP filter",
-                min_length=FlextLdapConstants.LdapValidation.MIN_FILTER_LENGTH,
-                max_length=FlextLdapConstants.LdapValidation.MAX_FILTER_LENGTH_VALUE_OBJECTS,
+                min_length=FlextLdapConstants.Validation.MIN_FILTER_LENGTH,
+                max_length=FlextLdapConstants.Validation.MAX_FILTER_LENGTH,
             )
 
             # LDAP filter validation pattern from SOURCE OF TRUTH
             FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-                FlextLdapConstants.LdapValidation.FILTER_PATTERN,
+                FlextLdapConstants.Validation.FILTER_PATTERN,
             )
 
             @field_validator("value")

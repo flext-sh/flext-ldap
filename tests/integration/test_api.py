@@ -16,10 +16,10 @@ import pytest
 
 from flext_core import FlextTypes
 from flext_ldap import (
+    FlextLdapApi,
     FlextLdapClient,
     FlextLdapContainer,
     FlextLdapModels,
-    FlextLdapServices,
 )
 from flext_ldap.typings import FlextLdapTypes
 
@@ -189,7 +189,7 @@ class TestLdapServiceRealOperations:
     @pytest.mark.asyncio
     async def test_service_user_lifecycle_real_operations(
         self,
-        ldap_service: FlextLdapServices,
+        ldap_service: FlextLdapApi,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
@@ -334,7 +334,7 @@ class TestLdapServiceRealOperations:
     )
     async def test_service_group_lifecycle_real_operations(
         self,
-        ldap_service: FlextLdapServices,
+        ldap_service: FlextLdapApi,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
@@ -533,7 +533,7 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_business_rules_validation_real_ldap(
         self,
-        ldap_service: FlextLdapServices,
+        ldap_service: FlextLdapApi,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""
