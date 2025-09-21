@@ -236,7 +236,7 @@ class FlextLdapRepositories:
 
         async def _save_async(
             self,
-            entry: FlextLdapModels.Entry | FlextLdapModels.User,
+            entry: FlextLdapModels.Entry | FlextLdapModels.LdapUser,
         ) -> FlextResult[None]:
             """Save entry - internal async implementation."""
             # Validate entry business rules
@@ -262,8 +262,8 @@ class FlextLdapRepositories:
                 attributes["objectClass"] = entry.object_classes
 
             # For User entities, convert model fields to LDAP attributes
-            if isinstance(entry, FlextLdapModels.User):
-                # After isinstance check, entry is known to be FlextLdapModels.User
+            if isinstance(entry, FlextLdapModels.LdapUser):
+                # After isinstance check, entry is known to be FlextLdapModels.LdapUser
                 if entry.cn:
                     attributes["cn"] = [entry.cn]
                 if entry.sn:

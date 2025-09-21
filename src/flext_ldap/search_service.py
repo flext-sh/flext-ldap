@@ -209,14 +209,14 @@ class FlextLdapSearchService(FlextDomainService[None]):
             ):
                 # ldap3 Entry object
                 return {
-                    "dn": str(raw_entry.entry_dn),
-                    "attributes": dict(raw_entry.entry_attributes),
+                    "dn": str(getattr(raw_entry, "entry_dn", "")),
+                    "attributes": dict(getattr(raw_entry, "entry_attributes", {})),
                 }
             if hasattr(raw_entry, "dn") and hasattr(raw_entry, "attributes"):
                 # Already structured entry
                 return {
-                    "dn": str(raw_entry.dn),
-                    "attributes": dict(raw_entry.attributes),
+                    "dn": str(getattr(raw_entry, "dn", "")),
+                    "attributes": dict(getattr(raw_entry, "attributes", {})),
                 }
             # Fallback for unknown entry types
             return {
@@ -252,7 +252,7 @@ class FlextLdapSearchService(FlextDomainService[None]):
         uid: str | None = None,
         cn: str | None = None,
         mail: str | None = None,
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search for users with optional filters."""
         # Build filter based on provided parameters
         filter_parts = ["(objectClass=person)"]
@@ -291,12 +291,12 @@ class FlextLdapSearchService(FlextDomainService[None]):
         filter_str: str,
         base_dn: str,
         scope: str = "subtree",
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search users with filter using railway pattern."""
         # Validate filter
         filter_validation = FlextLdapValidations.validate_filter(filter_str)
         if filter_validation.is_failure:
-            return FlextResult[list[FlextLdapModels.User]].fail(
+            return FlextResult[list[FlextLdapModels.LdapUser]].fail(
                 f"Invalid filter: {filter_validation.error}",
             )
 
@@ -319,14 +319,14 @@ class FlextLdapSearchService(FlextDomainService[None]):
     def _convert_entries_to_users(
         self,
         entries: list[FlextLdapModels.Entry],
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Convert entries to users - railway helper method."""
         try:
-            users: list[FlextLdapModels.User] = []
+            users: list[FlextLdapModels.LdapUser] = []
             for entry in entries:
                 # Create user from entry - simplified mapping
                 uid = self._get_entry_attribute(entry, "uid", "unknown")
-                user = FlextLdapModels.User(
+                user = FlextLdapModels.LdapUser(
                     id=f"user_{uid}",
                     dn=self._get_entry_attribute(entry, "dn", entry.dn),
                     uid=uid,
@@ -338,10 +338,10 @@ class FlextLdapSearchService(FlextDomainService[None]):
                     user_password=None,
                 )
                 users.append(user)
-            return FlextResult[list[FlextLdapModels.User]].ok(users)
+            return FlextResult[list[FlextLdapModels.LdapUser]].ok(users)
 
         except Exception as e:
-            return FlextResult[list[FlextLdapModels.User]].fail(
+            return FlextResult[list[FlextLdapModels.LdapUser]].fail(
                 f"Failed to convert entries to users: {e}",
             )
 

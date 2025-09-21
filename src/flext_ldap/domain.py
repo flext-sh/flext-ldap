@@ -496,7 +496,7 @@ class FlextLdapDomain:
     # INTERNAL DOMAIN SERVICE CLASSES
     # ==========================================================================
 
-    class UserManagementService(FlextDomainService[FlextLdapModels.User]):
+    class UserManagementService(FlextDomainService[FlextLdapModels.LdapUser]):
         """Internal domain service for user management business logic."""
 
         def __init__(self) -> None:
@@ -506,15 +506,15 @@ class FlextLdapDomain:
             self._password_spec = FlextLdapDomain.PasswordSpecification()
             self._email_spec = FlextLdapDomain.EmailSpecification()
 
-        def execute(self) -> FlextResult[FlextLdapModels.User]:
+        def execute(self) -> FlextResult[FlextLdapModels.LdapUser]:
             """Execute method required by FlextDomainService - CORRECTED signature.
 
             Returns:
-                FlextResult[FlextLdapModels.User]: Success result with user model.
+                FlextResult[FlextLdapModels.LdapUser]: Success result with user model.
 
             """
             return FlextResult.ok(
-                FlextLdapModels.User(
+                FlextLdapModels.LdapUser(
                     id="default_user",
                     dn="cn=default,dc=example,dc=com",
                     uid="default",
@@ -640,8 +640,8 @@ class FlextLdapDomain:
 
         def can_delete_user(
             self,
-            user: FlextLdapModels.User,
-            requesting_user: FlextLdapModels.User,
+            user: FlextLdapModels.LdapUser,
+            requesting_user: FlextLdapModels.LdapUser,
         ) -> FlextResult[bool]:
             """Check if user can be deleted by requesting user - explicit error handling.
 
@@ -758,7 +758,7 @@ class FlextLdapDomain:
         def can_add_member(
             self,
             group: FlextLdapModels.Group,
-            user: FlextLdapModels.User,
+            user: FlextLdapModels.LdapUser,
             *,
             allow_inactive: bool = False,
         ) -> FlextResult[bool]:
@@ -1282,14 +1282,14 @@ class FlextLdapDomain:
         def _create_entity(
             self,
             all_params: FlextTypes.Core.Dict,
-        ) -> FlextLdapModels.User:
-            """Create FlextLdapModels.User entity.
+        ) -> FlextLdapModels.LdapUser:
+            """Create FlextLdapModels.LdapUser entity.
 
             Returns:
-                FlextLdapModels.User: Created user entity.
+                FlextLdapModels.LdapUser: Created user entity.
 
             """
-            return FlextLdapModels.User(
+            return FlextLdapModels.LdapUser(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
                 uid=str(all_params["uid"]),
@@ -1514,11 +1514,11 @@ class FlextLdapDomain:
         def create_user_entity(
             self,
             user_params: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLdapModels.User]:
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create user entity - pure domain logic.
 
             Returns:
-                FlextResult[FlextLdapModels.User]: Created user.
+                FlextResult[FlextLdapModels.LdapUser]: Created user.
 
             """
             try:
@@ -1540,7 +1540,7 @@ class FlextLdapDomain:
                     k: v for k, v in mapped_params.items() if v is not None
                 }
 
-                user = FlextLdapModels.User.model_validate(mapped_params)
+                user = FlextLdapModels.LdapUser.model_validate(mapped_params)
                 return FlextResult.ok(user)
             except Exception as e:
                 return FlextResult.fail(f"User entity creation failed: {e}")
@@ -1594,7 +1594,7 @@ class FlextLdapDomain:
             }
 
     class CreateUserCommandHandler(
-        FlextHandlers["FlextLdapDomain.CreateUserCommand", FlextLdapModels.User],
+        FlextHandlers["FlextLdapDomain.CreateUserCommand", FlextLdapModels.LdapUser],
     ):
         """Command handler for user creation using modern FlextHandlers pattern."""
 
@@ -1608,11 +1608,11 @@ class FlextLdapDomain:
         def handle(
             self,
             message: "FlextLdapDomain.CreateUserCommand",
-        ) -> FlextResult[FlextLdapModels.User]:
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Handle user creation command using domain service.
 
             Returns:
-                FlextResult[FlextLdapModels.User]: Created user.
+                FlextResult[FlextLdapModels.LdapUser]: Created user.
 
             """
             # Validate command business rules
@@ -1622,7 +1622,7 @@ class FlextLdapDomain:
                 )
             )
             if validation_result.is_failure:
-                return FlextResult[FlextLdapModels.User].fail(
+                return FlextResult[FlextLdapModels.LdapUser].fail(
                     validation_result.error or "Command validation failed",
                 )
 
@@ -1631,7 +1631,7 @@ class FlextLdapDomain:
                 message.user_data,
             )
             if params_result.is_failure:
-                return FlextResult[FlextLdapModels.User].fail(
+                return FlextResult[FlextLdapModels.LdapUser].fail(
                     params_result.error or "Parameter extraction failed",
                 )
 
@@ -1640,11 +1640,11 @@ class FlextLdapDomain:
                 params_result.value,
             )
             if creation_result.is_failure:
-                return FlextResult[FlextLdapModels.User].fail(
+                return FlextResult[FlextLdapModels.LdapUser].fail(
                     creation_result.error or "User creation failed",
                 )
 
-            return FlextResult[FlextLdapModels.User].ok(creation_result.value)
+            return FlextResult[FlextLdapModels.LdapUser].ok(creation_result.value)
 
     class DomainFactory:
         """Internal factory for creating domain objects with business rule validation.
@@ -1686,11 +1686,11 @@ class FlextLdapDomain:
         def create_user_from_data(
             self,
             user_data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLdapModels.User]:
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create user entity using FlextHandlers command pattern.
 
             Returns:
-                FlextResult[FlextLdapModels.User]: Created user.
+                FlextResult[FlextLdapModels.LdapUser]: Created user.
 
             """
             # Create command for CQRS pattern
@@ -1706,11 +1706,13 @@ class FlextLdapDomain:
                         handler_output = dispatch_result.value
                         if isinstance(handler_output, FlextResult):
                             return cast(
-                                "FlextResult[FlextLdapModels.User]",
+                                "FlextResult[FlextLdapModels.LdapUser]",
                                 handler_output,
                             )
-                        if isinstance(handler_output, FlextLdapModels.User):
-                            return FlextResult[FlextLdapModels.User].ok(handler_output)
+                        if isinstance(handler_output, FlextLdapModels.LdapUser):
+                            return FlextResult[FlextLdapModels.LdapUser].ok(
+                                handler_output
+                            )
                         self._logger.error(
                             "dispatcher_unexpected_payload",
                             payload_type=handler_output.__class__.__name__,

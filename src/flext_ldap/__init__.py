@@ -23,6 +23,14 @@ from flext_ldap.type_guards import FlextLdapTypeGuards
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.value_objects import FlextLdapValueObjects
 
+# Rebuild models after all definitions are complete
+FlextLdapModels.LdapUser.model_rebuild()
+FlextLdapModels.Entry.model_rebuild()
+FlextLdapModels.Group.model_rebuild()
+FlextLdapModels.SearchRequest.model_rebuild()
+FlextLdapModels.SearchResponse.model_rebuild()
+FlextLdapModels.ConnectionConfig.model_rebuild()
+
 __all__ = [
     "FlextExceptions",
     "FlextLDAPOperations",

@@ -751,21 +751,21 @@ class FlextLdapConfigs(FlextConfig):
         return cast("FlextLdapConfigs", cls._global_instance)
 
     @classmethod
-    def set_global_instance(cls, config: FlextConfig) -> None:
+    def set_global_instance(cls, instance: FlextConfig) -> None:
         """Set the global singleton instance.
 
         Args:
-            config: New FlextConfig instance to set as global
+            instance: New FlextConfig instance to set as global
 
         Raises:
-            TypeError: If config is not a FlextLdapConfigs instance.
+            TypeError: If instance is not a FlextLdapConfigs instance.
 
         """
-        if not isinstance(config, FlextLdapConfigs):
-            msg = f"Expected FlextLdapConfigs, got {type(config)}"
+        if not isinstance(instance, FlextLdapConfigs):
+            msg = f"Expected FlextLdapConfigs, got {type(instance)}"
             raise TypeError(msg)
         with cls._lock:
-            cls._global_instance = config
+            cls._global_instance = instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
