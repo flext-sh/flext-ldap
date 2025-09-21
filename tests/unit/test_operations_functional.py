@@ -12,7 +12,7 @@ import re
 import sys
 import time
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Protocol, cast, object
+from typing import TYPE_CHECKING, Protocol, cast
 
 import pytest
 
