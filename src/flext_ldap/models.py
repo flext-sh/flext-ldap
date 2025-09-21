@@ -179,7 +179,7 @@ class FlextLdapModels(FlextModels):
 
             # This should never be reached due to AttributeDict type constraints
             # but keeping as fallback for type safety
-            return [str(attribute_value)]
+            return [str(attribute_value)]  # type: ignore[unreachable]
 
     class User(BaseModel):
         """LDAP User Model - actively used in API."""
@@ -636,9 +636,14 @@ class FlextLdapModels(FlextModels):
             @classmethod
             def create(
                 cls,
-                value: str,
+                *args: object,
+                **kwargs: object,
             ) -> FlextResult[FlextLdapModels.ValueObjects.DistinguishedName]:
                 """Create DN from string with validation."""
+                if len(args) != 1 or not isinstance(args[0], str):
+                    return FlextResult.fail("DistinguishedName.create requires exactly one string argument")
+                
+                value = args[0]
                 try:
                     dn = cls(value=value)
                     return FlextResult.ok(dn)
@@ -678,9 +683,14 @@ class FlextLdapModels(FlextModels):
             @classmethod
             def create(
                 cls,
-                scope: str,
+                *args: object,
+                **kwargs: object,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
                 """Create scope value object with validation."""
+                if len(args) != 1 or not isinstance(args[0], str):
+                    return FlextResult.fail("Scope.create requires exactly one string argument")
+                
+                scope = args[0]
                 try:
                     scope_obj = cls(scope=scope)
                     return FlextResult.ok(scope_obj)

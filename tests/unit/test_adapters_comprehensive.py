@@ -739,11 +739,12 @@ class TestAdapterErrorHandling:
             # Method should handle edge cases gracefully
             # Test successful method execution
             assert True
-        except Exception:
+        except Exception as e:
             # Expected for invalid entries in edge case testing
             # Exception is expected and handled gracefully by the method
             # Log the exception for debugging purposes
-            pass
+            import logging
+            logging.getLogger(__name__).debug(f"Expected exception in edge case testing: {e}")
 
     @pytest.mark.asyncio
     async def test_directory_service_operations_comprehensive(
