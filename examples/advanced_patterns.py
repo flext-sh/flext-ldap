@@ -42,6 +42,10 @@ async def ldap_session(
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
+
+    Yields:
+        tuple[FlextLdapApi, str]: A tuple containing the LDAP API instance and session ID.
+
     """
     api = FlextLdapApi()
     session_id = f"session_{id(api)}"
@@ -193,7 +197,12 @@ async def demonstrate_error_recovery() -> None:
         operation_name: str,
         max_retries: int = 3,
     ) -> str | None:
-        """Retry pattern for LDAP operations."""
+        """Retry pattern for LDAP operations.
+
+        Returns:
+            str | None: Success message or None if all retries failed.
+
+        """
 
         def _simulate_failure(op_name: str) -> None:
             msg: str = f"Simulated failure for {op_name}"

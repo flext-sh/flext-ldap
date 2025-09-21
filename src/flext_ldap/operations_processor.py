@@ -409,161 +409,141 @@ class FlextLdapOperationsProcessor:
         """
         try:
             if command_type == "connect":
-                connect_result = await self.connect(
-                    str(command_data["server_uri"]),
-                    str(command_data["bind_dn"]),
-                    str(command_data["bind_password"]),
-                )
-                if connect_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        connect_result.error or "Connection failed"
-                    )
-                return FlextResult[dict[str, object]].ok(
-                    {"session_id": connect_result.unwrap()}
-                )
-
+                return await self._handle_connect_command(command_data)
             if command_type == "search":
-                # Safely extract attributes
-                raw_attributes = command_data.get("attributes")
-                attributes = None
-                if raw_attributes is not None:
-                    if isinstance(raw_attributes, list):
-                        attributes = [str(attr) for attr in raw_attributes]
-
-                # Safely extract numeric values
-                raw_size_limit = command_data.get("size_limit", 1000)
-                size_limit = (
-                    int(raw_size_limit)
-                    if isinstance(raw_size_limit, (int, str))
-                    else 1000
-                )
-
-                raw_time_limit = command_data.get("time_limit", 30)
-                time_limit = (
-                    int(raw_time_limit)
-                    if isinstance(raw_time_limit, (int, str))
-                    else 30
-                )
-
-                search_request = FlextLdapModels.SearchRequest(
-                    base_dn=str(command_data["base_dn"]),
-                    filter_str=str(command_data.get("filter", "(objectClass=*)")),
-                    scope=str(command_data.get("scope", "subtree")),
-                    attributes=attributes,
-                    size_limit=size_limit,
-                    time_limit=time_limit,
-                )
-                search_result = await self.search(search_request)
-                if search_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        search_result.error or "Search failed"
-                    )
-                return FlextResult[dict[str, object]].ok(
-                    {"entries": search_result.unwrap()}
-                )
-
-            if command_type == "create_user":
-                # Safe type extraction
-                dn = command_data.get("dn")
-                uid = command_data.get("uid")
-                cn = command_data.get("cn")
-                sn = command_data.get("sn")
-                mail = command_data.get("mail")
-                object_classes = command_data.get(
-                    "object_classes", ["person", "organizationalPerson"]
-                )
-
-                # Type validation
-                if not all(isinstance(val, str) for val in [dn, uid, cn, sn]):
-                    return FlextResult[dict[str, object]].fail(
-                        "Missing required string fields for user creation"
-                    )
-
-                if mail is not None and not isinstance(mail, str):
-                    return FlextResult[dict[str, object]].fail(
-                        "Mail field must be a string"
-                    )
-
-                if not isinstance(object_classes, list) or not all(
-                    isinstance(cls, str) for cls in object_classes
-                ):
-                    return FlextResult[dict[str, object]].fail(
-                        "Object classes must be a list of strings"
-                    )
-
-                user_request = FlextLdapModels.CreateUserRequest(
-                    dn=str(dn),
-                    uid=str(uid),
-                    cn=str(cn),
-                    sn=str(sn),
-                    mail=str(mail) if mail else None,
-                    object_classes=object_classes,
-                )
-                result = await self.create_user(user_request)
-                if result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        result.error or "User creation failed"
-                    )
-                return FlextResult[dict[str, object]].ok({"user": result.unwrap()})
-
-            if command_type == "create_group":
-                # Safe type extraction
-                dn = command_data.get("dn")
-                cn = command_data.get("cn")
-                description = command_data.get("description")
-                member_dns = command_data.get("member_dns", [])
-                object_classes = command_data.get(
-                    "object_classes", ["group", "groupOfNames"]
-                )
-
-                # Type validation
-                if not all(isinstance(val, str) for val in [dn, cn]):
-                    return FlextResult[dict[str, object]].fail(
-                        "Missing required string fields for group creation"
-                    )
-
-                if description is not None and not isinstance(description, str):
-                    return FlextResult[dict[str, object]].fail(
-                        "Description field must be a string"
-                    )
-
-                if not isinstance(member_dns, list) or not all(
-                    isinstance(member, str) for member in member_dns
-                ):
-                    return FlextResult[dict[str, object]].fail(
-                        "Member DNs must be a list of strings"
-                    )
-
-                if not isinstance(object_classes, list) or not all(
-                    isinstance(cls, str) for cls in object_classes
-                ):
-                    return FlextResult[dict[str, object]].fail(
-                        "Object classes must be a list of strings"
-                    )
-
-                group_request = FlextLdapModels.CreateGroupRequest(
-                    dn=str(dn),
-                    cn=str(cn),
-                    description=str(description) if description else None,
-                    member_dns=member_dns,
-                    object_classes=object_classes,
-                )
-                result = await self.create_group(group_request)
-                if result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        result.error or "Group creation failed"
-                    )
-                return FlextResult[dict[str, object]].ok({"group": result.unwrap()})
-
+                return await self._handle_search_command(command_data)
+            if command_type == "add":
+                return await self._handle_add_command(command_data)
+            if command_type == "modify":
+                return await self._handle_modify_command(command_data)
+            if command_type == "delete":
+                return await self._handle_delete_command(command_data)
             return FlextResult[dict[str, object]].fail(
                 f"Unknown command type: {command_type}"
             )
-
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Command execution failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Command execution error: {e}")
+
+    async def _handle_connect_command(
+        self, command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle connect command."""
+        connect_result = await self.connect(
+            str(command_data["server_uri"]),
+            str(command_data["bind_dn"]),
+            str(command_data["bind_password"]),
+        )
+        if connect_result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                connect_result.error or "Connection failed"
+            )
+        return FlextResult[dict[str, object]].ok({
+            "session_id": connect_result.unwrap()
+        })
+
+    async def _handle_search_command(
+        self, command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle search command."""
+        # Safely extract attributes
+        raw_attributes = command_data.get("attributes")
+        attributes = None
+        if raw_attributes is not None and isinstance(raw_attributes, list):
+            attributes = [str(attr) for attr in raw_attributes]
+
+        # Safely extract numeric values
+        raw_size_limit = command_data.get("size_limit", 1000)
+        size_limit = (
+            int(raw_size_limit) if isinstance(raw_size_limit, (int, str)) else 1000
+        )
+
+        raw_time_limit = command_data.get("time_limit", 30)
+        time_limit = (
+            int(raw_time_limit) if isinstance(raw_time_limit, (int, str)) else 30
+        )
+
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=str(command_data["base_dn"]),
+            filter_str=str(command_data.get("filter", "(objectClass=*)")),
+            scope=str(command_data.get("scope", "subtree")),
+            attributes=attributes,
+            size_limit=size_limit,
+            time_limit=time_limit,
+        )
+        search_result = await self.search(search_request)
+        if search_result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                search_result.error or "Search failed"
+            )
+        return FlextResult[dict[str, object]].ok({"entries": search_result.unwrap()})
+
+    async def _handle_add_command(
+        self, _command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle add command."""
+        # Implementation would go here
+        return FlextResult[dict[str, object]].fail("Add command not implemented")
+
+    async def _handle_modify_command(
+        self, _command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle modify command."""
+        # Implementation would go here
+        return FlextResult[dict[str, object]].fail("Modify command not implemented")
+
+    async def _handle_delete_command(
+        self, _command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle delete command."""
+        # Implementation would go here
+        return FlextResult[dict[str, object]].fail("Delete command not implemented")
+
+    async def _handle_create_user_command(
+        self, command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Handle create user command."""
+        # Safe type extraction
+        dn = command_data.get("dn")
+        uid = command_data.get("uid")
+        cn = command_data.get("cn")
+        sn = command_data.get("sn")
+        mail = command_data.get("mail")
+        object_classes = command_data.get(
+            "object_classes", ["person", "organizationalPerson"]
+        )
+
+        # Type validation
+        if not all(isinstance(val, str) for val in [dn, uid, cn, sn]):
+            return FlextResult[dict[str, object]].fail(
+                "Missing required string fields for user creation"
+            )
+
+        if mail is not None and not isinstance(mail, str):
+            return FlextResult[dict[str, object]].fail("Mail field must be a string")
+
+        if not isinstance(object_classes, list) or not all(
+            isinstance(cls, str) for cls in object_classes
+        ):
+            return FlextResult[dict[str, object]].fail(
+                "Object classes must be a list of strings"
+            )
+
+        user_request = FlextLdapModels.CreateUserRequest(
+            dn=str(dn),
+            uid=str(uid),
+            cn=str(cn),
+            sn=str(sn),
+            mail=str(mail) if mail else None,
+            object_classes=object_classes,
+        )
+        result = await self.create_user(user_request)
+        if result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                result.error or "User creation failed"
+            )
+        return FlextResult[dict[str, object]].ok({"user": result.unwrap()})
 
     # Property Accessors for Domain Services (for advanced usage)
-
     @property
     def connection_service(self) -> FlextLdapConnectionService:
         """Access to connection domain service."""

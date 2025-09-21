@@ -40,13 +40,11 @@ class FlextLdapGroupService(FlextDomainService):
 
         Returns basic service information for the group service.
         """
-        return FlextResult[dict[str, str]].ok(
-            {
-                "service": "FlextLdapGroupService",
-                "status": "ready",
-                "operations": "create_group,get_group,update_group,delete_group,add_member,remove_member,get_members",
-            }
-        )
+        return FlextResult[dict[str, str]].ok({
+            "service": "FlextLdapGroupService",
+            "status": "ready",
+            "operations": "create_group,get_group,update_group,delete_group,add_member,remove_member,get_members",
+        })
 
     async def create_group(
         self,
@@ -411,7 +409,7 @@ class FlextLdapGroupService(FlextDomainService):
             if not value:
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
-            if first_element is None or first_element == "":
+            if first_element is None or not first_element:
                 return FlextResult[object].fail(
                     "List contains None or empty first element"
                 )

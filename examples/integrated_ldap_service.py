@@ -36,7 +36,12 @@ async def main() -> None:
 
 
 def _initialize_ldap_service() -> FlextLdapApi:
-    """Initialize LDAP service - Single Responsibility."""
+    """Initialize LDAP service - Single Responsibility.
+
+    Returns:
+        FlextLdapApi: The initialized LDAP API instance.
+
+    """
     # Check if we're running with Docker environment variables
     if os.getenv("LDAP_TEST_SERVER"):
         server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")

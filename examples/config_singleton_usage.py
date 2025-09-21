@@ -21,7 +21,12 @@ from flext_ldap.config import FlextLdapConfigs
 
 
 def demonstrate_singleton_pattern() -> None:
-    """Demonstrate the singleton pattern functionality."""
+    """Demonstrate the singleton pattern functionality.
+
+    Raises:
+        RuntimeError: If singleton pattern validation fails.
+
+    """
     formatters = FlextCliFormatters()
     formatters.display_message("FlextLdapConfigs Singleton Pattern Demo", "info")
 
@@ -255,7 +260,12 @@ def demonstrate_direct_singleton_usage() -> None:
 
 
 def demonstrate_runtime_behavior_changes() -> None:
-    """Demonstrate how parameter changes affect runtime behavior."""
+    """Demonstrate how parameter changes affect runtime behavior.
+
+    Raises:
+        RuntimeError: If runtime behavior validation fails.
+
+    """
     formatters = FlextCliFormatters()
     formatters.display_message("=== Runtime Behavior Changes Demo ===", "info")
 

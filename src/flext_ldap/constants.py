@@ -108,7 +108,12 @@ class FlextLdapConstants:
 
         @classmethod
         def get_person_attributes(cls) -> list[str]:
-            """Get standard person-related attributes."""
+            """Get standard person-related attributes.
+
+            Returns:
+                list[str]: List of person-related attribute names.
+
+            """
             return [
                 cls.OBJECT_CLASS,
                 cls.COMMON_NAME,
@@ -122,7 +127,12 @@ class FlextLdapConstants:
 
         @classmethod
         def get_group_attributes(cls) -> list[str]:
-            """Get standard group-related attributes."""
+            """Get standard group-related attributes.
+
+            Returns:
+                list[str]: List of group-related attribute names.
+
+            """
             return [
                 cls.OBJECT_CLASS,
                 cls.COMMON_NAME,
@@ -218,7 +228,12 @@ class FlextLdapConstants:
 
         @classmethod
         def dispatcher_enabled(cls) -> bool:
-            """Return True when dispatcher integration should be used."""
+            """Return True when dispatcher integration should be used.
+
+            Returns:
+                bool: True if dispatcher integration is enabled.
+
+            """
             return cls._env_enabled("FLEXT_LDAP_ENABLE_DISPATCHER")
 
 

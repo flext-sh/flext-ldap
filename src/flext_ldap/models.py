@@ -475,6 +475,7 @@ class FlextLdapModels(FlextModels):
     def create_search_request(
         cls,
         base_dn: str,
+        *,
         filter_str: str = FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
         scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: list[str] | None = None,

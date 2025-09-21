@@ -40,13 +40,11 @@ class FlextLdapSearchService(FlextDomainService):
 
         Returns basic service information for the search service.
         """
-        return FlextResult[dict[str, str]].ok(
-            {
-                "service": "FlextLdapSearchService",
-                "status": "ready",
-                "operations": "search,search_simple,search_users,search_groups,count_entries",
-            }
-        )
+        return FlextResult[dict[str, str]].ok({
+            "service": "FlextLdapSearchService",
+            "status": "ready",
+            "operations": "search,search_simple,search_users,search_groups,count_entries",
+        })
 
     async def search(
         self,
@@ -497,7 +495,7 @@ class FlextLdapSearchService(FlextDomainService):
             if not value:
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
-            if first_element is None or first_element == "":
+            if first_element is None or not first_element:
                 return FlextResult[object].fail(
                     "List contains None or empty first element"
                 )

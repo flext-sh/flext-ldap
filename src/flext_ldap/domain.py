@@ -48,7 +48,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             ...
 
         def get_validation_error(self, candidate: object) -> str:
-            """Get descriptive validation error message."""
+            """Get descriptive validation error message.
+
+            Returns:
+                str: Error message describing validation failure.
+
+            """
             return f"Specification '{self.name}' failed for {type(candidate).__name__}"
 
     # ==========================================================================
@@ -67,7 +72,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 structural pattern matching."""
+            """Check using Python 3.13 structural pattern matching.
+
+            Returns:
+                bool: True if candidate satisfies the specification.
+
+            """
             # Use pattern matching for attribute validation
             match candidate:
                 case obj if (
@@ -78,7 +88,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_user_attributes(self, user: object) -> bool:
-            """Validate user attributes using Python 3.13 patterns."""
+            """Validate user attributes using Python 3.13 patterns.
+
+            Returns:
+                bool: True if user attributes are valid.
+
+            """
             uid = getattr(user, "uid", None)
             dn = getattr(user, "dn", None)
             cn = getattr(user, "cn", None)
@@ -92,7 +107,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_object_classes(self, object_classes: object) -> bool:
-            """Validate object classes using pattern matching."""
+            """Validate object classes using pattern matching.
+
+            Returns:
+                bool: True if object classes are valid.
+
+            """
             required_classes = [
                 FlextLdapConstants.ObjectClasses.PERSON,
                 FlextLdapConstants.ObjectClasses.TOP,
@@ -106,7 +126,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get detailed user validation error."""
+            """Get detailed user validation error.
+
+            Returns:
+                str: Detailed error message for user validation failure.
+
+            """
             if not hasattr(candidate, "uid"):
                 return "User must have a valid UID"
             if not hasattr(candidate, "dn"):
@@ -125,7 +150,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 structural pattern matching."""
+            """Check using Python 3.13 structural pattern matching.
+
+            Returns:
+                bool: True if candidate satisfies the group specification.
+
+            """
             match candidate:
                 case obj if hasattr(obj, "cn") and hasattr(obj, "dn"):
                     return self._validate_group_attributes(obj)
@@ -133,7 +163,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_group_attributes(self, group: object) -> bool:
-            """Validate group attributes using Python 3.13 patterns."""
+            """Validate group attributes using Python 3.13 patterns.
+
+            Returns:
+                bool: True if group attributes are valid.
+
+            """
             object_classes = getattr(group, "object_classes", [])
             required_classes = [
                 FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
@@ -148,7 +183,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get detailed group validation error."""
+            """Get detailed group validation error.
+
+            Returns:
+                str: Detailed error message for group validation failure.
+
+            """
             if not hasattr(candidate, "cn"):
                 return "Group must have a Common Name"
             if not hasattr(candidate, "dn"):
@@ -171,7 +211,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 pattern matching and enhanced validation."""
+            """Check using Python 3.13 pattern matching and enhanced validation.
+
+            Returns:
+                bool: True if candidate satisfies the DN specification.
+
+            """
             match candidate:
                 case str() as dn_str:
                     return self._validate_dn_string(dn_str)
@@ -179,7 +224,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_dn_string(self, dn_str: str) -> bool:
-            """Validate DN string with length and pattern checks."""
+            """Validate DN string with length and pattern checks.
+
+            Returns:
+                bool: True if DN string is valid.
+
+            """
             match len(dn_str):
                 case length if length > FlextLdapConstants.Validation.MAX_FILTER_LENGTH:
                     return False
@@ -190,7 +240,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get detailed DN validation error."""
+            """Get detailed DN validation error.
+
+            Returns:
+                str: Detailed error message for DN validation failure.
+
+            """
             if not isinstance(candidate, str):
                 return "DN must be a string"
             if not candidate:
@@ -209,7 +264,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 pattern matching for password validation."""
+            """Check using Python 3.13 pattern matching for password validation.
+
+            Returns:
+                bool: True if candidate satisfies the password specification.
+
+            """
             match candidate:
                 case str() as password:
                     return self._validate_password_requirements(password)
@@ -217,7 +277,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_password_requirements(self, password: str) -> bool:
-            """Validate password using pattern matching for length and complexity."""
+            """Validate password using pattern matching for length and complexity.
+
+            Returns:
+                bool: True if password meets requirements.
+
+            """
             # Use pattern matching for length validation
             match len(password):
                 case length if (
@@ -232,7 +297,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return self._check_password_complexity(password)
 
         def _check_password_complexity(self, password: str) -> bool:
-            """Check password complexity using enhanced patterns."""
+            """Check password complexity using enhanced patterns.
+
+            Returns:
+                bool: True if password meets complexity requirements.
+
+            """
             match FlextLdapConstants.Validation.REQUIRE_PASSWORD_COMPLEXITY:
                 case False:
                     return True
@@ -240,7 +310,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return self._validate_complexity_rules(password)
 
         def _validate_complexity_rules(self, password: str) -> bool:
-            """Validate complexity rules using compiled patterns."""
+            """Validate complexity rules using compiled patterns.
+
+            Returns:
+                bool: True if password meets complexity rules.
+
+            """
             # Use compiled patterns for better performance
             patterns = {
                 "upper": re.compile(r"[A-Z]"),
@@ -505,7 +580,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "Only active users can delete other users",
                 )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def generate_username(
             self,
@@ -617,7 +692,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "User is already a member of this group",
                 )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def validate_group_creation(
             self,

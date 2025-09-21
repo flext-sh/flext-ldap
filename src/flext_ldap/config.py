@@ -203,7 +203,15 @@ class FlextLdapConfigs(FlextConfig):
     @field_validator("ldap_bind_dn")
     @classmethod
     def validate_bind_dn(cls, value: str | None) -> str | None:
-        """Validate bind DN format if provided."""
+        """Validate bind DN format if provided.
+
+        Returns:
+            str | None: The validated bind DN or None if not provided.
+
+        Raises:
+            ValueError: If the bind DN format is invalid.
+
+        """
         if value is None:
             return value
 
@@ -216,7 +224,15 @@ class FlextLdapConfigs(FlextConfig):
         return value
 
     def validate_configuration_consistency(self) -> Self:
-        """Validate configuration consistency and business rules."""
+        """Validate configuration consistency and business rules.
+
+        Returns:
+            Self: The validated configuration instance.
+
+        Raises:
+            ValueError: If configuration validation fails.
+
+        """
         # Validation 1: Connection configuration consistency
         if self.ldap_default_connection is None:
             # Create default connection if not provided
@@ -248,7 +264,12 @@ class FlextLdapConfigs(FlextConfig):
 
     @model_validator(mode="after")
     def _validate_configuration_consistency_model(self) -> FlextLdapConfigs:
-        """Pydantic model validator that calls the runtime validation method."""
+        """Pydantic model validator that calls the runtime validation method.
+
+        Returns:
+            FlextLdapConfigs: The validated configuration instance.
+
+        """
         return self.validate_configuration_consistency()
 
     # === SINGLETON PATTERN IMPLEMENTATION ===
@@ -273,6 +294,9 @@ class FlextLdapConfigs(FlextConfig):
 
         Args:
             config: New FlextConfig instance to set as global
+
+        Raises:
+            TypeError: If config is not a FlextLdapConfigs instance.
 
         """
         if not isinstance(config, FlextLdapConfigs):
@@ -699,7 +723,15 @@ class FlextLdapConfigs(FlextConfig):
         @field_validator("server")
         @classmethod
         def validate_server_uri(cls, v: str) -> str:
-            """Validate LDAP server URI format using FlextModels.Url validation."""
+            """Validate LDAP server URI format using FlextModels.Url validation.
+
+            Returns:
+                str: The validated server URI.
+
+            Raises:
+                ValueError: If the server URI format is invalid.
+
+            """
             if not v or not v.strip():
                 msg = "Server URI cannot be empty"
                 raise ValueError(msg)
@@ -727,7 +759,15 @@ class FlextLdapConfigs(FlextConfig):
         @field_validator("ca_cert_file", "client_cert_file", "client_key_file")
         @classmethod
         def validate_cert_files(cls, v: Path | None) -> Path | None:
-            """Validate certificate files using direct validation."""
+            """Validate certificate files using direct validation.
+
+            Returns:
+                Path | None: The validated certificate file path or None.
+
+            Raises:
+                ValueError: If the certificate file path is invalid.
+
+            """
             if v is None:
                 return v
 
@@ -745,7 +785,12 @@ class FlextLdapConfigs(FlextConfig):
             return v
 
         def get_server_uri(self) -> str:
-            """Get complete server URI including port if non-standard."""
+            """Get complete server URI including port if non-standard.
+
+            Returns:
+                str: The complete server URI with port.
+
+            """
             if ":" in self.server and not self.server.endswith(f":{self.port}"):
                 # Server already includes port
                 return self.server
