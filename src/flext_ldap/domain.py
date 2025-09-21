@@ -328,7 +328,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get detailed password validation error."""
+            """Get detailed password validation error.
+
+            Returns:
+                str: Detailed error message for password validation failure.
+
+            """
             if not isinstance(candidate, str):
                 return "Password must be a string"
             if len(candidate) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
@@ -349,7 +354,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check using Python 3.13 pattern matching for status validation."""
+            """Check using Python 3.13 pattern matching for status validation.
+
+            Returns:
+                bool: True if candidate satisfies the active user specification.
+
+            """
             match candidate:
                 case obj if hasattr(obj, "status"):
                     return self._validate_user_status(obj)
@@ -357,7 +367,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     return False
 
         def _validate_user_status(self, user: object) -> bool:
-            """Validate user status using pattern matching."""
+            """Validate user status using pattern matching.
+
+            Returns:
+                bool: True if user status is valid.
+
+            """
             status = getattr(user, "status", None)
 
             match status:
@@ -372,7 +387,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get user status validation error."""
+            """Get user status validation error.
+
+            Returns:
+                str: Detailed error message for user status validation failure.
+
+            """
             if not hasattr(candidate, "status"):
                 return "User must have a status field"
             status = getattr(candidate, "status", None)
@@ -390,7 +410,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check email validation using FlextModels.EmailAddress."""
+            """Check email validation using FlextModels.EmailAddress.
+
+            Returns:
+                bool: True if candidate satisfies the email specification.
+
+            """
             match candidate:
                 case str() as email_str if email_str.strip():
                     email_result = FlextModels.EmailAddress.create(email_str.strip())
@@ -400,7 +425,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get email validation error using FlextModels."""
+            """Get email validation error using FlextModels.
+
+            Returns:
+                str: Detailed error message for email validation failure.
+
+            """
             if not isinstance(candidate, str):
                 return "Email must be a string"
 
@@ -435,7 +465,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def is_satisfied_by(self, candidate: object) -> bool:
-            """Check if candidate satisfies all user validation rules."""
+            """Check if candidate satisfies all user validation rules.
+
+            Returns:
+                bool: True if candidate satisfies all user validation rules.
+
+            """
             return (
                 self._user_spec.is_satisfied_by(candidate)
                 and self._dn_spec.is_satisfied_by(getattr(candidate, "dn", ""))
@@ -444,7 +479,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @override
         def get_validation_error(self, candidate: object) -> str:
-            """Get first failing validation error."""
+            """Get first failing validation error.
+
+            Returns:
+                str: First validation error message encountered.
+
+            """
             if not self._user_spec.is_satisfied_by(candidate):
                 return self._user_spec.get_validation_error(candidate)
             if not self._dn_spec.is_satisfied_by(getattr(candidate, "dn", "")):
@@ -468,7 +508,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self._email_spec = FlextLdapDomain.EmailSpecification()
 
         def execute(self) -> FlextResult[FlextLdapModels.User]:
-            """Execute method required by FlextDomainService - CORRECTED signature."""
+            """Execute method required by FlextDomainService - CORRECTED signature.
+
+            Returns:
+                FlextResult[FlextLdapModels.User]: Success result with user model.
+
+            """
             return FlextResult.ok(
                 FlextLdapModels.User(
                     id="default_user",
@@ -487,7 +532,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate user creation business rules - explicit error handling."""
+            """Validate user creation business rules - explicit error handling.
+
+            Returns:
+                FlextResult[object]: Success if validation passes.
+
+            """
             # Direct call to validation chain - no try/except fallback
             # _perform_all_user_validations already returns FlextResult
             return self._perform_all_user_validations(user_data)
@@ -496,7 +546,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Perform all user validations and return first failure or success."""
+            """Perform all user validations and return first failure or success.
+
+            Returns:
+                FlextResult[object]: Success if all validations pass.
+
+            """
             # Chain all validations - stop at first failure
             validations = [
                 self._validate_required_fields,
@@ -516,7 +571,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate required user fields."""
+            """Validate required user fields.
+
+            Returns:
+                FlextResult[object]: Success if all required fields are present.
+
+            """
             required_fields = ["uid", "cn", "sn", "dn"]
             for field in required_fields:
                 if field not in user_data or not user_data[field]:
@@ -527,7 +587,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate DN field format."""
+            """Validate DN field format.
+
+            Returns:
+                FlextResult[object]: Success if DN field is valid.
+
+            """
             dn = str(user_data["dn"])
             if not self._user_spec.dn_spec.is_satisfied_by(dn):
                 return FlextResult[object].fail(
@@ -539,7 +604,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate email field using FlextModels - SOURCE OF TRUTH."""
+            """Validate email field using FlextModels - SOURCE OF TRUTH.
+
+            Returns:
+                FlextResult[object]: Success if email field is valid.
+
+            """
             if user_data.get("mail"):
                 email = str(user_data["mail"])
                 validation_result = FlextModels.create_validated_email(email)
@@ -553,7 +623,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate password field if provided."""
+            """Validate password field if provided.
+
+            Returns:
+                FlextResult[object]: Success if password field is valid.
+
+            """
             # Support both common password field names
             password_value = user_data.get("password") or user_data.get("user_password")
             if password_value:
@@ -648,7 +723,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self._dn_spec = FlextLdapDomain.DistinguishedNameSpecification()
 
         def execute(self) -> FlextResult[FlextLdapModels.Group]:
-            """Execute method required by FlextDomainService - CORRECTED signature."""
+            """Execute method required by FlextDomainService - CORRECTED signature.
+
+            Returns:
+                FlextResult[FlextLdapModels.Group]: Success result with group model.
+
+            """
             return FlextResult.ok(
                 FlextLdapModels.Group(
                     id="default_group",
@@ -725,7 +805,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self._password_spec = FlextLdapDomain.PasswordSpecification()
 
         def execute(self) -> FlextResult[str]:
-            """Execute method required by FlextDomainService - CORRECTED signature."""
+            """Execute method required by FlextDomainService - CORRECTED signature.
+
+            Returns:
+                FlextResult[str]: Success result with service status.
+
+            """
             return FlextResult.ok("Password service ready")
 
         def validate_password_change(
@@ -749,7 +834,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             return FlextResult[object].ok(None)
 
         def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
-            """Generate a secure password following business rules - explicit error handling."""
+            """Generate a secure password following business rules - explicit error handling.
+
+            Returns:
+                FlextResult[str]: Success result with generated password.
+
+            """
             # Validate parameters in single check
             validation_error = self._validate_password_length(length)
             if validation_error:
@@ -759,7 +849,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             return self._generate_password_with_retries(length)
 
         def _validate_password_length(self, length: int) -> str | None:
-            """Validate password length parameters - EXTRACTED METHOD."""
+            """Validate password length parameters - EXTRACTED METHOD.
+
+            Returns:
+                str | None: Error message if validation fails, None if valid.
+
+            """
             if length < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
                 return f"Password length must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH}"
             if length > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
@@ -767,7 +862,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             return None
 
         def _generate_password_with_retries(self, length: int) -> FlextResult[str]:
-            """Generate password with retry logic - EXTRACTED METHOD."""
+            """Generate password with retry logic - EXTRACTED METHOD.
+
+            Returns:
+                FlextResult[str]: Success result with generated password.
+
+            """
             chars = (
                 string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;'\",./<>?"
             )
@@ -825,7 +925,15 @@ class FlextLdapDomain(FlextMixins.Loggable):
         @field_validator("actor")
         @classmethod
         def validate_actor_format(cls, v: str) -> str:
-            """Validate actor follows proper format."""
+            """Validate actor follows proper format.
+
+            Returns:
+                str: Validated actor string.
+
+            Raises:
+                ValueError: If actor format is invalid.
+
+            """
             if not v.strip():
                 msg = "Actor cannot be empty or whitespace"
                 raise ValueError(msg)
@@ -1499,7 +1607,15 @@ class FlextLdapDomain(FlextMixins.Loggable):
             }
 
         def _create_user_entity(self, user_params: FlextTypes.Core.Dict) -> object:
-            """Create User entity using Python 3.13 pattern matching for validation."""
+            """Create User entity using Python 3.13 pattern matching for validation.
+
+            Returns:
+                object: Created user entity.
+
+            Raises:
+                ValueError: If required parameters are missing.
+
+            """
             # Validate required parameters using structural pattern matching
             match user_params:
                 case {"dn": str() as dn, "uid": str() as uid} if dn and uid:
@@ -1588,7 +1704,15 @@ class FlextLdapDomain(FlextMixins.Loggable):
             }
 
         def _create_group_entity(self, group_params: FlextTypes.Core.Dict) -> object:
-            """Create Group entity using Python 3.13 pattern matching for validation."""
+            """Create Group entity using Python 3.13 pattern matching for validation.
+
+            Returns:
+                object: Created group entity.
+
+            Raises:
+                ValueError: If required parameters are missing.
+
+            """
             # Validate required parameters using structural pattern matching
             match group_params:
                 case {"dn": str() as dn, "cn": str() as cn} if dn and cn:
