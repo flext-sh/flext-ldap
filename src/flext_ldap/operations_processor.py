@@ -9,27 +9,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from flext_core import FlextResult
-from flext_ldap.clients import FlextLdapClient
 from flext_ldap.connection_service import FlextLdapConnectionService
 from flext_ldap.group_service import FlextLdapGroupService
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.search_service import FlextLdapSearchService
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.user_service import FlextLdapUserService
 from flext_ldap.validations import FlextLdapValidations
 
-
-class LDAPOperationProcessor(Protocol):
-    """Protocol for LDAP operation processing."""
-
-    async def process(
-        self, operation_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Process LDAP operation with given data."""
-        ...
+if TYPE_CHECKING:
+    from flext_ldap.clients import FlextLdapClient
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapOperationsProcessor:
@@ -46,6 +38,16 @@ class FlextLdapOperationsProcessor:
         _search_service: Domain service for search operations.
 
     """
+
+    class _OperationProcessor(Protocol):
+        """Nested protocol for LDAP operation processing - unified class pattern."""
+
+        async def process(
+            self,
+            operation_data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Process LDAP operation with given data."""
+            ...
 
     def __init__(self, client: FlextLdapClient) -> None:
         """Initialize operations processor with domain services.
@@ -65,11 +67,16 @@ class FlextLdapOperationsProcessor:
     # Connection Operations Delegation
 
     async def connect(
-        self, server_uri: str, bind_dn: str, bind_password: str
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[str]:
         """Connect to LDAP server through connection service."""
         return await self._connection_service.connect(
-            server_uri, bind_dn, bind_password
+            server_uri,
+            bind_dn,
+            bind_password,
         )
 
     async def disconnect(self, session_id: str | None = None) -> FlextResult[None]:
@@ -77,19 +84,29 @@ class FlextLdapOperationsProcessor:
         return await self._connection_service.disconnect(session_id)
 
     async def test_connection(
-        self, server_uri: str, bind_dn: str, bind_password: str
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[bool]:
         """Test LDAP connection through connection service."""
         return await self._connection_service.test_connection(
-            server_uri, bind_dn, bind_password
+            server_uri,
+            bind_dn,
+            bind_password,
         )
 
     async def reconnect(
-        self, server_uri: str, bind_dn: str, bind_password: str
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[str]:
         """Reconnect to LDAP server through connection service."""
         return await self._connection_service.reconnect(
-            server_uri, bind_dn, bind_password
+            server_uri,
+            bind_dn,
+            bind_password,
         )
 
     def is_connected(self) -> FlextResult[bool]:
@@ -116,7 +133,11 @@ class FlextLdapOperationsProcessor:
     ) -> FlextResult[FlextLdapModels.User]:
         """Create user through user service."""
         return await self._user_service.create_user(
-            user_request_or_dn, uid, cn, sn, mail
+            user_request_or_dn,
+            uid,
+            cn,
+            sn,
+            mail,
         )
 
     async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
@@ -124,7 +145,9 @@ class FlextLdapOperationsProcessor:
         return await self._user_service.get_user(dn)
 
     async def update_user(
-        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+        self,
+        dn: str,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update user through user service."""
         return await self._user_service.update_user(dn, attributes)
@@ -141,7 +164,9 @@ class FlextLdapOperationsProcessor:
     ) -> FlextResult[list[FlextLdapModels.User]]:
         """Search users through user service."""
         return await self._user_service.search_users_by_filter(
-            filter_str, base_dn, scope
+            filter_str,
+            base_dn,
+            scope,
         )
 
     async def user_exists(self, dn: str) -> FlextResult[bool]:
@@ -149,7 +174,8 @@ class FlextLdapOperationsProcessor:
         return await self._user_service.user_exists(dn)
 
     async def batch_create_users(
-        self, user_requests: list[FlextLdapModels.CreateUserRequest]
+        self,
+        user_requests: list[FlextLdapModels.CreateUserRequest],
     ) -> FlextResult[list[FlextLdapModels.User]]:
         """Create multiple users through user service."""
         return await self._user_service.batch_create_users(user_requests)
@@ -159,7 +185,8 @@ class FlextLdapOperationsProcessor:
         return await self._user_service.batch_delete_users(dns)
 
     async def batch_get_users(
-        self, dns: list[str]
+        self,
+        dns: list[str],
     ) -> FlextResult[list[FlextLdapModels.User | None]]:
         """Get multiple users through user service."""
         return await self._user_service.batch_get_users(dns)
@@ -175,7 +202,10 @@ class FlextLdapOperationsProcessor:
     ) -> FlextResult[FlextLdapModels.Group]:
         """Create group through group service."""
         return await self._group_service.create_group(
-            group_request_or_dn, cn, description, member_dns
+            group_request_or_dn,
+            cn,
+            description,
+            member_dns,
         )
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
@@ -183,7 +213,9 @@ class FlextLdapOperationsProcessor:
         return await self._group_service.get_group(dn)
 
     async def update_group(
-        self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+        self,
+        dn: str,
+        attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
         """Update group through group service."""
         return await self._group_service.update_group(dn, attributes)
@@ -223,12 +255,12 @@ class FlextLdapOperationsProcessor:
         search_result = await self._search_service.search(search_request)
         if search_result.is_failure:
             return FlextResult[list[FlextLdapModels.Group]].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
         # Convert entries to groups manually since group service doesn't have this
         groups: list[FlextLdapModels.Group] = []
-        for entry in search_result.unwrap():
+        for entry in search_result.value:
             # Extract attributes for group creation
             cn_values = entry.attributes.get("cn", ["unknown"])
             cn_raw = cn_values[0] if cn_values else "unknown"
@@ -271,7 +303,8 @@ class FlextLdapOperationsProcessor:
         return await self._group_service.group_exists(dn)
 
     async def batch_create_groups(
-        self, group_requests: list[FlextLdapModels.CreateGroupRequest]
+        self,
+        group_requests: list[FlextLdapModels.CreateGroupRequest],
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Create multiple groups through group service."""
         return await self._group_service.batch_create_groups(group_requests)
@@ -283,13 +316,14 @@ class FlextLdapOperationsProcessor:
             result = await self.delete_group(dn)
             if result.is_failure:
                 return FlextResult[list[None]].fail(
-                    f"Group deletion failed: {result.error}"
+                    f"Group deletion failed: {result.error}",
                 )
-            results.append(result.unwrap())
+            results.append(result.value)
         return FlextResult[list[None]].ok(results)
 
     async def batch_get_groups(
-        self, dns: list[str]
+        self,
+        dns: list[str],
     ) -> FlextResult[list[FlextLdapModels.Group | None]]:
         """Get multiple groups through individual calls."""
         results: list[FlextLdapModels.Group | None] = []
@@ -297,19 +331,21 @@ class FlextLdapOperationsProcessor:
             result = await self.get_group(dn)
             if result.is_failure:
                 return FlextResult[list[FlextLdapModels.Group | None]].fail(
-                    f"Failed to get group {dn}: {result.error}"
+                    f"Failed to get group {dn}: {result.error}",
                 )
-            results.append(result.unwrap())
+            results.append(result.value)
         return FlextResult[list[FlextLdapModels.Group | None]].ok(results)
 
     async def batch_add_members(
-        self, operations: list[tuple[str, str]]
+        self,
+        operations: list[tuple[str, str]],
     ) -> FlextResult[list[None]]:
         """Add multiple members to groups through group service."""
         return await self._group_service.batch_add_members(operations)
 
     async def batch_remove_members(
-        self, operations: list[tuple[str, str]]
+        self,
+        operations: list[tuple[str, str]],
     ) -> FlextResult[list[None]]:
         """Remove multiple members from groups through group service."""
         return await self._group_service.batch_remove_members(operations)
@@ -317,7 +353,8 @@ class FlextLdapOperationsProcessor:
     # Search Operations Delegation
 
     async def search(
-        self, search_request: FlextLdapModels.SearchRequest
+        self,
+        search_request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute search through search service."""
         return await self._search_service.search(search_request)
@@ -332,7 +369,10 @@ class FlextLdapOperationsProcessor:
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute simple search through search service."""
         return await self._search_service.search_simple(
-            base_dn, search_filter, scope=scope, attributes=attributes
+            base_dn,
+            search_filter,
+            scope=scope,
+            attributes=attributes,
         )
 
     async def search_users(
@@ -363,7 +403,10 @@ class FlextLdapOperationsProcessor:
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Search by object class through search service."""
         return await self._search_service.search_by_object_class(
-            base_dn, object_class, scope, attributes
+            base_dn,
+            object_class,
+            scope,
+            attributes,
         )
 
     async def count_entries(
@@ -400,7 +443,9 @@ class FlextLdapOperationsProcessor:
     # Command Processing (simplified through domain service delegation)
 
     async def execute_command(
-        self, command_type: str, command_data: dict[str, object]
+        self,
+        command_type: str,
+        command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Execute LDAP command through appropriate domain service.
 
@@ -419,13 +464,14 @@ class FlextLdapOperationsProcessor:
             if command_type == "delete":
                 return await self._handle_delete_command(command_data)
             return FlextResult[dict[str, object]].fail(
-                f"Unknown command type: {command_type}"
+                f"Unknown command type: {command_type}",
             )
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Command execution error: {e}")
 
     async def _handle_connect_command(
-        self, command_data: dict[str, object]
+        self,
+        command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle connect command."""
         connect_result = await self.connect(
@@ -435,14 +481,13 @@ class FlextLdapOperationsProcessor:
         )
         if connect_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                connect_result.error or "Connection failed"
+                connect_result.error or "Connection failed",
             )
-        return FlextResult[dict[str, object]].ok({
-            "session_id": connect_result.unwrap()
-        })
+        return FlextResult[dict[str, object]].ok({"session_id": connect_result.value})
 
     async def _handle_search_command(
-        self, command_data: dict[str, object]
+        self,
+        command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle search command."""
         # Safely extract attributes
@@ -473,33 +518,37 @@ class FlextLdapOperationsProcessor:
         search_result = await self.search(search_request)
         if search_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
-        return FlextResult[dict[str, object]].ok({"entries": search_result.unwrap()})
+        return FlextResult[dict[str, object]].ok({"entries": search_result.value})
 
     async def _handle_add_command(
-        self, _command_data: dict[str, object]
+        self,
+        _command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle add command."""
         # Implementation would go here
         return FlextResult[dict[str, object]].fail("Add command not implemented")
 
     async def _handle_modify_command(
-        self, _command_data: dict[str, object]
+        self,
+        _command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle modify command."""
         # Implementation would go here
         return FlextResult[dict[str, object]].fail("Modify command not implemented")
 
     async def _handle_delete_command(
-        self, _command_data: dict[str, object]
+        self,
+        _command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle delete command."""
         # Implementation would go here
         return FlextResult[dict[str, object]].fail("Delete command not implemented")
 
     async def _handle_create_user_command(
-        self, command_data: dict[str, object]
+        self,
+        command_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Handle create user command."""
         # Safe type extraction
@@ -509,13 +558,14 @@ class FlextLdapOperationsProcessor:
         sn = command_data.get("sn")
         mail = command_data.get("mail")
         object_classes = command_data.get(
-            "object_classes", ["person", "organizationalPerson"]
+            "object_classes",
+            ["person", "organizationalPerson"],
         )
 
         # Type validation
         if not all(isinstance(val, str) for val in [dn, uid, cn, sn]):
             return FlextResult[dict[str, object]].fail(
-                "Missing required string fields for user creation"
+                "Missing required string fields for user creation",
             )
 
         if mail is not None and not isinstance(mail, str):
@@ -525,7 +575,7 @@ class FlextLdapOperationsProcessor:
             isinstance(cls, str) for cls in object_classes
         ):
             return FlextResult[dict[str, object]].fail(
-                "Object classes must be a list of strings"
+                "Object classes must be a list of strings",
             )
 
         user_request = FlextLdapModels.CreateUserRequest(
@@ -539,9 +589,9 @@ class FlextLdapOperationsProcessor:
         result = await self.create_user(user_request)
         if result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                result.error or "User creation failed"
+                result.error or "User creation failed",
             )
-        return FlextResult[dict[str, object]].ok({"user": result.unwrap()})
+        return FlextResult[dict[str, object]].ok({"user": result.value})
 
     # Property Accessors for Domain Services (for advanced usage)
     @property

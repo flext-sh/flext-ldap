@@ -21,11 +21,229 @@ from pydantic import (
 )
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextLogger, FlextModels, FlextResult
+from flext_core import (
+    FlextConfig,
+    FlextConstants,
+    FlextLogger,
+    FlextModels,
+    FlextResult,
+)
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
-# NO type aliases - use FlextLdapModels.ConnectionConfig directly
+
+class FlextLdapLoggingConstants:
+    """LDAP-specific logging constants for FLEXT LDAP module.
+
+    Provides domain-specific logging defaults, levels, and configuration
+    options tailored for LDAP operations, directory access, and LDAP
+    performance monitoring.
+    """
+
+    # LDAP-specific log levels
+    DEFAULT_LEVEL = FlextConstants.Config.LogLevel.WARNING
+    CONNECTION_LEVEL = FlextConstants.Config.LogLevel.INFO
+    QUERY_LEVEL = FlextConstants.Config.LogLevel.DEBUG
+    AUTHENTICATION_LEVEL = FlextConstants.Config.LogLevel.INFO
+    MODIFICATION_LEVEL = FlextConstants.Config.LogLevel.INFO
+    ERROR_LEVEL = FlextConstants.Config.LogLevel.ERROR
+
+    # Connection logging
+    LOG_CONNECTION_ATTEMPTS = True
+    LOG_CONNECTION_SUCCESS = True
+    LOG_CONNECTION_FAILURES = True
+    LOG_CONNECTION_CLOSURES = True
+    LOG_CONNECTION_POOL_EVENTS = True
+    LOG_CONNECTION_TIMEOUTS = True
+
+    # Query and search logging
+    LOG_SEARCH_OPERATIONS = True
+    LOG_SEARCH_FILTERS = False  # Don't log search filters by default (privacy)
+    LOG_SEARCH_RESULTS_COUNT = True
+    LOG_SEARCH_DURATION = True
+    LOG_LARGE_RESULT_SETS = True
+    LARGE_RESULT_SET_THRESHOLD = 1000
+
+    # Authentication logging
+    LOG_AUTHENTICATION_ATTEMPTS = True
+    LOG_AUTHENTICATION_SUCCESS = True
+    LOG_AUTHENTICATION_FAILURES = True
+    LOG_AUTHENTICATION_ERRORS = True
+    MASK_PASSWORDS = True
+    MASK_BIND_DN = False  # Log bind DN for debugging
+
+    # Modification logging
+    LOG_ADD_OPERATIONS = True
+    LOG_MODIFY_OPERATIONS = True
+    LOG_DELETE_OPERATIONS = True
+    LOG_MODIFY_ATTRIBUTES = False  # Don't log modified attributes by default (privacy)
+    LOG_MODIFY_VALUES = False  # Don't log modified values by default (privacy)
+
+    # Performance tracking
+    TRACK_LDAP_PERFORMANCE = True
+    LDAP_PERFORMANCE_THRESHOLD_WARNING = 1000.0  # 1 second
+    LDAP_PERFORMANCE_THRESHOLD_CRITICAL = 5000.0  # 5 seconds
+    TRACK_CONNECTION_POOL_USAGE = True
+    TRACK_QUERY_COMPLEXITY = True
+
+    # Error logging specifics
+    LOG_LDAP_ERRORS = True
+    LOG_VALIDATION_ERRORS = True
+    LOG_TIMEOUT_ERRORS = True
+    LOG_CONNECTION_ERRORS = True
+    LOG_QUERY_ERRORS = True
+
+    # Context information to include
+    INCLUDE_VALUES_IN_LOGS = False
+    INCLUDE_FILTERS_IN_LOGS = False
+    INCLUDE_CONTROLS_IN_LOGS = False
+    INCLUDE_TIMING_IN_LOGS = True
+    INCLUDE_CONNECTION_INFO_IN_LOGS = True
+    INCLUDE_USER_INFO_IN_LOGS = True
+    INCLUDE_SERVER_INFO_IN_LOGS = True
+    MASK_SENSITIVE_DATA = True
+    MASK_ATTRIBUTES = False
+    MASK_VALUES = True
+    USE_STANDARD_TEMPLATES = True
+    CUSTOM_LOG_FORMAT = ""
+    ENABLE_AUDIT_LOGGING = True
+    AUDIT_LOG_LEVEL = FlextConstants.Config.LogLevel.INFO
+    INCLUDE_CONNECTION_ID = True
+    INCLUDE_OPERATION_ID = True
+    INCLUDE_USER_DN = True
+    INCLUDE_BASE_DN = True
+    INCLUDE_SCOPE = True
+    INCLUDE_ATTRIBUTES = False  # Don't include attributes by default (privacy)
+
+    # Security logging
+    LOG_ACCESS_CONTROL_VIOLATIONS = True
+    LOG_PERMISSION_DENIED = True
+    LOG_SUSPICIOUS_QUERIES = True
+    LOG_BULK_OPERATIONS = True
+    BULK_OPERATION_THRESHOLD = 100
+
+    # Additional logging constants referenced in config
+    LOG_LDAP_QUERIES = True
+    LOG_LDAP_RESPONSES = True
+    STRUCTURED_LOGGING = True
+    LOG_CONNECTION_EVENTS = True
+    LOG_BIND_ATTEMPTS = True
+    LOG_SEARCH_RESULTS = True
+    LOG_COMPARE_OPERATIONS = True
+    LOG_LDAP_WARNINGS = True
+    LOG_LDAP_EXCEPTIONS = True
+    LOG_LDAP_TIMEOUTS = True
+    LOG_LDAP_RETRIES = True
+    LOG_LDAP_PERFORMANCE = True
+    LOG_LDAP_CONNECTIONS = True
+    LOG_LDAP_DISCONNECTIONS = True
+    LOG_LDAP_POOL_EVENTS = True
+    LOG_LDAP_CACHE_EVENTS = True
+    LOG_LDAP_SSL_EVENTS = True
+    LOG_LDAP_AUTHENTICATION = True
+    LOG_LDAP_AUTHORIZATION = True
+    LOG_LDAP_AUDIT = True
+    LOG_LDAP_SECURITY = True
+    LOG_LDAP_COMPLIANCE = True
+    ENVIRONMENT_SPECIFIC_LOGGING = True
+    AUDIT_LOG_FILE = "/var/log/flext-ldap/audit.log"
+    INCLUDE_DN_IN_LOGS = True
+    INCLUDE_ATTRIBUTES_IN_LOGS = False
+
+    # Message templates for LDAP operations
+    class Messages:
+        """LDAP-specific log message templates."""
+
+        # Connection messages
+        CONNECTION_ATTEMPT = "LDAP connection attempt to {server}:{port}"
+        CONNECTION_SUCCESS = "LDAP connection established to {server}:{port}"
+        CONNECTION_FAILED = "LDAP connection failed to {server}:{port}: {error}"
+        CONNECTION_CLOSED = "LDAP connection closed to {server}:{port}"
+        CONNECTION_TIMEOUT = "LDAP connection timeout to {server}:{port}"
+
+        # Authentication messages
+        AUTH_ATTEMPT = "LDAP authentication attempt for user: {user_dn}"
+        AUTH_SUCCESS = "LDAP authentication successful for user: {user_dn}"
+        AUTH_FAILED = "LDAP authentication failed for user: {user_dn}: {error}"
+        AUTH_ERROR = "LDAP authentication error for user: {user_dn}: {error}"
+
+        # Search messages
+        SEARCH_STARTED = (
+            "LDAP search started: base={base_dn} scope={scope} filter={filter}"
+        )
+        SEARCH_COMPLETED = (
+            "LDAP search completed: {result_count} results in {duration}ms"
+        )
+        SEARCH_FAILED = "LDAP search failed: {error}"
+        LARGE_RESULT_SET = (
+            "LDAP search returned large result set: {result_count} results"
+        )
+
+        # Modification messages
+        ADD_OPERATION = "LDAP add operation: dn={dn}"
+        ADD_SUCCESS = "LDAP add successful: dn={dn}"
+        ADD_FAILED = "LDAP add failed: dn={dn} error: {error}"
+
+        MODIFY_OPERATION = "LDAP modify operation: dn={dn}"
+        MODIFY_SUCCESS = "LDAP modify successful: dn={dn}"
+        MODIFY_FAILED = "LDAP modify failed: dn={dn} error: {error}"
+
+        DELETE_OPERATION = "LDAP delete operation: dn={dn}"
+        DELETE_SUCCESS = "LDAP delete successful: dn={dn}"
+        DELETE_FAILED = "LDAP delete failed: dn={dn} error: {error}"
+
+        # Performance messages
+        SLOW_OPERATION = "Slow LDAP operation: {operation} took {duration}ms"
+        SLOW_SEARCH = "Slow LDAP search: {filter} took {duration}ms"
+        HIGH_CONNECTION_USAGE = "High LDAP connection pool usage: {used}/{total}"
+
+        # Error messages
+        LDAP_ERROR = "LDAP error: {error_code} {error_message}"
+        VALIDATION_ERROR = "LDAP validation error: {field} {error}"
+        TIMEOUT_ERROR = "LDAP timeout error: {operation} exceeded {timeout}ms"
+        CONNECTION_ERROR = "LDAP connection error: {error}"
+
+        # Security messages
+        ACCESS_DENIED = "LDAP access denied: {user_dn} {operation} {dn}"
+        PERMISSION_DENIED = "LDAP permission denied: {user_dn} {operation}"
+        SUSPICIOUS_QUERY = "Suspicious LDAP query: {user_dn} {filter}"
+        BULK_OPERATION = "LDAP bulk operation detected: {operation} {count} entries"
+
+    # Environment-specific overrides for LDAP logging
+    class Environment:
+        """Environment-specific LDAP logging configuration."""
+
+        DEVELOPMENT: ClassVar[dict[str, object]] = {
+            "log_search_filters": True,  # Log search filters in dev
+            "log_modify_attributes": True,  # Log modified attributes in dev
+            "log_modify_values": True,  # Log modified values in dev
+            "include_attributes": True,  # Include attributes in dev
+            "audit_log_level": FlextConstants.Config.LogLevel.DEBUG,
+        }
+
+        STAGING: ClassVar[dict[str, object]] = {
+            "log_search_filters": False,
+            "log_modify_attributes": False,
+            "log_modify_values": False,
+            "include_attributes": False,
+            "audit_log_level": FlextConstants.Config.LogLevel.INFO,
+        }
+
+        PRODUCTION: ClassVar[dict[str, object]] = {
+            "log_search_filters": False,
+            "log_modify_attributes": False,
+            "log_modify_values": False,
+            "include_attributes": False,
+            "audit_log_level": FlextConstants.Config.LogLevel.WARNING,
+        }
+
+        TESTING: ClassVar[dict[str, object]] = {
+            "log_search_filters": True,
+            "log_modify_attributes": True,
+            "log_modify_values": True,
+            "include_attributes": True,
+            "audit_log_level": FlextConstants.Config.LogLevel.DEBUG,
+        }
 
 
 @final
@@ -112,82 +330,335 @@ class FlextLdapConfigs(FlextConfig):
         description="Enable debug mode for LDAP operations",
         alias="debug",
     )
+    # Debug and logging - using FlextLdapLoggingConstants as SOURCE OF TRUTH
     ldap_log_queries: bool = Field(
-        default=False,
+        default=FlextLdapLoggingConstants.LOG_LDAP_QUERIES,
         description="Log LDAP queries",
         alias="log_queries",
     )
     ldap_log_responses: bool = Field(
-        default=False,
+        default=FlextLdapLoggingConstants.LOG_LDAP_RESPONSES,
         description="Log LDAP responses",
         alias="log_responses",
     )
     ldap_structured_logging: bool = Field(
-        default=True,
+        default=FlextLdapLoggingConstants.STRUCTURED_LOGGING,
         description="Use structured logging for LDAP operations",
         alias="structured_logging",
     )
 
-    # Caching
+    # Additional LDAP-specific logging fields using FlextLdapLoggingConstants
+    log_connection_events: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_CONNECTION_EVENTS,
+        description="Log LDAP connection events",
+    )
+
+    log_bind_attempts: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_BIND_ATTEMPTS,
+        description="Log LDAP bind attempts",
+    )
+
+    log_search_operations: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_SEARCH_OPERATIONS,
+        description="Log LDAP search operations",
+    )
+
+    log_search_filters: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_SEARCH_FILTERS,
+        description="Log LDAP search filters",
+    )
+
+    log_search_results: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_SEARCH_RESULTS,
+        description="Log LDAP search results",
+    )
+
+    log_modify_operations: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_MODIFY_OPERATIONS,
+        description="Log LDAP modify operations",
+    )
+
+    log_modify_attributes: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_MODIFY_ATTRIBUTES,
+        description="Log modified attributes",
+    )
+
+    log_modify_values: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_MODIFY_VALUES,
+        description="Log modified values",
+    )
+
+    log_add_operations: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_ADD_OPERATIONS,
+        description="Log LDAP add operations",
+    )
+
+    log_delete_operations: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_DELETE_OPERATIONS,
+        description="Log LDAP delete operations",
+    )
+
+    log_compare_operations: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_COMPARE_OPERATIONS,
+        description="Log LDAP compare operations",
+    )
+
+    log_ldap_errors: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_ERRORS,
+        description="Log LDAP errors",
+    )
+
+    log_ldap_warnings: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_WARNINGS,
+        description="Log LDAP warnings",
+    )
+
+    log_ldap_exceptions: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_EXCEPTIONS,
+        description="Log LDAP exceptions",
+    )
+
+    log_ldap_timeouts: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_TIMEOUTS,
+        description="Log LDAP timeouts",
+    )
+
+    log_ldap_retries: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_RETRIES,
+        description="Log LDAP retry attempts",
+    )
+
+    log_ldap_performance: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_PERFORMANCE,
+        description="Log LDAP performance metrics",
+    )
+
+    log_ldap_connections: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_CONNECTIONS,
+        description="Log LDAP connection details",
+    )
+
+    log_ldap_disconnections: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_DISCONNECTIONS,
+        description="Log LDAP disconnection events",
+    )
+
+    log_ldap_pool_events: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_POOL_EVENTS,
+        description="Log LDAP connection pool events",
+    )
+
+    log_ldap_cache_events: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_CACHE_EVENTS,
+        description="Log LDAP cache events",
+    )
+
+    log_ldap_ssl_events: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_SSL_EVENTS,
+        description="Log LDAP SSL/TLS events",
+    )
+
+    log_ldap_authentication: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_AUTHENTICATION,
+        description="Log LDAP authentication events",
+    )
+
+    log_ldap_authorization: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_AUTHORIZATION,
+        description="Log LDAP authorization events",
+    )
+
+    log_ldap_audit: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_AUDIT,
+        description="Log LDAP audit events",
+    )
+
+    log_ldap_security: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_SECURITY,
+        description="Log LDAP security events",
+    )
+
+    log_ldap_compliance: bool = Field(
+        default=FlextLdapLoggingConstants.LOG_LDAP_COMPLIANCE,
+        description="Log LDAP compliance events",
+    )
+
+    # Performance tracking for LDAP operations
+    track_ldap_performance: bool = Field(
+        default=FlextLdapLoggingConstants.TRACK_LDAP_PERFORMANCE,
+        description="Track LDAP performance metrics",
+    )
+
+    ldap_performance_threshold_warning: float = Field(
+        default=FlextLdapLoggingConstants.LDAP_PERFORMANCE_THRESHOLD_WARNING,
+        description="LDAP performance warning threshold in milliseconds",
+    )
+
+    ldap_performance_threshold_critical: float = Field(
+        default=FlextLdapLoggingConstants.LDAP_PERFORMANCE_THRESHOLD_CRITICAL,
+        description="LDAP performance critical threshold in milliseconds",
+    )
+
+    # Context information to include in logs
+    include_dn_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_DN_IN_LOGS,
+        description="Include DN in log messages",
+    )
+
+    include_attributes_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_ATTRIBUTES_IN_LOGS,
+        description="Include attributes in log messages",
+    )
+
+    include_values_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_VALUES_IN_LOGS,
+        description="Include values in log messages",
+    )
+
+    include_filters_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_FILTERS_IN_LOGS,
+        description="Include filters in log messages",
+    )
+
+    include_controls_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_CONTROLS_IN_LOGS,
+        description="Include controls in log messages",
+    )
+
+    include_timing_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_TIMING_IN_LOGS,
+        description="Include timing information in log messages",
+    )
+
+    include_connection_info_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_CONNECTION_INFO_IN_LOGS,
+        description="Include connection information in log messages",
+    )
+
+    include_user_info_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_USER_INFO_IN_LOGS,
+        description="Include user information in log messages",
+    )
+
+    include_server_info_in_logs: bool = Field(
+        default=FlextLdapLoggingConstants.INCLUDE_SERVER_INFO_IN_LOGS,
+        description="Include server information in log messages",
+    )
+
+    # Security and privacy settings
+    mask_sensitive_data: bool = Field(
+        default=FlextLdapLoggingConstants.MASK_SENSITIVE_DATA,
+        description="Mask sensitive data in logs",
+    )
+
+    mask_passwords: bool = Field(
+        default=FlextLdapLoggingConstants.MASK_PASSWORDS,
+        description="Mask passwords in logs",
+    )
+
+    mask_attributes: bool = Field(
+        default=FlextLdapLoggingConstants.MASK_ATTRIBUTES,
+        description="Mask sensitive attributes in logs",
+    )
+
+    mask_values: bool = Field(
+        default=FlextLdapLoggingConstants.MASK_VALUES,
+        description="Mask sensitive values in logs",
+    )
+
+    # Log message templates
+    use_standard_templates: bool = Field(
+        default=FlextLdapLoggingConstants.USE_STANDARD_TEMPLATES,
+        description="Use standard log message templates",
+    )
+
+    custom_log_format: str | None = Field(
+        default=FlextLdapLoggingConstants.CUSTOM_LOG_FORMAT,
+        description="Custom log message format",
+    )
+
+    # Audit logging
+    enable_audit_logging: bool = Field(
+        default=FlextLdapLoggingConstants.ENABLE_AUDIT_LOGGING,
+        description="Enable audit logging",
+    )
+
+    audit_log_level: str = Field(
+        default=FlextLdapLoggingConstants.AUDIT_LOG_LEVEL,
+        description="Audit log level",
+    )
+
+    audit_log_file: str = Field(
+        default=FlextLdapLoggingConstants.AUDIT_LOG_FILE,
+        description="Audit log file path",
+    )
+
+    # Environment-specific logging
+    environment_specific_logging: bool = Field(
+        default=FlextLdapLoggingConstants.ENVIRONMENT_SPECIFIC_LOGGING,
+        description="Enable environment-specific logging",
+    )
+
+    # Caching - using FlextConstants as SOURCE OF TRUTH
     ldap_enable_caching: bool = Field(
-        default=False,
+        default=False,  # Keep as False for LDAP safety
         description="Enable caching for LDAP operations",
         alias="enable_caching",
     )
     ldap_cache_ttl: int = Field(
-        default=300,
+        default=FlextConstants.Defaults.TIMEOUT * 10,  # 300 seconds
         description="Cache time-to-live in seconds",
         alias="cache_ttl",
         ge=0,
     )
 
     # === LDAP OPERATION LIMITS ===
-    # Search limits
+    # Search limits - using FlextConstants as SOURCE OF TRUTH
     ldap_size_limit: int = Field(
-        default=1000,
+        default=FlextConstants.Defaults.PAGE_SIZE * 10,  # 1000
         description="Maximum number of entries to return in search",
         alias="size_limit",
         ge=0,
     )
     ldap_time_limit: int = Field(
-        default=30,
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
         description="Maximum time in seconds for search operations",
         alias="time_limit",
         ge=0,
     )
     ldap_page_size: int = Field(
-        default=100,
+        default=FlextConstants.Defaults.PAGE_SIZE,
         description="Page size for paged searches",
         alias="page_size",
         ge=1,
         le=1000,
     )
 
-    # Connection pool settings
+    # Connection pool settings - using FlextConstants as SOURCE OF TRUTH
     ldap_pool_size: int = Field(
-        default=10,
+        default=FlextConstants.Container.DEFAULT_WORKERS * 5,  # 10
         description="Maximum number of connections in pool",
         alias="pool_size",
         ge=1,
         le=100,
     )
     ldap_pool_timeout: int = Field(
-        default=30,
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
         description="Timeout for getting connection from pool (seconds)",
         alias="pool_timeout",
         ge=1,
     )
 
-    # Retry configuration
+    # Retry configuration - using FlextConstants as SOURCE OF TRUTH
     ldap_retry_attempts: int = Field(
-        default=3,
+        default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         description="Number of retry attempts for failed operations",
         alias="retry_attempts",
         ge=0,
         le=10,
     )
     ldap_retry_delay: int = Field(
-        default=1,
+        default=1,  # Keep as 1 second for LDAP responsiveness
         description="Delay between retry attempts (seconds)",
         alias="retry_delay",
         ge=0,
@@ -223,6 +694,7 @@ class FlextLdapConfigs(FlextConfig):
 
         return value
 
+    @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
         """Validate configuration consistency and business rules.
 
@@ -261,16 +733,6 @@ class FlextLdapConfigs(FlextConfig):
             raise ValueError(msg)
 
         return self
-
-    @model_validator(mode="after")
-    def _validate_configuration_consistency_model(self) -> FlextLdapConfigs:
-        """Pydantic model validator that calls the runtime validation method.
-
-        Returns:
-            FlextLdapConfigs: The validated configuration instance.
-
-        """
-        return self.validate_configuration_consistency()
 
     # === SINGLETON PATTERN IMPLEMENTATION ===
     @classmethod
@@ -603,6 +1065,55 @@ class FlextLdapConfigs(FlextConfig):
             "log_responses": self.ldap_log_responses,
             "structured_logging": self.ldap_structured_logging,
             "enable_debug": self.ldap_enable_debug,
+            "log_connection_events": self.log_connection_events,
+            "log_bind_attempts": self.log_bind_attempts,
+            "log_search_operations": self.log_search_operations,
+            "log_search_filters": self.log_search_filters,
+            "log_search_results": self.log_search_results,
+            "log_modify_operations": self.log_modify_operations,
+            "log_modify_attributes": self.log_modify_attributes,
+            "log_modify_values": self.log_modify_values,
+            "log_add_operations": self.log_add_operations,
+            "log_delete_operations": self.log_delete_operations,
+            "log_compare_operations": self.log_compare_operations,
+            "log_ldap_errors": self.log_ldap_errors,
+            "log_ldap_warnings": self.log_ldap_warnings,
+            "log_ldap_exceptions": self.log_ldap_exceptions,
+            "log_ldap_timeouts": self.log_ldap_timeouts,
+            "log_ldap_retries": self.log_ldap_retries,
+            "log_ldap_performance": self.log_ldap_performance,
+            "log_ldap_connections": self.log_ldap_connections,
+            "log_ldap_disconnections": self.log_ldap_disconnections,
+            "log_ldap_pool_events": self.log_ldap_pool_events,
+            "log_ldap_cache_events": self.log_ldap_cache_events,
+            "log_ldap_ssl_events": self.log_ldap_ssl_events,
+            "log_ldap_authentication": self.log_ldap_authentication,
+            "log_ldap_authorization": self.log_ldap_authorization,
+            "log_ldap_audit": self.log_ldap_audit,
+            "log_ldap_security": self.log_ldap_security,
+            "log_ldap_compliance": self.log_ldap_compliance,
+            "track_ldap_performance": self.track_ldap_performance,
+            "ldap_performance_threshold_warning": self.ldap_performance_threshold_warning,
+            "ldap_performance_threshold_critical": self.ldap_performance_threshold_critical,
+            "include_dn_in_logs": self.include_dn_in_logs,
+            "include_attributes_in_logs": self.include_attributes_in_logs,
+            "include_values_in_logs": self.include_values_in_logs,
+            "include_filters_in_logs": self.include_filters_in_logs,
+            "include_controls_in_logs": self.include_controls_in_logs,
+            "include_timing_in_logs": self.include_timing_in_logs,
+            "include_connection_info_in_logs": self.include_connection_info_in_logs,
+            "include_user_info_in_logs": self.include_user_info_in_logs,
+            "include_server_info_in_logs": self.include_server_info_in_logs,
+            "mask_sensitive_data": self.mask_sensitive_data,
+            "mask_passwords": self.mask_passwords,
+            "mask_attributes": self.mask_attributes,
+            "mask_values": self.mask_values,
+            "use_standard_templates": self.use_standard_templates,
+            "custom_log_format": self.custom_log_format,
+            "enable_audit_logging": self.enable_audit_logging,
+            "audit_log_level": self.audit_log_level,
+            "audit_log_file": self.audit_log_file,
+            "environment_specific_logging": self.environment_specific_logging,
         }
 
     def get_effective_connection(self) -> Types.ConfigDict | None:
@@ -748,8 +1259,8 @@ class FlextLdapConfigs(FlextConfig):
                 msg = "LDAP URI must start with 'ldap://' or 'ldaps://'"
                 raise ValueError(msg)
 
-            # Use FlextModels.Url for comprehensive validation
-            url_result = FlextModels.Url.create(temp_url)
+            # Use FlextModels.create_validated_url for comprehensive validation
+            url_result = FlextModels.create_validated_url(temp_url)
             if url_result.is_failure:
                 msg = f"Invalid LDAP URI format: {url_result.error}"
                 raise ValueError(msg)
@@ -821,9 +1332,9 @@ class FlextLdapConfigs(FlextConfig):
                         "SSL verification enabled but no CA certificate file specified",
                     )
 
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
             except Exception as e:
-                return FlextResult.fail(f"Configuration validation failed: {e}")
+                return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
 
 # Removed backward compatibility alias - use FlextLdapConfigs directly

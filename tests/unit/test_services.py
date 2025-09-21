@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -18,7 +18,9 @@ from flext_ldap import (
 )
 from flext_ldap.config import FlextLdapConfigs
 from flext_ldap.dispatcher import FlextLdapDispatcher
-from flext_ldap.typings import FlextLdapTypes
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class TestFlextLdapApiComprehensive:
@@ -285,7 +287,7 @@ class TestFlextLdapApiComprehensive:
         # Mock client to simulate failure
         mock_client = Mock()
         mock_client.search_with_request = AsyncMock(
-            return_value=FlextResult.fail("Client connection failed")
+            return_value=FlextResult.fail("Client connection failed"),
         )
 
         with patch.object(service, "_client", mock_client):
@@ -783,7 +785,7 @@ class TestFlextLdapApiComprehensive:
         # Mock client search to return empty response
         mock_client = Mock()
         mock_client.search_with_request = AsyncMock(
-            return_value=FlextResult.ok(mock_response)
+            return_value=FlextResult.ok(mock_response),
         )
 
         with patch.object(service, "_client", mock_client):
@@ -816,7 +818,7 @@ class TestFlextLdapApiComprehensive:
         # Mock client search to return successful response
         mock_client = Mock()
         mock_client.search_with_request = AsyncMock(
-            return_value=FlextResult.ok(mock_response)
+            return_value=FlextResult.ok(mock_response),
         )
 
         with patch.object(service, "_client", mock_client):
@@ -865,7 +867,7 @@ class TestFlextLdapApiComprehensive:
         # Mock client with failing modify
         mock_client = Mock()
         mock_client.modify_entry = AsyncMock(
-            return_value=FlextResult[None].fail("Modify failed")
+            return_value=FlextResult[None].fail("Modify failed"),
         )
 
         with patch.object(service, "_client", mock_client):
@@ -875,7 +877,8 @@ class TestFlextLdapApiComprehensive:
             assert not result.is_success
             assert "Failed to update user" in result.error
             mock_client.modify_entry.assert_called_once_with(
-                "cn=test,dc=test", {"cn": ["Test"]}
+                "cn=test,dc=test",
+                {"cn": ["Test"]},
             )
 
     @pytest.mark.asyncio
@@ -894,5 +897,6 @@ class TestFlextLdapApiComprehensive:
             assert result.is_success
             assert result.data is None
             mock_client.modify_entry.assert_called_once_with(
-                "cn=test,dc=test", {"cn": ["Test"]}
+                "cn=test,dc=test",
+                {"cn": ["Test"]},
             )

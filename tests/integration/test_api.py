@@ -9,19 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 import pytest
 
-from flext_core import FlextTypes
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapClient,
     FlextLdapContainer,
     FlextLdapModels,
 )
-from flext_ldap.typings import FlextLdapTypes
+
+if TYPE_CHECKING:
+    from flext_core import FlextTypes
+    from flext_ldap.typings import FlextLdapTypes
 
 
 # Helper function to replace create_ldap_attributes
@@ -523,7 +525,7 @@ class TestLdapValidationRealOperations:
 
         for invalid_dn in invalid_dns:
             dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create(
-                invalid_dn
+                invalid_dn,
             )
             if not dn_result.is_success:
                 # Validation correctly rejected invalid DN

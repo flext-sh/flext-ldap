@@ -46,7 +46,7 @@ class LdapTestServer:
             await self.stop()
 
             # Start new container
-            logger.info(f"Starting LDAP test server on port {self.port}")
+            logger.info("Starting LDAP test server on port %s", self.port)
 
             self._container = self.docker_client.containers.run(
                 image="osixia/openldap:1.5.0",
@@ -94,7 +94,7 @@ class LdapTestServer:
             # Try to find existing container
             try:
                 container = self.docker_client.containers.get(self.container_name)
-                logger.info(f"Stopping existing container: {self.container_name}")
+                logger.info("Stopping existing container: %s", self.container_name)
                 container.stop()
                 container.remove()
                 logger.info("Existing container stopped and removed")
@@ -140,18 +140,18 @@ class LdapTestServer:
 
                         conn.unbind()
                         logger.info("LDAP server is ready")
-                        return True
-
                     except Exception as e:
-                        logger.debug(f"LDAP server not ready yet: {e}")
+                        logger.debug("LDAP server not ready yet: %s", e)
                         await asyncio.sleep(2)
+                    else:
+                        return True
 
         except TimeoutError:
             logger.exception("LDAP server failed to become ready within timeout")
             return False
 
     async def setup_test_data(self) -> FlextResult[bool]:
-        """Setup initial test data in LDAP server."""
+        """Set up initial test data in LDAP server."""
         try:
             # ldap3 and test_data already imported at top
 
@@ -177,9 +177,9 @@ class LdapTestServer:
                         cast("str", ou_data["dn"]),
                         attributes=cast("dict[str, object]", ou_data["attributes"]),
                     )
-                    logger.debug(f"Created OU: {ou_data['dn']}")
+                    logger.debug("Created OU: %s", ou_data["dn"])
                 except Exception as e:
-                    logger.debug(f"Failed to create OU {ou_data['dn']}: {e}")
+                    logger.debug("Failed to create OU %s: %s", ou_data["dn"], e)
 
             # Create test users
             for user_data in TEST_USERS:
@@ -188,9 +188,9 @@ class LdapTestServer:
                         cast("str", user_data["dn"]),
                         attributes=cast("dict[str, object]", user_data["attributes"]),
                     )
-                    logger.debug(f"Created user: {user_data['dn']}")
+                    logger.debug("Created user: %s", user_data["dn"])
                 except Exception as e:
-                    logger.debug(f"Failed to create user {user_data['dn']}: {e}")
+                    logger.debug("Failed to create user %s: %s", user_data["dn"], e)
 
             # Create test groups
             for group_data in TEST_GROUPS:
@@ -199,9 +199,9 @@ class LdapTestServer:
                         cast("str", group_data["dn"]),
                         attributes=cast("dict[str, object]", group_data["attributes"]),
                     )
-                    logger.debug(f"Created group: {group_data['dn']}")
+                    logger.debug("Created group: %s", group_data["dn"])
                 except Exception as e:
-                    logger.debug(f"Failed to create group {group_data['dn']}: {e}")
+                    logger.debug("Failed to create group %s: %s", group_data["dn"], e)
 
             conn.unbind()
             logger.info("Test data setup completed")
@@ -268,10 +268,10 @@ async def wait_for_ldap_server(
                     )
 
                     conn.unbind()
-                    return True
-
                 except Exception:
                     await asyncio.sleep(2)
+                else:
+                    return True
 
     except TimeoutError:
         return False

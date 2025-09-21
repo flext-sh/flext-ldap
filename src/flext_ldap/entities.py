@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -24,8 +25,10 @@ from flext_core import (
     FlextModels,
 )
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapEntities(FlextModels):
@@ -96,7 +99,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate Distinguished Name format using centralized validation."""
+            """Validate Distinguished Name format using centralized validation.
+
+            Returns:
+                str: Validated DN.
+
+            Raises:
+                ValueError: If DN validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -105,7 +116,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("object_classes")
         @classmethod
         def validate_object_classes(cls, v: list[str]) -> list[str]:
-            """Validate object classes."""
+            """Validate object classes.
+
+            Returns:
+                list[str]: Validated object classes.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if not v:
                 msg = "At least one object class is required"
                 raise ValueError(msg)
@@ -115,7 +134,12 @@ class FlextLdapEntities(FlextModels):
             self,
             name: str,
         ) -> FlextLdapTypes.Entry.AttributeValue | None:
-            """Get attribute value by name."""
+            """Get attribute value by name.
+
+            Returns:
+                FlextLdapTypes.Entry.AttributeValue | None: Attribute value or None.
+
+            """
             return self.additional_attributes.get(name)
 
         def set_attribute(
@@ -127,11 +151,21 @@ class FlextLdapEntities(FlextModels):
             self.additional_attributes[name] = value
 
         def get_rdn(self) -> str:
-            """Extract Relative Distinguished Name (first component)."""
+            """Extract Relative Distinguished Name (first component).
+
+            Returns:
+                str: Relative Distinguished Name.
+
+            """
             return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         def get_parent_dn(self) -> str | None:
-            """Extract parent DN."""
+            """Extract parent DN.
+
+            Returns:
+                str | None: Parent DN or None if no parent.
+
+            """
             parts = self.dn.split(",", 1)
             return parts[1] if len(parts) > 1 else None
 
@@ -186,7 +220,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate Distinguished Name format using centralized validation."""
+            """Validate Distinguished Name format using centralized validation.
+
+            Returns:
+                str: Validated DN.
+
+            Raises:
+                ValueError: If DN validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -203,7 +245,12 @@ class FlextLdapEntities(FlextModels):
                 self.member_dns.remove(member_dn)
 
         def has_member(self, member_dn: str) -> bool:
-            """Check if DN is a member of this group."""
+            """Check if DN is a member of this group.
+
+            Returns:
+                bool: True if member exists in group.
+
+            """
             return member_dn in self.member_dns or member_dn in self.unique_member_dns
 
     class Entry(BaseModel):
@@ -244,7 +291,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate Distinguished Name format using centralized validation."""
+            """Validate Distinguished Name format using centralized validation.
+
+            Returns:
+                str: Validated DN.
+
+            Raises:
+                ValueError: If DN validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -254,7 +309,12 @@ class FlextLdapEntities(FlextModels):
             self,
             name: str,
         ) -> FlextLdapTypes.Entry.AttributeValue | None:
-            """Get attribute value by name."""
+            """Get attribute value by name.
+
+            Returns:
+                FlextLdapTypes.Entry.AttributeValue | None: Attribute value or None.
+
+            """
             return self.attributes.get(name)
 
         def set_attribute(
@@ -266,11 +326,21 @@ class FlextLdapEntities(FlextModels):
             self.attributes[name] = value
 
         def has_attribute(self, name: str) -> bool:
-            """Check if attribute exists."""
+            """Check if attribute exists.
+
+            Returns:
+                bool: True if attribute exists.
+
+            """
             return name in self.attributes
 
         def get_rdn(self) -> str:
-            """Extract Relative Distinguished Name."""
+            """Extract Relative Distinguished Name.
+
+            Returns:
+                str: Relative Distinguished Name.
+
+            """
             return self.dn.split(",")[0] if "," in self.dn else self.dn
 
     # =========================================================================
@@ -338,7 +408,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("base_dn")
         @classmethod
         def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN format."""
+            """Validate base DN format.
+
+            Returns:
+                str: Validated base DN.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if not v or not v.strip():
                 msg = "Base DN cannot be empty"
                 raise ValueError(msg)
@@ -347,7 +425,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("filter")
         @classmethod
         def validate_filter(cls, v: str) -> str:
-            """Validate LDAP filter format using centralized validation."""
+            """Validate LDAP filter format using centralized validation.
+
+            Returns:
+                str: Validated filter.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_filter(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -364,7 +450,12 @@ class FlextLdapEntities(FlextModels):
             base_dn: str = "ou=users,dc=example,dc=com",
             attributes: list[str] | None = None,
         ) -> FlextLdapEntities.SearchRequest:
-            """Factory method for user search."""
+            """Create search request for user.
+
+            Returns:
+                FlextLdapEntities.SearchRequest: Search request for user.
+
+            """
             # Use model_validate to avoid positional/keyword check issues and
             # to make construction explicit for Pydantic v2
             return cls.model_validate(
@@ -384,7 +475,12 @@ class FlextLdapEntities(FlextModels):
             base_dn: str = "ou=groups,dc=example,dc=com",
             attributes: list[str] | None = None,
         ) -> FlextLdapEntities.SearchRequest:
-            """Factory method for group search."""
+            """Create search request for group.
+
+            Returns:
+                FlextLdapEntities.SearchRequest: Search request for group.
+
+            """
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
@@ -426,7 +522,12 @@ class FlextLdapEntities(FlextModels):
         @field_validator("entries_returned", mode="before")
         @classmethod
         def set_entries_returned(cls, v: int, info: ValidationInfo) -> int:
-            """Auto-calculate entries returned from entries list."""
+            """Auto-calculate entries returned from entries list.
+
+            Returns:
+                int: Number of entries returned.
+
+            """
             if info.data and "entries" in info.data:
                 entries = info.data["entries"]
                 return len(entries) if isinstance(entries, list) else 0
@@ -473,7 +574,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate Distinguished Name format using centralized validation."""
+            """Validate Distinguished Name format using centralized validation.
+
+            Returns:
+                str: Validated DN.
+
+            Raises:
+                ValueError: If DN validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -482,14 +591,27 @@ class FlextLdapEntities(FlextModels):
         @field_validator("uid", "cn", "sn")
         @classmethod
         def validate_required_string(cls, v: str) -> str:
-            """Validate required string fields."""
+            """Validate required string fields.
+
+            Returns:
+                str: Validated string.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if not v or not v.strip():
                 msg = "Required field cannot be empty"
                 raise ValueError(msg)
             return v.strip()
 
         def to_user_entity(self) -> FlextLdapEntities.User:
-            """Convert to User entity."""
+            """Convert to User entity.
+
+            Returns:
+                FlextLdapEntities.User: User entity.
+
+            """
             # Build using aliases so the constructed model matches the User
             # field aliases (Pydantic v2 behavior). Use model_validate with a
             # mapping to avoid signature mismatches reported by static checkers.
@@ -554,7 +676,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("server")
         @classmethod
         def validate_server(cls, v: str) -> str:
-            """Validate server hostname/IP."""
+            """Validate server hostname/IP.
+
+            Returns:
+                str: Validated server.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if not v or not v.strip():
                 msg = "Server cannot be empty"
                 raise ValueError(msg)
@@ -563,7 +693,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("port")
         @classmethod
         def validate_port(cls, v: int) -> int:
-            """Validate port number."""
+            """Validate port number.
+
+            Returns:
+                int: Validated port.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if v <= 0 or v > FlextLdapConstants.Protocol.MAX_PORT:
                 msg = (
                     f"Port must be between 1 and {FlextLdapConstants.Protocol.MAX_PORT}"
@@ -608,7 +746,15 @@ class FlextLdapEntities(FlextModels):
         @field_validator("error_code")
         @classmethod
         def validate_error_code(cls, v: int) -> int:
-            """Validate LDAP error code."""
+            """Validate LDAP error code.
+
+            Returns:
+                int: Validated error code.
+
+            Raises:
+                ValueError: If validation fails.
+
+            """
             if v < 0:
                 msg = "Error code must be non-negative"
                 raise ValueError(msg)
@@ -658,7 +804,12 @@ class FlextLdapEntities(FlextModels):
             data: dict[str, object] | None = None,
             duration_ms: float = 0.0,
         ) -> FlextLdapEntities.OperationResult:
-            """Create success result."""
+            """Create success result.
+
+            Returns:
+                FlextLdapEntities.OperationResult: Success result.
+
+            """
             return cls(
                 success=True,
                 result_code=0,
@@ -678,7 +829,12 @@ class FlextLdapEntities(FlextModels):
             target_dn: str = "",
             duration_ms: float = 0.0,
         ) -> FlextLdapEntities.OperationResult:
-            """Create error result."""
+            """Create error result.
+
+            Returns:
+                FlextLdapEntities.OperationResult: Error result.
+
+            """
             return cls(
                 success=False,
                 result_code=error_code,

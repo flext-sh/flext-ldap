@@ -503,7 +503,7 @@ class TestAdapterIntegration:
         except Exception as e:
             # Validation error expected for invalid data
             logger = FlextLogger(__name__)
-            logger.debug(f"Expected validation error for invalid data: {e}")
+            logger.debug("Expected validation error for invalid data: %s", e)
 
     def test_adapter_factory_patterns(self, test_client: FlextLdapClient) -> None:
         """Test adapter factory and creation patterns."""
@@ -561,8 +561,8 @@ class TestAdapterErrorHandling:
 
         for test_case in test_cases:
             # Type assertions for MyPy compatibility
-            model_class = test_case["model"]  # Type: Union of model classes
-            valid_data = test_case["valid_data"]  # Type: dict[str, object]
+            model_class = test_case["model"]
+            valid_data = test_case["valid_data"]
 
             # Test valid data creates model successfully
             if callable(model_class):
@@ -710,7 +710,9 @@ class TestAdapterErrorHandling:
             self._test_edge_case_entry(entry_service, entry_data)
 
     def _test_edge_case_entry(
-        self, entry_service: object, entry_data: dict[str, object]
+        self,
+        entry_service: object,
+        entry_data: dict[str, object],
     ) -> None:
         """Test edge case entry validation to reduce nesting complexity."""
         if not hasattr(entry_service, "_validate_entry"):
@@ -737,11 +739,11 @@ class TestAdapterErrorHandling:
             # Method should handle edge cases gracefully
             # Test successful method execution
             assert True
-        except Exception as e:
+        except Exception:
             # Expected for invalid entries in edge case testing
             # Exception is expected and handled gracefully by the method
             # Log the exception for debugging purposes
-            print(f"Expected exception in edge case testing: {e}")  # noqa: T201
+            pass
 
     @pytest.mark.asyncio
     async def test_directory_service_operations_comprehensive(
@@ -772,7 +774,11 @@ class TestAdapterErrorHandling:
                 except Exception as e:
                     # Even exceptions exercise the code paths for coverage
                     logger = FlextLogger(__name__)
-                    logger.debug(f"Exception in operation method {operation_name}: {e}")
+                    logger.debug(
+                        "Exception in operation method %s: %s",
+                        operation_name,
+                        e,
+                    )
 
     @pytest.mark.asyncio
     async def test_adapter_integration_comprehensive(
@@ -806,7 +812,11 @@ class TestAdapterErrorHandling:
                 except Exception as e:
                     # Exception handling also provides coverage
                     logger = FlextLogger(__name__)
-                    logger.debug(f"Exception in adapter integration {operation}: {e}")
+                    logger.debug(
+                        "Exception in adapter integration %s: %s",
+                        operation,
+                        e,
+                    )
 
     def test_configuration_validation_comprehensive(self) -> None:
         """Test configuration validation - covers lines 248-259."""
@@ -864,7 +874,7 @@ class TestAdapterErrorHandling:
             except Exception as e:
                 # Even validation failures provide coverage
                 logger = FlextLogger(__name__)
-                logger.debug(f"Configuration validation error: {e}")
+                logger.debug("Configuration validation error: %s", e)
 
     async def test_service_error_exception_handling(
         self,
@@ -903,7 +913,9 @@ class TestAdapterErrorHandling:
                         except Exception as e:
                             logger = FlextLogger(__name__)
                             logger.debug(
-                                f"Expected exception in async method {method_name}: {e}",
+                                "Expected exception in async method %s: %s",
+                                method_name,
+                                e,
                             )
                     else:
                         try:
@@ -911,12 +923,14 @@ class TestAdapterErrorHandling:
                         except Exception as e:
                             logger = FlextLogger(__name__)
                             logger.debug(
-                                f"Expected exception in sync method {method_name}: {e}",
+                                "Expected exception in sync method %s: %s",
+                                method_name,
+                                e,
                             )
                 except Exception as e:
                     # object exception provides coverage of error handling paths
                     logger = FlextLogger(__name__)
-                    logger.debug(f"Object exception in service method handling: {e}")
+                    logger.debug("Object exception in service method handling: %s", e)
 
     def test_model_validation_edge_cases(self) -> None:
         """Test model validation edge cases - covers lines 414-433."""
@@ -963,7 +977,7 @@ class TestAdapterErrorHandling:
             except Exception as e:
                 # Validation failures also provide coverage
                 logger = FlextLogger(__name__)
-                logger.debug(f"Model validation edge case error: {e}")
+                logger.debug("Model validation edge case error: %s", e)
 
     async def test_search_scope_and_filter_processing(
         self,
@@ -1002,4 +1016,4 @@ class TestAdapterErrorHandling:
                 except Exception as e:
                     # Exception handling provides coverage too
                     logger = FlextLogger(__name__)
-                    logger.debug(f"Search processing error: {e}")
+                    logger.debug("Search processing error: %s", e)

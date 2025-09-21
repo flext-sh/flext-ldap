@@ -32,7 +32,8 @@ class TestFlextLdapValueObjectsCoverage:
     def test_dn_validation_missing_equals_error(self) -> None:
         """Test DN validation with missing equals sign."""
         with pytest.raises(
-            ValueError, match="Invalid DN format - missing attribute=value pairs"
+            ValueError,
+            match="Invalid DN format - missing attribute=value pairs",
         ):
             FlextLdapValueObjects.DistinguishedName(value="invalid_dn_format")
 
@@ -44,7 +45,8 @@ class TestFlextLdapValueObjectsCoverage:
     def test_filter_missing_parentheses_error(self) -> None:
         """Test Filter validation with missing parentheses."""
         with pytest.raises(
-            ValueError, match="LDAP filter must be enclosed in parentheses"
+            ValueError,
+            match="LDAP filter must be enclosed in parentheses",
         ):
             FlextLdapValueObjects.Filter(expression="uid=test")
 

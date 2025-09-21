@@ -11,9 +11,8 @@ import importlib
 import re
 import sys
 import time
-from collections.abc import Sequence
 from types import SimpleNamespace
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast, object
 
 import pytest
 
@@ -28,17 +27,20 @@ from flext_core import (
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.operations import FlextLDAPOperations
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 
 class MockLDAPEntry(Protocol):
     """Mock LDAP entry that implements LDAPEntryProtocol."""
 
-    attributes: dict[str, Any]
+    attributes: dict[str, object]
 
 
 class MockLDAPEntryImpl:
     """Implementation of MockLDAPEntry."""
 
-    def __init__(self, attributes: dict[str, Any]) -> None:
+    def __init__(self, attributes: dict[str, object]) -> None:
         """Initialize MockLDAPEntry with attributes dictionary."""
         self.attributes = attributes
 
@@ -437,7 +439,8 @@ class TestConnectionOperations:
             # Expected to fail without real server, but method should exist
             logger = FlextLogger(__name__)
             logger.debug(
-                f"Expected to fail without real server, but method should exist: {e}",
+                "Expected to fail without real server, but method should exist: %s",
+                e,
             )
 
     def test_cleanup_connection_method(self) -> None:
@@ -588,7 +591,8 @@ class TestConnectionManagement:
             # If validation throws exceptions, that's also valid error handling
             logger = FlextLogger(__name__)
             logger.debug(
-                f"If validation throws exceptions, that's also valid error handling: {e}",
+                "If validation throws exceptions, that's also valid error handling: %s",
+                e,
             )
 
 
@@ -825,7 +829,8 @@ class TestConnectionOperationsDetailed:
             # Expected to fail without real connection, but method should exist
             logger = FlextLogger(__name__)
             logger.debug(
-                f"Expected to fail without real connection, but method should exist: {e}",
+                "Expected to fail without real connection, but method should exist: %s",
+                e,
             )
 
     def test_list_active_connections_method(self) -> None:
@@ -944,7 +949,8 @@ class TestLDAPEntryProcessing:
 
         # Test comprehensive attribute extraction
         result = user_extractor.extract_user_attribute(
-            comprehensive_entry.attributes, "mail"
+            comprehensive_entry.attributes,
+            "mail",
         )
         assert result is not None
 
@@ -1081,7 +1087,8 @@ class TestCommandObjectExecution:
                 # Other exceptions are also fine - we've executed the code path
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Other exceptions are also fine - we've executed the code path: {e}",
+                    "Other exceptions are also fine - we've executed the code path: %s",
+                    e,
                 )
 
 
@@ -1244,14 +1251,15 @@ class TestDetailedAttributeExtraction:
                 except Exception as e:
                     # Exception is expected for invalid entries - log for debugging
                     logger.debug(
-                        f"Expected exception for invalid entry attributes: {e}"
+                        "Expected exception for invalid entry attributes: %s",
+                        e,
                     )
             elif isinstance(test_entry, dict):
                 try:
                     user_extractor.extract_user_attribute(test_entry, "cn")
                 except Exception as e:
                     # Exception is expected for invalid entries - log for debugging
-                    logger.debug(f"Expected exception for invalid dict entry: {e}")
+                    logger.debug("Expected exception for invalid dict entry: %s", e)
             # For other invalid entry types, just pass - method can't handle these
 
             # Test group extractor error handling
@@ -1262,7 +1270,8 @@ class TestDetailedAttributeExtraction:
                 except Exception as e:
                     # Exception is expected for invalid entries - log for debugging
                     logger.debug(
-                        f"Expected exception for invalid group dict entry: {e}"
+                        "Expected exception for invalid group dict entry: %s",
+                        e,
                     )
             elif (
                 hasattr(test_entry, "attributes") and test_entry.attributes is not None
@@ -1272,7 +1281,8 @@ class TestDetailedAttributeExtraction:
                 except Exception as e:
                     # Exception is expected for invalid entries - log for debugging
                     logger.debug(
-                        f"Expected exception for invalid group entry attributes: {e}"
+                        "Expected exception for invalid group entry attributes: %s",
+                        e,
                     )
             # For other invalid entry types, just pass
 
@@ -1408,7 +1418,8 @@ class TestAdvancedExecutionPaths:
                 # Some formats may not be supported - that's fine, we covered the path
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Some formats may not be supported - that's fine, we covered the path: {e}",
+                    "Some formats may not be supported - that's fine, we covered the path: %s",
+                    e,
                 )
 
     def test_search_operations_ldap_filter_escaping(self) -> None:
@@ -1591,13 +1602,15 @@ class TestOperationsServiceDetailed:
                     # Even exceptions are fine - we've covered the execution path
                     logger = FlextLogger(__name__)
                     logger.debug(
-                        f"Even exceptions are fine - we've covered the execution path: {e}",
+                        "Even exceptions are fine - we've covered the execution path: %s",
+                        e,
                     )
             except Exception as e:
                 # object exception is fine - method was executed and path covered
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"object exception is fine - method was executed and path covered: {e}",
+                    "object exception is fine - method was executed and path covered: %s",
+                    e,
                 )
 
     def test_entry_operations_advanced_functionality(self) -> None:
@@ -1631,7 +1644,8 @@ class TestOperationsServiceDetailed:
                 # Exceptions are expected for many methods without proper parameters
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"Exceptions are expected for many methods without proper parameters: {e}",
+                    "Exceptions are expected for many methods without proper parameters: %s",
+                    e,
                 )
 
 
@@ -1710,7 +1724,8 @@ class TestAttributeExtractionAdvanced:
         # Test attribute extraction using available methods
         # Since _extract_ldap_attributes doesn't exist, test the public methods
         result = extractor.extract_user_attribute(
-            {"attributes": comprehensive_attributes}, "cn"
+            {"attributes": comprehensive_attributes},
+            "cn",
         )
         assert isinstance(result, str)
         # Should contain processed attributes
@@ -1860,7 +1875,7 @@ class TestAttributeExtractionAdvanced:
             # Test entry deletion methods
             if hasattr(entry_ops, "delete_entry"):
                 result = entry_ops.delete_entry(
-                    "cn=testuser,ou=users,dc=example,dc=com"
+                    "cn=testuser,ou=users,dc=example,dc=com",
                 )
                 assert hasattr(result, "is_success")
             # Note: remove_entry method doesn't exist in EntryOperations, only delete_entry
@@ -1886,7 +1901,8 @@ class TestAttributeExtractionAdvanced:
             # If method doesn't exist or fails, that's acceptable for coverage
             logger = FlextLogger(__name__)
             logger.debug(
-                f"If method doesn't exist or fails, that's acceptable for coverage: {e}",
+                "If method doesn't exist or fails, that's acceptable for coverage: %s",
+                e,
             )
 
         # Test duration calculation if exists (method is on ConnectionOperations)
@@ -1914,7 +1930,8 @@ class TestAttributeExtractionAdvanced:
                 # If method fails, that's still acceptable for coverage
                 logger = FlextLogger(__name__)
                 logger.debug(
-                    f"If method fails, that's still acceptable for coverage: {e}",
+                    "If method fails, that's still acceptable for coverage: %s",
+                    e,
                 )
 
     @pytest.mark.asyncio

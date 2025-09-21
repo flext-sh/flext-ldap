@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextTypes
 from flext_ldap import FlextLdapModels
+
+if TYPE_CHECKING:
+    from flext_core import FlextTypes
 
 
 class TestFlextLdapDistinguishedName:
@@ -64,7 +66,7 @@ class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
     def create_test_user(self, **kwargs: object) -> FlextLdapModels.User:
-        """Helper to create test user with defaults using object for kwargs."""
+        """Create test user with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
         return FlextLdapModels.User(
             id=str(kwargs.get("id", "test_user")),
@@ -162,7 +164,7 @@ class TestFlextLdapGroup:
     """Test LDAP group entity with real business logic."""
 
     def create_test_group(self, **kwargs: object) -> FlextLdapModels.Group:
-        """Helper to create test group with defaults using object for kwargs."""
+        """Create test group with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
         return FlextLdapModels.Group(
             id=str(kwargs.get("id", "test_group")),
@@ -258,7 +260,7 @@ class TestFlextLdapModels:
     """Test generic LDAP entry with real attribute handling."""
 
     def create_test_entry(self, **kwargs: object) -> FlextLdapModels.Entry:
-        """Helper to create test entry with defaults using object for kwargs."""
+        """Create test entry with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
         return FlextLdapModels.Entry(
             id=str(kwargs.get("id", "test_entry")),

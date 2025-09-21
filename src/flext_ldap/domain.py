@@ -20,7 +20,6 @@ from flext_core import (
     FlextDomainService,
     FlextHandlers,
     FlextLogger,
-    FlextMixins,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -31,7 +30,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapDomain(FlextMixins.Loggable):
+class FlextLdapDomain:
     """LDAP domain functionality using FlextMixins.Loggable."""
 
     class DomainSpecification:
@@ -418,8 +417,8 @@ class FlextLdapDomain(FlextMixins.Loggable):
             """
             match candidate:
                 case str() as email_str if email_str.strip():
-                    email_result = FlextModels.EmailAddress.create(email_str.strip())
-                    return email_result.is_success
+                    email_result = FlextModels.create_validated_email(email_str.strip())
+                    return bool(email_result.is_success)
                 case _:
                     return False
 
@@ -434,7 +433,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
             if not isinstance(candidate, str):
                 return "Email must be a string"
 
-            email_result = FlextModels.EmailAddress.create(candidate)
+            email_result = FlextModels.create_validated_email(candidate)
             if email_result.is_failure:
                 return f"Invalid email format: {email_result.error}"
 
@@ -644,7 +643,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             user: FlextLdapModels.User,
             requesting_user: FlextLdapModels.User,
         ) -> FlextResult[bool]:
-            """Check if user can be deleted by requesting user - explicit error handling."""
+            """Check if user can be deleted by requesting user - explicit error handling.
+
+            Returns:
+                FlextResult[bool]: True if user can be deleted, False otherwise.
+
+            """
             # Business rule: Users cannot delete themselves
             if user.uid == requesting_user.uid:
                 return FlextResult.fail("Users cannot delete themselves")
@@ -655,29 +659,36 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "Only active users can delete other users",
                 )
 
-            return FlextResult[bool].ok(value=True)
+            return FlextResult[bool].ok(data=True)
 
         def generate_username(
             self,
             first_name: str,
             last_name: str,
         ) -> FlextResult[str]:
-            """Generate username following business rules - explicit error handling."""
+            """Generate username following business rules - explicit error handling.
+
+            Returns:
+                FlextResult[str]: Generated username on success.
+
+            """
             # Validate inputs using FlextUtilities.Validation
             first_validation = FlextUtilities.Validation.validate_string_not_empty(
-                first_name, "first_name"
+                first_name,
+                "first_name",
             )
             if first_validation.is_failure:
                 return FlextResult[str].fail(
-                    f"First name validation failed: {first_validation.error}"
+                    f"First name validation failed: {first_validation.error}",
                 )
 
             last_validation = FlextUtilities.Validation.validate_string_not_empty(
-                last_name, "last_name"
+                last_name,
+                "last_name",
             )
             if last_validation.is_failure:
                 return FlextResult[str].fail(
-                    f"Last name validation failed: {last_validation.error}"
+                    f"Last name validation failed: {last_validation.error}",
                 )
 
             # Clean text using FlextUtilities.TextProcessor
@@ -686,15 +697,15 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
             if clean_first_result.is_failure:
                 return FlextResult[str].fail(
-                    f"First name cleaning failed: {clean_first_result.error}"
+                    f"First name cleaning failed: {clean_first_result.error}",
                 )
             if clean_last_result.is_failure:
                 return FlextResult[str].fail(
-                    f"Last name cleaning failed: {clean_last_result.error}"
+                    f"Last name cleaning failed: {clean_last_result.error}",
                 )
 
-            clean_first = clean_first_result.unwrap()
-            clean_last = clean_last_result.unwrap()
+            clean_first = clean_first_result.value
+            clean_last = clean_last_result.value
 
             if not clean_first or not clean_last:
                 return FlextResult[str].fail("Invalid names provided after cleaning")
@@ -751,7 +762,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             *,
             allow_inactive: bool = False,
         ) -> FlextResult[bool]:
-            """Check if user can be added to group - explicit error handling."""
+            """Check if user can be added to group - explicit error handling.
+
+            Returns:
+                FlextResult[bool]: True if user can be added to group.
+
+            """
             # Validate group
             if not self._group_spec.is_satisfied_by(group):
                 return FlextResult.fail(
@@ -772,13 +788,18 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     "User is already a member of this group",
                 )
 
-            return FlextResult[bool].ok(value=True)
+            return FlextResult[bool].ok(data=True)
 
         def validate_group_creation(
             self,
             group_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
-            """Validate group creation business rules - explicit error handling."""
+            """Validate group creation business rules - explicit error handling.
+
+            Returns:
+                FlextResult[object]: Validation result.
+
+            """
             # Check required fields
             required_fields = ["cn", "dn"]
             for field in required_fields:
@@ -818,7 +839,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             current_password: str,
             new_password: str,
         ) -> FlextResult[object]:
-            """Validate password change business rules - explicit error handling."""
+            """Validate password change business rules - explicit error handling.
+
+            Returns:
+                FlextResult[object]: Validation result.
+
+            """
             # Validate new password strength
             if not self._password_spec.is_satisfied_by(new_password):
                 return FlextResult[object].fail(
@@ -918,7 +944,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @computed_field
         def event_id(self) -> str:
-            """Generate unique event identifier using FlextUtilities SOURCE OF TRUTH - ELIMINATE timestamp duplication."""
+            """Generate unique event identifier using FlextUtilities SOURCE OF TRUTH - ELIMINATE timestamp duplication.
+
+            Returns:
+                str: Unique event identifier.
+
+            """
             # Use FlextUtilities instead of local timestamp logic - SOLID compliance
             return FlextUtilities.Generators.generate_id()
 
@@ -958,7 +989,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             user_dn: str,
             created_by: str,
         ) -> "FlextLdapDomain.UserCreatedEvent":
-            """Create user created event using FlextModels.Event patterns."""
+            """Create user created event using FlextModels.Event patterns.
+
+            Returns:
+                FlextLdapDomain.UserCreatedEvent: User created event.
+
+            """
             return cls(
                 user_id=user_id,
                 user_dn=user_dn,
@@ -979,7 +1015,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             user_dn: str,
             deleted_by: str,
         ) -> "FlextLdapDomain.UserDeletedEvent":
-            """Create user deleted event using FlextModels.Event patterns."""
+            """Create user deleted event using FlextModels.Event patterns.
+
+            Returns:
+                FlextLdapDomain.UserDeletedEvent: User deleted event.
+
+            """
             return cls(
                 user_id=user_id,
                 user_dn=user_dn,
@@ -1000,7 +1041,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             member_dn: str,
             added_by: str,
         ) -> "FlextLdapDomain.GroupMemberAddedEvent":
-            """Create group member added event using FlextModels.Event patterns."""
+            """Create group member added event using FlextModels.Event patterns.
+
+            Returns:
+                FlextLdapDomain.GroupMemberAddedEvent: Group member added event.
+
+            """
             return cls(
                 group_dn=group_dn,
                 member_dn=member_dn,
@@ -1021,7 +1067,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             user_dn: str,
             changed_by: str,
         ) -> "FlextLdapDomain.PasswordChangedEvent":
-            """Create password changed event using FlextModels.Event patterns."""
+            """Create password changed event using FlextModels.Event patterns.
+
+            Returns:
+                FlextLdapDomain.PasswordChangedEvent: Password changed event.
+
+            """
             return cls(
                 user_dn=user_dn,
                 changed_by=changed_by,
@@ -1043,23 +1094,33 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @staticmethod
         def safe_str(value: object) -> str | None:
-            """Safely convert value using Python 3.13 structural pattern matching."""
+            """Safely convert value using Python 3.13 structural pattern matching.
+
+            Returns:
+                str | None: Converted string value or None.
+
+            """
             match value:
                 case None:
                     return None
                 case str() as text if text.strip():
                     result = FlextUtilities.TextProcessor.clean_text(text)
-                    return result.unwrap() if result.is_success else None
+                    return result.value if result.is_success else None
                 case int() | float() | bool() as primitive:
                     result = FlextUtilities.TextProcessor.clean_text(str(primitive))
-                    return result.unwrap() if result.is_success else None
+                    return result.value if result.is_success else None
                 case _:
                     result = FlextUtilities.TextProcessor.clean_text(str(value))
-                    return result.unwrap() if result.is_success else None
+                    return result.value if result.is_success else None
 
         @staticmethod
         def safe_list(value: object, default: list[str] | None = None) -> list[str]:
-            """Safely convert using Python 3.13 structural pattern matching."""
+            """Safely convert using Python 3.13 structural pattern matching.
+
+            Returns:
+                list[str]: Converted list of strings.
+
+            """
             match value:
                 case list() as items if items:
                     # Validate all items are convertible to string
@@ -1073,7 +1134,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @staticmethod
         def safe_dict(value: object) -> FlextTypes.Core.Dict:
-            """Safely convert using Python 3.13 pattern matching."""
+            """Safely convert using Python 3.13 pattern matching.
+
+            Returns:
+                FlextTypes.Core.Dict: Converted dictionary.
+
+            """
             match value:
                 case dict() as dict_value:
                     # Filter out None values and ensure string keys
@@ -1083,7 +1149,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
         @staticmethod
         def safe_ldap_attributes(value: object) -> FlextLdapTypes.Entry.AttributeDict:
-            """Convert to LDAP attributes using Python 3.13 pattern matching."""
+            """Convert to LDAP attributes using Python 3.13 pattern matching.
+
+            Returns:
+                FlextLdapTypes.Entry.AttributeDict: LDAP attributes dictionary.
+
+            """
             match value:
                 case dict() as attrs:
                     result: FlextLdapTypes.Entry.AttributeDict = {}
@@ -1113,7 +1184,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self.builder = FlextLdapDomain.EntityParameterBuilder()
 
         def build(self) -> object:
-            """Template method for building entities - eliminates duplication."""
+            """Template method for building entities - eliminates duplication.
+
+            Returns:
+                object: Built entity.
+
+            """
             # Step 1: Generate ID using template
             entity_id = self._generate_entity_id()
 
@@ -1127,11 +1203,21 @@ class FlextLdapDomain(FlextMixins.Loggable):
             return self._create_entity({**base_params, **specific_params})
 
         def _generate_entity_id(self) -> str:
-            """Generate entity ID using FlextUtilities SOURCE OF TRUTH - ELIMINATE local duplication."""
+            """Generate entity ID using FlextUtilities SOURCE OF TRUTH - ELIMINATE local duplication.
+
+            Returns:
+                str: Generated entity ID.
+
+            """
             return FlextUtilities.Generators.generate_id()
 
         def _extract_base_parameters(self, entity_id: str) -> FlextTypes.Core.Dict:
-            """Extract parameters common to all entities."""
+            """Extract parameters common to all entities.
+
+            Returns:
+                FlextTypes.Core.Dict: Common parameters.
+
+            """
             return {
                 "id": entity_id,
                 "dn": str(self.params["dn"]),
@@ -1160,7 +1246,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             super().__init__(params, "user")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
-            """Extract user parameters using Python 3.13 pattern matching."""
+            """Extract user parameters using Python 3.13 pattern matching.
+
+            Returns:
+                FlextTypes.Core.Dict: User parameters.
+
+            """
             match self.params:
                 case {"uid": uid, "cn": cn, "sn": sn, **optional}:
                     return {
@@ -1192,7 +1283,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             all_params: FlextTypes.Core.Dict,
         ) -> FlextLdapModels.User:
-            """Create FlextLdapModels.User entity."""
+            """Create FlextLdapModels.User entity.
+
+            Returns:
+                FlextLdapModels.User: Created user entity.
+
+            """
             return FlextLdapModels.User(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
@@ -1233,7 +1329,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             super().__init__(params, "group")
 
         def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
-            """Extract group parameters using Python 3.13 pattern matching."""
+            """Extract group parameters using Python 3.13 pattern matching.
+
+            Returns:
+                FlextTypes.Core.Dict: Group parameters.
+
+            """
             match self.params:
                 case {"cn": cn, **optional}:
                     return {
@@ -1259,7 +1360,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             all_params: FlextTypes.Core.Dict,
         ) -> FlextLdapModels.Group:
-            """Create FlextLdapModels.Group entity."""
+            """Create FlextLdapModels.Group entity.
+
+            Returns:
+                FlextLdapModels.Group: Created group entity.
+
+            """
             return FlextLdapModels.Group(
                 id=str(all_params.get("id", all_params.get("dn", ""))),
                 dn=str(all_params["dn"]),
@@ -1304,8 +1410,13 @@ class FlextLdapDomain(FlextMixins.Loggable):
             validate_assignment=True,
         )
 
-        def validate_command(self) -> FlextResult[bool]:
-            """Validate user creation data using Python 3.13 match expression."""
+        def validate_user_data(self) -> FlextResult[bool]:
+            """Validate user creation data using Python 3.13 match expression.
+
+            Returns:
+                FlextResult[bool]: Validation result.
+
+            """
             # Use structural pattern matching for validation
             match self.user_data:
                 case {"uid": str(uid), "cn": str(cn)} if uid.strip() and cn.strip():
@@ -1325,7 +1436,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 case _:
                     return FlextResult[bool].fail("Invalid user data structure")
 
-    class UserCreationDomainService(FlextMixins.Loggable):
+    class UserCreationDomainService:
         """Domain service for user creation business logic - SOLID compliant.
 
         Follows Single Responsibility: Only user creation business rules
@@ -1341,8 +1452,13 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             command: "FlextLdapDomain.CreateUserCommand",
         ) -> FlextResult[None]:
-            """Validate business rules for user creation - pure domain logic."""
-            validation_result = command.validate_command()
+            """Validate business rules for user creation - pure domain logic.
+
+            Returns:
+                FlextResult[None]: Validation result.
+
+            """
+            validation_result = command.validate_user_data()
             if validation_result.is_success:
                 return FlextResult.ok(None)
             return FlextResult.fail(validation_result.error or "Validation failed")
@@ -1351,7 +1467,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Extract user parameters - domain business logic only."""
+            """Extract user parameters - domain business logic only.
+
+            Returns:
+                FlextResult[FlextTypes.Core.Dict]: Extracted parameters.
+
+            """
             try:
                 # Use structural pattern matching for cleaner parameter extraction
                 match user_data:
@@ -1394,7 +1515,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_params: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.User]:
-            """Create user entity - pure domain logic."""
+            """Create user entity - pure domain logic.
+
+            Returns:
+                FlextResult[FlextLdapModels.User]: Created user.
+
+            """
             try:
                 # Map extracted parameters to User model fields
                 mapped_params = {
@@ -1426,7 +1552,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             dn: str,
             additional_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Build complete user parameters with business defaults."""
+            """Build complete user parameters with business defaults.
+
+            Returns:
+                FlextTypes.Core.Dict: Complete user parameters.
+
+            """
             sn = additional_data.get("sn", cn.rsplit(maxsplit=1)[-1] if cn else "User")
             return {
                 "extract_uid": uid,
@@ -1444,7 +1575,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Extract parameters with safe business defaults."""
+            """Extract parameters with safe business defaults.
+
+            Returns:
+                FlextTypes.Core.Dict: Extracted parameters.
+
+            """
             return {
                 "extract_uid": str(user_data.get("uid", "")),
                 "extract_cn": str(user_data.get("cn", "")),
@@ -1473,7 +1609,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             message: "FlextLdapDomain.CreateUserCommand",
         ) -> FlextResult[FlextLdapModels.User]:
-            """Handle user creation command using domain service."""
+            """Handle user creation command using domain service.
+
+            Returns:
+                FlextResult[FlextLdapModels.User]: Created user.
+
+            """
             # Validate command business rules
             validation_result = (
                 self._user_creation_service.validate_user_creation_business_rules(
@@ -1496,16 +1637,16 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
             # Create user entity from parameters
             creation_result = self._user_creation_service.create_user_entity(
-                params_result.unwrap(),
+                params_result.value,
             )
             if creation_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
                     creation_result.error or "User creation failed",
                 )
 
-            return FlextResult[FlextLdapModels.User].ok(creation_result.unwrap())
+            return FlextResult[FlextLdapModels.User].ok(creation_result.value)
 
-    class DomainFactory(FlextMixins.Loggable):
+    class DomainFactory:
         """Internal factory for creating domain objects with business rule validation.
 
         Refactored to use Flext CQRS pattern for complex operations to reduce
@@ -1530,11 +1671,28 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 reason="command_handler_type_matching_issues",
             )
 
+        def log_error(self, message: str, **kwargs: object) -> None:
+            """Log error message with structured data."""
+            self._logger.error(message, **kwargs)
+
+        def log_info(self, message: str, **kwargs: object) -> None:
+            """Log info message with structured data."""
+            self._logger.info(message, **kwargs)
+
+        def log_debug(self, message: str, **kwargs: object) -> None:
+            """Log debug message with structured data."""
+            self._logger.debug(message, **kwargs)
+
         def create_user_from_data(
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.User]:
-            """Create user entity using FlextHandlers command pattern."""
+            """Create user entity using FlextHandlers command pattern.
+
+            Returns:
+                FlextResult[FlextLdapModels.User]: Created user.
+
+            """
             # Create command for CQRS pattern
             command = FlextLdapDomain.CreateUserCommand(
                 command_type="create_user",
@@ -1545,7 +1703,7 @@ class FlextLdapDomain(FlextMixins.Loggable):
                 try:
                     dispatch_result = self._dispatcher.dispatch(command)
                     if dispatch_result.is_success:
-                        handler_output = dispatch_result.unwrap()
+                        handler_output = dispatch_result.value
                         if isinstance(handler_output, FlextResult):
                             return cast(
                                 "FlextResult[FlextLdapModels.User]",
@@ -1575,7 +1733,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             user_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Extract and convert user parameters from raw data."""
+            """Extract and convert user parameters from raw data.
+
+            Returns:
+                FlextTypes.Core.Dict: Converted parameters.
+
+            """
             given_name = user_data.get("given_name")
             mail = user_data.get("mail")
             object_classes_raw = user_data.get(
@@ -1626,7 +1789,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     raise ValueError(msg)
 
         def _validate_created_user(self, user: object) -> FlextResult[object]:
-            """Validate created user against domain specifications."""
+            """Validate created user against domain specifications.
+
+            Returns:
+                FlextResult[object]: Validation result.
+
+            """
             complete_spec = FlextLdapDomain.CompleteUserSpecification()
             if not complete_spec.is_satisfied_by(user):
                 return FlextResult[object].fail(
@@ -1638,7 +1806,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             group_data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLdapModels.Group]:
-            """Create group entity from data with full validation."""
+            """Create group entity from data with full validation.
+
+            Returns:
+                FlextResult[FlextLdapModels.Group]: Created group.
+
+            """
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "validate": self._group_service.validate_group_creation,
                 "extract": self._extract_group_parameters,
@@ -1669,7 +1842,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             self,
             group_data: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Extract and convert group parameters from raw data."""
+            """Extract and convert group parameters from raw data.
+
+            Returns:
+                FlextTypes.Core.Dict: Converted parameters.
+
+            """
             description = group_data.get("description")
             members_raw = group_data.get("members", [])
             object_classes_raw = group_data.get(
@@ -1723,7 +1901,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
                     raise ValueError(msg)
 
         def _validate_created_group(self, group: object) -> FlextResult[object]:
-            """Validate created group against domain specifications."""
+            """Validate created group against domain specifications.
+
+            Returns:
+                FlextResult[object]: Validation result.
+
+            """
             group_spec = FlextLdapDomain.GroupSpecification()
             if not group_spec.is_satisfied_by(group):
                 return FlextResult[object].fail(group_spec.get_validation_error(group))
@@ -1735,7 +1918,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             entity_type: str,
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
         ) -> FlextResult[object]:
-            """Template method for entity creation - ELIMINATES CODE DUPLICATION."""
+            """Template method for entity creation - ELIMINATES CODE DUPLICATION.
+
+            Returns:
+                FlextResult[object]: Created entity.
+
+            """
             try:
                 # Execute entity creation pipeline
                 return self._execute_entity_creation_pipeline(
@@ -1753,7 +1941,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             entity_type: str,
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
         ) -> FlextResult[object]:
-            """Execute entity creation pipeline using Railway Oriented Programming - eliminates multiple returns."""
+            """Execute entity creation pipeline using Railway Oriented Programming - eliminates multiple returns.
+
+            Returns:
+                FlextResult[object]: Pipeline result.
+
+            """
             # Railway chain: validate -> extract -> create -> final_validate
             return (
                 FlextResult[FlextTypes.Core.Dict]
@@ -1786,7 +1979,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Step 1: Validate business rules using Python 3.13 enhanced patterns."""
+            """Step 1: Validate business rules using Python 3.13 enhanced patterns.
+
+            Returns:
+                FlextResult[FlextTypes.Core.Dict]: Validation result.
+
+            """
             # Use structural pattern matching for operation validation
             match operations.get("validate"):
                 case None:
@@ -1810,7 +2008,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
-            """Step 2: Extract parameters."""
+            """Step 2: Extract parameters.
+
+            Returns:
+                FlextResult[object]: Extracted parameters.
+
+            """
             return self._execute_operation(
                 operations.get("extract"),
                 data,
@@ -1823,7 +2026,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
-            """Step 3: Create entity from parameters."""
+            """Step 3: Create entity from parameters.
+
+            Returns:
+                FlextResult[object]: Created entity.
+
+            """
             if params is None:
                 return FlextResult.fail(
                     f"{entity_type} parameter extraction returned None",
@@ -1840,7 +2048,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
-            """Step 4: Final domain validation."""
+            """Step 4: Final domain validation.
+
+            Returns:
+                FlextResult[object]: Validation result.
+
+            """
             if entity is None:
                 return FlextResult.fail(f"{entity_type} creation returned None")
             return self._execute_operation(
@@ -1857,7 +2070,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             data: object,
             operation_name: str,
         ) -> FlextResult[object]:
-            """Execute operation using Python 3.13 structural pattern matching."""
+            """Execute operation using Python 3.13 structural pattern matching.
+
+            Returns:
+                FlextResult[object]: Operation result.
+
+            """
             match operation:
                 case None:
                     return FlextResult.fail(
@@ -1877,7 +2095,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
             data: object,
             operation_name: str,
         ) -> FlextResult[object]:
-            """Execute callable operation with enhanced error handling."""
+            """Execute callable operation with enhanced error handling.
+
+            Returns:
+                FlextResult[object]: Operation result.
+
+            """
             try:
                 # Use pattern matching for data type handling
                 match data:
@@ -1906,6 +2129,9 @@ class FlextLdapDomain(FlextMixins.Loggable):
 
     def __init__(self) -> None:
         """Initialize all domain handlers with consolidated pattern."""
+        # Initialize FlextLogger for structured logging
+        self._logger = FlextLogger(self.__class__.__name__)
+
         # Specifications
         self._user_spec = self.UserSpecification()
         self._group_spec = self.GroupSpecification()
@@ -1948,7 +2174,12 @@ class FlextLdapDomain(FlextMixins.Loggable):
     # High-level convenience methods
 
     def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
-        """Generate secure password (convenience method)."""
+        """Generate secure password (convenience method).
+
+        Returns:
+            FlextResult[str]: Generated password.
+
+        """
         return self._password_service.generate_secure_password(length)
 
 

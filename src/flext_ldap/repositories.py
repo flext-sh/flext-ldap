@@ -8,7 +8,6 @@ import asyncio
 
 from flext_core import (
     FlextLogger,
-    FlextMixins,
     FlextProtocols,
     FlextResult,
 )
@@ -17,12 +16,13 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapRepositories(FlextMixins.Service):
+class FlextLdapRepositories:
     """LDAP repositories container with nested repository classes."""
 
-    def __init__(self, client: FlextLdapClient, **data: object) -> None:
+    def __init__(self, client: FlextLdapClient) -> None:
         """Initialize repositories container with LDAP client."""
-        super().__init__(**data)
+        # Initialize FlextLogger for structured logging
+        self._logger = FlextLogger(self.__class__.__name__)
         self._client = client
         self._base_repo = self.Repository(client)
         self._user_repo = self.UserRepository(self._base_repo)
@@ -82,16 +82,14 @@ class FlextLdapRepositories(FlextMixins.Service):
         return await self._base_repo.update_attributes(dn, attributes)
 
     class Repository(
-        FlextMixins.Service,
         FlextProtocols.Domain.Repository[FlextLdapModels.Entry],
     ):
         """Base LDAP repository implementing Domain.Repository protocol from flext-core."""
 
-        def __init__(self, client: FlextLdapClient, **data: object) -> None:
-            """Initialize repository with LDAP client and FlextMixins.Service."""
-            super().__init__(**data)
+        def __init__(self, client: FlextLdapClient) -> None:
+            """Initialize repository with LDAP client and FlextLogger."""
             self._client = client
-            self._logger = FlextLogger(__name__)
+            self._logger = FlextLogger(self.__class__.__name__)
             # For test compatibility - user/group repositories can access main repository via _repo
             self._repo = self
 
@@ -361,7 +359,7 @@ class FlextLdapRepositories(FlextMixins.Service):
                 )
             return result
 
-    class UserRepository(FlextMixins.Service):
+    class UserRepository:
         """User-specific repository operations."""
 
         def __init__(
@@ -463,7 +461,7 @@ class FlextLdapRepositories(FlextMixins.Service):
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(users)
 
-    class GroupRepository(FlextMixins.Service):
+    class GroupRepository:
         """Group-specific repository operations."""
 
         def __init__(
@@ -614,7 +612,7 @@ class FlextLdapRepositories(FlextMixins.Service):
                     f"Failed to get current members: {current_members_result.error}",
                 )
 
-            current_members = current_members_result.unwrap()
+            current_members = current_members_result.value
 
             # Check if member already exists
             if member_dn in current_members:

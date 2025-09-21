@@ -12,8 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
-from typing import ClassVar, final
+from typing import TYPE_CHECKING, ClassVar, final
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
@@ -25,8 +24,12 @@ from flext_core import (
     FlextUtilities,
 )
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapModels(FlextModels):
@@ -92,7 +95,7 @@ class FlextLdapModels(FlextModels):
             base_dn: str,
             uid: str | None = None,
         ) -> FlextLdapModels.SearchRequest:
-            """Factory method for common user search patterns."""
+            """Create search request for common user patterns."""
             filter_str = (
                 f"(&(objectClass=person)(uid={uid}))" if uid else "(objectClass=person)"
             )
@@ -173,9 +176,10 @@ class FlextLdapModels(FlextModels):
                     item.decode("utf-8") if isinstance(item, bytes) else str(item)
                     for item in attribute_value
                 ]
-            return None
-            # All possible types are handled above based on AttributeDict type definition
-            # MyPy correctly identifies that all cases are covered, so no fallback needed
+
+            # This should never be reached due to AttributeDict type constraints
+            # but keeping as fallback for type safety
+            return [str(attribute_value)]
 
     class User(BaseModel):
         """LDAP User Model - actively used in API."""
@@ -691,12 +695,12 @@ class FlextLdapModels(FlextModels):
             @classmethod
             def one(cls) -> FlextLdapModels.ValueObjects.Scope:
                 """Create one-level scope (search direct children only)."""
-                return cls(scope=FlextLdapConstants.Scopes.ONE)
+                return cls(scope=FlextLdapConstants.Scopes.ONELEVEL)
 
             @classmethod
             def sub(cls) -> FlextLdapModels.ValueObjects.Scope:
                 """Create subtree scope (search entry and all descendants)."""
-                return cls(scope=FlextLdapConstants.Scopes.SUB)
+                return cls(scope=FlextLdapConstants.Scopes.SUBTREE)
 
             # NO aliases - use sub() and one() methods directly
 
@@ -742,7 +746,7 @@ class FlextLdapModels(FlextModels):
                     error_msg = "LDAP filter cannot be empty after cleaning"
                     raise ValueError(error_msg)
 
-                clean_value = clean_result.unwrap()
+                clean_value = clean_result.value
                 if not clean_value:
                     error_msg = "LDAP filter cannot be empty after cleaning"
                     raise ValueError(error_msg)
@@ -843,7 +847,7 @@ class FlextLdapModels(FlextModels):
 
         @computed_field
         def entry_count(self) -> int:
-            """Computed field for entry count."""
+            """Return count of entries."""
             return len(self.entries)
 
         @computed_field

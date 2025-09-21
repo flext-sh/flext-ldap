@@ -70,21 +70,7 @@ class FlextLdapConstants:
         SUBTREE: Final[str] = "subtree"
         CHILDREN: Final[str] = "children"
 
-        # Legacy aliases for compatibility
-        ONE: Final[str] = ONELEVEL
-        SUB: Final[str] = SUBTREE
-
         VALID_SCOPES: Final[set[str]] = {BASE, ONELEVEL, SUBTREE, CHILDREN}
-
-        # Scope mapping for legacy code
-        SCOPE_MAP: Final[dict[str, str]] = {
-            "base": BASE,
-            "onelevel": ONELEVEL,
-            "one": ONELEVEL,
-            "subtree": SUBTREE,
-            "sub": SUBTREE,
-            "children": CHILDREN,
-        }
 
     class Attributes:
         """Standard LDAP attribute names."""

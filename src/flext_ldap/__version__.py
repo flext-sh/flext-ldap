@@ -62,5 +62,4 @@ __all__ = [
     "__version_tuple__",
 ]
 
-# Version attributes are available through explicit import:
-# from flext_ldap.__version__ import __version__, __version_info__
+# Version attributes are available through explicit import

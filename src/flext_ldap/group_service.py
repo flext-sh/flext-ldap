@@ -6,14 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core import FlextDomainService, FlextResult
-from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
+if TYPE_CHECKING:
+    from flext_ldap.clients import FlextLdapClient
+    from flext_ldap.typings import FlextLdapTypes
 
-class FlextLdapGroupService(FlextDomainService):
+
+class FlextLdapGroupService(FlextDomainService[None]):
     """Domain service for LDAP group operations.
 
     This service encapsulates all group-related business logic and operations
@@ -35,16 +39,12 @@ class FlextLdapGroupService(FlextDomainService):
         super().__init__()
         self._client = client
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[None]:
         """Execute the main domain service operation.
 
         Returns basic service information for the group service.
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapGroupService",
-            "status": "ready",
-            "operations": "create_group,get_group,update_group,delete_group,add_member,remove_member,get_members",
-        })
+        return FlextResult[None].ok(None)
 
     async def create_group(
         self,
@@ -63,7 +63,7 @@ class FlextLdapGroupService(FlextDomainService):
             dn = group_request_or_dn
             if cn is None:
                 return FlextResult[FlextLdapModels.Group].fail(
-                    "cn is required when using individual parameters"
+                    "cn is required when using individual parameters",
                 )
             request = FlextLdapModels.CreateGroupRequest(
                 dn=dn,
@@ -76,7 +76,7 @@ class FlextLdapGroupService(FlextDomainService):
         dn_validation = FlextLdapValidations.validate_dn(request.dn)
         if dn_validation.is_failure:
             return FlextResult[FlextLdapModels.Group].fail(
-                f"Invalid DN: {dn_validation.error}"
+                f"Invalid DN: {dn_validation.error}",
             )
 
         # Create LDAP attributes for the group
@@ -99,7 +99,8 @@ class FlextLdapGroupService(FlextDomainService):
         ).with_context(lambda err: f"Failed to create group {request.dn}: {err}")
 
     def _create_group_object(
-        self, request: FlextLdapModels.CreateGroupRequest
+        self,
+        request: FlextLdapModels.CreateGroupRequest,
     ) -> FlextResult[FlextLdapModels.Group]:
         """Create group object from request - railway helper method."""
         created_group = FlextLdapModels.Group(
@@ -118,7 +119,7 @@ class FlextLdapGroupService(FlextDomainService):
         dn_validation = FlextLdapValidations.validate_dn(dn)
         if dn_validation.is_failure:
             return FlextResult[FlextLdapModels.Group | None].fail(
-                f"Invalid DN: {dn_validation.error}"
+                f"Invalid DN: {dn_validation.error}",
             )
 
         # Search for the group by DN
@@ -139,7 +140,9 @@ class FlextLdapGroupService(FlextDomainService):
         ).with_context(lambda err: f"Failed to get group {dn}: {err}")
 
     def _process_group_search_entries(
-        self, search_response: FlextLdapModels.SearchResponse, dn: str
+        self,
+        search_response: FlextLdapModels.SearchResponse,
+        dn: str,
     ) -> FlextResult[FlextLdapModels.Group | None]:
         """Process search response entries for group retrieval - railway helper method."""
         if not search_response.entries:
@@ -175,7 +178,7 @@ class FlextLdapGroupService(FlextDomainService):
         # Railway pattern: modify entry with context
         modify_result = await self._client.modify_entry(dn, attributes)
         return modify_result.with_context(
-            lambda err: f"Failed to update group {dn}: {err}"
+            lambda err: f"Failed to update group {dn}: {err}",
         )
 
     async def delete_group(self, dn: str) -> FlextResult[None]:
@@ -188,7 +191,7 @@ class FlextLdapGroupService(FlextDomainService):
         # Railway pattern: delete entry with context
         delete_result = await self._client.delete(dn)
         return delete_result.with_context(
-            lambda err: f"Failed to delete group {dn}: {err}"
+            lambda err: f"Failed to delete group {dn}: {err}",
         )
 
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
@@ -197,22 +200,22 @@ class FlextLdapGroupService(FlextDomainService):
         group_dn_validation = FlextLdapValidations.validate_dn(group_dn)
         if group_dn_validation.is_failure:
             return FlextResult[None].fail(
-                f"Invalid group DN: {group_dn_validation.error}"
+                f"Invalid group DN: {group_dn_validation.error}",
             )
 
         member_dn_validation = FlextLdapValidations.validate_dn(member_dn)
         if member_dn_validation.is_failure:
             return FlextResult[None].fail(
-                f"Invalid member DN: {member_dn_validation.error}"
+                f"Invalid member DN: {member_dn_validation.error}",
             )
 
         # Railway pattern: modify group entry with context
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
-            "member": [member_dn]
+            "member": [member_dn],
         }
         modify_result = await self._client.modify_entry(group_dn, modifications)
         return modify_result.with_context(
-            lambda err: f"Failed to add member {member_dn} to group {group_dn}: {err}"
+            lambda err: f"Failed to add member {member_dn} to group {group_dn}: {err}",
         )
 
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
@@ -221,23 +224,23 @@ class FlextLdapGroupService(FlextDomainService):
         group_dn_validation = FlextLdapValidations.validate_dn(group_dn)
         if group_dn_validation.is_failure:
             return FlextResult[None].fail(
-                f"Invalid group DN: {group_dn_validation.error}"
+                f"Invalid group DN: {group_dn_validation.error}",
             )
 
         member_dn_validation = FlextLdapValidations.validate_dn(member_dn)
         if member_dn_validation.is_failure:
             return FlextResult[None].fail(
-                f"Invalid member DN: {member_dn_validation.error}"
+                f"Invalid member DN: {member_dn_validation.error}",
             )
 
         # Get group
         group_result = await self.get_group(group_dn)
         if group_result.is_failure:
             return FlextResult[None].fail(
-                f"Failed to remove member {member_dn} from group {group_dn}: {group_result.error}"
+                f"Failed to remove member {member_dn} from group {group_dn}: {group_result.error}",
             )
 
-        group = group_result.unwrap()
+        group = group_result.value
         if group is None:
             return FlextResult[None].fail(f"Group {group_dn} not found")
 
@@ -245,31 +248,35 @@ class FlextLdapGroupService(FlextDomainService):
         member_validation = self._validate_member_exists(group, member_dn)
         if member_validation.is_failure:
             return FlextResult[None].fail(
-                f"Failed to remove member {member_dn} from group {group_dn}: {member_validation.error}"
+                f"Failed to remove member {member_dn} from group {group_dn}: {member_validation.error}",
             )
 
         # Remove member from list
         updated_members_result = self._remove_member_from_list(
-            member_validation.unwrap(), member_dn
+            member_validation.value,
+            member_dn,
         )
         if updated_members_result.is_failure:
             return FlextResult[None].fail(
-                f"Failed to remove member {member_dn} from group {group_dn}: {updated_members_result.error}"
+                f"Failed to remove member {member_dn} from group {group_dn}: {updated_members_result.error}",
             )
 
         # Update group members
         update_result = await self._update_group_members(
-            group_dn, updated_members_result.unwrap()
+            group_dn,
+            updated_members_result.value,
         )
         if update_result.is_failure:
             return FlextResult[None].fail(
-                f"Failed to remove member {member_dn} from group {group_dn}: {update_result.error}"
+                f"Failed to remove member {member_dn} from group {group_dn}: {update_result.error}",
             )
 
         return FlextResult[None].ok(None)
 
     def _validate_member_exists(
-        self, group: FlextLdapModels.Group, member_dn: str
+        self,
+        group: FlextLdapModels.Group,
+        member_dn: str,
     ) -> FlextResult[list[str]]:
         """Validate that member exists in group - railway helper method."""
         if member_dn not in group.members:
@@ -277,18 +284,22 @@ class FlextLdapGroupService(FlextDomainService):
         return FlextResult[list[str]].ok(group.members)
 
     def _remove_member_from_list(
-        self, members: list[str], member_dn: str
+        self,
+        members: list[str],
+        member_dn: str,
     ) -> FlextResult[list[str]]:
         """Remove member from list - railway helper method."""
         updated_members = [m for m in members if m != member_dn]
         return FlextResult[list[str]].ok(updated_members)
 
     async def _update_group_members(
-        self, group_dn: str, members: list[str]
+        self,
+        group_dn: str,
+        members: list[str],
     ) -> FlextResult[None]:
         """Update group members - railway helper method."""
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
-            "member": members or ["cn=dummy"]
+            "member": members or ["cn=dummy"],
         }
         return await self._client.modify_entry(group_dn, modifications)
 
@@ -297,11 +308,12 @@ class FlextLdapGroupService(FlextDomainService):
         # Railway pattern: get group >> extract members
         group_result = await self.get_group(group_dn)
         return (group_result >> self._extract_group_members).with_context(
-            lambda err: f"Failed to get members for group {group_dn}: {err}"
+            lambda err: f"Failed to get members for group {group_dn}: {err}",
         )
 
     def _extract_group_members(
-        self, group: FlextLdapModels.Group | None
+        self,
+        group: FlextLdapModels.Group | None,
     ) -> FlextResult[list[str]]:
         """Extract members from group - railway helper method."""
         if group is None:
@@ -326,11 +338,11 @@ class FlextLdapGroupService(FlextDomainService):
         # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
         convert_result = (extract_result >> self._convert_to_safe_string).with_context(
-            lambda err: f"Failed to extract attribute '{key}': {err}"
+            lambda err: f"Failed to extract attribute '{key}': {err}",
         )
 
         # Use railway pattern with proper error recovery instead of .unwrap_or()
-        return convert_result.unwrap() if convert_result.is_success else default
+        return convert_result.value if convert_result.is_success else default
 
     def _get_entry_attribute_list(
         self,
@@ -352,7 +364,9 @@ class FlextLdapGroupService(FlextDomainService):
         return []
 
     def _extract_entry_value(
-        self, entry: FlextLdapTypes.Core.Dict | FlextLdapModels.Entry, key: str
+        self,
+        entry: FlextLdapTypes.Core.Dict | FlextLdapModels.Entry,
+        key: str,
     ) -> FlextResult[object]:
         """Extract value from entry using type checking."""
         # Handle FlextLdapModels.Entry type
@@ -411,7 +425,7 @@ class FlextLdapGroupService(FlextDomainService):
             first_element = value[0]
             if first_element is None or not first_element:
                 return FlextResult[object].fail(
-                    "List contains None or empty first element"
+                    "List contains None or empty first element",
                 )
             return FlextResult[object].ok(str(first_element))
         return FlextResult[object].ok(value)  # Pass through for next handler
@@ -423,43 +437,82 @@ class FlextLdapGroupService(FlextDomainService):
         return FlextResult[object].ok(value)  # Pass through for next handler
 
     async def batch_create_groups(
-        self, group_requests: list[FlextLdapModels.CreateGroupRequest]
+        self,
+        group_requests: list[FlextLdapModels.CreateGroupRequest],
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Create multiple groups using monadic traverse pattern."""
+        # Railway pattern: traverse list with early exit on failure
+        return await self._traverse_group_creation(group_requests)
+
+    async def _traverse_group_creation(
+        self,
+        group_requests: list[FlextLdapModels.CreateGroupRequest],
+    ) -> FlextResult[list[FlextLdapModels.Group]]:
+        """Railway traverse pattern for group creation with early exit on failure."""
         results: list[FlextLdapModels.Group] = []
+
         for request in group_requests:
-            result = await self.create_group(request)
-            if result.is_failure:
+            # Railway pattern: bind operation with early exit
+            creation_result = await self.create_group(request)
+            if creation_result.is_failure:
                 return FlextResult[list[FlextLdapModels.Group]].fail(
-                    f"Group creation failed: {result.error}"
+                    f"Group creation failed for {request.dn}: {creation_result.error}",
                 )
-            results.append(result.unwrap())
+            # Extract value using railway pattern
+            results.append(creation_result.value)
+
         return FlextResult[list[FlextLdapModels.Group]].ok(results)
 
     async def batch_add_members(
-        self, operations: list[tuple[str, str]]
+        self,
+        operations: list[tuple[str, str]],
     ) -> FlextResult[list[None]]:
         """Add multiple members to groups using monadic traverse pattern."""
+        # Railway pattern: traverse list with early exit on failure
+        return await self._traverse_member_addition(operations)
+
+    async def _traverse_member_addition(
+        self,
+        operations: list[tuple[str, str]],
+    ) -> FlextResult[list[None]]:
+        """Railway traverse pattern for member addition with early exit on failure."""
         results: list[None] = []
+
         for group_dn, member_dn in operations:
-            result = await self.add_member(group_dn, member_dn)
-            if result.is_failure:
+            # Railway pattern: bind operation with early exit
+            addition_result = await self.add_member(group_dn, member_dn)
+            if addition_result.is_failure:
                 return FlextResult[list[None]].fail(
-                    f"Member addition failed: {result.error}"
+                    f"Member addition failed for {member_dn} to group {group_dn}: {addition_result.error}",
                 )
-            results.append(result.unwrap())
+            # Extract value using railway pattern
+            results.append(addition_result.value)
+
         return FlextResult[list[None]].ok(results)
 
     async def batch_remove_members(
-        self, operations: list[tuple[str, str]]
+        self,
+        operations: list[tuple[str, str]],
     ) -> FlextResult[list[None]]:
         """Remove multiple members from groups using monadic traverse pattern."""
+        # Railway pattern: traverse list with early exit on failure
+        return await self._traverse_member_removal(operations)
+
+    async def _traverse_member_removal(
+        self,
+        operations: list[tuple[str, str]],
+    ) -> FlextResult[list[None]]:
+        """Railway traverse pattern for member removal with early exit on failure."""
         results: list[None] = []
+
         for group_dn, member_dn in operations:
-            result = await self.remove_member(group_dn, member_dn)
-            if result.is_failure:
+            # Railway pattern: bind operation with early exit
+            removal_result = await self.remove_member(group_dn, member_dn)
+            if removal_result.is_failure:
                 return FlextResult[list[None]].fail(
-                    f"Member removal failed: {result.error}"
+                    f"Member removal failed for {member_dn} from group {group_dn}: {removal_result.error}",
                 )
-            results.append(result.unwrap())
+            # Extract value using railway pattern
+            results.append(removal_result.value)
+
         return FlextResult[list[None]].ok(results)
