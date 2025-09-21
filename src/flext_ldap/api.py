@@ -101,7 +101,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         key: str,
         default: str = "",
     ) -> str:
-        """Extract string attribute from entry using enhanced FlextResult railway pattern."""
+        """Extract string attribute from entry using enhanced FlextResult railway pattern.
+
+        Returns:
+            str: The extracted string value or default if extraction fails.
+
+        """
         # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
         convert_result = (extract_result >> self._convert_to_safe_string).with_context(
@@ -114,7 +119,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _extract_entry_value(
         self, entry: FlextTypes.Core.Dict | FlextLdapModels.Entry, key: str
     ) -> FlextResult[object]:
-        """Extract value from entry using type checking."""
+        """Extract value from entry using type checking.
+
+        Returns:
+            FlextResult[object]: Success result with extracted value or failure result.
+
+        """
         # Handle FlextLdapModels.Entry type
         if isinstance(entry, FlextLdapModels.Entry):
             attr_values = entry.attributes.get(key, [])
@@ -134,7 +144,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         )
 
     def _convert_to_safe_string(self, raw_value: object) -> FlextResult[str]:
-        """Convert value to string using FlextResult railway pattern."""
+        """Convert value to string using FlextResult railway pattern.
+
+        Returns:
+            FlextResult[str]: Success result with converted string or failure result.
+
+        """
         # Railway pattern: process through type handlers >> convert to string
         result = (
             FlextResult[object].ok(raw_value)
@@ -148,7 +163,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         return result.with_context(lambda err: f"String conversion failed: {err}")
 
     def _handle_string_type(self, value: object) -> FlextResult[object]:
-        """Handle string type conversion."""
+        """Handle string type conversion.
+
+        Returns:
+            FlextResult[object]: Success result with processed value or pass-through.
+
+        """
         if isinstance(value, str):
             return (
                 FlextResult[object].ok(value)
@@ -158,18 +178,28 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[object].ok(value)  # Pass through for next handler
 
     def _handle_bytes_type(self, value: object) -> FlextResult[object]:
-        """Handle bytes type conversion."""
+        """Handle bytes type conversion.
+
+        Returns:
+            FlextResult[object]: Success result with decoded string or pass-through.
+
+        """
         if isinstance(value, bytes):
             return FlextResult[object].ok(value.decode("utf-8", errors="replace"))
         return FlextResult[object].ok(value)  # Pass through for next handler
 
     def _handle_list_type(self, value: object) -> FlextResult[object]:
-        """Handle list type conversion."""
+        """Handle list type conversion.
+
+        Returns:
+            FlextResult[object]: Success result with first element as string or pass-through.
+
+        """
         if isinstance(value, list):
             if not value:
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
-            if first_element is None or first_element == "":
+            if first_element is None or not first_element:
                 return FlextResult[object].fail(
                     "List contains None or empty first element"
                 )
@@ -177,7 +207,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[object].ok(value)  # Pass through for next handler
 
     def _handle_numeric_type(self, value: object) -> FlextResult[object]:
-        """Handle numeric type conversion."""
+        """Handle numeric type conversion.
+
+        Returns:
+            FlextResult[object]: Success result with converted string or pass-through.
+
+        """
         if isinstance(value, (int, float, bool)):
             return FlextResult[object].ok(str(value))
         return FlextResult[object].ok(value)  # Pass through for next handler
@@ -188,7 +223,7 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     # Public helper methods to avoid private member access violations
 
-    def display_message(self, message: str, level: str = "info") -> None:
+    def _display_message(self, message: str, level: str = "info") -> None:
         """Display formatted message using monadic composition - Phase 2 pattern."""
         # Monadic factory function replaces nested helper class
         self._create_display_message_handler(message, level)
@@ -198,7 +233,7 @@ class FlextLdapApi(FlextMixins.Loggable):
         # Implementation moved from nested class to monadic function
         # CLI integration point - implementation depends on flext-cli domain
 
-    def print_success(self, message: str) -> None:
+    def _print_success(self, message: str) -> None:
         """Print success message using monadic composition - Phase 2 pattern."""
         # Monadic factory function replaces nested helper class
         self._create_success_message_handler(message)
@@ -208,29 +243,49 @@ class FlextLdapApi(FlextMixins.Loggable):
         # Implementation moved from nested class to monadic function
         # CLI integration point - implementation depends on flext-cli domain
 
-    def format_connection_info(self, server_uri: str, bind_dn: str) -> str:
-        """Format connection information using monadic composition - Phase 2 pattern."""
+    def _format_connection_info(self, server_uri: str, bind_dn: str) -> str:
+        """Format connection information using monadic composition - Phase 2 pattern.
+
+        Returns:
+            str: Formatted connection information string.
+
+        """
         # Monadic factory function replaces nested helper class
         return self._create_connection_info_formatter(server_uri, bind_dn)
 
     def _create_connection_info_formatter(self, server_uri: str, bind_dn: str) -> str:
-        """Monadic factory function for connection info formatting - replaces _ConnectionHelper."""
+        """Monadic factory function for connection info formatting - replaces _ConnectionHelper.
+
+        Returns:
+            str: Formatted connection information string.
+
+        """
         # Implementation moved from nested class to monadic function
         return f"Server: {server_uri}\nBind DN: {bind_dn}"
 
-    def create_search_request(
+    def _create_search_request(
         self,
         base_dn: str,
         filter_str: str,
     ) -> FlextLdapModels.SearchRequest:
-        """Create search request using monadic composition - Phase 2 pattern."""
+        """Create search request using monadic composition - Phase 2 pattern.
+
+        Returns:
+            FlextLdapModels.SearchRequest: Configured search request object.
+
+        """
         # Monadic factory function replaces nested helper class
         return self._create_search_request_factory(base_dn, filter_str)
 
     def _create_search_request_factory(
         self, base_dn: str, filter_str: str
     ) -> FlextLdapModels.SearchRequest:
-        """Monadic factory function for search requests - replaces _SearchHelper."""
+        """Monadic factory function for search requests - replaces _SearchHelper.
+
+        Returns:
+            FlextLdapModels.SearchRequest: Configured search request object.
+
+        """
         # Implementation moved from nested class to monadic function
         return FlextLdapModels.SearchRequest(
             base_dn=base_dn,
@@ -241,14 +296,19 @@ class FlextLdapApi(FlextMixins.Loggable):
             time_limit=30,
         )
 
-    def create_user_request(
+    def _create_user_request(
         self,
         dn: str,
         uid: str,
         cn: str,
         sn: str,
     ) -> FlextLdapModels.CreateUserRequest:
-        """Create user request with standard parameters using monadic function."""
+        """Create user request with standard parameters using monadic function.
+
+        Returns:
+            FlextLdapModels.CreateUserRequest: Configured user creation request.
+
+        """
         # Simple monadic function replacement for helper
         return FlextLdapModels.CreateUserRequest(
             dn=dn,
@@ -258,27 +318,42 @@ class FlextLdapApi(FlextMixins.Loggable):
             object_classes=["person", "organizationalPerson"],
         )
 
-    def format_user_info(self, user: FlextLdapModels.User) -> str:
-        """Format user information for display using monadic function."""
+    def _format_user_info(self, user: FlextLdapModels.User) -> str:
+        """Format user information for display using monadic function.
+
+        Returns:
+            str: Formatted user information string.
+
+        """
         # Simple monadic function replacement for helper
         return f"User: {user.cn} ({user.uid}) - {user.mail or 'No email'}"
 
-    async def connect_to_ldap(
+    async def _connect_to_ldap(
         self,
         server_uri: str,
         bind_dn: str,
         bind_password: str,
     ) -> FlextResult[str]:
-        """Connect to LDAP server - CLI method wrapper."""
+        """Connect to LDAP server - CLI method wrapper.
+
+        Returns:
+            FlextResult[str]: Success result with session ID or failure result.
+
+        """
         return await self.connect(server_uri, bind_dn, bind_password)
 
-    async def search_ldap(
+    async def _search_ldap(
         self,
         base_dn: str,
         filter_str: str = "(objectClass=*)",
         scope: str = "subtree",
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
-        """Search LDAP directory - CLI method."""
+        """Search LDAP directory - CLI method.
+
+        Returns:
+            FlextResult[FlextLdapModels.SearchResponse]: Search results or failure result.
+
+        """
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
             filter_str=filter_str,
@@ -339,7 +414,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     async def _perform_ldap_connection(
         self, server_uri: str, bind_dn: str, bind_password: str
     ) -> FlextResult[None]:
-        """Perform LDAP connection - railway helper method."""
+        """Perform LDAP connection - railway helper method.
+
+        Returns:
+            FlextResult[None]: Success result if connection succeeds.
+
+        """
         connection_result = await self._client.connect(
             server_uri, bind_dn, bind_password
         )
@@ -350,7 +430,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _validate_connection_params(
         self, server_uri: str, bind_dn: str, bind_password: str
     ) -> FlextResult[None]:
-        """Validate connection parameters using FlextResult patterns."""
+        """Validate connection parameters using FlextResult patterns.
+
+        Returns:
+            FlextResult[None]: Success result if validation passes.
+
+        """
         if not server_uri or not server_uri.strip():
             return FlextResult[None].fail("Server URI cannot be empty")
         if not bind_dn or not bind_dn.strip():
@@ -394,6 +479,9 @@ class FlextLdapApi(FlextMixins.Loggable):
 
         Yields:
             Session ID for use within context
+
+        Raises:
+            ConnectionError: If connection fails.
 
         """
         # Monadic workflow: connect >> extract session >> yield session >> cleanup
@@ -442,7 +530,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _convert_search_response_to_entries(
         self, search_response: FlextLdapModels.SearchResponse
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Convert search response to Entry objects using monadic pipeline."""
+        """Convert search response to Entry objects using monadic pipeline.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.Entry]]: Success result with converted entries.
+
+        """
         entries: list[FlextLdapModels.Entry] = []
 
         for entry_data in search_response.entries:
@@ -486,7 +579,7 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
     # Convenience methods using factory patterns from SearchRequest
-    async def search_simple(
+    async def _search_simple(
         self,
         base_dn: str,
         search_filter: str = "(objectClass=*)",
@@ -494,7 +587,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         scope: str = "subtree",
         attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Simplified search interface using factory method pattern."""
+        """Simplified search interface using factory method pattern.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.Entry]]: Success result with found entries.
+
+        """
         # Use factory method from SearchRequest for convenience
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
@@ -511,7 +609,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         base_dn: str,
         uid: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Search users using factory method for common pattern."""
+        """Search users using factory method for common pattern.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.Entry]]: Success result with found user entries.
+
+        """
         search_request = FlextLdapModels.SearchRequest.create_user_search(
             base_dn=base_dn,
             uid=uid,
@@ -528,7 +631,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         sn: str | None = None,
         mail: str | None = None,
     ) -> FlextResult[FlextLdapModels.User]:
-        """Create user using proper service layer - supports both request object and individual parameters."""
+        """Create user using proper service layer - supports both request object and individual parameters.
+
+        Returns:
+            FlextResult[FlextLdapModels.User]: Success result with created user.
+
+        """
         # Handle both request object and individual parameters
         if isinstance(user_request_or_dn, FlextLdapModels.CreateUserRequest):
             # First overload: request object only - validate no extra params provided
@@ -567,7 +675,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _create_user_object(
         self, request: FlextLdapModels.CreateUserRequest
     ) -> FlextResult[FlextLdapModels.User]:
-        """Create user object from request - railway helper method."""
+        """Create user object from request - railway helper method.
+
+        Returns:
+            FlextResult[FlextLdapModels.User]: Success result with created user object.
+
+        """
         created_user = FlextLdapModels.User(
             id=f"user_{request.uid}",
             dn=request.dn,
@@ -582,7 +695,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[FlextLdapModels.User].ok(created_user)
 
     async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
-        """Get user by DN."""
+        """Get user by DN.
+
+        Returns:
+            FlextResult[FlextLdapModels.User | None]: Success result with user or None if not found.
+
+        """
         # Search for the user by DN
         search_request = FlextLdapModels.SearchRequest(
             base_dn=dn,
@@ -603,7 +721,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _process_user_search_entries(
         self, search_response: FlextLdapModels.SearchResponse, dn: str
     ) -> FlextResult[FlextLdapModels.User | None]:
-        """Process search response entries for user retrieval - railway helper method."""
+        """Process search response entries for user retrieval - railway helper method.
+
+        Returns:
+            FlextResult[FlextLdapModels.User | None]: Success result with user or None if not found.
+
+        """
         if not search_response.entries:
             return FlextResult[FlextLdapModels.User | None].ok(None)
 
@@ -628,7 +751,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         dn: str,
         attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
-        """Update user attributes using railway pattern."""
+        """Update user attributes using railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if update succeeds.
+
+        """
         # Railway pattern: modify entry with context
         modify_result = await self._client.modify_entry(dn, attributes)
         return modify_result.with_context(
@@ -636,20 +764,30 @@ class FlextLdapApi(FlextMixins.Loggable):
         )
 
     async def delete_user(self, dn: str) -> FlextResult[None]:
-        """Delete user using railway pattern."""
+        """Delete user using railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if deletion succeeds.
+
+        """
         # Railway pattern: delete entry with context
         delete_result = await self._client.delete(dn)
         return delete_result.with_context(
             lambda err: f"Failed to delete user {dn}: {err}"
         )
 
-    async def search_users_by_filter(
+    async def _search_users_by_filter(
         self,
         filter_str: str,
         base_dn: str,
         scope: str = "subtree",
     ) -> FlextResult[list[FlextLdapModels.User]]:
-        """Search users with filter using railway pattern."""
+        """Search users with filter using railway pattern.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.User]]: Success result with found users.
+
+        """
         # Use the generic search method with user-specific filter
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
@@ -669,7 +807,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _convert_search_entries_to_users(
         self, search_response: FlextLdapModels.SearchResponse
     ) -> FlextResult[list[FlextLdapModels.User]]:
-        """Convert search response entries to users - railway helper method."""
+        """Convert search response entries to users - railway helper method.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.User]]: Success result with converted users.
+
+        """
         users: list[FlextLdapModels.User] = []
         for entry in search_response.entries:
             # Create user from entry - simplified mapping
@@ -700,6 +843,10 @@ class FlextLdapApi(FlextMixins.Loggable):
         """Create group using proper service layer.
 
         Can accept either a CreateGroupRequest object or individual parameters.
+
+        Returns:
+            FlextResult[FlextLdapModels.Group]: Success result with created group.
+
         """
         # Handle both request object and individual parameters
         if isinstance(dn_or_request, FlextLdapModels.CreateGroupRequest):
@@ -746,7 +893,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         ).with_context(lambda err: f"Failed to create group {dn}: {err}")
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
-        """Get group by DN."""
+        """Get group by DN.
+
+        Returns:
+            FlextResult[FlextLdapModels.Group | None]: Success result with group or None if not found.
+
+        """
         # Use generic search to find group by DN
         search_request = FlextLdapModels.SearchRequest(
             base_dn=dn,
@@ -765,7 +917,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _process_group_search_response(
         self, search_response: FlextLdapModels.SearchResponse
     ) -> FlextResult[FlextLdapModels.Group | None]:
-        """Process search response and create group entity - railway pattern helper."""
+        """Process search response and create group entity - railway pattern helper.
+
+        Returns:
+            FlextResult[FlextLdapModels.Group | None]: Success result with group or None if not found.
+
+        """
         if not search_response or not search_response.entries:
             return FlextResult[FlextLdapModels.Group | None].ok(None)
 
@@ -797,7 +954,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         dn: str,
         attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
-        """Update group attributes using railway pattern."""
+        """Update group attributes using railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if update succeeds.
+
+        """
         # Railway pattern: modify entry with context
         modify_result = await self._client.modify_entry(dn, attributes)
         return modify_result.with_context(
@@ -805,7 +967,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         )
 
     async def delete_group(self, dn: str) -> FlextResult[None]:
-        """Delete group using railway pattern."""
+        """Delete group using railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if deletion succeeds.
+
+        """
         # Railway pattern: delete entry with context
         delete_result = await self._client.delete(dn)
         return delete_result.with_context(
@@ -813,7 +980,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         )
 
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
-        """Add member to group using railway pattern."""
+        """Add member to group using railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if member is added.
+
+        """
         # Railway pattern: modify group entry with context
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
             "member": [member_dn]
@@ -824,7 +996,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         )
 
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
-        """Remove member from group using explicit async/await pattern."""
+        """Remove member from group using explicit async/await pattern.
+
+        Returns:
+            FlextResult[None]: Success result if member is removed.
+
+        """
         # Get group
         group_result = await self.get_group(group_dn)
         if group_result.is_failure:
@@ -864,13 +1041,23 @@ class FlextLdapApi(FlextMixins.Loggable):
     async def _update_group_members_async(
         self, group_dn: str, updated_members: list[str]
     ) -> FlextResult[None]:
-        """Update group with new member list - async wrapper for railway pattern."""
+        """Update group with new member list - async wrapper for railway pattern.
+
+        Returns:
+            FlextResult[None]: Success result if update succeeds.
+
+        """
         return await self._update_group_members(group_dn, updated_members)
 
     def _validate_member_exists(
         self, group: FlextLdapModels.Group | None, member_dn: str
     ) -> FlextResult[FlextLdapModels.Group]:
-        """Validate that member exists in group."""
+        """Validate that member exists in group.
+
+        Returns:
+            FlextResult[FlextLdapModels.Group]: Success result with validated group.
+
+        """
         if not group:
             return FlextResult[FlextLdapModels.Group].fail("Group not found")
         if member_dn not in group.members:
@@ -880,21 +1067,36 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _remove_member_from_list(
         self, group: FlextLdapModels.Group, member_dn: str
     ) -> FlextResult[list[str]]:
-        """Remove member from group member list."""
+        """Remove member from group member list.
+
+        Returns:
+            FlextResult[list[str]]: Success result with updated member list.
+
+        """
         updated_members = [m for m in group.members if m != member_dn]
         return FlextResult[list[str]].ok(updated_members)
 
     async def _update_group_members(
         self, group_dn: str, updated_members: list[str]
     ) -> FlextResult[None]:
-        """Update group with new member list."""
+        """Update group with new member list.
+
+        Returns:
+            FlextResult[None]: Success result if update succeeds.
+
+        """
         modifications: dict[str, list[str] | list[bytes] | str | bytes] = {
             "member": updated_members
         }
         return await self._client.modify_entry(group_dn, modifications)
 
     async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
-        """Get group members using railway pattern."""
+        """Get group members using railway pattern.
+
+        Returns:
+            FlextResult[list[str]]: Success result with member list.
+
+        """
         # Railway pattern: get group >> extract members
         group_result = await self.get_group(group_dn)
         return (group_result >> self._extract_group_members).with_context(
@@ -904,15 +1106,25 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _extract_group_members(
         self, group: FlextLdapModels.Group | None
     ) -> FlextResult[list[str]]:
-        """Extract member list from group - railway helper method."""
+        """Extract member list from group - railway helper method.
+
+        Returns:
+            FlextResult[list[str]]: Success result with member list.
+
+        """
         if not group:
             return FlextResult[list[str]].fail("Group not found")
         return FlextResult[list[str]].ok(group.members or [])
 
     # Entry Operations
 
-    async def delete_entry(self, dn: str) -> FlextResult[None]:
-        """Delete LDAP entry by DN using explicit async/await pattern."""
+    async def _delete_entry(self, dn: str) -> FlextResult[None]:
+        """Delete LDAP entry by DN using explicit async/await pattern.
+
+        Returns:
+            FlextResult[None]: Success result if deletion succeeds.
+
+        """
         # Get repository
         repository_result = self._container.get("FlextLdapRepositories.Repository")
         if repository_result.is_failure:
@@ -939,7 +1151,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     def _prepare_delete_method(
         self, repository: object
     ) -> FlextResult[Callable[[str], Awaitable[FlextResult[None]]]]:
-        """Prepare delete method from repository - railway helper method."""
+        """Prepare delete method from repository - railway helper method.
+
+        Returns:
+            FlextResult[Callable[[str], Awaitable[FlextResult[None]]]]: Success result with delete method.
+
+        """
         typed_repository = cast("FlextLdapRepositories", repository)
         delete_method = getattr(typed_repository, "_delete_async", None)
         if delete_method is None:
@@ -953,7 +1170,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     async def _execute_delete(
         self, delete_method: Callable[[str], Awaitable[FlextResult[None]]], dn: str
     ) -> FlextResult[None]:
-        """Execute delete operation - railway helper method."""
+        """Execute delete operation - railway helper method.
+
+        Returns:
+            FlextResult[None]: Success result if deletion succeeds.
+
+        """
         try:
             result = await delete_method(dn)
             # Type annotation guarantees result is FlextResult[None]
@@ -965,102 +1187,172 @@ class FlextLdapApi(FlextMixins.Loggable):
 
     # Validation Methods
 
-    def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate distinguished name format using centralized validation - SOURCE OF TRUTH."""
+    def _validate_dn(self, dn: str) -> FlextResult[None]:
+        """Validate distinguished name format using centralized validation - SOURCE OF TRUTH.
+
+        Returns:
+            FlextResult[None]: Success result if validation passes.
+
+        """
         return FlextLdapValidations.validate_dn(dn)
 
-    def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP search filter using centralized validation - SOURCE OF TRUTH."""
+    def _validate_filter(self, filter_str: str) -> FlextResult[None]:
+        """Validate LDAP search filter using centralized validation - SOURCE OF TRUTH.
+
+        Returns:
+            FlextResult[None]: Success result if validation passes.
+
+        """
         return FlextLdapValidations.validate_filter(filter_str)
 
-    def validate_attributes(
+    def _validate_attributes(
         self,
         attributes: FlextLdapTypes.Entry.AttributeDict,
     ) -> FlextResult[None]:
-        """Validate LDAP attributes dictionary."""
+        """Validate LDAP attributes dictionary.
+
+        Returns:
+            FlextResult[None]: Success result if validation passes.
+
+        """
         if not attributes:
             return FlextResult.fail("Attributes cannot be empty")
 
         return FlextResult.ok(None)
 
-    def validate_object_classes(
+    def _validate_object_classes(
         self,
         object_classes: list[str],
     ) -> FlextResult[None]:
-        """Validate LDAP object classes list."""
+        """Validate LDAP object classes list.
+
+        Returns:
+            FlextResult[None]: Success result if validation passes.
+
+        """
         if not object_classes:
             return FlextResult.fail("Object classes cannot be empty")
         return FlextResult.ok(None)
 
-    async def user_exists(self, dn: str) -> FlextResult[bool]:
-        """Check if user exists at DN using railway pattern."""
+    async def _user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists at DN using railway pattern.
+
+        Returns:
+            FlextResult[bool]: Success result with existence status.
+
+        """
         # Railway pattern: get user >> check existence
         user_result = await self.get_user(dn)
         return (
             user_result >> (lambda user: FlextResult[bool].ok(user is not None))
         ).with_context(lambda err: f"Failed to check if user exists at {dn}: {err}")
 
-    async def group_exists(self, dn: str) -> FlextResult[bool]:
-        """Check if group exists at DN using railway pattern."""
+    async def _group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists at DN using railway pattern.
+
+        Returns:
+            FlextResult[bool]: Success result with existence status.
+
+        """
         # Railway pattern: get group >> check existence
         group_result = await self.get_group(dn)
         return (
             group_result >> (lambda group: FlextResult[bool].ok(group is not None))
         ).with_context(lambda err: f"Failed to check if group exists at {dn}: {err}")
 
-    async def add_member_to_group(
+    async def _add_member_to_group(
         self, group_dn: str, member_dn: str
     ) -> FlextResult[None]:
-        """Add member to group (alternative implementation)."""
+        """Add member to group (alternative implementation).
+
+        Returns:
+            FlextResult[None]: Success result if member is added.
+
+        """
         return await self.add_member(group_dn, member_dn)
 
-    async def remove_member_from_group(
+    async def _remove_member_from_group(
         self, group_dn: str, member_dn: str
     ) -> FlextResult[None]:
-        """Remove member from group (alternative implementation)."""
+        """Remove member from group (alternative implementation).
+
+        Returns:
+            FlextResult[None]: Success result if member is removed.
+
+        """
         return await self.remove_member(group_dn, member_dn)
 
-    async def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
-        """Get group members as list of DNs using railway pattern."""
+    async def _get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get group members as list of DNs using railway pattern.
+
+        Returns:
+            FlextResult[list[str]]: Success result with member DN list.
+
+        """
         # Railway pattern: get members >> convert to string list
         members_result = await self.get_members(group_dn)
         return (
             members_result
             >> (
-                lambda members: FlextResult[list[str]].ok(
-                    [str(member) for member in (members or [])]
-                )
+                lambda members: FlextResult[list[str]].ok([
+                    str(member) for member in (members or [])
+                ])
             )
         ).with_context(
             lambda err: f"Failed to get members list for group {group_dn}: {err}"
         )
 
-    async def initialize(self) -> FlextResult[None]:
-        """Initialize service using FlextProcessors logging."""
+    async def _initialize(self) -> FlextResult[None]:
+        """Initialize service using FlextProcessors logging.
+
+        Returns:
+            FlextResult[None]: Success result.
+
+        """
         self.log_info("LDAP service initializing", service="FlextLdapApi")
         return FlextResult[None].ok(None)
 
-    async def cleanup(self) -> FlextResult[None]:
-        """Cleanup service resources."""
+    async def _cleanup(self) -> FlextResult[None]:
+        """Cleanup service resources.
+
+        Returns:
+            FlextResult[None]: Success result.
+
+        """
         self.log_info("LDAP service cleanup", service="FlextLdapApi")
         return FlextResult[None].ok(None)
 
     # === Phase 2: Batch Operations with Traverse/Sequence ===
 
-    async def batch_create_users(
+    async def _batch_create_users(
         self, user_requests: list[FlextLdapModels.CreateUserRequest]
     ) -> FlextResult[list[FlextLdapModels.User]]:
-        """Create multiple users using monadic traverse pattern - Phase 2 implementation."""
+        """Create multiple users using monadic traverse pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.User]]: Success result with created users.
+
+        """
         return await self._traverse_user_operations(user_requests, self.create_user)
 
-    async def batch_delete_users(self, dns: list[str]) -> FlextResult[list[None]]:
-        """Delete multiple users using monadic traverse pattern - Phase 2 implementation."""
+    async def _batch_delete_users(self, dns: list[str]) -> FlextResult[list[None]]:
+        """Delete multiple users using monadic traverse pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[None]]: Success result with deletion results.
+
+        """
         return await self._traverse_simple_operations(dns, self.delete_user)
 
-    async def batch_get_users(
+    async def _batch_get_users(
         self, dns: list[str]
     ) -> FlextResult[list[FlextLdapModels.User | None]]:
-        """Get multiple users using monadic traverse pattern - Phase 2 implementation."""
+        """Get multiple users using monadic traverse pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.User | None]]: Success result with users or None for not found.
+
+        """
         results: list[FlextLdapModels.User | None] = []
         for dn in dns:
             result = await self.get_user(dn)
@@ -1071,16 +1363,26 @@ class FlextLdapApi(FlextMixins.Loggable):
             results.append(result.unwrap())
         return FlextResult[list[FlextLdapModels.User | None]].ok(results)
 
-    async def batch_create_groups(
+    async def _batch_create_groups(
         self, group_requests: list[FlextLdapModels.CreateGroupRequest]
     ) -> FlextResult[list[FlextLdapModels.Group]]:
-        """Create multiple groups using monadic traverse pattern - Phase 2 implementation."""
+        """Create multiple groups using monadic traverse pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.Group]]: Success result with created groups.
+
+        """
         return await self._traverse_group_operations(group_requests, self.create_group)
 
-    async def batch_add_members(
+    async def _batch_add_members(
         self, member_operations: list[tuple[str, str]]
     ) -> FlextResult[list[None]]:
-        """Add multiple members to groups using monadic sequence pattern - Phase 2 implementation."""
+        """Add multiple members to groups using monadic sequence pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[None]]: Success result with operation results.
+
+        """
         results: list[None] = []
         for group_dn, member_dn in member_operations:
             result = await self.add_member(group_dn, member_dn)
@@ -1091,10 +1393,15 @@ class FlextLdapApi(FlextMixins.Loggable):
             results.append(result.unwrap())
         return FlextResult[list[None]].ok(results)
 
-    async def batch_remove_members(
+    async def _batch_remove_members(
         self, member_operations: list[tuple[str, str]]
     ) -> FlextResult[list[None]]:
-        """Remove multiple members from groups using monadic sequence pattern - Phase 2 implementation."""
+        """Remove multiple members from groups using monadic sequence pattern - Phase 2 implementation.
+
+        Returns:
+            FlextResult[list[None]]: Success result with operation results.
+
+        """
         results: list[None] = []
         for group_dn, member_dn in member_operations:
             result = await self.remove_member(group_dn, member_dn)
@@ -1115,7 +1422,12 @@ class FlextLdapApi(FlextMixins.Loggable):
             Awaitable[FlextResult[FlextLdapModels.User]],
         ],
     ) -> FlextResult[list[FlextLdapModels.User]]:
-        """Process user operations in sequence."""
+        """Process user operations in sequence.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.User]]: Success result with processed users.
+
+        """
         results = []
         for request in requests:
             result = await operation(request)
@@ -1134,7 +1446,12 @@ class FlextLdapApi(FlextMixins.Loggable):
             Awaitable[FlextResult[FlextLdapModels.Group]],
         ],
     ) -> FlextResult[list[FlextLdapModels.Group]]:
-        """Process group operations in sequence."""
+        """Process group operations in sequence.
+
+        Returns:
+            FlextResult[list[FlextLdapModels.Group]]: Success result with processed groups.
+
+        """
         results = []
         for request in requests:
             result = await operation(request)
@@ -1148,7 +1465,12 @@ class FlextLdapApi(FlextMixins.Loggable):
     async def _traverse_simple_operations(
         self, items: list[str], operation: Callable[[str], Awaitable[FlextResult[None]]]
     ) -> FlextResult[list]:
-        """Process simple operations in sequence."""
+        """Process simple operations in sequence.
+
+        Returns:
+            FlextResult[list]: Success result with operation results.
+
+        """
         results: list[None] = []
         for item in items:
             result = await operation(item)
@@ -1165,7 +1487,12 @@ class FlextLdapApi(FlextMixins.Loggable):
         member_dns: list[str],
         operation: Callable[[str, str], Awaitable[FlextResult[None]]],
     ) -> FlextResult[list[None]]:
-        """Process member operations in sequence."""
+        """Process member operations in sequence.
+
+        Returns:
+            FlextResult[list[None]]: Success result with operation results.
+
+        """
         results: list[None] = []
         for member_dn in member_dns:
             result = await operation(group_dn, member_dn)
@@ -1177,54 +1504,49 @@ class FlextLdapApi(FlextMixins.Loggable):
         return FlextResult[list[None]].ok(results)
 
     def process(self, request: object) -> FlextResult[object]:
-        """Process LDAP request using Python 3.13 pattern matching."""
+        """Process LDAP request using Python 3.13 pattern matching.
+
+        Returns:
+            FlextResult[object]: Success result with processed request.
+
+        """
         # Python 3.13 structural pattern matching for LDAP request dispatch
         match request:
             case {"operation": "user_create", "data": user_data} if isinstance(
                 user_data,
                 dict,
             ):
-                return FlextResult[object].ok(
-                    {
-                        "status": "user_create_processed",
-                        "data": user_data,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "status": "user_create_processed",
+                    "data": user_data,
+                })
             case {"operation": "user_read", "dn": dn} if isinstance(dn, str):
-                return FlextResult[object].ok(
-                    {
-                        "status": "user_read_processed",
-                        "dn": dn,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "status": "user_read_processed",
+                    "dn": dn,
+                })
             case {"operation": "group_create", "data": group_data} if isinstance(
                 group_data,
                 dict,
             ):
-                return FlextResult[object].ok(
-                    {
-                        "status": "group_create_processed",
-                        "data": group_data,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "status": "group_create_processed",
+                    "data": group_data,
+                })
             case {"operation": "search", "params": search_params} if isinstance(
                 search_params,
                 dict,
             ):
-                return FlextResult[object].ok(
-                    {
-                        "status": "search_processed",
-                        "params": search_params,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "status": "search_processed",
+                    "params": search_params,
+                })
             case {"operation": "validate", "target": str(target), "value": value}:
-                return FlextResult[object].ok(
-                    {
-                        "status": "validate_processed",
-                        "target": target,
-                        "value": value,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "status": "validate_processed",
+                    "target": target,
+                    "value": value,
+                })
             case _:
                 return FlextResult[object].ok(request)
 

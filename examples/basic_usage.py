@@ -48,7 +48,12 @@ async def demonstrate_basic_operations() -> None:
 
 
 def _initialize_ldap_service() -> FlextLdapApi:
-    """Initialize LDAP service - Single Responsibility."""
+    """Initialize LDAP service - Single Responsibility.
+
+    Returns:
+        FlextLdapApi: The initialized LDAP API instance.
+
+    """
     return FlextLdapApi()
 
 

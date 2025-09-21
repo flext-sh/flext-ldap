@@ -40,13 +40,11 @@ class FlextLdapUserService(FlextDomainService):
 
         Returns basic service information for the user service.
         """
-        return FlextResult[dict[str, str]].ok(
-            {
-                "service": "FlextLdapUserService",
-                "status": "ready",
-                "operations": "create_user,get_user,update_user,delete_user,search_users_by_filter",
-            }
-        )
+        return FlextResult[dict[str, str]].ok({
+            "service": "FlextLdapUserService",
+            "status": "ready",
+            "operations": "create_user,get_user,update_user,delete_user,search_users_by_filter",
+        })
 
     async def create_user(
         self,
@@ -337,7 +335,7 @@ class FlextLdapUserService(FlextDomainService):
             if not value:
                 return FlextResult[object].fail("Empty list")
             first_element = value[0]
-            if first_element is None or first_element == "":
+            if first_element is None or not first_element:
                 return FlextResult[object].fail(
                     "List contains None or empty first element"
                 )

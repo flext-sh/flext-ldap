@@ -35,7 +35,12 @@ class FlextLdapDispatcher:
 
         @staticmethod
         def build_handlers() -> list[FlextHandlers[object, object]]:
-            """Build handler instances lazily to avoid circular imports."""
+            """Build handler instances lazily to avoid circular imports.
+
+            Returns:
+                list[FlextHandlers[object, object]]: List of configured handlers.
+
+            """
             # Import inside method to avoid circular import at runtime
             # For static type checking, FlextLdapDomain is imported above under TYPE_CHECKING
 
@@ -94,6 +99,10 @@ class FlextLdapDispatcher:
         """Create a dispatcher configured with ldap domain handlers.
 
         Replaces the global build_dispatcher function with class method.
+
+        Returns:
+            FlextDispatcher: Configured dispatcher instance.
+
         """
         instance = cls()
         return instance.build_dispatcher(bus)
@@ -103,6 +112,10 @@ class FlextLdapDispatcher:
         """Return cached dispatcher for flext-ldap domain operations.
 
         Replaces the global get_dispatcher function with class method.
+
+        Returns:
+            FlextDispatcher: Global dispatcher instance.
+
         """
         bus = FlextBus.create_command_bus()
         return cls.create_default(bus=bus)

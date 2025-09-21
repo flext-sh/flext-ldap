@@ -920,31 +920,27 @@ class TestLDAPEntryProcessing:
         user_extractor = FlextLDAPOperations()._extractors
 
         # Test with minimal attributes
-        minimal_entry = MockLDAPEntryImpl(
-            {
-                "cn": ["Minimal User"],
-                "objectClass": ["person"],
-            }
-        )
+        minimal_entry = MockLDAPEntryImpl({
+            "cn": ["Minimal User"],
+            "objectClass": ["person"],
+        })
 
         # Test actual available method - extract_user_attribute (expects dict, not SimpleNamespace)
         result = user_extractor.extract_user_attribute(minimal_entry.attributes, "cn")
         assert result is not None  # Test that extraction works
 
         # Test with comprehensive attributes
-        comprehensive_entry = MockLDAPEntryImpl(
-            {
-                "cn": ["Comprehensive User"],
-                "sn": ["User"],
-                "givenName": ["Comprehensive"],
-                "uid": ["comp.user"],
-                "mail": ["comp.user@example.com"],
-                "telephoneNumber": ["+1-555-0123"],
-                "departmentNumber": ["IT"],
-                "title": ["Software Engineer"],
-                "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
-            }
-        )
+        comprehensive_entry = MockLDAPEntryImpl({
+            "cn": ["Comprehensive User"],
+            "sn": ["User"],
+            "givenName": ["Comprehensive"],
+            "uid": ["comp.user"],
+            "mail": ["comp.user@example.com"],
+            "telephoneNumber": ["+1-555-0123"],
+            "departmentNumber": ["IT"],
+            "title": ["Software Engineer"],
+            "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
+        })
 
         # Test comprehensive attribute extraction
         result = user_extractor.extract_user_attribute(
@@ -957,31 +953,27 @@ class TestLDAPEntryProcessing:
         group_extractor = FlextLDAPOperations()._extractors
 
         # Test with simple group
-        simple_group = MockLDAPEntryImpl(
-            {
-                "cn": ["Simple Group"],
-                "objectClass": ["group"],
-            }
-        )
+        simple_group = MockLDAPEntryImpl({
+            "cn": ["Simple Group"],
+            "objectClass": ["group"],
+        })
 
         # Test actual available method - process_group_data
         result = group_extractor.process_group_data(simple_group)
         assert result is not None
 
         # Test with complex group with members
-        complex_group = MockLDAPEntryImpl(
-            {
-                "cn": ["Complex Group"],
-                "description": ["A complex group with many members"],
-                "member": [
-                    "cn=user1,ou=users,dc=example,dc=com",
-                    "cn=user2,ou=users,dc=example,dc=com",
-                    "cn=user3,ou=users,dc=example,dc=com",
-                ],
-                "uniqueMember": ["uid=user1,ou=people,dc=example,dc=com"],
-                "objectClass": ["group", "groupOfNames", "groupOfUniqueNames"],
-            }
-        )
+        complex_group = MockLDAPEntryImpl({
+            "cn": ["Complex Group"],
+            "description": ["A complex group with many members"],
+            "member": [
+                "cn=user1,ou=users,dc=example,dc=com",
+                "cn=user2,ou=users,dc=example,dc=com",
+                "cn=user3,ou=users,dc=example,dc=com",
+            ],
+            "uniqueMember": ["uid=user1,ou=people,dc=example,dc=com"],
+            "objectClass": ["group", "groupOfNames", "groupOfUniqueNames"],
+        })
 
         # Test complex group processing
         result = group_extractor.process_group_data(complex_group)
@@ -1218,13 +1210,11 @@ class TestDetailedAttributeExtraction:
 
         for members in member_test_cases:
             # Create mock entry with members
-            mock_entry = MockLDAPEntryImpl(
-                {
-                    "cn": ["Test Group"],
-                    "member": members,
-                    "objectClass": ["group", "groupOfNames"],
-                }
-            )
+            mock_entry = MockLDAPEntryImpl({
+                "cn": ["Test Group"],
+                "member": members,
+                "objectClass": ["group", "groupOfNames"],
+            })
 
             result = extractor.process_group_data(mock_entry)
             # Covers member extraction logic paths

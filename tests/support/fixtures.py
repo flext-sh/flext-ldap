@@ -21,7 +21,12 @@ logger = FlextLogger(__name__)
 
 @pytest.fixture(scope="session")
 async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
-    """Start and manage real LDAP server for testing."""
+    """Start and manage real LDAP server for testing.
+
+    Yields:
+        LdapTestServer: Configured LDAP test server instance.
+
+    """
     server = LdapTestServer()
 
     # Start the server
@@ -90,7 +95,12 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 # Synchronous fixtures for compatibility
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop]:
-    """Create event loop for the test session."""
+    """Create event loop for the test session.
+
+    Yields:
+        asyncio.AbstractEventLoop: Event loop for the test session.
+
+    """
     loop = asyncio.new_event_loop()
     try:
         yield loop
@@ -99,9 +109,9 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop]:
 
 
 @pytest.fixture
-async def clean_ldap_state(
+def clean_ldap_state(
     ldap_connection: FlextLdapModels.ConnectionConfig,
-) -> AsyncGenerator[None]:
+) -> Generator[None]:
     """Ensure clean LDAP state for each test."""
     # helpers already imported at top
 

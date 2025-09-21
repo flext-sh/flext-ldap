@@ -707,34 +707,41 @@ class TestAdapterErrorHandling:
 
         # Process each edge case (exercises attribute conversion logic)
         for entry_data in edge_case_entries:
-            if hasattr(entry_service, "_validate_entry"):
-                # Test entry validation which is available
-                try:
-                    # Convert dict to DirectoryEntry format for validation
-                    # Type safe access - entry_data is dict from test cases
-                    typed_entry_data: dict[str, object] = entry_data
-                    # Convert to proper AttributeDict format
-                    attributes: FlextLdapTypes.Entry.AttributeDict = {}
-                    for k, v in typed_entry_data.items():
-                        if k != "dn":
-                            if isinstance(v, (list, str, bytes)):
-                                attributes[k] = v
-                            else:
-                                # Convert other types to string
-                                attributes[k] = str(v)
+            self._test_edge_case_entry(entry_service, entry_data)
 
-                    directory_entry = FlextLdapAdapters.DirectoryEntry(
-                        dn=str(typed_entry_data["dn"]),
-                        attributes=attributes,
-                    )
-                    _ = entry_service._validate_entry(directory_entry)
-                    # Method should handle edge cases gracefully
-                    # Test successful method execution
-                    assert True
-                except Exception:
-                    # Expected for invalid entries in edge case testing
-                    # Exception is expected and handled gracefully by the method
-                    continue
+    def _test_edge_case_entry(
+        self, entry_service: object, entry_data: dict[str, object]
+    ) -> None:
+        """Test edge case entry validation to reduce nesting complexity."""
+        if not hasattr(entry_service, "_validate_entry"):
+            return
+
+        try:
+            # Convert dict to DirectoryEntry format for validation
+            typed_entry_data: dict[str, object] = entry_data
+            # Convert to proper AttributeDict format
+            attributes: FlextLdapTypes.Entry.AttributeDict = {}
+            for k, v in typed_entry_data.items():
+                if k != "dn":
+                    if isinstance(v, (list, str, bytes)):
+                        attributes[k] = v
+                    else:
+                        # Convert other types to string
+                        attributes[k] = str(v)
+
+            directory_entry = FlextLdapAdapters.DirectoryEntry(
+                dn=str(typed_entry_data["dn"]),
+                attributes=attributes,
+            )
+            _ = entry_service._validate_entry(directory_entry)
+            # Method should handle edge cases gracefully
+            # Test successful method execution
+            assert True
+        except Exception as e:
+            # Expected for invalid entries in edge case testing
+            # Exception is expected and handled gracefully by the method
+            # Log the exception for debugging purposes
+            print(f"Expected exception in edge case testing: {e}")  # noqa: T201
 
     @pytest.mark.asyncio
     async def test_directory_service_operations_comprehensive(

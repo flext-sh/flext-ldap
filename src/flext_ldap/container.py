@@ -39,6 +39,9 @@ class FlextLdapContainer(FlextMixins.Loggable):
         Returns:
             FlextContainer: The global flext-core container with LDAP services
 
+        Raises:
+            RuntimeError: If service registration fails.
+
         """
         container = FlextContainer.get_global()
 
@@ -56,7 +59,15 @@ class FlextLdapContainer(FlextMixins.Loggable):
         return container
 
     def get_client(self) -> FlextLdapClient:
-        """Get LDAP client using FlextContainer directly."""
+        """Get LDAP client using FlextContainer directly.
+
+        Returns:
+            FlextLdapClient: The registered LDAP client instance.
+
+        Raises:
+            RuntimeError: If client resolution fails.
+
+        """
         container = self.get_container()
         result = container.get("ldap_client")
 
@@ -68,7 +79,15 @@ class FlextLdapContainer(FlextMixins.Loggable):
         return cast("FlextLdapClient", result.value)
 
     def get_repository(self) -> FlextLdapRepositories.Repository:
-        """Get LDAP repository using FlextContainer directly."""
+        """Get LDAP repository using FlextContainer directly.
+
+        Returns:
+            FlextLdapRepositories.Repository: The registered LDAP repository instance.
+
+        Raises:
+            RuntimeError: If repository resolution fails.
+
+        """
         container = self.get_container()
         result = container.get("ldap_repository")
 
@@ -117,6 +136,10 @@ class FlextLdapContainer(FlextMixins.Loggable):
         """Register LDAP services using FlextContainer singleton patterns.
 
         Uses FlextContainer's built-in singleton/factory patterns exclusively.
+
+        Returns:
+            FlextResult[None]: Success if all services registered successfully.
+
         """
         try:
             # Register concrete service instances directly - FlextContainer handles singletons

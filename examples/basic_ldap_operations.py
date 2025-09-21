@@ -40,7 +40,12 @@ def demonstrate_configuration() -> None:
 
 
 async def demonstrate_api_usage() -> FlextLdapApi:
-    """Demonstrate API usage patterns."""
+    """Demonstrate API usage patterns.
+
+    Returns:
+        FlextLdapApi: The initialized LDAP API instance.
+
+    """
     # 1. Initialize API using factory function
     # Use explicit factory create() to avoid object-return typing for some loaders
     api = FlextLdapApi.create()

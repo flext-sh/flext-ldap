@@ -35,7 +35,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[object]:
-        """Execute domain operation - required by FlextDomainService."""
+        """Execute domain operation - required by FlextDomainService.
+
+        Returns:
+            FlextResult[object]: Success result with status information.
+
+        """
         return FlextResult[object].ok({"status": "adapters_available"})
 
     # =========================================================================
@@ -81,14 +86,27 @@ class FlextLdapAdapters(FlextDomainService[object]):
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using centralized validation."""
+            """Validate DN format using centralized validation.
+
+            Returns:
+                str: The validated and stripped DN string.
+
+            Raises:
+                ValueError: If DN validation fails.
+
+            """
             validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return v.strip()
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate entry business rules."""
+            """Validate entry business rules.
+
+            Returns:
+                FlextResult[None]: Success result if validation passes.
+
+            """
             if not self.dn:
                 return FlextResult.fail("DN cannot be empty")
 
@@ -116,7 +134,15 @@ class FlextLdapAdapters(FlextDomainService[object]):
         @field_validator("server")
         @classmethod
         def validate_server(cls, v: str) -> str:
-            """Validate server URI format using FlextModels.Url validation."""
+            """Validate server URI format using FlextModels.Url validation.
+
+            Returns:
+                str: The validated server URI string.
+
+            Raises:
+                ValueError: If server URI validation fails.
+
+            """
             if not v or not v.strip():
                 error_msg = FlextLdapAdapters.ErrorMessages.SERVER_URI_CANNOT_BE_EMPTY
                 raise ValueError(error_msg)
@@ -144,7 +170,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             return v
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate connection config business rules."""
+            """Validate connection config business rules.
+
+            Returns:
+                FlextResult[None]: Success result if validation passes.
+
+            """
             if not self.server:
                 return FlextResult.fail("Server cannot be empty")
             if self.timeout <= 0:
@@ -172,12 +203,22 @@ class FlextLdapAdapters(FlextDomainService[object]):
 
         @classmethod
         def ok(cls, connection_data: object) -> FlextResult[object]:
-            """Create successful connection result."""
+            """Create successful connection result.
+
+            Returns:
+                FlextResult[object]: Success result with connection data.
+
+            """
             return FlextResult[object].ok(connection_data)
 
         @classmethod
         def fail(cls, error_message: str) -> FlextResult[object]:
-            """Create failed connection result."""
+            """Create failed connection result.
+
+            Returns:
+                FlextResult[object]: Failure result with error message.
+
+            """
             return FlextResult[object].fail(error_message)
 
     class SearchRequest(FlextModels.Entity):
@@ -203,14 +244,24 @@ class FlextLdapAdapters(FlextDomainService[object]):
         def ok(
             cls, search_response: FlextLdapModels.SearchResponse
         ) -> FlextResult[FlextLdapModels.SearchResponse]:
-            """Create successful search result."""
+            """Create successful search result.
+
+            Returns:
+                FlextResult[FlextLdapModels.SearchResponse]: Success result with search response.
+
+            """
             return FlextResult[FlextLdapModels.SearchResponse].ok(search_response)
 
         @classmethod
         def fail(
             cls, error_message: str
         ) -> FlextResult[FlextLdapModels.SearchResponse]:
-            """Create failed search result."""
+            """Create failed search result.
+
+            Returns:
+                FlextResult[FlextLdapModels.SearchResponse]: Failure result with error message.
+
+            """
             return FlextResult[FlextLdapModels.SearchResponse].fail(error_message)
 
     # =========================================================================
@@ -236,7 +287,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             request: object,
         ) -> FlextResult[object]:
-            """Process connection request - core business logic."""
+            """Process connection request - core business logic.
+
+            Returns:
+                FlextResult[object]: Result of the connection operation.
+
+            """
             try:
                 req = cast("FlextLdapModels.ConnectionRequest", request)
                 if req.operation_type == "test":
@@ -259,7 +315,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             *,
             correlation_id: str,
         ) -> object:
-            """Build connection result - pure function."""
+            """Build connection result - pure function.
+
+            Returns:
+                object: The built connection result object.
+
+            """
             _ = domain  # Unused by design in this processor
             return {
                 "success": True,
@@ -282,7 +343,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             request: object,
         ) -> FlextResult[object]:
-            """Process search request - core business logic."""
+            """Process search request - core business logic.
+
+            Returns:
+                FlextResult[object]: Result of the search operation.
+
+            """
             try:
                 req = cast("FlextLdapModels.SearchRequest", request)
                 # Validate search filter is not empty
@@ -304,7 +370,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             *,
             correlation_id: str,
         ) -> object:
-            """Build search result - pure function."""
+            """Build search result - pure function.
+
+            Returns:
+                object: The built search result object.
+
+            """
             # Use correlation_id for metadata if needed
             _ = correlation_id  # Acknowledge parameter
             return FlextLdapModels.SearchResponse(
@@ -334,14 +405,24 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             request: FlextLdapModels.ConnectionRequest,
         ) -> FlextResult[None]:
-            """Execute using ServiceProcessor pattern - eliminates boilerplate."""
+            """Execute using ServiceProcessor pattern - eliminates boilerplate.
+
+            Returns:
+                FlextResult[None]: Result of the connection operation.
+
+            """
             return cast(
                 "FlextResult[None]",
                 self._connection_processor.process(request),
             )
 
         def execute(self) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Execute operation - base class method."""
+            """Execute operation - base class method.
+
+            Returns:
+                FlextResult[list[FlextLdapModels.Entry]]: Failure result indicating method not implemented.
+
+            """
             return FlextResult[list[FlextLdapModels.Entry]].fail(
                 "Not implemented in base class - use specific operation methods",
             )
@@ -351,7 +432,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             operation: Callable[[], Awaitable[FlextResult[list[str]]]],
             operation_name: str,
         ) -> FlextResult[list[str]]:
-            """Execute async operation with exception handling."""
+            """Execute async operation with exception handling.
+
+            Returns:
+                FlextResult[list[str]]: Result of the async operation.
+
+            """
             try:
                 return await operation()
             except Exception as e:
@@ -377,7 +463,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
         async def test_connection(
             self,
         ) -> FlextResult[None]:
-            """Test connection using ServiceProcessor pattern."""
+            """Test connection using ServiceProcessor pattern.
+
+            Returns:
+                FlextResult[None]: Result of the connection test.
+
+            """
             request = FlextLdapModels.ConnectionRequest(
                 server_uri=self.config.server,
                 bind_dn=self.config.bind_dn,
@@ -390,7 +481,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
         async def connect_and_bind(
             self,
         ) -> FlextResult[None]:
-            """Connect and bind using ServiceProcessor pattern."""
+            """Connect and bind using ServiceProcessor pattern.
+
+            Returns:
+                FlextResult[None]: Result of the connection and bind operation.
+
+            """
             request = FlextLdapModels.ConnectionRequest(
                 server_uri=self.config.server,
                 bind_dn=self.config.bind_dn,
@@ -404,7 +500,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             config: FlextLdapAdapters.ConnectionConfig,
         ) -> FlextResult[None]:
-            """Establish connection using ServiceProcessor pattern."""
+            """Establish connection using ServiceProcessor pattern.
+
+            Returns:
+                FlextResult[None]: Result of the connection establishment.
+
+            """
             request = FlextLdapModels.ConnectionRequest(
                 server_uri=config.server,
                 bind_dn=config.bind_dn,
@@ -417,7 +518,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
         async def terminate_connection(
             self,
         ) -> FlextResult[None]:
-            """Terminate connection using ServiceProcessor pattern."""
+            """Terminate connection using ServiceProcessor pattern.
+
+            Returns:
+                FlextResult[None]: Result of the connection termination.
+
+            """
             if not self.is_connected():
                 return FlextResult.fail("No active connection to terminate")
 
@@ -431,7 +537,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             return await self.execute_with_processor(request)
 
         def is_connected(self) -> bool:
-            """Check if client is connected using public method."""
+            """Check if client is connected using public method.
+
+            Returns:
+                bool: True if client is connected, False otherwise.
+
+            """
             try:
                 return self.client.is_connected()
             except Exception:
@@ -457,7 +568,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             scope: str = "subtree",
             attributes: list[str] | None = None,
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Search LDAP entries using ServiceProcessor pattern."""
+            """Search LDAP entries using ServiceProcessor pattern.
+
+            Returns:
+                FlextResult[list[FlextLdapModels.Entry]]: Result containing list of found entries.
+
+            """
             try:
                 request = FlextLdapModels.SearchRequest(
                     base_dn=base_dn,
@@ -486,7 +602,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             base_dn: str,
             filter_str: str,
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Simple search returning entries directly."""
+            """Simple search returning entries directly.
+
+            Returns:
+                FlextResult[list[FlextLdapModels.Entry]]: Result containing list of found entries.
+
+            """
             result = await self.search_entries(base_dn, filter_str)
             if result.is_success:
                 return FlextResult[list[FlextLdapModels.Entry]].ok(
@@ -500,7 +621,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             results: list[dict[str, object]],
         ) -> list[FlextLdapModels.Entry]:
-            """Convert search results to FlextLdapModels.Entry objects."""
+            """Convert search results to FlextLdapModels.Entry objects.
+
+            Returns:
+                list[FlextLdapModels.Entry]: List of converted entry objects.
+
+            """
             entries: list[FlextLdapModels.Entry] = []
 
             for result in results:
@@ -559,7 +685,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             entry: FlextLdapAdapters.DirectoryEntry,
         ) -> FlextResult[None]:
-            """Add new LDAP entry using DirectoryEntry object only."""
+            """Add new LDAP entry using DirectoryEntry object only.
+
+            Returns:
+                FlextResult[None]: Result of the add operation.
+
+            """
             try:
                 # Validate entry
                 validation_error = self._validate_entry(entry)
@@ -594,7 +725,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             dn: str,
             modifications: FlextTypes.Core.Dict,
         ) -> FlextResult[None]:
-            """Modify existing LDAP entry."""
+            """Modify existing LDAP entry.
+
+            Returns:
+                FlextResult[None]: Result of the modify operation.
+
+            """
             try:
                 validation_error = self._validate_modify_params(dn, modifications)
                 if validation_error:
@@ -617,7 +753,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 return FlextResult.fail(error_msg)
 
         async def delete_entry(self, dn: str) -> FlextResult[None]:
-            """Delete LDAP entry."""
+            """Delete LDAP entry.
+
+            Returns:
+                FlextResult[None]: Result of the delete operation.
+
+            """
             try:
                 validation_error = self._validate_dn_param(dn)
                 if validation_error:
@@ -635,7 +776,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             dn: str,
             modifications: FlextTypes.Core.Dict,
         ) -> str | None:
-            """Validate modify operation parameters."""
+            """Validate modify operation parameters.
+
+            Returns:
+                str | None: Error message if validation fails, None if valid.
+
+            """
             dn_error = self._validate_dn_param(dn)
             if dn_error:
                 return dn_error
@@ -646,7 +792,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             return None
 
         def _validate_dn_param(self, dn: str) -> str | None:
-            """Validate DN parameter."""
+            """Validate DN parameter.
+
+            Returns:
+                str | None: Error message if validation fails, None if valid.
+
+            """
             if not dn or not dn.strip():
                 return "DN cannot be empty"
 
@@ -656,7 +807,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             entry: FlextLdapAdapters.DirectoryEntry,
         ) -> str | None:
-            """Validate LDAP entry for add operation."""
+            """Validate LDAP entry for add operation.
+
+            Returns:
+                str | None: Error message if validation fails, None if valid.
+
+            """
             # Check if entry has attributes
             if not entry.attributes:
                 return "Entry must have at least one attribute"
@@ -694,7 +850,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             base_dn: str,
             filter_str: str = "(objectClass=*)",
         ) -> FlextResult[list[FlextTypes.Core.Dict]]:
-            """Get all entries from directory."""
+            """Get all entries from directory.
+
+            Returns:
+                FlextResult[list[FlextTypes.Core.Dict]]: Result containing list of directory entries.
+
+            """
             try:
                 search_request = FlextLdapModels.SearchRequest(
                     base_dn=base_dn,
@@ -725,7 +886,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             entries: list[dict[str, object]],
         ) -> list[FlextTypes.Core.Dict]:
-            """Convert entries to protocol format."""
+            """Convert entries to protocol format.
+
+            Returns:
+                list[FlextTypes.Core.Dict]: List of entries in protocol format.
+
+            """
             protocol_entries: list[FlextTypes.Core.Dict] = []
 
             for entry in entries:
@@ -756,7 +922,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             attributes: FlextTypes.Core.Dict,
         ) -> FlextTypes.Core.Dict:
-            """Normalize entry attributes for protocol compliance."""
+            """Normalize entry attributes for protocol compliance.
+
+            Returns:
+                FlextTypes.Core.Dict: Normalized attributes dictionary.
+
+            """
             # Convert attributes using Python standard conversion
             ldap_attrs = {
                 k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
@@ -777,7 +948,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             self,
             config: FlextLdapAdapters.ConnectionConfig,
         ) -> FlextResult[None]:
-            """Connect to LDAP server."""
+            """Connect to LDAP server.
+
+            Returns:
+                FlextResult[None]: Result of the connection operation.
+
+            """
             try:
                 # Use connection service for actual connection
                 connection_service = FlextLdapAdapters.ConnectionService(
@@ -801,7 +977,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             base_dn: str = "dc=example,dc=com",
             attributes: list[str] | None = None,
         ) -> FlextResult[list[FlextTypes.Core.Dict]]:
-            """Search for users in directory."""
+            """Search for users in directory.
+
+            Returns:
+                FlextResult[list[FlextTypes.Core.Dict]]: Result containing list of user entries.
+
+            """
             try:
                 search_request = FlextLdapModels.SearchRequest(
                     base_dn=base_dn,
@@ -827,7 +1008,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(error_msg)
 
         def execute(self) -> FlextResult[object]:
-            """Execute directory service operation."""
+            """Execute directory service operation.
+
+            Returns:
+                FlextResult[object]: Failure result indicating method not implemented.
+
+            """
             return FlextResult.fail("Use specific methods like get_all_entries")
 
     class DirectoryAdapter:
@@ -853,7 +1039,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             base_dn: str,
             filter_str: str = "(objectClass=*)",
         ) -> FlextResult[list[FlextTypes.Core.Dict]]:
-            """Get all directory entries."""
+            """Get all directory entries.
+
+            Returns:
+                FlextResult[list[FlextTypes.Core.Dict]]: Result containing list of directory entries.
+
+            """
             # Validate base DN
             if not base_dn or not base_dn.strip():
                 return FlextResult[list[FlextTypes.Core.Dict]].fail(
@@ -868,7 +1059,12 @@ class FlextLdapAdapters(FlextDomainService[object]):
             filter_str: str = "(objectClass=*)",
             scope: str = "subtree",
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Search directory entries."""
+            """Search directory entries.
+
+            Returns:
+                FlextResult[list[FlextLdapModels.Entry]]: Result containing list of found entries.
+
+            """
             result = await self.search.search_entries(base_dn, filter_str, scope)
             if result.is_success:
                 return FlextResult[list[FlextLdapModels.Entry]].ok(result.value)

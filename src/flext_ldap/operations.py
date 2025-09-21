@@ -600,9 +600,11 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         f"User creation failed for {dn}: {error_msg}"
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    {"dn": dn, "status": "created", "attributes_count": len(attributes)}
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "dn": dn,
+                    "status": "created",
+                    "attributes_count": len(attributes),
+                })
 
             # Monadic traverse: apply operation to each item and collect results
             def traverse_user_creations() -> FlextResult[list[dict[str, object]]]:
@@ -655,9 +657,11 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         f"Group creation failed for {dn}: {error_msg}"
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    {"dn": dn, "status": "created", "attributes_count": len(attributes)}
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "dn": dn,
+                    "status": "created",
+                    "attributes_count": len(attributes),
+                })
 
             # Monadic traverse: apply operation to each item and collect results
             def traverse_group_creations() -> FlextResult[list[dict[str, object]]]:
@@ -749,15 +753,13 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         f"Search failed for base_dn '{base_dn}': {error_msg}"
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    {
-                        "base_dn": base_dn,
-                        "filter": filter_str,
-                        "scope": scope,
-                        "results": search_result.unwrap(),
-                        "count": len(search_result.unwrap()),
-                    }
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "base_dn": base_dn,
+                    "filter": filter_str,
+                    "scope": scope,
+                    "results": search_result.unwrap(),
+                    "count": len(search_result.unwrap()),
+                })
 
             # Monadic traverse: apply search to each request and collect results
             def traverse_searches() -> FlextResult[list[dict[str, object]]]:
@@ -862,12 +864,10 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                     f"Search failed: {search_result.error}"
                 )
 
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "results": search_result.value,
-                    "count": len(search_result.value),
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "results": search_result.value,
+                "count": len(search_result.value),
+            })
 
         def _execute_create_user_command(
             self, parameters: dict[str, object]
@@ -896,9 +896,10 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         return FlextResult[tuple[str, dict[str, object]]].fail(
                             "attributes parameter required for create_user"
                         )
-                    return FlextResult[tuple[str, dict[str, object]]].ok(
-                        (dn, attributes)
-                    )
+                    return FlextResult[tuple[str, dict[str, object]]].ok((
+                        dn,
+                        attributes,
+                    ))
 
                 return (validate_dn() >> validate_attributes).with_context(
                     lambda err: f"User command parameter validation failed: {err}"
@@ -918,12 +919,10 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         f"User creation failed: {create_result.error}"
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    {
-                        "status": "created",
-                        "dn": dn,
-                    }
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "status": "created",
+                    "dn": dn,
+                })
 
             # Railway pattern: validate parameters >> create user
             return (validate_user_parameters() >> create_user).with_context(
@@ -957,9 +956,10 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         return FlextResult[tuple[str, dict[str, object]]].fail(
                             "attributes parameter required for create_group"
                         )
-                    return FlextResult[tuple[str, dict[str, object]]].ok(
-                        (dn, attributes)
-                    )
+                    return FlextResult[tuple[str, dict[str, object]]].ok((
+                        dn,
+                        attributes,
+                    ))
 
                 return (validate_dn() >> validate_attributes).with_context(
                     lambda err: f"Group command parameter validation failed: {err}"
@@ -979,12 +979,10 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
                         f"Group creation failed: {create_result.error}"
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    {
-                        "status": "created",
-                        "dn": dn,
-                    }
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "status": "created",
+                    "dn": dn,
+                })
 
             # Railway pattern: validate parameters >> create group
             return (validate_group_parameters() >> create_group).with_context(
@@ -1037,18 +1035,6 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
         """Check if connection exists for nested operations."""
         return connection_id in self._active_connections
 
-    def get_validations_helper(self) -> FlextLDAPOperations._ValidationOperations:
-        """Get validation operations helper for nested classes."""
-        return self._validations
-
-    def get_search_helper(self) -> FlextLDAPOperations._SearchOperations:
-        """Get search operations helper for nested classes."""
-        return self._search
-
-    def get_entities_helper(self) -> FlextLDAPOperations._EntityOperations:
-        """Get entity operations helper for nested classes."""
-        return self._entities
-
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute the main LDAP operations service with result contract."""
         self._logger.info("Executing LDAP operations service")
@@ -1096,10 +1082,6 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
         """Execute LDAP command using nested command processor."""
         return self._commands.execute_command(command_type, parameters)
 
-    def entry_operations(self) -> FlextLDAPOperations._EntityOperations:
-        """Get entity operations helper."""
-        return self._entities
-
     @property
     def connections(self) -> FlextLDAPOperations._ConnectionOperations:
         """Get connection operations helper."""
@@ -1113,11 +1095,6 @@ class FlextLDAPOperations(FlextDomainService[dict[str, object]]):
     @property
     def entities(self) -> FlextLDAPOperations._EntityOperations:
         """Get entity operations helper."""
-        return self._entities
-
-    @property
-    def entries(self) -> FlextLDAPOperations._EntityOperations:
-        """Get entity operations helper (alias for entities)."""
         return self._entities
 
     @property

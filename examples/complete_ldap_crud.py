@@ -192,7 +192,12 @@ async def demonstrate_crud_operations() -> None:
 
 
 def main() -> int:
-    """Main entry point."""
+    """Main entry point.
+
+    Returns:
+        int: Exit code (0 for success).
+
+    """
     logger.info("FLEXT-LDAP Complete CRUD Example")
     logger.info("=" * 50)
     logger.info("Ensure LDAP server is running on localhost:389")

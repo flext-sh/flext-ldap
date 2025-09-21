@@ -7,6 +7,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+import pytest
+
 from flext_ldap.value_objects import FlextLdapValueObjects
 
 
@@ -24,39 +26,27 @@ class TestFlextLdapValueObjectsCoverage:
 
     def test_dn_validation_empty_error(self) -> None:
         """Test DN validation with empty value."""
-        try:
+        with pytest.raises(ValueError, match="Distinguished Name cannot be empty"):
             FlextLdapValueObjects.DistinguishedName(value="")
-            msg = "Expected ValueError for empty DN"
-            raise AssertionError(msg)
-        except ValueError as e:
-            assert "Distinguished Name cannot be empty" in str(e)
 
     def test_dn_validation_missing_equals_error(self) -> None:
         """Test DN validation with missing equals sign."""
-        try:
+        with pytest.raises(
+            ValueError, match="Invalid DN format - missing attribute=value pairs"
+        ):
             FlextLdapValueObjects.DistinguishedName(value="invalid_dn_format")
-            msg = "Expected ValueError for invalid DN format"
-            raise AssertionError(msg)
-        except ValueError as e:
-            assert "Invalid DN format - missing attribute=value pairs" in str(e)
 
     def test_filter_empty_expression_error(self) -> None:
         """Test Filter validation with empty expression."""
-        try:
+        with pytest.raises(ValueError, match="LDAP filter cannot be empty"):
             FlextLdapValueObjects.Filter(expression="")
-            msg = "Expected ValueError for empty filter"
-            raise AssertionError(msg)
-        except ValueError as e:
-            assert "LDAP filter cannot be empty" in str(e)
 
     def test_filter_missing_parentheses_error(self) -> None:
         """Test Filter validation with missing parentheses."""
-        try:
+        with pytest.raises(
+            ValueError, match="LDAP filter must be enclosed in parentheses"
+        ):
             FlextLdapValueObjects.Filter(expression="uid=test")
-            msg = "Expected ValueError for missing parentheses"
-            raise AssertionError(msg)
-        except ValueError as e:
-            assert "LDAP filter must be enclosed in parentheses" in str(e)
 
     def test_filter_factory_methods(self) -> None:
         """Test Filter factory methods."""
@@ -74,12 +64,8 @@ class TestFlextLdapValueObjectsCoverage:
 
     def test_scope_invalid_value_error(self) -> None:
         """Test Scope with invalid value."""
-        try:
+        with pytest.raises(ValueError, match="Invalid scope"):
             FlextLdapValueObjects.Scope(value="invalid_scope")
-            msg = "Expected ValueError"
-            raise AssertionError(msg)
-        except ValueError as e:
-            assert "Invalid scope" in str(e)
 
     def test_scope_factory_methods(self) -> None:
         """Test Scope factory methods."""

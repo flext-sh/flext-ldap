@@ -156,43 +156,7 @@ class FlextLdapClient(
                 connection_entries = connection.entries if connection else []
 
                 for entry in connection_entries:
-                    # Get DN directly from ldap3 entry
-                    entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
-                    entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
-
-                    # Process attributes using strategy pattern
-                    if hasattr(entry, "entry_attributes") and entry.entry_attributes:
-                        if isinstance(entry.entry_attributes, dict):
-                            # Handle dict format (attribute names as keys)
-                            entry_attrs_dict = entry.entry_attributes
-                            entry_attributes = list(entry_attrs_dict.keys())
-                            for attr_name in entry_attributes:
-                                attr_values = cast(
-                                    "list[object]",
-                                    entry_attrs_dict.get(attr_name, []),
-                                )
-                                if len(attr_values) == 1:
-                                    entry_data[attr_name] = attr_values[0]
-                                elif attr_values:  # Only add non-empty lists
-                                    entry_data[attr_name] = attr_values
-                        elif isinstance(entry.entry_attributes, list):
-                            # Handle list format (attribute names as list items)
-                            # Access attributes directly from entry object
-                            for attr_name in entry.entry_attributes:
-                                if hasattr(entry, attr_name):
-                                    attr_value = getattr(entry, attr_name)
-                                    if attr_value is not None:
-                                        if (
-                                            isinstance(attr_value, list)
-                                            and len(attr_value) == 1
-                                        ):
-                                            entry_data[attr_name] = attr_value[0]
-                                        elif (
-                                            isinstance(attr_value, list) and attr_value
-                                        ):
-                                            entry_data[attr_name] = attr_value
-                                        else:
-                                            entry_data[attr_name] = attr_value
+                    entry_data = self._process_single_entry(entry)
                     entries.append(entry_data)
 
                 return FlextResult[FlextTypes.Core.Dict].ok({"entries": entries})
@@ -201,6 +165,73 @@ class FlextLdapClient(
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Entry conversion error: {e}",
                 )
+
+        def _process_single_entry(self, entry: object) -> FlextTypes.Core.Dict:
+            """Process a single LDAP entry and convert to structured format.
+
+            Args:
+                entry: LDAP entry object to process.
+
+            Returns:
+                FlextTypes.Core.Dict: Processed entry data.
+
+            """
+            # Get DN directly from ldap3 entry
+            entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
+            entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
+
+            # Process attributes using strategy pattern
+            if hasattr(entry, "entry_attributes") and entry.entry_attributes:
+                if isinstance(entry.entry_attributes, dict):
+                    self._process_dict_attributes(entry, entry_data)
+                elif isinstance(entry.entry_attributes, list):
+                    self._process_list_attributes(entry, entry_data)
+
+            return entry_data
+
+        def _process_dict_attributes(
+            self, entry: object, entry_data: FlextTypes.Core.Dict
+        ) -> None:
+            """Process entry attributes when they are in dict format.
+
+            Args:
+                entry: LDAP entry object.
+                entry_data: Entry data dictionary to populate.
+
+            """
+            entry_attrs_dict = entry.entry_attributes
+            entry_attributes = list(entry_attrs_dict.keys())
+
+            for attr_name in entry_attributes:
+                attr_values = cast(
+                    "list[object]",
+                    entry_attrs_dict.get(attr_name, []),
+                )
+                if len(attr_values) == 1:
+                    entry_data[attr_name] = attr_values[0]
+                elif attr_values:  # Only add non-empty lists
+                    entry_data[attr_name] = attr_values
+
+        def _process_list_attributes(
+            self, entry: object, entry_data: FlextTypes.Core.Dict
+        ) -> None:
+            """Process entry attributes when they are in list format.
+
+            Args:
+                entry: LDAP entry object.
+                entry_data: Entry data dictionary to populate.
+
+            """
+            for attr_name in entry.entry_attributes:
+                if hasattr(entry, attr_name):
+                    attr_value = getattr(entry, attr_name)
+                    if attr_value is not None:
+                        if isinstance(attr_value, list) and len(attr_value) == 1:
+                            entry_data[attr_name] = attr_value[0]
+                        elif isinstance(attr_value, list) and attr_value:
+                            entry_data[attr_name] = attr_value
+                        else:
+                            entry_data[attr_name] = attr_value
 
     class ResponseBuilderStrategy:
         """Search response builder strategy nested within unified client.

@@ -27,7 +27,15 @@ logger = logging.getLogger(__name__)
 
 
 def _load_module_spec(module_name: str, file_path: Path) -> types.ModuleType:
-    """Load a module spec and return the module."""
+    """Load a module spec and return the module.
+
+    Returns:
+        types.ModuleType: The loaded module.
+
+    Raises:
+        ImportError: If module spec creation or loading fails.
+
+    """
     spec = importlib.util.spec_from_file_location(module_name, str(file_path))
     if not spec:
         msg = f"Failed to create module spec for {module_name}"
@@ -41,7 +49,12 @@ def _load_module_spec(module_name: str, file_path: Path) -> types.ModuleType:
 
 
 def start_openldap_container() -> bool:
-    """Start OpenLDAP container for testing."""
+    """Start OpenLDAP container for testing.
+
+    Returns:
+        bool: True if container started successfully, False otherwise.
+
+    """
     try:
         client = docker.from_env()
         # Stop any existing container

@@ -55,16 +55,16 @@ class TestFlextLdapTypeGuardsMissingCoverage:
         assert result == string_with_equals
 
         # Test invalid input that cannot be converted (error path)
-        with pytest.raises(ValueError, match="Cannot convert .* to valid LDAP DN"):
+        with pytest.raises(ValueError, match=r"Cannot convert .* to valid LDAP DN"):
             FlextLdapTypeGuards.ensure_ldap_dn("no-equals-sign")
 
-        with pytest.raises(ValueError, match="Cannot convert .* to valid LDAP DN"):
+        with pytest.raises(ValueError, match=r"Cannot convert .* to valid LDAP DN"):
             FlextLdapTypeGuards.ensure_ldap_dn("")
 
-        with pytest.raises(ValueError, match="Cannot convert .* to valid LDAP DN"):
+        with pytest.raises(ValueError, match=r"Cannot convert .* to valid LDAP DN"):
             FlextLdapTypeGuards.ensure_ldap_dn(None)
 
-        with pytest.raises(ValueError, match="Cannot convert .* to valid LDAP DN"):
+        with pytest.raises(ValueError, match=r"Cannot convert .* to valid LDAP DN"):
             FlextLdapTypeGuards.ensure_ldap_dn(123)
 
     def test_has_error_attribute_coverage(self) -> None:
