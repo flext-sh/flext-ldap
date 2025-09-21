@@ -181,7 +181,7 @@ class FlextLdapModels(FlextModels):
             # but keeping as fallback for type safety
             return [str(attribute_value)]  # type: ignore[unreachable]
 
-    class User(BaseModel):
+    class LdapUser(BaseModel):
         """LDAP User Model - actively used in API."""
 
         id: str = Field(description="User identifier")
@@ -355,9 +355,9 @@ class FlextLdapModels(FlextModels):
                 return FlextResult[None].fail("Common Name cannot be empty")
             return FlextResult[None].ok(None)
 
-        def to_user_entity(self) -> FlextLdapModels.User:
+        def to_user_entity(self) -> FlextLdapModels.LdapUser:
             """Convert request to user entity."""
-            return FlextLdapModels.User(
+            return FlextLdapModels.LdapUser(
                 id=f"user_{self.uid}",
                 dn=self.dn,
                 uid=self.uid,
@@ -497,9 +497,9 @@ class FlextLdapModels(FlextModels):
         )
 
     @classmethod
-    def create_user_from_entry(cls, entry: Entry) -> User:
+    def create_user_from_entry(cls, entry: Entry) -> LdapUser:
         """Create User model from LDAP entry."""
-        return cls.User(
+        return cls.LdapUser(
             id=entry.id,
             dn=entry.dn,
             object_classes=entry.object_classes,
@@ -637,12 +637,14 @@ class FlextLdapModels(FlextModels):
             def create(
                 cls,
                 *args: object,
-                **kwargs: object,
+                **_kwargs: object,
             ) -> FlextResult[FlextLdapModels.ValueObjects.DistinguishedName]:
                 """Create DN from string with validation."""
                 if len(args) != 1 or not isinstance(args[0], str):
-                    return FlextResult.fail("DistinguishedName.create requires exactly one string argument")
-                
+                    return FlextResult.fail(
+                        "DistinguishedName.create requires exactly one string argument"
+                    )
+
                 value = args[0]
                 try:
                     dn = cls(value=value)
@@ -684,12 +686,14 @@ class FlextLdapModels(FlextModels):
             def create(
                 cls,
                 *args: object,
-                **kwargs: object,
+                **_kwargs: object,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
                 """Create scope value object with validation."""
                 if len(args) != 1 or not isinstance(args[0], str):
-                    return FlextResult.fail("Scope.create requires exactly one string argument")
-                
+                    return FlextResult.fail(
+                        "Scope.create requires exactly one string argument"
+                    )
+
                 scope = args[0]
                 try:
                     scope_obj = cls(scope=scope)
@@ -776,9 +780,16 @@ class FlextLdapModels(FlextModels):
             @classmethod
             def create(
                 cls,
-                value: str,
+                *args: object,
+                **_kwargs: object,
             ) -> FlextResult[FlextLdapModels.ValueObjects.Filter]:
                 """Create filter from string with validation."""
+                if len(args) != 1 or not isinstance(args[0], str):
+                    return FlextResult.fail(
+                        "Filter.create requires exactly one string argument"
+                    )
+
+                value = args[0]
                 try:
                     filter_obj = cls(value=value)
                     return FlextResult.ok(filter_obj)

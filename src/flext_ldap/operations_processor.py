@@ -130,7 +130,7 @@ class FlextLdapOperationsProcessor:
         cn: str | None = None,
         sn: str | None = None,
         mail: str | None = None,
-    ) -> FlextResult[FlextLdapModels.User]:
+    ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create user through user service."""
         return await self._user_service.create_user(
             user_request_or_dn,
@@ -140,7 +140,7 @@ class FlextLdapOperationsProcessor:
             mail,
         )
 
-    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
+    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
         """Get user through user service."""
         return await self._user_service.get_user(dn)
 
@@ -161,7 +161,7 @@ class FlextLdapOperationsProcessor:
         filter_str: str,
         base_dn: str,
         scope: str = "subtree",
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search users through user service."""
         return await self._user_service.search_users_by_filter(
             filter_str,
@@ -176,7 +176,7 @@ class FlextLdapOperationsProcessor:
     async def batch_create_users(
         self,
         user_requests: list[FlextLdapModels.CreateUserRequest],
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Create multiple users through user service."""
         return await self._user_service.batch_create_users(user_requests)
 
@@ -187,7 +187,7 @@ class FlextLdapOperationsProcessor:
     async def batch_get_users(
         self,
         dns: list[str],
-    ) -> FlextResult[list[FlextLdapModels.User | None]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser | None]]:
         """Get multiple users through user service."""
         return await self._user_service.batch_get_users(dns)
 
@@ -381,7 +381,7 @@ class FlextLdapOperationsProcessor:
         uid: str | None = None,
         cn: str | None = None,
         mail: str | None = None,
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search users through search service."""
         return await self._search_service.search_users(base_dn, uid, cn, mail)
 

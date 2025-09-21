@@ -186,7 +186,11 @@ class FlextLdapClient(
 
             """
             # Get DN directly from ldap3 entry
-            entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
+            entry_dn = (
+                str(getattr(entry, "entry_dn", ""))
+                if hasattr(entry, "entry_dn")
+                else ""
+            )
             entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
 
             # Process attributes using strategy pattern with type-safe access
@@ -195,7 +199,7 @@ class FlextLdapClient(
                 "entry_attributes",
                 None,
             ):
-                entry_attributes = entry.entry_attributes
+                entry_attributes = getattr(entry, "entry_attributes", None)
                 if isinstance(entry_attributes, dict):
                     self._process_dict_attributes(entry_attributes, entry_data)
                 elif isinstance(entry_attributes, list):

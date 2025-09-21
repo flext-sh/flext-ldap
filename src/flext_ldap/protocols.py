@@ -88,7 +88,7 @@ class FlextLdapProtocols(FlextProtocols):
             self,
             base_dn: str,
             filter_str: str | None = None,
-        ) -> FlextResult[list[FlextLdapModels.User]]:
+        ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
             """Search for users."""
             ...
 
@@ -147,12 +147,12 @@ class FlextLdapProtocols(FlextProtocols):
         def create_user(
             self,
             request: FlextLdapModels.CreateUserRequest,
-        ) -> FlextResult[FlextLdapModels.User]:
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create new user."""
             ...
 
         @abstractmethod
-        def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
+        def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
             """Get user by DN."""
             ...
 
@@ -161,7 +161,7 @@ class FlextLdapProtocols(FlextProtocols):
             self,
             dn: str,
             updates: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLdapModels.User]:
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Update user."""
             ...
 

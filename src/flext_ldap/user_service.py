@@ -53,7 +53,7 @@ class FlextLdapUserService(FlextDomainService[None]):
         cn: str | None = None,
         sn: str | None = None,
         mail: str | None = None,
-    ) -> FlextResult[FlextLdapModels.User]:
+    ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create user using proper service layer - supports both request object and individual parameters."""
         # Handle both request object and individual parameters
         if isinstance(user_request_or_dn, FlextLdapModels.CreateUserRequest):
@@ -63,7 +63,7 @@ class FlextLdapUserService(FlextDomainService[None]):
             # Second overload: individual parameters (uid, cn, sn are required)
             dn = user_request_or_dn
             if uid is None or cn is None or sn is None:
-                return FlextResult[FlextLdapModels.User].fail(
+                return FlextResult[FlextLdapModels.LdapUser].fail(
                     "uid, cn, and sn are required when using individual parameters",
                 )
             request = FlextLdapModels.CreateUserRequest(
@@ -78,7 +78,7 @@ class FlextLdapUserService(FlextDomainService[None]):
         # Validate DN format
         dn_validation = FlextLdapValidations.validate_dn(request.dn)
         if dn_validation.is_failure:
-            return FlextResult[FlextLdapModels.User].fail(
+            return FlextResult[FlextLdapModels.LdapUser].fail(
                 f"Invalid DN: {dn_validation.error}",
             )
 
@@ -101,9 +101,9 @@ class FlextLdapUserService(FlextDomainService[None]):
     def _create_user_object(
         self,
         request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextResult[FlextLdapModels.User]:
+    ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create user object from request - railway helper method."""
-        created_user = FlextLdapModels.User(
+        created_user = FlextLdapModels.LdapUser(
             id=f"user_{request.uid}",
             dn=request.dn,
             uid=request.uid,
@@ -114,14 +114,14 @@ class FlextLdapUserService(FlextDomainService[None]):
             given_name=None,
             user_password=None,
         )
-        return FlextResult[FlextLdapModels.User].ok(created_user)
+        return FlextResult[FlextLdapModels.LdapUser].ok(created_user)
 
-    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.User | None]:
+    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
         """Get user by DN."""
         # Validate DN format
         dn_validation = FlextLdapValidations.validate_dn(dn)
         if dn_validation.is_failure:
-            return FlextResult[FlextLdapModels.User | None].fail(
+            return FlextResult[FlextLdapModels.LdapUser | None].fail(
                 f"Invalid DN: {dn_validation.error}",
             )
 
@@ -146,15 +146,15 @@ class FlextLdapUserService(FlextDomainService[None]):
         self,
         search_response: FlextLdapModels.SearchResponse,
         dn: str,
-    ) -> FlextResult[FlextLdapModels.User | None]:
+    ) -> FlextResult[FlextLdapModels.LdapUser | None]:
         """Process search response entries for user retrieval - railway helper method."""
         if not search_response.entries:
-            return FlextResult[FlextLdapModels.User | None].ok(None)
+            return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
         # Convert the first entry to a User object
         entry = search_response.entries[0]
         uid = self._get_entry_attribute(entry, "uid", "unknown")
-        user = FlextLdapModels.User(
+        user = FlextLdapModels.LdapUser(
             id=f"user_{uid}",
             dn=dn,
             uid=uid,
@@ -165,7 +165,7 @@ class FlextLdapUserService(FlextDomainService[None]):
             modified_at=None,
             user_password=None,
         )
-        return FlextResult[FlextLdapModels.User | None].ok(user)
+        return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
     async def update_user(
         self,
@@ -202,19 +202,19 @@ class FlextLdapUserService(FlextDomainService[None]):
         filter_str: str,
         base_dn: str,
         scope: str = "subtree",
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search users with filter using railway pattern."""
         # Validate filter
         filter_validation = FlextLdapValidations.validate_filter(filter_str)
         if filter_validation.is_failure:
-            return FlextResult[list[FlextLdapModels.User]].fail(
+            return FlextResult[list[FlextLdapModels.LdapUser]].fail(
                 f"Invalid filter: {filter_validation.error}",
             )
 
         # Validate base DN
         dn_validation = FlextLdapValidations.validate_dn(base_dn)
         if dn_validation.is_failure:
-            return FlextResult[list[FlextLdapModels.User]].fail(
+            return FlextResult[list[FlextLdapModels.LdapUser]].fail(
                 f"Invalid base DN: {dn_validation.error}",
             )
 
@@ -237,13 +237,13 @@ class FlextLdapUserService(FlextDomainService[None]):
     def _convert_search_entries_to_users(
         self,
         search_response: FlextLdapModels.SearchResponse,
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Convert search response entries to users - railway helper method."""
-        users: list[FlextLdapModels.User] = []
+        users: list[FlextLdapModels.LdapUser] = []
         for entry in search_response.entries:
             # Create user from entry - simplified mapping
             uid = self._get_entry_attribute(entry, "uid", "unknown")
-            user = FlextLdapModels.User(
+            user = FlextLdapModels.LdapUser(
                 id=f"user_{uid}",
                 dn=self._get_entry_attribute(entry, "dn"),
                 uid=uid,
@@ -255,7 +255,7 @@ class FlextLdapUserService(FlextDomainService[None]):
                 user_password=None,
             )
             users.append(user)
-        return FlextResult[list[FlextLdapModels.User]].ok(users)
+        return FlextResult[list[FlextLdapModels.LdapUser]].ok(users)
 
     async def user_exists(self, dn: str) -> FlextResult[bool]:
         """Check if user exists at DN using railway pattern."""
@@ -357,7 +357,7 @@ class FlextLdapUserService(FlextDomainService[None]):
     async def batch_create_users(
         self,
         user_requests: list[FlextLdapModels.CreateUserRequest],
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Create multiple users using monadic traverse pattern."""
         # Railway pattern: traverse list with early exit on failure
         return await self._traverse_user_creation(user_requests)
@@ -365,21 +365,21 @@ class FlextLdapUserService(FlextDomainService[None]):
     async def _traverse_user_creation(
         self,
         user_requests: list[FlextLdapModels.CreateUserRequest],
-    ) -> FlextResult[list[FlextLdapModels.User]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Railway traverse pattern for user creation with early exit on failure."""
-        results: list[FlextLdapModels.User] = []
+        results: list[FlextLdapModels.LdapUser] = []
 
         for request in user_requests:
             # Railway pattern: bind operation with early exit
             creation_result = await self.create_user(request)
             if creation_result.is_failure:
-                return FlextResult[list[FlextLdapModels.User]].fail(
+                return FlextResult[list[FlextLdapModels.LdapUser]].fail(
                     f"User creation failed for {request.dn}: {creation_result.error}",
                 )
             # Extract value using railway pattern
             results.append(creation_result.value)
 
-        return FlextResult[list[FlextLdapModels.User]].ok(results)
+        return FlextResult[list[FlextLdapModels.LdapUser]].ok(results)
 
     async def batch_delete_users(self, dns: list[str]) -> FlextResult[list[None]]:
         """Delete multiple users using monadic traverse pattern."""
@@ -405,7 +405,7 @@ class FlextLdapUserService(FlextDomainService[None]):
     async def batch_get_users(
         self,
         dns: list[str],
-    ) -> FlextResult[list[FlextLdapModels.User | None]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser | None]]:
         """Get multiple users using monadic traverse pattern."""
         # Railway pattern: traverse list with early exit on failure
         return await self._traverse_user_retrieval(dns)
@@ -413,18 +413,18 @@ class FlextLdapUserService(FlextDomainService[None]):
     async def _traverse_user_retrieval(
         self,
         dns: list[str],
-    ) -> FlextResult[list[FlextLdapModels.User | None]]:
+    ) -> FlextResult[list[FlextLdapModels.LdapUser | None]]:
         """Railway traverse pattern for user retrieval with early exit on failure."""
-        results: list[FlextLdapModels.User | None] = []
+        results: list[FlextLdapModels.LdapUser | None] = []
 
         for dn in dns:
             # Railway pattern: bind operation with early exit
             retrieval_result = await self.get_user(dn)
             if retrieval_result.is_failure:
-                return FlextResult[list[FlextLdapModels.User | None]].fail(
+                return FlextResult[list[FlextLdapModels.LdapUser | None]].fail(
                     f"User retrieval failed for {dn}: {retrieval_result.error}",
                 )
             # Extract value using railway pattern
             results.append(retrieval_result.value)
 
-        return FlextResult[list[FlextLdapModels.User | None]].ok(results)
+        return FlextResult[list[FlextLdapModels.LdapUser | None]].ok(results)

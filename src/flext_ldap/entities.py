@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -25,10 +24,8 @@ from flext_core import (
     FlextModels,
 )
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
-
-if TYPE_CHECKING:
-    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapEntities(FlextModels):
@@ -43,7 +40,7 @@ class FlextLdapEntities(FlextModels):
     # CORE LDAP ENTITIES - Primary Domain Objects
     # =========================================================================
 
-    class User(BaseModel):
+    class LdapUser(BaseModel):
         """LDAP User entity with enterprise attributes."""
 
         model_config = ConfigDict(
@@ -605,17 +602,17 @@ class FlextLdapEntities(FlextModels):
                 raise ValueError(msg)
             return v.strip()
 
-        def to_user_entity(self) -> FlextLdapEntities.User:
+        def to_user_entity(self) -> FlextLdapEntities.LdapUser:
             """Convert to User entity.
 
             Returns:
-                FlextLdapEntities.User: User entity.
+                FlextLdapEntities.LdapUser: User entity.
 
             """
             # Build using aliases so the constructed model matches the User
             # field aliases (Pydantic v2 behavior). Use model_validate with a
             # mapping to avoid signature mismatches reported by static checkers.
-            return FlextLdapEntities.User.model_validate(
+            return FlextLdapEntities.LdapUser.model_validate(
                 {
                     "dn": self.dn,
                     "cn": self.cn,
@@ -848,7 +845,7 @@ class FlextLdapEntities(FlextModels):
 # FlextLdapTypes.Entry.AttributeDict already imported in TYPE_CHECKING block above
 
 # Rebuild models after all definitions are complete
-FlextLdapEntities.User.model_rebuild()
+FlextLdapEntities.LdapUser.model_rebuild()
 FlextLdapEntities.Group.model_rebuild()
 FlextLdapEntities.Entry.model_rebuild()
 FlextLdapEntities.SearchRequest.model_rebuild()
