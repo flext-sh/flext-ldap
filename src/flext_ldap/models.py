@@ -179,7 +179,7 @@ class FlextLdapModels(FlextModels):
 
             # This should never be reached due to AttributeDict type constraints
             # but keeping as fallback for type safety
-            return [str(attribute_value)]  # type: ignore[unreachable]
+            return [str(attribute_value)]
 
     class LdapUser(BaseModel):
         """LDAP User Model - actively used in API."""
