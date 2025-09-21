@@ -6,14 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 from flext_core import FlextDomainService, FlextResult
-from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
+if TYPE_CHECKING:
+    from flext_ldap.clients import FlextLdapClient
+    from flext_ldap.typings import FlextLdapTypes
 
-class FlextLdapSearchService(FlextDomainService):
+
+class FlextLdapSearchService(FlextDomainService[None]):
     """Domain service for LDAP search operations.
 
     This service encapsulates all search-related business logic and operations
@@ -35,16 +39,12 @@ class FlextLdapSearchService(FlextDomainService):
         super().__init__()
         self._client = client
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[None]:
         """Execute the main domain service operation.
 
         Returns basic service information for the search service.
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapSearchService",
-            "status": "ready",
-            "operations": "search,search_simple,search_users,search_groups,count_entries",
-        })
+        return FlextResult[None].ok(None)
 
     async def search(
         self,
@@ -67,17 +67,18 @@ class FlextLdapSearchService(FlextDomainService):
         validation_result = self._validate_search_request(search_request)
         if validation_result.is_failure:
             return FlextResult[list[FlextLdapModels.Entry]].fail(
-                f"Search validation failed: {validation_result.error}"
+                f"Search validation failed: {validation_result.error}",
             )
 
         # Railway pattern: search >> convert entries
         search_result = await self._client.search_with_request(search_request)
         return (search_result >> self._convert_search_response_to_entries).with_context(
-            lambda err: f"Search operation failed: {err}"
+            lambda err: f"Search operation failed: {err}",
         )
 
     def _validate_search_request(
-        self, search_request: FlextLdapModels.SearchRequest
+        self,
+        search_request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[None]:
         """Validate search request parameters."""
         # Validate base DN
@@ -87,7 +88,7 @@ class FlextLdapSearchService(FlextDomainService):
 
         # Validate filter
         filter_validation = FlextLdapValidations.validate_filter(
-            search_request.filter_str
+            search_request.filter_str,
         )
         if filter_validation.is_failure:
             return FlextResult[None].fail(f"Invalid filter: {filter_validation.error}")
@@ -96,7 +97,7 @@ class FlextLdapSearchService(FlextDomainService):
         valid_scopes = ["base", "onelevel", "subtree"]
         if search_request.scope not in valid_scopes:
             return FlextResult[None].fail(
-                f"Invalid scope '{search_request.scope}'. Must be one of: {valid_scopes}"
+                f"Invalid scope '{search_request.scope}'. Must be one of: {valid_scopes}",
             )
 
         # Validate limits
@@ -108,7 +109,8 @@ class FlextLdapSearchService(FlextDomainService):
         return FlextResult[None].ok(None)
 
     def _convert_search_response_to_entries(
-        self, search_response: FlextLdapModels.SearchResponse
+        self,
+        search_response: FlextLdapModels.SearchResponse,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Convert search response to entries - railway helper method."""
         try:
@@ -121,34 +123,27 @@ class FlextLdapSearchService(FlextDomainService):
                     and hasattr(raw_entry, "attributes")
                     and hasattr(raw_entry, "id")
                 ):
-                    # Already a properly structured Entry
-                    entries.append(raw_entry)  # type: ignore[arg-type]
+                    # Already a properly structured Entry - use explicit cast
+                    typed_entry = cast("FlextLdapModels.Entry", raw_entry)
+                    entries.append(typed_entry)
                 else:
                     # Assume dict-like structure and extract safely
                     entry_dict = self._extract_entry_attributes(raw_entry)
                     dn = str(entry_dict.get("dn", ""))
 
-                    # Safe extraction of attributes with proper typing
-                    raw_attributes = entry_dict.get("attributes", {})
-                    attributes = (
-                        raw_attributes if isinstance(raw_attributes, dict) else {}
-                    )
+                    # Generate a unique ID
+                    entry_id = f"search_entry_{dn.replace(',', '_').replace('=', '_')}"
 
-                    # Safe extraction of object classes
-                    raw_object_classes = entry_dict.get("objectClass", [])
-                    object_classes = (
-                        raw_object_classes
-                        if isinstance(raw_object_classes, list)
-                        else [str(raw_object_classes)]
-                        if raw_object_classes
-                        else []
-                    )
+                    # Extract object classes using type guards
+                    object_classes = self._extract_object_classes(entry_dict)
 
+                    # Create FlextLdapModels.Entry with proper structure
                     entry = FlextLdapModels.Entry(
-                        id=dn,  # Use DN as ID
+                        id=entry_id,
                         dn=dn,
-                        attributes=attributes,
                         object_classes=object_classes,
+                        attributes=self._convert_to_ldap_attributes(entry_dict),
+                        modified_at=None,
                     )
                     entries.append(entry)
 
@@ -156,25 +151,72 @@ class FlextLdapSearchService(FlextDomainService):
 
         except Exception as e:
             return FlextResult[list[FlextLdapModels.Entry]].fail(
-                f"Failed to convert search response: {e}"
+                f"Failed to convert search response: {e}",
             )
+
+    def _extract_object_classes(self, entry_dict: dict[str, object]) -> list[str]:
+        """Extract object classes from entry dictionary.
+
+        Args:
+            entry_dict: Dictionary containing entry data
+
+        Returns:
+            List of object class names
+
+        """
+        object_classes = entry_dict.get("objectClass", [])
+        if isinstance(object_classes, str):
+            return [object_classes]
+        if isinstance(object_classes, list):
+            return [str(oc) for oc in object_classes]
+        return ["top"]  # Default fallback
+
+    def _convert_to_ldap_attributes(
+        self,
+        entry_dict: dict[str, object],
+    ) -> FlextLdapTypes.Entry.AttributeDict:
+        """Convert entry dictionary to LDAP attributes format.
+
+        Args:
+            entry_dict: Dictionary containing entry data
+
+        Returns:
+            Properly formatted attribute dictionary
+
+        """
+        attributes: FlextLdapTypes.Entry.AttributeDict = {}
+
+        for key, value in entry_dict.items():
+            if key in {"dn", "objectClass"}:
+                continue  # Skip DN and object classes as they're handled separately
+
+            # Ensure values are in list format
+            if isinstance(value, str):
+                attributes[key] = [value]
+            elif isinstance(value, list):
+                attributes[key] = [str(v) for v in value]
+            else:
+                attributes[key] = [str(value)]
+
+        return attributes
 
     def _extract_entry_attributes(self, raw_entry: object) -> dict[str, object]:
         """Extract attributes from raw entry object."""
         try:
             if hasattr(raw_entry, "entry_dn") and hasattr(
-                raw_entry, "entry_attributes"
+                raw_entry,
+                "entry_attributes",
             ):
                 # ldap3 Entry object
                 return {
-                    "dn": str(getattr(raw_entry, "entry_dn")),
-                    "attributes": dict(getattr(raw_entry, "entry_attributes")),
+                    "dn": str(raw_entry.entry_dn),
+                    "attributes": dict(raw_entry.entry_attributes),
                 }
             if hasattr(raw_entry, "dn") and hasattr(raw_entry, "attributes"):
                 # Already structured entry
                 return {
-                    "dn": str(getattr(raw_entry, "dn")),
-                    "attributes": dict(getattr(raw_entry, "attributes")),
+                    "dn": str(raw_entry.dn),
+                    "attributes": dict(raw_entry.attributes),
                 }
             # Fallback for unknown entry types
             return {
@@ -241,7 +283,7 @@ class FlextLdapSearchService(FlextDomainService):
         # Railway pattern: search >> convert to users
         search_result = await self.search(search_request)
         return (search_result >> self._convert_entries_to_users).with_context(
-            lambda err: f"Failed to search users: {err}"
+            lambda err: f"Failed to search users: {err}",
         )
 
     async def search_users_by_filter(
@@ -255,7 +297,7 @@ class FlextLdapSearchService(FlextDomainService):
         filter_validation = FlextLdapValidations.validate_filter(filter_str)
         if filter_validation.is_failure:
             return FlextResult[list[FlextLdapModels.User]].fail(
-                f"Invalid filter: {filter_validation.error}"
+                f"Invalid filter: {filter_validation.error}",
             )
 
         # Use the generic search method with user-specific filter
@@ -271,11 +313,12 @@ class FlextLdapSearchService(FlextDomainService):
         # Railway pattern: search >> convert to users
         search_result = await self.search(search_request)
         return (search_result >> self._convert_entries_to_users).with_context(
-            lambda err: f"Failed to search users with filter '{filter_str}': {err}"
+            lambda err: f"Failed to search users with filter '{filter_str}': {err}",
         )
 
     def _convert_entries_to_users(
-        self, entries: list[FlextLdapModels.Entry]
+        self,
+        entries: list[FlextLdapModels.Entry],
     ) -> FlextResult[list[FlextLdapModels.User]]:
         """Convert entries to users - railway helper method."""
         try:
@@ -299,7 +342,7 @@ class FlextLdapSearchService(FlextDomainService):
 
         except Exception as e:
             return FlextResult[list[FlextLdapModels.User]].fail(
-                f"Failed to convert entries to users: {e}"
+                f"Failed to convert entries to users: {e}",
             )
 
     async def search_groups(
@@ -336,11 +379,12 @@ class FlextLdapSearchService(FlextDomainService):
         # Railway pattern: search >> convert to groups
         search_result = await self.search(search_request)
         return (search_result >> self._convert_entries_to_groups).with_context(
-            lambda err: f"Failed to search groups: {err}"
+            lambda err: f"Failed to search groups: {err}",
         )
 
     def _convert_entries_to_groups(
-        self, entries: list[FlextLdapModels.Entry]
+        self,
+        entries: list[FlextLdapModels.Entry],
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Convert entries to groups - railway helper method."""
         try:
@@ -364,7 +408,7 @@ class FlextLdapSearchService(FlextDomainService):
 
         except Exception as e:
             return FlextResult[list[FlextLdapModels.Group]].fail(
-                f"Failed to convert entries to groups: {e}"
+                f"Failed to convert entries to groups: {e}",
             )
 
     async def search_by_object_class(
@@ -412,11 +456,11 @@ class FlextLdapSearchService(FlextDomainService):
         # Enhanced railway pattern: extract value >> convert to string >> handle with context
         extract_result = self._extract_entry_value(entry, key)
         convert_result = (extract_result >> self._convert_to_safe_string).with_context(
-            lambda err: f"Failed to extract attribute '{key}': {err}"
+            lambda err: f"Failed to extract attribute '{key}': {err}",
         )
 
         # Use railway pattern with proper error recovery instead of .unwrap_or()
-        return convert_result.unwrap() if convert_result.is_success else default
+        return convert_result.value if convert_result.is_success else default
 
     def _get_entry_attribute_list(
         self,
@@ -438,7 +482,9 @@ class FlextLdapSearchService(FlextDomainService):
         return []
 
     def _extract_entry_value(
-        self, entry: FlextLdapTypes.Core.Dict | FlextLdapModels.Entry, key: str
+        self,
+        entry: FlextLdapTypes.Core.Dict | FlextLdapModels.Entry,
+        key: str,
     ) -> FlextResult[object]:
         """Extract value from entry using type checking."""
         # Handle FlextLdapModels.Entry type
@@ -497,7 +543,7 @@ class FlextLdapSearchService(FlextDomainService):
             first_element = value[0]
             if first_element is None or not first_element:
                 return FlextResult[object].fail(
-                    "List contains None or empty first element"
+                    "List contains None or empty first element",
                 )
             return FlextResult[object].ok(str(first_element))
         return FlextResult[object].ok(value)  # Pass through for next handler

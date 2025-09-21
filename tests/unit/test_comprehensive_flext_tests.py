@@ -13,11 +13,11 @@ import uuid
 from typing import cast
 
 import pytest
-from flext_tests import FlextTestsAsyncs, FlextTestsFactories, FlextTestsMatchers
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldap.api import FlextLdapApi
 from flext_ldap.models import FlextLdapModels
+from flext_tests import FlextTestsAsyncs, FlextTestsFactories, FlextTestsMatchers
 
 
 class TestComprehensiveFlextTests:

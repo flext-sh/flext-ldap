@@ -11,27 +11,28 @@ from __future__ import annotations
 
 import contextlib
 import ssl
-from collections.abc import Mapping
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 import ldap3
-from ldap3 import ALL_ATTRIBUTES, SUBTREE
+from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
-from flext_core import FlextMixins, FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextProtocols, FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldap.typings import FlextLdapTypes
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_ldap.protocols import FlextLdapProtocols
+    from flext_ldap.typings import FlextLdapTypes
 
 # LDAPSearchStrategies ELIMINATED - consolidated into FlextLdapClient nested classes
 # Following flext-core consolidation pattern: ALL functionality within single class
 
 
 class FlextLdapClient(
-    FlextMixins.Service,
-    FlextMixins.Loggable,
     FlextProtocols.Infrastructure.Connection,
 ):
     """Unified LDAP client consolidating all LDAP functionality in single class.
@@ -43,6 +44,7 @@ class FlextLdapClient(
     Attributes:
         _connection: Active LDAP connection instance.
         _server: LDAP server configuration instance.
+        _logger: FlextLogger instance for structured logging.
 
     """
 
@@ -89,11 +91,18 @@ class FlextLdapClient(
                 )
 
             try:
-                # Map scope to ldap3 constant
-                scope = FlextLdapConstants.Scopes.SCOPE_MAP.get(
-                    request.scope.lower(),
-                    SUBTREE,
-                )
+                # Direct scope validation without wrapper mapping - using proper type annotations
+                scope_lower = request.scope.lower()
+                scope: str
+                if scope_lower == "base":
+                    scope = BASE
+                elif scope_lower in {"onelevel", "one"}:
+                    scope = LEVEL
+                elif scope_lower in {"subtree", "sub"}:
+                    scope = SUBTREE
+                else:
+                    # Default to subtree for invalid scopes
+                    scope = SUBTREE
 
                 # Execute search using ldap3 directly
                 connection_obj = self.connection
@@ -180,26 +189,32 @@ class FlextLdapClient(
             entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
             entry_data: FlextTypes.Core.Dict = {"dn": entry_dn}
 
-            # Process attributes using strategy pattern
-            if hasattr(entry, "entry_attributes") and entry.entry_attributes:
-                if isinstance(entry.entry_attributes, dict):
-                    self._process_dict_attributes(entry, entry_data)
-                elif isinstance(entry.entry_attributes, list):
+            # Process attributes using strategy pattern with type-safe access
+            if hasattr(entry, "entry_attributes") and getattr(
+                entry,
+                "entry_attributes",
+                None,
+            ):
+                entry_attributes = entry.entry_attributes
+                if isinstance(entry_attributes, dict):
+                    self._process_dict_attributes(entry_attributes, entry_data)
+                elif isinstance(entry_attributes, list):
                     self._process_list_attributes(entry, entry_data)
 
             return entry_data
 
         def _process_dict_attributes(
-            self, entry: object, entry_data: FlextTypes.Core.Dict
+            self,
+            entry_attrs_dict: dict[str, object],
+            entry_data: FlextTypes.Core.Dict,
         ) -> None:
             """Process entry attributes when they are in dict format.
 
             Args:
-                entry: LDAP entry object.
+                entry_attrs_dict: Entry attributes dictionary.
                 entry_data: Entry data dictionary to populate.
 
             """
-            entry_attrs_dict = entry.entry_attributes
             entry_attributes = list(entry_attrs_dict.keys())
 
             for attr_name in entry_attributes:
@@ -213,7 +228,9 @@ class FlextLdapClient(
                     entry_data[attr_name] = attr_values
 
         def _process_list_attributes(
-            self, entry: object, entry_data: FlextTypes.Core.Dict
+            self,
+            entry: object,
+            entry_data: FlextTypes.Core.Dict,
         ) -> None:
             """Process entry attributes when they are in list format.
 
@@ -222,7 +239,8 @@ class FlextLdapClient(
                 entry_data: Entry data dictionary to populate.
 
             """
-            for attr_name in entry.entry_attributes:
+            entry_attributes = getattr(entry, "entry_attributes", [])
+            for attr_name in entry_attributes:
                 if hasattr(entry, attr_name):
                     attr_value = getattr(entry, attr_name)
                     if attr_value is not None:
@@ -273,13 +291,38 @@ class FlextLdapClient(
     def __init__(self) -> None:
         """Initialize LDAP client with flext-core logging capabilities.
 
-        Sets up the client with logging capabilities from FlextMixins.Service
+        Sets up the client with FlextLogger for structured logging
         and initializes connection and server attributes to None.
         """
-        # Initialize FlextMixins.Service for logging capabilities
+        # Initialize FlextLogger for structured logging capabilities
         super().__init__()
+        self._logger = FlextLogger(self.__class__.__name__)
         self._connection: FlextLdapProtocols.LdapProtocol | None = None
         self._server: ldap3.Server | None = None
+
+    # =========================================================================
+    # LOGGING HELPER METHODS - FlextLogger integration
+    # =========================================================================
+
+    def log_info(self, message: str, **kwargs: object) -> None:
+        """Log info message with structured data.
+
+        Args:
+            message: Log message.
+            **kwargs: Additional structured data.
+
+        """
+        self._logger.info(message, **kwargs)
+
+    def log_error(self, message: str, **kwargs: object) -> None:
+        """Log error message with structured data.
+
+        Args:
+            message: Log message.
+            **kwargs: Additional structured data.
+
+        """
+        self._logger.error(message, **kwargs)
 
     # =========================================================================
     # CONNECTION OPERATIONS - Consolidated connection management
@@ -539,9 +582,7 @@ class FlextLdapClient(
                     cast("list[object]", entries_result.value.get("entries", [])),
                 ),
             )
-
             return response_result
-
         except Exception as e:
             self.log_error(
                 "Unexpected search strategy error",
@@ -799,11 +840,14 @@ class FlextLdapClient(
                 FlextLdapConstants.Protocol.DEFAULT_SERVER_URI.split("://")[1],
             )
             port = getattr(
-                self._server, "port", FlextLdapConstants.Protocol.DEFAULT_PORT
+                self._server,
+                "port",
+                FlextLdapConstants.Protocol.DEFAULT_PORT,
             )
-            return f"{scheme}://{host}:{port}"
         except Exception:
             return "Connection string unavailable"
+        else:
+            return f"{scheme}://{host}:{port}"
 
     async def close_connection(self) -> FlextResult[None]:
         """Close connection to LDAP server - required by flext-core protocol.
@@ -815,7 +859,7 @@ class FlextLdapClient(
             FlextResult[None]: Success or error result from unbind operation.
 
         """
-        return await self.unbind()  # Protocol compliance - delegates to domain method
+        return await self.unbind()  # Protocol compliance - delegates to domain method  # Protocol compliance - delegates to domain method  # Protocol compliance - delegates to domain method
 
 
 __all__ = [

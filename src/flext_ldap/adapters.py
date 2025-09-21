@@ -6,15 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from pydantic import ConfigDict, Field, field_validator
 
 from flext_core import (
     FlextDomainService,
     FlextLogger,
-    FlextMixins,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -22,8 +20,12 @@ from flext_core import (
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapAdapters(FlextDomainService[object]):
@@ -161,8 +163,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 )
                 raise ValueError(error_msg)
 
-            # Use FlextModels.Url for comprehensive validation
-            url_result = FlextModels.Url.create(temp_url)
+            # Use FlextModels.create_validated_url for comprehensive validation
+            url_result = FlextModels.create_validated_url(temp_url)
             if url_result.is_failure:
                 error_msg = f"Invalid LDAP URI format: {url_result.error}"
                 raise ValueError(error_msg)
@@ -242,7 +244,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
 
         @classmethod
         def ok(
-            cls, search_response: FlextLdapModels.SearchResponse
+            cls,
+            search_response: FlextLdapModels.SearchResponse,
         ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Create successful search result.
 
@@ -254,7 +257,8 @@ class FlextLdapAdapters(FlextDomainService[object]):
 
         @classmethod
         def fail(
-            cls, error_message: str
+            cls,
+            error_message: str,
         ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Create failed search result.
 
@@ -391,7 +395,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
                 has_more=False,
             )
 
-    class OperationExecutor(FlextMixins.Loggable):
+    class OperationExecutor:
         """Base operation executor with reduced complexity through ServiceProcessor integration."""
 
         def __init__(self, client: FlextLdapClient) -> None:
@@ -602,7 +606,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
             base_dn: str,
             filter_str: str,
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Simple search returning entries directly.
+            """Return entries directly from simple search.
 
             Returns:
                 FlextResult[list[FlextLdapModels.Entry]]: Result containing list of found entries.
@@ -837,7 +841,7 @@ class FlextLdapAdapters(FlextDomainService[object]):
     # DIRECTORY SERVICES - High-level directory operation classes
     # =========================================================================
 
-    class DirectoryService(FlextMixins.Loggable):
+    class DirectoryService:
         """High-level directory service for comprehensive LDAP operations."""
 
         def __init__(self, client: FlextLdapClient) -> None:

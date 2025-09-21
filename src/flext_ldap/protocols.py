@@ -13,12 +13,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from ldap3 import SUBTREE
 
 from flext_core import FlextProtocols, FlextResult, FlextTypes
-from flext_ldap.models import FlextLdapModels
+
+if TYPE_CHECKING:
+    from flext_ldap.models import FlextLdapModels
 
 __all__ = ["FlextLdapProtocols"]
 

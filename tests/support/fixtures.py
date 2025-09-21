@@ -37,7 +37,7 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
     # Setup test data
     setup_result = await server.setup_test_data()
     if not setup_result.is_success:
-        logger.warning(f"Failed to setup test data: {setup_result.error}")
+        logger.warning("Failed to setup test data: %s", setup_result.error)
 
     try:
         yield server
@@ -45,7 +45,7 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
         # Clean up
         stop_result = await server.stop()
         if not stop_result.is_success:
-            logger.warning(f"Failed to stop LDAP server: {stop_result.error}")
+            logger.warning("Failed to stop LDAP server: %s", stop_result.error)
 
 
 @pytest.fixture

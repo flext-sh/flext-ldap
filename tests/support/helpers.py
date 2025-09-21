@@ -39,12 +39,12 @@ def create_test_user(
         conn.unbind()
 
         if success:
-            logger.debug(f"Created test user: {dn}")
+            logger.debug("Created test user: %s", dn)
             return FlextResult.ok(data=True)
         return FlextResult[bool].fail(f"Failed to create user: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error creating test user {dn}")
+        logger.exception("Error creating test user %s", dn)
         return FlextResult[bool].fail(f"Error creating test user: {e}")
 
 
@@ -73,12 +73,12 @@ def create_test_group(
         conn.unbind()
 
         if success:
-            logger.debug(f"Created test group: {dn}")
+            logger.debug("Created test group: %s", dn)
             return FlextResult.ok(data=True)
         return FlextResult[bool].fail(f"Failed to create group: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error creating test group {dn}")
+        logger.exception("Error creating test group %s", dn)
         return FlextResult[bool].fail(f"Error creating test group: {e}")
 
 
@@ -107,11 +107,11 @@ def cleanup_test_entries(
             try:
                 if conn.delete(dn):
                     cleaned_count += 1
-                    logger.debug(f"Cleaned up entry: {dn}")
+                    logger.debug("Cleaned up entry: %s", dn)
                 else:
-                    logger.debug(f"Failed to clean up {dn}: {conn.last_error}")
+                    logger.debug("Failed to clean up %s: %s", dn, conn.last_error)
             except Exception as e:
-                logger.debug(f"Error cleaning up {dn}: {e}")
+                logger.debug("Error cleaning up %s: %s", dn, e)
 
         conn.unbind()
         return FlextResult.ok(cleaned_count)
@@ -153,7 +153,7 @@ def verify_entry_exists(
         return FlextResult.ok(exists)
 
     except Exception as e:
-        logger.exception(f"Error verifying entry {dn}")
+        logger.exception("Error verifying entry %s", dn)
         return FlextResult[bool].fail(f"Error verifying entry: {e}")
 
 
@@ -192,7 +192,7 @@ def get_entry_attributes(
         return FlextResult[FlextTypes.Core.Dict].fail(f"Entry not found: {dn}")
 
     except Exception as e:
-        logger.exception(f"Error getting attributes for {dn}")
+        logger.exception("Error getting attributes for %s", dn)
         return FlextResult[FlextTypes.Core.Dict].fail(f"Error getting attributes: {e}")
 
 
@@ -286,12 +286,12 @@ def modify_entry(
         conn.unbind()
 
         if success:
-            logger.debug(f"Modified entry: {dn}")
+            logger.debug("Modified entry: %s", dn)
             return FlextResult.ok(data=True)
         return FlextResult[bool].fail(f"Failed to modify entry: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error modifying entry {dn}")
+        logger.exception("Error modifying entry %s", dn)
         return FlextResult[bool].fail(f"Error modifying entry: {e}")
 
 

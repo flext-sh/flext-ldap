@@ -55,8 +55,8 @@ class FlextLdapValidations:
         if email is None:
             return FlextResult[None].ok(None)
 
-        # Use FlextModels.EmailAddress for validation
-        email_result = FlextModels.EmailAddress.create(email)
+        # Use FlextModels.create_validated_email for validation
+        email_result = FlextModels.create_validated_email(email)
         if email_result.is_failure:
             return FlextResult[None].fail(
                 f"Email validation failed: {email_result.error or 'invalid format'}",

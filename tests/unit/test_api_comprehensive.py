@@ -164,7 +164,7 @@ class TestFlextLdapApiComprehensive:
             # Context manager should handle exceptions gracefully
             # Expected behavior - no action needed
             logger = FlextLogger(__name__)
-            logger.debug(f"Expected test behavior for connection failures: {e}")
+            logger.debug("Expected test behavior for connection failures: %s", e)
 
     @pytest.mark.asyncio
     async def test_search_without_connection(self) -> None:

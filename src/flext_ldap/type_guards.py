@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeGuard, cast
+from typing import TYPE_CHECKING, TypeGuard, cast
 
-from flext_core import FlextTypes
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.typings import FlextLdapTypes
+
+if TYPE_CHECKING:
+    from flext_core import FlextTypes
+    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapTypeGuards:

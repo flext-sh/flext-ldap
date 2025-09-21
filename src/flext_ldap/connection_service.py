@@ -6,16 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextResult
 from flext_ldap import FlextExceptions
-from flext_ldap.clients import FlextLdapClient
 from flext_ldap.validations import FlextLdapValidations
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
-class FlextLdapConnectionService(FlextDomainService):
+    from flext_ldap.clients import FlextLdapClient
+
+
+class FlextLdapConnectionService(FlextDomainService[None]):
     """Domain service for LDAP connection operations.
 
     This service encapsulates all connection-related business logic and operations
@@ -28,8 +32,8 @@ class FlextLdapConnectionService(FlextDomainService):
     """
 
     # Constants for validation
-    MAX_PORT_PARTS = 2
-    MAX_PORT_NUMBER = 65535
+    MAX_PORT_PARTS: int = 2
+    MAX_PORT_NUMBER: int = 65535
 
     def __init__(self, client: FlextLdapClient) -> None:
         """Initialize connection service with LDAP client.
@@ -42,7 +46,7 @@ class FlextLdapConnectionService(FlextDomainService):
         self._client = client
         self._session_id = "flext_ldap_session"
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[None]:
         """Execute the main domain service operation.
 
         Returns:
@@ -51,11 +55,7 @@ class FlextLdapConnectionService(FlextDomainService):
         Returns basic service information for the connection service.
 
         """
-        return FlextResult[dict[str, str]].ok({
-            "service": "FlextLdapConnectionService",
-            "status": "ready",
-            "operations": "connect,disconnect,test_connection,reconnect,validate_server_uri,get_connection_info,is_connected",
-        })
+        return FlextResult[None].ok(None)
 
     @property
     def session_id(self) -> str:
@@ -81,34 +81,41 @@ class FlextLdapConnectionService(FlextDomainService):
         """
         # Validate connection parameters
         param_validation = self._validate_connection_params(
-            server_uri, bind_dn, bind_password
+            server_uri,
+            bind_dn,
+            bind_password,
         )
         if param_validation.is_failure:
             return FlextResult[str].fail(
-                f"Connection to {server_uri} failed: {param_validation.error}"
+                f"Connection to {server_uri} failed: {param_validation.error}",
             )
 
         # Validate DN format
         dn_validation = FlextLdapValidations.validate_dn(bind_dn)
         if dn_validation.is_failure:
             return FlextResult[str].fail(
-                f"Connection to {server_uri} failed: {dn_validation.error}"
+                f"Connection to {server_uri} failed: {dn_validation.error}",
             )
 
         # Perform LDAP connection
         connection_result = await self._perform_ldap_connection(
-            server_uri, bind_dn, bind_password
+            server_uri,
+            bind_dn,
+            bind_password,
         )
         if connection_result.is_failure:
             return FlextResult[str].fail(
-                f"Connection to {server_uri} failed: {connection_result.error}"
+                f"Connection to {server_uri} failed: {connection_result.error}",
             )
 
         # Return session ID
         return FlextResult[str].ok(self.session_id)
 
     def _validate_connection_params(
-        self, server_uri: str, bind_dn: str, bind_password: str
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[None]:
         """Validate connection parameters using FlextResult patterns.
 
@@ -124,12 +131,15 @@ class FlextLdapConnectionService(FlextDomainService):
             return FlextResult[None].fail("Bind password cannot be empty")
         if not (server_uri.startswith(("ldap://", "ldaps://"))):
             return FlextResult[None].fail(
-                "Server URI must start with ldap:// or ldaps://"
+                "Server URI must start with ldap:// or ldaps://",
             )
         return FlextResult[None].ok(None)
 
     async def _perform_ldap_connection(
-        self, server_uri: str, bind_dn: str, bind_password: str
+        self,
+        server_uri: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[None]:
         """Perform actual LDAP connection through client.
 
@@ -184,14 +194,14 @@ class FlextLdapConnectionService(FlextDomainService):
 
         # Use monadic approach to handle connection result
         session_result = (connect_result >> (FlextResult[str].ok)).with_context(
-            lambda err: f"Connection context failed: {err}"
+            lambda err: f"Connection context failed: {err}",
         )
 
         if session_result.is_failure:
             error_msg = session_result.error or "Connection failed"
             raise FlextExceptions.ConnectionError(error_msg)
 
-        session_id = session_result.unwrap()
+        session_id = session_result.value
         try:
             yield session_id
         finally:
@@ -217,15 +227,15 @@ class FlextLdapConnectionService(FlextDomainService):
         # Attempt connection
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
         if connect_result.is_failure:
-            return FlextResult[bool].ok(value=False)
+            return FlextResult[bool].ok(data=False)
 
         # Immediately disconnect
         disconnect_result = await self.disconnect()
         if disconnect_result.is_failure:
             # Connection succeeded but disconnect failed - still consider it a successful test
-            return FlextResult[bool].ok(value=True)
+            return FlextResult[bool].ok(data=True)
 
-        return FlextResult[bool].ok(value=True)
+        return FlextResult[bool].ok(data=True)
 
     def validate_server_uri(self, server_uri: str) -> FlextResult[None]:
         """Validate LDAP server URI format.
@@ -242,7 +252,7 @@ class FlextLdapConnectionService(FlextDomainService):
 
         if not (server_uri.startswith(("ldap://", "ldaps://"))):
             return FlextResult[None].fail(
-                "Server URI must start with ldap:// or ldaps://"
+                "Server URI must start with ldap:// or ldaps://",
             )
 
         # Additional validation for URI format
@@ -260,7 +270,7 @@ class FlextLdapConnectionService(FlextDomainService):
                     port = int(parts[1].split("/")[0])
                     if port < 1 or port > self.MAX_PORT_NUMBER:
                         return FlextResult[None].fail(
-                            "Port must be between 1 and 65535"
+                            "Port must be between 1 and 65535",
                         )
                 except ValueError:
                     return FlextResult[None].fail("Invalid port number")
@@ -290,7 +300,7 @@ class FlextLdapConnectionService(FlextDomainService):
 
         except Exception as e:
             return FlextResult[dict[str, str]].fail(
-                f"Failed to get connection info: {e}"
+                f"Failed to get connection info: {e}",
             )
 
     def is_connected(self) -> FlextResult[bool]:
@@ -303,10 +313,7 @@ class FlextLdapConnectionService(FlextDomainService):
         try:
             # Check connection status through client
             is_connected = self._client.is_connected()
-            return FlextResult[bool].ok(value=is_connected)
-
-            # Unable to determine connection status
-            return FlextResult[bool].fail("Unable to determine connection status")
+            return FlextResult[bool].ok(is_connected)
 
         except Exception as e:
             return FlextResult[bool].fail(f"Connection status check failed: {e}")
@@ -330,12 +337,12 @@ class FlextLdapConnectionService(FlextDomainService):
         """
         # Check if currently connected
         connection_check = self.is_connected()
-        if connection_check.is_success and connection_check.unwrap():
+        if connection_check.is_success and connection_check.value:
             # Disconnect first
             disconnect_result = await self.disconnect()
             if disconnect_result.is_failure:
                 return FlextResult[str].fail(
-                    f"Failed to disconnect before reconnecting: {disconnect_result.error}"
+                    f"Failed to disconnect before reconnecting: {disconnect_result.error}",
                 )
 
         # Connect

@@ -43,7 +43,7 @@ class FlextLdapValueObjects(FlextModels):
 
         @classmethod
         def create(cls, dn_string: str) -> FlextLdapValueObjects.DistinguishedName:
-            """Factory method for DN creation with validation."""
+            """Create DN with validation."""
             return cls(value=dn_string.strip())
 
     @dataclass(frozen=True)
@@ -69,7 +69,9 @@ class FlextLdapValueObjects(FlextModels):
 
         @classmethod
         def starts_with(
-            cls, attribute: str, value: str
+            cls,
+            attribute: str,
+            value: str,
         ) -> FlextLdapValueObjects.Filter:
             """Create starts-with filter."""
             return cls(expression=f"({attribute}={value}*)")
