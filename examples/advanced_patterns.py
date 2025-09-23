@@ -86,8 +86,7 @@ async def ldap_session(
     finally:
         # Cleanup
         try:
-            if isinstance(session_id, str):
-                await api.disconnect()
+            await api.disconnect()
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
             logger.warning(
@@ -108,13 +107,12 @@ def demonstrate_value_objects() -> None:
 
         # 2. LDAP Filters - Using correct FlextLdapFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_result = FlextLdapModels.Filter.create(complex_filter)
-
-        if filter_result.success:
-            default_filter = FlextLdapModels.Filter(value="(objectClass=*)")
-            filter_obj = filter_result.unwrap_or(default_filter)
-            # Filter doesn't have validate_business_rules method
-            logger.debug(f"Using filter: {filter_obj.value}")
+        try:
+            filter_obj = FlextLdapModels.Filter(expression=complex_filter)
+            logger.debug(f"Using filter: {filter_obj.expression}")
+        except ValueError as e:
+            logger.warning(f"Invalid filter: {e}")
+            filter_obj = FlextLdapModels.Filter(expression="(objectClass=*)")
 
     except Exception:
         logger.exception("Value object demonstration failed")
@@ -129,8 +127,8 @@ def demonstrate_comprehensive_configuration() -> None:
         # 2. Create search request using FlextLdapSearchRequest
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
+            filter="(objectClass=person)",
             scope="subtree",
-            filter_str="(objectClass=person)",
             attributes=["cn", "mail"],
             size_limit=100,
             time_limit=30,
@@ -154,7 +152,7 @@ async def demonstrate_async_patterns() -> None:
             "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[FlextLdapModels.Entry]]]] = []
+            tasks: list[Awaitable[FlextResult[list[dict[str, object]]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",

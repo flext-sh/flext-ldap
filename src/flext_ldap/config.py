@@ -877,8 +877,12 @@ class FlextLdapConfigs(FlextConfig):
             "log_ldap_security": self.log_ldap_security,
             "log_ldap_compliance": self.log_ldap_compliance,
             "track_ldap_performance": self.track_ldap_performance,
-            "ldap_performance_threshold_warning": self.ldap_performance_threshold_warning,
-            "ldap_performance_threshold_critical": self.ldap_performance_threshold_critical,
+            "ldap_performance_threshold_warning": (
+                self.ldap_performance_threshold_warning
+            ),
+            "ldap_performance_threshold_critical": (
+                self.ldap_performance_threshold_critical
+            ),
             "include_dn_in_logs": self.include_dn_in_logs,
             "include_attributes_in_logs": self.include_attributes_in_logs,
             "include_values_in_logs": self.include_values_in_logs,
@@ -930,7 +934,8 @@ class FlextLdapConfigs(FlextConfig):
             "verify_certificates": self.ldap_verify_certificates,
         }
 
-    # LdapConnection class moved to connection_config.py to follow one-class-per-module rule
+    # LdapConnection class moved to connection_config.py to follow
+    # one-class-per-module rule
 
 
 # Removed backward compatibility alias - use FlextLdapConfigs directly

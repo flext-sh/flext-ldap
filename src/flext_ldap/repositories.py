@@ -64,7 +64,7 @@ class FlextLdapRepositories:
 
         @abstractmethod
         async def update(
-            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict,
         ) -> FlextResult[bool]:
             """Update entry attributes."""
 
@@ -107,7 +107,7 @@ class FlextLdapRepositories:
             try:
                 # Use all parameters in the search implementation
                 self._logger.debug(
-                    f"Searching users with base_dn={base_dn}, filter={filter_str}, page_size={page_size}, paged_cookie={paged_cookie!r}"
+                    f"Searching users with base_dn={base_dn}, filter={filter_str}, page_size={page_size}, paged_cookie={paged_cookie!r}",
                 )
                 # Mock implementation - replace with actual LDAP search
                 return FlextResult[list[dict[str, object]]].ok([])
@@ -115,7 +115,7 @@ class FlextLdapRepositories:
                 return FlextResult[list[dict[str, object]]].fail(str(e))
 
         async def save(
-            self, entry: FlextLdapModels.LdapUser
+            self, entry: FlextLdapModels.LdapUser,
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Save user entry."""
             try:
@@ -146,7 +146,7 @@ class FlextLdapRepositories:
                 return FlextResult[bool].fail(str(e))
 
         async def update(
-            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict,
         ) -> FlextResult[bool]:
             """Update user attributes."""
             try:
@@ -161,7 +161,7 @@ class FlextLdapRepositories:
                 return FlextResult[bool].fail(str(e))
 
         async def find_user_by_uid(
-            self, uid: str
+            self, uid: str,
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Find user by UID."""
             try:
@@ -187,7 +187,7 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.LdapUser].fail(str(e))
 
         async def find_users_by_filter(
-            self, _filter_str: str
+            self, _filter_str: str,
         ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
             """Find users by filter."""
             try:
@@ -224,7 +224,7 @@ class FlextLdapRepositories:
             try:
                 # Use all parameters in the search implementation
                 self._logger.debug(
-                    f"Searching groups with base_dn={base_dn}, filter={filter_str}, page_size={page_size}, paged_cookie={paged_cookie!r}"
+                    f"Searching groups with base_dn={base_dn}, filter={filter_str}, page_size={page_size}, paged_cookie={paged_cookie!r}",
                 )
                 # Mock implementation - replace with actual LDAP search
                 return FlextResult[list[dict[str, object]]].ok([])
@@ -232,7 +232,7 @@ class FlextLdapRepositories:
                 return FlextResult[list[dict[str, object]]].fail(str(e))
 
         async def save(
-            self, entry: FlextLdapModels.Group
+            self, entry: FlextLdapModels.Group,
         ) -> FlextResult[FlextLdapModels.Group]:
             """Save group entry."""
             try:
@@ -263,7 +263,7 @@ class FlextLdapRepositories:
                 return FlextResult[bool].fail(str(e))
 
         async def update(
-            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict
+            self, dn: str, attributes: FlextLdapTypes.Entry.AttributeDict,
         ) -> FlextResult[bool]:
             """Update group attributes."""
             try:
@@ -300,7 +300,7 @@ class FlextLdapRepositories:
                 return FlextResult[list[str]].fail(str(e))
 
         async def add_member_to_group(
-            self, _group_dn: str, _member_dn: str
+            self, _group_dn: str, _member_dn: str,
         ) -> FlextResult[bool]:
             """Add member to group."""
             try:

@@ -78,14 +78,14 @@ class TestFlextLdapAPIValidations:
         api = FlextLdapAPI.create()
         result = api.validate_dn("cn=test,dc=example,dc=com")
         assert result.is_success
-        assert result.data == "cn=test,dc=example,dc=com"
+        assert result.value == "cn=test,dc=example,dc=com"
 
     def test_validate_dn_valid_with_spaces(self) -> None:
         """Test DN validation accepts DN with surrounding spaces."""
         api = FlextLdapAPI.create()
         result = api.validate_dn("  cn=test,dc=example,dc=com  ")
         assert result.is_success
-        assert "cn=test,dc=example,dc=com" in result.data
+        assert "cn=test,dc=example,dc=com" in result.value
 
     def test_validate_dn_invalid_empty(self) -> None:
         """Test DN validation rejects empty string."""
@@ -113,7 +113,7 @@ class TestFlextLdapAPIValidations:
         api = FlextLdapAPI.create()
         result = api.validate_filter("(objectClass=person)")
         assert result.is_success
-        assert result.data == "(objectClass=person)"
+        assert result.value == "(objectClass=person)"
 
     def test_validate_filter_valid_complex(self) -> None:
         """Test filter validation with complex filter."""
@@ -133,14 +133,14 @@ class TestFlextLdapAPIValidations:
         api = FlextLdapAPI.create()
         result = api.validate_filter("objectClass=person")
         assert result.is_success
-        assert result.data == "objectClass=person"
+        assert result.value == "objectClass=person"
 
     def test_validate_email_valid(self) -> None:
         """Test email validation with valid email."""
         api = FlextLdapAPI.create()
         result = api.validate_email("test@example.com")
         assert result.is_success
-        assert result.data == "test@example.com"
+        assert result.value == "test@example.com"
 
     def test_validate_email_valid_complex(self) -> None:
         """Test email validation with complex valid email."""

@@ -49,17 +49,17 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
 
 
 @pytest.fixture
-async def ldap_connection(
+async def ldap_connection(  # noqa: RUF029
     real_ldap_server: LdapTestServer,
-) -> AsyncGenerator[FlextLdapModels.ConnectionConfig]:
+) -> AsyncGenerator[FlextLdapModels.ConnectionConfig, None]:
     """Get LDAP connection configuration for testing."""
-    return real_ldap_server.get_connection_config()
+    yield real_ldap_server.get_connection_config()
 
 
 @pytest.fixture
-async def ldap_api() -> AsyncGenerator[FlextLdapClient]:
+async def ldap_api() -> AsyncGenerator[FlextLdapClient, None]:  # noqa: RUF029
     """Get configured LDAP API instance."""
-    return FlextLdapClient()
+    yield FlextLdapClient()
 
 
 @pytest.fixture
@@ -95,18 +95,19 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 async def clean_ldap_container(
     real_ldap_server: LdapTestServer,
-) -> AsyncGenerator[dict[str, object]]:
+) -> AsyncGenerator[dict[str, object], None]:
     """Get clean LDAP container configuration for testing."""
+    await real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
     container_info: dict[str, object] = {
         "server_url": config.server,
         "bind_dn": config.bind_dn,
         "password": config.bind_password,
-        "base_dn": "dc=flext,dc=local",  # Standard test base DN
+        "base_dn": "dc=flext,dc=local",
         "port": real_ldap_server.port,
         "use_ssl": config.use_ssl,
     }
-    return container_info
+    yield container_info
 
 
 # Synchronous fixtures for compatibility

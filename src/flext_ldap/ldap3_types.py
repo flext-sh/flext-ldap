@@ -84,8 +84,8 @@ class Ldap3Connection(Protocol):
     def add(
         self,
         dn: str,
-        object_class: list[str] | None = None,
-        attributes: dict[str, str | list[str]] | None = None,
+        object_class: list[str] | str | None = None,
+        attributes: dict[str, object] | None = None,
         *,
         controls: object | None = None,
     ) -> bool:
@@ -95,7 +95,7 @@ class Ldap3Connection(Protocol):
     def modify(
         self,
         dn: str,
-        changes: dict[str, list[tuple[str, list[str]]]],
+        changes: dict[str, list[tuple[object, list[object]]]] | dict[str, object],
         *,
         controls: object | None = None,
     ) -> bool:

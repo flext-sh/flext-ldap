@@ -15,6 +15,7 @@ import ldap3
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels
+from flext_ldap.ldap3_types import Ldap3Connection
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
@@ -124,13 +125,14 @@ class LdapTestServer:
                             connect_timeout=5,
                         )
 
-                        conn = ldap3.Connection(
+                        conn_raw = ldap3.Connection(
                             server=server,
                             user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                             password=self.REDACTED_LDAP_BIND_PASSWORD_password,
                             auto_bind=True,
                             authentication=ldap3.SIMPLE,
                         )
+                        conn = cast(Ldap3Connection, conn_raw)
 
                         conn.search(
                             search_base="dc=flext,dc=local",
@@ -162,13 +164,14 @@ class LdapTestServer:
                 use_ssl=False,
             )
 
-            conn = ldap3.Connection(
+            conn_raw = ldap3.Connection(
                 server=server,
                 user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                 password=self.REDACTED_LDAP_BIND_PASSWORD_password,
                 auto_bind=True,
                 authentication=ldap3.SIMPLE,
             )
+            conn = cast(Ldap3Connection, conn_raw)
 
             # Create organizational units first
             for ou_data in TEST_OUS:
@@ -253,13 +256,14 @@ async def wait_for_ldap_server(
                         connect_timeout=5,
                     )
 
-                    conn = ldap3.Connection(
+                    conn_raw = ldap3.Connection(
                         server=server,
                         user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                         password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
                         auto_bind=True,
                         authentication=ldap3.SIMPLE,
                     )
+                    conn = cast(Ldap3Connection, conn_raw)
 
                     conn.search(
                         search_base="dc=flext,dc=local",

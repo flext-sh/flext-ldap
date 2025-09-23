@@ -33,8 +33,7 @@ class TestVersionMetadata:
         """Test author defaults are set."""
         assert __version__.__author__ is not None
         assert isinstance(__version__.__author__, str)
-        if not __version__.__author__:
-            assert __version__.__author__ == "FLEXT Team"
+        assert __version__.__author__ in {"FLEXT Team", ""}  # Allow empty or default
 
     def test_author_email_defaults(self) -> None:
         """Test author email defaults are set."""

@@ -71,7 +71,7 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def create(
-            cls, dn_string: str
+            cls, dn_string: str,
         ) -> FlextResult[FlextLdapModels.DistinguishedName]:
             """Create DN with validation."""
             try:
@@ -206,7 +206,7 @@ class FlextLdapModels(FlextModels):
         created_at: str | None = Field(default=None, description="Creation timestamp")
         display_name: str | None = Field(default=None, description="Display Name")
         modified_at: str | None = Field(
-            default=None, description="Last modification timestamp"
+            default=None, description="Last modification timestamp",
         )
 
         # Timestamps
@@ -327,7 +327,7 @@ class FlextLdapModels(FlextModels):
         )
         status: str | None = Field(default=None, description="Group status")
         modified_at: str | None = Field(
-            default=None, description="Last modification timestamp"
+            default=None, description="Last modification timestamp",
         )
 
         # Metadata
