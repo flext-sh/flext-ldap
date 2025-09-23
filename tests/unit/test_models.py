@@ -28,7 +28,7 @@ class TestFlextLdapDistinguishedName:
         ]
 
         for dn_str in valid_dns:
-            result = FlextLdapModels.ValueObjects.DistinguishedName.create(dn_str)
+            result = FlextLdapModels.DistinguishedName.create(dn_str)
             assert result.is_success, f"Valid DN should work: {dn_str} - {result.error}"
             # Use value since we verified is_success
             dn_obj = result.value
@@ -46,7 +46,7 @@ class TestFlextLdapDistinguishedName:
         ]
 
         for invalid_dn in invalid_dns:
-            result = FlextLdapModels.ValueObjects.DistinguishedName.create(invalid_dn)
+            result = FlextLdapModels.DistinguishedName.create(invalid_dn)
             # Should either reject or handle gracefully
             if not result.is_success:
                 assert result.error  # Should have error message
@@ -55,8 +55,8 @@ class TestFlextLdapDistinguishedName:
     def test_dn_equality_and_comparison(self) -> None:
         """Test DN equality and string representation."""
         dn_str = "cn=test,dc=example,dc=com"
-        dn1 = FlextLdapModels.ValueObjects.DistinguishedName(value=dn_str)
-        dn2 = FlextLdapModels.ValueObjects.DistinguishedName(value=dn_str)
+        dn1 = FlextLdapModels.DistinguishedName(value=dn_str)
+        dn2 = FlextLdapModels.DistinguishedName(value=dn_str)
 
         assert dn1.value == dn2.value
         assert str(dn1) == dn_str or repr(dn1)  # Should have string representation
@@ -65,26 +65,33 @@ class TestFlextLdapDistinguishedName:
 class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
-    def create_test_user(self, **kwargs: object) -> FlextLdapModels.User:
+    def create_test_user(self, **kwargs: object) -> FlextLdapModels.LdapUser:
         """Create test user with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
-        return FlextLdapModels.User(
-            id=str(kwargs.get("id", "test_user")),
+        return FlextLdapModels.LdapUser(
             dn=str(kwargs.get("dn", "cn=testuser,ou=users,dc=example,dc=com")),
-            uid=str(kwargs.get("uid", "testuser")),
             cn=str(kwargs.get("cn", "Test User")),
+            uid=str(kwargs.get("uid", "testuser")),
             sn=str(kwargs.get("sn", "User")),
             given_name=str(kwargs.get("given_name", "Test")),
             mail=str(kwargs.get("mail", "testuser@example.com")),
+            telephone_number=None,
+            mobile=None,
+            department=None,
+            title=None,
+            organization=None,
+            organizational_unit=None,
+            user_password=None,
+            created_timestamp=None,
+            modified_timestamp=None,
             object_classes=cast(
-                "FlextTypes.Core.StringList",
+                "list[str]",
                 kwargs.get("object_classes", ["inetOrgPerson", "person"]),
             ),
-            attributes=cast(
-                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+            additional_attributes=cast(
+                "dict[str, str | bytes | list[str] | list[bytes]]",
                 kwargs.get("attributes", {}),
             ),
-            status=str(kwargs.get("status", "active")),
         )
 
     def test_user_creation_with_required_fields(self) -> None:
@@ -167,20 +174,20 @@ class TestFlextLdapGroup:
         """Create test group with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
         return FlextLdapModels.Group(
-            id=str(kwargs.get("id", "test_group")),
             dn=str(kwargs.get("dn", "cn=testgroup,ou=groups,dc=example,dc=com")),
             cn=str(kwargs.get("cn", "Test Group")),
+            gid_number=None,
             description=str(kwargs.get("description", "Test group for unit testing")),
+            created_timestamp=None,
+            modified_timestamp=None,
             object_classes=cast(
-                "FlextTypes.Core.StringList",
+                "list[str]",
                 kwargs.get("object_classes", ["groupOfNames"]),
             ),
-            attributes=cast(
-                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+            additional_attributes=cast(
+                "dict[str, str | bytes | list[str] | list[bytes]]",
                 kwargs.get("attributes", {}),
             ),
-            members=cast("FlextTypes.Core.StringList", kwargs.get("members", [])),
-            status=str(kwargs.get("status", "active")),
         )
 
     def test_group_creation_with_required_fields(self) -> None:

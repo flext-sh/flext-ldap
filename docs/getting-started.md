@@ -90,9 +90,9 @@ export FLEXT_LDAP_POOL_SIZE=5
 Create `flext_ldap_config.py`:
 
 ```python
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host="ldap.example.com",
     port=636,
     use_ssl=True,

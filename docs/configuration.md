@@ -13,16 +13,16 @@ FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic Bas
 ### Configuration Hierarchy
 
 ```python
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
 # 1. Default configuration
-config = FlextLdapConfig()
+config = FlextLdapConfigs()
 
 # 2. Environment variables (preferred)
-config = FlextLdapConfig.from_env()
+config = FlextLdapConfigs.from_env()
 
 # 3. Explicit configuration
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -86,10 +86,10 @@ export FLEXT_LDAP_RECEIVE_TIMEOUT=30
 Create `ldap_config.py`:
 
 ```python
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
 # Production configuration
-PRODUCTION_CONFIG = FlextLdapConfig(
+PRODUCTION_CONFIG = FlextLdapConfigs(
     host="ldap-prod.example.com",
     port=636,
     use_ssl=True,
@@ -101,7 +101,7 @@ PRODUCTION_CONFIG = FlextLdapConfig(
 )
 
 # Development configuration
-DEVELOPMENT_CONFIG = FlextLdapConfig(
+DEVELOPMENT_CONFIG = FlextLdapConfigs(
     host="ldap-dev.example.com",
     port=389,
     use_ssl=False,
@@ -117,9 +117,9 @@ DEVELOPMENT_CONFIG = FlextLdapConfig(
 
 ```python
 import os
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
-def get_config() -> FlextLdapConfig:
+def get_config() -> FlextLdapConfigs:
     """Get configuration based on environment."""
     env = os.getenv("FLEXT_ENV", "development")
 
@@ -193,9 +193,9 @@ docker run -d \
 ### Test Configuration
 
 ```python
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
-TEST_CONFIG = FlextLdapConfig(
+TEST_CONFIG = FlextLdapConfigs(
     host="localhost",
     port=389,
     use_ssl=False,
@@ -260,7 +260,7 @@ asyncio.run(validate_config())
 # Use environment variables for secrets
 import os
 
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host=os.getenv("FLEXT_LDAP_HOST"),
     bind_password=os.getenv("FLEXT_LDAP_BIND_PASSWORD"),
     # ... other settings
@@ -272,7 +272,7 @@ config = FlextLdapConfig(
 ```python
 from ssl import create_default_context
 
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -289,7 +289,7 @@ config = FlextLdapConfig(
 
 ```python
 # High-traffic configuration
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     pool_size=20,           # Adjust based on concurrent users
     connection_timeout=5,   # Fast connection timeout
     receive_timeout=15,     # Operation timeout

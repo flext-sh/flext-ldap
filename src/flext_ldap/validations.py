@@ -24,10 +24,6 @@ class FlextLdapValidations:
         if not dn or not dn.strip():
             return FlextResult[None].fail(f"{context} cannot be empty")
 
-        # Use simple validation for string
-        if not isinstance(dn, str) or len(dn.strip()) == 0:
-            return FlextResult[None].fail(f"{context} must be a non-empty string")
-
         # Basic DN format validation (RFC 2253) - must contain = and proper structure
         if (
             not re.match(r"^[a-zA-Z0-9=,\s\-\._]+$", dn.strip())

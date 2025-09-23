@@ -54,8 +54,6 @@ Homepage = "https://github.com/flext-sh/flext"
 Repository = "https://github.com/flext-sh/flext"
 Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 
-[project.scripts]
-flext-ldap = "flext_ldap.cli:main"
 
 [tool.ruff]
 extend = "../ruff-shared.toml"
@@ -216,14 +214,10 @@ output = "reports/coverage.xml"
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
-flext-cli = { path = "../flext-cli", develop = true }
-flext-ldif = { path = "../flext-ldif", develop = true }
 pydantic = ">=2.11.7"
 pydantic-settings = ">=2.10.1"
 ldap3 = ">=2.9.1"
 cryptography = ">=45.0.5"
-click = ">=8.2.1"
-rich = ">=14.0.0"
 structlog = ">=25.4.0"
 
 [tool.poetry.group.dev.dependencies]

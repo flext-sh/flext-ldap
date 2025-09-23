@@ -49,7 +49,7 @@ class UserService:
 
 ```python
 # Environment-based configuration following FLEXT patterns
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 from pydantic import BaseSettings
 
 class AppSettings(BaseSettings):
@@ -67,9 +67,9 @@ class AppSettings(BaseSettings):
     app_name: str = "flext-app"
     debug: bool = False
 
-    def get_ldap_config(self) -> FlextLdapConfig:
+    def get_ldap_config(self) -> FlextLdapConfigs:
         """Create LDAP configuration from app settings."""
-        return FlextLdapConfig(
+        return FlextLdapConfigs(
             host=self.ldap_host,
             port=self.ldap_port,
             use_ssl=self.ldap_use_ssl,
@@ -447,117 +447,6 @@ async def search_users():
 
 if __name__ == '__main__':
     app.run(debug=True)
-```
-
----
-
-## CLI Tools Integration
-
-### Click-based CLI with LDAP Operations
-
-```python
-import click
-import asyncio
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
-
-@click.group()
-def ldap_cli():
-    """LDAP management CLI tool."""
-    pass
-
-@ldap_cli.command()
-@click.option('--username', prompt=True, help='Username to authenticate')
-@click.option('--password', prompt=True, hide_input=True, help='User password')
-def auth(username: str, password: str):
-    """Test user authentication."""
-    async def authenticate():
-        ldap_api = get_flext_ldap_api()
-        result = await ldap_api.authenticate_user(username, password)
-
-        if result.is_success:
-            user = result.unwrap()
-            click.echo(f"✅ Authentication successful for {user.cn}")
-            click.echo(f"   Email: {user.mail}")
-            click.echo(f"   Groups: {len(user.member_of or [])}")
-        else:
-            click.echo(f"❌ Authentication failed: {result.error}")
-
-    asyncio.run(authenticate())
-
-@ldap_cli.command()
-@click.option('--filter', default='(objectClass=person)', help='LDAP search filter')
-@click.option('--base-dn', default='dc=example,dc=com', help='Search base DN')
-@click.option('--limit', default=10, type=int, help='Maximum results')
-def search(filter: str, base_dn: str, limit: int):
-    """Search directory entries."""
-    async def search_entries():
-        ldap_api = get_flext_ldap_api()
-
-        search_request = FlextLdapEntities.SearchRequest(
-            base_dn=base_dn,
-            filter_str=filter,
-            scope="subtree",
-            attributes=["uid", "cn", "mail"],
-            size_limit=limit
-        )
-
-        result = await ldap_api.search_entries(search_request)
-
-        if result.is_success:
-            entries = result.unwrap()
-            click.echo(f"Found {len(entries)} entries:")
-            for entry in entries:
-                click.echo(f"  {entry.uid}: {entry.cn} ({entry.mail})")
-        else:
-            click.echo(f"❌ Search failed: {result.error}")
-
-    asyncio.run(search_entries())
-
-@ldap_cli.command()
-@click.option('--uid', prompt=True, help='User ID')
-@click.option('--cn', prompt=True, help='Common Name')
-@click.option('--sn', prompt=True, help='Surname')
-@click.option('--mail', help='Email address')
-def create_user(uid: str, cn: str, sn: str, mail: str):
-    """Create a new user."""
-    async def create():
-        ldap_api = get_flext_ldap_api()
-
-        create_request = FlextLdapEntities.CreateUserRequest(
-            dn=f"cn={uid},ou=users,dc=example,dc=com",
-            uid=uid,
-            cn=cn,
-            sn=sn,
-            mail=mail,
-            object_classes=["person", "organizationalPerson", "inetOrgPerson"]
-        )
-
-        result = await ldap_api.create_user(create_request)
-
-        if result.is_success:
-            user = result.unwrap()
-            click.echo(f"✅ Created user: {user.dn}")
-        else:
-            click.echo(f"❌ User creation failed: {result.error}")
-
-    asyncio.run(create())
-
-@ldap_cli.command()
-def test_connection():
-    """Test LDAP server connection."""
-    async def test():
-        ldap_api = get_flext_ldap_api()
-        result = await ldap_api.test_connection()
-
-        if result.is_success:
-            click.echo("✅ LDAP connection successful")
-        else:
-            click.echo(f"❌ Connection failed: {result.error}")
-
-    asyncio.run(test())
-
-if __name__ == '__main__':
-    ldap_cli()
 ```
 
 ---

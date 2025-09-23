@@ -21,7 +21,7 @@ src/flext_ldap/
 
 ### Core API Layer
 
-- **api.py**: Main FlextLdapApi interface providing unified LDAP operations
+- **api.py**: Main FlextLdapClient interface providing unified LDAP operations
 - **base.py**: Base functionality and shared patterns
 - **config.py**: Configuration management with environment variable support
 

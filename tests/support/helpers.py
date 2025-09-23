@@ -4,7 +4,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import cast
+from typing import Literal, cast
 
 import ldap3
 
@@ -35,12 +35,12 @@ def create_test_user(
             authentication=ldap3.SIMPLE,
         )
 
-        success = conn.add(dn, attributes=attributes)
+        success: bool = conn.add(dn, attributes=attributes)
         conn.unbind()
 
         if success:
             logger.debug("Created test user: %s", dn)
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(data=True)
         return FlextResult[bool].fail(f"Failed to create user: {conn.last_error}")
 
     except Exception as e:
@@ -69,12 +69,12 @@ def create_test_group(
             authentication=ldap3.SIMPLE,
         )
 
-        success = conn.add(dn, attributes=attributes)
+        success: bool = conn.add(dn, attributes=attributes)
         conn.unbind()
 
         if success:
             logger.debug("Created test group: %s", dn)
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(data=True)
         return FlextResult[bool].fail(f"Failed to create group: {conn.last_error}")
 
     except Exception as e:
@@ -114,7 +114,7 @@ def cleanup_test_entries(
                 logger.debug("Error cleaning up %s: %s", dn, e)
 
         conn.unbind()
-        return FlextResult.ok(cleaned_count)
+        return FlextResult[int].ok(cleaned_count)
 
     except Exception as e:
         logger.exception("Error during cleanup")
@@ -141,16 +141,16 @@ def verify_entry_exists(
             authentication=ldap3.SIMPLE,
         )
 
-        success = conn.search(
+        success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
             search_scope=ldap3.BASE,
         )
 
-        exists = success and len(conn.entries) > 0
+        exists: bool = success and len(cast("list[object]", conn.entries)) > 0
         conn.unbind()
 
-        return FlextResult.ok(exists)
+        return FlextResult[bool].ok(exists)
 
     except Exception as e:
         logger.exception("Error verifying entry %s", dn)
@@ -177,17 +177,21 @@ def get_entry_attributes(
             authentication=ldap3.SIMPLE,
         )
 
-        success = conn.search(
+        success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
             search_scope=ldap3.BASE,
         )
 
-        if success and len(conn.entries) > 0:
-            entry = conn.entries[0]
-            attributes = {attr: entry[attr].values for attr in entry.entry_attributes}
+        if success and len(cast("list[object]", conn.entries)) > 0:
+            entry: object = conn.entries[0]
+            attributes: dict[str, object] = {
+                attr: entry[attr].values for attr in entry.entry_attributes
+            }
             conn.unbind()
-            return FlextResult.ok(cast("FlextTypes.Core.Dict", attributes))
+            return FlextResult[FlextTypes.Core.Dict].ok(
+                cast("FlextTypes.Core.Dict", attributes)
+            )
         conn.unbind()
         return FlextResult[FlextTypes.Core.Dict].fail(f"Entry not found: {dn}")
 
@@ -200,7 +204,7 @@ def search_entries(
     config: FlextLdapModels.ConnectionConfig,
     base_dn: str,
     search_filter: str,
-    scope: str = "subtree",
+    scope: Literal["base", "onelevel", "subtree"] = "subtree",
 ) -> FlextResult[list[FlextTypes.Core.Dict]]:
     """Search for entries in LDAP server."""
     try:
@@ -219,23 +223,25 @@ def search_entries(
         )
 
         # Map string scope to ldap3 integer scope
-        scope_map = {
-            "base": ldap3.BASE,
-            "onelevel": ldap3.LEVEL,
-            "subtree": ldap3.SUBTREE,
+        scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+            "base": "BASE",
+            "onelevel": "LEVEL",
+            "subtree": "SUBTREE",
         }
-        ldap_scope = scope_map.get(scope, ldap3.SUBTREE)
+        ldap_scope: Literal["BASE", "LEVEL", "SUBTREE"] = scope_map.get(
+            scope, "SUBTREE"
+        )
 
-        success = conn.search(
+        success: bool = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
             search_scope=ldap_scope,
         )
 
-        results = []
+        results: list[dict[str, object]] = []
         if success:
-            for entry in conn.entries:
-                entry_data = {
+            for entry in cast("list[object]", conn.entries):
+                entry_data: dict[str, object] = {
                     "dn": entry.entry_dn,
                     "attributes": {
                         attr: entry[attr].values for attr in entry.entry_attributes
@@ -244,7 +250,9 @@ def search_entries(
                 results.append(entry_data)
 
         conn.unbind()
-        return FlextResult.ok(cast("list[FlextTypes.Core.Dict]", results))
+        return FlextResult[list[FlextTypes.Core.Dict]].ok(
+            cast("list[FlextTypes.Core.Dict]", results)
+        )
 
     except Exception as e:
         logger.exception("Error searching entries")
@@ -282,12 +290,12 @@ def modify_entry(
             else:
                 ldap3_changes[attr] = [(ldap3.MODIFY_REPLACE, [values])]
 
-        success = conn.modify(dn, ldap3_changes)
+        success: bool = conn.modify(dn, ldap3_changes)
         conn.unbind()
 
         if success:
             logger.debug("Modified entry: %s", dn)
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(data=True)
         return FlextResult[bool].fail(f"Failed to modify entry: {conn.last_error}")
 
     except Exception as e:

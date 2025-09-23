@@ -1,4 +1,4 @@
-"""Tests for FlextLdapConfig singleton functionality.
+"""Tests for FlextLdapConfigs singleton functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,34 +10,33 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import cast
 from unittest.mock import patch
 
 import pytest
 from pydantic import SecretStr
 
-from flext_ldap.config import FlextLdapConfigs as FlextLdapConfig
+from flext_ldap.config import FlextLdapConfigs
 from flext_ldap.models import FlextLdapModels
 
 
 class TestFlextLdapConfigSingleton:
-    """Test FlextLdapConfig singleton functionality."""
+    """Test FlextLdapConfigs singleton functionality."""
 
     def setup_method(self) -> None:
         """Clear global instance before each test."""
-        FlextLdapConfig.reset_global_instance()
+        FlextLdapConfigs.reset_global_instance()
 
     def teardown_method(self) -> None:
         """Clear global instance after each test."""
-        FlextLdapConfig.reset_global_instance()
+        FlextLdapConfigs.reset_global_instance()
 
     def test_singleton_instance_creation(self) -> None:
         """Test that get_global_instance returns the same instance."""
         # Get first instance
-        config1 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfigs.get_global_instance()
 
         # Get second instance
-        config2 = FlextLdapConfig.get_global_instance()
+        config2 = FlextLdapConfigs.get_global_instance()
 
         # Should be the same instance
         assert config1 is config2
@@ -45,11 +44,11 @@ class TestFlextLdapConfigSingleton:
 
     def test_convenience_function_get_config(self) -> None:
         """Test that get_global_instance returns the singleton instance."""
-        config1 = FlextLdapConfig.get_global_instance()
-        config2 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfigs.get_global_instance()
+        config2 = FlextLdapConfigs.get_global_instance()
 
         assert config1 is config2
-        assert isinstance(config1, FlextLdapConfig)
+        assert isinstance(config1, FlextLdapConfigs)
 
     def test_set_global_instance(self) -> None:
         """Test setting a custom global instance."""
@@ -59,13 +58,13 @@ class TestFlextLdapConfigSingleton:
             "ldap_bind_dn": "cn=test,dc=example,dc=com",
             "ldap_bind_password": SecretStr("test123"),
         }
-        custom_config = FlextLdapConfig.model_validate(config_data)
+        custom_config = FlextLdapConfigs.model_validate(config_data)
 
         # Set as global
-        FlextLdapConfig.set_global_instance(custom_config)
+        FlextLdapConfigs.set_global_instance(custom_config)
 
         # Get global instance
-        global_config = FlextLdapConfig.get_global_instance()
+        global_config = FlextLdapConfigs.get_global_instance()
 
         # Should be the custom instance
         assert global_config is custom_config
@@ -75,13 +74,13 @@ class TestFlextLdapConfigSingleton:
     def test_reset_global_instance(self) -> None:
         """Test resetting the global instance."""
         # Get initial instance
-        config1 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfigs.get_global_instance()
 
         # Reset global instance
-        FlextLdapConfig.reset_global_instance()
+        FlextLdapConfigs.reset_global_instance()
 
         # Get new instance
-        config2 = FlextLdapConfig.get_global_instance()
+        config2 = FlextLdapConfigs.get_global_instance()
 
         # Should be different instances
         assert config1 is not config2
@@ -101,9 +100,9 @@ class TestFlextLdapConfigSingleton:
             },
         ):
             # Clear and reload
-            FlextLdapConfig.reset_global_instance()
+            FlextLdapConfigs.reset_global_instance()
             # Create instance directly to ensure env vars are read
-            config = FlextLdapConfig()
+            config = FlextLdapConfigs()
 
             # Should load from environment
             assert config.ldap_bind_dn == "cn=env,dc=example,dc=com"
@@ -131,13 +130,9 @@ class TestFlextLdapConfigSingleton:
             config_file = f.name
 
         try:
-            # Create config from file
-            config_result = FlextLdapConfig.load_from_file(config_file)
-            assert config_result.is_success
-
-            config = cast("FlextLdapConfig", config_result.value)
+            # Create config from file using Pydantic Settings
+            config = FlextLdapConfigs(_env_file=config_file)
             assert config.app_name == "file-app"
-            # config is already a FlextLdapConfig instance
             assert config.ldap_bind_dn == "cn=file,dc=example,dc=com"
             assert config.ldap_bind_password is not None
             assert config.ldap_bind_password.get_secret_value() == "file123"
@@ -148,7 +143,7 @@ class TestFlextLdapConfigSingleton:
 
     def test_basic_config_creation(self) -> None:
         """Test basic configuration creation with default values."""
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
 
         assert config.ldap_use_ssl is True
         assert config.ldap_verify_certificates is True
@@ -158,7 +153,7 @@ class TestFlextLdapConfigSingleton:
 
     def test_ldap_specific_methods(self) -> None:
         """Test LDAP-specific configuration methods."""
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
         config.ldap_default_connection = FlextLdapModels.ConnectionConfig(
             server="ldap://test.example.com",
             port=389,
@@ -188,7 +183,7 @@ class TestFlextLdapConfigSingleton:
             "ldap_time_limit": 30,
             "ldap_enable_caching": False,
         }
-        config = FlextLdapConfig.model_validate(config_data)
+        config = FlextLdapConfigs.model_validate(config_data)
 
         # Check initial values
         assert config.ldap_size_limit == 100
@@ -209,7 +204,7 @@ class TestFlextLdapConfigSingleton:
 
     def test_connection_config_assignment(self) -> None:
         """Test assigning connection configuration."""
-        config = FlextLdapConfig()
+        config = FlextLdapConfigs()
 
         new_connection = FlextLdapModels.ConnectionConfig(
             server="ldaps://new.example.com",
@@ -235,7 +230,7 @@ class TestFlextLdapConfigSingleton:
             "ldap_enable_caching": True,
             "ldap_cache_ttl": 300,
         }
-        valid_config = FlextLdapConfig.model_validate(valid_config_data)
+        valid_config = FlextLdapConfigs.model_validate(valid_config_data)
 
         result = valid_config.validate_business_rules()
         assert result.is_success
@@ -246,7 +241,7 @@ class TestFlextLdapConfigSingleton:
             "ldap_enable_caching": True,
             "ldap_cache_ttl": 300,  # Valid value
         }
-        valid_config_with_cache = FlextLdapConfig.model_validate(cache_config_data)
+        valid_config_with_cache = FlextLdapConfigs.model_validate(cache_config_data)
 
         result = valid_config_with_cache.validate_business_rules()
         assert result.is_success
@@ -255,18 +250,18 @@ class TestFlextLdapConfigSingleton:
         """Test LDAP-specific field validation."""
         # Valid bind DN
         config_data = {"ldap_bind_dn": "cn=test,dc=example,dc=com"}
-        config = FlextLdapConfig.model_validate(config_data)
+        config = FlextLdapConfigs.model_validate(config_data)
         assert config.ldap_bind_dn == "cn=test,dc=example,dc=com"
 
         # None bind DN is valid
         config_none_data = {"ldap_bind_dn": None}
-        config_none = FlextLdapConfig.model_validate(config_none_data)
+        config_none = FlextLdapConfigs.model_validate(config_none_data)
         assert config_none.ldap_bind_dn is None
 
         # Invalid bind DN - malformed DN format
         invalid_dn_data = {"ldap_bind_dn": "invalid-dn-format"}
         with pytest.raises(ValueError, match="Invalid LDAP bind DN format"):
-            FlextLdapConfig.model_validate(invalid_dn_data)
+            FlextLdapConfigs.model_validate(invalid_dn_data)
 
     def test_model_validation_consistency(self) -> None:
         """Test cross-field validation consistency."""
@@ -277,7 +272,7 @@ class TestFlextLdapConfigSingleton:
             "ldap_enable_caching": True,
             "ldap_cache_ttl": 300,
         }
-        config = FlextLdapConfig.model_validate(valid_config_data)
+        config = FlextLdapConfigs.model_validate(valid_config_data)
         assert config.ldap_use_ssl is True
 
         # Test business rules validation
@@ -287,17 +282,17 @@ class TestFlextLdapConfigSingleton:
     def test_singleton_persistence_across_imports(self) -> None:
         """Test that singleton persists across different import contexts."""
         # Get config from first context
-        config1 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfigs.get_global_instance()
 
         # Simulate different import context by clearing and reloading
-        FlextLdapConfig.reset_global_instance()
+        FlextLdapConfigs.reset_global_instance()
 
         # Get config from second context
-        config2 = FlextLdapConfig.get_global_instance()
+        config2 = FlextLdapConfigs.get_global_instance()
 
         # Should be different instances (fresh load)
         assert config1 is not config2
 
-        # But both should be valid FlextLdapConfig instances
-        assert isinstance(config1, FlextLdapConfig)
-        assert isinstance(config2, FlextLdapConfig)
+        # But both should be valid FlextLdapConfigs instances
+        assert isinstance(config1, FlextLdapConfigs)
+        assert isinstance(config2, FlextLdapConfigs)

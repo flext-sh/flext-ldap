@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from flext_ldap.api import FlextLdapApi
+from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 
 
@@ -29,7 +29,7 @@ class TestLdapE2EOperations:
         Currently it tests the API flow without actual LDAP operations.
         """
         # Get API instance
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Test configuration
         FlextLdapModels.ConnectionConfig(
@@ -39,9 +39,9 @@ class TestLdapE2EOperations:
 
         # Test connection creation (will fail without real server)
         connection_result = await api.connect(
-            server_uri="ldap://localhost:3389",
+            uri="ldap://localhost:3389",
             bind_dn="cn=admin,dc=flext,dc=local",
-            bind_password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
+            password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
         )
 
         # For now, just test that the API methods exist and return results
@@ -59,6 +59,9 @@ class TestLdapE2EOperations:
             description=None,
             telephone_number=None,
             user_password=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         # Test user creation request structure
@@ -75,20 +78,22 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Test search without connection (should fail gracefully)
         # FlextLdapModels already imported at top
 
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=person)",
+            filter="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "uid"],
             size_limit=1000,
             time_limit=30,
+            page_size=None,
+            paged_cookie=None,
         )
-        search_result = await api.search(search_request)
+        search_result = await api.search_with_request(search_request)
 
         # Should handle missing session gracefully
         assert search_result is not None
@@ -97,7 +102,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_group_management_flow(self) -> None:
         """Test group management workflow."""
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Test group operations structure
         # Note: Actual implementation would require real LDAP server
@@ -113,13 +118,13 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_connection_error_handling(self) -> None:
         """Test connection error handling in E2E scenarios."""
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Test connection to non-existent server
         result = await api.connect(
-            server_uri="ldap://127.0.0.1:9999",
+            uri="ldap://127.0.0.1:9999",
             bind_dn="cn=admin,dc=test,dc=local",
-            bind_password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
+            password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
         )
 
         # Should fail gracefully
@@ -138,7 +143,7 @@ class TestLdapE2EOperations:
         )
 
         # Create API with configuration
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Should handle configuration properly
         assert api is not None
@@ -146,7 +151,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_error_propagation_e2e(self) -> None:
         """Test error propagation through the entire stack."""
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Test various error scenarios
         scenarios = [
@@ -157,9 +162,9 @@ class TestLdapE2EOperations:
 
         for uri, _expected_error_type in scenarios:
             result = await api.connect(
-                server_uri=uri,
+                uri=uri,
                 bind_dn="cn=test",
-                bind_password=os.getenv("LDAP_TEST_PASSWORD", "test"),
+                password=os.getenv("LDAP_TEST_PASSWORD", "test"),
             )
 
             # Should handle all error types gracefully
@@ -189,7 +194,7 @@ class TestLdapE2EWithDockerServer:
         # 2. Test domain: dc=flext,dc=local
         # 3. Admin credentials: cn=admin,dc=flext,dc=local / admin123
 
-        FlextLdapApi()
+        FlextLdapClient()
 
         # Connection parameters for Docker test server
 
@@ -204,6 +209,9 @@ class TestLdapE2EWithDockerServer:
             description=None,
             telephone_number=None,
             user_password=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"
@@ -218,7 +226,7 @@ class TestLdapE2EWithDockerServer:
         # 3. Attribute retrieval
         # 4. Paged search results
 
-        api = FlextLdapApi()
+        api = FlextLdapClient()
         assert api is not None
 
     @pytest.mark.asyncio
@@ -231,5 +239,5 @@ class TestLdapE2EWithDockerServer:
         # 3. Group search
         # 4. Group deletion
 
-        api = FlextLdapApi()
+        api = FlextLdapClient()
         assert api is not None

@@ -486,7 +486,7 @@ tests/unit/test_clients_functional.py:693:21: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
                         FlextLdapEntities.SearchRequest(
                         ^
-tests/unit/test_api_comprehensive.py: note: In member "test_connection_context_manager" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_connection_context_manager" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:143:35: error: Subclass of "str" and
 "FlextResult[object]" cannot exist: would have incompatible method signatures 
 [unreachable]
@@ -496,7 +496,7 @@ tests/unit/test_api_comprehensive.py:144:17: error: Statement is unreachable
 [unreachable]
                     if session_result.is_success:
                     ^
-tests/unit/test_api_comprehensive.py: note: In member "test_search_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:163:26: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
             search_request = FlextLdapEntities.SearchRequest(
@@ -509,29 +509,29 @@ tests/unit/test_api_comprehensive.py:175:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_simple_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_simple_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:191:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_users_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_users_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:206:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_create_user_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_create_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:226:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_user_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:240:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_update_user_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_update_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:251:44: error: Argument 2 to "update_user"
-of "FlextLdapApi" has incompatible type "dict[str, str]"; expected
+of "FlextLdapClient" has incompatible type "dict[str, str]"; expected
 "dict[str, str | bytes | list[str] | list[bytes]]"  [arg-type]
             result = await api.update_user(dn, attributes)
                                                ^~~~~~~~~~
@@ -541,19 +541,19 @@ tests/unit/test_api_comprehensive.py:256:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_user_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:270:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_users_by_filter_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_users_by_filter_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:286:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_create_group_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_create_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:302:24: error: No overload variant of
-"create_group" of "FlextLdapApi" matches argument type "Entry"  [call-overload]
+"create_group" of "FlextLdapClient" matches argument type "Entry"  [call-overload]
             result = await api.create_group(group_entry)
                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/unit/test_api_comprehensive.py:302:24: note: Possible overload variants:
@@ -563,14 +563,14 @@ tests/unit/test_api_comprehensive.py:307:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_group_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:329:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_update_group_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_update_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:341:51: error: Argument 2 to
-"update_group" of "FlextLdapApi" has incompatible type "dict[str, str]";
+"update_group" of "FlextLdapClient" has incompatible type "dict[str, str]";
 expected "dict[str, str | bytes | list[str] | list[bytes]]"  [arg-type]
             result = await api.update_group(group_dn, attributes)
                                                       ^~~~~~~~~~
@@ -580,42 +580,42 @@ tests/unit/test_api_comprehensive.py:346:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_group_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:360:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_add_member_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_add_member_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:377:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_remove_member_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_remove_member_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:394:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_members_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_members_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:408:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_entry_without_connection" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_entry_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:422:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_validate_dn_invalid" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_validate_dn_invalid" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:457:32: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                         pattern in result.error.lower()
                                    ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_validate_filter_invalid" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_validate_filter_invalid" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:494:32: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                         pattern in result.error.lower()
                                    ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_with_different_scopes" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_with_different_scopes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:552:30: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
                 search_request = FlextLdapEntities.SearchRequest(
@@ -624,20 +624,20 @@ tests/unit/test_api_comprehensive.py:552:30: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
                 search_request = FlextLdapEntities.SearchRequest(
                                  ^
-tests/unit/test_api_comprehensive.py: note: In member "test_user_operations_with_complex_data" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_user_operations_with_complex_data" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:603:18: error: Incompatible types in
 assignment (expression has type "FlextResult[None]", variable has type
 "FlextResult[User]")  [assignment]
             result = await api.update_user(dn, attributes)
                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/unit/test_api_comprehensive.py:603:44: error: Argument 2 to "update_user"
-of "FlextLdapApi" has incompatible type "dict[str, str]"; expected
+of "FlextLdapClient" has incompatible type "dict[str, str]"; expected
 "dict[str, str | bytes | list[str] | list[bytes]]"  [arg-type]
             result = await api.update_user(dn, attributes)
                                                ^~~~~~~~~~
 tests/unit/test_api_comprehensive.py:603:44: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/unit/test_api_comprehensive.py:603:44: note: Consider using "Mapping" instead, which is covariant in the value type
-tests/unit/test_api_comprehensive.py: note: In member "test_group_operations_comprehensive" of class "TestFlextLdapApiComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_group_operations_comprehensive" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:625:18: error: Incompatible types in
 assignment (expression has type "FlextResult[None]", variable has type
 "FlextResult[Group]")  [assignment]
@@ -839,7 +839,7 @@ tests/support/fixtures.py:51:12: error: Incompatible return value type (got
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/support/fixtures.py: note: In function "ldap_api":
 tests/support/fixtures.py:57:12: error: Incompatible return value type (got
-"FlextLdapApi", expected "AsyncGenerator[FlextLdapApi, None]")  [return-value]
-        return FlextLdapApi()
+"FlextLdapClient", expected "AsyncGenerator[FlextLdapClient, None]")  [return-value]
+        return FlextLdapClient()
                ^~~~~~~~~~~~~~
 Found 159 errors in 11 files (checked 56 source files)

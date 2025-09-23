@@ -10,7 +10,7 @@ from collections.abc import AsyncGenerator, Generator
 import pytest
 
 from flext_core import FlextLogger, FlextTypes
-from flext_ldap import FlextLdapApi, FlextLdapModels
+from flext_ldap import FlextLdapClient, FlextLdapModels
 
 from .helpers import cleanup_test_entries, search_entries
 from .ldap_server import LdapTestServer, get_test_ldap_config
@@ -57,9 +57,9 @@ def ldap_connection(
 
 
 @pytest.fixture
-def ldap_api() -> FlextLdapApi:
+def ldap_api() -> FlextLdapClient:
     """Get configured LDAP API instance."""
-    return FlextLdapApi()
+    return FlextLdapClient()
 
 
 @pytest.fixture

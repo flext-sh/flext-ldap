@@ -1,0 +1,14 @@
+[tool.pyright]
+include = ["flext_ldap/"]
+exclude = ["tests/"]
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportPrivateUsage = "warning"
+reportTypeCommentUsage = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
