@@ -45,7 +45,7 @@ class FlextLdapClient:
         self._session_id: str | None = None
 
     async def connect(
-        self, server_uri: str, bind_dn: str, password: str
+        self, server_uri: str, bind_dn: str, password: str,
     ) -> FlextResult[bool]:
         """Connect and bind to LDAP server.
 
@@ -59,7 +59,7 @@ class FlextLdapClient:
 
         """
         try:
-            self._logger.info(f"Connecting to LDAP server: {server_uri}")
+            self._logger.info("Connecting to LDAP server: %s", server_uri)
             self._server = Server(server_uri)
             self._connection = cast(
                 "Ldap3Connection",
@@ -151,14 +151,14 @@ class FlextLdapClient:
             # Perform a simple search to test the connection
             if self._connection:
                 self._connection.search(
-                    "", "(objectClass=*)", "SUBTREE", attributes=["objectClass"]
+                    "", "(objectClass=*)", "SUBTREE", attributes=["objectClass"],
                 )
             return FlextResult[bool].ok(True)
         except Exception as e:
             return FlextResult[bool].fail(f"Connection test failed: {e}")
 
     async def authenticate_user(
-        self, username: str, password: str
+        self, username: str, password: str,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Authenticate user credentials.
 
@@ -173,7 +173,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Search for user by username (uid or cn)
@@ -181,7 +181,7 @@ class FlextLdapClient:
             search_base = "ou=users,dc=example,dc=com"  # Default base
 
             self._connection.search(
-                search_base, search_filter, "SUBTREE", attributes=None
+                search_base, search_filter, "SUBTREE", attributes=["*"],
             )
 
             if not self._connection.entries:
@@ -193,15 +193,15 @@ class FlextLdapClient:
             # Test authentication by attempting to bind with user credentials
             if not self._server:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "No server connection established"
+                    "No server connection established",
                 )
             test_connection = Connection(
-                self._server, user_dn, password, auto_bind=False
+                self._server, user_dn, password, auto_bind=False,
             )
 
             if not test_connection.bind():
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "Authentication failed"
+                    "Authentication failed",
                 )
 
             test_connection.unbind()  # type: ignore[no-untyped-call]
@@ -213,11 +213,11 @@ class FlextLdapClient:
         except Exception as e:
             self._logger.exception("Authentication failed")
             return FlextResult[FlextLdapModels.LdapUser].fail(
-                f"Authentication failed: {e}"
+                f"Authentication failed: {e}",
             )
 
     async def search_with_request(
-        self, request: FlextLdapModels.SearchRequest
+        self, request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Perform LDAP search with SearchRequest.
 
@@ -231,7 +231,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Convert scope string to ldap3 scope
@@ -252,7 +252,7 @@ class FlextLdapClient:
 
             if not success:
                 return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    "Search operation failed"
+                    "Search operation failed",
                 )
 
             # Convert entries to our format
@@ -283,11 +283,11 @@ class FlextLdapClient:
         except Exception as e:
             self._logger.exception("Search failed")
             return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Search failed: {e}"
+                f"Search failed: {e}",
             )
 
     async def search_users(
-        self, base_dn: str, uid: str | None = None
+        self, base_dn: str, uid: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search for users in LDAP directory.
 
@@ -302,7 +302,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[list[FlextLdapModels.LdapUser]].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Build search filter
@@ -312,7 +312,7 @@ class FlextLdapClient:
                 search_filter = "(objectClass=inetOrgPerson)"
 
             # Perform search
-            self._connection.search(base_dn, search_filter, SUBTREE, attributes=None)
+            self._connection.search(base_dn, search_filter, SUBTREE, attributes=["*"])
 
             users = []
             for entry in self._connection.entries:
@@ -324,11 +324,11 @@ class FlextLdapClient:
         except Exception as e:
             self._logger.exception("User search failed")
             return FlextResult[list[FlextLdapModels.LdapUser]].fail(
-                f"User search failed: {e}"
+                f"User search failed: {e}",
             )
 
     async def search_groups(
-        self, base_dn: str, cn: str | None = None
+        self, base_dn: str, cn: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for groups in LDAP directory.
 
@@ -343,7 +343,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[list[FlextLdapModels.Group]].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Build search filter
@@ -353,7 +353,7 @@ class FlextLdapClient:
                 search_filter = "(objectClass=groupOfNames)"
 
             # Perform search
-            self._connection.search(base_dn, search_filter, SUBTREE, attributes=None)
+            self._connection.search(base_dn, search_filter, SUBTREE, attributes=["*"])
 
             groups = []
             for entry in self._connection.entries:
@@ -365,7 +365,7 @@ class FlextLdapClient:
         except Exception as e:
             self._logger.exception("Group search failed")
             return FlextResult[list[FlextLdapModels.Group]].fail(
-                f"Group search failed: {e}"
+                f"Group search failed: {e}",
             )
 
     async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
@@ -381,22 +381,35 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
-            # Search for the specific user by DN
-            self._connection.search(dn, "(objectClass=*)", BASE, attributes=None)
+            success = self._connection.search(
+                dn, "(objectClass=*)", BASE, attributes=["*"],
+            )
+
+            if not success:
+                error_msg = self._connection.last_error or "Unknown error"
+                if "noSuchObject" in error_msg or "No such object" in error_msg:
+                    self._logger.debug("Entry not found for DN: %s", dn)
+                    return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
+
+                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                return FlextResult[FlextLdapModels.LdapUser | None].fail(
+                    f"LDAP search failed: {error_msg}",
+                )
 
             if not self._connection.entries:
+                self._logger.debug("No entries found for DN: %s", dn)
                 return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
             user = self._create_user_from_entry(self._connection.entries[0])
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
-            self._logger.exception("Get user failed")
+            self._logger.exception("Get user failed for DN %s", dn)
             return FlextResult[FlextLdapModels.LdapUser | None].fail(
-                f"Get user failed: {e}"
+                f"Get user failed: {e}",
             )
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
@@ -412,11 +425,23 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.Group | None].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
-            # Search for the specific group by DN
-            self._connection.search(dn, "(objectClass=*)", BASE, attributes=None)
+            success = self._connection.search(
+                dn, "(objectClass=*)", BASE, attributes=["*"],
+            )
+
+            if not success:
+                error_msg = self._connection.last_error or "Unknown error"
+                if "noSuchObject" in error_msg or "No such object" in error_msg:
+                    self._logger.debug("Group not found for DN: %s", dn)
+                    return FlextResult[FlextLdapModels.Group | None].ok(None)
+
+                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                return FlextResult[FlextLdapModels.Group | None].fail(
+                    f"LDAP search failed: {error_msg}",
+                )
 
             if not self._connection.entries:
                 return FlextResult[FlextLdapModels.Group | None].ok(None)
@@ -427,11 +452,11 @@ class FlextLdapClient:
         except Exception as e:
             self._logger.exception("Get group failed")
             return FlextResult[FlextLdapModels.Group | None].fail(
-                f"Get group failed: {e}"
+                f"Get group failed: {e}",
             )
 
     async def create_user(
-        self, request: FlextLdapModels.CreateUserRequest
+        self, request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create new user in LDAP directory.
 
@@ -445,7 +470,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Use the provided DN directly
@@ -476,30 +501,39 @@ class FlextLdapClient:
                 ldap3_attributes["userPassword"] = request.user_password
 
             # Create user
-            success = self._connection.add(dn=user_dn, attributes=ldap3_attributes)
+            success = self._connection.add(
+                dn=user_dn, attributes=cast("dict[str, object]", ldap3_attributes),
+            )
 
             if not success:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    f"Failed to create user: {self._connection.last_error}"
+                    f"Failed to create user: {self._connection.last_error}",
                 )
 
             # Retrieve created user
             created_user_result = await self.get_user(user_dn)
-            if created_user_result.is_failure or not created_user_result.value:
+            if created_user_result.is_failure:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "User created but failed to retrieve"
+                    "User created but failed to retrieve",
                 )
 
-            return FlextResult[FlextLdapModels.LdapUser].ok(created_user_result.value)
+            # We know the user exists since we just created it
+            user = created_user_result.value
+            if user is None:
+                return FlextResult[FlextLdapModels.LdapUser].fail(
+                    "User created but returned None",
+                )
+
+            return FlextResult[FlextLdapModels.LdapUser].ok(user)
 
         except Exception as e:
             self._logger.exception("Create user failed")
             return FlextResult[FlextLdapModels.LdapUser].fail(
-                f"Create user failed: {e}"
+                f"Create user failed: {e}",
             )
 
     async def create_group(
-        self, request: FlextLdapModels.CreateGroupRequest
+        self, request: FlextLdapModels.CreateGroupRequest,
     ) -> FlextResult[FlextLdapModels.Group]:
         """Create new group in LDAP directory.
 
@@ -513,7 +547,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[FlextLdapModels.Group].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Use the provided DN directly
@@ -531,21 +565,30 @@ class FlextLdapClient:
                 ldap3_attributes["description"] = request.description
 
             # Create group
-            success = self._connection.add(dn=group_dn, attributes=ldap3_attributes)
+            success = self._connection.add(
+                dn=group_dn, attributes=cast("dict[str, object]", ldap3_attributes),
+            )
 
             if not success:
                 return FlextResult[FlextLdapModels.Group].fail(
-                    f"Failed to create group: {self._connection.last_error}"
+                    f"Failed to create group: {self._connection.last_error}",
                 )
 
             # Retrieve created group
             created_group_result = await self.get_group(group_dn)
-            if created_group_result.is_failure or not created_group_result.value:
+            if created_group_result.is_failure:
                 return FlextResult[FlextLdapModels.Group].fail(
-                    "Group created but failed to retrieve"
+                    "Group created but failed to retrieve",
                 )
 
-            return FlextResult[FlextLdapModels.Group].ok(created_group_result.value)
+            # We know the group exists since we just created it
+            group = created_group_result.value
+            if group is None:
+                return FlextResult[FlextLdapModels.Group].fail(
+                    "Group created but returned None",
+                )
+
+            return FlextResult[FlextLdapModels.Group].ok(group)
 
         except Exception as e:
             self._logger.exception("Create group failed")
@@ -561,7 +604,7 @@ class FlextLdapClient:
         return await self.unbind()
 
     async def update_group(
-        self, dn: str, attributes: dict[str, object]
+        self, dn: str, attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update group attributes (alias for update_group_attributes).
 
@@ -591,13 +634,15 @@ class FlextLdapClient:
                 return FlextResult[None].fail("No connection established")
 
             changes: dict[str, list[tuple[str, list[str]]]] = {
-                "member": [(MODIFY_DELETE, [member_dn])]
+                "member": [(MODIFY_DELETE, [member_dn])],
             }
-            success = self._connection.modify(group_dn, changes)
+            success = self._connection.modify(
+                group_dn, cast("dict[str, object]", changes),
+            )
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to remove member: {self._connection.last_error}"
+                    f"Failed to remove member: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -622,7 +667,7 @@ class FlextLdapClient:
 
             # Search for the group
             self._connection.search(
-                group_dn, "(objectClass=*)", "BASE", attributes=["member"]
+                group_dn, "(objectClass=*)", "BASE", attributes=["member"],
             )
 
             if not self._connection.entries:
@@ -752,7 +797,7 @@ class FlextLdapClient:
         try:
             result = await self.get_user(dn)
             if result.is_success:
-                exists = result.value is not None
+                exists = result.unwrap() is not None
                 return FlextResult[bool].ok(exists)
             return FlextResult[bool].ok(False)
 
@@ -772,7 +817,7 @@ class FlextLdapClient:
         try:
             result = await self.get_group(dn)
             if result.is_success:
-                exists = result.value is not None
+                exists = result.unwrap() is not None
                 return FlextResult[bool].ok(exists)
             return FlextResult[bool].ok(False)
 
@@ -780,7 +825,7 @@ class FlextLdapClient:
             return FlextResult[bool].fail(f"Group existence check failed: {e}")
 
     async def add_member_to_group(
-        self, group_dn: str, member_dn: str
+        self, group_dn: str, member_dn: str,
     ) -> FlextResult[None]:
         """Add member to group (alias for add_member).
 
@@ -795,7 +840,7 @@ class FlextLdapClient:
         return await self.add_member(group_dn, member_dn)
 
     async def remove_member_from_group(
-        self, group_dn: str, member_dn: str
+        self, group_dn: str, member_dn: str,
     ) -> FlextResult[None]:
         """Remove member from group (alias for remove_member).
 
@@ -845,7 +890,7 @@ class FlextLdapClient:
         try:
             if not self._connection:
                 return FlextResult[list[dict[str, object]]].fail(
-                    "No connection established"
+                    "No connection established",
                 )
 
             # Perform search
@@ -860,7 +905,7 @@ class FlextLdapClient:
 
             if not success:
                 return FlextResult[list[dict[str, object]]].fail(
-                    f"Search failed: {self._connection.last_error}"
+                    f"Search failed: {self._connection.last_error}",
                 )
 
             # Convert entries to our format
@@ -891,7 +936,7 @@ class FlextLdapClient:
         return await self.unbind()
 
     async def update_user_attributes(
-        self, dn: str, attributes: dict[str, object]
+        self, dn: str, attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update user attributes.
 
@@ -913,11 +958,13 @@ class FlextLdapClient:
                 ldap3_changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
 
             # Perform modification
-            success = self._connection.modify(dn, ldap3_changes)
+            success = self._connection.modify(
+                dn, cast("dict[str, object]", ldap3_changes),
+            )
 
             if not success:
                 return FlextResult[bool].fail(
-                    f"Failed to update user: {self._connection.last_error}"
+                    f"Failed to update user: {self._connection.last_error}",
                 )
 
             return FlextResult[bool].ok(True)
@@ -927,7 +974,7 @@ class FlextLdapClient:
             return FlextResult[bool].fail(f"Update user failed: {e}")
 
     async def update_group_attributes(
-        self, dn: str, attributes: dict[str, object]
+        self, dn: str, attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update group attributes.
 
@@ -949,11 +996,11 @@ class FlextLdapClient:
                 changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
 
             # Perform modification
-            success = self._connection.modify(dn, changes)
+            success = self._connection.modify(dn, cast("dict[str, object]", changes))
 
             if not success:
                 return FlextResult[bool].fail(
-                    f"Failed to update group: {self._connection.last_error}"
+                    f"Failed to update group: {self._connection.last_error}",
                 )
 
             return FlextResult[bool].ok(True)
@@ -980,7 +1027,7 @@ class FlextLdapClient:
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to delete user: {self._connection.last_error}"
+                    f"Failed to delete user: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1007,7 +1054,7 @@ class FlextLdapClient:
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to delete group: {self._connection.last_error}"
+                    f"Failed to delete group: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1035,11 +1082,13 @@ class FlextLdapClient:
             if not self._connection:
                 return FlextResult[None].fail("No connection established")
 
-            success = self._connection.add(dn, attributes=attributes)
+            success = self._connection.add(
+                dn, attributes=cast("dict[str, object] | None", attributes),
+            )
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to add entry: {self._connection.last_error}"
+                    f"Failed to add entry: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1067,11 +1116,11 @@ class FlextLdapClient:
             if not self._connection:
                 return FlextResult[None].fail("No connection established")
 
-            success = self._connection.modify(dn, changes)
+            success = self._connection.modify(dn, cast("dict[str, object]", changes))
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to modify entry: {self._connection.last_error}"
+                    f"Failed to modify entry: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1098,7 +1147,7 @@ class FlextLdapClient:
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to delete entry: {self._connection.last_error}"
+                    f"Failed to delete entry: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1123,13 +1172,15 @@ class FlextLdapClient:
                 return FlextResult[None].fail("No connection established")
 
             changes: dict[str, list[tuple[str, list[str]]]] = {
-                "member": [(MODIFY_ADD, [member_dn])]
+                "member": [(MODIFY_ADD, [member_dn])],
             }
-            success = self._connection.modify(group_dn, changes)
+            success = self._connection.modify(
+                group_dn, cast("dict[str, object]", changes),
+            )
 
             if not success:
                 return FlextResult[None].fail(
-                    f"Failed to add member: {self._connection.last_error}"
+                    f"Failed to add member: {self._connection.last_error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -1173,7 +1224,7 @@ class FlextLdapClient:
                         [str(attr_value)]
                         if isinstance(attr_value, str)
                         else [str(v) for v in attr_value],
-                    )
+                    ),
                 ]
             else:
                 changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
@@ -1194,19 +1245,32 @@ class FlextLdapClient:
         def get_attribute_value(attr_name: str) -> str | None:
             """Safely get attribute value from entry."""
             try:
+                # Try to access the attribute directly
                 if hasattr(entry, attr_name):
-                    attr_obj = getattr(entry, attr_name)
-                    if hasattr(attr_obj, "value") and attr_obj.value:
-                        return str(attr_obj.value)
+                    attr = getattr(entry, attr_name)
+                    if hasattr(attr, "value"):
+                        value = attr.value
+                        if isinstance(value, list) and value:
+                            return str(value[0])
+                        if isinstance(value, str) and value:
+                            return value
                 return None
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, KeyError):
                 return None
+
+        cn = get_attribute_value("cn")
+        if not cn:
+            cn = (
+                entry.entry_dn.split(",")[0].split("=")[1]
+                if "=" in entry.entry_dn
+                else "Unknown"
+            )
 
         return FlextLdapModels.LdapUser(
             dn=str(entry.entry_dn),
-            cn=get_attribute_value("cn") or "",
-            uid=get_attribute_value("uid") or "",
-            sn=get_attribute_value("sn") or "",
+            cn=cn,
+            uid=get_attribute_value("uid"),
+            sn=get_attribute_value("sn"),
             given_name=get_attribute_value("givenName"),
             mail=get_attribute_value("mail"),
             telephone_number=get_attribute_value("telephoneNumber"),
@@ -1215,9 +1279,9 @@ class FlextLdapClient:
             title=get_attribute_value("title"),
             organization=get_attribute_value("o"),
             organizational_unit=get_attribute_value("ou"),
-            user_password=None,  # Never expose password
-            created_timestamp=None,  # Not available in basic LDAP
-            modified_timestamp=None,  # Not available in basic LDAP
+            user_password=None,
+            created_timestamp=None,
+            modified_timestamp=None,
         )
 
     def _create_group_from_entry(self, entry: Ldap3Entry) -> FlextLdapModels.Group:
@@ -1234,23 +1298,33 @@ class FlextLdapClient:
         def get_attribute_value(attr_name: str) -> str | None:
             """Safely get attribute value from entry."""
             try:
+                # Try to access the attribute directly
                 if hasattr(entry, attr_name):
-                    attr_obj = getattr(entry, attr_name)
-                    if hasattr(attr_obj, "value") and attr_obj.value:
-                        return str(attr_obj.value)
+                    attr = getattr(entry, attr_name)
+                    if hasattr(attr, "value"):
+                        value = attr.value
+                        if isinstance(value, list) and value:
+                            return str(value[0])
+                        if isinstance(value, str) and value:
+                            return value
                 return None
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, KeyError):
                 return None
 
         def get_int_attribute_value(attr_name: str) -> int | None:
             """Safely get integer attribute value from entry."""
             try:
+                # Try to access the attribute directly
                 if hasattr(entry, attr_name):
-                    attr_obj = getattr(entry, attr_name)
-                    if hasattr(attr_obj, "value") and attr_obj.value:
-                        return int(attr_obj.value)
+                    attr = getattr(entry, attr_name)
+                    if hasattr(attr, "value"):
+                        value = attr.value
+                        if isinstance(value, list) and value:
+                            return int(value[0])
+                    if isinstance(value, str) and value:
+                        return int(value)
                 return None
-            except (AttributeError, TypeError, ValueError):
+            except (AttributeError, TypeError, ValueError, KeyError):
                 return None
 
         return FlextLdapModels.Group(
@@ -1258,8 +1332,8 @@ class FlextLdapClient:
             cn=get_attribute_value("cn") or "",
             gid_number=get_int_attribute_value("gidNumber"),
             description=get_attribute_value("description"),
-            created_timestamp=None,  # Not available in basic LDAP
-            modified_timestamp=None,  # Not available in basic LDAP
+            created_timestamp=None,
+            modified_timestamp=None,
         )
 
 

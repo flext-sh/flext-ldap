@@ -16,11 +16,11 @@ from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapValidations:
-    """Centralized validation using direct validation - SOURCE OF TRUTH for all LDAP validations."""
+    """Centralized validation - SOURCE OF TRUTH for all LDAP validations."""
 
     @staticmethod
     def validate_dn(dn: str, context: str = "DN") -> FlextResult[None]:
-        """Centralized DN validation using direct validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized DN validation - ELIMINATE ALL DUPLICATION."""
         if not dn or not dn.strip():
             return FlextResult[None].fail(f"{context} cannot be empty")
 

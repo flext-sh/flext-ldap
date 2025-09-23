@@ -68,7 +68,7 @@ class TestFlextLdapClientConnection:
             patch("flext_ldap.clients.Connection") as mock_conn,
         ):
             mock_conn_instance = MagicMock()
-            mock_conn_instance.bind.return_value = False
+            mock_conn_instance.bound = False  # Simulate failed bind
             mock_conn_instance.last_error = "Invalid credentials"
             mock_conn.return_value = mock_conn_instance
 
@@ -76,8 +76,8 @@ class TestFlextLdapClientConnection:
                 "ldap://localhost:389", "cn=admin,dc=example,dc=com", "wrong_password"
             )
 
-            assert result.is_failure
-            assert result.error is not None and "Invalid credentials" in result.error
+            assert not result.is_success
+            assert result.error is not None and "Failed to bind to LDAP server" in result.error
 
     @pytest.mark.asyncio
     async def test_bind_success(self) -> None:
@@ -147,9 +147,30 @@ class TestFlextLdapClientAuthentication:
             mock_main_conn = MagicMock()
             mock_main_conn.bind.return_value = True
             mock_main_conn.search.return_value = True
-            mock_main_conn.entries = [
-                MagicMock(entry_dn="cn=testuser,dc=example,dc=com")
-            ]
+            
+            # Create a proper mock entry with valid email
+            mock_entry = MagicMock()
+            mock_entry.entry_dn = "cn=testuser,dc=example,dc=com"
+            
+            # Mock the email attribute with a proper email format
+            mock_email_attr = MagicMock()
+            mock_email_attr.value = "testuser@example.com"
+            mock_entry.mail = mock_email_attr
+            
+            # Mock other required attributes
+            mock_cn_attr = MagicMock()
+            mock_cn_attr.value = "Test User"
+            mock_entry.cn = mock_cn_attr
+            
+            mock_uid_attr = MagicMock()
+            mock_uid_attr.value = "testuser"
+            mock_entry.uid = mock_uid_attr
+            
+            mock_sn_attr = MagicMock()
+            mock_sn_attr.value = "User"
+            mock_entry.sn = mock_sn_attr
+            
+            mock_main_conn.entries = [mock_entry]
 
             # Setup user auth connection
             mock_user_conn = MagicMock()
@@ -184,7 +205,7 @@ class TestFlextLdapClientAuthentication:
             )
 
             result = await client.authenticate_user("nonexistent", "pass")
-            assert result.is_failure
+            assert not result.is_success
             assert result.error is not None and "not found" in result.error.lower()
 
 
@@ -203,7 +224,19 @@ class TestFlextLdapClientSearch:
             mock_entry = MagicMock()
             mock_entry.entry_dn = "cn=testuser,dc=example,dc=com"
             mock_entry.entry_attributes = ["cn", "uid", "mail"]
-            mock_entry.__getitem__.side_effect = lambda _: MagicMock(value="test")
+            
+            # Set up attributes directly on the mock entry
+            mock_cn_attr = MagicMock()
+            mock_cn_attr.value = "Test User"
+            mock_entry.cn = mock_cn_attr
+            
+            mock_uid_attr = MagicMock()
+            mock_uid_attr.value = "testuser"
+            mock_entry.uid = mock_uid_attr
+            
+            mock_mail_attr = MagicMock()
+            mock_mail_attr.value = "testuser@example.com"
+            mock_entry.mail = mock_mail_attr
 
             mock_conn_instance = MagicMock()
             mock_conn_instance.bind.return_value = True
@@ -262,17 +295,26 @@ class TestFlextLdapClientCRUD:
             mock_entry.entry_dn = "cn=testuser,dc=example,dc=com"
             mock_entry.entry_attributes = ["cn", "uid", "sn", "givenName", "mail"]
 
-            def mock_getitem(key: str) -> MagicMock:
-                values = {
-                    "cn": MagicMock(value="Test User"),
-                    "uid": MagicMock(value="testuser"),
-                    "sn": MagicMock(value="User"),
-                    "givenName": MagicMock(value="Test"),
-                    "mail": MagicMock(value="test@example.com"),
-                }
-                return values.get(key, MagicMock(value=None))
-
-            mock_entry.__getitem__ = mock_getitem
+            # Set up attributes directly on the mock entry
+            mock_cn_attr = MagicMock()
+            mock_cn_attr.value = "Test User"
+            mock_entry.cn = mock_cn_attr
+            
+            mock_uid_attr = MagicMock()
+            mock_uid_attr.value = "testuser"
+            mock_entry.uid = mock_uid_attr
+            
+            mock_sn_attr = MagicMock()
+            mock_sn_attr.value = "User"
+            mock_entry.sn = mock_sn_attr
+            
+            mock_given_name_attr = MagicMock()
+            mock_given_name_attr.value = "Test"
+            mock_entry.givenName = mock_given_name_attr
+            
+            mock_mail_attr = MagicMock()
+            mock_mail_attr.value = "test@example.com"
+            mock_entry.mail = mock_mail_attr
 
             mock_conn_instance = MagicMock()
             mock_conn_instance.bind.return_value = True
@@ -328,7 +370,7 @@ class TestFlextLdapClientCRUD:
         client = FlextLdapClient()
 
         result = await client.delete_user("cn=testuser,dc=example,dc=com")
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -337,7 +379,7 @@ class TestFlextLdapClientCRUD:
         client = FlextLdapClient()
 
         result = await client.delete_group("cn=testgroup,dc=example,dc=com")
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
 
@@ -350,7 +392,7 @@ class TestFlextLdapClientLowLevel:
         client = FlextLdapClient()
 
         result = await client.add("cn=test,dc=example,dc=com", {"cn": "test"})
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -361,7 +403,7 @@ class TestFlextLdapClientLowLevel:
         result = await client.modify(
             "cn=test,dc=example,dc=com", {"mail": [("MODIFY_REPLACE", ["new@example.com"])]}
         )
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -370,7 +412,7 @@ class TestFlextLdapClientLowLevel:
         client = FlextLdapClient()
 
         result = await client.delete("cn=test,dc=example,dc=com")
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -381,7 +423,7 @@ class TestFlextLdapClientLowLevel:
         result = await client.add_member(
             "cn=group,dc=example,dc=com", "cn=user,dc=example,dc=com"
         )
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
 
@@ -396,7 +438,7 @@ class TestFlextLdapClientUpdate:
         result = await client.update_user_attributes(
             "cn=testuser,dc=example,dc=com", {"mail": "new@example.com"}
         )
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -407,7 +449,7 @@ class TestFlextLdapClientUpdate:
         result = await client.update_group_attributes(
             "cn=testgroup,dc=example,dc=com", {"description": "New description"}
         )
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
     @pytest.mark.asyncio
@@ -418,7 +460,7 @@ class TestFlextLdapClientUpdate:
         result = await client.update_user(
             "cn=testuser,dc=example,dc=com", {"mail": "new@example.com"}
         )
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "No connection" in result.error
 
 
@@ -433,23 +475,50 @@ class TestFlextLdapClientHelpers:
         mock_entry.entry_dn = "cn=testuser,dc=example,dc=com"
         mock_entry.entry_attributes = ["cn", "uid", "sn", "givenName", "mail"]
 
-        def mock_getitem(key: str) -> MagicMock:
-            values = {
-                "cn": MagicMock(value="Test User"),
-                "uid": MagicMock(value="testuser"),
-                "sn": MagicMock(value="User"),
-                "givenName": MagicMock(value="Test"),
-                "mail": MagicMock(value="test@example.com"),
-                "telephoneNumber": MagicMock(value="123-456-7890"),
-                "mobile": MagicMock(value="098-765-4321"),
-                "departmentNumber": MagicMock(value="IT"),
-                "title": MagicMock(value="Developer"),
-                "o": MagicMock(value="Example Corp"),
-                "ou": MagicMock(value="Engineering"),
-            }
-            return values.get(key, MagicMock(value=None))
-
-        mock_entry.__getitem__ = mock_getitem
+        # Set up attributes directly on the mock entry
+        mock_cn_attr = MagicMock()
+        mock_cn_attr.value = "Test User"
+        mock_entry.cn = mock_cn_attr
+        
+        mock_uid_attr = MagicMock()
+        mock_uid_attr.value = "testuser"
+        mock_entry.uid = mock_uid_attr
+        
+        mock_sn_attr = MagicMock()
+        mock_sn_attr.value = "User"
+        mock_entry.sn = mock_sn_attr
+        
+        mock_given_name_attr = MagicMock()
+        mock_given_name_attr.value = "Test"
+        mock_entry.givenName = mock_given_name_attr
+        
+        mock_mail_attr = MagicMock()
+        mock_mail_attr.value = "test@example.com"
+        mock_entry.mail = mock_mail_attr
+        
+        mock_telephone_number_attr = MagicMock()
+        mock_telephone_number_attr.value = "123-456-7890"
+        mock_entry.telephoneNumber = mock_telephone_number_attr
+        
+        mock_mobile_attr = MagicMock()
+        mock_mobile_attr.value = "098-765-4321"
+        mock_entry.mobile = mock_mobile_attr
+        
+        mock_department_number_attr = MagicMock()
+        mock_department_number_attr.value = "IT"
+        mock_entry.departmentNumber = mock_department_number_attr
+        
+        mock_title_attr = MagicMock()
+        mock_title_attr.value = "Developer"
+        mock_entry.title = mock_title_attr
+        
+        mock_o_attr = MagicMock()
+        mock_o_attr.value = "Example Corp"
+        mock_entry.o = mock_o_attr
+        
+        mock_ou_attr = MagicMock()
+        mock_ou_attr.value = "Engineering"
+        mock_entry.ou = mock_ou_attr
 
         user = client._create_user_from_entry(mock_entry)
         assert user.dn == "cn=testuser,dc=example,dc=com"
@@ -464,18 +533,18 @@ class TestFlextLdapClientHelpers:
         mock_entry.entry_dn = "cn=testgroup,dc=example,dc=com"
         mock_entry.entry_attributes = ["cn", "gidNumber", "description", "member"]
 
-        def mock_getitem(key: str) -> MagicMock:
-            mock_attr = MagicMock()
-            values_map = {
-                "cn": "testgroup",
-                "gidNumber": "1000",
-                "description": "Test group",
-                "member": ["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"],
-            }
-            mock_attr.value = values_map.get(key)
-            return mock_attr
-
-        mock_entry.__getitem__ = mock_getitem
+        # Set up attributes directly on the mock entry
+        mock_cn_attr = MagicMock()
+        mock_cn_attr.value = "testgroup"
+        mock_entry.cn = mock_cn_attr
+        
+        mock_gid_number_attr = MagicMock()
+        mock_gid_number_attr.value = "1000"
+        mock_entry.gidNumber = mock_gid_number_attr
+        
+        mock_description_attr = MagicMock()
+        mock_description_attr.value = "Test group"
+        mock_entry.description = mock_description_attr
 
         group = client._create_group_from_entry(mock_entry)
         assert group.dn == "cn=testgroup,dc=example,dc=com"
@@ -491,7 +560,7 @@ class TestFlextLdapClientTestConnection:
         client = FlextLdapClient()
 
         result = client.test_connection()
-        assert result.is_failure
+        assert not result.is_success
         assert result.error is not None and "Not connected" in result.error
 
     def test_test_connection_with_connection(self) -> None:

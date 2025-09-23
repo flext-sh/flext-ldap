@@ -4,13 +4,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import Literal
+from typing import Literal, cast
 
 import ldap3
 from ldap3 import Connection, Server
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldap import FlextLdapModels
+from flext_ldap.ldap3_types import Ldap3Connection
 
 logger = FlextLogger(__name__)
 
@@ -28,16 +29,16 @@ def create_test_user(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
-        # ldap3.add returns a boolean, but mypy doesn't know this
-        success: bool = conn.add(dn, attributes=attributes)
+        success: bool = conn.add(dn, attributes=cast(dict[str, object], attributes))
         conn.unbind()
 
         if success:
@@ -63,16 +64,16 @@ def create_test_group(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
-        # ldap3.add returns a boolean, but mypy doesn't know this
-        success: bool = conn.add(dn, attributes=attributes)
+        success: bool = conn.add(dn, attributes=cast(dict[str, object], attributes))
         conn.unbind()
 
         if success:
@@ -97,13 +98,14 @@ def cleanup_test_entries(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
         cleaned_count = 0
         for dn in dns:
@@ -137,13 +139,14 @@ def verify_entry_exists(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
         # ldap3.search returns a boolean, but mypy doesn't know this
         success: bool = conn.search(
@@ -175,26 +178,23 @@ def get_entry_attributes(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
-        # ldap3.search returns a boolean, but mypy doesn't know this
         success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
             search_scope=ldap3.BASE,
         )
 
-        # conn.entries is a list of Ldap3Entry objects, but mypy doesn't know this
         if success and len(conn.entries) > 0:
-            entry: object = conn.entries[
-                0
-            ]  # This is an Ldap3Entry, but mypy doesn't know this
+            entry = conn.entries[0]
             attributes: dict[str, object] = {
                 attr: entry[attr].value for attr in entry.entry_attributes
             }
@@ -222,15 +222,16 @@ def search_entries(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
-        # Map string scope to ldap3 string scope constants
+        ldap_scope: str
         if scope == "base":
             ldap_scope = ldap3.BASE
         elif scope == "onelevel":
@@ -238,7 +239,6 @@ def search_entries(
         else:
             ldap_scope = ldap3.SUBTREE
 
-        # ldap3.search returns a boolean, but mypy doesn't know this
         success: bool = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
@@ -247,11 +247,7 @@ def search_entries(
 
         results: list[dict[str, object]] = []
         if success:
-            # conn.entries is a list of Ldap3Entry objects, but mypy doesn't know this
-            for entry_obj in conn.entries:
-                entry: object = (
-                    entry_obj  # This is an Ldap3Entry, but mypy doesn't know this
-                )
+            for entry in conn.entries:
                 entry_data: dict[str, object] = {
                     "dn": entry.entry_dn,
                     "attributes": {
@@ -283,13 +279,14 @@ def modify_entry(
             use_ssl=config.use_ssl,
         )
 
-        conn: Connection = Connection(
+        conn_raw = Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
             authentication=ldap3.SIMPLE,
         )
+        conn = cast(Ldap3Connection, conn_raw)
 
         # Convert changes to ldap3 format
         ldap3_changes: dict[str, list[tuple[object, list[object]]]] = {}

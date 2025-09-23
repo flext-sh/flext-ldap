@@ -39,7 +39,7 @@ class FlextLdapAPI:
         api = FlextLdapClient()
         result = await api.authenticate_user("username", "password")
         if result.is_success:
-            user = result.value
+            user = result.unwrap()
 
     """
 
@@ -117,7 +117,7 @@ class FlextLdapAPI:
     # =========================================================================
 
     async def authenticate_user(
-        self, username: str, password: str
+        self, username: str, password: str,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Authenticate user credentials against LDAP directory.
 
@@ -132,7 +132,7 @@ class FlextLdapAPI:
         return await self._client.authenticate_user(username, password)
 
     async def bind(
-        self, dn: str | None = None, password: str | None = None
+        self, dn: str | None = None, password: str | None = None,
     ) -> FlextResult[bool]:
         """Bind to LDAP server with credentials.
 
@@ -206,7 +206,7 @@ class FlextLdapAPI:
     # =========================================================================
 
     async def search_users(
-        self, filter_str: str | None = None, base_dn: str | None = None
+        self, filter_str: str | None = None, base_dn: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search for users in LDAP directory.
 
@@ -231,12 +231,12 @@ class FlextLdapAPI:
             )
             if search_result.is_failure:
                 return FlextResult[list[FlextLdapModels.LdapUser]].fail(
-                    search_result.error or "Search failed"
+                    search_result.error or "Search failed",
                 )
 
             # Convert SearchResponse entries to LdapUser objects
             users: list[FlextLdapModels.LdapUser] = []
-            for entry in search_result.value.entries:
+            for entry in search_result.unwrap().entries:
                 # Create minimal user object from search result
                 user = FlextLdapModels.LdapUser(
                     dn=str(entry.get("dn", "")),
@@ -264,7 +264,7 @@ class FlextLdapAPI:
         return await self._client.search_users(actual_base_dn, uid=None)
 
     async def search_groups(
-        self, filter_str: str | None = None, base_dn: str | None = None
+        self, filter_str: str | None = None, base_dn: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for groups in LDAP directory.
 
@@ -289,12 +289,12 @@ class FlextLdapAPI:
             )
             if search_result.is_failure:
                 return FlextResult[list[FlextLdapModels.Group]].fail(
-                    search_result.error or "Search failed"
+                    search_result.error or "Search failed",
                 )
 
             # Convert SearchResponse entries to Group objects
             groups: list[FlextLdapModels.Group] = []
-            for entry in search_result.value.entries:
+            for entry in search_result.unwrap().entries:
                 # Create minimal group object from search result
                 group = FlextLdapModels.Group(
                     dn=str(entry.get("dn", "")),
@@ -348,7 +348,7 @@ class FlextLdapAPI:
     # =========================================================================
 
     async def create_user(
-        self, user_request: FlextLdapModels.CreateUserRequest
+        self, user_request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create new user in LDAP directory.
 
@@ -362,7 +362,7 @@ class FlextLdapAPI:
         return await self._client.create_user(user_request)
 
     async def create_group(
-        self, group_request: FlextLdapModels.CreateGroupRequest
+        self, group_request: FlextLdapModels.CreateGroupRequest,
     ) -> FlextResult[FlextLdapModels.Group]:
         """Create new group in LDAP directory.
 
@@ -400,7 +400,7 @@ class FlextLdapAPI:
         return await self._client.get_group(dn)
 
     async def update_user_attributes(
-        self, dn: str, attributes: dict[str, object]
+        self, dn: str, attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update user attributes.
 
@@ -415,7 +415,7 @@ class FlextLdapAPI:
         return await self._client.update_user_attributes(dn, attributes)
 
     async def update_group_attributes(
-        self, dn: str, attributes: dict[str, object]
+        self, dn: str, attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update group attributes.
 
@@ -504,7 +504,7 @@ class FlextLdapAPI:
             business_validation = self._config.validate_business_rules()
             if business_validation.is_failure:
                 return FlextResult[None].fail(
-                    f"Business rules validation failed: {business_validation.error}"
+                    f"Business rules validation failed: {business_validation.error}",
                 )
 
             return FlextResult[None].ok(None)
@@ -524,7 +524,7 @@ class FlextLdapAPI:
         validation_result = FlextLdapValidations.validate_dn(dn)
         if validation_result.is_failure:
             return FlextResult[str].fail(
-                validation_result.error or "DN validation failed"
+                validation_result.error or "DN validation failed",
             )
         return FlextResult[str].ok(dn)
 
@@ -541,7 +541,7 @@ class FlextLdapAPI:
         validation_result = FlextLdapValidations.validate_filter(filter_str)
         if validation_result.is_failure:
             return FlextResult[str].fail(
-                validation_result.error or "Filter validation failed"
+                validation_result.error or "Filter validation failed",
             )
         return FlextResult[str].ok(filter_str)
 
@@ -561,7 +561,7 @@ class FlextLdapAPI:
         validation_result = FlextLdapValidations.validate_email(email)
         if validation_result.is_failure:
             return FlextResult[str | None].fail(
-                validation_result.error or "Email validation failed"
+                validation_result.error or "Email validation failed",
             )
         return FlextResult[str | None].ok(email)
 

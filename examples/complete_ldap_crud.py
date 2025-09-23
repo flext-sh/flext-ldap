@@ -69,13 +69,16 @@ async def create_sample_users(api: FlextLdapClient) -> None:
             description=None,
             telephone_number=None,
             user_password=None,
+            department=None,
+            title=None,
+            organization=None,
         )
         create_result: FlextResult[object] = cast(
             "FlextResult[object]",
             await api.create_user(request),
         )
 
-        if create_result.is_success:
+        if create_result.success:
             logger.info(f"✅ Created user: {user_data['cn']}")
         else:
             logger.error(
@@ -89,34 +92,35 @@ async def search_users(api: FlextLdapClient) -> None:
 
     search_request = FlextLdapModels.SearchRequest(
         base_dn=USERS_DN,
-        filter_str="(objectClass=inetOrgPerson)",
+        filter="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
         scope="subtree",
         size_limit=1000,
         time_limit=30,
     )
-    result = await api.search(search_request)
+    result: FlextResult[list[dict[str, object]]] = await api.search(search_request)
 
-    if result.is_success:
-        users = result.value or []
+    if result.success:
+        users = result.data or []
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
-            cn = user.attributes.get("cn", ["Unknown"])
-            mail = user.attributes.get("mail", ["No email"])
-            # get_attribute returns list[str] | None, so take first element
-            cn_str = cn[0] if cn else "Unknown"
-            mail_str = mail[0] if mail else "No email"
-            # Ensure values are strings, not bytes
-            cn_str = (
-                cn_str.decode("utf-8") if isinstance(cn_str, bytes) else str(cn_str)
-            )
-            mail_str = (
-                mail_str.decode("utf-8")
-                if isinstance(mail_str, bytes)
-                else str(mail_str)
-            )
-            logger.info(f"  - {cn_str} ({mail_str})")
+            if isinstance(user, dict):
+                cn = user.get("cn", ["Unknown"])
+                mail = user.get("mail", ["No email"])
+                # Handle list or single value
+                cn_str = cn[0] if isinstance(cn, list) and cn else str(cn) if cn else "Unknown"
+                mail_str = mail[0] if isinstance(mail, list) and mail else str(mail) if mail else "No email"
+                # Ensure values are strings, not bytes
+                cn_str = (
+                    cn_str.decode("utf-8") if isinstance(cn_str, bytes) else str(cn_str)
+                )
+                mail_str = (
+                    mail_str.decode("utf-8")
+                    if isinstance(mail_str, bytes)
+                    else str(mail_str)
+                )
+                logger.info(f"  - {cn_str} ({mail_str})")
     else:
         logger.error(f"❌ Search failed: {result.error}")
 
@@ -131,7 +135,7 @@ async def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None
             result = await modify_method(session, user_dn, {"mail": [new_mail]})
             typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
-            if typed_result.is_success:
+            if typed_result.success:
                 logger.info(f"✅ Updated user email to: {new_mail}")
             else:
                 logger.error(f"❌ Failed to update user: {typed_result.error}")
@@ -149,7 +153,7 @@ async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
             result = await delete_method(session, user_dn)
             typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
-            if typed_result.is_success:
+            if typed_result.success:
                 logger.info("✅ User deleted successfully")
             else:
                 logger.error(f"❌ Failed to delete user: {typed_result.error}")
