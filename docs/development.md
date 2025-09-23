@@ -411,7 +411,7 @@ class TestLdapOperations:
 import pytest
 import asyncio
 import docker
-from flext_ldap import FlextLdapConfig, set_flext_ldap_config
+from flext_ldap import FlextLdapConfigs, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
 def ldap_server():
@@ -436,7 +436,7 @@ def ldap_server():
     time.sleep(10)
 
     # Configure flext-ldap for testing
-    test_config = FlextLdapConfig(
+    test_config = FlextLdapConfigs(
         host="localhost",
         port=3390,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
@@ -480,7 +480,7 @@ async def authenticated_user():
 ### Code Documentation
 
 ```python
-class FlextLdapApi:
+class FlextLdapClient:
     """High-level LDAP API following Clean Architecture patterns.
 
     This class serves as the main entry point for LDAP operations,
@@ -547,9 +547,9 @@ All public APIs require comprehensive documentation including:
 
 ```python
 # Use connection pooling for high-traffic scenarios
-from flext_ldap import FlextLdapConfig
+from flext_ldap import FlextLdapConfigs
 
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host="ldap.example.com",
     pool_size=10,  # Adjust based on load
     connection_timeout=5,

@@ -15,7 +15,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.api import FlextLdapApi
+from flext_ldap import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 from flext_tests import FlextTestsAsyncs, FlextTestsFactories, FlextTestsMatchers
 
@@ -55,22 +55,30 @@ class TestComprehensiveFlextTests:
             uid = f"user_{user_id.split('-', maxsplit=1)[0]}"  # Use first part of UUID as UID
 
             # Create LDAP entity with proper constructor arguments
-            ldap_user = FlextLdapModels.User(
-                id=user_id,
+            ldap_user = FlextLdapModels.LdapUser(
                 dn=f"cn={user_name},ou=users,dc=test,dc=com",
-                uid=uid,
                 cn=user_name,
+                uid=uid,
                 mail=user_email,
                 sn=user_name.rsplit(maxsplit=1)[-1] if " " in user_name else user_name,
                 given_name=user_name.split(maxsplit=1)[0]
                 if " " in user_name
                 else user_name,
+                telephone_number=None,
+                mobile=None,
+                department=None,
+                title=None,
+                organization=None,
+                organizational_unit=None,
+                user_password=None,
+                created_timestamp=None,
+                modified_timestamp=None,
                 object_classes=["person"],
-                attributes={},
+                additional_attributes={},
             )
 
             # Use standard assertions for LDAP entity validation
-            assert isinstance(ldap_user, FlextLdapModels.User), (
+            assert isinstance(ldap_user, FlextLdapModels.LdapUser), (
                 "Should create valid LDAP User entity"
             )
             assert ldap_user.dn is not None, "DN should not be None"
@@ -104,11 +112,13 @@ class TestComprehensiveFlextTests:
         # Use direct FlextLdapModels.SearchRequest construction (no FlextTestsBuilders as it doesn't exist)
         ldap_search = FlextLdapModels.SearchRequest(
             base_dn="ou=users,dc=test,dc=com",
-            filter_str="(objectClass=person)",
+            filter="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "mail", "uid"],
             size_limit=100,
             time_limit=30,
+            page_size=None,
+            paged_cookie=None,
         )
 
         # Validate LDAP format using standard assertions
@@ -126,7 +136,7 @@ class TestComprehensiveFlextTests:
     @pytest.mark.asyncio
     async def test_real_ldap_operations_with_matchers(self) -> None:
         """Test real LDAP operations using FlextTestsMatchers for validation."""
-        api = FlextLdapApi()
+        api = FlextLdapClient()
 
         # Generate test user data
         test_user = {
@@ -138,15 +148,17 @@ class TestComprehensiveFlextTests:
         # Create search request for the user
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
-            filter_str=f"(cn={test_user['name']})",
+            filter=f"(cn={test_user['name']})",
             scope="subtree",
             attributes=["cn", "mail"],
             size_limit=100,
             time_limit=30,
+            page_size=None,
+            paged_cookie=None,
         )
 
         # Execute search (will fail gracefully without connection)
-        result = await api.search(search_request)
+        result = await api.search_with_request(search_request)
 
         # Validate result using FlextTestsMatchers
         assert isinstance(result, FlextResult), (
@@ -155,8 +167,11 @@ class TestComprehensiveFlextTests:
 
         if result.is_success:
             FlextTestsMatchers.assert_result_success(result)
-            assert isinstance(result.value, list), (
-                "Successful result should contain a list"
+            assert isinstance(result.value, FlextLdapModels.SearchResponse), (
+                "Successful result should contain a SearchResponse"
+            )
+            assert isinstance(result.value.entries, list), (
+                "SearchResponse should contain entries list"
             )
         else:
             # Expected failure without real LDAP connection
@@ -191,17 +206,24 @@ class TestComprehensiveFlextTests:
             # Create LDAP user from scenario using only valid fields with type safety
             user_dict = cast("dict[str, str]", scenario["user"])
             user_name = str(user_dict["name"])
-            ldap_user = FlextLdapModels.User(
-                id=f"test{user_name.lower().replace(' ', '')}",
+            ldap_user = FlextLdapModels.LdapUser(
                 dn=str(scenario["dn_format"]),
                 cn=str(scenario["expected_cn"]),
                 mail=str(scenario["expected_mail"]),
                 uid=user_name.lower().replace(" ", "."),
                 sn="TestSurname",
                 given_name=str(scenario["expected_cn"]),
+                telephone_number=None,
+                mobile=None,
+                department=None,
+                title=None,
+                organization=None,
+                organizational_unit=None,
+                user_password=None,
+                created_timestamp=None,
+                modified_timestamp=None,
                 object_classes=["person"],
-                attributes={},
-                status="active",
+                additional_attributes={},
             )
             assert ldap_user.cn == scenario["expected_cn"], "CN should match expected"
             assert ldap_user.mail == scenario["expected_mail"], (

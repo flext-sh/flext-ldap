@@ -143,7 +143,7 @@ ldap-test: ## Test LDAP connection
 
 .PHONY: ldap-validate
 ldap-validate: ## Validate LDAP configuration
-	$(POETRY) run python -c "from flext_ldap.config import FlextLdapConfig; print('LDAP config valid')"
+	$(POETRY) run python -c "from flext_ldap.config import FlextLdapConfigs; print('LDAP config valid')"
 
 .PHONY: ldap-connect
 ldap-connect: ## Test LDAP server connection

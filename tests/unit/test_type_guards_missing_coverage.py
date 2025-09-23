@@ -140,7 +140,7 @@ class TestFlextLdapTypeGuardsMissingCoverage:
             assert FlextLdapTypeGuards.is_connection_result(result)
 
         # Test invalid connection results
-        invalid_results = [
+        invalid_results: list[object] = [
             {},  # Missing status
             {"status": 123},  # Non-string status
             {"status": None},  # None status
@@ -167,7 +167,7 @@ class TestFlextLdapTypeGuardsMissingCoverage:
             assert FlextLdapTypeGuards.is_bytes_list(lst)
 
         # Test invalid bytes lists
-        invalid_lists = [
+        invalid_lists: list[object] = [
             ["string1", "string2"],  # Strings not bytes
             [b"byte1", "string2"],  # Mixed types
             [123, 456],  # Numbers
@@ -177,7 +177,8 @@ class TestFlextLdapTypeGuardsMissingCoverage:
         ]
 
         for lst in invalid_lists:
-            assert not FlextLdapTypeGuards.is_bytes_list(lst)
+            lst_obj: object = lst
+            assert not FlextLdapTypeGuards.is_bytes_list(lst_obj)
 
     def test_is_string_list_coverage(self) -> None:
         """Test is_string_list type guard with edge cases."""
@@ -193,7 +194,7 @@ class TestFlextLdapTypeGuardsMissingCoverage:
             assert FlextLdapTypeGuards.is_string_list(lst)
 
         # Test invalid string lists
-        invalid_lists = [
+        invalid_lists: list[object] = [
             [b"byte1", b"byte2"],  # Bytes not strings
             ["str1", 123],  # Mixed types
             [None, "string"],  # None in list
@@ -204,7 +205,8 @@ class TestFlextLdapTypeGuardsMissingCoverage:
         ]
 
         for lst in invalid_lists:
-            assert not FlextLdapTypeGuards.is_string_list(lst)
+            lst_obj: object = lst
+            assert not FlextLdapTypeGuards.is_string_list(lst_obj)
 
     def test_is_ldap_entry_data_attributes_handling(self) -> None:
         """Test is_ldap_entry_data with special attributes handling."""

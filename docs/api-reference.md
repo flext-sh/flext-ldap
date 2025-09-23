@@ -14,9 +14,9 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLdapConfig, optional): Configuration object. If None, uses default config.
+- `config` (FlextLdapConfigs, optional): Configuration object. If None, uses default config.
 
-**Returns:** FlextLdapApi instance
+**Returns:** FlextLdapClient instance
 
 **Example:**
 
@@ -28,7 +28,7 @@ api = get_flext_ldap_api()
 
 ---
 
-## 🏗️ FlextLdapApi
+## 🏗️ FlextLdapClient
 
 Main API facade providing high-level LDAP operations.
 
@@ -253,7 +253,7 @@ Search scope enumeration.
 
 ## ⚙️ Configuration
 
-### FlextLdapConfig
+### FlextLdapConfigs
 
 LDAP connection configuration.
 
@@ -271,9 +271,9 @@ LDAP connection configuration.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapConfig, set_flext_ldap_config
+from flext_ldap import FlextLdapConfigs, set_flext_ldap_config
 
-config = FlextLdapConfig(
+config = FlextLdapConfigs(
     host="ldap.example.com",
     port=636,
     use_ssl=True,

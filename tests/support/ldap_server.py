@@ -81,7 +81,7 @@ class LdapTestServer:
             # Wait for server to be ready
             if await self.wait_for_ready():
                 logger.info("LDAP test server started successfully")
-                return FlextResult.ok(data=True)
+                return FlextResult[bool].ok(data=True)
             return FlextResult[bool].fail("LDAP server failed to start within timeout")
 
         except Exception as e:
@@ -102,7 +102,7 @@ class LdapTestServer:
                 logger.debug("No existing container found")
 
             self._container = None
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to stop LDAP server")
@@ -205,7 +205,7 @@ class LdapTestServer:
 
             conn.unbind()
             logger.info("Test data setup completed")
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to setup test data")

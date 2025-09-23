@@ -485,7 +485,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/support/fixtures.py",
       "severity": "error",
-      "message": "Type \"FlextLdapApi\" is not assignable to return type \"AsyncGenerator[FlextLdapApi, None]\"\n  \"FlextLdapApi\" is incompatible with protocol \"AsyncGenerator[FlextLdapApi, None]\"\n    \"__anext__\" is not present\n    \"asend\" is not present\n    \"athrow\" is not present\n    \"aclose\" is not present\n    \"__aiter__\" is not present",
+      "message": "Type \"FlextLdapClient\" is not assignable to return type \"AsyncGenerator[FlextLdapClient, None]\"\n  \"FlextLdapClient\" is incompatible with protocol \"AsyncGenerator[FlextLdapClient, None]\"\n    \"__anext__\" is not present\n    \"asend\" is not present\n    \"athrow\" is not present\n    \"aclose\" is not present\n    \"__aiter__\" is not present",
       "range": {
         "start": {
           "line": 56,

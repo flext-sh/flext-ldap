@@ -20,7 +20,7 @@ import os
 
 from flext_core import FlextLogger
 from flext_ldap import (
-    FlextLdapApi,
+    FlextLdapClient,
     FlextLdapConfigs,
     FlextLdapModels,
 )
@@ -39,16 +39,16 @@ def demonstrate_configuration() -> None:
     logger.info("Configuration initialized successfully")
 
 
-async def demonstrate_api_usage() -> FlextLdapApi:
+async def demonstrate_api_usage() -> FlextLdapClient:
     """Demonstrate API usage patterns.
 
     Returns:
-        FlextLdapApi: The initialized LDAP API instance.
+        FlextLdapClient: The initialized LDAP API instance.
 
     """
     # 1. Initialize API using factory function
     # Use explicit factory create() to avoid object-return typing for some loaders
-    api = FlextLdapApi.create()
+    api = FlextLdapClient.create()
 
     # 2. Connect (using demo server for example)
     try:
@@ -70,7 +70,7 @@ async def demonstrate_api_usage() -> FlextLdapApi:
     return api
 
 
-async def demonstrate_search_operations(api: FlextLdapApi) -> None:
+async def demonstrate_search_operations(api: FlextLdapClient) -> None:
     """Demonstrate search operations."""
     # Session ID for demonstration
 
@@ -108,7 +108,7 @@ async def demonstrate_error_handling() -> None:
         pass
 
     # 3. Connection errors (simulated)
-    api = FlextLdapApi()
+    api = FlextLdapClient()
     try:
         test_password = os.getenv(
             "LDAP_TEST_PASSWORD",

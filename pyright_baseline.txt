@@ -80,8 +80,8 @@
       "athrow" is not present
       "aclose" is not present
       "__aiter__" is not present (reportReturnType)
-  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:57:12 - error: Type "FlextLdapApi" is not assignable to return type "AsyncGenerator[FlextLdapApi, None]"
-    "FlextLdapApi" is incompatible with protocol "AsyncGenerator[FlextLdapApi, None]"
+  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:57:12 - error: Type "FlextLdapClient" is not assignable to return type "AsyncGenerator[FlextLdapClient, None]"
+    "FlextLdapClient" is incompatible with protocol "AsyncGenerator[FlextLdapClient, None]"
       "__anext__" is not present
       "asend" is not present
       "athrow" is not present

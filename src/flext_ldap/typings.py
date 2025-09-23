@@ -1,4 +1,8 @@
-"""FLEXT LDAP Types Module.
+"""LDAP type definitions for flext-ldap domain.
+
+This module contains all type aliases and type definitions used throughout
+the flext-ldap domain. Following FLEXT standards, all types are organized
+under a single FlextLdapTypes class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,103 +10,102 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
 
-from flext_core import FlextTypes
+class FlextLdapTypes:
+    """Unified LDAP types class containing all type definitions for the domain.
 
-
-class FlextLdapTypes(FlextTypes):
-    """Unified type definitions for FLEXT LDAP ecosystem.
-
-    Provides comprehensive type system for domain operations, search parameters,
-    client configurations, entry structures, and connection management. All types
-    are organized into logical namespaces following Clean Architecture patterns with
-    internal properties with full type safety.
+    This class consolidates all LDAP-related type aliases, type variables,
+    and complex type definitions in a single location following FLEXT
+    domain separation patterns.
     """
 
-    class LdapDomain:
-        """Domain-level type definitions for LDAP entities."""
+    class Entry:
+        """LDAP entry-related type definitions."""
 
-        DistinguishedName = str
-        Dn = str
-        ValidatedDn = str
-        LdapDn = str
-        BaseDn = str
-        Rdn = str
-        AttributeName = str
-        AttributeValue = str | int | bool | bytes
-        ObjectClass = str
-        ConnectionId = str
+        # Basic LDAP attribute value types
+        type AttributeValue = str | list[str] | bytes | list[bytes]
+
+        # LDAP attributes dictionary
+        type AttributeDict = dict[str, AttributeValue]
+
+        # LDAP entry data structure
+        type Data = dict[str, AttributeValue]
+
+        # Distinguished Name type
+        type DN = str
+
+        # Object classes list
+        type ObjectClasses = list[str]
 
     class Search:
-        """Search operation type definitions."""
+        """LDAP search-related type definitions."""
 
-        Filter = str
-        FilterString = str
-        LdapFilter = str
-        SearchScope = str
-        ScopeType = Literal["BASE", "LEVEL", "SUBTREE"]
-        SearchResult = dict[str, object]
-        ResultEntry = dict[str, object]
-        ResultList = list[dict[str, object]]
-        SearchAttributes = list[str] | None
-        SizeLimit = int
-        TimeLimit = int
+        # Search result entry
+        type ResultEntry = dict[str, object]
 
-    class Client:
-        """Client configuration and connection types."""
+        # Search result collection
+        type Result = list[ResultEntry]
 
-        LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
-        ServerUri = str
-        Port = int
-        UseSSL = bool
-        UseTLS = bool
-        Username = str
-        Password = str
-        BindDn = str
-        Timeout = int
+        # Search filter string
+        type Filter = str
 
-    class Entry:
-        """LDAP entry structure types."""
+        # Search scope values
+        type Scope = str
 
-        EntryDict = dict[str, object]
-        # Accept both single values (str/bytes) and lists of strings/bytes for
-        # attribute dictionaries to match different callsites and LDAP client
-        # expectations used throughout examples and tests.
-        AttributeDict = dict[
-            str,
-            list[str] | list[bytes] | str | bytes,
-        ]
-        AttributeValue = str | int | bool | bytes | object
-        EntryData = dict[str, object]
-        RawEntry = dict[str, object]
-        NormalizedEntry = dict[str, object]
+        # Search base DN
+        type BaseDN = str
+
+        # Attributes to return
+        type Attributes = list[str] | None
 
     class Connection:
-        """Connection management types."""
+        """LDAP connection-related type definitions."""
 
-        type ConnectionId = str
-        ConnectionState = Literal["UNBOUND", "BOUND", "CLOSED"]
-        ConnectionPool = dict[str, object]
-        SessionId = str
-        ConnectionConfig = dict[str, object]
+        # Server URI
+        type ServerURI = str
+
+        # Port number
+        type Port = int
+
+        # Bind DN for authentication
+        type BindDN = str | None
+
+        # Bind password
+        type BindPassword = str | None
+
+        # Connection timeout
+        type Timeout = int
+
+        # SSL/TLS configuration
+        type UseSSL = bool
+        type UseTLS = bool
+
+    class Validation:
+        """LDAP validation-related type definitions."""
+
+        # Validation result type
+        type ValidationResult = bool
+
+        # Error message type
+        type ErrorMessage = str
+
+        # Field name for validation
+        type FieldName = str
 
     class Operation:
-        """LDAP operation types."""
+        """LDAP operation-related type definitions."""
 
-        OperationType = Literal["ADD", "DELETE", "MODIFY", "SEARCH", "BIND"]
-        OperationResult = dict[str, object]
-        ModifyType = Literal["ADD", "DELETE", "REPLACE"]
-        ModifyOperation = dict[str, object]
+        # Operation type identifier
+        type OperationType = str
 
-    class Request:
-        """Request parameter types."""
+        # Operation result code
+        type ResultCode = int
 
-        SearchRequest = dict[str, object]
-        ModifyRequest = dict[str, object]
-        AddRequest = dict[str, object]
-        DeleteRequest = dict[str, object]
-        BindRequest = dict[str, object]
+        # Operation duration in milliseconds
+        type Duration = float
+
+        # Operation status
+        type Status = bool
 
 
 __all__ = [

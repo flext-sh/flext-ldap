@@ -34,7 +34,7 @@ FLEXT-LDAP serves as the centralized LDAP operations library for all directory s
 
 | Pattern             | Status  | Description                           |
 | ------------------- | ------- | ------------------------------------- |
-| **FlextResult<T>**  | 🟢 100% | All operations return FlextResult     |
+| **FlextResult&lt;T&gt;**  | 🟢 100% | All operations return FlextResult     |
 | **FlextService**    | 🟡 75%  | Domain services implemented           |
 | **FlextContainer**  | 🟡 60%  | Dependency injection in progress      |
 | **Domain Patterns** | 🟢 85%  | Entities, value objects, repositories |
@@ -45,7 +45,7 @@ FLEXT-LDAP serves as the centralized LDAP operations library for all directory s
 
 ```mermaid
 graph TB
-    A[FlextLdapApi] --> B[FlextLdapServices]
+    A[FlextLdapClient] --> B[FlextLdapServices]
     B --> C[FlextLdapDomain]
     B --> D[FlextLdapRepositories]
     D --> E[FlextLdapOperations]

@@ -19,14 +19,14 @@ from flext_core import FlextLogger
 
 if TYPE_CHECKING:
     # For static type checkers only
-    from flext_ldap import FlextLdapApi, FlextLdapModels
+    from flext_ldap import FlextLdapClient, FlextLdapModels
 else:
     # Runtime: try to import library but fall back to harmless placeholders
     try:
-        from flext_ldap import FlextLdapApi, FlextLdapModels
+        from flext_ldap import FlextLdapClient, FlextLdapModels
     except Exception:  # pragma: no cover - example fallback for local editing
         # type ignored: these placeholders are only for editor/static-checker convenience
-        FlextLdapApi = object
+        FlextLdapClient = object
         FlextLdapModels = object
 
 
@@ -47,17 +47,17 @@ async def demonstrate_basic_operations() -> None:
     await _demo_error_handling(service)
 
 
-def _initialize_ldap_service() -> FlextLdapApi:
+def _initialize_ldap_service() -> FlextLdapClient:
     """Initialize LDAP service - Single Responsibility.
 
     Returns:
-        FlextLdapApi: The initialized LDAP API instance.
+        FlextLdapClient: The initialized LDAP API instance.
 
     """
-    return FlextLdapApi()
+    return FlextLdapClient()
 
 
-def _demo_create_primary_user(_service: FlextLdapApi) -> None:
+def _demo_create_primary_user(_service: FlextLdapClient) -> None:
     """Create primary test user - Single Responsibility."""
     FlextLdapModels.CreateUserRequest(
         dn="cn=johndoe,ou=users,dc=example,dc=com",
@@ -75,23 +75,23 @@ def _demo_create_primary_user(_service: FlextLdapApi) -> None:
     # Simplified for compatibility - would normally use proper session management
 
 
-async def _demo_search_user(_service: FlextLdapApi) -> None:
+async def _demo_search_user(_service: FlextLdapClient) -> None:
     """Search for user - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-async def _demo_update_user(_service: FlextLdapApi) -> None:
+async def _demo_update_user(_service: FlextLdapClient) -> None:
     """Update user information - Single Responsibility."""
     # Split long line for readability
     # Simplified for compatibility - would normally use update_user() with session
 
 
-async def _demo_list_users(_service: FlextLdapApi, context: str) -> None:
+async def _demo_list_users(_service: FlextLdapClient, context: str) -> None:
     """List all users with context - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-def _demo_create_additional_users(_service: FlextLdapApi) -> None:
+def _demo_create_additional_users(_service: FlextLdapClient) -> None:
     """Create additional test users - Single Responsibility."""
     # Split long lines for readability
     additional_users = [
@@ -121,19 +121,19 @@ def _demo_create_additional_users(_service: FlextLdapApi) -> None:
         # Simplified for compatibility - would normally use create_user() with session
 
 
-async def _demo_delete_user(_service: FlextLdapApi) -> None:
+async def _demo_delete_user(_service: FlextLdapClient) -> None:
     """Delete user demonstration - Single Responsibility."""
     # Simplified for compatibility - would normally use delete_user() with session
 
 
-async def _demo_error_handling(_service: FlextLdapApi) -> None:
+async def _demo_error_handling(_service: FlextLdapClient) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Simplified for compatibility - would normally use proper error handling
 
 
 async def demonstrate_connection_handling() -> None:
     """Demonstrate connection handling capabilities."""
-    service = FlextLdapApi()
+    service = FlextLdapClient()
 
     # Test connection to non-existent server (will fail gracefully)
     result = await service.connect(

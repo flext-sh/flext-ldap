@@ -1,9 +1,9 @@
-"""FLEXT-LDAP Unified Models Module.
+"""Unified LDAP models for flext-ldap - ALL models consolidated into FlextLdapModels.
 
-This module provides unified Pydantic models for FLEXT-LDAP, following the FLEXT standards
-of having a single unified class per module that inherits from FlextModels.
+This module consolidates ALL LDAP models, entities, and value objects into a single
+FlextLdapModels class following FLEXT one-class-per-module standards.
 
-Contains only the actively used models from the FLEXT-LDAP project.
+Eliminates previous triple model system (models.py + entities.py + value_objects.py).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,211 +11,222 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
-from typing import TYPE_CHECKING, ClassVar, final
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
-
-from flext_core import (
-    FlextDomainService,
-    FlextModels,
-    FlextResult,
-    FlextTypes,
-    FlextUtilities,
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
 )
+
+from flext_core import FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapModels(FlextModels):
-    """Unified LDAP Models class inheriting from FlextModels.
+    """Unified LDAP models class consolidating ALL models, entities, and value objects.
 
-    This class provides only the actively used LDAP-specific Pydantic models as nested classes,
-    following the FLEXT standard architecture pattern.
+    This class consolidates:
+    - Previous FlextLdapModels (legacy models)
+    - Previous FlextLdapEntities (domain entities)
+    - Previous FlextLdapValueObjects (value objects)
+
+    Into a single unified class following FLEXT patterns. ALL LDAP data structures
+    are now available as nested classes within FlextLdapModels.
+
+    NO legacy compatibility maintained - clean consolidated implementation only.
     """
 
-    class SearchRequest(BaseModel):
-        """LDAP Search Request Model - actively used in API."""
+    # =========================================================================
+    # VALUE OBJECTS - Immutable LDAP value objects
+    # =========================================================================
 
-        base_dn: str = Field(description="Base DN for search")
-        filter_str: str = Field(
-            default=FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-            description="LDAP search filter",
-        )
-        scope: str = Field(
-            default=FlextLdapConstants.Scopes.SUBTREE,
-            description="Search scope",
-        )
-        attributes: list[str] | None = Field(
-            default=None,
-            description="Attributes to retrieve",
-        )
-        size_limit: int = Field(
-            default=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
-            description="Maximum number of entries to return",
-            gt=0,
-        )
-        time_limit: int = Field(
-            default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
-            description="Search timeout in seconds",
-            gt=0,
-        )
+    @dataclass(frozen=True)
+    class DistinguishedName:
+        """LDAP Distinguished Name value object with RFC 2253 compliance."""
 
-        @field_validator("base_dn")
-        @classmethod
-        def validate_base_dn(cls, value: str) -> str:
-            """Validate base DN using centralized validation."""
-            validation_result = FlextLdapValidations.validate_dn(
-                value.strip(),
-                "Base DN",
-            )
-            if validation_result.is_failure:
-                raise ValueError(validation_result.error)
+        value: str
 
-            return value.strip()
-
-        @field_validator("scope")
-        @classmethod
-        def validate_scope(cls, value: str) -> str:
-            """Validate search scope."""
-            if value not in FlextLdapConstants.Scopes.VALID_SCOPES:
-                valid_scopes = ", ".join(sorted(FlextLdapConstants.Scopes.VALID_SCOPES))
-                msg = f"Invalid scope. Must be one of: {valid_scopes}"
+        def __post_init__(self) -> None:
+            """Validate Distinguished Name format and content."""
+            if not self.value or not self.value.strip():
+                msg = "Distinguished Name cannot be empty"
                 raise ValueError(msg)
-            return value
+            # Basic DN validation - full RFC 2253 validation would be more complex
+            if "=" not in self.value:
+                msg = "Invalid DN format - missing attribute=value pairs"
+                raise ValueError(msg)
+
+        @property
+        def rdn(self) -> str:
+            """Get the Relative Distinguished Name (first component)."""
+            return self.value.split(",")[0].strip()
 
         @classmethod
-        def create_user_search(
+        def create(
+            cls, dn_string: str
+        ) -> FlextResult[FlextLdapModels.DistinguishedName]:
+            """Create DN with validation."""
+            try:
+                dn_obj = cls(value=dn_string.strip())
+                return FlextResult[FlextLdapModels.DistinguishedName].ok(dn_obj)
+            except ValueError as e:
+                return FlextResult[FlextLdapModels.DistinguishedName].fail(str(e))
+
+    @dataclass(frozen=True)
+    class Filter:
+        """LDAP filter value object with RFC 4515 compliance."""
+
+        expression: str
+
+        def __post_init__(self) -> None:
+            """Validate LDAP filter syntax and format."""
+            if not self.expression or not self.expression.strip():
+                msg = "LDAP filter cannot be empty"
+                raise ValueError(msg)
+            # Basic filter validation
+            if not (self.expression.startswith("(") and self.expression.endswith(")")):
+                msg = "LDAP filter must be enclosed in parentheses"
+                raise ValueError(msg)
+
+        @classmethod
+        def equals(cls, attribute: str, value: str) -> FlextLdapModels.Filter:
+            """Create equality filter."""
+            return cls(expression=f"({attribute}={value})")
+
+        @classmethod
+        def starts_with(
             cls,
-            base_dn: str,
-            uid: str | None = None,
-        ) -> FlextLdapModels.SearchRequest:
-            """Create search request for common user patterns."""
-            filter_str = (
-                f"(&(objectClass=person)(uid={uid}))" if uid else "(objectClass=person)"
-            )
-            return cls(
-                base_dn=base_dn,
-                filter_str=filter_str,
-                scope="subtree",
-                attributes=["uid", "cn", "sn", "mail"],
-                size_limit=100,
-                time_limit=30,
-            )
+            attribute: str,
+            value: str,
+        ) -> FlextLdapModels.Filter:
+            """Create starts-with filter."""
+            return cls(expression=f"({attribute}={value}*)")
 
-    class Entry(BaseModel):
-        """LDAP Entry Model - actively used in API."""
-
-        id: str = Field(description="Entry identifier")
-        dn: str = Field(description="Distinguished Name")
-        object_classes: list[str] = Field(
-            default_factory=list,
-            description="Object classes",
-        )
-        attributes: FlextLdapTypes.Entry.AttributeDict = Field(
-            default_factory=dict,
-            description="Entry attributes",
-        )
-        modified_at: str | None = Field(
-            default=None,
-            description="Last modification timestamp",
-        )
-
-        @field_validator("dn")
         @classmethod
-        def validate_dn(cls, value: str) -> str:
-            """Validate DN format using centralized validation."""
-            validation_result = FlextLdapValidations.validate_dn(value)
-            if validation_result.is_failure:
-                raise ValueError(validation_result.error)
-            return value.strip()
+        def object_class(cls, object_class: str) -> FlextLdapModels.Filter:
+            """Create objectClass filter."""
+            return cls(expression=f"(objectClass={object_class})")
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate entry business rules."""
-            # Basic entry validations
-            if not self.dn:
-                return FlextResult[None].fail("Entry must have a DN")
+    @dataclass(frozen=True)
+    class Scope:
+        """LDAP search scope value object."""
 
-            # LDAP entries must have at least one object class
-            if not self.object_classes:
-                return FlextResult[None].fail(
-                    "Entry must have at least one object class",
+        value: str
+
+        BASE: Final[str] = "base"
+        ONELEVEL: Final[str] = "onelevel"
+        SUBTREE: Final[str] = "subtree"
+
+        def __post_init__(self) -> None:
+            """Validate LDAP search scope value."""
+            valid_scopes = {self.BASE, self.ONELEVEL, self.SUBTREE}
+            if self.value not in valid_scopes:
+                error_msg = (
+                    f"Invalid scope: {self.value}. Must be one of {valid_scopes}"
                 )
+                raise ValueError(error_msg)
 
-            return FlextResult[None].ok(None)
+        @classmethod
+        def base(cls) -> FlextLdapModels.Scope:
+            """Create base scope."""
+            return cls(value=cls.BASE)
 
-        def get_attribute(self, name: str) -> list[str] | None:
-            """Get attribute values from entry attributes.
+        @classmethod
+        def onelevel(cls) -> FlextLdapModels.Scope:
+            """Create onelevel scope."""
+            return cls(value=cls.ONELEVEL)
 
-            Args:
-                name: Attribute name to retrieve
+        @classmethod
+        def subtree(cls) -> FlextLdapModels.Scope:
+            """Create subtree scope."""
+            return cls(value=cls.SUBTREE)
 
-            Returns:
-                List of attribute values, None if attribute not found
-
-            """
-            if name not in self.attributes:
-                return None
-
-            attribute_value = self.attributes[name]
-
-            # Ensure return type is always a list of strings
-            # AttributeDict values can only be: list[str] | list[bytes] | str | bytes
-            if isinstance(attribute_value, str):
-                return [attribute_value]
-            if isinstance(attribute_value, bytes):
-                return [attribute_value.decode("utf-8")]
-            if isinstance(attribute_value, list):
-                # Convert all items to strings
-                return [
-                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
-                    for item in attribute_value
-                ]
-
-            # This should never be reached due to AttributeDict type constraints
-            # but keeping as fallback for type safety
-            return [str(attribute_value)]
+    # =========================================================================
+    # CORE LDAP ENTITIES - Primary Domain Objects
+    # =========================================================================
 
     class LdapUser(BaseModel):
-        """LDAP User Model - actively used in API."""
+        """LDAP User entity with enterprise attributes."""
 
-        id: str = Field(description="User identifier")
-        dn: str = Field(description="Distinguished Name")
-        uid: str | None = Field(default=None, description="User ID")
-        cn: str | None = Field(default=None, description="Common Name")
-        sn: str | None = Field(default=None, description="Surname")
-        given_name: str | None = Field(default=None, description="Given Name")
-        mail: str | None = Field(default=None, description="Email Address")
-        display_name: str | None = Field(default=None, description="Display Name")
-        user_password: str | None = Field(default=None, description="User password")
-        status: str | None = Field(default=None, description="User status")
-        created_at: str | None = Field(default=None, description="Creation timestamp")
-        object_classes: list[str] = Field(
-            default_factory=list,
-            description="Object classes",
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            populate_by_name=True,
         )
+
+        # Core identification
+        dn: str = Field(..., description="Distinguished Name (unique identifier)")
+        cn: str = Field(..., description="Common Name")
+        uid: str | None = Field(None, description="User ID")
+        sn: str | None = Field(None, description="Surname")
+        given_name: str | None = Field(None, description="Given Name")
+
+        # Contact information
+        mail: str | None = Field(None, description="Primary email address")
+        telephone_number: str | None = Field(None, description="Primary phone number")
+        mobile: str | None = Field(None, description="Mobile phone number")
+
+        # Organizational
+        department: str | None = Field(None, description="Department")
+        title: str | None = Field(None, description="Job title")
+        organization: str | None = Field(None, description="Organization")
+        organizational_unit: str | None = Field(None, description="Organizational Unit")
+
+        # Authentication
+        user_password: SecretStr | None = Field(None, description="User password")
+
+        # LDAP metadata
+        object_classes: list[str] = Field(
+            default_factory=lambda: ["person", "organizationalPerson", "inetOrgPerson"],
+            description="LDAP object classes",
+        )
+
+        # Additional attributes as flexible dict
+        additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
+            default_factory=dict,
+            description="Additional LDAP attributes",
+        )
+
+        # Legacy compatibility fields
+        id: str = Field(default="", description="Legacy ID field")
         attributes: FlextLdapTypes.Entry.AttributeDict = Field(
             default_factory=dict,
-            description="User attributes",
+            description="Legacy attributes dict",
         )
+        status: str | None = Field(default=None, description="User status")
+        created_at: str | None = Field(default=None, description="Creation timestamp")
+        display_name: str | None = Field(default=None, description="Display Name")
         modified_at: str | None = Field(
-            default=None,
+            default=None, description="Last modification timestamp"
+        )
+
+        # Timestamps
+        created_timestamp: datetime | None = Field(
+            None,
+            description="Creation timestamp",
+        )
+        modified_timestamp: datetime | None = Field(
+            None,
             description="Last modification timestamp",
         )
 
         @field_validator("dn")
         @classmethod
-        def validate_dn(cls, value: str) -> str:
-            """Validate DN format using centralized validation."""
-            validation_result = FlextLdapValidations.validate_dn(value)
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-            return value.strip()
+            return v.strip()
 
         @field_validator("mail")
         @classmethod
@@ -224,8 +235,25 @@ class FlextLdapModels(FlextModels):
             validation_result = FlextLdapValidations.validate_email(value)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-
             return value
+
+        @field_validator("cn")
+        @classmethod
+        def validate_cn(cls, v: str) -> str:
+            """Validate Common Name."""
+            if not v or not v.strip():
+                msg = "Common Name cannot be empty"
+                raise ValueError(msg)
+            return v.strip()
+
+        @field_validator("object_classes")
+        @classmethod
+        def validate_object_classes(cls, v: list[str]) -> list[str]:
+            """Validate object classes."""
+            if not v:
+                msg = "At least one object class is required"
+                raise ValueError(msg)
+            return v
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate user business rules."""
@@ -238,39 +266,101 @@ class FlextLdapModels(FlextModels):
 
             return FlextResult[None].ok(None)
 
-    class Group(BaseModel):
-        """LDAP Group Model - actively used in API."""
+        def get_attribute(
+            self,
+            name: str,
+        ) -> FlextLdapTypes.Entry.AttributeValue | None:
+            """Get attribute value by name."""
+            return self.additional_attributes.get(name)
 
-        id: str = Field(description="Group identifier")
-        dn: str = Field(description="Distinguished Name")
-        cn: str | None = Field(default=None, description="Common Name")
-        description: str | None = Field(default=None, description="Group Description")
-        status: str | None = Field(default=None, description="Group status")
+        def set_attribute(
+            self,
+            name: str,
+            value: FlextLdapTypes.Entry.AttributeValue,
+        ) -> None:
+            """Set attribute value by name."""
+            self.additional_attributes[name] = value
+
+        def get_rdn(self) -> str:
+            """Extract Relative Distinguished Name (first component)."""
+            return self.dn.split(",")[0] if "," in self.dn else self.dn
+
+        def get_parent_dn(self) -> str | None:
+            """Extract parent DN."""
+            parts = self.dn.split(",", 1)
+            return parts[1] if len(parts) > 1 else None
+
+    class Group(BaseModel):
+        """LDAP Group entity with membership management."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            populate_by_name=True,
+        )
+
+        # Core identification
+        dn: str = Field(..., description="Distinguished Name")
+        cn: str = Field(..., description="Common Name")
+        gid_number: int | None = Field(None, description="Group ID Number")
+
+        # Group membership
+        member_dns: list[str] = Field(
+            default_factory=list,
+            description="Member Distinguished Names",
+        )
+        unique_member_dns: list[str] = Field(
+            default_factory=list,
+            description="Unique Member Distinguished Names",
+        )
+
+        # Legacy compatibility
+        id: str = Field(default="", description="Legacy ID field")
         members: list[str] = Field(
             default_factory=list,
-            description="Group members (DNs)",
-        )
-        object_classes: list[str] = Field(
-            default_factory=list,
-            description="Object classes",
+            description="Legacy members list",
         )
         attributes: FlextLdapTypes.Entry.AttributeDict = Field(
             default_factory=dict,
-            description="Group attributes",
+            description="Legacy attributes dict",
         )
+        status: str | None = Field(default=None, description="Group status")
         modified_at: str | None = Field(
-            default=None,
+            default=None, description="Last modification timestamp"
+        )
+
+        # Metadata
+        description: str | None = Field(None, description="Group description")
+        object_classes: list[str] = Field(
+            default_factory=lambda: ["groupOfNames", "top"],
+            description="LDAP object classes",
+        )
+
+        # Additional attributes
+        additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
+            default_factory=dict,
+            description="Additional LDAP attributes",
+        )
+
+        # Timestamps
+        created_timestamp: datetime | None = Field(
+            None,
+            description="Creation timestamp",
+        )
+        modified_timestamp: datetime | None = Field(
+            None,
             description="Last modification timestamp",
         )
 
         @field_validator("dn")
         @classmethod
-        def validate_dn(cls, value: str) -> str:
-            """Validate DN format using centralized validation."""
-            validation_result = FlextLdapValidations.validate_dn(value)
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-            return value.strip()
+            return v.strip()
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate group business rules."""
@@ -284,46 +374,328 @@ class FlextLdapModels(FlextModels):
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
-            return member_dn in self.members
+            return (
+                member_dn in self.member_dns
+                or member_dn in self.unique_member_dns
+                or member_dn in self.members
+            )
 
         def add_member(self, member_dn: str) -> FlextResult[None]:
             """Add member to group."""
+            if member_dn not in self.member_dns:
+                self.member_dns.append(member_dn)
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                return FlextResult[None].ok(None)
-            return FlextResult[None].ok(None)  # Already a member, no-op
+            return FlextResult[None].ok(None)
 
         def remove_member(self, member_dn: str) -> FlextResult[None]:
             """Remove member from group."""
+            if member_dn in self.member_dns:
+                self.member_dns.remove(member_dn)
             if member_dn in self.members:
                 self.members.remove(member_dn)
                 return FlextResult[None].ok(None)
             return FlextResult[None].fail(f"Member {member_dn} not found in group")
 
-    class CreateUserRequest(BaseModel):
-        """Create User Request Model - actively used in API."""
+    class Entry(BaseModel):
+        """Generic LDAP Entry entity."""
 
-        dn: str = Field(description="User DN")
-        uid: str = Field(description="User ID")
-        cn: str = Field(description="Common Name")
-        sn: str = Field(description="Surname")
-        given_name: str | None = Field(default=None, description="Given Name")
-        mail: str | None = Field(default=None, description="Email Address")
-        description: str | None = Field(default=None, description="User description")
-        telephone_number: str | None = Field(default=None, description="Phone number")
-        user_password: str | None = Field(default=None, description="User Password")
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            populate_by_name=True,
+        )
+
+        # Core identification
+        dn: str = Field(..., description="Distinguished Name")
+
+        # LDAP attributes as flexible dict
+        attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
+            default_factory=dict,
+            description="LDAP entry attributes",
+        )
+
+        # LDAP metadata
+        object_classes: list[str] = Field(
+            default_factory=list,
+            description="LDAP object classes",
+        )
+
+        # Timestamps
+        created_timestamp: datetime | None = Field(
+            None,
+            description="Creation timestamp",
+        )
+        modified_timestamp: datetime | None = Field(
+            None,
+            description="Last modification timestamp",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error)
+            return v.strip()
+
+        def get_attribute(
+            self,
+            name: str,
+        ) -> FlextLdapTypes.Entry.AttributeValue | None:
+            """Get attribute value by name.
+
+            Args:
+                name: Attribute name.
+
+            Returns:
+                Attribute value or None if not found.
+
+            """
+            attribute_value = self.attributes.get(name)
+            if attribute_value is None:
+                return None
+
+            # Convert different types to string list for consistent access
+            if isinstance(attribute_value, str):
+                return [attribute_value]
+            if isinstance(attribute_value, bytes):
+                return [attribute_value.decode("utf-8")]
+            # attribute_value is list[str] | list[bytes] at this point
+            # Convert all items to strings
+            return [
+                item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                for item in attribute_value
+            ]
+
+        def set_attribute(
+            self,
+            name: str,
+            value: FlextLdapTypes.Entry.AttributeValue,
+        ) -> None:
+            """Set attribute value by name."""
+            self.attributes[name] = value
+
+        def has_attribute(self, name: str) -> bool:
+            """Check if attribute exists."""
+            return name in self.attributes
+
+        def get_rdn(self) -> str:
+            """Extract Relative Distinguished Name."""
+            return self.dn.split(",")[0] if "," in self.dn else self.dn
+
+    # =========================================================================
+    # LDAP OPERATION ENTITIES - Request/Response Objects
+    # =========================================================================
+
+    class SearchRequest(BaseModel):
+        """LDAP Search Request entity with comprehensive parameters."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+        )
+
+        # Search scope
+        base_dn: str = Field(..., description="Search base Distinguished Name")
+        filter_str: str = Field(..., description="LDAP search filter", alias="filter")
+        scope: str = Field(
+            default="subtree",
+            description="Search scope: base, onelevel, subtree",
+            pattern="^(base|onelevel|subtree)$",
+        )
+
+        # Attribute selection
+        attributes: list[str] | None = Field(
+            default=None,
+            description="Attributes to return (None = all)",
+        )
+
+        # Search limits
+        size_limit: int = Field(
+            default=1000,
+            description="Maximum number of entries to return",
+            ge=0,
+        )
+        time_limit: int = Field(
+            default=60,
+            description="Search timeout in seconds",
+            ge=0,
+        )
+
+        # Paging
+        page_size: int | None = Field(
+            None,
+            description="Page size for paged results",
+            ge=1,
+        )
+        paged_cookie: bytes | None = Field(
+            None,
+            description="Paging cookie for continuation",
+        )
+
+        # Advanced options
+        types_only: bool = Field(
+            default=False,
+            description="Return attribute types only (no values)",
+        )
+        deref_aliases: str = Field(
+            default="never",
+            description="Alias dereferencing: never, searching, finding, always",
+            pattern="^(never|searching|finding|always)$",
+        )
+
+        @field_validator("base_dn")
+        @classmethod
+        def validate_base_dn(cls, v: str) -> str:
+            """Validate base DN format."""
+            if not v or not v.strip():
+                msg = "Base DN cannot be empty"
+                raise ValueError(msg)
+            return v.strip()
+
+        @field_validator("filter_str")
+        @classmethod
+        def validate_filter(cls, v: str) -> str:
+            """Validate LDAP filter format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_filter(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error)
+            v = v.strip()
+            if not (v.startswith("(") and v.endswith(")")):
+                msg = "LDAP filter must be enclosed in parentheses"
+                raise ValueError(msg)
+            return v
+
+        @classmethod
+        def create_user_search(
+            cls,
+            uid: str,
+            base_dn: str = "ou=users,dc=example,dc=com",
+            attributes: list[str] | None = None,
+        ) -> FlextLdapModels.SearchRequest:
+            """Create search request for user."""
+            return cls.model_validate(
+                {
+                    "base_dn": base_dn,
+                    "filter_str": f"(&(objectClass=person)(uid={uid}))",
+                    "attributes": attributes or ["uid", "cn", "mail", "sn"],
+                    "page_size": None,
+                    "paged_cookie": None,
+                },
+            )
+
+        @classmethod
+        def create_group_search(
+            cls,
+            cn: str,
+            base_dn: str = "ou=groups,dc=example,dc=com",
+            attributes: list[str] | None = None,
+        ) -> FlextLdapModels.SearchRequest:
+            """Create search request for group."""
+            return cls.model_validate(
+                {
+                    "base_dn": base_dn,
+                    "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
+                    "attributes": attributes or ["cn", "member", "description"],
+                    "page_size": None,
+                    "paged_cookie": None,
+                },
+            )
+
+    class SearchResponse(BaseModel):
+        """LDAP Search Response entity."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+        )
+
+        # Results
+        entries: list[dict[str, object]] = Field(
+            default_factory=list,
+            description="Search result entries",
+        )
+
+        # Result metadata
+        total_count: int = Field(0, description="Total number of entries")
+        has_more: bool = Field(default=False, description="More results available")
+
+        # Legacy compatibility
+        result_code: int = Field(0, description="LDAP result code")
+        result_description: str = Field("", description="Result description")
+        matched_dn: str = Field("", description="Matched DN")
+        has_more_pages: bool = Field(default=False, description="More pages available")
+        next_cookie: bytes | None = Field(None, description="Next page cookie")
+        entries_returned: int = Field(0, description="Number of entries returned")
+        time_elapsed: float = Field(0.0, description="Search time in seconds")
+
+        @field_validator("entries_returned", mode="before")
+        @classmethod
+        def set_entries_returned(cls, v: int, info: ValidationInfo) -> int:
+            """Auto-calculate entries returned from entries list."""
+            if info.data and "entries" in info.data:
+                entries = info.data["entries"]
+                if isinstance(entries, list):
+                    return len(entries)
+                return 0
+            return v
+
+    class CreateUserRequest(BaseModel):
+        """LDAP User Creation Request entity."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+        )
+
+        # Required fields
+        dn: str = Field(..., description="Distinguished Name for new user")
+        uid: str = Field(..., description="User ID")
+        cn: str = Field(..., description="Common Name")
+        sn: str = Field(..., description="Surname")
+
+        # Optional user attributes
+        given_name: str | None = Field(None, description="Given Name")
+        mail: str | None = Field(None, description="Email address")
+        user_password: str | None = Field(None, description="User password")
+        telephone_number: str | None = Field(None, description="Phone number")
+        description: str | None = Field(None, description="User description")
+
+        # Organizational
+        department: str | None = Field(None, description="Department")
+        title: str | None = Field(None, description="Job title")
+        organization: str | None = Field(None, description="Organization")
+
+        # LDAP metadata
         object_classes: list[str] = Field(
             default_factory=lambda: [
                 FlextLdapConstants.ObjectClasses.TOP,
                 FlextLdapConstants.ObjectClasses.PERSON,
                 FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
             ],
-            description="Object classes for user",
+            description="LDAP object classes",
         )
-        additional_attributes: dict[str, list[str]] = Field(
+
+        # Additional attributes
+        additional_attributes: dict[str, FlextLdapTypes.Entry.AttributeValue] = Field(
             default_factory=dict,
             description="Additional user attributes",
         )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error)
+            return v.strip()
 
         @field_validator("mail")
         @classmethod
@@ -332,7 +704,6 @@ class FlextLdapModels(FlextModels):
             validation_result = FlextLdapValidations.validate_email(value)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-
             return value
 
         @field_validator("user_password")
@@ -342,8 +713,16 @@ class FlextLdapModels(FlextModels):
             validation_result = FlextLdapValidations.validate_password(value)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-
             return value
+
+        @field_validator("uid", "cn", "sn")
+        @classmethod
+        def validate_required_string(cls, v: str) -> str:
+            """Validate required string fields."""
+            if not v or not v.strip():
+                msg = "Required field cannot be empty"
+                raise ValueError(msg)
+            return v.strip()
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate create user request business rules."""
@@ -365,573 +744,251 @@ class FlextLdapModels(FlextModels):
                 sn=self.sn,
                 given_name=self.given_name,
                 mail=self.mail,
-                user_password=self.user_password,
-                object_classes=self.object_classes.copy(),
-                attributes={},
-                modified_at=None,
+                telephone_number=self.telephone_number,
+                mobile=None,
+                department=self.department,
+                title=self.title,
+                organization=self.organization,
+                organizational_unit=None,
+                user_password=SecretStr(self.user_password)
+                if self.user_password
+                else None,
+                object_classes=self.object_classes,
+                additional_attributes=self.additional_attributes,
+                created_timestamp=None,
+                modified_timestamp=None,
             )
 
     class CreateGroupRequest(BaseModel):
-        """Create Group Request Model - actively used in API."""
+        """LDAP Group Creation Request entity."""
 
-        dn: str = Field(description="Group DN")
-        cn: str = Field(description="Common Name")
-        description: str | None = Field(default=None, description="Group Description")
-        member_dns: list[str] = Field(
-            default_factory=list,
-            description="Initial group members (DNs)",
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
         )
+
+        # Required fields
+        dn: str = Field(..., description="Distinguished Name for new group")
+        cn: str = Field(..., description="Common Name")
+
+        # Optional group attributes
+        description: str | None = Field(None, description="Group description")
+        members: list[str] | None = Field(None, description="Initial group members")
+
+        # LDAP metadata
         object_classes: list[str] = Field(
-            default_factory=lambda: [
-                FlextLdapConstants.ObjectClasses.TOP,
-                FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
-            ],
-            description="Object classes for group",
-        )
-        additional_attributes: dict[str, list[str]] = Field(
-            default_factory=dict,
-            description="Additional group attributes",
+            default_factory=lambda: ["groupOfNames", "top"],
+            description="LDAP object classes",
         )
 
-    class UpdateGroupRequest(BaseModel):
-        """Update Group Request Model - used in protocols."""
-
-        dn: str = Field(description="Distinguished Name of group to update")
-        cn: str | None = Field(default=None, description="New Common Name")
-        description: str | None = Field(
-            default=None,
-            description="New group description",
-        )
-        member_dns: list[str] | None = Field(
-            default=None,
-            description="New list of member DNs (replaces existing)",
-        )
-
-    class SearchResponse(BaseModel):
-        """Search Response Model - used in protocols."""
-
-        entries: list[FlextTypes.Core.Dict] = Field(
-            default_factory=list,
-            description="Search result entries",
-        )
-        total_count: int = Field(default=0, description="Total number of entries found")
-        has_more: bool = Field(
-            default=False,
-            description="Whether more entries are available",
-        )
-        search_time_ms: float = Field(
-            default=0.0,
-            description="Search execution time in ms",
-        )
-
-    class ConnectionRequest(BaseModel):
-        """LDAP Connection Request Model - used for operational requests."""
-
-        server_uri: str = Field(description="LDAP server URI")
-        bind_dn: str | None = Field(
-            default=None,
-            description="Bind DN for authentication",
-        )
-        bind_password: str | None = Field(default=None, description="Bind password")
-        operation_type: str = Field(
-            description="Operation type: test, connect, bind, terminate",
-        )
-        timeout: int = Field(
-            default=30,
-            description="Connection timeout in seconds",
-            gt=0,
-            le=300,
-        )
-
-    # Utility methods for type conversion
-    @staticmethod
-    def _convert_to_str(value: str | bytes | int | None) -> str | None:
-        """Convert LDAP attribute value to string."""
-        if value is None:
-            return None
-        if isinstance(value, bytes):
-            return value.decode("utf-8", errors="ignore")
-        if isinstance(value, int):
-            return str(value)
-        return str(value)
-
-    @staticmethod
-    def _convert_to_str_list(
-        value: list[str] | list[bytes] | str | bytes | None,
-    ) -> list[str]:
-        """Convert LDAP member list to list of strings."""
-        if value is None:
-            return []
-        if isinstance(value, (str, bytes)):
-            # Single value, convert to list
-            converted = FlextLdapModels._convert_to_str(value)
-            return [converted] if converted is not None else []
-        # Must be a list due to type constraints
-        result = []
-        for item in value:
-            converted = FlextLdapModels._convert_to_str(item)
-            if converted is not None:
-                result.append(converted)
-        return result
-
-    # Factory methods for creating models
-    @classmethod
-    def create_search_request(
-        cls,
-        base_dn: str,
-        *,
-        filter_str: str = FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-        scope: str = FlextLdapConstants.Scopes.SUBTREE,
-        attributes: list[str] | None = None,
-        size_limit: int = FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
-        time_limit: int = FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
-    ) -> SearchRequest:
-        """Create search request."""
-        return cls.SearchRequest(
-            base_dn=base_dn,
-            filter_str=filter_str,
-            scope=scope,
-            attributes=attributes,
-            size_limit=size_limit,
-            time_limit=time_limit,
-        )
-
-    @classmethod
-    def create_user_from_entry(cls, entry: Entry) -> LdapUser:
-        """Create User model from LDAP entry."""
-        return cls.LdapUser(
-            id=entry.id,
-            dn=entry.dn,
-            object_classes=entry.object_classes,
-            attributes=entry.attributes,
-            modified_at=entry.modified_at,
-            uid=cls._convert_to_str(
-                entry.attributes.get(FlextLdapConstants.Attributes.USER_ID, [None])[0],
-            ),
-            cn=cls._convert_to_str(
-                entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[
-                    0
-                ],
-            ),
-            sn=cls._convert_to_str(
-                entry.attributes.get(FlextLdapConstants.Attributes.SURNAME, [None])[0],
-            ),
-            given_name=cls._convert_to_str(
-                entry.attributes.get(
-                    FlextLdapConstants.Attributes.GIVEN_NAME,
-                    [None],
-                )[0],
-            ),
-            mail=cls._convert_to_str(
-                entry.attributes.get(FlextLdapConstants.Attributes.MAIL, [None])[0],
-            ),
-            display_name=cls._convert_to_str(
-                entry.attributes.get(
-                    FlextLdapConstants.Attributes.DISPLAY_NAME,
-                    [None],
-                )[0],
-            ),
-        )
-
-    @classmethod
-    def create_group_from_entry(cls, entry: Entry) -> Group:
-        """Create Group model from LDAP entry."""
-        return cls.Group(
-            id=entry.id,
-            dn=entry.dn,
-            object_classes=entry.object_classes,
-            attributes=entry.attributes,
-            modified_at=entry.modified_at,
-            cn=cls._convert_to_str(
-                entry.attributes.get(FlextLdapConstants.Attributes.COMMON_NAME, [None])[
-                    0
-                ],
-            ),
-            description=cls._convert_to_str(
-                entry.attributes.get(
-                    FlextLdapConstants.Attributes.DESCRIPTION,
-                    [None],
-                )[0],
-            ),
-            members=cls._convert_to_str_list(
-                entry.attributes.get(FlextLdapConstants.Attributes.MEMBER, []),
-            ),
-        )
-
-    class ValueObjects(FlextDomainService[object]):
-        """Single FlextLdapModels.ValueObjects class with all LDAP value objects.
-
-        Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
-        Everything from DN validation to filter creation is available as internal classes
-        with NO legacy compatibility and domain-driven design principles.
-        """
-
-        def execute(self) -> FlextResult[object]:
-            """Execute domain operation - required by FlextDomainService."""
-            return FlextResult[object].ok({"status": "value_objects_available"})
-
-        # =========================================================================
-        # DISTINGUISHED NAME - DN value object with RFC 2253 compliance
-        # =========================================================================
-
-        @final
-        class DistinguishedName(FlextModels.Value):
-            """LDAP Distinguished Name value object with RFC 2253 compliance."""
-
-            model_config = ConfigDict(
-                extra="forbid",
-                validate_assignment=True,
-                str_strip_whitespace=True,
-                frozen=True,
-            )
-
-            value: str = Field(
-                ...,
-                description="RFC 2253 compliant Distinguished Name",
-                min_length=FlextLdapConstants.Validation.MIN_DN_LENGTH,
-                max_length=FlextLdapConstants.Validation.MAX_DN_LENGTH,
-            )
-
-            # DN validation pattern from SOURCE OF TRUTH
-            DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-                FlextLdapConstants.Validation.DN_PATTERN,
-            )
-
-            @field_validator("value")
-            @classmethod
-            def validate_dn_format(cls, value: str) -> str:
-                """Validate DN using direct validation - ELIMINATE local duplication."""
-                # Use direct validation instead of FlextValidations
-                if not value or not value.strip():
-                    error_msg = "Distinguished Name cannot be empty"
-                    raise ValueError(error_msg)
-
-                # Direct pattern validation for DN format
-                if not re.match(r"^[a-zA-Z]+=.+", value):
-                    error_msg = f"Invalid DN format: {value}"
-                    raise ValueError(error_msg)
-
-                return value.strip()
-
-            def validate_business_rules(self) -> FlextResult[None]:
-                """Validate business rules for DN."""
-                # DN is validated in field_validator, no additional business rules
-                return FlextResult.ok(None)
-
-            @property
-            def rdn(self) -> str:
-                """Get the Relative Distinguished Name (first component)."""
-                return self.value.split(",", 1)[0].strip()
-
-            def is_descendant_of(
-                self,
-                parent_dn: str | FlextLdapModels.ValueObjects.DistinguishedName,
-            ) -> bool:
-                """Check if this DN is a descendant of the given parent DN."""
-                parent_str = (
-                    parent_dn if isinstance(parent_dn, str) else parent_dn.value
-                )
-                return self.value.lower().endswith(parent_str.lower())
-
-            @classmethod
-            def create(
-                cls,
-                *args: object,
-                **_kwargs: object,
-            ) -> FlextResult[FlextLdapModels.ValueObjects.DistinguishedName]:
-                """Create DN from string with validation."""
-                if len(args) != 1 or not isinstance(args[0], str):
-                    return FlextResult.fail(
-                        "DistinguishedName.create requires exactly one string argument"
-                    )
-
-                value = args[0]
-                try:
-                    dn = cls(value=value)
-                    return FlextResult.ok(dn)
-                except ValueError as e:
-                    return FlextResult.fail(str(e))
-                except TypeError as e:
-                    return FlextResult.fail(f"Invalid input type: {e}")
-
-        # =========================================================================
-        # SCOPE - LDAP search scope value object
-        # =========================================================================
-
-        @final
-        class Scope(FlextModels.Value):
-            """LDAP search scope value object."""
-
-            scope: str = Field(..., description="LDAP search scope")
-
-            # Valid LDAP scopes from SOURCE OF TRUTH
-            VALID_SCOPES: ClassVar[set[str]] = FlextLdapConstants.Scopes.VALID_SCOPES
-
-            @field_validator("scope")
-            @classmethod
-            def validate_scope(cls, value: str) -> str:
-                """Validate LDAP scope value."""
-                normalized = value.lower()
-                if normalized not in cls.VALID_SCOPES:
-                    msg = f"Invalid LDAP scope: {value}. Must be one of {cls.VALID_SCOPES}"
-                    raise ValueError(msg)
-                return normalized
-
-            def validate_business_rules(self) -> FlextResult[None]:
-                """Validate business rules."""
-                # Scope is validated in field_validator, no additional business rules
-                return FlextResult.ok(None)
-
-            @classmethod
-            def create(
-                cls,
-                *args: object,
-                **_kwargs: object,
-            ) -> FlextResult[FlextLdapModels.ValueObjects.Scope]:
-                """Create scope value object with validation."""
-                if len(args) != 1 or not isinstance(args[0], str):
-                    return FlextResult.fail(
-                        "Scope.create requires exactly one string argument"
-                    )
-
-                scope = args[0]
-                try:
-                    scope_obj = cls(scope=scope)
-                    return FlextResult.ok(scope_obj)
-                except ValueError as e:
-                    return FlextResult.fail(str(e))
-
-            @classmethod
-            def base(cls) -> FlextLdapModels.ValueObjects.Scope:
-                """Create base scope (search only the entry itself)."""
-                return cls(scope=FlextLdapConstants.Scopes.BASE)
-
-            @classmethod
-            def one(cls) -> FlextLdapModels.ValueObjects.Scope:
-                """Create one-level scope (search direct children only)."""
-                return cls(scope=FlextLdapConstants.Scopes.ONELEVEL)
-
-            @classmethod
-            def sub(cls) -> FlextLdapModels.ValueObjects.Scope:
-                """Create subtree scope (search entry and all descendants)."""
-                return cls(scope=FlextLdapConstants.Scopes.SUBTREE)
-
-            # NO aliases - use sub() and one() methods directly
-
-        # =========================================================================
-        # FILTER - LDAP filter value object with RFC 4515 compliance
-        # =========================================================================
-
-        @final
-        class Filter(FlextModels.Value):
-            """LDAP filter value object with RFC 4515 compliance."""
-
-            model_config = ConfigDict(
-                extra="forbid",
-                validate_assignment=True,
-                str_strip_whitespace=True,
-                frozen=True,
-            )
-
-            value: str = Field(
-                ...,
-                description="RFC 4515 compliant LDAP filter",
-                min_length=FlextLdapConstants.Validation.MIN_FILTER_LENGTH,
-                max_length=FlextLdapConstants.Validation.MAX_FILTER_LENGTH,
-            )
-
-            # LDAP filter validation pattern from SOURCE OF TRUTH
-            FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-                FlextLdapConstants.Validation.FILTER_PATTERN,
-            )
-
-            @field_validator("value")
-            @classmethod
-            def validate_filter_format(cls, value: str) -> str:
-                """Validate LDAP filter using centralized validation - ELIMINATE local duplication."""
-                # Use centralized validation from validations module
-                validation_result = FlextLdapValidations.validate_filter(value)
-                if validation_result.is_failure:
-                    raise ValueError(validation_result.error)
-
-                # Clean text using FlextUtilities (keep this as it's domain-specific)
-                clean_result = FlextUtilities.TextProcessor.clean_text(value)
-                if clean_result.is_failure:
-                    error_msg = "LDAP filter cannot be empty after cleaning"
-                    raise ValueError(error_msg)
-
-                clean_value = clean_result.value
-                if not clean_value:
-                    error_msg = "LDAP filter cannot be empty after cleaning"
-                    raise ValueError(error_msg)
-
-                # Must start and end with parentheses
-                if not (clean_value.startswith("(") and clean_value.endswith(")")):
-                    msg = f"LDAP filter must be enclosed in parentheses: {clean_value}"
-                    raise ValueError(msg)
-
-                return clean_value
-
-            def validate_business_rules(self) -> FlextResult[None]:
-                """Validate business rules for filter."""
-                # Filter is validated in field_validator, no additional business rules
-                return FlextResult.ok(None)
-
-            @classmethod
-            def create(
-                cls,
-                *args: object,
-                **_kwargs: object,
-            ) -> FlextResult[FlextLdapModels.ValueObjects.Filter]:
-                """Create filter from string with validation."""
-                if len(args) != 1 or not isinstance(args[0], str):
-                    return FlextResult.fail(
-                        "Filter.create requires exactly one string argument"
-                    )
-
-                value = args[0]
-                try:
-                    filter_obj = cls(value=value)
-                    return FlextResult.ok(filter_obj)
-                except ValueError as e:
-                    return FlextResult.fail(str(e))
-                except TypeError as e:
-                    return FlextResult.fail(f"Invalid input type: {e}")
-
-            @classmethod
-            def equals(
-                cls,
-                attribute: str,
-                value: str,
-            ) -> FlextLdapModels.ValueObjects.Filter:
-                """Create equality filter."""
-                return cls(value=f"({attribute}={value})")
-
-            @classmethod
-            def starts_with(
-                cls,
-                attribute: str,
-                value: str,
-            ) -> FlextLdapModels.ValueObjects.Filter:
-                """Create starts-with filter."""
-                return cls(value=f"({attribute}={value}*)")
-
-            @classmethod
-            def object_class(
-                cls,
-                object_class: str,
-            ) -> FlextLdapModels.ValueObjects.Filter:
-                """Create object class filter."""
-                return cls(value=f"(objectClass={object_class})")
-
-            @classmethod
-            def all_objects(cls) -> FlextLdapModels.ValueObjects.Filter:
-                """Create filter that matches all objects."""
-                return cls(value="(objectClass=*)")
-
-    class UserConversionParams(BaseModel):
-        """User conversion parameters."""
-
-        model_config = ConfigDict(
-            frozen=True,  # Immutable for safety
-            extra="forbid",  # Strict validation
-            validate_assignment=True,
-            str_strip_whitespace=True,
-        )
-
-        entries: Sequence[FlextLdapTypes.Search.ResultEntry] = Field(
-            description="LDAP entries to convert",
-            min_length=0,
-        )
-        include_disabled: bool = Field(
-            default=False,
-            description="Include disabled user accounts",
-        )
-        include_system: bool = Field(
-            default=False,
-            description="Include system accounts",
-        )
-        attribute_filter: list[str] | None = Field(
-            default=None,
-            description="Filter specific attributes",
-            min_length=0,  # Allow empty lists
-        )
-
-        @field_validator("entries")
+        @field_validator("dn")
         @classmethod
-        def validate_entries(
-            cls,
-            v: Sequence[FlextLdapTypes.Search.ResultEntry],
-        ) -> Sequence[FlextLdapTypes.Search.ResultEntry]:
-            """Validate entries structure."""
-            return v
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            validation_result = FlextLdapValidations.validate_dn(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error)
+            return v.strip()
 
-        @computed_field
-        def entry_count(self) -> int:
-            """Return count of entries."""
-            return len(self.entries)
+        @field_validator("cn")
+        @classmethod
+        def validate_cn(cls, v: str) -> str:
+            """Validate Common Name."""
+            if not v or not v.strip():
+                msg = "Common Name cannot be empty"
+                raise ValueError(msg)
+            return v.strip()
 
-        @computed_field
-        def has_filters(self) -> bool:
-            """Check if object filters are applied."""
-            return (
-                self.include_disabled
-                or self.include_system
-                or bool(self.attribute_filter)
-            )
+    # =========================================================================
+    # CONNECTION AND CONFIGURATION ENTITIES
+    # =========================================================================
 
-    class ConnectionConfig(BaseModel):
-        """LDAP Connection Configuration Model - consolidated from scattered definitions."""
+    class ConnectionInfo(BaseModel):
+        """LDAP Connection Information entity."""
 
         model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
             validate_assignment=True,
-            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
         )
 
-        server: str = Field(description="LDAP server URI")
+        # Connection details
+        server: str = Field(..., description="LDAP server hostname/IP")
         port: int = Field(
-            default=389,
+            389,
             description="LDAP server port",
-            gt=0,
-            le=65535,
-        )
-        bind_dn: str | None = Field(
-            default=None,
-            description="Bind DN for authentication",
-        )
-        bind_password: str | None = Field(default=None, description="Bind password")
-        timeout: int = Field(
-            default=30,
-            description="Connection timeout in seconds",
-            gt=0,
-            le=300,
+            ge=1,
+            le=FlextLdapConstants.Protocol.MAX_PORT,
         )
         use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
+        use_tls: bool = Field(default=False, description="Use StartTLS")
+
+        # Authentication
+        bind_dn: str | None = Field(None, description="Bind Distinguished Name")
+        bind_password: SecretStr | None = Field(None, description="Bind password")
+
+        # Connection options
+        timeout: int = Field(30, description="Connection timeout in seconds", ge=1)
+        pool_size: int = Field(10, description="Connection pool size", ge=1)
+        pool_keepalive: int = Field(3600, description="Pool keepalive in seconds", ge=0)
+
+        # SSL/TLS options
+        verify_certificates: bool = Field(
+            default=True,
+            description="Verify SSL certificates",
+        )
+        ca_certs_file: str | None = Field(None, description="CA certificates file path")
 
         @field_validator("server")
         @classmethod
-        def validate_server(cls, value: str) -> str:
-            """Validate server URI format."""
-            if not value or not value.strip():
-                msg = "Server URI cannot be empty"
+        def validate_server(cls, v: str) -> str:
+            """Validate server hostname/IP."""
+            if not v or not v.strip():
+                msg = "Server cannot be empty"
                 raise ValueError(msg)
+            return v.strip()
 
-            value = value.strip()
-            if not (value.startswith(("ldap://", "ldaps://"))):
-                msg = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
+        @field_validator("port")
+        @classmethod
+        def validate_port(cls, v: int) -> int:
+            """Validate port number."""
+            if v <= 0 or v > FlextLdapConstants.Protocol.MAX_PORT:
+                msg = (
+                    f"Port must be between 1 and {FlextLdapConstants.Protocol.MAX_PORT}"
+                )
                 raise ValueError(msg)
+            return v
 
-            return value
+    # =========================================================================
+    # ERROR AND STATUS ENTITIES
+    # =========================================================================
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate connection config business rules."""
-            if not self.server:
-                return FlextResult[None].fail("Server cannot be empty")
-            if self.timeout <= 0:
-                return FlextResult[None].fail("Timeout must be positive")
-            return FlextResult[None].ok(None)
+    class LdapError(BaseModel):
+        """LDAP Error entity with detailed information."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+        )
+
+        # Error details
+        error_code: int = Field(..., description="LDAP error code")
+        error_message: str = Field(..., description="Error message")
+        matched_dn: str = Field("", description="Matched DN")
+
+        # Context
+        operation: str = Field("", description="Operation that failed")
+        target_dn: str = Field("", description="Target DN")
+
+        # Additional details
+        server_info: dict[str, object] = Field(
+            default_factory=dict,
+            description="Server information",
+        )
+
+        # Timestamp
+        timestamp: datetime = Field(
+            default_factory=datetime.now,
+            description="Error timestamp",
+        )
+
+        @field_validator("error_code")
+        @classmethod
+        def validate_error_code(cls, v: int) -> int:
+            """Validate LDAP error code."""
+            if v < 0:
+                msg = "Error code must be non-negative"
+                raise ValueError(msg)
+            return v
+
+    class OperationResult(BaseModel):
+        """LDAP Operation Result entity."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+        )
+
+        # Result status
+        success: bool = Field(..., description="Operation success status")
+        result_code: int = Field(0, description="LDAP result code")
+        result_message: str = Field("", description="Result message")
+
+        # Operation details
+        operation_type: str = Field("", description="Type of operation")
+        target_dn: str = Field("", description="Target DN")
+
+        # Performance metrics
+        duration_ms: float = Field(
+            0.0,
+            description="Operation duration in milliseconds",
+        )
+
+        # Additional data
+        data: dict[str, object] = Field(
+            default_factory=dict,
+            description="Additional result data",
+        )
+
+        # Timestamp
+        timestamp: datetime = Field(
+            default_factory=datetime.now,
+            description="Operation timestamp",
+        )
+
+        @classmethod
+        def success_result(
+            cls,
+            operation_type: str,
+            target_dn: str = "",
+            data: dict[str, object] | None = None,
+            duration_ms: float = 0.0,
+        ) -> FlextLdapModels.OperationResult:
+            """Create success result."""
+            return cls(
+                success=True,
+                result_code=0,
+                result_message="Success",
+                operation_type=operation_type,
+                target_dn=target_dn,
+                data=data or {},
+                duration_ms=duration_ms,
+            )
+
+        @classmethod
+        def error_result(
+            cls,
+            operation_type: str,
+            error_code: int,
+            error_message: str,
+            target_dn: str = "",
+            duration_ms: float = 0.0,
+        ) -> FlextLdapModels.OperationResult:
+            """Create error result."""
+            return cls(
+                success=False,
+                result_code=error_code,
+                result_message=error_message,
+                operation_type=operation_type,
+                target_dn=target_dn,
+                duration_ms=duration_ms,
+            )
+
+    @dataclass(frozen=True)
+    class ConnectionConfig:
+        """LDAP connection configuration value object."""
+
+        server: str
+        port: int = 389
+        use_ssl: bool = False
+        bind_dn: str | None = None
+        bind_password: str | None = None
+        timeout: int = 30
 
 
-__all__ = ["FlextLdapModels"]
+__all__ = [
+    "FlextLdapModels",
+]

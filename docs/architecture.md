@@ -151,13 +151,13 @@ class LdapFilter:
 
 ### **API Facade**
 
-The `FlextLdapApi` serves as the main entry point:
+The `FlextLdapClient` serves as the main entry point:
 
 ```python
-class FlextLdapApi:
+class FlextLdapClient:
     """High-level LDAP API facade."""
 
-    def __init__(self, config: FlextLdapConfig | None = None):
+    def __init__(self, config: FlextLdapConfigs | None = None):
         self._config = config or get_flext_ldap_config()
         self._container = FlextLdapContainer().get_container()
         self._service = FlextLdapServices(self._container)
@@ -264,7 +264,7 @@ The `FlextLdapClient` abstracts ldap3 operations:
 class FlextLdapClient:
     """LDAP client abstraction over ldap3."""
 
-    def __init__(self, config: FlextLdapConfig):
+    def __init__(self, config: FlextLdapConfigs):
         self._config = config
         self._connection: Optional[Connection] = None
 
@@ -350,11 +350,11 @@ user_service = container.resolve(FlextLdapUserService)
 
 ### **Configuration Management**
 
-Centralized configuration via FlextLdapConfig:
+Centralized configuration via FlextLdapConfigs:
 
 ```python
 @dataclass
-class FlextLdapConfig:
+class FlextLdapConfigs:
     """LDAP configuration with validation."""
     host: str
     port: int = 389

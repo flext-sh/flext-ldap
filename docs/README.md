@@ -28,7 +28,7 @@ Comprehensive documentation for **FLEXT-LDAP**, a sophisticated enterprise LDAP 
 
 ### 📖 Comprehensive API Reference
 
-- **[Core API](api/core/README.md)** - FlextLdapApi comprehensive async interface with enterprise patterns
+- **[Core API](api/core/README.md)** - FlextLdapClient comprehensive async interface with enterprise patterns
 - **[Domain Objects](api/domain/README.md)** - Rich entities and value objects with Pydantic v2 validation
 - **[Infrastructure](api/infrastructure/README.md)** - LDAP operations and protocol adapters (2,370+ lines)
 - **[Configuration](api/configuration.md)** - Enterprise configuration patterns with Pydantic v2

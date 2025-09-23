@@ -25,7 +25,7 @@ from contextlib import asynccontextmanager
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
-    FlextLdapApi,
+    FlextLdapClient,
     FlextLdapConfigs,
     FlextLdapModels,
 )
@@ -38,16 +38,16 @@ async def ldap_session(
     server_url: str,
     bind_dn: str,
     password: str,
-) -> AsyncIterator[tuple[FlextLdapApi, str]]:
+) -> AsyncIterator[tuple[FlextLdapClient, str]]:
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
 
     Yields:
-        tuple[FlextLdapApi, str]: A tuple containing the LDAP API instance and session ID.
+        tuple[FlextLdapClient, str]: A tuple containing the LDAP API instance and session ID.
 
     """
-    api = FlextLdapApi()
+    api = FlextLdapClient()
     session_id = f"session_{id(api)}"
 
     def _raise_conn_error(message: str) -> None:

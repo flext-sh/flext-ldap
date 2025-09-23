@@ -2,7 +2,7 @@
 """Complete LDAP CRUD Operations Example using FLEXT-LDAP API.
 
 This example demonstrates COMPLETE LDAP functionality using flext-ldap:
-- CREATE users and groups with FlextLdapApi
+- CREATE users and groups with FlextLdapClient
 - READ/SEARCH operations
 - UPDATE user attributes
 - DELETE operations
@@ -20,7 +20,7 @@ from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
 from flext_ldap import (
-    FlextLdapApi,
+    FlextLdapClient,
     FlextLdapModels,
 )
 
@@ -35,8 +35,8 @@ ADMIN_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 ADMIN_PASSWORD: Final[str] = os.getenv("LDAP_ADMIN_PASSWORD") or ""
 
 
-async def create_sample_users(api: FlextLdapApi) -> None:
-    """Create sample users using FlextLdapApi."""
+async def create_sample_users(api: FlextLdapClient) -> None:
+    """Create sample users using FlextLdapClient."""
     logger.info("Creating sample users...")
 
     users_to_create = [
@@ -83,8 +83,8 @@ async def create_sample_users(api: FlextLdapApi) -> None:
             )
 
 
-async def search_users(api: FlextLdapApi) -> None:
-    """Search for users using FlextLdapApi."""
+async def search_users(api: FlextLdapClient) -> None:
+    """Search for users using FlextLdapClient."""
     logger.info("Searching for users...")
 
     search_request = FlextLdapModels.SearchRequest(
@@ -121,8 +121,8 @@ async def search_users(api: FlextLdapApi) -> None:
         logger.error(f"❌ Search failed: {result.error}")
 
 
-async def update_user(api: FlextLdapApi, user_dn: str, new_mail: str) -> None:
-    """Update user attributes using FlextLdapApi."""
+async def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None:
+    """Update user attributes using FlextLdapClient."""
     logger.info(f"Updating user {user_dn}...")
 
     async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
@@ -139,8 +139,8 @@ async def update_user(api: FlextLdapApi, user_dn: str, new_mail: str) -> None:
             logger.error("❌ modify_entry method not available")
 
 
-async def delete_user(api: FlextLdapApi, user_dn: str) -> None:
-    """Delete user using FlextLdapApi."""
+async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
+    """Delete user using FlextLdapClient."""
     logger.info(f"Deleting user {user_dn}...")
 
     async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
@@ -161,8 +161,8 @@ async def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
-    # Get FlextLdapApi instance via explicit factory to ensure proper typing
-    api = FlextLdapApi.create()
+    # Get FlextLdapClient instance via explicit factory to ensure proper typing
+    api = FlextLdapClient.create()
 
     try:
         # CREATE: Add sample users
