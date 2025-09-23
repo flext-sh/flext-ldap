@@ -310,12 +310,4 @@
   /home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py:110:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py:204:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py:405:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
-/home/marlonsc/flext/flext-ldap/tests/unit/test_services.py
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:144:19 - error: Arguments missing for parameters "mail", "description", "telephone_number", "user_password" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:166:19 - error: Arguments missing for parameters "description", "telephone_number", "user_password" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:294:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:313:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:585:26 - error: Arguments missing for parameters "description", "telephone_number", "user_password" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:619:17 - error: Argument missing for parameter "modified_at" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_services.py:741:21 - error: Arguments missing for parameters "modified_at", "sn", "given_name", "mail", "user_password" (reportCallIssue)
-165 errors, 7 warnings, 0 informations
+158 errors, 7 warnings, 0 informations

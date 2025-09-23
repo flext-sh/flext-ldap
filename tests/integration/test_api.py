@@ -22,7 +22,6 @@ from flext_ldap import (
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldap.models import FlextLdapTypes
 
 
 # Helper function to replace create_ldap_attributes
@@ -126,14 +125,14 @@ class TestLdapClientRealOperations:
         ou_attributes = create_ldap_attributes(ou_attrs_raw)
         _ = await connected_ldap_client.add(
             ou_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes),
+            ou_attributes,
         )
         # Ignore if OU already exists (error code 68)
 
         # ADD: Create user entry
         add_result = await connected_ldap_client.add(
             test_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", user_attributes),
+            user_attributes,
         )
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
@@ -238,7 +237,7 @@ class TestLdapServiceRealOperations:
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         await client.add(
             ou_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_2),
+            ou_attributes_2,
         )  # Ignore if exists
 
         # Test user creation
@@ -252,6 +251,9 @@ class TestLdapServiceRealOperations:
             description="Test user for real operations",
             telephone_number="+1234567890",
             user_password="testpassword123",
+            department="Engineering",
+            title="Software Engineer",
+            organization="Test Organization",
         )
 
         # CREATE: Real user creation
@@ -319,7 +321,7 @@ class TestLdapServiceRealOperations:
         update_attributes = create_ldap_attributes(update_attrs_raw)
         update_result = await client.update_user(
             user_request.dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", update_attributes),
+            update_attributes,
         )
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
@@ -407,7 +409,7 @@ class TestLdapServiceRealOperations:
             ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
             await client.add(
                 ou_dn,
-                cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_3),
+                ou_attributes_3,
             )  # Ignore if exists
 
         # Create test user for group membership
@@ -423,7 +425,7 @@ class TestLdapServiceRealOperations:
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
         await client.add(
             user_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", user_attributes_4),
+            user_attributes_4,
         )
 
         # Test group creation
@@ -470,7 +472,7 @@ class TestLdapServiceRealOperations:
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
         update_result = await client.update_group(
             group_request.dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", update_attributes_5),
+            cast("dict[str, object]", update_attributes_5),
         )
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
@@ -488,7 +490,7 @@ class TestLdapServiceRealOperations:
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
         await client.add(
             user2_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", user2_attributes_6),
+            user2_attributes_6,
         )
 
         # Add member
@@ -602,7 +604,7 @@ class TestLdapValidationRealOperations:
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
         await client.add(
             ou_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", ou_attributes_7),
+            ou_attributes_7,
         )
 
         # Test user with valid business rules
@@ -742,7 +744,7 @@ class TestLdapErrorHandlingReal:
 
         add_result = await connected_ldap_client.add(
             invalid_dn,
-            cast("FlextLdapTypes.Entry.AttributeDict", invalid_attributes),
+            invalid_attributes,
         )
         # Should fail with appropriate error
         assert not add_result.is_success

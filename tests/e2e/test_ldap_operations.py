@@ -39,7 +39,7 @@ class TestLdapE2EOperations:
 
         # Test connection creation (will fail without real server)
         connection_result = await api.connect(
-            uri="ldap://localhost:3389",
+            server_uri="ldap://localhost:3389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
         )
@@ -122,7 +122,7 @@ class TestLdapE2EOperations:
 
         # Test connection to non-existent server
         result = await api.connect(
-            uri="ldap://127.0.0.1:9999",
+            server_uri="ldap://127.0.0.1:9999",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
         )
@@ -162,7 +162,7 @@ class TestLdapE2EOperations:
 
         for uri, _expected_error_type in scenarios:
             result = await api.connect(
-                uri=uri,
+                server_uri=uri,
                 bind_dn="cn=test",
                 password=os.getenv("LDAP_TEST_PASSWORD", "test"),
             )

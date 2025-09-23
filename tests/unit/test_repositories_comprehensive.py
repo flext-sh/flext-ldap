@@ -176,7 +176,7 @@ class TestUserRepository:
         # Test search method
         result = await user_repo.search(
             base_dn="ou=users,dc=example,dc=com",
-            filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             page_size=None,
             paged_cookie=None,
         )
@@ -231,6 +231,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is not None
         else:
+            assert result.error is not None
             assert "Find failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -255,6 +256,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is not None
         else:
+            assert result.error is not None
             assert "save failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -271,6 +273,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "delete failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -294,6 +297,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "update failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -310,6 +314,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is not None
         else:
+            assert result.error is not None
             assert "get failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -320,7 +325,7 @@ class TestUserRepository:
         # Test find_all method
         result = await user_repo.search(
             base_dn="ou=users,dc=example,dc=com",
-            filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             page_size=None,
             paged_cookie=None,
         )
@@ -329,6 +334,7 @@ class TestUserRepository:
         if result.is_success:
             assert isinstance(result.value, list)
         else:
+            assert result.error is not None
             assert "find all failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -353,6 +359,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is not None
         else:
+            assert result.error is not None
             assert "save failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -369,6 +376,7 @@ class TestUserRepository:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "delete failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -386,6 +394,7 @@ class TestUserRepository:
             assert result.value is not None
             assert result.value.uid == "testuser"
         else:
+            assert result.error is not None
             assert "find user failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -402,6 +411,7 @@ class TestUserRepository:
         if result.is_success:
             assert isinstance(result.value, list)
         else:
+            assert result.error is not None
             assert "find users failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -418,6 +428,7 @@ class TestUserRepository:
         if result.is_success:
             assert isinstance(result.value, list)
         else:
+            assert result.error is not None
             assert "find users failed" in result.error.lower()
 
 
@@ -439,6 +450,7 @@ class TestGroupRepository:
             assert result.value is not None
             assert result.value.dn == "cn=testgroup,ou=groups,dc=example,dc=com"
         else:
+            assert result.error is not None
             assert "find group failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -456,6 +468,7 @@ class TestGroupRepository:
             assert result.value is not None
             assert result.value.cn == "testgroup"
         else:
+            assert result.error is not None
             assert "find group failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -474,6 +487,7 @@ class TestGroupRepository:
         if result.is_success:
             assert isinstance(result.value, list)
         else:
+            assert result.error is not None
             assert "get members failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -493,6 +507,7 @@ class TestGroupRepository:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "add member failed" in result.error.lower()
 
 
@@ -509,7 +524,7 @@ class TestRepositoryIntegration:
 
         result = await user_repo.search(
             base_dn="dc=example,dc=com",
-            filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             page_size=None,
             paged_cookie=None,
         )
@@ -518,6 +533,7 @@ class TestRepositoryIntegration:
         if result.is_success:
             assert isinstance(result.value, list)
         else:
+            assert result.error is not None
             assert "search failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -543,6 +559,7 @@ class TestRepositoryIntegration:
         if result.is_success:
             assert result.value is not None
         else:
+            assert result.error is not None
             assert "save failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -560,6 +577,7 @@ class TestRepositoryIntegration:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "delete failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -577,6 +595,7 @@ class TestRepositoryIntegration:
         if result.is_success:
             assert isinstance(result.value, bool)
         else:
+            assert result.error is not None
             assert "exists failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -599,18 +618,14 @@ class TestRepositoryIntegration:
         if result.is_success:
             assert result.value is True
         else:
+            assert result.error is not None
             assert "update failed" in result.error.lower()
 
-    @pytest.mark.asyncio
     async def test_repository_cross_functionality(
         self, mock_client: FlextLdapClient
     ) -> None:
         """Test cross-repository functionality."""
         repos = FlextLdapRepositories()
-
-        # Test multiple repositories
-        repo1 = repos.Repository(mock_client)
-        repo2 = repos.Repository(mock_client)
 
         # Test user repository
         users1 = repos.UserRepository(mock_client)
@@ -621,9 +636,15 @@ class TestRepositoryIntegration:
         groups2 = repos.GroupRepository(mock_client)
 
         # Verify all repositories are properly instantiated
-        assert repo1 is not None
-        assert repo2 is not None
         assert users1 is not None
         assert users2 is not None
         assert groups1 is not None
         assert groups2 is not None
+
+        # Test that they are separate instances
+        assert users1 is not users2
+        assert groups1 is not groups2
+
+        # Test that they share same client
+        assert users1._client is mock_client
+        assert groups1._client is mock_client

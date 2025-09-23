@@ -7,25 +7,21 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from __future__ import annotations
+from collections.abc import Mapping
+from typing import cast
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from ldap3.abstract.entry import Entry
-
-from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, MODIFY_REPLACE, SUBTREE
+from ldap3 import BASE, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, SUBTREE
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldap.ldap3_types import (
+    Ldap3Attributes,
+    Ldap3Connection,
+    Ldap3Entry,
+    Ldap3ModifyChanges,
+)
 from flext_ldap.models import FlextLdapModels
-
-# from flext_ldap.protocols import FlextLdapProtocols  # Removed - consolidated
-# from flext_ldap.typings import FlextLdapTypes  # Removed - consolidated
-
-# LDAPSearchStrategies ELIMINATED - consolidated into FlextLdapClient nested classes
-# Following flext-core consolidation pattern: ALL functionality within single class
 
 
 class FlextLdapClient:
@@ -39,11 +35,14 @@ class FlextLdapClient:
     automatic connection management and proper error handling.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: FlextLdapModels.ConnectionConfig | None = None) -> None:
         """Initialize FlextLdapClient."""
-        self._connection: Connection | None = None
+        self._connection: Ldap3Connection | None = None
         self._server: Server | None = None
         self._logger = FlextLogger(__name__)
+        self._config = config
+        self._container_manager = None  # Placeholder for container management
+        self._session_id: str | None = None
 
     async def connect(
         self, server_uri: str, bind_dn: str, password: str
@@ -62,8 +61,9 @@ class FlextLdapClient:
         try:
             self._logger.info(f"Connecting to LDAP server: {server_uri}")
             self._server = Server(server_uri)
-            self._connection = Connection(
-                self._server, bind_dn, password, auto_bind=True
+            self._connection = cast(
+                "Ldap3Connection",
+                Connection(self._server, bind_dn, password, auto_bind=True),
             )
 
             if not self._connection.bound:
@@ -94,8 +94,9 @@ class FlextLdapClient:
             # Create new connection with provided credentials
             if not self._server:
                 return FlextResult[bool].fail("No server connection established")
-            self._connection = Connection(
-                self._server, bind_dn, password, auto_bind=True
+            self._connection = cast(
+                "Ldap3Connection",
+                Connection(self._server, bind_dn, password, auto_bind=True),
             )
 
             if not self._connection.bound:
@@ -150,7 +151,7 @@ class FlextLdapClient:
             # Perform a simple search to test the connection
             if self._connection:
                 self._connection.search(
-                    "", "(objectClass=*)", SUBTREE, attributes=["objectClass"]
+                    "", "(objectClass=*)", "SUBTREE", attributes=["objectClass"]
                 )
             return FlextResult[bool].ok(True)
         except Exception as e:
@@ -180,7 +181,7 @@ class FlextLdapClient:
             search_base = "ou=users,dc=example,dc=com"  # Default base
 
             self._connection.search(
-                search_base, search_filter, SUBTREE, attributes=ALL_ATTRIBUTES
+                search_base, search_filter, "SUBTREE", attributes=None
             )
 
             if not self._connection.entries:
@@ -203,7 +204,7 @@ class FlextLdapClient:
                     "Authentication failed"
                 )
 
-            test_connection.unbind()
+            test_connection.unbind()  # type: ignore[no-untyped-call]
 
             # Create user object from LDAP entry
             user = self._create_user_from_entry(user_entry)
@@ -234,19 +235,19 @@ class FlextLdapClient:
                 )
 
             # Convert scope string to ldap3 scope
-            scope_map = {
-                "base": BASE,
-                "onelevel": LEVEL,
-                "subtree": SUBTREE,
+            scope_map: dict[str, str] = {
+                "base": "BASE",
+                "onelevel": "LEVEL",
+                "subtree": "SUBTREE",
             }
-            ldap3_scope = scope_map.get(request.scope, SUBTREE)
+            ldap3_scope = scope_map.get(request.scope, "SUBTREE")
 
             # Perform search
             success = self._connection.search(
                 request.base_dn,
                 request.filter_str,
                 ldap3_scope,
-                attributes=request.attributes or ALL_ATTRIBUTES,
+                attributes=request.attributes,
             )
 
             if not success:
@@ -311,9 +312,7 @@ class FlextLdapClient:
                 search_filter = "(objectClass=inetOrgPerson)"
 
             # Perform search
-            self._connection.search(
-                base_dn, search_filter, SUBTREE, attributes=ALL_ATTRIBUTES
-            )
+            self._connection.search(base_dn, search_filter, SUBTREE, attributes=None)
 
             users = []
             for entry in self._connection.entries:
@@ -354,9 +353,7 @@ class FlextLdapClient:
                 search_filter = "(objectClass=groupOfNames)"
 
             # Perform search
-            self._connection.search(
-                base_dn, search_filter, SUBTREE, attributes=ALL_ATTRIBUTES
-            )
+            self._connection.search(base_dn, search_filter, SUBTREE, attributes=None)
 
             groups = []
             for entry in self._connection.entries:
@@ -388,9 +385,7 @@ class FlextLdapClient:
                 )
 
             # Search for the specific user by DN
-            self._connection.search(
-                dn, "(objectClass=*)", BASE, attributes=ALL_ATTRIBUTES
-            )
+            self._connection.search(dn, "(objectClass=*)", BASE, attributes=None)
 
             if not self._connection.entries:
                 return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
@@ -421,9 +416,7 @@ class FlextLdapClient:
                 )
 
             # Search for the specific group by DN
-            self._connection.search(
-                dn, "(objectClass=*)", BASE, attributes=ALL_ATTRIBUTES
-            )
+            self._connection.search(dn, "(objectClass=*)", BASE, attributes=None)
 
             if not self._connection.entries:
                 return FlextResult[FlextLdapModels.Group | None].ok(None)
@@ -459,7 +452,7 @@ class FlextLdapClient:
             user_dn = request.dn
 
             # Build LDAP attributes
-            ldap3_attributes = {
+            ldap3_attributes: Ldap3Attributes = {
                 "objectClass": ["inetOrgPerson", "organizationalPerson", "person"],
                 "uid": request.uid,
                 "cn": request.cn,
@@ -527,7 +520,7 @@ class FlextLdapClient:
             group_dn = request.dn
 
             # Build LDAP attributes
-            ldap3_attributes = {
+            ldap3_attributes: Ldap3Attributes = {
                 "objectClass": ["groupOfNames"],
                 "cn": request.cn,
                 "member": "uid=placeholder,ou=users,dc=example,dc=com",  # Placeholder member
@@ -558,6 +551,345 @@ class FlextLdapClient:
             self._logger.exception("Create group failed")
             return FlextResult[FlextLdapModels.Group].fail(f"Create group failed: {e}")
 
+    async def close_connection(self) -> FlextResult[None]:
+        """Close LDAP connection.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        return await self.unbind()
+
+    async def update_group(
+        self, dn: str, attributes: dict[str, object]
+    ) -> FlextResult[bool]:
+        """Update group attributes (alias for update_group_attributes).
+
+        Args:
+            dn: Group Distinguished Name.
+            attributes: Attributes to update.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        return await self.update_group_attributes(dn, attributes)
+
+    async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Remove member from group.
+
+        Args:
+            group_dn: Group Distinguished Name.
+            member_dn: Member Distinguished Name to remove.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[None].fail("No connection established")
+
+            changes: dict[str, list[tuple[str, list[str]]]] = {
+                "member": [(MODIFY_DELETE, [member_dn])]
+            }
+            success = self._connection.modify(group_dn, changes)
+
+            if not success:
+                return FlextResult[None].fail(
+                    f"Failed to remove member: {self._connection.last_error}"
+                )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            self._logger.exception("Remove member failed")
+            return FlextResult[None].fail(f"Remove member failed: {e}")
+
+    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get list of group members.
+
+        Args:
+            group_dn: Group Distinguished Name.
+
+        Returns:
+            FlextResult containing list of member DNs or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[list[str]].fail("No connection established")
+
+            # Search for the group
+            self._connection.search(
+                group_dn, "(objectClass=*)", "BASE", attributes=["member"]
+            )
+
+            if not self._connection.entries:
+                return FlextResult[list[str]].fail("Group not found")
+
+            entry = self._connection.entries[0]
+            members = []
+
+            if hasattr(entry, "member"):
+                member_attr = entry.member
+                if hasattr(member_attr, "value"):
+                    if isinstance(member_attr.value, list):
+                        members = [str(m) for m in member_attr.value]
+                    else:
+                        members = [str(member_attr.value)]
+
+            return FlextResult[list[str]].ok(members)
+
+        except Exception as e:
+            self._logger.exception("Get members failed")
+            return FlextResult[list[str]].fail(f"Get members failed: {e}")
+
+    def validate_dn(self, dn: str) -> FlextResult[bool]:
+        """Validate Distinguished Name format.
+
+        Args:
+            dn: Distinguished Name to validate.
+
+        Returns:
+            FlextResult indicating validation success or error.
+
+        """
+        try:
+            if not dn or not isinstance(dn, str):
+                return FlextResult[bool].fail("DN must be a non-empty string")
+
+            # Basic DN validation - check for common patterns
+            if not dn.strip():
+                return FlextResult[bool].fail("DN cannot be empty or whitespace")
+
+            # Check for basic DN structure (attribute=value,attribute=value)
+            if "=" not in dn:
+                return FlextResult[bool].fail("DN must contain attribute=value pairs")
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"DN validation failed: {e}")
+
+    def validate_filter(self, filter_str: str) -> FlextResult[bool]:
+        """Validate LDAP search filter format.
+
+        Args:
+            filter_str: LDAP filter string to validate.
+
+        Returns:
+            FlextResult indicating validation success or error.
+
+        """
+        try:
+            if not filter_str or not isinstance(filter_str, str):
+                return FlextResult[bool].fail("Filter must be a non-empty string")
+
+            # Basic filter validation
+            if not filter_str.strip():
+                return FlextResult[bool].fail("Filter cannot be empty or whitespace")
+
+            # Check for balanced parentheses
+            if filter_str.count("(") != filter_str.count(")"):
+                return FlextResult[bool].fail("Filter has unbalanced parentheses")
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Filter validation failed: {e}")
+
+    def validate_attributes(self, attributes: list[str]) -> FlextResult[bool]:
+        """Validate LDAP attribute names.
+
+        Args:
+            attributes: List of attribute names to validate.
+
+        Returns:
+            FlextResult indicating validation success or error.
+
+        """
+        try:
+            for attr in attributes:
+                if not isinstance(attr, str) or not attr.strip():
+                    return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Attribute validation failed: {e}")
+
+    def validate_object_classes(self, object_classes: list[str]) -> FlextResult[bool]:
+        """Validate LDAP object class names.
+
+        Args:
+            object_classes: List of object class names to validate.
+
+        Returns:
+            FlextResult indicating validation success or error.
+
+        """
+        try:
+            for oc in object_classes:
+                if not isinstance(oc, str) or not oc.strip():
+                    return FlextResult[bool].fail(f"Invalid object class name: {oc}")
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Object class validation failed: {e}")
+
+    async def user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists in LDAP directory.
+
+        Args:
+            dn: User Distinguished Name.
+
+        Returns:
+            FlextResult containing True if user exists, False otherwise.
+
+        """
+        try:
+            result = await self.get_user(dn)
+            if result.is_success:
+                exists = result.value is not None
+                return FlextResult[bool].ok(exists)
+            return FlextResult[bool].ok(False)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"User existence check failed: {e}")
+
+    async def group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists in LDAP directory.
+
+        Args:
+            dn: Group Distinguished Name.
+
+        Returns:
+            FlextResult containing True if group exists, False otherwise.
+
+        """
+        try:
+            result = await self.get_group(dn)
+            if result.is_success:
+                exists = result.value is not None
+                return FlextResult[bool].ok(exists)
+            return FlextResult[bool].ok(False)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Group existence check failed: {e}")
+
+    async def add_member_to_group(
+        self, group_dn: str, member_dn: str
+    ) -> FlextResult[None]:
+        """Add member to group (alias for add_member).
+
+        Args:
+            group_dn: Group Distinguished Name.
+            member_dn: Member Distinguished Name to add.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        return await self.add_member(group_dn, member_dn)
+
+    async def remove_member_from_group(
+        self, group_dn: str, member_dn: str
+    ) -> FlextResult[None]:
+        """Remove member from group (alias for remove_member).
+
+        Args:
+            group_dn: Group Distinguished Name.
+            member_dn: Member Distinguished Name to remove.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        return await self.remove_member(group_dn, member_dn)
+
+    async def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get list of group members (alias for get_members).
+
+        Args:
+            group_dn: Group Distinguished Name.
+
+        Returns:
+            FlextResult containing list of member DNs or error.
+
+        """
+        return await self.get_members(group_dn)
+
+    async def search(
+        self,
+        base_dn: str,
+        filter_str: str,
+        attributes: list[str] | None = None,
+        page_size: int = 0,
+        paged_cookie: str | None = None,
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Perform LDAP search operation.
+
+        Args:
+            base_dn: Base DN for search.
+            filter_str: LDAP search filter.
+            attributes: List of attributes to retrieve.
+            page_size: Page size for paged search.
+            paged_cookie: Cookie for paged search.
+
+        Returns:
+            FlextResult containing search results or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[list[dict[str, object]]].fail(
+                    "No connection established"
+                )
+
+            # Perform search
+            success = self._connection.search(
+                base_dn,
+                filter_str,
+                "SUBTREE",
+                attributes=attributes,
+                paged_size=page_size if page_size > 0 else None,
+                paged_cookie=paged_cookie,
+            )
+
+            if not success:
+                return FlextResult[list[dict[str, object]]].fail(
+                    f"Search failed: {self._connection.last_error}"
+                )
+
+            # Convert entries to our format
+            results: list[dict[str, object]] = []
+            for entry in self._connection.entries:
+                entry_dict: dict[str, object] = {"dn": str(entry.entry_dn)}
+                for attr_name in entry.entry_attributes:
+                    attr_value = entry[attr_name].value
+                    if isinstance(attr_value, list) and len(attr_value) == 1:
+                        entry_dict[attr_name] = attr_value[0]
+                    else:
+                        entry_dict[attr_name] = attr_value
+                results.append(entry_dict)
+
+            return FlextResult[list[dict[str, object]]].ok(results)
+
+        except Exception as e:
+            self._logger.exception("Search failed")
+            return FlextResult[list[dict[str, object]]].fail(f"Search failed: {e}")
+
+    async def disconnect(self) -> FlextResult[None]:
+        """Disconnect from LDAP server (alias for unbind).
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        return await self.unbind()
+
     async def update_user_attributes(
         self, dn: str, attributes: dict[str, object]
     ) -> FlextResult[bool]:
@@ -576,7 +908,7 @@ class FlextLdapClient:
                 return FlextResult[bool].fail("No connection established")
 
             # Convert attributes to LDAP modification format
-            ldap3_changes = {}
+            ldap3_changes: Ldap3ModifyChanges = {}
             for attr_name, attr_value in attributes.items():
                 ldap3_changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
 
@@ -612,7 +944,7 @@ class FlextLdapClient:
                 return FlextResult[bool].fail("No connection established")
 
             # Convert attributes to LDAP modification format
-            changes = {}
+            changes: Ldap3ModifyChanges = {}
             for attr_name, attr_value in attributes.items():
                 changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
 
@@ -684,7 +1016,171 @@ class FlextLdapClient:
             self._logger.exception("Delete group failed")
             return FlextResult[None].fail(f"Delete group failed: {e}")
 
-    def _create_user_from_entry(self, entry: Entry) -> FlextLdapModels.LdapUser:
+    async def add(
+        self,
+        dn: str,
+        attributes: dict[str, str | list[str]] | None = None,
+    ) -> FlextResult[None]:
+        """Add entry to LDAP directory (low-level operation).
+
+        Args:
+            dn: Distinguished Name of entry to add.
+            attributes: LDAP attributes dictionary.
+
+        Returns:
+            FlextResult indicating add success or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[None].fail("No connection established")
+
+            success = self._connection.add(dn, attributes=attributes)
+
+            if not success:
+                return FlextResult[None].fail(
+                    f"Failed to add entry: {self._connection.last_error}"
+                )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            self._logger.exception("Add entry failed")
+            return FlextResult[None].fail(f"Add entry failed: {e}")
+
+    async def modify(
+        self,
+        dn: str,
+        changes: dict[str, list[tuple[str, list[str]]]],
+    ) -> FlextResult[None]:
+        """Modify entry in LDAP directory (low-level operation).
+
+        Args:
+            dn: Distinguished Name of entry to modify.
+            changes: Dictionary of attribute changes.
+
+        Returns:
+            FlextResult indicating modify success or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[None].fail("No connection established")
+
+            success = self._connection.modify(dn, changes)
+
+            if not success:
+                return FlextResult[None].fail(
+                    f"Failed to modify entry: {self._connection.last_error}"
+                )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            self._logger.exception("Modify entry failed")
+            return FlextResult[None].fail(f"Modify entry failed: {e}")
+
+    async def delete(self, dn: str) -> FlextResult[None]:
+        """Delete entry from LDAP directory (low-level operation).
+
+        Args:
+            dn: Distinguished Name of entry to delete.
+
+        Returns:
+            FlextResult indicating delete success or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[None].fail("No connection established")
+
+            success = self._connection.delete(dn)
+
+            if not success:
+                return FlextResult[None].fail(
+                    f"Failed to delete entry: {self._connection.last_error}"
+                )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            self._logger.exception("Delete entry failed")
+            return FlextResult[None].fail(f"Delete entry failed: {e}")
+
+    async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Add member to group.
+
+        Args:
+            group_dn: Group Distinguished Name.
+            member_dn: Member Distinguished Name to add.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        try:
+            if not self._connection:
+                return FlextResult[None].fail("No connection established")
+
+            changes: dict[str, list[tuple[str, list[str]]]] = {
+                "member": [(MODIFY_ADD, [member_dn])]
+            }
+            success = self._connection.modify(group_dn, changes)
+
+            if not success:
+                return FlextResult[None].fail(
+                    f"Failed to add member: {self._connection.last_error}"
+                )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            self._logger.exception("Add member failed")
+            return FlextResult[None].fail(f"Add member failed: {e}")
+
+    @property
+    def session_id(self) -> str | None:
+        """Get current session ID."""
+        return self._session_id
+
+    @session_id.setter
+    def session_id(self, value: str | None) -> None:
+        """Set session ID."""
+        self._session_id = value
+
+    async def update_user(
+        self,
+        dn: str,
+        attributes: Mapping[str, object] | dict[str, object],
+    ) -> FlextResult[None]:
+        """Update user attributes (alias for modify).
+
+        Args:
+            dn: User Distinguished Name.
+            attributes: Attributes to update.
+
+        Returns:
+            FlextResult indicating success or error.
+
+        """
+        # Convert attributes to modify format
+        changes: dict[str, list[tuple[str, list[str]]]] = {}
+        for attr_name, attr_value in attributes.items():
+            if isinstance(attr_value, (str, list)):
+                changes[attr_name] = [
+                    (
+                        MODIFY_REPLACE,
+                        [str(attr_value)]
+                        if isinstance(attr_value, str)
+                        else [str(v) for v in attr_value],
+                    )
+                ]
+            else:
+                changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
+
+        return await self.modify(dn, changes)
+
+    def _create_user_from_entry(self, entry: Ldap3Entry) -> FlextLdapModels.LdapUser:
         """Create LdapUser from LDAP entry.
 
         Args:
@@ -694,43 +1190,37 @@ class FlextLdapClient:
             LdapUser object.
 
         """
+
+        def get_attribute_value(attr_name: str) -> str | None:
+            """Safely get attribute value from entry."""
+            try:
+                if hasattr(entry, attr_name):
+                    attr_obj = getattr(entry, attr_name)
+                    if hasattr(attr_obj, "value") and attr_obj.value:
+                        return str(attr_obj.value)
+                return None
+            except (AttributeError, TypeError):
+                return None
+
         return FlextLdapModels.LdapUser(
             dn=str(entry.entry_dn),
-            cn=str(entry.cn.value) if hasattr(entry, "cn") and entry.cn.value else "",
-            uid=str(entry.uid.value)
-            if hasattr(entry, "uid") and entry.uid.value
-            else "",
-            sn=str(entry.sn.value) if hasattr(entry, "sn") and entry.sn.value else "",
-            given_name=str(entry.givenName.value)
-            if hasattr(entry, "givenName") and entry.givenName.value
-            else None,
-            mail=str(entry.mail.value)
-            if hasattr(entry, "mail") and entry.mail.value
-            else None,
-            telephone_number=str(entry.telephoneNumber.value)
-            if hasattr(entry, "telephoneNumber") and entry.telephoneNumber.value
-            else None,
-            mobile=str(entry.mobile.value)
-            if hasattr(entry, "mobile") and entry.mobile.value
-            else None,
-            department=str(entry.departmentNumber.value)
-            if hasattr(entry, "departmentNumber") and entry.departmentNumber.value
-            else None,
-            title=str(entry.title.value)
-            if hasattr(entry, "title") and entry.title.value
-            else None,
-            organization=str(entry.o.value)
-            if hasattr(entry, "o") and entry.o.value
-            else None,
-            organizational_unit=str(entry.ou.value)
-            if hasattr(entry, "ou") and entry.ou.value
-            else None,
+            cn=get_attribute_value("cn") or "",
+            uid=get_attribute_value("uid") or "",
+            sn=get_attribute_value("sn") or "",
+            given_name=get_attribute_value("givenName"),
+            mail=get_attribute_value("mail"),
+            telephone_number=get_attribute_value("telephoneNumber"),
+            mobile=get_attribute_value("mobile"),
+            department=get_attribute_value("departmentNumber"),
+            title=get_attribute_value("title"),
+            organization=get_attribute_value("o"),
+            organizational_unit=get_attribute_value("ou"),
             user_password=None,  # Never expose password
             created_timestamp=None,  # Not available in basic LDAP
             modified_timestamp=None,  # Not available in basic LDAP
         )
 
-    def _create_group_from_entry(self, entry: Entry) -> FlextLdapModels.Group:
+    def _create_group_from_entry(self, entry: Ldap3Entry) -> FlextLdapModels.Group:
         """Create Group from LDAP entry.
 
         Args:
@@ -740,23 +1230,47 @@ class FlextLdapClient:
             Group object.
 
         """
-        gid_number = None
-        if hasattr(entry, "gidNumber") and entry.gidNumber.value:
+
+        def get_attribute_value(attr_name: str) -> str | None:
+            """Safely get attribute value from entry."""
             try:
-                gid_number = int(entry.gidNumber.value)
-            except (ValueError, TypeError):
-                gid_number = None
+                if hasattr(entry, attr_name):
+                    attr_obj = getattr(entry, attr_name)
+                    if hasattr(attr_obj, "value") and attr_obj.value:
+                        return str(attr_obj.value)
+                return None
+            except (AttributeError, TypeError):
+                return None
+
+        def get_int_attribute_value(attr_name: str) -> int | None:
+            """Safely get integer attribute value from entry."""
+            try:
+                if hasattr(entry, attr_name):
+                    attr_obj = getattr(entry, attr_name)
+                    if hasattr(attr_obj, "value") and attr_obj.value:
+                        return int(attr_obj.value)
+                return None
+            except (AttributeError, TypeError, ValueError):
+                return None
 
         return FlextLdapModels.Group(
             dn=str(entry.entry_dn),
-            cn=str(entry.cn.value) if hasattr(entry, "cn") and entry.cn.value else "",
-            gid_number=gid_number,
-            description=str(entry.description.value)
-            if hasattr(entry, "description") and entry.description.value
-            else None,
+            cn=get_attribute_value("cn") or "",
+            gid_number=get_int_attribute_value("gidNumber"),
+            description=get_attribute_value("description"),
             created_timestamp=None,  # Not available in basic LDAP
             modified_timestamp=None,  # Not available in basic LDAP
         )
+
+
+__all__ = [
+    "FlextLdapClient",
+]
+
+
+__all__ = [
+    "FlextLdapClient",
+]
 
 
 __all__ = [

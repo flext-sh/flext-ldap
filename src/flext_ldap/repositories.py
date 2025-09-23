@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
 
 from pydantic import SecretStr
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
+
+T = TypeVar("T", FlextLdapModels.LdapUser, FlextLdapModels.Group)
 
 
 class FlextLdapRepositories:
@@ -25,7 +28,7 @@ class FlextLdapRepositories:
     following FLEXT one-class-per-module standards.
     """
 
-    class Repository(ABC):
+    class Repository(ABC, Generic[T]):
         """Base repository interface for LDAP operations."""
 
         def __init__(self, client: object) -> None:
@@ -34,7 +37,7 @@ class FlextLdapRepositories:
             self._logger = FlextLogger(__name__)
 
         @abstractmethod
-        async def find_by_dn(self, dn: str) -> FlextResult[object]:
+        async def find_by_dn(self, dn: str) -> FlextResult[T]:
             """Find entry by Distinguished Name."""
 
         @abstractmethod
@@ -48,8 +51,8 @@ class FlextLdapRepositories:
             """Search LDAP entries."""
 
         @abstractmethod
-        async def save(self, entry: object) -> FlextResult[object]:
-            """Save LDAP entry."""
+        async def save(self, entry: T) -> FlextResult[T]:
+            """Save entry to LDAP."""
 
         @abstractmethod
         async def delete(self, dn: str) -> FlextResult[bool]:
@@ -65,10 +68,10 @@ class FlextLdapRepositories:
         ) -> FlextResult[bool]:
             """Update entry attributes."""
 
-    class UserRepository(Repository):
+    class UserRepository(Repository[FlextLdapModels.LdapUser]):
         """Repository for LDAP user operations."""
 
-        async def find_by_dn(self, dn: str) -> FlextResult[object]:
+        async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser]:
             """Find user by Distinguished Name."""
             try:
                 # Mock implementation - would use actual LDAP client
@@ -89,9 +92,9 @@ class FlextLdapRepositories:
                     created_timestamp=None,
                     modified_timestamp=None,
                 )
-                return FlextResult[object].ok(user)
+                return FlextResult[FlextLdapModels.LdapUser].ok(user)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdapModels.LdapUser].fail(str(e))
 
         async def search(
             self,
@@ -111,12 +114,14 @@ class FlextLdapRepositories:
             except Exception as e:
                 return FlextResult[list[dict[str, object]]].fail(str(e))
 
-        async def save(self, entry: object) -> FlextResult[object]:
-            """Save user."""
+        async def save(
+            self, entry: FlextLdapModels.LdapUser
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
+            """Save user entry."""
             try:
-                return FlextResult[object].ok(entry)
+                return FlextResult[FlextLdapModels.LdapUser].ok(entry)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdapModels.LdapUser].fail(str(e))
 
         async def delete(self, dn: str) -> FlextResult[bool]:
             """Delete user."""
@@ -190,23 +195,23 @@ class FlextLdapRepositories:
             except Exception as e:
                 return FlextResult[list[FlextLdapModels.LdapUser]].fail(str(e))
 
-    class GroupRepository(Repository):
+    class GroupRepository(Repository[FlextLdapModels.Group]):
         """Repository for LDAP group operations."""
 
-        async def find_by_dn(self, dn: str) -> FlextResult[object]:
+        async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.Group]:
             """Find group by Distinguished Name."""
             try:
                 group = FlextLdapModels.Group(
                     dn=dn,
                     cn="Test Group",
                     gid_number=1000,
-                    description="Test group for LDAP operations",
+                    description="Test group description",
                     created_timestamp=None,
                     modified_timestamp=None,
                 )
-                return FlextResult[object].ok(group)
+                return FlextResult[FlextLdapModels.Group].ok(group)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdapModels.Group].fail(str(e))
 
         async def search(
             self,
@@ -226,12 +231,14 @@ class FlextLdapRepositories:
             except Exception as e:
                 return FlextResult[list[dict[str, object]]].fail(str(e))
 
-        async def save(self, entry: object) -> FlextResult[object]:
-            """Save group."""
+        async def save(
+            self, entry: FlextLdapModels.Group
+        ) -> FlextResult[FlextLdapModels.Group]:
+            """Save group entry."""
             try:
-                return FlextResult[object].ok(entry)
+                return FlextResult[FlextLdapModels.Group].ok(entry)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdapModels.Group].fail(str(e))
 
         async def delete(self, dn: str) -> FlextResult[bool]:
             """Delete group."""

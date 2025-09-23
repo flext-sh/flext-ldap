@@ -581,7 +581,7 @@ class FlextLdapModels(FlextModels):
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=person)(uid={uid}))",
+                    "filter": f"(&(objectClass=person)(uid={uid}))",
                     "attributes": attributes or ["uid", "cn", "mail", "sn"],
                     "page_size": None,
                     "paged_cookie": None,
@@ -599,7 +599,7 @@ class FlextLdapModels(FlextModels):
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
+                    "filter": f"(&(objectClass=groupOfNames)(cn={cn}))",
                     "attributes": attributes or ["cn", "member", "description"],
                     "page_size": None,
                     "paged_cookie": None,
@@ -641,6 +641,7 @@ class FlextLdapModels(FlextModels):
             if info.data and "entries" in info.data:
                 entries = info.data["entries"]
                 if isinstance(entries, list):
+                    # Type-safe length calculation
                     return len(entries)
                 return 0
             return v

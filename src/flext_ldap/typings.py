@@ -23,89 +23,89 @@ class FlextLdapTypes:
         """LDAP entry-related type definitions."""
 
         # Basic LDAP attribute value types
-        type AttributeValue = str | list[str] | bytes | list[bytes]
+        AttributeValue = str | list[str] | bytes | list[bytes]
 
         # LDAP attributes dictionary
-        type AttributeDict = dict[str, AttributeValue]
+        AttributeDict = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
 
         # LDAP entry data structure
-        type Data = dict[str, AttributeValue]
+        Data = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
 
         # Distinguished Name type
-        type DN = str
+        DN = str
 
         # Object classes list
-        type ObjectClasses = list[str]
+        ObjectClasses = list[str]
 
     class Search:
         """LDAP search-related type definitions."""
 
         # Search result entry
-        type ResultEntry = dict[str, object]
+        ResultEntry = dict[str, object]
 
         # Search result collection
-        type Result = list[ResultEntry]
+        Result = list["FlextLdapTypes.Search.ResultEntry"]
 
         # Search filter string
-        type Filter = str
+        Filter = str
 
         # Search scope values
-        type Scope = str
+        Scope = str
 
         # Search base DN
-        type BaseDN = str
+        BaseDN = str
 
         # Attributes to return
-        type Attributes = list[str] | None
+        Attributes = list[str] | None
 
     class Connection:
         """LDAP connection-related type definitions."""
 
         # Server URI
-        type ServerURI = str
+        ServerURI = str
 
         # Port number
-        type Port = int
+        Port = int
 
         # Bind DN for authentication
-        type BindDN = str | None
+        BindDN = str | None
 
         # Bind password
-        type BindPassword = str | None
+        BindPassword = str | None
 
         # Connection timeout
-        type Timeout = int
+        Timeout = int
 
         # SSL/TLS configuration
-        type UseSSL = bool
-        type UseTLS = bool
+        UseSSL = bool
+        UseTLS = bool
 
     class Validation:
         """LDAP validation-related type definitions."""
 
         # Validation result type
-        type ValidationResult = bool
+        ValidationResult = bool
 
         # Error message type
-        type ErrorMessage = str
+        ErrorMessage = str
 
         # Field name for validation
-        type FieldName = str
+        FieldName = str
 
     class Operation:
         """LDAP operation-related type definitions."""
 
         # Operation type identifier
-        type OperationType = str
+        OperationType = str
 
         # Operation result code
-        type ResultCode = int
+        ResultCode = int
 
         # Operation duration in milliseconds
-        type Duration = float
+        Duration = float
 
         # Operation status
-        type Status = bool
+        Status = bool
 
 
 __all__ = [

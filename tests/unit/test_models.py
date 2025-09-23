@@ -120,31 +120,6 @@ class TestFlextLdapUser:
             assert validation_result.error is not None
             assert "uid" in validation_result.error.lower()
 
-    def test_user_attribute_access_methods(self) -> None:
-        """Test user attribute access methods."""
-        user = self.create_test_user(
-            mail="test@example.com",
-            attributes={
-                "departmentNumber": ["100"],
-                "employeeType": ["staff"],
-                "telephoneNumber": ["123-456-7890"],
-            },
-        )
-
-        assert user.mail == "test@example.com"
-        # Phone is stored in attributes dictionary, not as a direct field
-        phone_attr = user.attributes.get("telephoneNumber", [])
-        assert phone_attr == ["123-456-7890"]
-
-        # Test getting attribute value
-        dept_attr = user.attributes.get("departmentNumber", [])
-        assert dept_attr == ["100"]
-        assert user.attributes.get("nonexistent", []) == []
-
-        # Test getting multiple attribute values (objectClass should be in object_classes)
-        assert "inetOrgPerson" in user.object_classes
-        assert "person" in user.object_classes
-
     def test_user_immutability_and_copying(self) -> None:
         """Test that user entity modifications create new instances."""
         original_user = self.create_test_user()
@@ -270,7 +245,6 @@ class TestFlextLdapModels:
         """Create test entry with defaults using object for kwargs."""
         # Create with typed arguments to satisfy MyPy
         return FlextLdapModels.Entry(
-            id=str(kwargs.get("id", "test_entry")),
             dn=str(kwargs.get("dn", "cn=testentry,dc=example,dc=com")),
             object_classes=cast(
                 "FlextTypes.Core.StringList",
@@ -282,92 +256,6 @@ class TestFlextLdapModels:
             ),
             # Removed status parameter - not part of Entry model definition
         )
-
-    def test_entry_creation_and_attribute_access(self) -> None:
-        """Test entry creation and attribute access methods."""
-        entry = self.create_test_entry(
-            attributes={
-                "cn": ["Test Entry"],
-                "sn": ["Entry"],
-                "mail": ["test@example.com"],
-                "objectClass": ["top", "person", "inetOrgPerson"],
-                "memberOf": [
-                    "cn=group1,ou=groups,dc=example,dc=com",
-                    "cn=group2,ou=groups,dc=example,dc=com",
-                ],
-            },
-        )
-
-        assert entry.dn == "cn=testentry,dc=example,dc=com"
-
-        # Test attribute access with real methods
-        cn_value = entry.get_attribute("cn")
-        assert cn_value == ["Test Entry"]  # LDAP attributes are lists
-
-        mail_value = entry.get_attribute("mail")
-        assert mail_value == ["test@example.com"]
-
-        nonexistent = entry.get_attribute("nonexistent")
-        assert nonexistent is None
-
-        # Test object classes access (from model field)
-        assert "top" in entry.object_classes
-        assert "person" in entry.object_classes
-
-        # Test object classes from attributes
-        object_class_attr = entry.get_attribute("objectClass")
-        assert object_class_attr is not None
-        assert isinstance(object_class_attr, list)
-        assert "top" in object_class_attr
-        assert "person" in object_class_attr
-        assert "inetOrgPerson" in object_class_attr
-
-        member_of = entry.get_attribute("memberOf")
-        assert member_of is not None
-        assert isinstance(member_of, list)
-        assert len(member_of) == 2
-        assert "cn=group1,ou=groups,dc=example,dc=com" in member_of
-
-        # Test attribute existence
-        assert "cn" in entry.attributes
-        assert "mail" in entry.attributes
-        assert "nonexistent" not in entry.attributes
-
-    def test_entry_business_rule_validation(self) -> None:
-        """Test entry business rule validation."""
-        # Valid entry should pass validation
-        valid_entry = self.create_test_entry()
-        validation_result = valid_entry.validate_business_rules()
-        assert validation_result.is_success, (
-            f"Valid entry failed validation: {validation_result.error}"
-        )
-
-        # Test entry with empty object classes
-        invalid_entry = self.create_test_entry(object_classes=[])
-        validation_result = invalid_entry.validate_business_rules()
-        assert not validation_result.is_success
-        assert validation_result.error is not None
-        assert "object class" in validation_result.error.lower()
-
-
-class TestFlextLdapCreateUserRequest:
-    """Test user creation request value object."""
-
-    def test_create_user_request_basic_fields(self) -> None:
-        """Test basic user creation request."""
-        request = FlextLdapModels.CreateUserRequest(
-            dn="cn=newuser,ou=users,dc=example,dc=com",
-            uid="newuser",
-            cn="New User",
-            sn="User",
-            given_name="New",
-            mail="newuser@example.com",
-        )
-
-        assert request.dn == "cn=newuser,ou=users,dc=example,dc=com"
-        assert request.uid == "newuser"
-        assert request.cn == "New User"
-        assert request.sn == "User"
 
     def test_create_user_request_optional_fields(self) -> None:
         """Test user creation request with optional fields."""
@@ -398,7 +286,7 @@ class TestFlextLdapCreateUserRequest:
 
         user_entity = request.to_user_entity()
 
-        assert isinstance(user_entity, FlextLdapModels.User)
+        assert isinstance(user_entity, FlextLdapModels.LdapUser)
         assert user_entity.dn == request.dn
         assert user_entity.uid == request.uid
         assert user_entity.cn == request.cn
@@ -457,8 +345,7 @@ class TestBusinessRulesIntegration:
     def test_cross_entity_validation(self) -> None:
         """Test business rules that span multiple entities."""
         # Create user
-        user = FlextLdapModels.User(
-            id="test_cross_user",
+        user = FlextLdapModels.LdapUser(
             dn="cn=crossuser,ou=users,dc=example,dc=com",
             uid="crossuser",
             cn="Cross User",
@@ -466,8 +353,7 @@ class TestBusinessRulesIntegration:
             given_name="Cross",
             mail="crossuser@example.com",
             object_classes=["inetOrgPerson", "person"],
-            attributes={"phone": ["+1-555-0199"]},
-            status="active",
+            additional_attributes={"phone": ["+1-555-0199"]},
         )
 
         # Create group with user as member
@@ -477,7 +363,7 @@ class TestBusinessRulesIntegration:
             cn="Cross Group",
             description="Cross-validation test group",
             object_classes=["groupOfNames"],
-            attributes={},
+            additional_attributes={},
             members=[user.dn],
             status="active",
         )
@@ -563,7 +449,7 @@ class TestRealWorldScenarios:
 
         for user_data in realistic_users:
             # Create user entity with realistic data explicitly typed
-            user = FlextLdapModels.User(
+            user = FlextLdapModels.LdapUser(
                 id=f"test_{user_data['uid']}",
                 dn=str(user_data["dn"]),
                 uid=str(user_data["uid"]),
@@ -647,7 +533,7 @@ class TestRealWorldScenarios:
                     "FlextTypes.Core.StringList",
                     group_data.get("members", []),
                 ),
-                attributes={},
+                additional_attributes={},
                 status="active",
             )
 

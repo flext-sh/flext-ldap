@@ -14,8 +14,8 @@ import asyncio
 import os
 from urllib.parse import urlparse
 
-from flext_core import FlextLogger
-from flext_ldap import FlextLdapClient, FlextLdapConfigs
+from flext_core import FlextLogger, FlextResult
+from flext_ldap import FlextLdapClient
 
 logger = FlextLogger(__name__)
 
@@ -48,7 +48,7 @@ def _initialize_ldap_service() -> FlextLdapClient:
         urlparse(server_url)
 
         # Create service using current API
-        service = FlextLdapClient(FlextLdapConfigs())
+        service = FlextLdapClient()
     else:
         service = FlextLdapClient()
 
@@ -69,7 +69,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapClient) -> Non
             return
 
         # Use .value for modern type-safe access (success verified above)
-        session_id = connection_result.value
+        # connection_result.value is a boolean indicating success
 
         try:
             # Verify organizational units exist
@@ -80,10 +80,11 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapClient) -> Non
 
             for ou_dn in ous_to_verify:
                 # Search for the OU to verify it exists
-                search_result = await ldap_service.search_simple(
+                search_result: FlextResult[
+                    list[dict[str, object]]
+                ] = await ldap_service.search(
                     base_dn=ou_dn,
-                    search_filter="(objectClass=organizationalUnit)",
-                    scope="base",
+                    filter_str="(objectClass=organizationalUnit)",
                     attributes=["ou", "description", "objectClass"],
                 )
 
@@ -92,7 +93,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapClient) -> Non
 
         finally:
             # Clean up connection
-            await ldap_service.disconnect(session_id)
+            await ldap_service.disconnect()
 
     except Exception as e:
         # Continue with next operation
@@ -115,21 +116,23 @@ async def _demo_user_operations(ldap_service: FlextLdapClient) -> None:
             return
 
         # Use .value for modern type-safe access (success verified above)
-        session_id = connection_result.value
+        # connection_result.value is a boolean indicating success
 
         try:
             # Search for existing users in the people OU
-            search_result = await ldap_service.search_simple(
+            search_result: FlextResult[
+                list[dict[str, object]]
+            ] = await ldap_service.search(
                 base_dn="ou=people,dc=flext,dc=local",
-                search_filter="(objectClass=person)",
+                filter_str="(objectClass=person)",
                 attributes=["uid", "cn", "sn", "mail", "objectClass"],
             )
 
             if search_result.is_success and search_result.value:
-                entries = search_result.value
-                for user_entry in entries:
-                    uid = user_entry.attributes.get("uid", ["N/A"])[0]
-                    cn = user_entry.attributes.get("cn", ["N/A"])[0]
+                user_entries: list[dict[str, object]] = search_result.value
+                for user_entry in user_entries:
+                    uid: object = user_entry["attributes"].get("uid", ["N/A"])[0]
+                    cn: object = user_entry["attributes"].get("cn", ["N/A"])[0]
                     # Ensure string conversion for safe f-string interpolation
                     uid_str = (
                         uid.decode("utf-8") if isinstance(uid, bytes) else str(uid)
@@ -138,25 +141,26 @@ async def _demo_user_operations(ldap_service: FlextLdapClient) -> None:
                     logger.debug(f"Found user: {uid_str} ({cn_str})")
 
                 # Perform user search validation
-                await _perform_user_search_validation(ldap_service, session_id)
+                await _perform_user_search_validation(ldap_service, "demo_session")
             else:
                 # Test wildcard search
-                wildcard_result = await ldap_service.search_simple(
+                wildcard_result: FlextResult[
+                    list[dict[str, object]]
+                ] = await ldap_service.search(
                     base_dn="dc=flext,dc=local",
-                    search_filter="(objectClass=*)",
+                    filter_str="(objectClass=*)",
                     attributes=[
                         "objectClass",
                     ],  # dn is always returned, don't request it as attribute
-                    scope="subtree",
                 )
 
                 if wildcard_result.is_success and wildcard_result.value:
-                    entries = wildcard_result.value
-                    for _i, _entry in enumerate(entries[:5]):  # Show first 5
+                    wildcard_entries = wildcard_result.value
+                    for _i, _entry in enumerate(wildcard_entries[:5]):  # Show first 5
                         pass
         finally:
             # Clean up connection
-            await ldap_service.disconnect(session_id)
+            await ldap_service.disconnect()
 
     except Exception as e:
         # Continue with next operation
@@ -169,38 +173,35 @@ async def _perform_user_search_validation(
 ) -> None:
     """Perform REAL user search validation with different filters."""
     # Test 1: Search by object class
-    search_result = await ldap_service.search_simple(
+    search_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
-        search_filter="(objectClass=inetOrgPerson)",
+        filter_str="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
-        scope="subtree",
     )
 
     if search_result.is_success:
         pass
 
     # Test 2: Search with compound filter
-    compound_result = await ldap_service.search_simple(
+    compound_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
-        search_filter="(&(objectClass=person)(uid=*))",
+        filter_str="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
-        scope="subtree",
     )
 
     if compound_result.is_success:
         pass
 
     # Test 3: Base scope search on root
-    base_result = await ldap_service.search_simple(
+    base_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
-        search_filter="(objectClass=*)",
+        filter_str="(objectClass=*)",
         attributes=["dc", "objectClass"],
-        scope="base",
     )
 
     if base_result.is_success and base_result.value:
-        entry = base_result.value[0]
-        entry.attributes.get("objectClass", [])
+        entry: dict[str, object] = base_result.value[0]
+        entry.get("attributes", {}).get("objectClass", [])
 
 
 async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
@@ -216,21 +217,23 @@ async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
             return
 
         # Use .value for modern type-safe access (success verified above)
-        session_id = connection_result.value
+        # connection_result.value is a boolean indicating success
 
         try:
             # Search for existing groups in the groups OU
-            search_result = await ldap_service.search_simple(
+            search_result: FlextResult[
+                list[dict[str, object]]
+            ] = await ldap_service.search(
                 base_dn="ou=groups,dc=flext,dc=local",
-                search_filter="(objectClass=groupOfNames)",
+                filter_str="(objectClass=groupOfNames)",
                 attributes=["cn", "description", "member", "objectClass"],
             )
 
             if search_result.is_success and search_result.value:
-                entries = search_result.value
-                for group_entry in entries:
-                    cn = group_entry.attributes.get("cn", ["N/A"])[0]
-                    description = group_entry.attributes.get(
+                group_search_entries: list[dict[str, object]] = search_result.value
+                for group_entry in group_search_entries:
+                    cn: object = group_entry.get("attributes", {}).get("cn", ["N/A"])[0]
+                    description: object = group_entry.get("attributes", {}).get(
                         "description",
                         ["No description"],
                     )[0]
@@ -244,20 +247,22 @@ async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
                     logger.debug(f"Found group: {cn_str} - {description_str}")
 
                 # Perform group search validation
-                await _perform_group_search_validation(ldap_service, session_id)
+                await _perform_group_search_validation(ldap_service, "demo_session")
             else:
                 # Test alternative group object classes
-                alt_result = await ldap_service.search_simple(
+                alt_result: FlextResult[
+                    list[dict[str, object]]
+                ] = await ldap_service.search(
                     base_dn="ou=groups,dc=flext,dc=local",
-                    search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
+                    filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
                     attributes=["cn", "objectClass"],
                 )
 
                 if alt_result.is_success and alt_result.value:
-                    entries = alt_result.value
+                    pass
         finally:
             # Clean up connection
-            await ldap_service.disconnect(session_id)
+            await ldap_service.disconnect()
 
     except Exception as e:
         # Continue with next operation
@@ -270,18 +275,19 @@ async def _perform_group_search_validation(
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     # Test 1: Search for all group types
-    all_groups_result = await ldap_service.search_simple(
+    all_groups_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
-        search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
+        filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
-        scope="subtree",
     )
 
     if all_groups_result.is_success:
-        entries = all_groups_result.value or []
-        for group_entry in entries:
-            cn = group_entry.attributes.get("cn", ["Unknown"])[0]
-            object_class = group_entry.attributes.get("objectClass", [])
+        group_entries: list[dict[str, object]] = all_groups_result.value or []
+        for group_entry in group_entries:
+            cn: object = group_entry.get("attributes", {}).get("cn", ["Unknown"])[0]
+            object_class: object = group_entry.get("attributes", {}).get(
+                "objectClass", []
+            )
             # Ensure string conversion for safe f-string interpolation
             cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
             object_class_str = str(
@@ -290,31 +296,26 @@ async def _perform_group_search_validation(
             logger.debug(f"Group: {cn_str}, Class: {object_class_str}")
 
     # Test 2: Search groups with wildcards
-    wildcard_result = await ldap_service.search_simple(
+    wildcard_result = await ldap_service.search(
         base_dn="ou=groups,dc=flext,dc=local",
-        search_filter="(cn=*)",
+        filter_str="(cn=*)",
         attributes=["cn", "objectClass"],
-        scope="one",
     )
 
     if wildcard_result.is_success:
-        entries = wildcard_result.value or []
+        pass
 
     # Test 3: Search with scope validation
-    scopes = ["base", "one", "subtree"]
+    scope_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+        base_dn="ou=groups,dc=flext,dc=local",
+        filter_str="(objectClass=*)",
+        attributes=[
+            "objectClass",
+        ],  # dn is always returned, don't request it as attribute
+    )
 
-    for scope in scopes:
-        scope_result = await ldap_service.search_simple(
-            base_dn="ou=groups,dc=flext,dc=local",
-            search_filter="(objectClass=*)",
-            attributes=[
-                "objectClass",
-            ],  # dn is always returned, don't request it as attribute
-            scope=scope,
-        )
-
-        if scope_result.is_success:
-            entries = scope_result.value or []
+    if scope_result.is_success:
+        pass
 
 
 async def _demo_connection_management(ldap_service: FlextLdapClient) -> None:
@@ -329,10 +330,10 @@ async def _demo_connection_management(ldap_service: FlextLdapClient) -> None:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
         if connection_result.is_success:
             # Use .value for modern type-safe access (success verified above)
-            session_id = connection_result.value
+            _ = connection_result.value
 
             # Disconnect
-            disconnect_result = await ldap_service.disconnect(session_id)
+            disconnect_result: FlextResult[None] = await ldap_service.disconnect()
             if disconnect_result.is_success:
                 pass
     except Exception as e:

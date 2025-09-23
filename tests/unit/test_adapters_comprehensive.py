@@ -18,7 +18,7 @@ from flext_ldap import (
     FlextLdapClient,
     FlextLdapModels,
 )
-from flext_ldap.models import FlextLdapTypes
+from flext_ldap.typings import FlextLdapTypes
 
 
 @pytest.fixture
@@ -352,11 +352,11 @@ class TestModelValidation:
                     data_dict = cast("dict[str, object]", valid_data)
                     config_data = {
                         "server": str(data_dict["server"]),
-                        "port": int(data_dict.get("port", 389)),
+                        "port": int(str(data_dict.get("port", 389))),
                         "use_ssl": bool(data_dict.get("use_ssl", False)),
                         "bind_dn": str(data_dict.get("bind_dn", "")),
                         "bind_password": str(data_dict.get("bind_password", "")),
-                        "timeout": int(data_dict.get("timeout", 30)),
+                        "timeout": int(str(data_dict.get("timeout", 30))),
                     }
                     instance = model_class(**config_data)
                 elif model_class == FlextLdapModels.SearchRequest:
@@ -367,8 +367,8 @@ class TestModelValidation:
                         "filter": str(data_dict["filter"]),
                         "scope": str(data_dict.get("scope", "subtree")),
                         "attributes": data_dict.get("attributes"),
-                        "size_limit": int(data_dict.get("size_limit", 1000)),
-                        "time_limit": int(data_dict.get("time_limit", 60)),
+                        "size_limit": int(str(data_dict.get("size_limit", 1000))),
+                        "time_limit": int(str(data_dict.get("time_limit", 60))),
                         "page_size": data_dict.get("page_size"),
                         "paged_cookie": data_dict.get("paged_cookie"),
                         "types_only": bool(data_dict.get("types_only", False)),
