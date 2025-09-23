@@ -16,6 +16,7 @@ import traceback
 
 from pydantic import SecretStr
 
+from flext_ldap import FlextLdapModels
 from flext_ldap.config import FlextLdapConfigs
 
 
@@ -143,17 +144,20 @@ def demonstrate_validation_features() -> None:
     try:
         # Test validation with valid configuration
         valid_config = FlextLdapConfigs(
+            ldap_default_connection=FlextLdapModels.ConnectionConfig(
+                server="localhost",
+                port=389,
+            ),
             ldap_bind_dn="cn=valid-user,dc=example,dc=com",
             ldap_bind_password=SecretStr("valid-password"),
-            ldap_server_uri="ldap://localhost:389",
             ldap_use_ssl=True,
         )
 
-        validation_result = valid_config.validate_configuration_consistency()
-        if validation_result.is_success:
-            print("✅ Valid configuration passed validation")
-        else:
-            print(f"❌ Valid configuration failed: {validation_result.error}")
+        # Validation happens automatically during instantiation
+        # If we got here, validation passed
+        print("✅ Valid configuration passed validation")
+        print(f"   Server: {valid_config.get_effective_server_uri()}")
+        print(f"   Bind DN: {valid_config.get_effective_bind_dn()}")
 
     except Exception as e:
         print(f"❌ Configuration validation error: {e}")

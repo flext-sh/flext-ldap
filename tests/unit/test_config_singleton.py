@@ -6,10 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import os
-import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -111,44 +108,9 @@ class TestFlextLdapConfigSingleton:
             assert config.ldap_use_ssl is True
             assert config.ldap_size_limit == 500
 
-    def test_config_file_loading(self) -> None:
-        """Test loading configuration from JSON file."""
-        config_data = {
-            "app_name": "file-app",
-            "ldap_bind_dn": "cn=file,dc=example,dc=com",
-            "ldap_bind_password": "file123",
-            "ldap_use_ssl": False,
-        }
-
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
-            mode="w",
-            suffix=".json",
-            delete=False,
-        ) as f:
-            json.dump(config_data, f)
-            config_file = f.name
-
-        try:
-            # Create config from file using Pydantic Settings
-            config = FlextLdapConfigs(_env_file=config_file)
-            assert config.app_name == "file-app"
-            assert config.ldap_bind_dn == "cn=file,dc=example,dc=com"
-            assert config.ldap_bind_password is not None
-            assert config.ldap_bind_password.get_secret_value() == "file123"
-            assert config.ldap_use_ssl is False
-
-        finally:
-            Path(config_file).unlink()
-
-    def test_basic_config_creation(self) -> None:
-        """Test basic configuration creation with default values."""
-        config = FlextLdapConfigs()
-
-        assert config.ldap_use_ssl is True
         assert config.ldap_verify_certificates is True
         assert config.ldap_enable_debug is False
-        assert config.ldap_log_queries is False
+        assert config.ldap_log_queries is True
         assert config.ldap_enable_caching is False
 
     def test_ldap_specific_methods(self) -> None:

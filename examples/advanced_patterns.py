@@ -64,13 +64,13 @@ async def ldap_session(
 
     try:
         # Attempt connection
-        connection_result = await api.connect(
+        connection_result: FlextResult[bool] = await api.connect(
             server_uri=server_url,
             bind_dn=bind_dn,
-            bind_password=password,
+            password=password,
         )
 
-        if not connection_result.is_success:
+        if not connection_result.success:
             msg: str = f"Failed to connect: {connection_result.error}"
             _raise_conn_error(msg)
 
@@ -87,7 +87,7 @@ async def ldap_session(
         # Cleanup
         try:
             if isinstance(session_id, str):
-                await api.disconnect(session_id)
+                await api.disconnect()
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
             logger.warning(
@@ -100,21 +100,21 @@ def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
-        dn = FlextLdapModels.ValueObjects.DistinguishedName(
+        dn = FlextLdapModels.DistinguishedName(
             value="cn=admin,ou=users,dc=example,dc=com",
         )
-        dn.validate_business_rules()
+        # DistinguishedName doesn't have validate_business_rules method
+        logger.debug(f"Created DN: {dn.value}")
 
         # 2. LDAP Filters - Using correct FlextLdapFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_result = FlextLdapModels.ValueObjects.Filter.create(complex_filter)
+        filter_result = FlextLdapModels.Filter.create(complex_filter)
 
-        if filter_result.is_success:
-            default_filter = FlextLdapModels.ValueObjects.Filter(
-                value="(objectClass=*)"
-            )
+        if filter_result.success:
+            default_filter = FlextLdapModels.Filter(value="(objectClass=*)")
             filter_obj = filter_result.unwrap_or(default_filter)
-            filter_obj.validate_business_rules()
+            # Filter doesn't have validate_business_rules method
+            logger.debug(f"Using filter: {filter_obj.value}")
 
     except Exception:
         logger.exception("Value object demonstration failed")
@@ -162,15 +162,11 @@ async def demonstrate_async_patterns() -> None:
             ]
 
             for base_dn in search_bases:
-                search_request = FlextLdapModels.SearchRequest(
+                task = api.search(
                     base_dn=base_dn,
                     filter_str="(objectClass=*)",
                     attributes=["dn"],
-                    scope="one",
-                    size_limit=100,
-                    time_limit=30,
                 )
-                task = api.search(search_request)
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
@@ -180,8 +176,8 @@ async def demonstrate_async_patterns() -> None:
                 1
                 for result in results
                 if not isinstance(result, Exception)
-                and hasattr(result, "is_success")
-                and getattr(result, "is_success", False)
+                and hasattr(result, "success")
+                and getattr(result, "success", False)
             )
 
     except Exception:

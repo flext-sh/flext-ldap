@@ -235,7 +235,7 @@ class FlextLdapAPI:
                 )
 
             # Convert SearchResponse entries to LdapUser objects
-            users = []
+            users: list[FlextLdapModels.LdapUser] = []
             for entry in search_result.value.entries:
                 # Create minimal user object from search result
                 user = FlextLdapModels.LdapUser(
@@ -293,7 +293,7 @@ class FlextLdapAPI:
                 )
 
             # Convert SearchResponse entries to Group objects
-            groups = []
+            groups: list[FlextLdapModels.Group] = []
             for entry in search_result.value.entries:
                 # Create minimal group object from search result
                 group = FlextLdapModels.Group(

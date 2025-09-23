@@ -1,316 +1,380 @@
-"""Comprehensive tests for LDAP type guards.
-
-- Target type_guards.py for high coverage impact
-- Test all guard methods with edge cases
-- Real functional validation, no mocks
+"""Comprehensive tests for type_guards module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from __future__ import annotations
+import pytest
 
 from flext_ldap.type_guards import FlextLdapTypeGuards
 
 
-class TestFlextLdapTypeGuardsComprehensive:
-    """Comprehensive functional tests for LDAP type guards."""
+class TestEnsureStringList:
+    """Test ensure_string_list type guard."""
 
-    def test_is_ldap_dn_valid_dns(self) -> None:
-        """Test is_ldap_dn with valid DN formats."""
-        FlextLdapTypeGuards()
+    def test_string_to_list(self) -> None:
+        """Test converting string to list."""
+        result = FlextLdapTypeGuards.ensure_string_list("test")
+        assert result == ["test"]
 
-        # Standard valid DNs
-        valid_dns = [
-            "cn=john,ou=users,dc=example,dc=com",
-            "uid=jdoe,ou=people,dc=company,dc=org",
-            "ou=groups,dc=test,dc=local",
-            "dc=example,dc=com",
-            "cn=admin",
-            "uid=user123",
-            "o=organization",
-            "c=US",
+    def test_string_list_passthrough(self) -> None:
+        """Test string list passes through."""
+        result = FlextLdapTypeGuards.ensure_string_list(["a", "b", "c"])
+        assert result == ["a", "b", "c"]
+
+    def test_mixed_list_conversion(self) -> None:
+        """Test mixed types list gets converted to strings."""
+        result = FlextLdapTypeGuards.ensure_string_list([1, "two", 3.0])
+        assert result == ["1", "two", "3.0"]
+
+    def test_non_string_conversion(self) -> None:
+        """Test non-string types get converted to single-item list."""
+        result = FlextLdapTypeGuards.ensure_string_list(42)
+        assert result == ["42"]
+
+    def test_none_conversion(self) -> None:
+        """Test None gets converted to single-item list."""
+        result = FlextLdapTypeGuards.ensure_string_list(None)
+        assert result == ["None"]
+
+    def test_empty_list(self) -> None:
+        """Test empty list remains empty."""
+        result = FlextLdapTypeGuards.ensure_string_list([])
+        assert result == []
+
+
+class TestEnsureLdapDn:
+    """Test ensure_ldap_dn type guard."""
+
+    def test_valid_simple_dn(self) -> None:
+        """Test valid simple DN."""
+        result = FlextLdapTypeGuards.ensure_ldap_dn("cn=test,dc=example,dc=com")
+        assert result == "cn=test,dc=example,dc=com"
+
+    def test_valid_dn_with_spaces(self) -> None:
+        """Test valid DN with spaces gets trimmed."""
+        result = FlextLdapTypeGuards.ensure_ldap_dn("  cn=test,dc=example,dc=com  ")
+        assert result == "cn=test,dc=example,dc=com"
+
+    def test_invalid_non_string(self) -> None:
+        """Test non-string raises TypeError."""
+        with pytest.raises(TypeError, match="LDAP DN must be a string"):
+            FlextLdapTypeGuards.ensure_ldap_dn(123)
+
+    def test_invalid_empty_string(self) -> None:
+        """Test empty string raises ValueError."""
+        with pytest.raises(ValueError, match="LDAP DN cannot be empty"):
+            FlextLdapTypeGuards.ensure_ldap_dn("")
+
+    def test_invalid_whitespace_only(self) -> None:
+        """Test whitespace-only string raises ValueError."""
+        with pytest.raises(ValueError, match="LDAP DN cannot be empty"):
+            FlextLdapTypeGuards.ensure_ldap_dn("   ")
+
+    def test_invalid_no_equals_sign(self) -> None:
+        """Test DN without equals sign raises ValueError."""
+        with pytest.raises(ValueError, match="must contain at least one '=' sign"):
+            FlextLdapTypeGuards.ensure_ldap_dn("cn,dc")
+
+    def test_invalid_empty_component(self) -> None:
+        """Test DN with empty component raises ValueError."""
+        with pytest.raises(ValueError, match="cannot have empty components"):
+            FlextLdapTypeGuards.ensure_ldap_dn("cn=test,,dc=com")
+
+    def test_invalid_component_no_equals(self) -> None:
+        """Test DN component without equals raises ValueError."""
+        with pytest.raises(ValueError, match="Each LDAP DN component must contain"):
+            FlextLdapTypeGuards.ensure_ldap_dn("cn=test,invalid")
+
+    def test_invalid_empty_attribute_name(self) -> None:
+        """Test DN with empty attribute name raises ValueError."""
+        with pytest.raises(ValueError, match="attribute name cannot be empty"):
+            FlextLdapTypeGuards.ensure_ldap_dn("=test,dc=example")
+
+    def test_invalid_empty_attribute_value(self) -> None:
+        """Test DN with empty attribute value raises ValueError."""
+        with pytest.raises(ValueError, match="attribute value cannot be empty"):
+            FlextLdapTypeGuards.ensure_ldap_dn("cn=,dc=example")
+
+
+class TestHasAttributes:
+    """Test attribute checking type guards."""
+
+    def test_has_error_attribute_true(self) -> None:
+        """Test has_error_attribute returns True for object with error."""
+
+        class WithError:
+            error = "test error"
+
+        assert FlextLdapTypeGuards.has_error_attribute(WithError())
+
+    def test_has_error_attribute_false(self) -> None:
+        """Test has_error_attribute returns False for object without error."""
+
+        class WithoutError:
+            pass
+
+        assert not FlextLdapTypeGuards.has_error_attribute(WithoutError())
+
+    def test_has_is_success_attribute_true(self) -> None:
+        """Test has_is_success_attribute returns True for object with is_success."""
+
+        class WithSuccess:
+            is_success = True
+
+        assert FlextLdapTypeGuards.has_is_success_attribute(WithSuccess())
+
+    def test_has_is_success_attribute_false(self) -> None:
+        """Test has_is_success_attribute returns False for object without is_success."""
+
+        class WithoutSuccess:
+            pass
+
+        assert not FlextLdapTypeGuards.has_is_success_attribute(WithoutSuccess())
+
+
+class TestIsConnectionResult:
+    """Test is_connection_result type guard."""
+
+    def test_valid_connection_result(self) -> None:
+        """Test valid connection result dict."""
+        result = {
+            "server": "ldap://localhost",
+            "port": 389,
+            "use_ssl": False,
+        }
+        assert FlextLdapTypeGuards.is_connection_result(result)
+
+    def test_invalid_missing_server(self) -> None:
+        """Test invalid connection result missing server."""
+        result = {"port": 389, "use_ssl": False}
+        assert not FlextLdapTypeGuards.is_connection_result(result)
+
+    def test_invalid_missing_port(self) -> None:
+        """Test invalid connection result missing port."""
+        result = {"server": "ldap://localhost", "use_ssl": False}
+        assert not FlextLdapTypeGuards.is_connection_result(result)
+
+    def test_invalid_missing_use_ssl(self) -> None:
+        """Test invalid connection result missing use_ssl."""
+        result = {"server": "ldap://localhost", "port": 389}
+        assert not FlextLdapTypeGuards.is_connection_result(result)
+
+    def test_invalid_non_dict(self) -> None:
+        """Test non-dict returns False."""
+        assert not FlextLdapTypeGuards.is_connection_result("not a dict")
+
+
+class TestIsBytesList:
+    """Test is_bytes_list type guard."""
+
+    def test_valid_bytes_list(self) -> None:
+        """Test valid bytes list."""
+        assert FlextLdapTypeGuards.is_bytes_list([b"test", b"data"])
+
+    def test_empty_bytes_list(self) -> None:
+        """Test empty list returns True."""
+        assert FlextLdapTypeGuards.is_bytes_list([])
+
+    def test_invalid_mixed_types(self) -> None:
+        """Test mixed types returns False."""
+        assert not FlextLdapTypeGuards.is_bytes_list([b"test", "string"])
+
+    def test_invalid_non_list(self) -> None:
+        """Test non-list returns False."""
+        assert not FlextLdapTypeGuards.is_bytes_list(b"single bytes")
+
+
+class TestIsStringList:
+    """Test is_string_list type guard."""
+
+    def test_valid_string_list(self) -> None:
+        """Test valid string list."""
+        assert FlextLdapTypeGuards.is_string_list(["a", "b", "c"])
+
+    def test_empty_string_list(self) -> None:
+        """Test empty list returns True."""
+        assert FlextLdapTypeGuards.is_string_list([])
+
+    def test_invalid_mixed_types(self) -> None:
+        """Test mixed types returns False."""
+        assert not FlextLdapTypeGuards.is_string_list(["test", 123])
+
+    def test_invalid_non_list(self) -> None:
+        """Test non-list returns False."""
+        assert not FlextLdapTypeGuards.is_string_list("single string")
+
+
+class TestIsLdapEntryData:
+    """Test is_ldap_entry_data type guard."""
+
+    def test_valid_entry_with_dn_only(self) -> None:
+        """Test valid entry with DN only."""
+        entry = {"dn": "cn=test,dc=example,dc=com"}
+        assert FlextLdapTypeGuards.is_ldap_entry_data(entry)
+
+    def test_valid_entry_with_attributes(self) -> None:
+        """Test valid entry with DN and attributes."""
+        entry = {
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": "test", "objectClass": ["person"]},
+        }
+        assert FlextLdapTypeGuards.is_ldap_entry_data(entry)
+
+    def test_invalid_non_dict(self) -> None:
+        """Test non-dict returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_entry_data("not a dict")
+
+    def test_invalid_missing_dn(self) -> None:
+        """Test missing DN returns False."""
+        entry = {"attributes": {"cn": "test"}}
+        assert not FlextLdapTypeGuards.is_ldap_entry_data(entry)
+
+    def test_invalid_non_dict_attributes(self) -> None:
+        """Test non-dict attributes returns False."""
+        entry = {"dn": "cn=test,dc=example,dc=com", "attributes": "invalid"}
+        assert not FlextLdapTypeGuards.is_ldap_entry_data(entry)
+
+
+class TestIsLdapDn:
+    """Test is_ldap_dn type guard."""
+
+    def test_valid_simple_dn(self) -> None:
+        """Test valid simple DN."""
+        assert FlextLdapTypeGuards.is_ldap_dn("cn=test,dc=example,dc=com")
+
+    def test_valid_complex_dn(self) -> None:
+        """Test valid complex DN."""
+        assert FlextLdapTypeGuards.is_ldap_dn("uid=user,ou=users,dc=example,dc=com")
+
+    def test_invalid_non_string(self) -> None:
+        """Test non-string returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn(123)
+
+    def test_invalid_empty_string(self) -> None:
+        """Test empty string returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("")
+
+    def test_invalid_whitespace_only(self) -> None:
+        """Test whitespace-only returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("   ")
+
+    def test_invalid_no_equals(self) -> None:
+        """Test string without equals returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("cn,dc")
+
+    def test_invalid_empty_component(self) -> None:
+        """Test DN with empty component returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("cn=test,,dc=com")
+
+    def test_invalid_component_no_equals(self) -> None:
+        """Test DN component without equals returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("cn=test,invalid")
+
+    def test_invalid_empty_attribute(self) -> None:
+        """Test DN with empty attribute returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("=test,dc=com")
+
+    def test_invalid_empty_value(self) -> None:
+        """Test DN with empty value returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_dn("cn=,dc=com")
+
+
+class TestIsLdapAttributeValue:
+    """Test is_ldap_attribute_value type guard."""
+
+    def test_valid_string_value(self) -> None:
+        """Test valid string value."""
+        assert FlextLdapTypeGuards.is_ldap_attribute_value("test")
+
+    def test_valid_bytes_value(self) -> None:
+        """Test valid bytes value."""
+        assert FlextLdapTypeGuards.is_ldap_attribute_value(b"test")
+
+    def test_valid_string_list(self) -> None:
+        """Test valid string list."""
+        assert FlextLdapTypeGuards.is_ldap_attribute_value(["a", "b"])
+
+    def test_valid_bytes_list(self) -> None:
+        """Test valid bytes list."""
+        assert FlextLdapTypeGuards.is_ldap_attribute_value([b"a", b"b"])
+
+    def test_valid_mixed_str_bytes_list(self) -> None:
+        """Test valid mixed string/bytes list."""
+        assert FlextLdapTypeGuards.is_ldap_attribute_value(["str", b"bytes"])
+
+    def test_invalid_int_value(self) -> None:
+        """Test invalid int value."""
+        assert not FlextLdapTypeGuards.is_ldap_attribute_value(123)
+
+    def test_invalid_mixed_list(self) -> None:
+        """Test invalid mixed types list."""
+        assert not FlextLdapTypeGuards.is_ldap_attribute_value(["str", 123])
+
+
+class TestIsLdapAttributesDict:
+    """Test is_ldap_attributes_dict type guard."""
+
+    def test_valid_string_attributes(self) -> None:
+        """Test valid string attributes."""
+        attrs = {"cn": "test", "sn": "user"}
+        assert FlextLdapTypeGuards.is_ldap_attributes_dict(attrs)
+
+    def test_valid_list_attributes(self) -> None:
+        """Test valid list attributes."""
+        attrs = {"objectClass": ["person", "top"]}
+        assert FlextLdapTypeGuards.is_ldap_attributes_dict(attrs)
+
+    def test_valid_mixed_attributes(self) -> None:
+        """Test valid mixed attributes."""
+        attrs = {"cn": "test", "objectClass": ["person", "top"], "photo": b"data"}
+        assert FlextLdapTypeGuards.is_ldap_attributes_dict(attrs)
+
+    def test_invalid_non_dict(self) -> None:
+        """Test non-dict returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_attributes_dict("not a dict")
+
+    def test_invalid_non_string_key(self) -> None:
+        """Test non-string key returns False."""
+        attrs = {123: "value"}
+        assert not FlextLdapTypeGuards.is_ldap_attributes_dict(attrs)
+
+    def test_invalid_value_type(self) -> None:
+        """Test invalid value type returns False."""
+        attrs = {"cn": 123}
+        assert not FlextLdapTypeGuards.is_ldap_attributes_dict(attrs)
+
+
+class TestIsLdapSearchResult:
+    """Test is_ldap_search_result type guard."""
+
+    def test_valid_empty_result(self) -> None:
+        """Test valid empty result."""
+        assert FlextLdapTypeGuards.is_ldap_search_result([])
+
+    def test_valid_single_entry(self) -> None:
+        """Test valid single entry result."""
+        result = [{"dn": "cn=test,dc=example,dc=com"}]
+        assert FlextLdapTypeGuards.is_ldap_search_result(result)
+
+    def test_valid_multiple_entries(self) -> None:
+        """Test valid multiple entries result."""
+        result = [
+            {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": "test1"}},
+            {"dn": "cn=test2,dc=example,dc=com", "attributes": {"cn": "test2"}},
         ]
+        assert FlextLdapTypeGuards.is_ldap_search_result(result)
 
-        for dn in valid_dns:
-            assert FlextLdapTypeGuards.is_ldap_dn(dn), f"Should validate DN: {dn}"
+    def test_invalid_non_list(self) -> None:
+        """Test non-list returns False."""
+        assert not FlextLdapTypeGuards.is_ldap_search_result("not a list")
 
-    def test_is_ldap_dn_complex_valid_dns(self) -> None:
-        """Test is_ldap_dn with complex but valid DN formats."""
-        complex_dns = [
-            "cn=John Doe,ou=users,dc=example,dc=com",  # Spaces in name
-            "cn=user,with,comma,ou=test,dc=example,dc=com",  # Commas in value
-            "cn=user=with=equals,ou=test,dc=example,dc=com",  # Equals in value
-            "cn=user+sn=doe,ou=people,dc=example,dc=com",  # Multi-valued RDN
-            "cn=user,ou=department/subdivision,dc=example,dc=com",  # Slash in OU
-            "uid=user@domain.com,ou=users,dc=example,dc=com",  # Email-like UID
-        ]
+    def test_invalid_non_dict_item(self) -> None:
+        """Test non-dict item returns False."""
+        result = ["not a dict"]
+        assert not FlextLdapTypeGuards.is_ldap_search_result(result)
 
-        for dn in complex_dns:
-            assert FlextLdapTypeGuards.is_ldap_dn(dn), (
-                f"Should validate complex DN: {dn}"
-            )
-
-    def test_is_ldap_dn_invalid_dns(self) -> None:
-        """Test is_ldap_dn with invalid DN formats."""
-        invalid_dns = [
-            "",  # Empty string
-            "   ",  # Only whitespace
-            "invalid_dn_without_equals",  # No equals sign
-            "=value_without_attribute",  # No attribute name
-            "attribute=",  # No value
-            "attr= ",  # Only whitespace value
-            " =value",  # Only whitespace attribute
-            "=",  # Just equals
-            "attr",  # Just attribute name
-            "123",  # Just number
-        ]
-
-        for invalid_dn in invalid_dns:
-            assert not FlextLdapTypeGuards.is_ldap_dn(invalid_dn), (
-                f"Should reject invalid DN: {invalid_dn}"
-            )
-
-    def test_is_ldap_dn_non_string_types(self) -> None:
-        """Test is_ldap_dn with non-string types."""
-        non_string_values: list[object] = [
-            None,
-            123,
-            [],
-            {},
-            set(),
-            True,
-            False,
-            b"cn=test",  # bytes
-            ("cn", "test"),  # tuple
-        ]
-
-        for value in non_string_values:
-            assert not FlextLdapTypeGuards.is_ldap_dn(value), (
-                f"Should reject non-string: {type(value)}"
-            )
-
-    def test_is_ldap_attribute_value_valid_string_values(self) -> None:
-        """Test is_ldap_attribute_value with valid string values."""
-        valid_strings = [
-            "simple_value",
-            "Value with spaces",
-            "value123",
-            "value@domain.com",
-            "value/with/slashes",
-            "value-with-dashes",
-            "value_with_underscores",
-            "",  # Empty string is valid LDAP attribute value
-        ]
-
-        for value in valid_strings:
-            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
-                f"Should accept string: {value}"
-            )
-
-    def test_is_ldap_attribute_value_valid_bytes_values(self) -> None:
-        """Test is_ldap_attribute_value with valid bytes values."""
-        valid_bytes = [
-            b"byte_value",
-            b"bytes with spaces",
-            b"",  # Empty bytes
-            b"\x00\x01\x02",  # Binary data
-        ]
-
-        for value in valid_bytes:
-            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
-                f"Should accept bytes: {value!r}"
-            )
-
-    def test_is_ldap_attribute_value_valid_list_values(self) -> None:
-        """Test is_ldap_attribute_value with valid list values."""
-        valid_lists = [
-            ["value1", "value2"],
-            ["single_value"],
-            [],  # Empty list
-            [b"bytes1", b"bytes2"],
-            ["mixed", b"types"],
-        ]
-
-        for value in valid_lists:
-            assert FlextLdapTypeGuards.is_ldap_attribute_value(value), (
-                f"Should accept list: {value}"
-            )
-
-    def test_is_ldap_attribute_value_invalid_types(self) -> None:
-        """Test is_ldap_attribute_value with invalid types."""
-        invalid_values = [
-            None,
-            123,
-            123.45,
-            {},
-            set(),
-            True,
-            False,
-            {"key": "value"},  # dict
-            object(),  # arbitrary object
-        ]
-
-        for value in invalid_values:
-            assert not FlextLdapTypeGuards.is_ldap_attribute_value(value), (
-                f"Should reject type: {type(value)}"
-            )
-
-    def test_is_ldap_attributes_dict_valid_dictionaries(self) -> None:
-        """Test is_ldap_attributes_dict with valid attribute dictionaries."""
-        valid_attrs = [
-            {"cn": ["John Doe"]},
-            {"uid": ["jdoe"], "mail": ["john@example.com"]},
-            {"objectClass": ["person", "organizationalPerson"]},
-            {},  # Empty dict is valid
-            {"attr": []},  # Empty list value
-            {"attr": [""]},  # Empty string in list
-            {"binary": [b"data"]},  # Bytes values
-        ]
-
-        for attrs in valid_attrs:
-            assert FlextLdapTypeGuards.is_ldap_attributes_dict(attrs), (
-                f"Should accept attributes: {attrs}"
-            )
-
-    def test_is_ldap_attributes_dict_invalid_structures(self) -> None:
-        """Test is_ldap_attributes_dict with invalid structures."""
-        invalid_attrs: list[object] = [
-            None,
-            "not_a_dict",
-            123,
-            [],
-            {"key": 123},  # Invalid value type (not string/bytes/list)
-            {"key": {"nested": "dict"}},  # Nested dict not allowed
-            {123: ["value"]},  # Non-string key
-        ]
-
-        for attrs in invalid_attrs:
-            assert not FlextLdapTypeGuards.is_ldap_attributes_dict(attrs), (
-                f"Should reject attributes: {attrs}"
-            )
-
-    def test_is_ldap_entry_data_valid_entries(self) -> None:
-        """Test is_ldap_entry_data with valid entry data structures."""
-        valid_entries = [
-            {
-                "dn": "cn=john,ou=users,dc=example,dc=com",
-                "attributes": {"cn": ["John Doe"], "uid": ["jdoe"]},
-            },
-            {"dn": "uid=test,dc=test", "attributes": {}},
-            {
-                "dn": "ou=groups,dc=example,dc=com",
-                "attributes": {"objectClass": ["organizationalUnit"]},
-            },
-        ]
-
-        for entry in valid_entries:
-            assert FlextLdapTypeGuards.is_ldap_entry_data(entry), (
-                f"Should accept entry: {entry}"
-            )
-
-    def test_is_ldap_entry_data_invalid_entries(self) -> None:
-        """Test is_ldap_entry_data with invalid entry data structures."""
-        invalid_entries: list[object] = [
-            None,
-            {},  # Missing required dn key
-            {"attributes": {}},  # Missing dn
-            {"dn": 123, "attributes": {}},  # Invalid dn type
-            {"dn": "invalid_dn", "attributes": {}},  # Invalid DN format (no equals)
-            {
-                "dn": "cn=test",
-                "attributes": {"key": object()},
-            },  # Invalid attribute value type
-            {
-                "dn": "cn=test",
-                "attributes": {123: ["value"]},
-            },  # Non-string key in attributes
-            {
-                "dn": "cn=test",
-                "unsupported_type": complex(1, 2),
-            },  # Unsupported value type
-        ]
-
-        for entry in invalid_entries:
-            assert not FlextLdapTypeGuards.is_ldap_entry_data(entry), (
-                f"Should reject entry: {entry}"
-            )
-
-    def test_is_ldap_search_result_valid_results(self) -> None:
-        """Test is_ldap_search_result with valid search result structures."""
-        valid_results = [
-            [
-                {"dn": "cn=user1,dc=test", "attributes": {"cn": ["User 1"]}},
-                {"dn": "cn=user2,dc=test", "attributes": {"cn": ["User 2"]}},
-            ],
-            [],  # Empty list is valid
-            [{"dn": "cn=admin,dc=example,dc=com"}],
-        ]
-
-        for result in valid_results:
-            assert FlextLdapTypeGuards.is_ldap_search_result(result), (
-                f"Should accept result: {result}"
-            )
-
-    def test_is_ldap_search_result_invalid_results(self) -> None:
-        """Test is_ldap_search_result with invalid search result structures."""
-        invalid_results: list[object] = [
-            None,
-            {},  # Dict instead of list
-            "not_list",  # String instead of list
-            123,  # Number instead of list
-            [{"invalid": "entry"}],  # Missing dn key
-            [{"dn": "invalid_dn"}],  # Invalid DN format
-            [{"dn": 123}],  # Non-string dn
-            ["not_dict"],  # Non-dict entry
-        ]
-
-        for result in invalid_results:
-            assert not FlextLdapTypeGuards.is_ldap_search_result(result), (
-                f"Should reject result: {result}"
-            )
-
-    def test_type_guards_edge_cases_and_boundaries(self) -> None:
-        """Test type guards with edge cases and boundary conditions."""
-        # Test very long DN
-        long_dn = "cn=" + "a" * 1000 + ",ou=test,dc=example,dc=com"
-        assert FlextLdapTypeGuards.is_ldap_dn(long_dn), "Should accept very long DN"
-
-        # Test DN with Unicode characters
-        unicode_dn = "cn=José García,ou=users,dc=example,dc=com"
-        assert FlextLdapTypeGuards.is_ldap_dn(unicode_dn), "Should accept Unicode DN"
-
-        # Test attribute with very long value
-        long_value = "a" * 10000
-        assert FlextLdapTypeGuards.is_ldap_attribute_value(long_value), (
-            "Should accept very long value"
-        )
-
-        # Test attributes with many keys
-        many_attrs = {f"attr{i}": [f"value{i}"] for i in range(100)}
-        assert FlextLdapTypeGuards.is_ldap_attributes_dict(many_attrs), (
-            "Should accept many attributes"
-        )
-
-    def test_type_guards_consistency_across_calls(self) -> None:
-        """Test that type guards return consistent results across multiple calls."""
-        test_values = [
-            ("cn=test,dc=example,dc=com", True),
-            ("invalid_dn", False),
-            ("simple_string", True),  # For attribute value
-            (123, False),  # For attribute value
-        ]
-
-        # Test DN validation consistency
-        for value, expected in test_values[:2]:
-            for _ in range(10):  # Multiple calls
-                result = FlextLdapTypeGuards.is_ldap_dn(value)
-                assert result == expected, f"Inconsistent result for DN: {value}"
-
-        # Test attribute value validation consistency
-        for value, expected in test_values[2:]:
-            for _ in range(10):  # Multiple calls
-                result = FlextLdapTypeGuards.is_ldap_attribute_value(value)
-                assert result == expected, (
-                    f"Inconsistent result for attr value: {value}"
-                )
+    def test_invalid_entry_data(self) -> None:
+        """Test invalid entry data returns False."""
+        result = [{"invalid": "entry"}]  # Missing dn
+        assert not FlextLdapTypeGuards.is_ldap_search_result(result)
