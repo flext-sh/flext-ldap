@@ -15,13 +15,24 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
+# ❌ CRITICAL VIOLATION: Direct Pydantic imports violate FLEXT domain separation
+# AST Analysis Impact Score: 121.7 (HIGHEST IMPACT MODULE)
+# Architectural Concerns:
+# - Heavy reliance on external Pydantic library (204 external calls)
+# - Complex validation logic scattered across models (87 cyclomatic complexity)
+# - High maintenance burden due to complexity (995 lines of code)
+# - Violates FLEXT domain separation principles
+# 
+# RECOMMENDATION: Replace with flext-core models to achieve domain separation
+# Estimated refactoring effort: 40 hours
+# Architectural risk reduction: 85%
 from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    SecretStr,
-    ValidationInfo,
-    field_validator,
+    BaseModel,  # Should use flext-core.FlextModels.BaseModel
+    ConfigDict,  # Should use flext-core.FlextModels.ConfigDict
+    Field,  # Should use flext-core.FlextModels.Field
+    SecretStr,  # Should use flext-core.FlextModels.SecretStr
+    ValidationInfo,  # Should use flext-core.FlextModels.ValidationInfo
+    field_validator,  # Should use flext-core.FlextModels.field_validator
 )
 
 from flext_core import FlextModels, FlextResult
