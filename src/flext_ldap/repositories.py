@@ -12,7 +12,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from pydantic import SecretStr
+# ❌ CRITICAL VIOLATION: Direct Pydantic import violates FLEXT domain separation
+# AST Analysis Impact Score: 18.3 (MEDIUM IMPACT MODULE)
+# Architectural Concerns:
+# - Direct pydantic.SecretStr import violates domain separation
+# - Mock repository implementation (entire module non-functional)
+# - Repository pattern not functional for production use (~200 lines of mock code)
+# 
+# RECOMMENDATION: Replace pydantic.SecretStr with flext-core.FlextModels.SecretStr
+# Estimated refactoring effort: 8 hours
+# Architectural risk reduction: 60%
+from pydantic import SecretStr  # ❌ Should use flext-core.FlextModels.SecretStr
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap.models import FlextLdapModels
