@@ -1,4 +1,7 @@
-"""LDAP exceptions module - Direct FlextExceptions usage (ZERO aliases).
+"""LDAP-specific exceptions for flext-ldap library.
+
+This module provides LDAP domain-specific exception classes extending
+flext-core exception patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,10 +9,355 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Direct imports from FlextExceptions - NO wrapper classes or aliases
+from collections.abc import Mapping
+from typing import TypedDict, Unpack
+
 from flext_core import FlextExceptions
 
-# Export FlextExceptions directly - ELIMINATES wrapper pattern
+
+class _LdapExceptionKwargs(TypedDict, total=False):
+    """Type-safe kwargs for LDAP exceptions."""
+
+    code: str | None
+    context: Mapping[str, object] | None
+    correlation_id: str | None
+    config_file: str | None
+
+
+class FlextLdapExceptions(FlextExceptions):
+    """LDAP-specific exceptions extending FlextExceptions.
+
+    Provides LDAP domain-specific exception classes for all LDAP operation
+    error scenarios while maintaining compatibility with flext-core
+    exception hierarchy.
+
+    All LDAP exceptions inherit from FlextExceptions.BaseError and include
+    proper error codes, context, and correlation tracking.
+    """
+
+    class LdapConnectionError(FlextExceptions._ConnectionError):  # noqa: SLF001
+        """LDAP connection failure.
+
+        Raised when LDAP server connection fails or is lost.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            server_uri: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP connection error.
+
+            Args:
+                message: Error message
+                server_uri: LDAP server URI that failed
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                service="LDAP",
+                endpoint=server_uri,
+                **kwargs,
+            )
+            self.server_uri = server_uri
+
+    class LdapAuthenticationError(FlextExceptions._AuthenticationError):  # noqa: SLF001
+        """LDAP authentication failure.
+
+        Raised when LDAP bind or authentication fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            bind_dn: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP authentication error.
+
+            Args:
+                message: Error message
+                bind_dn: DN used for authentication
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                auth_method="LDAP_BIND",
+                **kwargs,
+            )
+            self.bind_dn = bind_dn
+
+    class LdapSearchError(FlextExceptions._OperationError):  # noqa: SLF001
+        """LDAP search operation failure.
+
+        Raised when LDAP search operation fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            base_dn: str | None = None,
+            filter_str: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP search error.
+
+            Args:
+                message: Error message
+                base_dn: Search base DN
+                filter_str: LDAP search filter
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                operation="LDAP_SEARCH",
+                **kwargs,
+            )
+            self.base_dn = base_dn
+            self.filter_str = filter_str
+
+    class LdapModifyError(FlextExceptions._OperationError):  # noqa: SLF001
+        """LDAP modify operation failure.
+
+        Raised when LDAP modify operation fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            dn: str | None = None,
+            modifications: list[tuple[str, str, object]] | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP modify error.
+
+            Args:
+                message: Error message
+                dn: Entry DN being modified
+                modifications: List of modifications attempted
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                operation="LDAP_MODIFY",
+                **kwargs,
+            )
+            self.dn = dn
+            self.modifications = modifications
+
+    class LdapAddError(FlextExceptions._OperationError):  # noqa: SLF001
+        """LDAP add operation failure.
+
+        Raised when LDAP add operation fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            dn: str | None = None,
+            object_classes: list[str] | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP add error.
+
+            Args:
+                message: Error message
+                dn: Entry DN being added
+                object_classes: Object classes for the entry
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                operation="LDAP_ADD",
+                **kwargs,
+            )
+            self.dn = dn
+            self.object_classes = object_classes
+
+    class LdapDeleteError(FlextExceptions._OperationError):
+        """LDAP delete operation failure.
+
+        Raised when LDAP delete operation fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            dn: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP delete error.
+
+            Args:
+                message: Error message
+                dn: Entry DN being deleted
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                operation="LDAP_DELETE",
+                **kwargs,
+            )
+            self.dn = dn
+
+    class LdapValidationError(FlextExceptions._ValidationError):
+        """LDAP data validation failure.
+
+        Raised when LDAP data validation fails.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            ldap_field: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP validation error.
+
+            Args:
+                message: Error message
+                ldap_field: LDAP field/attribute that failed validation
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                field=ldap_field,
+                **kwargs,
+            )
+            self.ldap_field = ldap_field
+
+    class LdapConfigurationError(FlextExceptions._ConfigurationError):
+        """LDAP configuration error.
+
+        Raised when LDAP configuration is invalid or missing.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            ldap_config_key: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP configuration error.
+
+            Args:
+                message: Error message
+                ldap_config_key: LDAP configuration key that is invalid
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                config_key=ldap_config_key,
+                **kwargs,
+            )
+            self.ldap_config_key = ldap_config_key
+
+    class LdapTimeoutError(FlextExceptions._TimeoutError):
+        """LDAP operation timeout.
+
+        Raised when LDAP operation exceeds timeout limit.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            operation: str | None = None,
+            timeout_seconds: float | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP timeout error.
+
+            Args:
+                message: Error message
+                operation: LDAP operation that timed out
+                timeout_seconds: Timeout duration in seconds
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                timeout_seconds=timeout_seconds,
+                **kwargs,
+            )
+            self.operation = operation
+
+    class LdapEntryNotFoundError(FlextExceptions._NotFoundError):
+        """LDAP entry not found.
+
+        Raised when requested LDAP entry does not exist.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            dn: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP entry not found error.
+
+            Args:
+                message: Error message
+                dn: DN of the entry that was not found
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                resource_id=dn,
+                resource_type="LDAP_ENTRY",
+                **kwargs,
+            )
+            self.dn = dn
+
+    class LdapEntryAlreadyExistsError(FlextExceptions._AlreadyExistsError):
+        """LDAP entry already exists.
+
+        Raised when attempting to create an entry that already exists.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            dn: str | None = None,
+            **kwargs: Unpack[_LdapExceptionKwargs],
+        ) -> None:
+            """Initialize LDAP entry already exists error.
+
+            Args:
+                message: Error message
+                dn: DN of the entry that already exists
+                **kwargs: Additional context
+
+            """
+            super().__init__(
+                message,
+                resource_id=dn,
+                resource_type="LDAP_ENTRY",
+                **kwargs,
+            )
+            self.dn = dn
+
+
 __all__ = [
-    "FlextExceptions",
+    "FlextLdapExceptions",
 ]

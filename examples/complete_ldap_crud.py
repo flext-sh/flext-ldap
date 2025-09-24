@@ -78,7 +78,7 @@ async def create_sample_users(api: FlextLdapClient) -> None:
             await api.create_user(request),
         )
 
-        if create_result.success:
+        if create_result.is_success:
             logger.info(f"✅ Created user: {user_data['cn']}")
         else:
             logger.error(
@@ -90,37 +90,49 @@ async def search_users(api: FlextLdapClient) -> None:
     """Search for users using FlextLdapClient."""
     logger.info("Searching for users...")
 
-    search_request = FlextLdapModels.SearchRequest(
+    result: FlextResult[list[dict[str, object]]] = await api.search(
         base_dn=USERS_DN,
-        filter="(objectClass=inetOrgPerson)",
+        filter_str="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
-        scope="subtree",
-        size_limit=1000,
-        time_limit=30,
+        page_size=1000,
+        paged_cookie=None,
     )
-    result: FlextResult[list[dict[str, object]]] = await api.search(search_request)
 
-    if result.success:
-        users = result.data or []
+    if result.is_success:
+        users: list[dict[str, object]] = result.value or []
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
-            if isinstance(user, dict):
-                cn = user.get("cn", ["Unknown"])
-                mail = user.get("mail", ["No email"])
-                # Handle list or single value
-                cn_str = cn[0] if isinstance(cn, list) and cn else str(cn) if cn else "Unknown"
-                mail_str = mail[0] if isinstance(mail, list) and mail else str(mail) if mail else "No email"
-                # Ensure values are strings, not bytes
-                cn_str = (
-                    cn_str.decode("utf-8") if isinstance(cn_str, bytes) else str(cn_str)
-                )
-                mail_str = (
-                    mail_str.decode("utf-8")
-                    if isinstance(mail_str, bytes)
-                    else str(mail_str)
-                )
-                logger.info(f"  - {cn_str} ({mail_str})")
+            cn_value: object = user.get("cn", ["Unknown"])
+            mail_value: object = user.get("mail", ["No email"])
+
+            # Helper function to safely convert to string
+            def safe_str(value: object) -> str:
+                if value is None:
+                    return "Unknown"
+                if isinstance(value, bytes):
+                    return value.decode("utf-8")
+                return str(value)
+
+            # Handle cn value
+            cn_str: str = "Unknown"
+            if isinstance(cn_value, list) and cn_value:
+                # Type-safe access to list element
+                first_cn: object = cn_value[0]
+                cn_str = safe_str(first_cn)
+            elif cn_value is not None:
+                cn_str = safe_str(cn_value)
+
+            # Handle mail value
+            mail_str: str = "No email"
+            if isinstance(mail_value, list) and mail_value:
+                # Type-safe access to list element
+                first_mail: object = mail_value[0]
+                mail_str = safe_str(first_mail)
+            elif mail_value is not None:
+                mail_str = safe_str(mail_value)
+
+            logger.info(f"  - {cn_str} ({mail_str})")
     else:
         logger.error(f"❌ Search failed: {result.error}")
 
@@ -129,44 +141,62 @@ async def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None
     """Update user attributes using FlextLdapClient."""
     logger.info(f"Updating user {user_dn}...")
 
-    async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
-        modify_method = getattr(api, "modify_entry", None)
-        if modify_method:
-            result = await modify_method(session, user_dn, {"mail": [new_mail]})
-            typed_result: FlextResult[object] = cast("FlextResult[object]", result)
+    # Connect to LDAP server
+    connect_result = await api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
+    if connect_result.is_success:
+        try:
+            # Use modify_entry method if available
+            modify_method = getattr(api, "modify_entry", None)
+            if modify_method:
+                result = await modify_method(user_dn, {"mail": [new_mail]})
+                typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
-            if typed_result.success:
-                logger.info(f"✅ Updated user email to: {new_mail}")
+                if typed_result.is_success:
+                    logger.info(f"✅ Updated user email to: {new_mail}")
+                else:
+                    logger.error(f"❌ Failed to update user: {typed_result.error}")
             else:
-                logger.error(f"❌ Failed to update user: {typed_result.error}")
-        else:
-            logger.error("❌ modify_entry method not available")
+                logger.error("❌ modify_entry method not available")
+        finally:
+            # Disconnect
+            await api.unbind()
+    else:
+        logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
 async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
     """Delete user using FlextLdapClient."""
     logger.info(f"Deleting user {user_dn}...")
 
-    async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
-        delete_method = getattr(api, "delete_entry", None)
-        if delete_method:
-            result = await delete_method(session, user_dn)
-            typed_result: FlextResult[object] = cast("FlextResult[object]", result)
+    # Connect to LDAP server
+    connect_result = await api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
+    if connect_result.is_success:
+        try:
+            # Use delete_entry method if available
+            delete_method = getattr(api, "delete_entry", None)
+            if delete_method:
+                result = await delete_method(user_dn)
+                typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
-            if typed_result.success:
-                logger.info("✅ User deleted successfully")
+                if typed_result.is_success:
+                    logger.info("✅ User deleted successfully")
+                else:
+                    logger.error(f"❌ Failed to delete user: {typed_result.error}")
             else:
-                logger.error(f"❌ Failed to delete user: {typed_result.error}")
-        else:
-            logger.error("❌ delete_entry method not available")
+                logger.error("❌ delete_entry method not available")
+        finally:
+            # Disconnect
+            await api.unbind()
+    else:
+        logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
 async def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
-    # Get FlextLdapClient instance via explicit factory to ensure proper typing
-    api = FlextLdapClient.create()
+    # Get FlextLdapClient instance
+    api = FlextLdapClient()
 
     try:
         # CREATE: Add sample users

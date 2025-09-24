@@ -13,18 +13,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult
+from flext_core import FlextProtocols, FlextResult
 
 if TYPE_CHECKING:
     from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapProtocols:
-    """Unified LDAP protocols class containing all protocol interfaces.
+class FlextLdapProtocols(FlextProtocols):
+    """Unified LDAP protocols class extending FlextProtocols with LDAP-specific protocols.
 
-    This class consolidates all LDAP-related protocol definitions, abstract
-    base classes, and interface specifications in a single location following
-    FLEXT domain separation patterns.
+    This class extends the base FlextProtocols with LDAP-specific protocol definitions,
+    abstract base classes, and interface specifications following FLEXT domain separation patterns.
     """
 
     class Repository(ABC):
@@ -47,7 +46,7 @@ class FlextLdapProtocols:
         async def create(
             self,
             dn: str,
-            attributes: FlextLdapTypes.Entry.AttributeDict,
+            attributes: FlextLdapTypes.EntryAttributeDict,
         ) -> FlextResult[bool]:
             """Create a new entry in the LDAP directory."""
 
@@ -55,7 +54,7 @@ class FlextLdapProtocols:
         async def update(
             self,
             dn: str,
-            attributes: FlextLdapTypes.Entry.AttributeDict,
+            attributes: FlextLdapTypes.EntryAttributeDict,
         ) -> FlextResult[bool]:
             """Update an existing entry in the LDAP directory."""
 
@@ -143,19 +142,11 @@ class FlextLdapProtocols:
             """Generic search for LDAP entries."""
 
     class Validation(ABC):
-        """LDAP validation protocol interface."""
+        """LDAP validation protocol interface.
 
-        @abstractmethod
-        def validate_dn(self, dn: str) -> FlextResult[str]:
-            """Validate Distinguished Name format."""
-
-        @abstractmethod
-        def validate_filter(self, filter_str: str) -> FlextResult[str]:
-            """Validate LDAP search filter format."""
-
-        @abstractmethod
-        def validate_email(self, email: str | None) -> FlextResult[str | None]:
-            """Validate email address format."""
+        Note: Validation methods have been moved to FlextLdapValidations.
+        This protocol is kept for backward compatibility but will be deprecated.
+        """
 
         @abstractmethod
         def validate_password(self, password: str | None) -> FlextResult[str | None]:

@@ -6,11 +6,21 @@ access to all LDAP domain functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
+- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
+- Properties like conn.entries and entry.entry_dn are not fully typed
+- Entry attributes and their values have incomplete type information
 """
+# type: ignore[attr-defined]
 
 from __future__ import annotations
 
 from flext_core import FlextResult
+from flext_ldap.acl import (
+    FlextLdapAclConstants,
+    FlextLdapAclManager,
+)
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfigs
 from flext_ldap.models import FlextLdapModels
@@ -54,6 +64,7 @@ class FlextLdapAPI:
         self._client = FlextLdapClient()
         self._user_repository = FlextLdapRepositories.UserRepository(self._client)
         self._group_repository = FlextLdapRepositories.GroupRepository(self._client)
+        self._acl_manager = FlextLdapAclManager()
 
     @classmethod
     def create(cls, config: FlextLdapConfigs | None = None) -> FlextLdapAPI:
@@ -112,12 +123,29 @@ class FlextLdapAPI:
         """Access to LDAP validations class."""
         return FlextLdapValidations
 
+    @property
+    def acl(self) -> FlextLdapAclManager:
+        """Access to ACL manager for ACL operations."""
+        return self._acl_manager
+
+    @property
+    def acl_models(self) -> type[FlextLdapModels]:
+        """Access to ACL models class."""
+        return FlextLdapModels
+
+    @property
+    def acl_constants(self) -> type[FlextLdapAclConstants]:
+        """Access to ACL constants class."""
+        return FlextLdapAclConstants
+
     # =========================================================================
     # AUTHENTICATION METHODS
     # =========================================================================
 
     async def authenticate_user(
-        self, username: str, password: str,
+        self,
+        username: str,
+        password: str,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Authenticate user credentials against LDAP directory.
 
@@ -132,7 +160,9 @@ class FlextLdapAPI:
         return await self._client.authenticate_user(username, password)
 
     async def bind(
-        self, dn: str | None = None, password: str | None = None,
+        self,
+        dn: str | None = None,
+        password: str | None = None,
     ) -> FlextResult[bool]:
         """Bind to LDAP server with credentials.
 
@@ -206,7 +236,9 @@ class FlextLdapAPI:
     # =========================================================================
 
     async def search_users(
-        self, filter_str: str | None = None, base_dn: str | None = None,
+        self,
+        filter_str: str | None = None,
+        base_dn: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
         """Search for users in LDAP directory.
 
@@ -264,7 +296,9 @@ class FlextLdapAPI:
         return await self._client.search_users(actual_base_dn, uid=None)
 
     async def search_groups(
-        self, filter_str: str | None = None, base_dn: str | None = None,
+        self,
+        filter_str: str | None = None,
+        base_dn: str | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for groups in LDAP directory.
 
@@ -335,7 +369,7 @@ class FlextLdapAPI:
         """
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
-            filter=filter_str,  # Use the alias 'filter' instead of 'filter_str'
+            filter_str=filter_str,
             scope=scope,
             attributes=attributes,
             page_size=None,
@@ -343,12 +377,34 @@ class FlextLdapAPI:
         )
         return await self._client.search_with_request(search_request)
 
+    async def search_entries_from_data(
+        self,
+        search_data: FlextLdapTypes.SearchRequestData,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
+        """Search LDAP entries using SearchRequestData structure.
+
+        Args:
+            search_data: Search request data using DataStructures types
+
+        Returns:
+            FlextResult containing search response or error.
+
+        """
+        try:
+            search_request = FlextLdapModels.SearchRequest(**search_data)
+            return await self._client.search_with_request(search_request)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
+                f"Failed to create search request from data: {e}"
+            )
+
     # =========================================================================
     # CRUD METHODS
     # =========================================================================
 
     async def create_user(
-        self, user_request: FlextLdapModels.CreateUserRequest,
+        self,
+        user_request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create new user in LDAP directory.
 
@@ -362,7 +418,8 @@ class FlextLdapAPI:
         return await self._client.create_user(user_request)
 
     async def create_group(
-        self, group_request: FlextLdapModels.CreateGroupRequest,
+        self,
+        group_request: FlextLdapModels.CreateGroupRequest,
     ) -> FlextResult[FlextLdapModels.Group]:
         """Create new group in LDAP directory.
 
@@ -400,7 +457,9 @@ class FlextLdapAPI:
         return await self._client.get_group(dn)
 
     async def update_user_attributes(
-        self, dn: str, attributes: dict[str, object],
+        self,
+        dn: str,
+        attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update user attributes.
 
@@ -415,7 +474,9 @@ class FlextLdapAPI:
         return await self._client.update_user_attributes(dn, attributes)
 
     async def update_group_attributes(
-        self, dn: str, attributes: dict[str, object],
+        self,
+        dn: str,
+        attributes: dict[str, object],
     ) -> FlextResult[bool]:
         """Update group attributes.
 
@@ -475,95 +536,71 @@ class FlextLdapAPI:
             return FlextResult[bool].fail(test_result.error or "Connection test failed")
         return FlextResult[bool].ok(True)
 
-    def validate_configuration_consistency(self) -> FlextResult[None]:
-        """Validate LDAP configuration consistency.
+    # =========================================================================
+    # ACL MANAGEMENT METHODS
+    # =========================================================================
+
+    def parse_acl(
+        self, acl_string: str, format_type: str
+    ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+        """Parse ACL from specific format to unified representation.
+
+        Args:
+            acl_string: ACL string to parse.
+            format_type: ACL format type (openldap, oracle, aci).
+
+        Returns:
+            FlextResult containing unified ACL or error.
+
+        """
+        return self._acl_manager.parse_acl(acl_string, format_type)
+
+    def convert_acl(
+        self, acl_string: str, source_format: str, target_format: str
+    ) -> FlextResult[FlextLdapModels.ConversionResult]:
+        """Convert ACL from source format to target format.
+
+        Args:
+            acl_string: ACL string to convert.
+            source_format: Source ACL format.
+            target_format: Target ACL format.
+
+        Returns:
+            FlextResult containing conversion result or error.
+
+        """
+        return self._acl_manager.convert_acl(acl_string, source_format, target_format)
+
+    def batch_convert_acls(
+        self, acl_list: list[str], source_format: str, target_format: str
+    ) -> FlextResult[list[FlextLdapModels.ConversionResult]]:
+        """Convert multiple ACLs from source to target format.
+
+        Args:
+            acl_list: List of ACL strings to convert.
+            source_format: Source ACL format.
+            target_format: Target ACL format.
+
+        Returns:
+            FlextResult containing list of conversion results or error.
+
+        """
+        return self._acl_manager.batch_convert(acl_list, source_format, target_format)
+
+    def validate_acl_syntax(
+        self, acl_string: str, format_type: str
+    ) -> FlextResult[bool]:
+        """Validate ACL syntax for specific format.
+
+        Args:
+            acl_string: ACL string to validate.
+            format_type: ACL format type.
 
         Returns:
             FlextResult indicating validation success or error.
 
         """
-        try:
-            # Check required configuration fields using helper methods
-            server_uri = self._config.get_effective_server_uri()
-            bind_dn = self._config.get_effective_bind_dn()
-            bind_password = self._config.get_effective_bind_password()
-
-            if not server_uri:
-                return FlextResult[None].fail("Server URI is required")
-            if not bind_dn:
-                return FlextResult[None].fail("Bind DN is required")
-            if not bind_password:
-                return FlextResult[None].fail("Bind password is required")
-
-            # Validate DN format
-            dn_validation = FlextLdapValidations.validate_dn(bind_dn)
-            if dn_validation.is_failure:
-                return FlextResult[None].fail(f"Invalid bind DN: {dn_validation.error}")
-
-            # Use business rules validation from config
-            business_validation = self._config.validate_business_rules()
-            if business_validation.is_failure:
-                return FlextResult[None].fail(
-                    f"Business rules validation failed: {business_validation.error}",
-                )
-
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Configuration validation error: {e}")
-
-    def validate_dn(self, dn: str) -> FlextResult[str]:
-        """Validate Distinguished Name format.
-
-        Args:
-            dn: Distinguished Name to validate.
-
-        Returns:
-            FlextResult containing validated DN or error.
-
-        """
-        validation_result = FlextLdapValidations.validate_dn(dn)
-        if validation_result.is_failure:
-            return FlextResult[str].fail(
-                validation_result.error or "DN validation failed",
-            )
-        return FlextResult[str].ok(dn)
-
-    def validate_filter(self, filter_str: str) -> FlextResult[str]:
-        """Validate LDAP search filter format.
-
-        Args:
-            filter_str: Search filter to validate.
-
-        Returns:
-            FlextResult containing validated filter or error.
-
-        """
-        validation_result = FlextLdapValidations.validate_filter(filter_str)
-        if validation_result.is_failure:
-            return FlextResult[str].fail(
-                validation_result.error or "Filter validation failed",
-            )
-        return FlextResult[str].ok(filter_str)
-
-    def validate_email(self, email: str | None) -> FlextResult[str | None]:
-        """Validate email address format.
-
-        Args:
-            email: Email address to validate.
-
-        Returns:
-            FlextResult containing validated email or error.
-
-        """
-        if email is None:
-            return FlextResult[str | None].ok(None)
-
-        validation_result = FlextLdapValidations.validate_email(email)
-        if validation_result.is_failure:
-            return FlextResult[str | None].fail(
-                validation_result.error or "Email validation failed",
-            )
-        return FlextResult[str | None].ok(email)
+        return self._acl_manager.validate_acl_syntax(acl_string, format_type)
 
 
 __all__ = [

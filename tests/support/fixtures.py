@@ -1,40 +1,65 @@
-"""Test fixtures for LDAP testing.
+"""Test fixtures for LDAP testing - Now using shared container.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 import asyncio
+import sys
 from collections.abc import AsyncGenerator, Generator
+from pathlib import Path
+from typing import Any
 
 import pytest
 
 from flext_core import FlextLogger, FlextTypes
 from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_ldap.api import FlextLdapAPI
+from flext_ldap.config import FlextLdapConfigs
+from flext_ldap.validations import FlextLdapValidations
 
-from .helpers import cleanup_test_entries, search_entries
-from .ldap_server import LdapTestServer, get_test_ldap_config
-from .test_data import SAMPLE_GROUP_ENTRY, SAMPLE_USER_ENTRY, TEST_GROUPS, TEST_USERS
+# Add docker directory to path to import shared fixtures
+docker_dir = Path(__file__).parent.parent.parent.parent / "docker"
+if str(docker_dir) not in sys.path:
+    sys.path.insert(0, str(docker_dir))
+
+
+from .helpers import cleanup_test_entries, search_entries  # noqa: E402
+from .ldap_server import LdapTestServer, get_test_ldap_config  # noqa: E402
+from .test_data import (  # noqa: E402
+    SAMPLE_GROUP_ENTRY,
+    SAMPLE_USER_ENTRY,
+    TEST_GROUPS,
+    TEST_USERS,
+)
 
 logger = FlextLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
-    """Start and manage real LDAP server for testing.
+async def real_ldap_server(
+    shared_ldap_container: object,
+) -> AsyncGenerator[LdapTestServer]:
+    """Start and manage shared LDAP server for testing.
+
+    This fixture now uses the shared LDAP container to avoid conflicts
+    between different test runs and projects.
 
     Yields:
-        LdapTestServer: Configured LDAP test server instance.
+        LdapTestServer: Configured LDAP test server instance using shared container.
 
     """
-    server = LdapTestServer()
-
-    # Start the server
-    start_result = await server.start()
-    if not start_result.is_success:
-        raise RuntimeError(f"Failed to start LDAP server: {start_result.error}")
-
-    # Setup test data
+    # Create a server instance that uses the shared container
+    server = LdapTestServer(
+        container_name="flext-shared-ldap-server",  # Use shared container name
+        port=3390,  # Use shared port
+    )
+    
+    # The shared container is already running, so we just need to configure the server
+    # to use it instead of starting a new one
+    server._container = shared_ldap_container
+    
+    # Setup test data on the shared container
     setup_result = await server.setup_test_data()
     if not setup_result.is_success:
         logger.warning("Failed to setup test data: %s", setup_result.error)
@@ -42,24 +67,23 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
     try:
         yield server
     finally:
-        # Clean up
-        stop_result = await server.stop()
-        if not stop_result.is_success:
-            logger.warning("Failed to stop LDAP server: %s", stop_result.error)
+        # Don't stop the shared container - it's managed by the shared container manager
+        # Test data cleanup is not needed for shared container
+        pass
 
 
 @pytest.fixture
-async def ldap_connection(  # noqa: RUF029
+def ldap_connection(
     real_ldap_server: LdapTestServer,
-) -> AsyncGenerator[FlextLdapModels.ConnectionConfig, None]:
+) -> FlextLdapModels.ConnectionConfig:
     """Get LDAP connection configuration for testing."""
-    yield real_ldap_server.get_connection_config()
+    return real_ldap_server.get_connection_config()
 
 
 @pytest.fixture
-async def ldap_api() -> AsyncGenerator[FlextLdapClient, None]:  # noqa: RUF029
+def ldap_api() -> FlextLdapClient:
     """Get configured LDAP API instance."""
-    yield FlextLdapClient()
+    return FlextLdapClient()
 
 
 @pytest.fixture
@@ -95,7 +119,7 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 async def clean_ldap_container(
     real_ldap_server: LdapTestServer,
-) -> AsyncGenerator[dict[str, object], None]:
+) -> dict[str, object]:
     """Get clean LDAP container configuration for testing."""
     await real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
@@ -107,12 +131,12 @@ async def clean_ldap_container(
         "port": real_ldap_server.port,
         "use_ssl": config.use_ssl,
     }
-    yield container_info
+    return container_info
 
 
 # Synchronous fixtures for compatibility
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop]:
+def custom_event_loop() -> Generator[asyncio.AbstractEventLoop]:
     """Create event loop for the test session.
 
     Yields:
@@ -160,3 +184,103 @@ def clean_ldap_state(
         ]
         if dns_to_cleanup_after:
             cleanup_test_entries(ldap_connection, dns_to_cleanup_after)
+
+
+@pytest.fixture
+def flext_ldap_api() -> Generator[FlextLdapAPI]:
+    """Create FlextLdapAPI instance with clean configuration."""
+    FlextLdapConfigs.reset_global_instance()
+    api = FlextLdapAPI.create()
+    yield api
+    FlextLdapConfigs.reset_global_instance()
+
+
+@pytest.fixture
+def flext_ldap_config() -> Generator[FlextLdapConfigs]:
+    """Create clean FlextLdapConfigs instance."""
+    FlextLdapConfigs.reset_global_instance()
+    config = FlextLdapConfigs()
+    yield config
+    FlextLdapConfigs.reset_global_instance()
+
+
+@pytest.fixture
+def flext_ldap_validations() -> type[FlextLdapValidations]:
+    """Get FlextLdapValidations class for testing."""
+    return FlextLdapValidations
+
+
+@pytest.fixture
+def sample_valid_dn() -> str:
+    """Get sample valid DN for testing."""
+    return "cn=test,dc=example,dc=com"
+
+
+@pytest.fixture
+def sample_valid_filter() -> str:
+    """Get sample valid LDAP filter for testing."""
+    return "(objectClass=person)"
+
+
+@pytest.fixture
+def sample_valid_email() -> str:
+    """Get sample valid email for testing."""
+    return "test@example.com"
+
+
+@pytest.fixture
+def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
+    """Get sample connection configuration."""
+    return FlextLdapModels.ConnectionConfig(
+        server="ldap://localhost:389",
+        bind_dn="cn=admin,dc=example,dc=com",
+        bind_password="password",
+    )
+
+
+# =========================================================================
+# SHARED LDAP FIXTURES - Integration with docker/shared_ldap_fixtures.py
+# =========================================================================
+
+@pytest.fixture
+async def shared_ldap_client(shared_ldap_config: Any) -> AsyncGenerator[FlextLdapClient]:  # noqa: ANN401
+    """Get FlextLdapClient connected to shared LDAP container.
+    
+    This fixture provides a client connected to the shared LDAP container
+    managed by the docker/shared_ldap_fixtures.py system.
+    """
+    if shared_ldap_config is None:
+        pytest.skip("Shared LDAP fixtures not available")
+    
+    client = FlextLdapClient()
+    
+    # Connect to shared LDAP server
+    result = await client.connect(
+        server_uri=str(shared_ldap_config["server_url"]),
+        bind_dn=str(shared_ldap_config["bind_dn"]),
+        password=str(shared_ldap_config["password"]),
+    )
+    
+    if not result.is_success:
+        pytest.skip(f"Shared LDAP server not available: {result.error}")
+    
+    try:
+        yield client
+    finally:
+        await client.close_connection()
+
+
+@pytest.fixture
+def shared_ldap_connection_config(shared_ldap_config: Any) -> FlextLdapModels.ConnectionConfig:  # noqa: ANN401
+    """Get FlextLdapModels.ConnectionConfig for shared LDAP container."""
+    if shared_ldap_config is None:
+        pytest.skip("Shared LDAP fixtures not available")
+    
+    return FlextLdapModels.ConnectionConfig(
+        server=str(shared_ldap_config["server_url"]),
+        bind_dn=str(shared_ldap_config["bind_dn"]),
+        bind_password=str(shared_ldap_config["password"]),
+        base_dn=str(shared_ldap_config["base_dn"]),
+        use_ssl=False,
+        timeout=30,
+    )

@@ -85,7 +85,7 @@ class TestLdapE2EOperations:
 
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "uid"],
             size_limit=1000,

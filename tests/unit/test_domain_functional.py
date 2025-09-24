@@ -176,7 +176,7 @@ class TestLdapModelsValidation:
         """Test SearchRequest creation."""
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
-            filter="(cn=test*)",
+            filter_str="(cn=test*)",
             scope="subtree",
             attributes=["cn", "mail"],
             page_size=None,

@@ -1,8 +1,8 @@
-"""LDAP type definitions for flext-ldap domain.
+"""Unified LDAP type definitions for flext-ldap domain.
 
-This module contains all type aliases and type definitions used throughout
-the flext-ldap domain. Following FLEXT standards, all types are organized
-under a single FlextLdapTypes class.
+This module consolidates all type aliases, type definitions, and  protocol
+definitions used throughout the flext-ldap domain. Following FLEXT standards,
+all types are organized under a single FlextLdapTypes class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,104 +10,202 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
 
-class FlextLdapTypes:
-    """Unified LDAP types class containing all type definitions for the domain.
+from flext_core import FlextTypes
 
-    This class consolidates all LDAP-related type aliases, type variables,
-    and complex type definitions in a single location following FLEXT
-    domain separation patterns.
+if TYPE_CHECKING:
+    import ldap3
+
+
+class FlextLdapTypes(FlextTypes):
+    """Unified LDAP types class extending FlextTypes with LDAP-specific type definitions.
+
+    This class extends the base FlextTypes with LDAP-specific type aliases, type variables,
+    complex type definitions, and  protocol definitions following FLEXT domain separation patterns.
     """
 
-    class Entry:
-        """LDAP entry-related type definitions."""
+    # =========================================================================
+    # ENTRY TYPES - LDAP entry-related type definitions
+    # =========================================================================
 
-        # Basic LDAP attribute value types
-        AttributeValue = str | list[str] | bytes | list[bytes]
+    # Basic LDAP attribute value types
+    EntryAttributeValue = str | list[str] | bytes | list[bytes]
 
-        # LDAP attributes dictionary
-        AttributeDict = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
+    # LDAP attributes dictionary
+    EntryAttributeDict = dict[str, EntryAttributeValue]
 
-        # LDAP entry data structure
-        Data = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
+    # LDAP entry data structure
+    EntryData = dict[str, EntryAttributeValue]
 
-        # Distinguished Name type
-        DN = str
+    # Distinguished Name type
+    EntryDN = str
 
-        # Object classes list
-        ObjectClasses = list[str]
+    # Object classes list
+    EntryObjectClasses = list[str]
 
-    class Search:
-        """LDAP search-related type definitions."""
+    # =========================================================================
+    # SEARCH TYPES - LDAP search-related type definitions
+    # =========================================================================
 
-        # Search result entry
-        ResultEntry = dict[str, object]
+    # Search result entry
+    SearchResultEntry = dict[str, object]
 
-        # Search result collection
-        Result = list["FlextLdapTypes.Search.ResultEntry"]
+    # Search result collection
+    SearchResult = list[SearchResultEntry]
 
-        # Search filter string
-        Filter = str
+    # Search filter string
+    SearchFilter = str
 
-        # Search scope values
-        Scope = str
+    # Search scope values
+    SearchScope = str
 
-        # Search base DN
-        BaseDN = str
+    # Search base DN
+    SearchBaseDN = str
 
-        # Attributes to return
-        Attributes = list[str] | None
+    # Attributes to return
+    SearchAttributes = list[str] | None
 
-    class Connection:
-        """LDAP connection-related type definitions."""
+    # =========================================================================
+    # CONNECTION TYPES - LDAP connection-related type definitions
+    # =========================================================================
 
-        # Server URI
-        ServerURI = str
+    # Server URI
+    ConnectionServerURI = str
 
-        # Port number
-        Port = int
+    # Port number
+    ConnectionPort = int
 
-        # Bind DN for authentication
-        BindDN = str | None
+    # Bind DN for authentication
+    ConnectionBindDN = str | None
 
-        # Bind password
-        BindPassword = str | None
+    # Bind password
+    ConnectionBindPassword = str | None
 
-        # Connection timeout
-        Timeout = int
+    # Connection timeout
+    ConnectionTimeout = int
 
-        # SSL/TLS configuration
-        UseSSL = bool
-        UseTLS = bool
+    # SSL/TLS configuration
+    ConnectionUseSSL = bool
+    ConnectionUseTLS = bool
 
-    class Validation:
-        """LDAP validation-related type definitions."""
+    # =========================================================================
+    # VALIDATION TYPES - LDAP validation-related type definitions
+    # =========================================================================
 
-        # Validation result type
-        ValidationResult = bool
+    # Validation result type
+    ValidationResult = bool
 
-        # Error message type
-        ErrorMessage = str
+    # Error message type
+    ValidationErrorMessage = str
 
-        # Field name for validation
-        FieldName = str
+    # Field name for validation
+    ValidationFieldName = str
 
-    class Operation:
-        """LDAP operation-related type definitions."""
+    # =========================================================================
+    # OPERATION TYPES - LDAP operation-related type definitions
+    # =========================================================================
 
-        # Operation type identifier
-        OperationType = str
+    # Operation type identifier
+    OperationType = str
 
-        # Operation result code
-        ResultCode = int
+    # Operation result code
+    OperationResultCode = int
 
-        # Operation duration in milliseconds
-        Duration = float
+    # Operation duration in milliseconds
+    OperationDuration = float
 
-        # Operation status
-        Status = bool
+    # Operation status
+    OperationStatus = bool
+
+    # =========================================================================
+    # DATA STRUCTURES - Composite type aliases for module use
+    # =========================================================================
+
+    # ConnectionConfig data structure - specific field types
+    ConnectionConfigData = dict[
+        str,
+        ConnectionServerURI
+        | ConnectionPort
+        | ConnectionUseSSL
+        | ConnectionBindDN
+        | ConnectionBindPassword
+        | ConnectionTimeout,
+    ]
+
+    # SearchRequest data structure - specific field types
+    SearchRequestData = dict[
+        str,
+        SearchBaseDN
+        | SearchFilter
+        | SearchScope
+        | SearchAttributes
+        | int
+        | bool
+        | bytes
+        | None,
+    ]
+
+    # Generic model data structure - broader for flexibility
+    GenericModelData = dict[
+        str,
+        EntryAttributeValue
+        | SearchBaseDN
+        | SearchFilter
+        | SearchScope
+        | SearchAttributes
+        | int
+        | bool
+        | bytes
+        | None,
+    ]
+
+    # Additional  type aliases for better readability
+    AttributeValue = str | list[str]
+    Attributes = dict[str, AttributeValue]
+    ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+
+
+# Module-level type aliases for LDAP3 types
+if TYPE_CHECKING:
+    from ldap3 import Connection, Server, Entry, Attribute
+    # LDAP3 constants
+    ALL: int
+    BASE: int
+    LEVEL: int
+    SUBTREE: int
+    MODIFY_ADD: int
+    MODIFY_DELETE: int
+    MODIFY_REPLACE: int
+    SIMPLE: int
+else:
+    # Runtime fallbacks
+    Connection = Any
+    Server = Any
+    Entry = Any
+    Attribute = Any
+    ALL = 0
+    BASE = 1
+    LEVEL = 2
+    SUBTREE = 3
+    MODIFY_ADD = 0
+    MODIFY_DELETE = 1
+    MODIFY_REPLACE = 2
+    SIMPLE = 0
 
 
 __all__ = [
     "FlextLdapTypes",
+    "Connection",
+    "Server", 
+    "Entry",
+    "Attribute",
+    "ALL",
+    "BASE",
+    "LEVEL",
+    "SUBTREE",
+    "MODIFY_ADD",
+    "MODIFY_DELETE",
+    "MODIFY_REPLACE",
+    "SIMPLE",
 ]

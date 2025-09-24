@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Example of running FLEXT-LDAP examples with Docker OpenLDAP container.
+"""Example of running FLEXT-LDAP examples with shared Docker OpenLDAP container.
 
-This script automatically starts an OpenLDAP container and runs examples against it.
-Perfect for testing and demonstration without needing a manual LDAP setup.
+This script automatically starts the shared OpenLDAP container and runs examples against it.
+Uses the same container definition as flext-ldif and other FLEXT projects to avoid conflicts.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -16,12 +16,17 @@ import importlib
 import importlib.util
 import logging
 import os
-import time
+import sys
 import types
 from pathlib import Path
 
 import docker
-from docker import errors as docker_errors
+
+# Add docker directory to path to import shared fixtures
+docker_dir = Path(__file__).parent.parent.parent / "docker"
+sys.path.insert(0, str(docker_dir))
+
+from shared_ldap_fixtures import FlextSharedLDAPContainerManager  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -49,89 +54,39 @@ def _load_module_spec(module_name: str, file_path: Path) -> types.ModuleType:
 
 
 def start_openldap_container() -> bool:
-    """Start OpenLDAP container for testing.
+    """Start shared OpenLDAP container for testing.
 
     Returns:
         bool: True if container started successfully, False otherwise.
 
     """
     try:
-        client = docker.from_env()
-        # Stop any existing container
-        try:
-            existing = client.containers.get("flext-ldap-example")
-            try:
-                existing.stop()
-            finally:
-                existing.remove(force=True)
-        except docker_errors.NotFound:
-            logger.debug("No existing container to stop", exc_info=True)
-
-        # Start new container
-        env = {
-            "LDAP_ORGANISATION": "FLEXT Example Org",
-            "LDAP_DOMAIN": "flext.local",
-            "LDAP_ADMIN_PASSWORD": "admin123",
-            "LDAP_CONFIG_PASSWORD": "config123",
-            "LDAP_READONLY_USER": "false",
-            "LDAP_RFC2307BIS_SCHEMA": "true",
-            "LDAP_BACKEND": "mdb",
-            "LDAP_TLS": "false",
-            "LDAP_REMOVE_CONFIG_AFTER_SETUP": "true",
-        }
-        client.containers.run(
-            image="osixia/openldap:1.5.0",
-            name="flext-ldap-example",
-            detach=True,
-            ports={"389/tcp": 3389},
-            environment=env,
-        )
-
-        # Wait for container to be ready
-        ldap3 = importlib.import_module("ldap3")
-        server = ldap3.Server("localhost", port=389, get_info=ldap3.ALL)
-        for _attempt in range(30):
-            try:
-                with ldap3.Connection(
-                    server,
-                    user="cn=admin,dc=flext,dc=local",
-                    password=os.getenv("LDAP_TEST_PASSWORD", ""),
-                    auto_bind=True,
-                ) as conn:
-                    if conn.bound:
-                        return True
-            except Exception:
-                time.sleep(1)
-
-        return False
+        # Use shared container manager
+        manager = FlextSharedLDAPContainerManager()
+        container = manager.start_container()
+        return container is not None
 
     except (RuntimeError, ValueError, TypeError):
-        logger.exception("Failed to start OpenLDAP container")
+        logger.exception("Failed to start shared OpenLDAP container")
         return False
 
 
 def stop_openldap_container() -> None:
-    """Stop and remove OpenLDAP container."""
+    """Stop and remove shared OpenLDAP container."""
     try:
-        client = docker.from_env()
-        try:
-            c = client.containers.get("flext-ldap-example")
-            try:
-                c.stop()
-            finally:
-                c.remove(force=True)
-        except docker_errors.NotFound:
-            logger.debug("Container not found when stopping", exc_info=True)
+        # Use shared container manager
+        manager = FlextSharedLDAPContainerManager()
+        manager.stop_container()
     except (RuntimeError, ValueError, TypeError) as e:
-        logger.warning("Failed to stop container: %s", e)
+        logger.warning("Failed to stop shared container: %s", e)
 
 
 async def run_examples_with_docker() -> None:
-    """Run FLEXT-LDAP examples against Docker OpenLDAP."""
-    # Set environment variables for container
+    """Run FLEXT-LDAP examples against shared Docker OpenLDAP."""
+    # Set environment variables for shared container
     os.environ.update(
         {
-            "LDAP_TEST_SERVER": "ldap://localhost:3389",
+            "LDAP_TEST_SERVER": "ldap://localhost:3390",
             "LDAP_TEST_BIND_DN": "cn=admin,dc=flext,dc=local",
             "LDAP_TEST_PASSWORD": "admin123",
             "LDAP_TEST_BASE_DN": "dc=flext,dc=local",
@@ -183,7 +138,9 @@ if __name__ == "__main__":
     try:
         docker_client = docker.from_env()
         # Check connectivity by listing containers
-        _ = docker_client.containers.list()
+        containers = docker_client.containers.list()
+        # Use the result to verify Docker connectivity
+        container_count = len(containers) if containers else 0
     except Exception as e:
         raise SystemExit(1) from e
 

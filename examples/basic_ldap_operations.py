@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConfigs,
@@ -46,16 +46,15 @@ async def demonstrate_api_usage() -> FlextLdapClient:
         FlextLdapClient: The initialized LDAP API instance.
 
     """
-    # 1. Initialize API using factory function
-    # Use explicit factory create() to avoid object-return typing for some loaders
-    api = FlextLdapClient.create()
+    # 1. Initialize API using direct instantiation
+    api = FlextLdapClient()
 
     # 2. Connect (using demo server for example)
     try:
-        connection_result = await api.connect(
+        connection_result: FlextResult[bool] = await api.connect(
             server_uri=os.getenv("LDAP_SERVER_URI", "ldap://demo.example.com:389"),
             bind_dn=os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com"),
-            bind_password=os.getenv("LDAP_BIND_PASSWORD") or "",
+            password=os.getenv("LDAP_BIND_PASSWORD") or "",
         )
 
         if connection_result.is_success:
@@ -76,19 +75,18 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
 
     try:
         # 1. Basic search using correct API
-        search_result = await api.search_simple(
+        search_result: FlextResult[list[dict[str, object]]] = await api.search(
             base_dn="dc=example,dc=com",
-            search_filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
-            scope="subtree",
         )
 
         if search_result.is_success:
-            entries = search_result.value or []
+            entries: list[dict[str, object]] = search_result.value or []
             logger.info(f"Found {len(entries)} entries")
 
             for entry in entries[:3]:  # Show first 3 entries
-                logger.debug(f"Entry DN: {entry.dn}")
+                logger.debug(f"Entry: {entry}")
 
     except Exception as e:
         # Continue demo with available operations
@@ -98,14 +96,17 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
 async def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result = FlextLdapModels.ValueObjects.DistinguishedName.create("")
+    dn_result: FlextResult[FlextLdapModels.DistinguishedName] = (
+        FlextLdapModels.DistinguishedName.create("")
+    )
     if not dn_result.is_success:
         pass
 
     # 2. Filter validation errors
-    filter_result = FlextLdapModels.ValueObjects.Filter.create("invalid-filter-format")
-    if not filter_result.is_success:
-        pass
+    filter_result: FlextLdapModels.Filter = FlextLdapModels.Filter.equals(
+        "objectClass", "invalid-filter-format"
+    )
+    logger.debug(f"Created filter: {filter_result.expression}")
 
     # 3. Connection errors (simulated)
     api = FlextLdapClient()
@@ -114,10 +115,10 @@ async def demonstrate_error_handling() -> None:
             "LDAP_TEST_PASSWORD",
             "demo_password_not_for_production",
         )
-        connection_result = await api.connect(
+        connection_result: FlextResult[bool] = await api.connect(
             server_uri="ldap://nonexistent.server:389",
             bind_dn="cn=test",
-            bind_password=test_password,
+            password=test_password,
         )
 
         if not connection_result.is_success:

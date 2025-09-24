@@ -78,7 +78,7 @@ class TestLdapClientRealOperations:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
-            filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=[],  # Get all attributes
             size_limit=10,
             time_limit=30,  # 30 seconds timeout
@@ -144,14 +144,14 @@ class TestLdapClientRealOperations:
         ou_attributes = create_ldap_attributes(ou_attrs_raw)
         _ = await client.add(
             ou_dn,
-            ou_attributes,
+            cast("dict[str, str | list[str]] | None", ou_attributes),
         )
         # Ignore if OU already exists (error code 68)
 
         # ADD: Create user entry
         add_result = await client.add(
             test_dn,
-            user_attributes,
+            cast("dict[str, str | list[str]] | None", user_attributes),
         )
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
@@ -163,7 +163,7 @@ class TestLdapClientRealOperations:
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
         modify_result = await client.modify(
             test_dn,
-            cast("dict[str, object]", modify_attributes),
+            cast("dict[str, list[tuple[str, list[str]]]]", modify_attributes),
         )
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
@@ -171,7 +171,7 @@ class TestLdapClientRealOperations:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=test_dn,
             scope="base",
-            filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=1,
             time_limit=30,
@@ -256,7 +256,7 @@ class TestLdapServiceRealOperations:
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         await client.add(
             ou_dn,
-            ou_attributes_2,
+            cast("dict[str, str | list[str]] | None", ou_attributes_2),
         )  # Ignore if exists
 
         # Test user creation
@@ -299,7 +299,9 @@ class TestLdapServiceRealOperations:
             created_timestamp=None,
             modified_timestamp=None,
         )
-        created_user = create_result.unwrap() if create_result.is_success else default_user
+        created_user = (
+            create_result.unwrap() if create_result.is_success else default_user
+        )
         assert created_user.uid == user_request.uid
         assert created_user.cn == user_request.cn
         assert created_user.mail == user_request.mail
@@ -368,7 +370,9 @@ class TestLdapServiceRealOperations:
             modified_timestamp=None,
         )
         updated_user = (
-            updated_get_result.unwrap() if updated_get_result.is_success else default_user
+            updated_get_result.unwrap()
+            if updated_get_result.is_success
+            else default_user
         )
         assert updated_user is not None
         assert updated_user.mail == "updated-real@example.com"
@@ -382,7 +386,9 @@ class TestLdapServiceRealOperations:
             f"Failed to search users: {search_result.error}"
         )
         default_users: list[FlextLdapModels.LdapUser] = []
-        found_users = search_result.unwrap() if search_result.is_success else default_users
+        found_users = (
+            search_result.unwrap() if search_result.is_success else default_users
+        )
         assert len(found_users) == 1
         found_user = found_users[0]
         assert found_user.uid == user_request.uid
@@ -393,7 +399,9 @@ class TestLdapServiceRealOperations:
 
         # Verify deletion
         verify_result = await client.get_user(user_request.dn)
-        assert verify_result.is_success  # get_user succeeds even when user doesn't exist
+        assert (
+            verify_result.is_success
+        )  # get_user succeeds even when user doesn't exist
         assert verify_result.value is None  # User should not exist after deletion
 
     @pytest.mark.asyncio
@@ -424,7 +432,7 @@ class TestLdapServiceRealOperations:
             ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
             await client.add(
                 ou_dn,
-                ou_attributes_3,
+                cast("dict[str, str | list[str]] | None", ou_attributes_3),
             )  # Ignore if exists
 
         # Create test user for group membership
@@ -440,7 +448,7 @@ class TestLdapServiceRealOperations:
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
         await client.add(
             user_dn,
-            user_attributes_4,
+            cast("dict[str, str | list[str]] | None", user_attributes_4),
         )
 
         # Test group creation
@@ -475,7 +483,9 @@ class TestLdapServiceRealOperations:
             created_timestamp=None,
             modified_timestamp=None,
         )
-        retrieved_group = get_result.unwrap() if get_result.is_success else default_group
+        retrieved_group = (
+            get_result.unwrap() if get_result.is_success else default_group
+        )
         assert retrieved_group is not None
         assert retrieved_group.cn == group_request.cn
         assert user_dn in retrieved_group.members
@@ -505,7 +515,7 @@ class TestLdapServiceRealOperations:
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
         await client.add(
             user2_dn,
-            user2_attributes_6,
+            cast("dict[str, str | list[str]] | None", user2_attributes_6),
         )
 
         # Add member
@@ -619,7 +629,7 @@ class TestLdapValidationRealOperations:
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
         await client.add(
             ou_dn,
-            ou_attributes_7,
+            cast("dict[str, str | list[str]] | None", ou_attributes_7),
         )
 
         # Test user with valid business rules
@@ -665,8 +675,10 @@ class TestLdapValidationRealOperations:
             created_timestamp=None,
             modified_timestamp=None,
         )
-        created_user = create_result.unwrap() if create_result.is_success else default_user
-        validation_result = created_user.validate_business_rules()
+        created_user = (
+            create_result.unwrap() if create_result.is_success else default_user
+        )
+        validation_result = created_user.validate_business_rules_base()
         assert validation_result.is_success, (
             "Created user should pass business rule validation"
         )
@@ -742,7 +754,7 @@ class TestLdapErrorHandlingReal:
         invalid_search = FlextLdapModels.SearchRequest(
             base_dn="cn=nonexistent,dc=invalid,dc=com",
             scope="base",
-            filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=10,
             time_limit=30,
@@ -770,7 +782,7 @@ class TestLdapErrorHandlingReal:
 
         add_result = await client.add(
             invalid_dn,
-            invalid_attributes,
+            cast("dict[str, str | list[str]] | None", invalid_attributes),
         )
         # Should fail with appropriate error
         assert not add_result.is_success

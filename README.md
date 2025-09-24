@@ -14,11 +14,25 @@
 
 FLEXT-LDAP serves as the centralized LDAP operations library for all directory service needs across the FLEXT ecosystem. It provides a standardized interface for LDAP authentication, user management, and directory queries using Clean Architecture principles and domain-driven design patterns.
 
+### **Universal Compatibility**
+
+FLEXT-LDAP now provides **universal compatibility** with any LDAP server implementation through automatic schema discovery and server quirks handling:
+
+- **OpenLDAP** - Full support with VLV and sync capabilities
+- **Active Directory** - Case-insensitive operations and attribute mappings
+- **Oracle Directory Server** - Complete feature support
+- **Apache Directory Server** - Standard LDAP operations
+- **389 Directory Server** - Enterprise features support
+- **Novell eDirectory** - Legacy compatibility
+- **Any LDAP3-compatible server** - Automatic adaptation
+
 ### **Key Responsibilities**
 
-1. **LDAP Operations** - User authentication, directory searches, entry management
-2. **Clean Architecture** - Domain-driven design with separated layers (domain, application, infrastructure)
-3. **FLEXT Integration** - FlextResult error handling, dependency injection, logging
+1. **Universal LDAP Operations** - Works with any LDAP server automatically
+2. **Automatic Schema Discovery** - Detects server capabilities and quirks
+3. **Server-Specific Adaptations** - Normalizes operations per server type
+4. **Clean Architecture** - Domain-driven design with separated layers
+5. **FLEXT Integration** - FlextResult error handling, dependency injection, logging
 
 ### **Integration Points**
 
@@ -58,6 +72,79 @@ graph TB
         H --> J[User, Group, Entry]
         I --> K[DN, Filter, Scope]
     end
+```
+
+---
+
+## 🌐 Universal LDAP Compatibility
+
+### **GenericLdapClient - Works with Any LDAP Server**
+
+The `GenericLdapClient` automatically adapts to any LDAP server implementation:
+
+```python
+from flext_ldap import GenericLdapClient
+
+# Works with ANY LDAP server automatically
+client = GenericLdapClient()
+
+# Connect with automatic schema discovery
+await client.connect_with_discovery(
+    server_uri="ldap://your-server:389",
+    bind_dn="cn=admin,dc=example,dc=com", 
+    password="password"
+)
+
+# Server information is automatically discovered
+server_type = client.get_server_type()  # "openldap", "active_directory", etc.
+server_quirks = client.get_server_quirks()  # Server-specific behaviors
+
+# Universal search - works on any server
+results = await client.search_generic(
+    base_dn="dc=example,dc=com",
+    search_filter="(objectClass=person)",
+    attributes=["cn", "sn", "mail"]
+)
+
+# Universal CRUD operations
+await client.add_entry_generic("cn=user,dc=example,dc=com", {
+    "cn": "user",
+    "sn": "User", 
+    "objectClass": ["person"]
+})
+```
+
+### **Automatic Server Detection**
+
+The client automatically detects and adapts to:
+
+| Server Type | Detection | Adaptations |
+|-------------|-----------|-------------|
+| **OpenLDAP** | Vendor name patterns | Case-sensitive, VLV support |
+| **Active Directory** | Microsoft patterns | Case-insensitive, attribute mappings |
+| **Oracle Directory** | Oracle patterns | Full feature support |
+| **Apache DS** | Apache patterns | Standard LDAP operations |
+| **Generic** | Fallback | Conservative defaults |
+
+### **Server Quirks Handling**
+
+```python
+# Automatic quirks detection
+quirks = client.get_server_quirks()
+
+if quirks.case_sensitive_dns:
+    # Server requires exact case in DNs
+    dn = "cn=TestUser,dc=Example,dc=Com"
+else:
+    # Server accepts any case
+    dn = "cn=testuser,dc=example,dc=com"
+
+if quirks.supports_paged_results:
+    # Large result sets automatically paginated
+    results = await client.search_generic(base_dn, filter, size_limit=10000)
+else:
+    # Limited to server's max page size
+    results = await client.search_generic(base_dn, filter, size_limit=1000)
 ```
 
 ---

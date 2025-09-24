@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.exceptions import FlextExceptions
+from flext_core import FlextExceptions
 
 
 class TestExceptionStringRepresentations:
@@ -53,7 +53,7 @@ class TestExceptionStringRepresentations:
         error = FlextExceptions.OperationError(
             "Search failed",
             base_dn="ou=users,dc=test",
-            search_filter="(uid=test)",
+            search_filter_str="(uid=test)",
             ldap_result_code="32",
         )
         result_str = str(error)

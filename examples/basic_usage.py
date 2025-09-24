@@ -12,22 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger
-
-if TYPE_CHECKING:
-    # For static type checkers only
-    from flext_ldap import FlextLdapClient, FlextLdapModels
-else:
-    # Runtime: try to import library but fall back to harmless placeholders
-    try:
-        from flext_ldap import FlextLdapClient, FlextLdapModels
-    except Exception:  # pragma: no cover - example fallback for local editing
-        # type ignored: these placeholders are only for editor/static-checker convenience
-        FlextLdapClient = object
-        FlextLdapModels = object
+from flext_core import FlextLogger, FlextResult
+from flext_ldap import FlextLdapAPI, FlextLdapModels
 
 
 async def demonstrate_basic_operations() -> None:
@@ -47,17 +34,17 @@ async def demonstrate_basic_operations() -> None:
     await _demo_error_handling(service)
 
 
-def _initialize_ldap_service() -> FlextLdapClient:
+def _initialize_ldap_service() -> FlextLdapAPI:
     """Initialize LDAP service - Single Responsibility.
 
     Returns:
-        FlextLdapClient: The initialized LDAP API instance.
+        FlextLdapAPI: The initialized LDAP API instance.
 
     """
-    return FlextLdapClient()
+    return FlextLdapAPI()
 
 
-def _demo_create_primary_user(_service: FlextLdapClient) -> None:
+def _demo_create_primary_user(_service: FlextLdapAPI) -> None:
     """Create primary test user - Single Responsibility."""
     FlextLdapModels.CreateUserRequest(
         dn="cn=johndoe,ou=users,dc=example,dc=com",
@@ -70,28 +57,31 @@ def _demo_create_primary_user(_service: FlextLdapClient) -> None:
         user_password=None,
         # phone=None,  # Field not available in CreateUserRequest
         mail="john.doe@example.com",
+        department=None,
+        title=None,
+        organization=None,
     )
 
     # Simplified for compatibility - would normally use proper session management
 
 
-async def _demo_search_user(_service: FlextLdapClient) -> None:
+async def _demo_search_user(_service: FlextLdapAPI) -> None:
     """Search for user - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-async def _demo_update_user(_service: FlextLdapClient) -> None:
+async def _demo_update_user(_service: FlextLdapAPI) -> None:
     """Update user information - Single Responsibility."""
     # Split long line for readability
     # Simplified for compatibility - would normally use update_user() with session
 
 
-async def _demo_list_users(_service: FlextLdapClient, context: str) -> None:
+async def _demo_list_users(_service: FlextLdapAPI, context: str) -> None:
     """List all users with context - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-def _demo_create_additional_users(_service: FlextLdapClient) -> None:
+def _demo_create_additional_users(_service: FlextLdapAPI) -> None:
     """Create additional test users - Single Responsibility."""
     # Split long lines for readability
     additional_users = [
@@ -116,37 +106,36 @@ def _demo_create_additional_users(_service: FlextLdapClient) -> None:
             mail=user_data["mail"],
             given_name=None,
             # phone=None,  # Field not available in CreateUserRequest
+            department=None,
+            title=None,
+            organization=None,
         )
 
         # Simplified for compatibility - would normally use create_user() with session
 
 
-async def _demo_delete_user(_service: FlextLdapClient) -> None:
+async def _demo_delete_user(_service: FlextLdapAPI) -> None:
     """Delete user demonstration - Single Responsibility."""
     # Simplified for compatibility - would normally use delete_user() with session
 
 
-async def _demo_error_handling(_service: FlextLdapClient) -> None:
+async def _demo_error_handling(_service: FlextLdapAPI) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Simplified for compatibility - would normally use proper error handling
 
 
 async def demonstrate_connection_handling() -> None:
     """Demonstrate connection handling capabilities."""
-    service = FlextLdapClient()
+    service = FlextLdapAPI()
 
-    # Test connection to non-existent server (will fail gracefully)
-    result = await service.connect(
-        server_uri="ldap://localhost:3389",
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
-    )
+    # Test connection (will fail gracefully if no config)
+    result: FlextResult[bool] = await service.connect()
 
     if result.is_failure:
         pass
     else:
-        session_id = result.value or "unknown"
-        await service.disconnect(session_id)
+        # Connection successful, disconnect
+        await service.unbind()
 
     # Show that operations still work in memory mode
     FlextLdapModels.CreateUserRequest(
@@ -160,6 +149,9 @@ async def demonstrate_connection_handling() -> None:
         telephone_number=None,
         user_password=None,
         # phone=None,  # Field not available in CreateUserRequest
+        department=None,
+        title=None,
+        organization=None,
     )
 
     # Simplified demonstration - real implementation would use session management

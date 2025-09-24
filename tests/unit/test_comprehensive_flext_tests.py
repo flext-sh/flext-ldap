@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -111,7 +111,7 @@ class TestComprehensiveFlextTests:
         # Use direct FlextLdapModels.SearchRequest construction (no FlextTestsBuilders as it doesn't exist)
         ldap_search = FlextLdapModels.SearchRequest(
             base_dn="ou=users,dc=test,dc=com",
-            filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "mail", "uid"],
             size_limit=100,
@@ -144,7 +144,7 @@ class TestComprehensiveFlextTests:
         # Create search request for the user
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
-            filter=f"(cn={test_user['name']})",
+            filter_str=f"(cn={test_user['name']})",
             scope="subtree",
             attributes=["cn", "mail"],
             size_limit=100,
@@ -161,14 +161,14 @@ class TestComprehensiveFlextTests:
     def test_hypothesis_like_testing_with_factories(self) -> None:
         """Test multiple scenarios using FlextTestsFactories patterns."""
         # Generate test scenarios using real FlextTestsFactories
-        test_scenarios = []
+        test_scenarios: list[dict[str, Any]] = []
         for i in range(20):  # Test 20 different scenarios
-            user = {
+            user: dict[str, str] = {
                 "name": f"TestUser{i}",
                 "email": f"testuser{i}@example.com",
                 "uid": f"testuser{i}",
             }
-            scenario = {
+            scenario: dict[str, Any] = {
                 "user": user,
                 "dn_format": f"cn={user['name']},ou=users,dc=example,dc=com",
                 "expected_cn": user["name"],

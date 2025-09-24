@@ -70,7 +70,7 @@ async def ldap_session(
             password=password,
         )
 
-        if not connection_result.success:
+        if not connection_result.is_success:
             msg: str = f"Failed to connect: {connection_result.error}"
             _raise_conn_error(msg)
 
@@ -86,7 +86,7 @@ async def ldap_session(
     finally:
         # Cleanup
         try:
-            await api.disconnect()
+            await api.unbind()
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
             logger.warning(
@@ -127,11 +127,13 @@ def demonstrate_comprehensive_configuration() -> None:
         # 2. Create search request using FlextLdapSearchRequest
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=example,dc=com",
-            filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             scope="subtree",
             attributes=["cn", "mail"],
             size_limit=100,
             time_limit=30,
+            page_size=None,
+            paged_cookie=None,
         )
         # SearchRequest uses Pydantic field validation automatically
         logger.debug(f"Search configured for {search_request.base_dn}")
