@@ -2,16 +2,21 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
+- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
+- Properties like conn.entries and entry.entry_dn are not fully typed
+- Entry attributes and their values have incomplete type information
 """
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 
 from typing import Literal, cast
 
-import ldap3
-from ldap3 import Connection, Server
+from ldap3.core.connection import Connection
+from ldap3.core.server import Server
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_ldap import FlextLdapModels
-from flext_ldap.ldap3_types import Ldap3Connection
+from flext_ldap import FlextLdapModels, FlextLdapTypes
 
 logger = FlextLogger(__name__)
 
@@ -23,22 +28,21 @@ def create_test_user(
 ) -> FlextResult[bool]:
     """Create a test user in LDAP server."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
-        success: bool = conn.add(dn, attributes=cast(dict[str, object], attributes))
+        success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
         conn.unbind()
 
         if success:
@@ -58,22 +62,21 @@ def create_test_group(
 ) -> FlextResult[bool]:
     """Create a test group in LDAP server."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
-        success: bool = conn.add(dn, attributes=cast(dict[str, object], attributes))
+        success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
         conn.unbind()
 
         if success:
@@ -92,20 +95,19 @@ def cleanup_test_entries(
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
         cleaned_count = 0
         for dn in dns:
@@ -133,33 +135,30 @@ def verify_entry_exists(
 ) -> FlextResult[bool]:
     """Verify that an entry exists in LDAP server."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
-        # ldap3.search returns a boolean, but mypy doesn't know this
         success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
-            search_scope=ldap3.BASE,
+            search_scope=FlextLdapTypes.BASE,
         )
 
-        # conn.entries is a list of Ldap3Entry objects, but mypy doesn't know this
         exists: bool = success and len(conn.entries) > 0
         conn.unbind()
 
-        return FlextResult[bool].ok(exists)
+        return FlextResult[bool].ok(data=exists)
 
     except Exception as e:
         logger.exception("Error verifying entry %s", dn)
@@ -172,25 +171,24 @@ def get_entry_attributes(
 ) -> FlextResult[FlextTypes.Core.Dict]:
     """Get attributes of an LDAP entry."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
         success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
-            search_scope=ldap3.BASE,
+            search_scope=FlextLdapTypes.BASE,
         )
 
         if success and len(conn.entries) > 0:
@@ -216,28 +214,27 @@ def search_entries(
 ) -> FlextResult[list[FlextTypes.Core.Dict]]:
     """Search for entries in LDAP server."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
-        ldap_scope: str
+        ldap_scope: Literal["BASE", "LEVEL", "SUBTREE"]
         if scope == "base":
-            ldap_scope = ldap3.BASE
+            ldap_scope = FlextLdapTypes.BASE
         elif scope == "onelevel":
-            ldap_scope = ldap3.LEVEL
+            ldap_scope = FlextLdapTypes.LEVEL
         else:
-            ldap_scope = ldap3.SUBTREE
+            ldap_scope = FlextLdapTypes.SUBTREE
 
         success: bool = conn.search(
             search_base=base_dn,
@@ -273,28 +270,27 @@ def modify_entry(
 ) -> FlextResult[bool]:
     """Modify an LDAP entry."""
     try:
-        server: Server = Server(
+        server: Server = FlextLdapTypes.Server(
             host=config.server.replace("ldap://", "").replace("ldaps://", ""),
             port=config.port or 389,
             use_ssl=config.use_ssl,
         )
 
-        conn_raw = Connection(
+        conn: Connection = FlextLdapTypes.Connection(
             server=server,
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=ldap3.SIMPLE,
+            authentication=FlextLdapTypes.SIMPLE,
         )
-        conn = cast(Ldap3Connection, conn_raw)
 
         # Convert changes to ldap3 format
         ldap3_changes: dict[str, list[tuple[object, list[object]]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
-                ldap3_changes[attr] = [(ldap3.MODIFY_REPLACE, values)]
+                ldap3_changes[attr] = [(FlextLdapTypes.MODIFY_REPLACE, values)]
             else:
-                ldap3_changes[attr] = [(ldap3.MODIFY_REPLACE, [values])]
+                ldap3_changes[attr] = [(FlextLdapTypes.MODIFY_REPLACE, [values])]
 
         # ldap3.modify returns a boolean, but mypy doesn't know this
         success: bool = conn.modify(dn, ldap3_changes)

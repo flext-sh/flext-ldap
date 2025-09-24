@@ -254,7 +254,8 @@ class TestFlextLdapModels:
                 "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
                 kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]}),
             ),
-            # Removed status parameter - not part of Entry model definition
+            created_timestamp=None,
+            modified_timestamp=None,
         )
 
     def test_create_user_request_optional_fields(self) -> None:
@@ -267,6 +268,11 @@ class TestFlextLdapModels:
             given_name="Full",
             mail="full@example.com",
             user_password="secret123",
+            telephone_number=None,
+            description=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         assert request.given_name == "Full"
@@ -282,6 +288,12 @@ class TestFlextLdapModels:
             sn="User",
             given_name="Convert",
             mail="convert@example.com",
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         user_entity = request.to_user_entity()
@@ -303,6 +315,12 @@ class TestFlextLdapModels:
             sn="User",
             given_name="LDAP",
             mail="ldap@example.com",
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         user_entity = request.to_user_entity()
@@ -323,6 +341,12 @@ class TestFlextLdapModels:
             sn="User",
             given_name="Valid",
             mail="validuser@example.com",
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         # Test that valid request creates user entity correctly
@@ -354,6 +378,15 @@ class TestBusinessRulesIntegration:
             mail="crossuser@example.com",
             object_classes=["inetOrgPerson", "person"],
             additional_attributes={"phone": ["+1-555-0199"]},
+            created_timestamp=None,
+            modified_timestamp=None,
+            telephone_number=None,
+            mobile=None,
+            department=None,
+            title=None,
+            organization=None,
+            organizational_unit=None,
+            user_password=None,
         )
 
         # Create group with user as member
@@ -366,6 +399,9 @@ class TestBusinessRulesIntegration:
             additional_attributes={},
             members=[user.dn],
             status="active",
+            created_timestamp=None,
+            modified_timestamp=None,
+            gid_number=None,
         )
 
         # Both should validate successfully
@@ -386,6 +422,12 @@ class TestBusinessRulesIntegration:
             sn="User",
             given_name="Consistent",
             mail="consistent@example.com",
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            title=None,
+            organization=None,
         )
 
         # Convert to entity
@@ -457,6 +499,15 @@ class TestRealWorldScenarios:
                 sn=str(user_data["sn"]),
                 given_name=str(user_data["given_name"]),
                 mail=str(user_data["mail"]),
+                telephone_number=None,
+                mobile=None,
+                department=None,
+                title=None,
+                organization=None,
+                organizational_unit=None,
+                user_password=None,
+                created_timestamp=None,
+                modified_timestamp=None,
                 object_classes=cast(
                     "FlextTypes.Core.StringList",
                     user_data["object_classes"],
@@ -524,6 +575,7 @@ class TestRealWorldScenarios:
                 id=f"test_group_{cn_str.lower().replace(' ', '_')}",
                 dn=str(group_data["dn"]),
                 cn=cn_str,
+                gid_number=None,
                 description=str(group_data.get("description", "")),
                 object_classes=cast(
                     "FlextTypes.Core.StringList",
@@ -535,6 +587,8 @@ class TestRealWorldScenarios:
                 ),
                 additional_attributes={},
                 status="active",
+                created_timestamp=None,
+                modified_timestamp=None,
             )
 
             # Test realistic group validation

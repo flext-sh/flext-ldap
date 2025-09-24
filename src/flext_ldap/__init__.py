@@ -9,9 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Direct access to exceptions through flext-core
-from flext_core import FlextExceptions
-
 # Main domain API - primary entry point
 from flext_ldap.api import FlextLdapAPI
 
@@ -19,7 +16,7 @@ from flext_ldap.api import FlextLdapAPI
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfigs
 
-# Constants and exceptions (re-exported from their respective modules)
+# Constants and models
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
@@ -28,23 +25,15 @@ from flext_ldap.protocols import FlextLdapProtocols
 
 # Domain utilities
 from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.type_guards import FlextLdapTypeGuards
-from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.validations import FlextLdapValidations
 
-# Rebuild models after all definitions are complete
-FlextLdapModels.LdapUser.model_rebuild()
-FlextLdapModels.Entry.model_rebuild()
-FlextLdapModels.Group.model_rebuild()
-FlextLdapModels.SearchRequest.model_rebuild()
-FlextLdapModels.SearchResponse.model_rebuild()
-FlextLdapModels.CreateUserRequest.model_rebuild()
-FlextLdapModels.CreateGroupRequest.model_rebuild()
+# Generic universal compatibility components
+from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap.validations import FlextLdapValidations
 
 # Main domain exports following FLEXT standards
 __all__ = [
-    # Exceptions (from flext-core)
-    "FlextExceptions",
     # Primary API - main entry point
     "FlextLdapAPI",
     # Core domain components
@@ -55,8 +44,9 @@ __all__ = [
     "FlextLdapProtocols",
     # Domain utilities
     "FlextLdapRepositories",
-    "FlextLdapTypeGuards",
-    # Type system
+    # Generic universal compatibility components
+    "FlextLdapSchema",
     "FlextLdapTypes",
+    "FlextLdapUtilities",
     "FlextLdapValidations",
 ]

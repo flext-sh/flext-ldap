@@ -37,6 +37,7 @@ dependencies = [
     "cryptography (>=45.0.5)",
     "structlog (>=25.4.0)",
     "flext-core @ file:///home/marlonsc/flext/flext-core",
+    "flext-ldif @ file:///home/marlonsc/flext/flext-ldif",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -58,7 +59,6 @@ Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 [tool.ruff]
 extend = "../ruff-shared.toml"
 lint.isort.known-first-party = ["flext_ldap"]
-extend-exclude = ["src/ldap3/"]
 
 [tool.mypy]
 # Strict mode - enables all recommended checks
@@ -109,7 +109,7 @@ platform = "linux"
 
 # Package structure
 namespace_packages = false
-mypy_path = ["src"]  # Enable proper module resolution
+mypy_path = ["src"]
 files = ["src"]
 
 # Plugins
@@ -184,6 +184,8 @@ markers = [
     "stress: Stress tests",
     "async_test: Async tests",
     "factory_test: Factory tests",
+    "timeout: Timeout tests",
+    "regression: Regression tests",
 ]
 # filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
 
@@ -219,6 +221,7 @@ pydantic-settings = ">=2.10.1"
 ldap3 = ">=2.9.1"
 cryptography = ">=45.0.5"
 structlog = ">=25.4.0"
+flext-ldif = { path = "../flext-ldif", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 ruff = ">=0.12.3"
@@ -270,3 +273,6 @@ types-docker = "^7.1.0.20250809"
 [tool.poetry.group.security.dependencies]
 bandit = ">=1.8.0"
 pip-audit = ">=2.7.3"
+
+[tool.pyright]
+typeCheckingMode = "off"

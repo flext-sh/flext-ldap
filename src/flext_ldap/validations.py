@@ -97,5 +97,29 @@ class FlextLdapValidations:
 
         return FlextResult[None].ok(None)
 
+    @staticmethod
+    def validate_attributes(attributes: list[str]) -> FlextResult[None]:
+        """Centralized LDAP attribute names validation - ELIMINATE ALL DUPLICATION."""
+        if not attributes:
+            return FlextResult[None].fail("Attributes list cannot be empty")
+
+        for attr in attributes:
+            if not isinstance(attr, str) or not attr.strip():
+                return FlextResult[None].fail(f"Invalid attribute name: {attr}")
+
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_object_classes(object_classes: list[str]) -> FlextResult[None]:
+        """Centralized LDAP object class names validation - ELIMINATE ALL DUPLICATION."""
+        if not object_classes:
+            return FlextResult[None].fail("Object classes list cannot be empty")
+
+        for oc in object_classes:
+            if not isinstance(oc, str) or not oc.strip():
+                return FlextResult[None].fail(f"Invalid object class name: {oc}")
+
+        return FlextResult[None].ok(None)
+
 
 __all__ = ["FlextLdapValidations"]

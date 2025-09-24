@@ -135,8 +135,8 @@ class TestFlextLdapConfigSingleton:
         assert bind_password == "test123"
 
         # Test utility methods
-        assert config.is_ssl_enabled() is False
-        assert config.is_debug_enabled() is False
+        assert config.ldap_use_ssl is False
+        assert config.ldap_enable_debug is False
 
     def test_config_field_modifications(self) -> None:
         """Test modifying LDAP configuration fields."""
@@ -186,6 +186,10 @@ class TestFlextLdapConfigSingleton:
         """Test LDAP-specific business rule validation."""
         # Valid configuration
         valid_config_data = {
+            "ldap_default_connection": FlextLdapModels.ConnectionConfig(
+                server="ldap://test.example.com",
+                port=389,
+            ),
             "ldap_size_limit": 1000,
             "ldap_time_limit": 30,
             "ldap_page_size": 100,
@@ -194,18 +198,22 @@ class TestFlextLdapConfigSingleton:
         }
         valid_config = FlextLdapConfigs.model_validate(valid_config_data)
 
-        result = valid_config.validate_business_rules()
+        result = valid_config.validate_business_rules_base()
         assert result.is_success
 
         # Test business rules validation with valid configuration
         # The validation_business_rules method should handle edge cases
         cache_config_data = {
+            "ldap_default_connection": FlextLdapModels.ConnectionConfig(
+                server="ldap://test.example.com",
+                port=389,
+            ),
             "ldap_enable_caching": True,
             "ldap_cache_ttl": 300,  # Valid value
         }
         valid_config_with_cache = FlextLdapConfigs.model_validate(cache_config_data)
 
-        result = valid_config_with_cache.validate_business_rules()
+        result = valid_config_with_cache.validate_business_rules_base()
         assert result.is_success
 
     def test_field_validation(self) -> None:
@@ -229,6 +237,11 @@ class TestFlextLdapConfigSingleton:
         """Test cross-field validation consistency."""
         # Valid configuration
         valid_config_data = {
+            "ldap_default_connection": FlextLdapModels.ConnectionConfig(
+                server="ldap://test.example.com",
+                port=389,
+                use_ssl=False,
+            ),
             "ldap_use_ssl": True,
             "ldap_verify_certificates": True,
             "ldap_enable_caching": True,
@@ -238,7 +251,7 @@ class TestFlextLdapConfigSingleton:
         assert config.ldap_use_ssl is True
 
         # Test business rules validation
-        result = config.validate_business_rules()
+        result = config.validate_business_rules_base()
         assert result.is_success
 
     def test_singleton_persistence_across_imports(self) -> None:

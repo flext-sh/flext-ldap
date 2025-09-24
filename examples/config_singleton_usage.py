@@ -97,7 +97,7 @@ def demonstrate_factory_methods() -> None:
         test_config = test_result.value
         print("Test Configuration:")
         print(f"  Environment: {test_config.environment}")
-        print(f"  Test mode: {test_config.ldap_enable_test_mode}")
+        print(f"  Debug mode: {test_config.ldap_enable_debug}")
         print(f"  Bind DN: {test_config.ldap_bind_dn}")
         print(f"  SSL enabled: {test_config.ldap_use_ssl}")
         print()
@@ -125,10 +125,10 @@ def demonstrate_parameter_overrides() -> None:
 
     # Create new instance with overrides using constructor parameters
     override_config = FlextLdapConfigs(
-        ldap_bind_dn="cn=override-user,dc=test,dc=com",
-        ldap_bind_password=SecretStr("override-password"),
-        ldap_use_ssl=True,
-        ldap_pool_size=10,
+        bind_dn="cn=override-user,dc=test,dc=com",
+        bind_password=SecretStr("override-password"),
+        use_ssl=True,
+        pool_size=10,
     )
 
     print(f"Override bind DN: {override_config.ldap_bind_dn}")
@@ -144,13 +144,13 @@ def demonstrate_validation_features() -> None:
     try:
         # Test validation with valid configuration
         valid_config = FlextLdapConfigs(
-            ldap_default_connection=FlextLdapModels.ConnectionConfig(
+            ldap_connection=FlextLdapModels.ConnectionConfig(
                 server="localhost",
                 port=389,
             ),
-            ldap_bind_dn="cn=valid-user,dc=example,dc=com",
-            ldap_bind_password=SecretStr("valid-password"),
-            ldap_use_ssl=True,
+            bind_dn="cn=valid-user,dc=example,dc=com",
+            bind_password=SecretStr("valid-password"),
+            use_ssl=True,
         )
 
         # Validation happens automatically during instantiation

@@ -2,7 +2,13 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
+- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
+- Properties like conn.entries and entry.entry_dn are not fully typed
+- Entry attributes and their values have incomplete type information
 """
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportGeneralTypeIssues=false
 
 import asyncio
 import os
@@ -11,11 +17,10 @@ from typing import cast
 import docker
 import docker.errors
 import docker.models.containers
-import ldap3
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels
-from flext_ldap.ldap3_types import Ldap3Connection
+from flext_ldap.typings import FlextLdapTypes
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
@@ -118,26 +123,25 @@ class LdapTestServer:
                 while True:
                     try:
                         # Try to connect to LDAP server
-                        server = ldap3.Server(
+                        server = FlextLdapTypes.Server(
                             host="localhost",
                             port=self.port,
                             use_ssl=False,
                             connect_timeout=5,
                         )
 
-                        conn_raw = ldap3.Connection(
+                        conn = FlextLdapTypes.Connection(
                             server=server,
                             user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                             password=self.REDACTED_LDAP_BIND_PASSWORD_password,
                             auto_bind=True,
-                            authentication=ldap3.SIMPLE,
+                            authentication=FlextLdapTypes.SIMPLE,
                         )
-                        conn = cast(Ldap3Connection, conn_raw)
 
                         conn.search(
                             search_base="dc=flext,dc=local",
                             search_filter="(objectClass=*)",
-                            search_scope=ldap3.BASE,
+                            search_scope=FlextLdapTypes.BASE,
                         )
 
                         conn.unbind()
@@ -158,20 +162,19 @@ class LdapTestServer:
             # ldap3 and test_data already imported at top
 
             # Connect to LDAP server
-            server = ldap3.Server(
+            server = FlextLdapTypes.Server(
                 host="localhost",
                 port=self.port,
                 use_ssl=False,
             )
 
-            conn_raw = ldap3.Connection(
+            conn = FlextLdapTypes.Connection(
                 server=server,
                 user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                 password=self.REDACTED_LDAP_BIND_PASSWORD_password,
                 auto_bind=True,
-                authentication=ldap3.SIMPLE,
+                authentication=FlextLdapTypes.SIMPLE,
             )
-            conn = cast(Ldap3Connection, conn_raw)
 
             # Create organizational units first
             for ou_data in TEST_OUS:
@@ -249,26 +252,26 @@ async def wait_for_ldap_server(
         async with asyncio.timeout(timeout_seconds):
             while True:
                 try:
-                    server = ldap3.Server(
+                    server = FlextLdapTypes.Server(
                         host=host,
                         port=port,
                         use_ssl=False,
                         connect_timeout=5,
                     )
 
-                    conn_raw = ldap3.Connection(
+                    conn_raw = FlextLdapTypes.Connection(
                         server=server,
                         user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                         password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
                         auto_bind=True,
-                        authentication=ldap3.SIMPLE,
+                        authentication=FlextLdapTypes.SIMPLE,
                     )
-                    conn = cast(Ldap3Connection, conn_raw)
+                    conn = conn_raw  # type: ignore[assignment]
 
                     conn.search(
                         search_base="dc=flext,dc=local",
                         search_filter="(objectClass=*)",
-                        search_scope=ldap3.BASE,
+                        search_scope=FlextLdapTypes.BASE,
                     )
 
                     conn.unbind()
