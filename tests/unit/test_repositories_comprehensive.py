@@ -15,9 +15,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from flext_core import FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap import (
+    FlextLdapClient,
+    FlextLdapModels,
+    FlextLdapRepositories,
+    FlextLdapTypes,
+)
 
 
 @pytest.fixture

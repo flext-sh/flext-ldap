@@ -25,19 +25,20 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ## 📊 **Validation Violations Summary**
 
-| Module | Violations | Impact Score | Lines of Code |
-|--------|------------|--------------|---------------|
-| **clients.py** | 4 violations | HIGH | ~80 lines |
-| **api.py** | 4 violations | MEDIUM | ~60 lines |
-| **config.py** | 3 violations | LOW | ~0 lines (correct usage) |
-| **models.py** | 20 violations | LOW | ~0 lines (correct usage) |
-| **TOTAL** | **11 violations** | **HIGH** | **~140 lines** |
+| Module         | Violations        | Impact Score | Lines of Code            |
+| -------------- | ----------------- | ------------ | ------------------------ |
+| **clients.py** | 4 violations      | HIGH         | ~80 lines                |
+| **api.py**     | 4 violations      | MEDIUM       | ~60 lines                |
+| **config.py**  | 3 violations      | LOW          | ~0 lines (correct usage) |
+| **models.py**  | 20 violations     | LOW          | ~0 lines (correct usage) |
+| **TOTAL**      | **11 violations** | **HIGH**     | **~140 lines**           |
 
 ## 🚨 **Critical Validation Violations**
 
 ### **1. CLIENTS Module (4 Violations)**
 
 #### **1.1 validate_dn() - Line 704**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
 ✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfigs.validate_dn()
@@ -47,6 +48,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **1.2 validate_filter() - Line 736**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
 ✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfigs.validate_filter()
@@ -56,6 +58,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **1.3 validate_attributes() - Line 768**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
 ✅ SHOULD USE: FlextLdapValidations.validate_attributes() or FlextLdapConfigs.validate_attributes()
@@ -65,6 +68,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **1.4 validate_object_classes() - Line 793**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
 ✅ SHOULD USE: FlextLdapValidations.validate_object_classes() or FlextLdapConfigs.validate_object_classes()
@@ -76,6 +80,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ### **2. API Module (4 Violations)**
 
 #### **2.1 validate_configuration_consistency() - Line 478**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
 ✅ SHOULD USE: FlextLdapConfigs.validate_configuration_consistency() or FlextLdapValidations.validate_configuration()
@@ -85,6 +90,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **2.2 validate_dn() - Line 519**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
 ✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfigs.validate_dn()
@@ -94,6 +100,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **2.3 validate_filter() - Line 541**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
 ✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfigs.validate_filter()
@@ -103,6 +110,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **2.4 validate_email() - Line 563**
+
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
 ✅ SHOULD USE: FlextLdapValidations.validate_email() or FlextLdapConfigs.validate_email()
@@ -116,6 +124,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ### **1. CONFIG Module (3 Correct Usages)**
 
 #### **1.1 validate_bind_dn() - Line 472**
+
 ```python
 ✅ CORRECT USAGE: Validation in config class (FLEXT compliant)
 📍 LOCATION: Line 472 - Config validation method
@@ -124,6 +133,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **1.2 validate_configuration_consistency() - Line 498**
+
 ```python
 ✅ CORRECT USAGE: Validation in config class (FLEXT compliant)
 📍 LOCATION: Line 498 - Config validation method
@@ -132,6 +142,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 ```
 
 #### **1.3 validate_business_rules() - Line 581**
+
 ```python
 ✅ CORRECT USAGE: Validation in config class (FLEXT compliant)
 📍 LOCATION: Line 581 - Config validation method
@@ -191,12 +202,14 @@ All validation methods in the models module correctly delegate to `FlextLdapVali
 ## 📈 **Expected Outcomes**
 
 ### **Code Quality Improvements**
+
 - **Validation Centralization**: 100% of validation in config/models only
 - **Code Reduction**: ~140 lines of duplicate validation logic removed
 - **Maintainability**: Single source of truth for validation logic
 - **Consistency**: Uniform validation patterns across all modules
 
 ### **FLEXT Compliance**
+
 - **Architectural Compliance**: 100% adherence to FLEXT validation patterns
 - **Domain Separation**: Proper validation delegation to appropriate layers
 - **Interface Consistency**: Clean separation between client/API and validation layers

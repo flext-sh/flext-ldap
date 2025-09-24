@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 import pytest
 
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapModels
 
 
 class TestFlextLdapValueObjectsCoverage:

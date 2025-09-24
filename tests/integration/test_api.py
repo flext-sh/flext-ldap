@@ -9,19 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 from uuid import uuid4
 
 import pytest
 from pydantic import SecretStr
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapModels,
 )
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypes
 
 
 # Helper function to replace create_ldap_attributes
@@ -78,7 +76,7 @@ class TestLdapClientRealOperations:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
-            filter_str="(objectClass=*)",
+            search_filter="(objectClass=*)",
             attributes=[],  # Get all attributes
             size_limit=10,
             time_limit=30,  # 30 seconds timeout
@@ -86,7 +84,9 @@ class TestLdapClientRealOperations:
             paged_cookie=None,
         )
 
-        result = await client.search_with_request(search_request)
+        result: FlextResult[FlextLdapModels.SearchResponse] = (
+            client.search_with_request(search_request)
+        )
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"
@@ -100,13 +100,15 @@ class TestLdapClientRealOperations:
             entries_returned=0,
             time_elapsed=0.0,
         )
-        response_data = result.unwrap() if result.is_success else empty_response
+        response_data: FlextLdapModels.SearchResponse = (
+            result.unwrap() if result.is_success else empty_response
+        )
         assert response_data.entries, "Should find at least the base DN"
         assert response_data.total_count > 0
 
     @pytest.mark.asyncio
     @pytest.mark.xfail(
-        reason="Low-level LDAP modify operations need proper change list format - complex LDAP protocol issue",
+        reason="Low-level LDAP modify operations need proper change list format - complex LDAP protocol issue"
     )
     async def test_client_add_modify_delete_real_entry(
         self,
@@ -171,14 +173,16 @@ class TestLdapClientRealOperations:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=test_dn,
             scope="base",
-            filter_str="(objectClass=*)",
+            search_filter="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=1,
             time_limit=30,
             page_size=None,
             paged_cookie=None,
         )
-        search_result = await client.search_with_request(search_request)
+        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+            client.search_with_request(search_request)
+        )
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
         empty_response = FlextLdapModels.SearchResponse(
             entries=[],
@@ -190,13 +194,13 @@ class TestLdapClientRealOperations:
             entries_returned=0,
             time_elapsed=0.0,
         )
-        search_data = (
+        search_data: FlextLdapModels.SearchResponse = (
             search_result.unwrap() if search_result.is_success else empty_response
         )
         assert search_data.entries, "User entry should exist"
 
-        entry_data = search_data.entries[0]
-        mail_value = entry_data.get("mail", "")
+        entry_data: FlextTypes.Core.Dict = search_data.entries[0]
+        mail_value: object = entry_data.get("mail", "")
         assert "updated@example.com" in str(mail_value), "Email should be updated"
 
         # DELETE: Remove user entry
@@ -204,7 +208,9 @@ class TestLdapClientRealOperations:
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
-        verify_search = await client.search_with_request(search_request)
+        verify_search: FlextResult[FlextLdapModels.SearchResponse] = (
+            client.search_with_request(search_request)
+        )
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
@@ -218,7 +224,7 @@ class TestLdapClientRealOperations:
                 entries_returned=0,
                 time_elapsed=0.0,
             )
-            verify_data = (
+            verify_data: FlextLdapModels.SearchResponse = (
                 verify_search.unwrap() if verify_search.is_success else empty_response
             )
             assert not verify_data.entries, "User entry should be deleted"
@@ -296,8 +302,8 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_timestamp=None,
-            modified_timestamp=None,
+            created_at=None,
+            updated_at=None,
         )
         created_user = (
             create_result.unwrap() if create_result.is_success else default_user
@@ -326,8 +332,8 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_timestamp=None,
-            modified_timestamp=None,
+            created_at=None,
+            updated_at=None,
         )
         retrieved_user = get_result.unwrap() if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -339,10 +345,13 @@ class TestLdapServiceRealOperations:
             "mail": ["updated-real@example.com"],
             "description": ["Updated via service"],
         }
-        update_attributes = create_ldap_attributes(update_attrs_raw)
-        update_result = await client.update_user(
+        update_attributes_raw = create_ldap_attributes(update_attrs_raw)
+        update_attributes: FlextTypes.Core.Dict = cast(
+            "FlextTypes.Core.Dict", update_attributes_raw
+        )
+        update_result = await client.update_user_attributes(
             user_request.dn,
-            update_attributes,
+            update_attributes,  # type: ignore[arg-type]
         )
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
@@ -366,8 +375,8 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_timestamp=None,
-            modified_timestamp=None,
+            created_at=None,
+            updated_at=None,
         )
         updated_user = (
             updated_get_result.unwrap()
@@ -406,7 +415,7 @@ class TestLdapServiceRealOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.xfail(
-        reason="Group member operations need debugging - members_list returns empty",
+        reason="Group member operations need debugging - members_list returns empty"
     )
     async def test_service_group_lifecycle_real_operations(
         self,
@@ -480,8 +489,8 @@ class TestLdapServiceRealOperations:
             status="active",
             modified_at=None,
             gid_number=1001,
-            created_timestamp=None,
-            modified_timestamp=None,
+            created_at=None,
+            updated_at=None,
         )
         retrieved_group = (
             get_result.unwrap() if get_result.is_success else default_group
@@ -672,13 +681,13 @@ class TestLdapValidationRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_timestamp=None,
-            modified_timestamp=None,
+            created_at=None,
+            updated_at=None,
         )
         created_user = (
             create_result.unwrap() if create_result.is_success else default_user
         )
-        validation_result = created_user.validate_business_rules_base()
+        validation_result = created_user.validate_business_rules()
         assert validation_result.is_success, (
             "Created user should pass business rule validation"
         )
@@ -734,7 +743,7 @@ class TestLdapErrorHandlingReal:
 
     @pytest.mark.asyncio
     @pytest.mark.xfail(
-        reason="Error handling test - generic error messages vs specific LDAP error codes",
+        reason="Error handling test - generic error messages vs specific LDAP error codes"
     )
     async def test_ldap_operation_error_handling(
         self,
@@ -754,7 +763,7 @@ class TestLdapErrorHandlingReal:
         invalid_search = FlextLdapModels.SearchRequest(
             base_dn="cn=nonexistent,dc=invalid,dc=com",
             scope="base",
-            filter_str="(objectClass=*)",
+            search_filter="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=10,
             time_limit=30,
@@ -762,7 +771,9 @@ class TestLdapErrorHandlingReal:
             paged_cookie=None,
         )
 
-        search_result = await client.search_with_request(invalid_search)
+        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+            client.search_with_request(invalid_search)
+        )
         # Should handle gracefully - either return empty results or proper error
         assert search_result.is_success or (
             search_result.error

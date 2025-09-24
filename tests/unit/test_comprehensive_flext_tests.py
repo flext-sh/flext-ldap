@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapModels
 from flext_tests import FlextTestsAsyncs, FlextTestsFactories, FlextTestsMatchers
 
 
@@ -161,14 +161,14 @@ class TestComprehensiveFlextTests:
     def test_hypothesis_like_testing_with_factories(self) -> None:
         """Test multiple scenarios using FlextTestsFactories patterns."""
         # Generate test scenarios using real FlextTestsFactories
-        test_scenarios: list[dict[str, Any]] = []
+        test_scenarios: list[dict[str, object]] = []
         for i in range(20):  # Test 20 different scenarios
             user: dict[str, str] = {
                 "name": f"TestUser{i}",
                 "email": f"testuser{i}@example.com",
                 "uid": f"testuser{i}",
             }
-            scenario: dict[str, Any] = {
+            scenario: dict[str, object] = {
                 "user": user,
                 "dn_format": f"cn={user['name']},ou=users,dc=example,dc=com",
                 "expected_cn": user["name"],

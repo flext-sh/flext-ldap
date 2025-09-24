@@ -19,7 +19,9 @@ from flext_ldap import FlextLdapClient
 class TestRealLdifExport:
     """Test LDIF export from real LDAP server."""
 
-    async def test_export_base_dn_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_export_base_dn_to_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test exporting base DN to LDIF format."""
         client = shared_ldap_client
 
@@ -30,14 +32,16 @@ class TestRealLdifExport:
         )
 
         assert result.is_success
-        assert len(result.data) > 0
+        assert len(result.value) > 0
 
         # Verify LDIF-compatible data structure
-        for entry in result.data:
+        for entry in result.value:
             assert "dn" in entry
             assert "objectClass" in entry
 
-    async def test_export_users_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_export_users_to_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test exporting user entries to LDIF format."""
         client = shared_ldap_client
 
@@ -66,20 +70,24 @@ class TestRealLdifExport:
         )
 
         assert result.is_success
-        assert len(result.data) >= 1
+        assert len(result.value) >= 1
 
         # Verify LDIF structure
-        ldif_entry = result.data[0]
+        ldif_entry = result.value[0]
         assert "dn" in ldif_entry
         assert "cn" in ldif_entry
         assert "sn" in ldif_entry
         assert "objectClass" in ldif_entry
 
         # Cleanup
-        await client.delete_entry_universal(dn="cn=ldif_user1,ou=ldif_users,dc=flext,dc=local")
+        await client.delete_entry_universal(
+            dn="cn=ldif_user1,ou=ldif_users,dc=flext,dc=local"
+        )
         await client.delete_entry_universal(dn="ou=ldif_users,dc=flext,dc=local")
 
-    async def test_export_groups_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_export_groups_to_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test exporting group entries to LDIF format."""
         client = shared_ldap_client
 
@@ -106,17 +114,19 @@ class TestRealLdifExport:
         )
 
         assert result.is_success
-        assert len(result.data) >= 1
+        assert len(result.value) >= 1
 
         # Verify LDIF structure
-        ldif_entry = result.data[0]
+        ldif_entry = result.value[0]
         assert "dn" in ldif_entry
         assert "cn" in ldif_entry
         assert "member" in ldif_entry
         assert "objectClass" in ldif_entry
 
         # Cleanup
-        await client.delete_entry_universal(dn="cn=ldif_group1,ou=ldif_groups,dc=flext,dc=local")
+        await client.delete_entry_universal(
+            dn="cn=ldif_group1,ou=ldif_groups,dc=flext,dc=local"
+        )
         await client.delete_entry_universal(dn="ou=ldif_groups,dc=flext,dc=local")
 
 
@@ -125,7 +135,9 @@ class TestRealLdifExport:
 class TestRealLdifImport:
     """Test LDIF import to real LDAP server."""
 
-    async def test_import_organizational_unit_from_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_import_organizational_unit_from_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test importing organizational unit from LDIF-like data."""
         client = shared_ldap_client
 
@@ -151,12 +163,14 @@ class TestRealLdifImport:
         )
 
         assert search_result.is_success
-        assert len(search_result.data) > 0
+        assert len(search_result.value) > 0
 
         # Cleanup
         await client.delete_entry_universal(dn="ou=imported,dc=flext,dc=local")
 
-    async def test_import_user_from_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_import_user_from_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test importing user from LDIF-like data."""
         client = shared_ldap_client
 
@@ -188,18 +202,23 @@ class TestRealLdifImport:
         search_result = await client.search(
             base_dn="cn=imported_user,ou=import_test,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
+            attributes=["*"],  # Request all attributes
         )
 
         assert search_result.is_success
-        assert len(search_result.data) > 0
-        imported_entry = search_result.data[0]
+        assert len(search_result.value) > 0
+        imported_entry = search_result.value[0]
         assert "imported_user" in str(imported_entry.get("cn", ""))
 
         # Cleanup
-        await client.delete_entry_universal(dn="cn=imported_user,ou=import_test,dc=flext,dc=local")
+        await client.delete_entry_universal(
+            dn="cn=imported_user,ou=import_test,dc=flext,dc=local"
+        )
         await client.delete_entry_universal(dn="ou=import_test,dc=flext,dc=local")
 
-    async def test_import_group_from_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_import_group_from_ldif(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test importing group from LDIF-like data."""
         client = shared_ldap_client
 
@@ -232,10 +251,12 @@ class TestRealLdifImport:
         )
 
         assert search_result.is_success
-        assert len(search_result.data) > 0
+        assert len(search_result.value) > 0
 
         # Cleanup
-        await client.delete_entry_universal(dn="cn=imported_group,ou=import_groups,dc=flext,dc=local")
+        await client.delete_entry_universal(
+            dn="cn=imported_group,ou=import_groups,dc=flext,dc=local"
+        )
         await client.delete_entry_universal(dn="ou=import_groups,dc=flext,dc=local")
 
 
@@ -244,7 +265,9 @@ class TestRealLdifImport:
 class TestRealLdifRoundTrip:
     """Test LDIF export/import round-trip operations."""
 
-    async def test_ldif_roundtrip_user_data(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_ldif_roundtrip_user_data(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test complete round-trip: export to LDIF, re-import."""
         client = shared_ldap_client
 
@@ -276,7 +299,7 @@ class TestRealLdifRoundTrip:
         )
 
         assert export_result.is_success
-        exported_data = export_result.data[0]
+        exported_data = export_result.value[0]
 
         # Re-import with different DN
         reimported_user = {
@@ -302,14 +325,20 @@ class TestRealLdifRoundTrip:
         )
 
         assert verify_result.is_success
-        assert len(verify_result.data) > 0
+        assert len(verify_result.value) > 0
 
         # Cleanup
-        await client.delete_entry_universal(dn="cn=original,ou=roundtrip,dc=flext,dc=local")
-        await client.delete_entry_universal(dn="cn=reimported,ou=roundtrip,dc=flext,dc=local")
+        await client.delete_entry_universal(
+            dn="cn=original,ou=roundtrip,dc=flext,dc=local"
+        )
+        await client.delete_entry_universal(
+            dn="cn=reimported,ou=roundtrip,dc=flext,dc=local"
+        )
         await client.delete_entry_universal(dn="ou=roundtrip,dc=flext,dc=local")
 
-    async def test_ldif_bulk_export_import(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_ldif_bulk_export_import(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test bulk LDIF export and import operations."""
         client = shared_ldap_client
 
@@ -340,15 +369,17 @@ class TestRealLdifRoundTrip:
         )
 
         assert export_result.is_success
-        assert len(export_result.data) >= 3
+        assert len(export_result.value) >= 3
 
         # Verify exported LDIF structure
-        for entry in export_result.data:
+        for entry in export_result.value:
             assert "dn" in entry
             assert "cn" in entry
             assert "objectClass" in entry
 
         # Cleanup
         for i in range(1, 4):
-            await client.delete_entry_universal(dn=f"cn=bulk_user{i},ou=bulk_test,dc=flext,dc=local")
+            await client.delete_entry_universal(
+                dn=f"cn=bulk_user{i},ou=bulk_test,dc=flext,dc=local"
+            )
         await client.delete_entry_universal(dn="ou=bulk_test,dc=flext,dc=local")

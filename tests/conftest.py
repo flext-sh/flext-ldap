@@ -3,32 +3,13 @@
 This module imports all test fixtures and provides global test configuration.
 """
 
-# Import shared LDAP fixtures from docker directory
-import sys
-from pathlib import Path
-from typing import Any
+from collections.abc import Generator
 
-# Add docker directory to path to import shared fixtures
-docker_path = Path(__file__).parent.parent.parent / "docker"
-sys.path.insert(0, str(docker_path))
+import pytest
 
-try:
-    from shared_ldap_fixtures import (
-        shared_ldap_config,
-        shared_ldap_container,
-        shared_ldap_container_manager,
-        shared_ldif_data,
-        skip_if_no_docker,
-    )
-except ImportError:
-    # Fallback if shared fixtures are not available
-    shared_ldap_config: Any = None
-    shared_ldap_container: Any = None
-    shared_ldap_container_manager: Any = None
-    shared_ldif_data: Any = None
-    skip_if_no_docker: Any = None
+from flext_tests import FlextTestDocker
 
-from .support.fixtures import (  # noqa: E402
+from .support.fixtures import (
     clean_ldap_container,
     clean_ldap_state,
     custom_event_loop,
@@ -50,6 +31,70 @@ from .support.fixtures import (  # noqa: E402
     test_ldap_config,
     test_user_data,
 )
+
+
+@pytest.fixture(scope="session")
+def docker_control() -> FlextTestDocker:
+    """Provide Docker control instance for tests."""
+    return FlextTestDocker()
+
+
+@pytest.fixture(scope="session")
+def shared_ldap_config() -> dict[str, str]:
+    """Shared LDAP configuration for integration tests."""
+    return {
+        "server_url": "ldap://localhost:3390",
+        "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+        "password": "REDACTED_LDAP_BIND_PASSWORD123",
+        "base_dn": "dc=flext,dc=local",
+    }
+
+
+@pytest.fixture(scope="session")
+def shared_ldap_container(docker_control: FlextTestDocker) -> Generator[str]:
+    """Managed LDAP container using FlextTestDocker with auto-start."""
+    result = docker_control.start_container("flext-openldap-test")
+    if result.is_failure:
+        pytest.skip(f"Failed to start LDAP container: {result.error}")
+
+    yield "flext-openldap-test"
+
+    docker_control.stop_container("flext-openldap-test", remove=False)
+
+
+@pytest.fixture(scope="session")
+def shared_ldap_container_manager(docker_control: FlextTestDocker) -> FlextTestDocker:
+    """Docker control manager for LDAP containers."""
+    return docker_control
+
+
+@pytest.fixture
+def shared_ldif_data() -> str:
+    """Shared LDIF test data."""
+    return """dn: dc=flext,dc=local
+objectClass: dcObject
+objectClass: organization
+dc: flext
+o: FLEXT Organization
+
+dn: ou=people,dc=flext,dc=local
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=john.doe,ou=people,dc=flext,dc=local
+objectClass: inetOrgPerson
+uid: john.doe
+cn: John Doe
+sn: Doe
+mail: john.doe@internal.invalid
+"""
+
+
+@pytest.fixture
+def skip_if_no_docker() -> None:
+    """Dummy fixture - Docker availability checked elsewhere."""
+    return
+
 
 __all__ = [
     "clean_ldap_container",

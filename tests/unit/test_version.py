@@ -4,9 +4,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+import importlib
 import importlib.metadata
 
-from flext_ldap import __version__
+__version__ = importlib.import_module("flext_ldap.__version__")
 
 
 class TestVersionMetadata:

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core import FlextConstants
 
-class FlextLdapAclConstants:
+
+class FlextLdapAclConstants(FlextConstants):
     """Unified constants for LDAP ACL management across different server types."""
 
     class AclFormat:

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.acl import FlextLdapAclConstants, FlextLdapAclModels
+from flext_ldap import FlextLdapAclConstants, FlextLdapAclModels
 
 
 class TestAclTarget:

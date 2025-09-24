@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generic LDAP Client Example - Universal Compatibility.
 
-This example demonstrates how to use the GenericLdapClient to work with
+This example demonstrates how to use the FlextLdapClient to work with
 any LDAP server implementation, including:
 - OpenLDAP
 - Active Directory
@@ -9,7 +9,7 @@ any LDAP server implementation, including:
 - Apache Directory Server
 - 389 Directory Server
 - Novell eDirectory
-- Any other LDAP3-compatible server
+- object other LDAP3-compatible server
 
 The client automatically:
 1. Discovers server capabilities and schema
@@ -25,7 +25,7 @@ import asyncio
 import os
 
 from flext_core import FlextLogger
-from flext_ldap import GenericLdapClient, LdapServerType
+from flext_ldap import FlextLdapClient, FlextLdapModels
 
 
 async def demonstrate_generic_ldap_client() -> None:
@@ -42,7 +42,7 @@ async def demonstrate_generic_ldap_client() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create generic client
-    client = GenericLdapClient()
+    client = FlextLdapClient()
 
     try:
         # Connect with automatic schema discovery
@@ -107,13 +107,13 @@ async def demonstrate_generic_ldap_client() -> None:
 
     finally:
         # Disconnect
-        if client._connection:  # noqa: SLF001
+        if client.is_connected():
             await client.unbind()
             logger.info("Disconnected from LDAP server")
 
 
 async def demonstrate_universal_search(
-    client: GenericLdapClient, logger: FlextLogger
+    client: FlextLdapClient, logger: FlextLogger
 ) -> None:
     """Demonstrate universal search operations."""
     logger.info("\n=== Universal Search Operations ===")
@@ -173,7 +173,7 @@ async def demonstrate_universal_search(
 
 
 async def demonstrate_universal_crud(
-    client: GenericLdapClient, logger: FlextLogger
+    client: FlextLdapClient, logger: FlextLogger
 ) -> None:
     """Demonstrate universal CRUD operations."""
     logger.info("\n=== Universal CRUD Operations ===")
@@ -192,7 +192,7 @@ async def demonstrate_universal_crud(
         "cn": "testuser",
         "sn": "TestUser",
         "objectClass": ["person", "top"],
-        "description": "Test user created by GenericLdapClient",
+        "description": "Test user created by FlextLdapClient",
     }
 
     logger.info("Creating test entry: %s", test_dn)
@@ -225,7 +225,7 @@ async def demonstrate_universal_crud(
 
 
 def demonstrate_server_adaptations(
-    client: GenericLdapClient, logger: FlextLogger
+    client: FlextLdapClient, logger: FlextLogger
 ) -> None:
     """Demonstrate server-specific adaptations."""
     logger.info("\n=== Server-Specific Adaptations ===")
@@ -299,7 +299,7 @@ def demonstrate_different_server_types() -> None:
     server_examples = [
         {
             "name": "OpenLDAP",
-            "type": LdapServerType.OPENLDAP,
+            "type": FlextLdapModels.LdapServerType.OPENLDAP,
             "quirks": {
                 "case_sensitive_dns": True,
                 "case_sensitive_attributes": True,
@@ -310,7 +310,7 @@ def demonstrate_different_server_types() -> None:
         },
         {
             "name": "Active Directory",
-            "type": LdapServerType.ACTIVE_DIRECTORY,
+            "type": FlextLdapModels.LdapServerType.ACTIVE_DIRECTORY,
             "quirks": {
                 "case_sensitive_dns": False,
                 "case_sensitive_attributes": False,
@@ -328,7 +328,7 @@ def demonstrate_different_server_types() -> None:
         },
         {
             "name": "Oracle Directory Server",
-            "type": LdapServerType.ORACLE_DIRECTORY,
+            "type": FlextLdapModels.LdapServerType.ORACLE_DIRECTORY,
             "quirks": {
                 "case_sensitive_dns": True,
                 "case_sensitive_attributes": True,
@@ -366,7 +366,7 @@ if __name__ == "__main__":
     print("Generic LDAP Client - Universal Compatibility Example")
     print("=" * 60)
     print()
-    print("This example demonstrates how to use GenericLdapClient")
+    print("This example demonstrates how to use FlextLdapClient")
     print("to work with any LDAP server implementation.")
     print()
     print("Environment Variables:")
@@ -382,5 +382,5 @@ if __name__ == "__main__":
     asyncio.run(demonstrate_different_server_types())
 
     print("\nDemonstration completed!")
-    print("The GenericLdapClient provides universal compatibility")
+    print("The FlextLdapClient provides universal compatibility")
     print("across all LDAP server implementations.")

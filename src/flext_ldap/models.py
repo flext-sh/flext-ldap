@@ -14,9 +14,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Final
+from typing import Final
 
-from pydantic import BaseModel, Field, SecretStr, ValidationInfo, field_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
 
 from flext_core import FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
@@ -216,7 +216,7 @@ class FlextLdapModels(FlextModels):
     class SchemaDiscoveryResult:
         """Result of LDAP schema discovery operation."""
 
-        server_info: dict[str, Any]
+        server_info: dict[str, object]
         server_type: FlextLdapModels.LdapServerType
         server_quirks: FlextLdapModels.ServerQuirks
         attributes: dict[str, FlextLdapModels.SchemaAttribute]
@@ -232,9 +232,17 @@ class FlextLdapModels(FlextModels):
     class FlextLdapBaseModel(FlextModels.ArbitraryTypesModel):
         """Base model class with common LDAP entity configuration and validation.
 
-        Extends FlextModels.ArbitraryTypesModel to inherit FLEXT model patterns
-        and provides LDAP-specific configuration for all entity models.
+        Uses ArbitraryTypesModel instead of TimestampedModel to avoid timestamp conflicts.
+        Provides LDAP-specific configuration for all entity models.
         """
+
+        # LDAP-specific timestamp fields (nullable)
+        created_at: datetime | None = Field(
+            default=None, description="Creation timestamp"
+        )
+        updated_at: datetime | None = Field(
+            default=None, description="Last update timestamp"
+        )
 
     class FlextLdapValidationMixin:
         """Mixin providing common field validation methods for LDAP entities.
@@ -245,7 +253,7 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_dn_field(v: str) -> str:
             """Common DN validation using centralized validation."""
-            validation_result = FlextLdapValidations.validate_dn(v)
+            validation_result: FlextResult[None] = FlextLdapValidations.validate_dn(v)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return v.strip()
@@ -253,7 +261,9 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_email_field(value: str | None) -> str | None:
             """Common email validation using centralized validation."""
-            validation_result = FlextLdapValidations.validate_email(value)
+            validation_result: FlextResult[None] = FlextLdapValidations.validate_email(
+                value
+            )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return value
@@ -261,7 +271,9 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_password_field(value: str | None) -> str | None:
             """Common password validation using centralized validation."""
-            validation_result = FlextLdapValidations.validate_password(value)
+            validation_result: FlextResult[None] = (
+                FlextLdapValidations.validate_password(value)
+            )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return value
@@ -281,15 +293,7 @@ class FlextLdapModels(FlextModels):
         across multiple LDAP entity types.
         """
 
-        # Common timestamp fields
-        created_timestamp: datetime | None = Field(
-            None,
-            description="Creation timestamp",
-        )
-        modified_timestamp: datetime | None = Field(
-            None,
-            description="Last modification timestamp",
-        )
+        # Timestamp fields inherited from FlextLdapBaseModel
 
         # Common additional attributes field
         additional_attributes: dict[str, FlextLdapTypes.EntryAttributeValue] = Field(
@@ -338,11 +342,13 @@ class FlextLdapModels(FlextModels):
             description="Legacy attributes dict",
         )
         status: str | None = Field(default=None, description="User status")
-        created_at: str | None = Field(default=None, description="Creation timestamp")
+        created_at: datetime | None = Field(
+            default=None, description="Creation timestamp"
+        )
         display_name: str | None = Field(default=None, description="Display Name")
         modified_at: str | None = Field(
             default=None,
-            description="Last modification timestamp",
+            description="Last modification timestamp (legacy field)",
         )
 
         @field_validator("dn")
@@ -438,7 +444,7 @@ class FlextLdapModels(FlextModels):
         status: str | None = Field(default=None, description="Group status")
         modified_at: str | None = Field(
             default=None,
-            description="Last modification timestamp",
+            description="Last modification timestamp (legacy field)",
         )
 
         # Metadata
@@ -567,11 +573,13 @@ class FlextLdapModels(FlextModels):
 
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter")
+        filter_str: str = Field(
+            ..., alias="search_filter", description="LDAP search filter"
+        )
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
-            pattern="^(base|onelevel|subtree)$",
+            pattern="^(base|onelevel|subtree|BASE|ONELEVEL|SUBTREE)$",
         )
 
         # Attribute selection
@@ -617,21 +625,19 @@ class FlextLdapModels(FlextModels):
         @field_validator("base_dn")
         @classmethod
         def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN format."""
-            return cls.validate_required_string_field(v)
+            """Validate base DN format using centralized validation."""
+            return cls.validate_dn_field(v)
 
         @field_validator("filter_str")
         @classmethod
-        def validate_filter(cls, v: str) -> str:
+        def validate_filter_str(cls, v: str) -> str:
             """Validate LDAP filter format using centralized validation."""
-            validation_result = FlextLdapValidations.validate_filter(v)
+            validation_result: FlextResult[None] = FlextLdapValidations.validate_filter(
+                v
+            )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
-            v = v.strip()
-            if not (v.startswith("(") and v.endswith(")")):
-                msg = "LDAP filter must be enclosed in parentheses"
-                raise ValueError(msg)
-            return v
+            return v.strip()
 
         @classmethod
         def create_user_search(
@@ -644,7 +650,7 @@ class FlextLdapModels(FlextModels):
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter": f"(&(objectClass=person)(uid={uid}))",
+                    "filter_str": f"(&(objectClass=person)(uid={uid}))",
                     "attributes": attributes or ["uid", "cn", "mail", "sn"],
                     "page_size": None,
                     "paged_cookie": None,
@@ -662,7 +668,7 @@ class FlextLdapModels(FlextModels):
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter": f"(&(objectClass=groupOfNames)(cn={cn}))",
+                    "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
                     "attributes": attributes or ["cn", "member", "description"],
                     "page_size": None,
                     "paged_cookie": None,
@@ -795,8 +801,8 @@ class FlextLdapModels(FlextModels):
                 else None,
                 object_classes=self.object_classes,
                 additional_attributes=self.additional_attributes,
-                created_timestamp=None,
-                modified_timestamp=None,
+                created_at=None,
+                modified_at=None,
             )
 
     class CreateGroupRequest(FlextLdapBaseModel, FlextLdapValidationMixin):
@@ -946,6 +952,11 @@ class FlextLdapModels(FlextModels):
             description="Operation timestamp",
         )
 
+        @property
+        def is_success(self) -> bool:
+            """Alias for success field for backward compatibility."""
+            return self.success
+
         @classmethod
         def success_result(
             cls,
@@ -999,7 +1010,7 @@ class FlextLdapModels(FlextModels):
     # ACL MODELS - Access Control List models (consolidated from acl/models.py)
     # =========================================================================
 
-    class AclTarget(BaseModel):
+    class AclTarget(FlextLdapBaseModel):
         """ACL target specification - what is being protected."""
 
         target_type: str = Field(
@@ -1038,7 +1049,7 @@ class FlextLdapModels(FlextModels):
                     f"ACL target creation failed: {e}"
                 )
 
-    class AclSubject(BaseModel):
+    class AclSubject(FlextLdapBaseModel):
         """ACL subject specification - who has access."""
 
         subject_type: str = Field(
@@ -1071,7 +1082,7 @@ class FlextLdapModels(FlextModels):
                     f"ACL subject creation failed: {e}"
                 )
 
-    class AclPermissions(BaseModel):
+    class AclPermissions(FlextLdapBaseModel):
         """ACL permissions specification."""
 
         permissions: list[str] = Field(
@@ -1104,7 +1115,7 @@ class FlextLdapModels(FlextModels):
                     f"ACL permissions creation failed: {e}"
                 )
 
-    class UnifiedAcl(BaseModel):
+    class UnifiedAcl(FlextLdapBaseModel):
         """Unified ACL representation - intermediate format for conversion."""
 
         name: str = Field(default="", description="ACL rule name")
@@ -1114,10 +1125,10 @@ class FlextLdapModels(FlextModels):
             ..., description="ACL permissions"
         )
         priority: int = Field(default=0, description="ACL evaluation priority")
-        conditions: dict[str, Any] = Field(
+        conditions: dict[str, object] = Field(
             default_factory=dict, description="Additional conditions (time, IP, etc.)"
         )
-        metadata: dict[str, Any] = Field(
+        metadata: dict[str, object] = Field(
             default_factory=dict, description="Format-specific metadata"
         )
 
@@ -1129,8 +1140,8 @@ class FlextLdapModels(FlextModels):
             permissions: FlextLdapModels.AclPermissions,
             name: str = "",
             priority: int = 0,
-            conditions: dict[str, Any] | None = None,
-            metadata: dict[str, Any] | None = None,
+            conditions: dict[str, object] | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Create unified ACL with validation."""
             try:
@@ -1149,7 +1160,7 @@ class FlextLdapModels(FlextModels):
                     f"Unified ACL creation failed: {e}"
                 )
 
-    class OpenLdapAcl(BaseModel):
+    class OpenLdapAcl(FlextLdapBaseModel):
         """OpenLDAP ACL format representation."""
 
         access_line: str = Field(..., description="Complete OpenLDAP access line")
@@ -1178,7 +1189,7 @@ class FlextLdapModels(FlextModels):
                     f"OpenLDAP ACL creation failed: {e}"
                 )
 
-    class OracleAcl(BaseModel):
+    class OracleAcl(FlextLdapBaseModel):
         """Oracle Directory ACL format representation."""
 
         orclaci_value: str = Field(..., description="Oracle orclaci attribute value")
@@ -1217,7 +1228,7 @@ class FlextLdapModels(FlextModels):
                     f"Oracle ACL creation failed: {e}"
                 )
 
-    class AciFormat(BaseModel):
+    class AciFormat(FlextLdapBaseModel):
         """389 DS/Apache DS ACI format representation."""
 
         aci_value: str = Field(..., description="Complete ACI string")
@@ -1260,7 +1271,7 @@ class FlextLdapModels(FlextModels):
                     f"ACI format creation failed: {e}"
                 )
 
-    class ConversionResult(BaseModel):
+    class ConversionResult(FlextLdapBaseModel):
         """Result of ACL conversion with warnings and metadata."""
 
         converted_acl: str = Field(..., description="Converted ACL string")
@@ -1269,7 +1280,7 @@ class FlextLdapModels(FlextModels):
         warnings: list[str] = Field(
             default_factory=list, description="Conversion warnings"
         )
-        metadata: dict[str, Any] = Field(
+        metadata: dict[str, object] = Field(
             default_factory=dict, description="Conversion metadata"
         )
 
@@ -1280,7 +1291,7 @@ class FlextLdapModels(FlextModels):
             source_format: str,
             target_format: str,
             warnings: list[str] | None = None,
-            metadata: dict[str, Any] | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> FlextResult[FlextLdapModels.ConversionResult]:
             """Create conversion result."""
             try:

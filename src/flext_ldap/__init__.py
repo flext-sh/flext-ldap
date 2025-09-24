@@ -9,6 +9,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __branch__,
+    __build__,
+    __commit__,
+    __copyright__,
+    __description__,
+    __email__,
+    __license__,
+    __maintainer__,
+    __maintainer_email__,
+    __project__,
+    __version__,
+    __version_info__,
+    __version_tuple__,
+)
+from flext_ldap.acl import (
+    FlextLdapAclConstants,
+    FlextLdapAclConverters,
+    FlextLdapAclManager,
+    FlextLdapAclModels,
+    FlextLdapAclParsers,
+)
+
 # Main domain API - primary entry point
 from flext_ldap.api import FlextLdapAPI
 
@@ -18,6 +43,8 @@ from flext_ldap.config import FlextLdapConfigs
 
 # Constants and models
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap.mixins import FlextLdapMixins
 from flext_ldap.models import FlextLdapModels
 
 # Type system and protocols
@@ -34,19 +61,37 @@ from flext_ldap.validations import FlextLdapValidations
 
 # Main domain exports following FLEXT standards
 __all__ = [
-    # Primary API - main entry point
     "FlextLdapAPI",
-    # Core domain components
+    "FlextLdapAclConstants",
+    "FlextLdapAclConverters",
+    "FlextLdapAclManager",
+    "FlextLdapAclModels",
+    "FlextLdapAclParsers",
     "FlextLdapClient",
     "FlextLdapConfigs",
     "FlextLdapConstants",
+    "FlextLdapExceptions",
+    "FlextLdapMixins",
     "FlextLdapModels",
     "FlextLdapProtocols",
-    # Domain utilities
     "FlextLdapRepositories",
-    # Generic universal compatibility components
     "FlextLdapSchema",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
+    "__author__",
+    "__author_email__",
+    "__branch__",
+    "__build__",
+    "__commit__",
+    "__copyright__",
+    "__description__",
+    "__email__",
+    "__license__",
+    "__maintainer__",
+    "__maintainer_email__",
+    "__project__",
+    "__version__",
+    "__version_info__",
+    "__version_tuple__",
 ]

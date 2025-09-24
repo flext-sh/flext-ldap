@@ -35,7 +35,7 @@ class FlextLdapExceptions(FlextExceptions):
     proper error codes, context, and correlation tracking.
     """
 
-    class LdapConnectionError(FlextExceptions._ConnectionError):  # noqa: SLF001
+    class LdapConnectionError(FlextExceptions._ConnectionError):
         """LDAP connection failure.
 
         Raised when LDAP server connection fails or is lost.
@@ -64,7 +64,7 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.server_uri = server_uri
 
-    class LdapAuthenticationError(FlextExceptions._AuthenticationError):  # noqa: SLF001
+    class LdapAuthenticationError(FlextExceptions._AuthenticationError):
         """LDAP authentication failure.
 
         Raised when LDAP bind or authentication fails.
@@ -92,7 +92,7 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.bind_dn = bind_dn
 
-    class LdapSearchError(FlextExceptions._OperationError):  # noqa: SLF001
+    class LdapSearchError(FlextExceptions._OperationError):
         """LDAP search operation failure.
 
         Raised when LDAP search operation fails.
@@ -123,7 +123,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.base_dn = base_dn
             self.filter_str = filter_str
 
-    class LdapModifyError(FlextExceptions._OperationError):  # noqa: SLF001
+    class LdapModifyError(FlextExceptions._OperationError):
         """LDAP modify operation failure.
 
         Raised when LDAP modify operation fails.
@@ -154,7 +154,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.modifications = modifications
 
-    class LdapAddError(FlextExceptions._OperationError):  # noqa: SLF001
+    class LdapAddError(FlextExceptions._OperationError):
         """LDAP add operation failure.
 
         Raised when LDAP add operation fails.

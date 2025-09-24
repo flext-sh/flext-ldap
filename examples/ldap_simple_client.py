@@ -15,8 +15,7 @@ import asyncio
 import os
 
 from flext_core import FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap import FlextLdapClient, FlextLdapModels, FlextLdapTypes
 
 
 async def main() -> None:

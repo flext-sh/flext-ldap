@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
+
 import pytest
 
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.schema import FlextLdapSchema
+from flext_ldap import FlextLdapClient, FlextLdapModels, FlextLdapSchema
 
 
 @pytest.mark.integration
@@ -20,7 +21,9 @@ from flext_ldap.schema import FlextLdapSchema
 class TestRealSchemaDiscovery:
     """Test real schema discovery operations."""
 
-    async def test_discover_schema_from_real_server(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_discover_schema_from_real_server(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test discovering schema from real LDAP server."""
         client = shared_ldap_client
 
@@ -35,7 +38,9 @@ class TestRealSchemaDiscovery:
         assert schema.server_type is not None
         assert schema.server_quirks is not None
 
-    async def test_detect_server_type(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_detect_server_type(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test detecting server type from real server."""
         client = shared_ldap_client
 
@@ -53,7 +58,9 @@ class TestRealSchemaDiscovery:
             "generic",
         }, f"Unexpected server type: {server_type}"
 
-    async def test_discover_server_capabilities(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_discover_server_capabilities(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test discovering server capabilities."""
         client = shared_ldap_client
 
@@ -92,7 +99,9 @@ class TestRealSchemaDiscovery:
 class TestRealServerQuirksDetection:
     """Test server quirks detection with real server."""
 
-    async def test_quirks_detector_with_real_server_info(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_quirks_detector_with_real_server_info(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test quirks detector with real server information."""
         client = shared_ldap_client
 
@@ -115,7 +124,9 @@ class TestRealServerQuirksDetection:
         assert quirks is not None
         assert quirks.server_type == server_type
 
-    async def test_openldap_quirks_detection(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_openldap_quirks_detection(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test OpenLDAP specific quirks detection."""
         client = shared_ldap_client
 
@@ -137,7 +148,9 @@ class TestRealServerQuirksDetection:
 class TestRealSchemaNormalization:
     """Test schema normalization with real server."""
 
-    async def test_normalize_attribute_names(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_normalize_attribute_names(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test normalizing attribute names with real schema."""
         client = shared_ldap_client
 
@@ -166,7 +179,9 @@ class TestRealSchemaNormalization:
         assert normalized_dn is not None
         assert isinstance(normalized_dn, str)
 
-    async def test_normalize_object_classes(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_normalize_object_classes(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test normalizing object class names with real schema."""
         client = shared_ldap_client
 
@@ -186,7 +201,9 @@ class TestRealSchemaNormalization:
 class TestRealUniversalOperations:
     """Test universal LDAP operations with real server."""
 
-    async def test_universal_search_with_normalization(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_universal_search_with_normalization(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test universal search with automatic normalization."""
         client = shared_ldap_client
 
@@ -203,7 +220,9 @@ class TestRealUniversalOperations:
         assert result.is_success, f"Universal search failed: {result.error}"
         assert len(result.value) > 0
 
-    async def test_universal_add_with_normalization(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_universal_add_with_normalization(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test universal add with automatic normalization."""
         client = shared_ldap_client
 
@@ -221,10 +240,10 @@ class TestRealUniversalOperations:
         # Cleanup
         await client.delete_entry_universal(dn="ou=universal-test,dc=flext,dc=local")
 
-    async def test_schema_discovery_performance(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_schema_discovery_performance(
+        self, shared_ldap_client: FlextLdapClient
+    ) -> None:
         """Test schema discovery performance with real server."""
-        import time
-
         client = shared_ldap_client
 
         # Measure discovery time
@@ -233,4 +252,6 @@ class TestRealUniversalOperations:
         discovery_time = time.time() - start_time
 
         assert result.is_success
-        assert discovery_time < 10.0, f"Schema discovery took {discovery_time}s (too slow)"
+        assert discovery_time < 10.0, (
+            f"Schema discovery took {discovery_time}s (too slow)"
+        )

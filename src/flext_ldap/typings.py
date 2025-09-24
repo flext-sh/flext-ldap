@@ -10,12 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Protocol
+
+import ldap3
 
 from flext_core import FlextTypes
-
-if TYPE_CHECKING:
-    import ldap3
 
 
 class FlextLdapTypes(FlextTypes):
@@ -30,100 +29,113 @@ class FlextLdapTypes(FlextTypes):
     # =========================================================================
 
     # Basic LDAP attribute value types
-    EntryAttributeValue = str | list[str] | bytes | list[bytes]
+    type EntryAttributeValue = str | list[str] | bytes | list[bytes]
 
     # LDAP attributes dictionary
-    EntryAttributeDict = dict[str, EntryAttributeValue]
+    type EntryAttributeDict = dict[str, EntryAttributeValue]
+
+    # LDAP attributes for add operations
+    type Attributes = dict[str, str | list[str]]
 
     # LDAP entry data structure
-    EntryData = dict[str, EntryAttributeValue]
+    type EntryData = dict[str, EntryAttributeValue]
 
     # Distinguished Name type
-    EntryDN = str
+    type EntryDN = str
 
     # Object classes list
-    EntryObjectClasses = list[str]
+    type EntryObjectClasses = list[str]
 
     # =========================================================================
     # SEARCH TYPES - LDAP search-related type definitions
     # =========================================================================
 
     # Search result entry
-    SearchResultEntry = dict[str, object]
+    type SearchResultEntry = dict[str, object]
 
     # Search result collection
-    SearchResult = list[SearchResultEntry]
+    type SearchResult = list[SearchResultEntry]
+
+    # Generic LDAP entry type
+    type Entry = object  # Generic LDAP entry object
 
     # Search filter string
-    SearchFilter = str
+    type SearchFilter = str
 
     # Search scope values
-    SearchScope = str
+    type SearchScope = str
 
     # Search base DN
-    SearchBaseDN = str
+    type SearchBaseDN = str
 
     # Attributes to return
-    SearchAttributes = list[str] | None
+    type SearchAttributes = list[str] | None
+
+    # =========================================================================
+    # MODIFY TYPES - LDAP modify operation type definitions
+    # =========================================================================
+
+    # Modify changes dictionary
+    type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
 
     # =========================================================================
     # CONNECTION TYPES - LDAP connection-related type definitions
     # =========================================================================
 
     # Server URI
-    ConnectionServerURI = str
+    type ConnectionServerURI = str
 
     # Port number
-    ConnectionPort = int
+    type ConnectionPort = int
 
     # Bind DN for authentication
-    ConnectionBindDN = str | None
+    type ConnectionBindDN = str | None
 
     # Bind password
-    ConnectionBindPassword = str | None
+    type ConnectionBindPassword = str | None
 
     # Connection timeout
-    ConnectionTimeout = int
+    type ConnectionTimeout = int
 
     # SSL/TLS configuration
-    ConnectionUseSSL = bool
-    ConnectionUseTLS = bool
+    type ConnectionUseSSL = bool
+    type ConnectionUseTLS = bool
 
     # =========================================================================
     # VALIDATION TYPES - LDAP validation-related type definitions
     # =========================================================================
 
     # Validation result type
-    ValidationResult = bool
+    type ValidationResult = bool
 
     # Error message type
-    ValidationErrorMessage = str
+    type ValidationErrorMessage = str
 
     # Field name for validation
-    ValidationFieldName = str
+    type ValidationFieldName = str
 
     # =========================================================================
     # OPERATION TYPES - LDAP operation-related type definitions
     # =========================================================================
 
     # Operation type identifier
-    OperationType = str
+    type OperationType = str
 
     # Operation result code
-    OperationResultCode = int
+    type OperationResultCode = int
 
     # Operation duration in milliseconds
-    OperationDuration = float
+    type OperationDuration = float
 
     # Operation status
-    OperationStatus = bool
+    type OperationStatus = bool
 
     # =========================================================================
     # DATA STRUCTURES - Composite type aliases for module use
     # =========================================================================
 
     # ConnectionConfig data structure - specific field types
-    ConnectionConfigData = dict[
+    type ConnectionConfigData = dict[
         str,
         ConnectionServerURI
         | ConnectionPort
@@ -134,7 +146,7 @@ class FlextLdapTypes(FlextTypes):
     ]
 
     # SearchRequest data structure - specific field types
-    SearchRequestData = dict[
+    type SearchRequestData = dict[
         str,
         SearchBaseDN
         | SearchFilter
@@ -147,7 +159,7 @@ class FlextLdapTypes(FlextTypes):
     ]
 
     # Generic model data structure - broader for flexibility
-    GenericModelData = dict[
+    type GenericModelData = dict[
         str,
         EntryAttributeValue
         | SearchBaseDN
@@ -160,52 +172,65 @@ class FlextLdapTypes(FlextTypes):
         | None,
     ]
 
-    # Additional  type aliases for better readability
-    AttributeValue = str | list[str]
-    Attributes = dict[str, AttributeValue]
-    ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+
+# Additional  type aliases for better readability
+type AttributeValue = str | list[str]
+type Attributes = dict[str, AttributeValue]
+type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+
+# =========================================================================
+# LDAP3 CONNECTION PROTOCOL - Type-safe interface for ldap3 Connection
+# =========================================================================
+
+
+class LdapConnectionProtocol(Protocol):
+    """Protocol for ldap3 Connection to provide type safety for untyped methods."""
+
+    bound: bool
+    last_error: str
+
+    def modify(self, dn: str, changes: ModifyChanges) -> bool: ...
+    def delete(self, dn: str) -> bool: ...
+    def add(self, dn: str, attributes: dict[str, object]) -> bool: ...
+    def compare(self, dn: str, attribute: str, value: str) -> bool: ...
+    def extended(self, request_name: str, request_value: str | None = None) -> bool: ...
+    def search(
+        self,
+        search_base: str,
+        search_filter: str,
+        search_scope: str,
+        attributes: list[str] | None = None,
+        size_limit: int = 0,
+        time_limit: int = 0,
+        types_only: bool = False,  # noqa: FBT001, FBT002
+        dereference_aliases: int = 0,
+    ) -> bool: ...
+    def unbind(self) -> bool: ...
 
 
 # Module-level type aliases for LDAP3 types
-if TYPE_CHECKING:
-    from ldap3 import Connection, Server, Entry, Attribute
-    # LDAP3 constants
-    ALL: int
-    BASE: int
-    LEVEL: int
-    SUBTREE: int
-    MODIFY_ADD: int
-    MODIFY_DELETE: int
-    MODIFY_REPLACE: int
-    SIMPLE: int
-else:
-    # Runtime fallbacks
-    Connection = Any
-    Server = Any
-    Entry = Any
-    Attribute = Any
-    ALL = 0
-    BASE = 1
-    LEVEL = 2
-    SUBTREE = 3
-    MODIFY_ADD = 0
-    MODIFY_DELETE = 1
-    MODIFY_REPLACE = 2
-    SIMPLE = 0
+
+# LDAP3 constants - provide actual values at runtime
+# FIXED: Removed ImportError fallback - ldap3 must be available (ZERO TOLERANCE)
+
+ALL = ldap3.ALL
+BASE = ldap3.BASE
+LEVEL = ldap3.LEVEL
+SUBTREE = ldap3.SUBTREE
+MODIFY_ADD = ldap3.MODIFY_ADD
+MODIFY_DELETE = ldap3.MODIFY_DELETE
+MODIFY_REPLACE = ldap3.MODIFY_REPLACE
+SIMPLE = ldap3.SIMPLE
 
 
 __all__ = [
-    "FlextLdapTypes",
-    "Connection",
-    "Server", 
-    "Entry",
-    "Attribute",
     "ALL",
     "BASE",
     "LEVEL",
-    "SUBTREE",
     "MODIFY_ADD",
     "MODIFY_DELETE",
     "MODIFY_REPLACE",
     "SIMPLE",
+    "SUBTREE",
+    "FlextLdapTypes",
 ]

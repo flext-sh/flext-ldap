@@ -82,7 +82,7 @@ class FlextLdapAPI:
     def users(self) -> FlextLdapRepositories.UserRepository
     @property
     def groups(self) -> FlextLdapRepositories.GroupRepository
-    
+
     # Core Operations
     async def authenticate_user() -> FlextResult[LdapUser]
     async def connect() -> FlextResult[bool]
@@ -121,15 +121,15 @@ class FlextLdapClient:
     async def connect() -> FlextResult[bool]
     async def bind() -> FlextResult[bool]
     async def unbind() -> FlextResult[None]
-    
+
     # Authentication
     async def authenticate_user() -> FlextResult[LdapUser]
-    
+
     # Search Operations
     async def search_with_request() -> FlextResult[SearchResponse]
     async def search_users() -> FlextResult[list[LdapUser]]
     async def search_groups() -> FlextResult[list[Group]]
-    
+
     # CRUD Operations
     async def create_user() -> FlextResult[LdapUser]
     async def create_group() -> FlextResult[Group]
@@ -168,14 +168,14 @@ class FlextLdapConfigs(FlextConfig):
     # Singleton Implementation
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
-    
+
     # Configuration Fields
     ldap_default_connection: FlextLdapModels.ConnectionConfig | None
     ldap_bind_dn: str | None
     ldap_bind_password: SecretStr | None
     ldap_use_ssl: bool
     # ... extensive configuration options
-    
+
     # Business Logic
     def validate_business_rules() -> FlextResult[None]
     def get_effective_server_uri() -> str
@@ -214,13 +214,13 @@ class FlextLdapModels(FlextModels):
         value: str
         @classmethod
         def create() -> FlextResult[DistinguishedName]
-    
+
     @dataclass(frozen=True)
     class Filter:
         expression: str
         @classmethod
         def equals() -> Filter
-    
+
     # Core Entities
     class LdapUser(BaseModel):
         dn: str
@@ -228,7 +228,7 @@ class FlextLdapModels(FlextModels):
         uid: str | None
         # ... comprehensive user attributes
         def validate_business_rules() -> FlextResult[None]
-    
+
     class Group(BaseModel):
         dn: str
         cn: str
@@ -236,7 +236,7 @@ class FlextLdapModels(FlextModels):
         # ... group attributes and membership
         def has_member() -> bool
         def add_member() -> FlextResult[None]
-    
+
     # Operation Entities
     class SearchRequest(BaseModel):
         base_dn: str
@@ -280,17 +280,17 @@ class FlextLdapProtocols:
         async def get() -> FlextResult[dict | None]
         @abstractmethod
         async def create() -> FlextResult[bool]
-    
+
     class Connection(ABC):
         @abstractmethod
         async def connect() -> FlextResult[bool]
         @abstractmethod
         async def bind() -> FlextResult[bool]
-    
+
     class Authentication(ABC):
         @abstractmethod
         async def authenticate_user() -> FlextResult[bool]
-    
+
     class Search(ABC):
         @abstractmethod
         async def search_users() -> FlextResult[list[dict]]
@@ -328,12 +328,12 @@ class FlextLdapRepositories:
         async def save() -> FlextResult[T]
         @abstractmethod
         async def delete() -> FlextResult[bool]
-    
+
     class UserRepository(Repository[FlextLdapModels.LdapUser]):
         async def find_by_dn() -> FlextResult[LdapUser]
         async def find_user_by_uid() -> FlextResult[LdapUser]
         async def find_users_by_filter() -> FlextResult[list[LdapUser]]
-    
+
     class GroupRepository(Repository[FlextLdapModels.Group]):
         async def find_by_dn() -> FlextResult[Group]
         async def find_group_by_cn() -> FlextResult[Group]
@@ -407,23 +407,23 @@ class FlextLdapConstants:
         DEFAULT_SSL_PORT: Final[int] = 636
         PROTOCOL_PREFIX_LDAP: Final[str] = "ldap://"
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
-    
+
     class Attributes:
         OBJECT_CLASS: Final[str] = "objectClass"
         COMMON_NAME: Final[str] = "cn"
         USER_ID: Final[str] = "uid"
         # ... comprehensive attribute definitions
-    
+
     class ObjectClasses:
         TOP: Final[str] = "top"
         PERSON: Final[str] = "person"
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
-    
+
     class Validation:
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
         DN_PATTERN: Final[str] = r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+..."
-    
+
     class Logging:
         # Comprehensive logging configuration
         LOG_CONNECTION_ATTEMPTS = True
@@ -461,7 +461,7 @@ class FlextLdapTypes:
         Data = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
         DN = str
         ObjectClasses = list[str]
-    
+
     class Search:
         ResultEntry = dict[str, object]
         Result = list["FlextLdapTypes.Search.ResultEntry"]
@@ -469,7 +469,7 @@ class FlextLdapTypes:
         Scope = str
         BaseDN = str
         Attributes = list[str] | None
-    
+
     class Connection:
         ServerURI = str
         Port = int
@@ -564,7 +564,7 @@ __all__ = ["FlextExceptions"]
 - **Core Operations**: Authentication, Connection, Search, CRUD, Validation
 - **Dependencies**: FlextLdapClient, FlextLdapConfigs, FlextLdapRepositories, FlextLdapModels
 
-#### FlextLdapClient Class Structure  
+#### FlextLdapClient Class Structure
 
 - **Total Methods**: 35 methods + 1 property
 - **Core Operations**: Connection management, LDAP operations, data transformation
@@ -1143,10 +1143,10 @@ of each module on the overall system architecture.
 def analyze_module_profound_impact(file_path: str) -> dict:
     """
     Analyze a single module's profound architectural impact using AST parsing.
-    
+
     Args:
         file_path: Path to the Python module to analyze
-        
+
     Returns:
         Dictionary containing comprehensive impact metrics including:
         - Lines of code and cyclomatic complexity
@@ -1154,7 +1154,7 @@ def analyze_module_profound_impact(file_path: str) -> dict:
         - Flext-core integration metrics
         - Critical architectural violations
         - Overall architectural impact score
-        
+
     Note:
         This function uses AST parsing to provide accurate, syntax-aware
         analysis of code structure and dependencies.
@@ -1295,28 +1295,28 @@ graph TD
     A --> E[models.py]
     A --> F[repositories.py]
     A --> G[validations.py]
-    
+
     B --> C
     B --> D
     B --> E
     B --> F
     B --> G
-    
+
     C --> H[ldap3_types.py]
     C --> E
-    
+
     D --> I[constants.py]
     D --> E
-    
+
     E --> I
     E --> J[typings.py]
     E --> G
-    
+
     F --> E
     F --> J
-    
+
     G --> I
-    
+
     K[protocols.py] --> J
     L[type_guards.py] --> J
 ```
@@ -1517,7 +1517,7 @@ The AST analysis findings have been documented directly in the source code with 
 # - Complex validation logic scattered across models (87 cyclomatic complexity)
 # - High maintenance burden due to complexity (995 lines of code)
 # - Violates FLEXT domain separation principles
-# 
+#
 # RECOMMENDATION: Replace with flext-core models to achieve domain separation
 # Estimated refactoring effort: 40 hours
 # Architectural risk reduction: 85%
@@ -1541,7 +1541,7 @@ from pydantic import (
 # - Complex validation patterns that could be in flext-core (46 cyclomatic complexity)
 # - Threading usage that should use flext-core utilities
 # - Path manipulation that should use flext-core utilities
-# 
+#
 # RECOMMENDATION: Replace external libraries with flext-core equivalents
 # Estimated refactoring effort: 24 hours
 # Architectural risk reduction: 75%
@@ -1567,7 +1567,7 @@ from pydantic_settings import SettingsConfigDict  # ❌ Should use flext-core.Fl
 # - Must be used to provide LDAP functions using FLEXT interfaces
 # - Duplicate validation methods instead of delegating (4 validation methods)
 # - High complexity indicates potential refactoring needs (62 cyclomatic complexity)
-# 
+#
 # RECOMMENDATION: Keep ldap3 but improve FLEXT interface wrapping
 # Estimated refactoring effort: 16 hours (reduce complexity, improve delegation)
 # Architectural improvement: Better FLEXT ecosystem integration
@@ -1585,7 +1585,7 @@ from ldap3.core.server import Server  # ✅ REQUIRED for LDAP server management
 # - Direct pydantic.SecretStr import violates domain separation
 # - Mock repository implementation (entire module non-functional)
 # - Repository pattern not functional for production use (~200 lines of mock code)
-# 
+#
 # RECOMMENDATION: Replace pydantic.SecretStr with flext-core.FlextModels.SecretStr
 # Estimated refactoring effort: 8 hours
 # Architectural risk reduction: 60%

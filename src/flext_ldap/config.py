@@ -11,11 +11,10 @@ Note: This file has type checking disabled due to limitations in the official ty
 - Properties like conn.entries and entry.entry_dn are not fully typed
 - Entry attributes and their values have incomplete type information
 """
-# type: ignore[attr-defined]
 
 from __future__ import annotations
 
-from typing import ClassVar, override
+from typing import ClassVar
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -244,7 +243,7 @@ class FlextLdapConfigs(FlextConfig):
         environment: str,
         config_data: dict[str, object],
         **overrides: object,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[FlextLdapConfigs]:
         """Create configuration with environment-specific defaults."""
         try:
             # Apply overrides if any
@@ -252,10 +251,10 @@ class FlextLdapConfigs(FlextConfig):
                 config_data.update(overrides)
 
             # Use model_validate for proper type handling
-            config = cls.model_validate(config_data)
-            return FlextResult[object].ok(config)
+            config: FlextLdapConfigs = cls.model_validate(config_data)
+            return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
-            return FlextResult[object].fail(
+            return FlextResult[FlextLdapConfigs].fail(
                 f"Failed to create {environment} config: {e}"
             )
 
@@ -274,17 +273,33 @@ class FlextLdapConfigs(FlextConfig):
 
         """
         try:
-            # Convert DataStructures format to config format
+            # Convert DataStructures format to config format with proper type handling
+            server_val = connection_data.get("server", "")
+            port_val = connection_data.get("port", 389)
+            use_ssl_val = connection_data.get("use_ssl", True)
+            bind_dn_val = connection_data.get("bind_dn")
+            bind_password_val = connection_data.get("bind_password")
+            timeout_val = connection_data.get("timeout", 30)
+
             config_data = {
                 "ldap_default_connection": FlextLdapModels.ConnectionConfig(
-                    **connection_data
+                    server=str(server_val) if server_val is not None else "",
+                    port=int(port_val) if isinstance(port_val, (int, str)) else 389,
+                    use_ssl=bool(use_ssl_val) if use_ssl_val is not None else True,
+                    bind_dn=str(bind_dn_val) if bind_dn_val is not None else None,
+                    bind_password=str(bind_password_val)
+                    if bind_password_val is not None
+                    else None,
+                    timeout=int(timeout_val)
+                    if isinstance(timeout_val, (int, str))
+                    else 30,
                 ),
                 "ldap_use_ssl": connection_data.get("use_ssl", True),
                 "ldap_bind_dn": connection_data.get("bind_dn"),
                 "ldap_bind_password": connection_data.get("bind_password"),
             }
 
-            config = cls.model_validate(config_data)
+            config: FlextLdapConfigs = cls.model_validate(config_data)
             return FlextResult[FlextLdapConfigs].ok(config)
         except Exception as e:
             return FlextResult[FlextLdapConfigs].fail(
@@ -296,7 +311,6 @@ class FlextLdapConfigs(FlextConfig):
     # =========================================================================
 
     @classmethod
-    @override
     def get_global_instance(cls) -> FlextLdapConfigs:
         """Get the global singleton instance of FlextLdapConfigs."""
         if cls._global_instance is None:
@@ -304,7 +318,6 @@ class FlextLdapConfigs(FlextConfig):
         return cls._global_instance
 
     @classmethod
-    @override
     def reset_global_instance(cls) -> None:
         """Reset the global FlextLdapConfigs instance (mainly for testing)."""
         cls._global_instance = None
@@ -357,7 +370,9 @@ class FlextLdapConfigs(FlextConfig):
         """Validate LDAP bind DN format."""
         if v is None:
             return v
-        validation_result = FlextLdapValidations.validate_dn(v, "LDAP bind DN")
+        validation_result: FlextResult[None] = FlextLdapValidations.validate_dn(
+            v, "LDAP bind DN"
+        )
         if validation_result.is_failure:
             error_msg = f"Invalid LDAP bind DN format: {validation_result.error}"
             raise ValueError(error_msg)
@@ -378,7 +393,9 @@ class FlextLdapConfigs(FlextConfig):
             return value
 
         # Basic DN validation using value objects
-        dn_result = FlextLdapModels.DistinguishedName.create(value)
+        dn_result: FlextResult[FlextLdapModels.DistinguishedName] = (
+            FlextLdapModels.DistinguishedName.create(value)
+        )
         if dn_result.is_failure:
             msg = f"Invalid LDAP bind DN format: {value}"
             raise ValueError(msg)
@@ -423,7 +440,7 @@ class FlextLdapConfigs(FlextConfig):
     def create_development_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
         """Create a development LDAP configuration."""
         try:
-            config = cls.model_validate({
+            config: FlextLdapConfigs = cls.model_validate({
                 "ldap_use_ssl": False,
                 "ldap_enable_debug": True,
                 "ldap_log_queries": True,
@@ -442,7 +459,7 @@ class FlextLdapConfigs(FlextConfig):
     def create_test_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
         """Create a test LDAP configuration."""
         try:
-            config = cls.model_validate({
+            config: FlextLdapConfigs = cls.model_validate({
                 "ldap_use_ssl": False,
                 "ldap_enable_debug": False,
                 "ldap_log_queries": False,
@@ -461,7 +478,7 @@ class FlextLdapConfigs(FlextConfig):
     def create_production_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
         """Create a production LDAP configuration."""
         try:
-            config = cls.model_validate({
+            config: FlextLdapConfigs = cls.model_validate({
                 "ldap_use_ssl": True,
                 "ldap_enable_debug": False,
                 "ldap_log_queries": False,
