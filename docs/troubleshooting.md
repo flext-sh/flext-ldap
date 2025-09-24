@@ -630,7 +630,6 @@ asyncio.run(handle_errors_properly())
 ### Enable Debug Logging
 
 ```python
-import logging
 from flext_core import FlextLogger
 
 # Enable debug logging

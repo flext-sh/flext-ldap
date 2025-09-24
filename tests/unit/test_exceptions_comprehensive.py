@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextExceptions
-from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap import FlextLdapExceptions
 
 
 class TestLdapConnectionError:

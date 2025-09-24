@@ -12,8 +12,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import SecretStr
 
-from flext_ldap.config import FlextLdapConfigs
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapConfigs, FlextLdapModels
 
 
 class TestFlextLdapConfigSingleton:

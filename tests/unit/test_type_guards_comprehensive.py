@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 import pytest
 
-from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap import FlextLdapUtilities
 
 
 class TestEnsureStringList:
@@ -62,7 +62,7 @@ class TestEnsureLdapDn:
 
     def test_invalid_non_string(self) -> None:
         """Test non-string raises TypeError."""
-        with pytest.raises(TypeError, match="Expected string, got"):
+        with pytest.raises(TypeError, match="DN must be a string"):
             FlextLdapUtilities.TypeGuards.ensure_ldap_dn(123)
 
     def test_invalid_empty_string(self) -> None:
@@ -82,19 +82,18 @@ class TestEnsureLdapDn:
 
     def test_invalid_empty_component(self) -> None:
         """Test DN with empty component raises ValueError."""
-        with pytest.raises(ValueError, match="cannot contain empty components"):
+        with pytest.raises(ValueError, match="DN cannot have empty components"):
             FlextLdapUtilities.TypeGuards.ensure_ldap_dn("cn=test,,dc=com")
 
     def test_invalid_component_no_equals(self) -> None:
-        """Test DN component without equals - this is actually valid in the current implementation."""
-        # The current implementation only checks for at least one '=' in the entire DN
-        # It doesn't validate individual components, so this input is considered valid
-        result = FlextLdapUtilities.TypeGuards.ensure_ldap_dn("cn=test,invalid")
-        assert result == "cn=test,invalid"
+        """Test DN component without equals raises ValueError."""
+        # DN components must contain '=' separator
+        with pytest.raises(ValueError, match="DN component must contain '='"):
+            FlextLdapUtilities.TypeGuards.ensure_ldap_dn("cn=test,invalid")
 
     def test_invalid_empty_attribute_name(self) -> None:
         """Test DN with empty attribute name raises ValueError."""
-        with pytest.raises(ValueError, match="DN component cannot start or end with"):
+        with pytest.raises(ValueError, match="DN attribute name cannot be empty"):
             FlextLdapUtilities.TypeGuards.ensure_ldap_dn("=test,dc=example")
 
     def test_invalid_empty_attribute_value(self) -> None:
@@ -279,10 +278,9 @@ class TestIsLdapDn:
         assert not FlextLdapUtilities.TypeGuards.is_ldap_dn("cn=test,,dc=com")
 
     def test_invalid_component_no_equals(self) -> None:
-        """Test DN component without equals - this is actually valid in the current implementation."""
-        # The current implementation only checks for at least one '=' in the entire DN
-        # It doesn't validate individual components, so this input is considered valid
-        assert FlextLdapUtilities.TypeGuards.is_ldap_dn("cn=test,invalid")
+        """Test DN component without equals returns False."""
+        # DN components must contain '=' separator
+        assert not FlextLdapUtilities.TypeGuards.is_ldap_dn("cn=test,invalid")
 
     def test_invalid_empty_attribute(self) -> None:
         """Test DN with empty attribute returns False."""
@@ -349,10 +347,9 @@ class TestIsLdapAttributesDict:
         assert not FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict("not a dict")
 
     def test_invalid_non_string_key(self) -> None:
-        """Test non-string key - this is actually valid in the current implementation."""
-        # The current implementation doesn't validate key types
+        """Test non-string key returns False."""
         attrs = {123: "value"}
-        assert FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict(attrs)
+        assert not FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict(attrs)
 
     def test_invalid_value_type(self) -> None:
         """Test invalid value type returns False."""

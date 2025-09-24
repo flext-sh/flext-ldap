@@ -8,18 +8,21 @@ SPDX-License-Identifier: MIT
 """
 
 import importlib.metadata
+from typing import cast
 
-_metadata = importlib.metadata.metadata("flext-ldap")
-__version__ = _metadata["Version"]
-__project__ = _metadata["Name"]
-__description__ = _metadata["Summary"]
-__author__ = _metadata["Author"]
-__author_email__ = (
-    _metadata["Author-email"].split("<")[1].rstrip(">")
-    if "<" in _metadata.get("Author-email", "")
+_metadata: dict[str, object] = cast(
+    "dict[str, object]", importlib.metadata.metadata("flext-ldap")
+)
+__version__: str = cast("str", _metadata["Version"])
+__project__: str = cast("str", _metadata["Name"])
+__description__: str = cast("str", _metadata["Summary"])
+__author__: str = cast("str", _metadata["Author"])
+__author_email__: str = (
+    cast("str", _metadata["Author-email"]).split("<")[1].rstrip(">")
+    if "<" in cast("str", _metadata.get("Author-email", ""))
     else ""
 )
-__email__ = __author_email__
+__email__: str = __author_email__
 
 # Ensure sensible defaults when metadata is missing in editable installs
 if not __author__:
@@ -27,14 +30,18 @@ if not __author__:
 if not __author_email__:
     __author_email__ = "dev@flext.dev"
     __email__ = __author_email__
-__maintainer__ = _metadata.get("Maintainer", __author__)
-__maintainer_email__ = _metadata.get("Maintainer-email", __author_email__)
-__license__ = _metadata.get("License", "MIT")
+__maintainer__: str = cast("str", _metadata.get("Maintainer", __author__))
+__maintainer_email__: str = cast(
+    "str", _metadata.get("Maintainer-email", __author_email__)
+)
+__license__: str = cast("str", _metadata.get("License", "MIT"))
 
 # Parse version info
-_parts = __version__.split(".")
-__version_info__ = tuple(int(p) if p.isdigit() else p for p in _parts)
-__version_tuple__ = __version_info__
+_parts: list[str] = __version__.split(".")
+__version_info__: tuple[int | str, ...] = tuple(
+    int(p) if p.isdigit() else p for p in _parts
+)
+__version_tuple__: tuple[int | str, ...] = __version_info__
 
 # Fixed metadata
 __copyright__ = "Copyright (c) 2025 Flext. All rights reserved."

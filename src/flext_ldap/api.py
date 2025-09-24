@@ -12,13 +12,11 @@ Note: This file has type checking disabled due to limitations in the official ty
 - Properties like conn.entries and entry.entry_dn are not fully typed
 - Entry attributes and their values have incomplete type information
 """
-# type: ignore[attr-defined]
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 from flext_ldap.acl import (
-    FlextLdapAclConstants,
     FlextLdapAclManager,
 )
 from flext_ldap.clients import FlextLdapClient
@@ -30,323 +28,115 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapAPI:
-    """Main LDAP domain API providing unified access to all LDAP functionality.
+class FlextLdapAPI(FlextService[None]):
+    """Main domain access point for LDAP operations.
 
-    This is the primary entry point for the flext-ldap domain following FLEXT
-    standards. It provides a single unified interface for all LDAP operations
-    including connection management, authentication, search, CRUD operations,
-    and domain-specific functionality.
-
-    The API provides access to:
-    - LDAP client operations (connection, authentication, search)
-    - Repository pattern for data access
-    - Model validation and type checking
-    - Configuration management
-    - Domain constants and utilities
-
-    Example:
-        api = FlextLdapClient()
-        result = await api.authenticate_user("username", "password")
-        if result.is_success:
-            user = result.unwrap()
-
+    This class provides the primary API interface for the flext-ldap domain.
+    Following FLEXT standards, this is the single unified class that provides
+    access to all LDAP domain functionality.
     """
 
     def __init__(self, config: FlextLdapConfigs | None = None) -> None:
-        """Initialize FlextLdapAPI with optional configuration.
-
-        Args:
-            config: Optional LDAP configuration. If None, uses global instance.
-
-        """
-        self._config = config or FlextLdapConfigs.get_global_instance()
-        self._client = FlextLdapClient()
-        self._user_repository = FlextLdapRepositories.UserRepository(self._client)
-        self._group_repository = FlextLdapRepositories.GroupRepository(self._client)
-        self._acl_manager = FlextLdapAclManager()
+        """Initialize the LDAP API service."""
+        super().__init__()
+        self._client: FlextLdapClient | None = None
+        self._repositories: FlextLdapRepositories | None = None
+        self._acl_manager: FlextLdapAclManager | None = None
+        self._config: FlextLdapConfigs | None = config
 
     @classmethod
-    def create(cls, config: FlextLdapConfigs | None = None) -> FlextLdapAPI:
-        """Factory method to create FlextLdapAPI instance.
+    def create(cls) -> FlextLdapAPI:
+        """Create a new FlextLdapAPI instance (factory method)."""
+        return cls()
 
-        Args:
-            config: Optional LDAP configuration.
+    def execute(self) -> FlextResult[None]:
+        """Execute the main domain operation (required by FlextService)."""
+        return FlextResult[None].ok(None)
 
-        Returns:
-            New FlextLdapAPI instance.
-
-        """
-        return cls(config=config)
-
-    # =========================================================================
-    # DOMAIN ACCESS PROPERTIES
-    # =========================================================================
+    # =============================================================================
+    # PROPERTY ACCESSORS - Direct access to domain components
+    # =============================================================================
 
     @property
     def client(self) -> FlextLdapClient:
-        """Access to LDAP client for direct operations."""
+        """Get the LDAP client instance."""
+        if self._client is None:
+            self._client = FlextLdapClient()
         return self._client
 
     @property
     def config(self) -> FlextLdapConfigs:
-        """Access to LDAP configuration."""
-        return self._config
+        """Get the LDAP configuration instance."""
+        if self._config is not None:
+            return self._config
+        return FlextLdapConfigs.get_global_instance()
 
     @property
-    def users(self) -> FlextLdapRepositories.UserRepository:
-        """Access to user repository."""
-        return self._user_repository
+    def users(self) -> FlextLdapRepositories:
+        """Get the users repository instance."""
+        if self._repositories is None:
+            self._repositories = FlextLdapRepositories()
+        return self._repositories
 
     @property
-    def groups(self) -> FlextLdapRepositories.GroupRepository:
-        """Access to group repository."""
-        return self._group_repository
+    def groups(self) -> FlextLdapRepositories:
+        """Get the groups repository instance."""
+        if self._repositories is None:
+            self._repositories = FlextLdapRepositories()
+        return self._repositories
 
     @property
     def models(self) -> type[FlextLdapModels]:
-        """Access to LDAP models class."""
+        """Get the LDAP models class."""
         return FlextLdapModels
 
     @property
     def types(self) -> type[FlextLdapTypes]:
-        """Access to LDAP types class."""
+        """Get the LDAP types class."""
         return FlextLdapTypes
 
     @property
     def protocols(self) -> type[FlextLdapProtocols]:
-        """Access to LDAP protocols class."""
+        """Get the LDAP protocols class."""
         return FlextLdapProtocols
 
     @property
     def validations(self) -> type[FlextLdapValidations]:
-        """Access to LDAP validations class."""
+        """Get the LDAP validations class."""
         return FlextLdapValidations
 
-    @property
-    def acl(self) -> FlextLdapAclManager:
-        """Access to ACL manager for ACL operations."""
-        return self._acl_manager
-
-    @property
-    def acl_models(self) -> type[FlextLdapModels]:
-        """Access to ACL models class."""
-        return FlextLdapModels
-
-    @property
-    def acl_constants(self) -> type[FlextLdapAclConstants]:
-        """Access to ACL constants class."""
-        return FlextLdapAclConstants
-
-    # =========================================================================
-    # AUTHENTICATION METHODS
-    # =========================================================================
-
-    async def authenticate_user(
-        self,
-        username: str,
-        password: str,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
-        """Authenticate user credentials against LDAP directory.
-
-        Args:
-            username: Username to authenticate.
-            password: User password.
-
-        Returns:
-            FlextResult containing authenticated user or error.
-
-        """
-        return await self._client.authenticate_user(username, password)
-
-    async def bind(
-        self,
-        dn: str | None = None,
-        password: str | None = None,
-    ) -> FlextResult[bool]:
-        """Bind to LDAP server with credentials.
-
-        Args:
-            dn: Distinguished Name for binding. If None, uses config.
-            password: Password for binding. If None, uses config.
-
-        Returns:
-            FlextResult indicating bind success or error.
-
-        """
-        # Get actual values from config if None provided
-        actual_dn = dn or self._config.get_effective_bind_dn()
-        actual_password = password or self._config.get_effective_bind_password()
-
-        if not actual_dn or not actual_password:
-            return FlextResult[bool].fail("DN and password are required")
-
-        bind_result = await self._client.bind(actual_dn, actual_password)
-        if bind_result.is_failure:
-            return FlextResult[bool].fail(bind_result.error or "Bind failed")
-        return FlextResult[bool].ok(True)
-
-    # =========================================================================
-    # CONNECTION METHODS
-    # =========================================================================
-
-    async def connect(self) -> FlextResult[bool]:
-        """Establish connection to LDAP server.
-
-        Returns:
-            FlextResult indicating connection success or error.
-
-        """
-        # Get connection details from config
-        uri = self._config.get_effective_server_uri()
-        bind_dn = self._config.get_effective_bind_dn()
-        password = self._config.get_effective_bind_password()
-
-        if not uri or not bind_dn or not password:
-            return FlextResult[bool].fail("Missing connection configuration")
-
-        connect_result = await self._client.connect(uri, bind_dn, password)
-        if connect_result.is_failure:
-            return FlextResult[bool].fail(connect_result.error or "Connection failed")
-        return FlextResult[bool].ok(True)
-
-    async def disconnect(self) -> FlextResult[bool]:
-        """Close connection to LDAP server.
-
-        Returns:
-            FlextResult indicating disconnection success or error.
-
-        """
-        unbind_result = await self._client.unbind()
-        if unbind_result.is_failure:
-            return FlextResult[bool].fail(unbind_result.error or "Disconnect failed")
-        return FlextResult[bool].ok(True)
+    # =============================================================================
+    # CONNECTION MANAGEMENT METHODS
+    # =============================================================================
 
     async def is_connected(self) -> bool:
-        """Check if currently connected to LDAP server.
+        """Check if the LDAP client is connected."""
+        return self.client.is_connected()
 
-        Returns:
-            True if connected, False otherwise.
+    async def test_connection(self) -> FlextResult[bool]:
+        """Test the LDAP connection."""
+        return self.client.test_connection()
 
-        """
-        return self._client.is_connected()
-
-    # =========================================================================
-    # SEARCH METHODS
-    # =========================================================================
-
-    async def search_users(
-        self,
-        filter_str: str | None = None,
-        base_dn: str | None = None,
-    ) -> FlextResult[list[FlextLdapModels.LdapUser]]:
-        """Search for users in LDAP directory.
-
-        Args:
-            filter_str: LDAP search filter. If None, uses default user filter.
-            base_dn: Search base DN. If None, uses a default.
-
-        Returns:
-            FlextResult containing list of users or error.
-
-        """
-        # Get defaults - use a reasonable default for base_dn
-        actual_base_dn = base_dn or "ou=users,dc=example,dc=com"
-
-        # If custom filter provided, use generic search_entries
-        if filter_str:
-            search_result = await self.search_entries(
-                base_dn=actual_base_dn,
-                filter_str=filter_str,
-                scope="subtree",
-                attributes=None,
-            )
-            if search_result.is_failure:
-                return FlextResult[list[FlextLdapModels.LdapUser]].fail(
-                    search_result.error or "Search failed",
-                )
-
-            # Convert SearchResponse entries to LdapUser objects
-            users: list[FlextLdapModels.LdapUser] = []
-            for entry in search_result.unwrap().entries:
-                # Create minimal user object from search result
-                user = FlextLdapModels.LdapUser(
-                    dn=str(entry.get("dn", "")),
-                    cn=str(entry.get("cn", "")),
-                    uid=str(entry.get("uid", "")),
-                    sn=str(entry.get("sn", "")),
-                    given_name=str(entry.get("givenName"))
-                    if entry.get("givenName")
-                    else None,
-                    mail=str(entry.get("mail")) if entry.get("mail") else None,
-                    telephone_number=None,
-                    mobile=None,
-                    department=None,
-                    title=None,
-                    organization=None,
-                    organizational_unit=None,
-                    user_password=None,
-                    created_timestamp=None,
-                    modified_timestamp=None,
-                )
-                users.append(user)
-            return FlextResult[list[FlextLdapModels.LdapUser]].ok(users)
-
-        # Use default client search for standard user queries
-        return await self._client.search_users(actual_base_dn, uid=None)
+    # =============================================================================
+    # SEARCH METHODS - Delegate to client
+    # =============================================================================
 
     async def search_groups(
         self,
+        base_dn: str,
+        cn: str | None = None,
         filter_str: str | None = None,
-        base_dn: str | None = None,
+        scope: str = "subtree",
+        attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
-        """Search for groups in LDAP directory.
-
-        Args:
-            filter_str: LDAP search filter. If None, uses default group filter.
-            base_dn: Search base DN. If None, uses a default.
-
-        Returns:
-            FlextResult containing list of groups or error.
-
-        """
-        # Get defaults - use a reasonable default for base_dn
-        actual_base_dn = base_dn or "ou=groups,dc=example,dc=com"
-
-        # If custom filter provided, use generic search_entries
-        if filter_str:
-            search_result = await self.search_entries(
-                base_dn=actual_base_dn,
-                filter_str=filter_str,
-                scope="subtree",
-                attributes=None,
-            )
-            if search_result.is_failure:
-                return FlextResult[list[FlextLdapModels.Group]].fail(
-                    search_result.error or "Search failed",
-                )
-
-            # Convert SearchResponse entries to Group objects
-            groups: list[FlextLdapModels.Group] = []
-            for entry in search_result.unwrap().entries:
-                # Create minimal group object from search result
-                group = FlextLdapModels.Group(
-                    dn=str(entry.get("dn", "")),
-                    cn=str(entry.get("cn", "")),
-                    gid_number=int(str(entry.get("gidNumber", 0)))
-                    if entry.get("gidNumber")
-                    else None,
-                    description=str(entry.get("description"))
-                    if entry.get("description")
-                    else None,
-                    created_timestamp=None,
-                    modified_timestamp=None,
-                )
-                groups.append(group)
-            return FlextResult[list[FlextLdapModels.Group]].ok(groups)
-
-        # Use default client search for standard group queries
-        return await self._client.search_groups(actual_base_dn, cn=None)
+        """Search for LDAP groups."""
+        return await self.client.search_groups(
+            base_dn=base_dn,
+            cn=cn,
+            filter_str=filter_str,
+            scope=scope,
+            attributes=attributes,
+        )
 
     async def search_entries(
         self,
@@ -355,252 +145,83 @@ class FlextLdapAPI:
         scope: str = "subtree",
         attributes: list[str] | None = None,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
-        """Generic search for LDAP entries.
-
-        Args:
-            base_dn: Search base Distinguished Name.
-            filter_str: LDAP search filter.
-            scope: Search scope (base, onelevel, subtree).
-            attributes: Attributes to return. If None, returns all.
-
-        Returns:
-            FlextResult containing search response or error.
-
-        """
-        search_request = FlextLdapModels.SearchRequest(
+        """Search for LDAP entries using search_with_request."""
+        request = self.models.SearchRequest(
             base_dn=base_dn,
             filter_str=filter_str,
-            scope=scope,
-            attributes=attributes,
-            page_size=None,
-            paged_cookie=None,
+            scope=getattr(self.models.Scope, scope.upper(), self.models.Scope.SUBTREE),
+            attributes=attributes or [],
+            page_size=100,
+            paged_cookie=b"",
         )
-        return await self._client.search_with_request(search_request)
-
-    async def search_entries_from_data(
-        self,
-        search_data: FlextLdapTypes.SearchRequestData,
-    ) -> FlextResult[FlextLdapModels.SearchResponse]:
-        """Search LDAP entries using SearchRequestData structure.
-
-        Args:
-            search_data: Search request data using DataStructures types
-
-        Returns:
-            FlextResult containing search response or error.
-
-        """
-        try:
-            search_request = FlextLdapModels.SearchRequest(**search_data)
-            return await self._client.search_with_request(search_request)
-        except Exception as e:
-            return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Failed to create search request from data: {e}"
-            )
-
-    # =========================================================================
-    # CRUD METHODS
-    # =========================================================================
-
-    async def create_user(
-        self,
-        user_request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
-        """Create new user in LDAP directory.
-
-        Args:
-            user_request: User creation request with required fields.
-
-        Returns:
-            FlextResult containing created user or error.
-
-        """
-        return await self._client.create_user(user_request)
-
-    async def create_group(
-        self,
-        group_request: FlextLdapModels.CreateGroupRequest,
-    ) -> FlextResult[FlextLdapModels.Group]:
-        """Create new group in LDAP directory.
-
-        Args:
-            group_request: Group creation request with required fields.
-
-        Returns:
-            FlextResult containing created group or error.
-
-        """
-        return await self._client.create_group(group_request)
-
-    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
-        """Get user by Distinguished Name.
-
-        Args:
-            dn: User Distinguished Name.
-
-        Returns:
-            FlextResult containing user or None if not found.
-
-        """
-        return await self._client.get_user(dn)
+        return await self.client.search_with_request(request)
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
-        """Get group by Distinguished Name.
+        """Get a specific LDAP group by DN."""
+        return await self.client.get_group(dn)
 
-        Args:
-            dn: Group Distinguished Name.
-
-        Returns:
-            FlextResult containing group or None if not found.
-
-        """
-        return await self._client.get_group(dn)
+    # =============================================================================
+    # UPDATE METHODS - Delegate to client
+    # =============================================================================
 
     async def update_user_attributes(
-        self,
-        dn: str,
-        attributes: dict[str, object],
+        self, dn: str, attributes: dict[str, str]
     ) -> FlextResult[bool]:
-        """Update user attributes.
-
-        Args:
-            dn: User Distinguished Name.
-            attributes: Attributes to update.
-
-        Returns:
-            FlextResult indicating update success or error.
-
-        """
-        return await self._client.update_user_attributes(dn, attributes)
+        """Update user attributes."""
+        return await self.client.update_user_attributes(dn, attributes)
 
     async def update_group_attributes(
-        self,
-        dn: str,
-        attributes: dict[str, object],
+        self, dn: str, attributes: dict[str, str]
     ) -> FlextResult[bool]:
-        """Update group attributes.
+        """Update group attributes."""
+        return await self.client.update_group_attributes(dn, attributes)
 
-        Args:
-            dn: Group Distinguished Name.
-            attributes: Attributes to update.
-
-        Returns:
-            FlextResult indicating update success or error.
-
-        """
-        return await self._client.update_group_attributes(dn, attributes)
+    # =============================================================================
+    # DELETE METHODS - Delegate to client
+    # =============================================================================
 
     async def delete_user(self, dn: str) -> FlextResult[bool]:
-        """Delete user from LDAP directory.
+        """Delete a user."""
+        return await self.client.delete_user(dn)
 
-        Args:
-            dn: User Distinguished Name.
+    # =============================================================================
+    # VALIDATION METHODS - Delegate to validations
+    # =============================================================================
 
-        Returns:
-            FlextResult indicating deletion success or error.
-
-        """
-        delete_result = await self._client.delete_user(dn)
-        if delete_result.is_failure:
-            return FlextResult[bool].fail(delete_result.error or "Delete failed")
+    def validate_configuration_consistency(self) -> FlextResult[bool]:
+        """Validate configuration consistency."""
+        config = self.config
+        if config.ldap_bind_dn and not config.ldap_bind_password:
+            return FlextResult[bool].fail(
+                "Bind password required when bind DN is provided"
+            )
         return FlextResult[bool].ok(True)
 
-    async def delete_group(self, dn: str) -> FlextResult[bool]:
-        """Delete group from LDAP directory.
+    def validate_dn(self, dn: str) -> FlextResult[str]:
+        """Validate DN format."""
+        return self.validations.validate_dn(dn)
 
-        Args:
-            dn: Group Distinguished Name.
+    def validate_filter(self, filter_str: str) -> FlextResult[str]:
+        """Validate LDAP filter format."""
+        return self.validations.validate_filter(filter_str)
 
-        Returns:
-            FlextResult indicating deletion success or error.
+    # =============================================================================
+    # LEGACY METHODS - For backward compatibility
+    # =============================================================================
 
-        """
-        delete_result = await self._client.delete_group(dn)
-        if delete_result.is_failure:
-            return FlextResult[bool].fail(delete_result.error or "Delete failed")
-        return FlextResult[bool].ok(True)
+    def get_client(self) -> FlextLdapClient:
+        """Get the LDAP client instance (legacy method)."""
+        return self.client
 
-    # =========================================================================
-    # UTILITY METHODS
-    # =========================================================================
+    def get_repositories(self) -> FlextLdapRepositories:
+        """Get the LDAP repositories instance (legacy method)."""
+        return self.users
 
-    async def test_connection(self) -> FlextResult[bool]:
-        """Test LDAP connection.
-
-        Returns:
-            FlextResult indicating connection test success or error.
-
-        """
-        test_result = self._client.test_connection()
-        if test_result.is_failure:
-            return FlextResult[bool].fail(test_result.error or "Connection test failed")
-        return FlextResult[bool].ok(True)
-
-    # =========================================================================
-    # ACL MANAGEMENT METHODS
-    # =========================================================================
-
-    def parse_acl(
-        self, acl_string: str, format_type: str
-    ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
-        """Parse ACL from specific format to unified representation.
-
-        Args:
-            acl_string: ACL string to parse.
-            format_type: ACL format type (openldap, oracle, aci).
-
-        Returns:
-            FlextResult containing unified ACL or error.
-
-        """
-        return self._acl_manager.parse_acl(acl_string, format_type)
-
-    def convert_acl(
-        self, acl_string: str, source_format: str, target_format: str
-    ) -> FlextResult[FlextLdapModels.ConversionResult]:
-        """Convert ACL from source format to target format.
-
-        Args:
-            acl_string: ACL string to convert.
-            source_format: Source ACL format.
-            target_format: Target ACL format.
-
-        Returns:
-            FlextResult containing conversion result or error.
-
-        """
-        return self._acl_manager.convert_acl(acl_string, source_format, target_format)
-
-    def batch_convert_acls(
-        self, acl_list: list[str], source_format: str, target_format: str
-    ) -> FlextResult[list[FlextLdapModels.ConversionResult]]:
-        """Convert multiple ACLs from source to target format.
-
-        Args:
-            acl_list: List of ACL strings to convert.
-            source_format: Source ACL format.
-            target_format: Target ACL format.
-
-        Returns:
-            FlextResult containing list of conversion results or error.
-
-        """
-        return self._acl_manager.batch_convert(acl_list, source_format, target_format)
-
-    def validate_acl_syntax(
-        self, acl_string: str, format_type: str
-    ) -> FlextResult[bool]:
-        """Validate ACL syntax for specific format.
-
-        Args:
-            acl_string: ACL string to validate.
-            format_type: ACL format type.
-
-        Returns:
-            FlextResult indicating validation success or error.
-
-        """
-        return self._acl_manager.validate_acl_syntax(acl_string, format_type)
+    def get_acl_manager(self) -> FlextLdapAclManager:
+        """Get the ACL manager instance (legacy method)."""
+        if self._acl_manager is None:
+            self._acl_manager = FlextLdapAclManager()
+        return self._acl_manager
 
 
 __all__ = [

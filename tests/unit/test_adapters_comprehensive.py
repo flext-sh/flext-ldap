@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import is_dataclass
+
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap import FlextLdapClient, FlextLdapModels, FlextLdapTypes
 
 
 @pytest.fixture
@@ -240,7 +242,9 @@ class TestFlextLdapClient:
         client_methods = [
             method
             for method in dir(client)
-            if not method.startswith("_") and callable(getattr(client, method))
+            if not method.startswith("_")
+            and not method.startswith("model_")
+            and callable(getattr(client, method, None))
         ]
         assert len(client_methods) >= 0  # Should have some public methods
 
@@ -290,20 +294,16 @@ class TestFlextResultIntegration:
             dn="cn=test,dc=example,dc=com",
             attributes={},
             created_timestamp=None,
-            modified_timestamp=None,
         )
         # Entry inherits from BaseModel (Pydantic)
-        from pydantic import BaseModel
 
         assert isinstance(entry, BaseModel)
 
         config = FlextLdapModels.ConnectionConfig(
             server="ldap://test.com:389",
             bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="test",
         )
         # ConnectionConfig is a dataclass
-        from dataclasses import is_dataclass
 
         assert is_dataclass(config)
 

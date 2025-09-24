@@ -89,9 +89,7 @@ async def demonstrate_oracle_oud_opends_support() -> None:
             logger.info("Disconnected from LDAP server")
 
 
-def demonstrate_oracle_detection(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate Oracle OUD/OpenDS server detection."""
     logger.info("\n=== Oracle OUD/OpenDS Detection ===")
 
@@ -120,7 +118,7 @@ def demonstrate_oracle_detection(
         }:
             logger.info("  ✅ Oracle OUD/OpenDS detected!")
         else:
-            logger.info("  ℹ️  Other server type detected: %s", server_type.value)  # noqa: RUF001
+            logger.info("  i  Other server type detected: %s", server_type.value)
 
     if capabilities["server_quirks"]:
         quirks = capabilities["server_quirks"]
@@ -262,9 +260,7 @@ async def demonstrate_oracle_schema(
         logger.info("Schema not yet discovered")
 
 
-def demonstrate_oracle_quirks(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_oracle_quirks(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate Oracle-specific quirks handling."""
     logger.info("\n=== Oracle-Specific Quirks Handling ===")
 

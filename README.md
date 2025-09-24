@@ -46,12 +46,12 @@ FLEXT-LDAP now provides **universal compatibility** with any LDAP server impleme
 
 ### **FLEXT-Core Integration Status**
 
-| Pattern             | Status  | Description                           |
-| ------------------- | ------- | ------------------------------------- |
-| **FlextResult&lt;T&gt;**  | 🟢 100% | All operations return FlextResult     |
-| **FlextService**    | 🟡 75%  | Domain services implemented           |
-| **FlextContainer**  | 🟡 60%  | Dependency injection in progress      |
-| **Domain Patterns** | 🟢 85%  | Entities, value objects, repositories |
+| Pattern                  | Status  | Description                           |
+| ------------------------ | ------- | ------------------------------------- |
+| **FlextResult&lt;T&gt;** | 🟢 100% | All operations return FlextResult     |
+| **FlextService**         | 🟡 75%  | Domain services implemented           |
+| **FlextContainer**       | 🟡 60%  | Dependency injection in progress      |
+| **Domain Patterns**      | 🟢 85%  | Entities, value objects, repositories |
 
 > **Status**: 🔴 Critical · 1.0.0 Release Preparation | 🟡 Partial | 🟢 Complete
 
@@ -91,7 +91,7 @@ client = GenericLdapClient()
 # Connect with automatic schema discovery
 await client.connect_with_discovery(
     server_uri="ldap://your-server:389",
-    bind_dn="cn=admin,dc=example,dc=com", 
+    bind_dn="cn=admin,dc=example,dc=com",
     password="password"
 )
 
@@ -109,7 +109,7 @@ results = await client.search_generic(
 # Universal CRUD operations
 await client.add_entry_generic("cn=user,dc=example,dc=com", {
     "cn": "user",
-    "sn": "User", 
+    "sn": "User",
     "objectClass": ["person"]
 })
 ```
@@ -118,13 +118,13 @@ await client.add_entry_generic("cn=user,dc=example,dc=com", {
 
 The client automatically detects and adapts to:
 
-| Server Type | Detection | Adaptations |
-|-------------|-----------|-------------|
-| **OpenLDAP** | Vendor name patterns | Case-sensitive, VLV support |
-| **Active Directory** | Microsoft patterns | Case-insensitive, attribute mappings |
-| **Oracle Directory** | Oracle patterns | Full feature support |
-| **Apache DS** | Apache patterns | Standard LDAP operations |
-| **Generic** | Fallback | Conservative defaults |
+| Server Type          | Detection            | Adaptations                          |
+| -------------------- | -------------------- | ------------------------------------ |
+| **OpenLDAP**         | Vendor name patterns | Case-sensitive, VLV support          |
+| **Active Directory** | Microsoft patterns   | Case-insensitive, attribute mappings |
+| **Oracle Directory** | Oracle patterns      | Full feature support                 |
+| **Apache DS**        | Apache patterns      | Standard LDAP operations             |
+| **Generic**          | Fallback             | Conservative defaults                |
 
 ### **Server Quirks Handling**
 

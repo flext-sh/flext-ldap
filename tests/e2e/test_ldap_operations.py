@@ -13,8 +13,7 @@ import os
 
 import pytest
 
-from flext_ldap.clients import FlextLdapClient
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapClient, FlextLdapModels
 
 
 @pytest.mark.e2e

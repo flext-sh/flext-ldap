@@ -6,279 +6,256 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
-from flext_ldap.acl.constants import FlextLdapAclConstants
+from flext_core import FlextHandlers, FlextResult
 from flext_ldap.models import FlextLdapModels
 
 
-class FlextLdapAclConverters:
+class FlextLdapAclConverters(FlextHandlers[object, FlextResult[object]]):
     """ACL converters for bidirectional format conversion."""
 
-    class OpenLdapConverter:
+    class OpenLdapConverter(FlextHandlers[object, FlextResult[object]]):
         """Convert unified ACL to OpenLDAP format."""
 
         @classmethod
         def from_unified(
-            cls, unified_acl: FlextLdapModels.UnifiedAcl
+            cls, _unified_acl: FlextLdapModels.UnifiedAcl
         ) -> FlextResult[str]:
-            """Convert unified ACL to OpenLDAP access line."""
-            if not unified_acl:
-                return FlextResult[str].fail("Unified ACL cannot be None")
+            """Convert unified ACL to OpenLDAP ACL format.
 
-            target_spec = cls._build_target(unified_acl.target)
-            by_clause = cls._build_by_clause(
-                unified_acl.subject, unified_acl.permissions
-            )
+            Args:
+                _unified_acl: Unified ACL to convert.
 
-            access_line = f"access to {target_spec} {by_clause}"
+            Returns:
+                FlextResult containing OpenLDAP ACL string or error.
 
-            return FlextResult[str].ok(access_line)
+            """
+            try:
+                # Build OpenLDAP ACL: access to <target> by <subject> <permissions>
+                acl_parts = ["access to"]
 
-        @classmethod
-        def _build_target(cls, target: FlextLdapModels.AclTarget) -> str:
-            """Build OpenLDAP target specification."""
-            parts = []
+                # Add target
+                if _unified_acl.target.target_type == "attributes":
+                    attrs = ",".join(_unified_acl.target.attributes)
+                    acl_parts.append(f"attrs={attrs}")
+                elif (
+                    _unified_acl.target.dn_pattern
+                    and _unified_acl.target.dn_pattern != "*"
+                ):
+                    acl_parts.append(f'dn.exact="{_unified_acl.target.dn_pattern}"')
+                else:
+                    acl_parts.append("*")
 
-            if target.attributes:
-                attrs = ",".join(target.attributes)
-                parts.append(f"attrs={attrs}")
+                # Add by keyword
+                acl_parts.append("by")
 
-            if target.dn_pattern and target.dn_pattern != "*":
-                parts.append(f'dn.exact="{target.dn_pattern}"')
+                # Add subject
+                if _unified_acl.subject.subject_type == "self":
+                    acl_parts.append("self")
+                elif _unified_acl.subject.subject_type == "group":
+                    acl_parts.append(f"group={_unified_acl.subject.identifier}")
+                elif _unified_acl.subject.subject_type == "authenticated":
+                    acl_parts.append("users")
+                elif _unified_acl.subject.subject_type == "anyone":
+                    acl_parts.append("*")
+                else:
+                    acl_parts.append(f"dn={_unified_acl.subject.identifier}")
 
-            if target.filter_expression:
-                parts.append(f"filter={target.filter_expression}")
+                # Add permissions
+                if _unified_acl.permissions.permissions:
+                    perms = ",".join(_unified_acl.permissions.permissions)
+                    acl_parts.append(perms)
 
-            return " ".join(parts) if parts else "*"
+                openldap_acl = " ".join(acl_parts)
+                return FlextResult[str].ok(openldap_acl)
 
-        @classmethod
-        def _build_by_clause(
-            cls,
-            subject: FlextLdapModels.AclSubject,
-            permissions: FlextLdapModels.AclPermissions,
-        ) -> str:
-            """Build OpenLDAP by clause."""
-            subject_spec = cls._map_subject(subject)
+            except Exception as e:
+                return FlextResult[str].fail(f"OpenLDAP ACL conversion failed: {e}")
 
-            perm_spec = cls._map_permissions(permissions)
-
-            return f"by {subject_spec} {perm_spec}"
-
-        @classmethod
-        def _map_subject(cls, subject: FlextLdapModels.AclSubject) -> str:
-            """Map subject to OpenLDAP format."""
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.SELF:
-                return "self"
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.ANONYMOUS:
-                return "anonymous"
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.AUTHENTICATED:
-                return "users"
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.GROUP:
-                return f"group={subject.identifier}"
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.DN:
-                return f"dn={subject.identifier}"
-
-            return "*"
-
-        @classmethod
-        def _map_permissions(
-            cls, permissions: FlextLdapModels.AclPermissions
-        ) -> str:
-            """Map permissions to OpenLDAP format."""
-            if permissions.permissions:
-                return permissions.permissions[0].lower()
-
-            return "none"
-
-    class OracleConverter:
+    class OracleConverter(FlextHandlers[object, FlextResult[object]]):
         """Convert unified ACL to Oracle Directory format."""
 
         @classmethod
         def from_unified(
-            cls, unified_acl: FlextLdapModels.UnifiedAcl
+            cls, _unified_acl: FlextLdapModels.UnifiedAcl
         ) -> FlextResult[str]:
-            """Convert unified ACL to Oracle orclaci format."""
-            if not unified_acl:
-                return FlextResult[str].fail("Unified ACL cannot be None")
+            """Convert unified ACL to Oracle ACL format.
 
-            target_spec = cls._build_target(unified_acl.target)
-            subject_spec = cls._build_subject(unified_acl.subject)
-            perms_spec = cls._build_permissions(unified_acl.permissions)
+            Args:
+                _unified_acl: Unified ACL to convert.
 
-            orclaci = f"access to {target_spec} by {subject_spec} ({perms_spec})"
+            Returns:
+                FlextResult containing Oracle ACL string or error.
 
-            return FlextResult[str].ok(orclaci)
+            """
+            try:
+                # Build Oracle ACL: access to <target> by <subject> (<permissions>)
+                acl_parts = ["access to"]
 
-        @classmethod
-        def _build_target(cls, target: FlextLdapModels.AclTarget) -> str:
-            """Build Oracle target specification."""
-            if target.attributes:
-                attrs = ", ".join(target.attributes)
-                return f"attr=({attrs})"
+                # Add target
+                if _unified_acl.target.target_type == "attributes":
+                    attrs = ", ".join(_unified_acl.target.attributes)
+                    acl_parts.append(f"attr=({attrs})")
+                elif _unified_acl.target.target_type == "entry":
+                    acl_parts.append("entry")
+                else:
+                    acl_parts.append("*")
 
-            if target.target_type == FlextLdapAclConstants.TargetType.ENTRY:
-                return "entry"
+                # Add by keyword
+                acl_parts.append("by")
 
-            return "attr=(*)"
+                # Add subject
+                if _unified_acl.subject.subject_type == "self":
+                    acl_parts.append("self")
+                elif _unified_acl.subject.subject_type == "group":
+                    acl_parts.append(f'group="{_unified_acl.subject.identifier}"')
+                elif _unified_acl.subject.subject_type == "user":
+                    acl_parts.append(f'user="{_unified_acl.subject.identifier}"')
+                elif _unified_acl.subject.subject_type == "anonymous":
+                    acl_parts.append("anonymous")
+                else:
+                    acl_parts.append(f'user="{_unified_acl.subject.identifier}"')
 
-        @classmethod
-        def _build_subject(cls, subject: FlextLdapModels.AclSubject) -> str:
-            """Build Oracle subject specification."""
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.GROUP:
-                return f'group="{subject.identifier}"'
+                # Add permissions (Oracle format with parentheses)
+                if _unified_acl.permissions.permissions:
+                    perms = ", ".join(_unified_acl.permissions.permissions)
+                    acl_parts.append(f"({perms})")
 
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.USER:
-                return f'user="{subject.identifier}"'
+                oracle_acl = " ".join(acl_parts)
+                return FlextResult[str].ok(oracle_acl)
 
-            return 'group="*"'
+            except Exception as e:
+                return FlextResult[str].fail(f"Oracle ACL conversion failed: {e}")
 
-        @classmethod
-        def _build_permissions(
-            cls, permissions: FlextLdapModels.AclPermissions
-        ) -> str:
-            """Build Oracle permissions specification."""
-            if permissions.permissions:
-                return ", ".join(permissions.permissions)
-
-            return "none"
-
-    class AciConverter:
+    class AciConverter(FlextHandlers[object, FlextResult[object]]):
         """Convert unified ACL to 389 DS/Apache DS ACI format."""
 
-        @classmethod
-        def from_unified(
-            cls, unified_acl: FlextLdapModels.UnifiedAcl
-        ) -> FlextResult[str]:
+        @staticmethod
+        def from_unified(_unified_acl: FlextLdapModels.UnifiedAcl) -> FlextResult[str]:
             """Convert unified ACL to ACI format."""
-            if not unified_acl:
-                return FlextResult[str].fail("Unified ACL cannot be None")
+            try:
+                # Basic ACI conversion - in a real implementation, this would be more robust
+                target_str = FlextLdapAclConverters.AciConverter.format_target(
+                    _unified_acl.target
+                )
+                subject_str = FlextLdapAclConverters.AciConverter.format_subject(
+                    _unified_acl.subject
+                )
+                permissions_str = (
+                    FlextLdapAclConverters.AciConverter.format_permissions(
+                        _unified_acl.permissions
+                    )
+                )
 
-            target = unified_acl.target.dn_pattern or "*"
-            name = unified_acl.name or "Converted ACL"
-            grant_type = unified_acl.permissions.grant_type
-            perms = cls._build_permissions(unified_acl.permissions)
-            bind_rules = cls._build_bind_rules(unified_acl.subject)
+                aci = f'(target="{target_str}")(version 3.0;acl "{_unified_acl.name}";allow ({permissions_str}) {subject_str};)'
 
-            aci = (
-                f'(target="{target}")'
-                f'(version 3.0; acl "{name}"; {grant_type} ({perms}) {bind_rules};)'
-            )
+                return FlextResult[str].ok(aci)
+            except Exception as e:
+                return FlextResult[str].fail(f"Failed to convert to ACI: {e}")
 
-            return FlextResult[str].ok(aci)
+        @staticmethod
+        def format_target(target: FlextLdapModels.AclTarget) -> str:
+            """Format ACL target for ACI."""
+            if target.target_type == "entry":
+                return target.dn_pattern
+            if target.target_type == "attributes":
+                return f"attr={','.join(target.attributes)}"
+            return target.dn_pattern
 
-        @classmethod
-        def _build_permissions(
-            cls, permissions: FlextLdapModels.AclPermissions
-        ) -> str:
-            """Build ACI permissions."""
-            perm_list = (
-                permissions.permissions
-                if permissions.grant_type == "allow"
-                else permissions.denied_permissions
-            )
-
-            return ", ".join(perm_list) if perm_list else "read"
-
-        @classmethod
-        def _build_bind_rules(cls, subject: FlextLdapModels.AclSubject) -> str:
-            """Build ACI bind rules."""
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.DN:
+        @staticmethod
+        def format_subject(subject: FlextLdapModels.AclSubject) -> str:
+            """Format ACL subject for ACI."""
+            if subject.subject_type == "user":
                 return f'userdn="{subject.identifier}"'
-
-            if subject.subject_type == FlextLdapAclConstants.SubjectType.GROUP:
+            if subject.subject_type == "group":
                 return f'groupdn="{subject.identifier}"'
+            if subject.subject_type == "self":
+                return 'userdn="ldap:///self"'
+            return f'userdn="{subject.identifier}"'
 
-            return 'userdn="ldap:///anyone"'
+        @staticmethod
+        def format_permissions(permissions: FlextLdapModels.AclPermissions) -> str:
+            """Format ACL permissions for ACI."""
+            return ",".join(permissions.permissions)
 
-    class UniversalConverter:
-        """Universal converter for any format conversion."""
+    class UniversalConverter(FlextHandlers[object, FlextResult[object]]):
+        """Universal converter that can handle any ACL format."""
 
-        @classmethod
+        @staticmethod
         def convert(
-            cls, acl_string: str, source_format: str, target_format: str
-        ) -> FlextResult[FlextLdapModels.ConversionResult]:
+            acl_content: str,
+            source_format: str,
+            target_format: str,
+        ) -> FlextResult[object]:
             """Convert ACL from source format to target format."""
-            if not acl_string or not acl_string.strip():
-                return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    "ACL string cannot be empty"
-                )
+            if not acl_content or not acl_content.strip():
+                return FlextResult[object].fail("ACL content cannot be empty")
 
-            if source_format not in {
-                FlextLdapAclConstants.AclFormat.OPENLDAP,
-                FlextLdapAclConstants.AclFormat.ORACLE,
-                FlextLdapAclConstants.AclFormat.ACI,
-            }:
-                return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    f"Unsupported source format: {source_format}"
-                )
-
-            if target_format not in {
-                FlextLdapAclConstants.AclFormat.OPENLDAP,
-                FlextLdapAclConstants.AclFormat.ORACLE,
-                FlextLdapAclConstants.AclFormat.ACI,
-            }:
-                return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    f"Unsupported target format: {target_format}"
-                )
-
-            unified_result = cls._parse_to_unified(acl_string, source_format)
-            if unified_result.is_failure:
-                return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    f"Parse failed: {unified_result.error}"
-                )
-
-            converted_result = cls._convert_from_unified(
-                unified_result.unwrap(), target_format
-            )
-            if converted_result.is_failure:
-                return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    f"Conversion failed: {converted_result.error}"
-                )
-
-            return FlextLdapModels.ConversionResult.create(
-                converted_acl=converted_result.unwrap(),
-                source_format=source_format,
-                target_format=target_format,
-                warnings=[],
+            # Import parsers and converters at runtime to avoid circular imports
+            from flext_ldap import (  # noqa: PLC0415
+                FlextLdapAclConstants,
+                FlextLdapAclParsers,
             )
 
-        @classmethod
-        def _parse_to_unified(
-            cls, acl_string: str, format_type: str
-        ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
-            """Parse ACL string to unified format based on source format."""
-            from flext_ldap.acl.parsers import FlextLdapAclParsers
+            try:
+                # Step 1: Parse source ACL to unified format
+                if source_format == FlextLdapAclConstants.AclFormat.OPENLDAP:
+                    parse_result = FlextLdapAclParsers.OpenLdapAclParser.parse(
+                        acl_content
+                    )
+                elif source_format == FlextLdapAclConstants.AclFormat.ORACLE:
+                    parse_result = FlextLdapAclParsers.OracleAclParser.parse(
+                        acl_content
+                    )
+                elif source_format == FlextLdapAclConstants.AclFormat.ACI:
+                    parse_result = FlextLdapAclParsers.AciParser.parse(acl_content)
+                else:
+                    return FlextResult[object].fail(
+                        f"Unsupported source format: {source_format}"
+                    )
 
-            if format_type == FlextLdapAclConstants.AclFormat.OPENLDAP:
-                return FlextLdapAclParsers.OpenLdapAclParser.parse(acl_string)
+                if parse_result.is_failure:
+                    return FlextResult[object].fail(
+                        f"Parsing failed: {parse_result.error}"
+                    )
 
-            if format_type == FlextLdapAclConstants.AclFormat.ORACLE:
-                return FlextLdapAclParsers.OracleAclParser.parse(acl_string)
+                unified_acl = parse_result.unwrap()
 
-            if format_type == FlextLdapAclConstants.AclFormat.ACI:
-                return FlextLdapAclParsers.AciParser.parse(acl_string)
+                # Step 2: Convert unified format to target format
+                if target_format == FlextLdapAclConstants.AclFormat.OPENLDAP:
+                    convert_result = (
+                        FlextLdapAclConverters.OpenLdapConverter.from_unified(
+                            unified_acl
+                        )
+                    )
+                elif target_format == FlextLdapAclConstants.AclFormat.ORACLE:
+                    convert_result = (
+                        FlextLdapAclConverters.OracleConverter.from_unified(unified_acl)
+                    )
+                elif target_format == FlextLdapAclConstants.AclFormat.ACI:
+                    convert_result = FlextLdapAclConverters.AciConverter.from_unified(
+                        unified_acl
+                    )
+                else:
+                    return FlextResult[object].fail(
+                        f"Unsupported target format: {target_format}"
+                    )
 
-            return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"Unknown format: {format_type}"
-            )
+                if convert_result.is_failure:
+                    return FlextResult[object].fail(
+                        f"Conversion failed: {convert_result.error}"
+                    )
 
-        @classmethod
-        def _convert_from_unified(
-            cls, unified_acl: FlextLdapModels.UnifiedAcl, target_format: str
-        ) -> FlextResult[str]:
-            """Convert unified ACL to target format."""
-            if target_format == FlextLdapAclConstants.AclFormat.OPENLDAP:
-                return FlextLdapAclConverters.OpenLdapConverter.from_unified(
-                    unified_acl
+                # Step 3: Create conversion result
+                conversion_result = FlextLdapModels.ConversionResult(
+                    source_format=source_format,
+                    target_format=target_format,
+                    converted_acl=convert_result.unwrap(),
                 )
 
-            if target_format == FlextLdapAclConstants.AclFormat.ORACLE:
-                return FlextLdapAclConverters.OracleConverter.from_unified(unified_acl)
+                return FlextResult[object].ok(conversion_result)
 
-            if target_format == FlextLdapAclConstants.AclFormat.ACI:
-                return FlextLdapAclConverters.AciConverter.from_unified(unified_acl)
-
-            return FlextResult[str].fail(f"Unknown target format: {target_format}")
+            except Exception as e:
+                return FlextResult[object].fail(f"Conversion failed: {e}")
 
 
 __all__ = ["FlextLdapAclConverters"]

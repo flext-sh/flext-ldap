@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapModels
 
 
 class TestFlextLdapModelsFunctional:

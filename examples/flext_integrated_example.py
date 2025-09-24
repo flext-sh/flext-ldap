@@ -163,8 +163,11 @@ async def demonstrate_universal_operations(
 
 
 def demonstrate_flext_models(
-    client: FlextLdapClient, logger: FlextLogger  # noqa: ARG001
+    client: FlextLdapClient,
+    logger: FlextLogger,
 ) -> None:
+    """Demonstrate FLEXT models functionality."""
+    _ = client  # Acknowledge parameter usage
     """Demonstrate FLEXT model usage."""
     logger.info("\n=== FLEXT Model Usage ===")
 

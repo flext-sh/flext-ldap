@@ -19,8 +19,7 @@ import docker.errors
 import docker.models.containers
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldap import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap import FlextLdapModels, FlextLdapTypes
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
@@ -266,7 +265,7 @@ async def wait_for_ldap_server(
                         auto_bind=True,
                         authentication=FlextLdapTypes.SIMPLE,
                     )
-                    conn = conn_raw  # type: ignore[assignment]
+                    conn = conn_raw
 
                     conn.search(
                         search_base="dc=flext,dc=local",

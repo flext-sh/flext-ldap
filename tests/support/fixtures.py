@@ -5,28 +5,23 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
-import sys
 from collections.abc import AsyncGenerator, Generator
-from pathlib import Path
-from typing import Any
 
 import pytest
 
 from flext_core import FlextLogger, FlextTypes
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.api import FlextLdapAPI
-from flext_ldap.config import FlextLdapConfigs
-from flext_ldap.validations import FlextLdapValidations
+from flext_ldap import (
+    FlextLdapAPI,
+    FlextLdapClient,
+    FlextLdapConfigs,
+    FlextLdapModels,
+    FlextLdapValidations,
+)
 
-# Add docker directory to path to import shared fixtures
-docker_dir = Path(__file__).parent.parent.parent.parent / "docker"
-if str(docker_dir) not in sys.path:
-    sys.path.insert(0, str(docker_dir))
-
-
-from .helpers import cleanup_test_entries, search_entries  # noqa: E402
-from .ldap_server import LdapTestServer, get_test_ldap_config  # noqa: E402
-from .test_data import (  # noqa: E402
+# Import shared LDAP fixtures from docker directory
+from .helpers import cleanup_test_entries, search_entries
+from .ldap_server import LdapTestServer, get_test_ldap_config
+from .test_data import (
     SAMPLE_GROUP_ENTRY,
     SAMPLE_USER_ENTRY,
     TEST_GROUPS,
@@ -54,11 +49,11 @@ async def real_ldap_server(
         container_name="flext-shared-ldap-server",  # Use shared container name
         port=3390,  # Use shared port
     )
-    
+
     # The shared container is already running, so we just need to configure the server
     # to use it instead of starting a new one
     server._container = shared_ldap_container
-    
+
     # Setup test data on the shared container
     setup_result = await server.setup_test_data()
     if not setup_result.is_success:
@@ -242,28 +237,31 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 # SHARED LDAP FIXTURES - Integration with docker/shared_ldap_fixtures.py
 # =========================================================================
 
+
 @pytest.fixture
-async def shared_ldap_client(shared_ldap_config: Any) -> AsyncGenerator[FlextLdapClient]:  # noqa: ANN401
+async def shared_ldap_client(
+    shared_ldap_config: object,
+) -> AsyncGenerator[FlextLdapClient]:
     """Get FlextLdapClient connected to shared LDAP container.
-    
+
     This fixture provides a client connected to the shared LDAP container
     managed by the docker/shared_ldap_fixtures.py system.
     """
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
-    
+
     client = FlextLdapClient()
-    
+
     # Connect to shared LDAP server
     result = await client.connect(
         server_uri=str(shared_ldap_config["server_url"]),
         bind_dn=str(shared_ldap_config["bind_dn"]),
         password=str(shared_ldap_config["password"]),
     )
-    
+
     if not result.is_success:
         pytest.skip(f"Shared LDAP server not available: {result.error}")
-    
+
     try:
         yield client
     finally:
@@ -271,16 +269,17 @@ async def shared_ldap_client(shared_ldap_config: Any) -> AsyncGenerator[FlextLda
 
 
 @pytest.fixture
-def shared_ldap_connection_config(shared_ldap_config: Any) -> FlextLdapModels.ConnectionConfig:  # noqa: ANN401
+def shared_ldap_connection_config(
+    shared_ldap_config: object,
+) -> FlextLdapModels.ConnectionConfig:
     """Get FlextLdapModels.ConnectionConfig for shared LDAP container."""
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
-    
+
     return FlextLdapModels.ConnectionConfig(
         server=str(shared_ldap_config["server_url"]),
         bind_dn=str(shared_ldap_config["bind_dn"]),
         bind_password=str(shared_ldap_config["password"]),
-        base_dn=str(shared_ldap_config["base_dn"]),
         use_ssl=False,
         timeout=30,
     )

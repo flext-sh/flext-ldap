@@ -12,7 +12,7 @@ from flext_core import FlextConstants
 
 
 @final
-class FlextLdapConstants:
+class FlextLdapConstants(FlextConstants):
     """LDAP domain-specific constants - essential constants only."""
 
     # Import universal constants from flext-core (single source of truth)

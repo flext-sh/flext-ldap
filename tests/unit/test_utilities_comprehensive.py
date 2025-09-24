@@ -13,7 +13,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap import FlextLdapUtilities
 
 
 class TestTypeGuardsEnsureStringList:

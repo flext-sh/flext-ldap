@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextHandlers, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
 
 
-class FlextLdapValidations:
+class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
     """Centralized validation - SOURCE OF TRUTH for all LDAP validations."""
 
     @staticmethod
@@ -43,6 +43,12 @@ class FlextLdapValidations:
         if not re.match(r"^[\(\)=&!|a-zA-Z0-9\s\-\.\*]+$", filter_str.strip()):
             return FlextResult[None].fail("Filter contains invalid characters")
 
+        # Require parentheses like Filter class
+        if not (
+            filter_str.strip().startswith("(") and filter_str.strip().endswith(")")
+        ):
+            return FlextResult[None].fail("LDAP filter must be enclosed in parentheses")
+
         return FlextResult[None].ok(None)
 
     @staticmethod
@@ -52,7 +58,9 @@ class FlextLdapValidations:
             return FlextResult[None].ok(None)
 
         # Use FlextModels.create_validated_email for validation
-        email_result = FlextModels.create_validated_email(email)
+        email_result: FlextResult[FlextModels.EmailAddress] = (
+            FlextModels.create_validated_email(email)
+        )
         if email_result.is_failure:
             return FlextResult[None].fail(
                 f"Email validation failed: {email_result.error or 'invalid format'}",

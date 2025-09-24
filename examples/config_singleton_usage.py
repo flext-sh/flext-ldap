@@ -16,8 +16,7 @@ import traceback
 
 from pydantic import SecretStr
 
-from flext_ldap import FlextLdapModels
-from flext_ldap.config import FlextLdapConfigs
+from flext_ldap import FlextLdapConfigs, FlextLdapModels
 
 
 def demonstrate_singleton_pattern() -> None:

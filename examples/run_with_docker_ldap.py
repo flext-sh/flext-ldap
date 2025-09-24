@@ -14,7 +14,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.util
-import logging
 import os
 import sys
 import types
@@ -22,13 +21,16 @@ from pathlib import Path
 
 import docker
 
+from flext_core import FlextLogger
+
 # Add docker directory to path to import shared fixtures
 docker_dir = Path(__file__).parent.parent.parent / "docker"
 sys.path.insert(0, str(docker_dir))
 
+# Import after modifying sys.path
 from shared_ldap_fixtures import FlextSharedLDAPContainerManager  # noqa: E402
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 def _load_module_spec(module_name: str, file_path: Path) -> types.ModuleType:

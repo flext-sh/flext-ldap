@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 import pytest
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
+from tests.support.shared_ldap_fixtures import check_docker_available, skip_if_no_docker
 
 
 class TestSharedLDAPIntegration:
@@ -25,14 +26,14 @@ class TestSharedLDAPIntegration:
         """Test connecting to shared LDAP container."""
         # The client should already be connected via the fixture
         assert shared_ldap_client is not None
-        
+
         # Test basic search to verify connection
         search_result = await shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
             search_filter="(objectClass=*)",
-            scope="base"
+            scope="base",
         )
-        
+
         assert search_result.is_success, f"Search failed: {search_result.error}"
         assert search_result.value is not None
 
@@ -44,10 +45,12 @@ class TestSharedLDAPIntegration:
         """Test schema discovery with shared LDAP container."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        
-        assert schema_result.is_success, f"Schema discovery failed: {schema_result.error}"
+
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
         assert schema_result.value is not None
-        
+
         # Verify we got some schema information
         schema_data = schema_result.value
         assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
@@ -56,21 +59,23 @@ class TestSharedLDAPIntegration:
     @pytest.mark.asyncio
     async def test_shared_ldap_container_manager(
         self,
-        shared_ldap_container_manager,
-        shared_ldap_container,
+        shared_ldap_container_manager: object,
+        shared_ldap_container: object,
     ) -> None:
         """Test shared container manager functionality."""
+        # Suppress unused parameter warning - fixture is used for side effects
+        _ = shared_ldap_container
         # Verify container manager is available
         assert shared_ldap_container_manager is not None
-        
+
         # Verify container is running
         assert shared_ldap_container_manager.is_container_running()
-        
+
         # Test LDIF export
         ldif_data = shared_ldap_container_manager.get_ldif_export()
         assert ldif_data is not None
         assert len(ldif_data) > 0
-        
+
         # Verify LDIF contains expected base structure
         assert "dc=flext,dc=local" in ldif_data
         assert "objectClass: dcObject" in ldif_data
@@ -85,12 +90,14 @@ class TestSharedLDAPIntegration:
         required_keys = ["server_url", "bind_dn", "password", "base_dn"]
         for key in required_keys:
             assert key in shared_ldap_config, f"Missing config key: {key}"
-        
+
         # Verify values are not empty
         for key, value in shared_ldap_config.items():
             if key != "container":  # container can be None
-                assert value is not None and str(value).strip() != "", f"Empty value for {key}: {value}"
-        
+                assert value is not None and str(value).strip(), (
+                    f"Empty value for {key}: {value}"
+                )
+
         # Verify specific values match shared constants
         assert shared_ldap_config["server_url"] == "ldap://localhost:3390"
         assert shared_ldap_config["bind_dn"] == "cn=admin,dc=flext,dc=local"
@@ -105,12 +112,12 @@ class TestSharedLDAPIntegration:
         """Test shared LDIF data fixture."""
         assert shared_ldif_data is not None
         assert len(shared_ldif_data) > 0
-        
+
         # Verify LDIF contains expected structure
         assert "dc=flext,dc=local" in shared_ldif_data
         assert "objectClass: dcObject" in shared_ldif_data
         assert "objectClass: organization" in shared_ldif_data
-        
+
         # Verify test data is included
         assert "ou=people," in shared_ldif_data
         assert "uid=john.doe," in shared_ldif_data
@@ -122,7 +129,7 @@ class TestSharedLDAPIntegration:
     ) -> None:
         """Test shared LDAP connection config fixture."""
         assert shared_ldap_connection_config is not None
-        
+
         # Verify config values
         assert shared_ldap_connection_config.server == "ldap://localhost:3390"
         assert shared_ldap_connection_config.bind_dn == "cn=admin,dc=flext,dc=local"
@@ -139,7 +146,7 @@ class TestSharedLDAPIntegration:
     ) -> None:
         """Test CRUD operations with shared LDAP container."""
         base_dn = shared_ldap_config["base_dn"]
-        
+
         # Test creating an organizational unit using universal add
         ou_dn = f"ou=test,{base_dn}"
         create_result = await shared_ldap_client.add_entry_universal(
@@ -147,33 +154,35 @@ class TestSharedLDAPIntegration:
             attributes={
                 "objectClass": ["organizationalUnit", "top"],
                 "ou": "test",
-                "description": "Test OU for shared LDAP integration"
-            }
+                "description": "Test OU for shared LDAP integration",
+            },
         )
-        
+
         # Note: Creation might fail if entry already exists, which is OK for shared container
         if not create_result.is_success:
             # If creation failed, try to search for existing entry
             search_result = await shared_ldap_client.search_universal(
-                base_dn=ou_dn,
-                search_filter="(objectClass=*)",
-                scope="base"
+                base_dn=ou_dn, search_filter="(objectClass=*)", scope="base"
             )
-            assert search_result.is_success, f"Entry should exist or be creatable: {create_result.error}"
+            assert search_result.is_success, (
+                f"Entry should exist or be creatable: {create_result.error}"
+            )
         else:
-            assert create_result.is_success, f"Failed to create test OU: {create_result.error}"
-        
+            assert create_result.is_success, (
+                f"Failed to create test OU: {create_result.error}"
+            )
+
         # Test searching for the entry
         search_result = await shared_ldap_client.search_universal(
-            base_dn=ou_dn,
-            search_filter="(objectClass=*)",
-            scope="base"
+            base_dn=ou_dn, search_filter="(objectClass=*)", scope="base"
         )
-        
-        assert search_result.is_success, f"Failed to search test OU: {search_result.error}"
+
+        assert search_result.is_success, (
+            f"Failed to search test OU: {search_result.error}"
+        )
         assert search_result.value is not None
         assert len(search_result.value) > 0
-        
+
         # Clean up - delete the test entry
         delete_result = await shared_ldap_client.delete_entry_universal(ou_dn)
         # Note: Deletion might fail if entry doesn't exist or we don't have permissions
@@ -188,16 +197,12 @@ class TestSharedLDAPSkipConditions:
 
     def test_skip_if_no_docker_decorator(self) -> None:
         """Test that skip_if_no_docker decorator works."""
-        from shared_ldap_fixtures import skip_if_no_docker
-        
         # This should not raise an exception
         decorator = skip_if_no_docker()
         assert decorator is not None
 
     def test_docker_availability_check(self) -> None:
         """Test Docker availability check."""
-        from shared_ldap_fixtures import check_docker_available
-        
         # This should return a boolean
         is_available = check_docker_available()
         assert isinstance(is_available, bool)

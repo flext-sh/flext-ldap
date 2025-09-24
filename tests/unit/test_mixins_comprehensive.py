@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from flext_core import FlextResult
-from flext_ldap.mixins import FlextLdapMixins
+from flext_ldap import FlextLdapMixins
 
 
 class TestValidationMixin:
@@ -174,7 +172,7 @@ class TestFactoryMixin:
         ]
 
         for value in test_values:
-            result: FlextResult[Any] = (
+            result: FlextResult[object] = (
                 FlextLdapMixins.FactoryMixin.create_flext_result_ok(value)
             )
             assert result.is_success
@@ -183,7 +181,7 @@ class TestFactoryMixin:
     def test_create_flext_result_fail(self) -> None:
         """Test create_flext_result_fail creates failed result."""
         error_message: str = "Operation failed"
-        result: Any = FlextLdapMixins.FactoryMixin.create_flext_result_fail(
+        result: object = FlextLdapMixins.FactoryMixin.create_flext_result_fail(
             error_message
         )
 
@@ -194,7 +192,7 @@ class TestFactoryMixin:
     def test_create_flext_result_fail_with_detailed_error(self) -> None:
         """Test create_flext_result_fail with detailed error message."""
         error_message: str = "Validation failed: email format invalid"
-        result: Any = FlextLdapMixins.FactoryMixin.create_flext_result_fail(
+        result: object = FlextLdapMixins.FactoryMixin.create_flext_result_fail(
             error_message
         )
 
@@ -310,7 +308,7 @@ class TestMixinsIntegration:
     def test_factory_and_validation_integration(self) -> None:
         """Test integration of factory and validation mixins."""
         # Create successful result
-        success_result: Any = FlextLdapMixins.FactoryMixin.create_flext_result_ok(
+        success_result: object = FlextLdapMixins.FactoryMixin.create_flext_result_ok(
             "data"
         )
         assert success_result.is_success
