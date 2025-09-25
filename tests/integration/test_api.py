@@ -76,7 +76,7 @@ class TestLdapClientRealOperations:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=[],  # Get all attributes
             size_limit=10,
             time_limit=30,  # 30 seconds timeout
@@ -84,9 +84,9 @@ class TestLdapClientRealOperations:
             paged_cookie=None,
         )
 
-        result: FlextResult[FlextLdapModels.SearchResponse] = (
-            client.search_with_request(search_request)
-        )
+        result: FlextResult[
+            FlextLdapModels.SearchResponse
+        ] = await client.search_with_request(search_request)
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"

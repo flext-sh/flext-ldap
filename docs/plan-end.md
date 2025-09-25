@@ -76,7 +76,7 @@ This document consolidates all analysis findings and provides a unified implemen
 
 - [ ] Remove all validation methods from `FlextLdapClient`
 - [ ] Move validation logic to `FlextLdapValidations` (centralized)
-- [ ] Update `FlextLdapConfigs` to use centralized validation
+- [ ] Update `FlextLdapConfig` to use centralized validation
 - [ ] Update `FlextLdapModels` to use centralized validation
 - [ ] Ensure NO inline validation in any code
 
@@ -185,7 +185,7 @@ FLEXT Validation Pattern - ONLY in config and models
    - Reusable across config and models
    - Consistent error handling
 
-2. Config Validation (FlextLdapConfigs):
+2. Config Validation (FlextLdapConfig):
    - Use centralized validation methods
    - No inline validation logic
    - Proper error reporting

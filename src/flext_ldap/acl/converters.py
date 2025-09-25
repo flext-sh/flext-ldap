@@ -198,6 +198,7 @@ class FlextLdapAclConverters(FlextHandlers[object, FlextResult[object]]):
 
             try:
                 # Step 1: Parse source ACL to unified format
+                parse_result: FlextResult[FlextLdapModels.UnifiedAcl]
                 if source_format == FlextLdapAclConstants.AclFormat.OPENLDAP:
                     parse_result = FlextLdapAclParsers.OpenLdapAclParser.parse(
                         acl_content
@@ -256,6 +257,41 @@ class FlextLdapAclConverters(FlextHandlers[object, FlextResult[object]]):
 
             except Exception as e:
                 return FlextResult[object].fail(f"Conversion failed: {e}")
+
+    def handle(self, message: object) -> FlextResult[FlextResult[object]]:
+        """Handle ACL conversion operations with proper type safety."""
+        try:
+            # Type-safe message handling
+            if not isinstance(message, dict):
+                return FlextResult[FlextResult[object]].fail(
+                    "Message must be a dictionary"
+                )
+
+            acl_data = message.get("acl_data")
+            if not isinstance(acl_data, str):
+                return FlextResult[FlextResult[object]].fail(
+                    "ACL data must be a string"
+                )
+
+            target_format = message.get("target_format")
+            if not isinstance(target_format, str):
+                return FlextResult[FlextResult[object]].fail(
+                    "Target format must be specified"
+                )
+
+            source_format = message.get("source_format", "auto")
+            if not isinstance(source_format, str):
+                source_format = "auto"
+
+            # Use universal converter to handle the conversion
+            result = self.UniversalConverter.convert(
+                acl_data, source_format, target_format
+            )
+            wrapped_result = FlextResult[object].ok(result)
+            return FlextResult[FlextResult[object]].ok(wrapped_result)
+
+        except Exception as e:
+            return FlextResult[FlextResult[object]].fail(f"ACL conversion failed: {e}")
 
 
 __all__ = ["FlextLdapAclConverters"]

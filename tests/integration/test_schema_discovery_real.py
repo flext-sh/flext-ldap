@@ -76,7 +76,7 @@ class TestRealSchemaDiscovery:
         assert capabilities.get("server_info") is not None
         assert capabilities.get("server_type") is not None
 
-    async def test_get_server_quirks(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test getting server-specific quirks."""
         client = shared_ldap_client
 
@@ -165,7 +165,7 @@ class TestRealSchemaNormalization:
         assert normalized_cn is not None
         assert normalized_mail is not None
 
-    async def test_normalize_dns(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test normalizing DNs with real schema."""
         client = shared_ldap_client
 

@@ -39,11 +39,17 @@ from flext_ldap.api import FlextLdapAPI
 
 # Core domain components
 from flext_ldap.clients import FlextLdapClient
-from flext_ldap.config import FlextLdapConfigs
+from flext_ldap.config import FlextLdapConfig
 
 # Constants and models
 from flext_ldap.constants import FlextLdapConstants
+
+# Advanced service components
+from flext_ldap.domain_services import (
+    FlextLdapDomainServices,
+)
 from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap.factory import FlextLdapFactory
 from flext_ldap.mixins import FlextLdapMixins
 from flext_ldap.models import FlextLdapModels
 
@@ -55,9 +61,15 @@ from flext_ldap.repositories import FlextLdapRepositories
 
 # Generic universal compatibility components
 from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.services import FlextLdapAdvancedService
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
+from flext_ldap.workflows import (
+    FlextLdapWorkflowOrchestrator,
+)
+
+# Advanced domain services
 
 # Main domain exports following FLEXT standards
 __all__ = [
@@ -67,10 +79,13 @@ __all__ = [
     "FlextLdapAclManager",
     "FlextLdapAclModels",
     "FlextLdapAclParsers",
+    "FlextLdapAdvancedService",
     "FlextLdapClient",
-    "FlextLdapConfigs",
+    "FlextLdapConfig",
     "FlextLdapConstants",
+    "FlextLdapDomainServices",
     "FlextLdapExceptions",
+    "FlextLdapFactory",
     "FlextLdapMixins",
     "FlextLdapModels",
     "FlextLdapProtocols",
@@ -79,6 +94,7 @@ __all__ = [
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
+    "FlextLdapWorkflowOrchestrator",
     "__author__",
     "__author_email__",
     "__branch__",

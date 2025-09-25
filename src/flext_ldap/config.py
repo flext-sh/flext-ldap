@@ -14,6 +14,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+import os
 from typing import ClassVar
 
 from pydantic import Field, SecretStr, field_validator
@@ -25,7 +26,7 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapConfigs(FlextConfig):
+class FlextLdapConfig(FlextConfig):
     """FLEXT-LDAP Configuration singleton extending FlextConfig with LDAP-specific fields.
 
     This class provides a singleton configuration instance for LDAP operations,
@@ -54,7 +55,7 @@ class FlextLdapConfigs(FlextConfig):
     )
 
     # SINGLETON pattern inherited from FlextConfig with proper typing
-    _global_instance: ClassVar[FlextLdapConfigs | None] = None
+    _global_instance: ClassVar[FlextLdapConfig | None] = None
 
     # === CONSTANTS ===
     MAX_CACHE_TTL_SECONDS: ClassVar[int] = 3600  # 1 hour
@@ -233,6 +234,607 @@ class FlextLdapConfigs(FlextConfig):
         except Exception as e:
             return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for LDAP configuration.
+
+        This method provides the standard validate_business_rules interface
+        expected by examples and other code using FlextLdapConfig.
+
+        Returns:
+            FlextResult indicating success or failure with detailed error messages.
+
+        """
+        return self.validate_business_rules_base()
+
+    def validate_filter_format(self, filter_str: str) -> FlextResult[bool]:
+        """Validate LDAP filter format.
+
+        Args:
+            filter_str: LDAP filter string to validate
+
+        Returns:
+            FlextResult with True if valid, False if invalid
+
+        """
+        try:
+            if not filter_str or not filter_str.strip():
+                return FlextResult[bool].fail("Invalid filter format: empty filter")
+
+            # Basic LDAP filter validation
+            # Check for balanced parentheses
+            if filter_str.count("(") != filter_str.count(")"):
+                return FlextResult[bool].fail(
+                    "Invalid filter format: unbalanced parentheses"
+                )
+
+            # Check for basic filter structure
+            if not filter_str.startswith("(") or not filter_str.endswith(")"):
+                return FlextResult[bool].fail(
+                    "Invalid filter format: must start and end with parentheses"
+                )
+
+            # Check for basic attribute=value pattern
+            inner_filter = filter_str[1:-1]  # Remove outer parentheses
+            if "=" not in inner_filter:
+                return FlextResult[bool].fail(
+                    "Invalid filter format: missing attribute=value pattern"
+                )
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Invalid filter format: {e}")
+
+    def validate_dn_format(self, dn: str) -> FlextResult[bool]:
+        """Validate LDAP Distinguished Name format.
+
+        Args:
+            dn: Distinguished Name string to validate
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not dn:
+                return FlextResult[bool].fail("DN cannot be empty")
+
+            # Use FlextLdapValidations to validate the DN
+            validation_result = FlextLdapValidations.validate_dn(dn)
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(
+                    f"Invalid DN format: {validation_result.error}"
+                )
+
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Failed to validate DN format: {e}")
+
+    def get_default_connection_config(
+        self,
+    ) -> FlextResult[FlextLdapModels.ConnectionConfig]:
+        """Get default connection configuration.
+
+        Returns:
+            FlextResult with default connection configuration
+
+        """
+        return self._create_connection_config()
+
+    def _create_connection_config(
+        self,
+    ) -> FlextResult[FlextLdapModels.ConnectionConfig]:
+        """Create connection configuration from current settings.
+
+        Returns:
+            FlextResult with connection configuration
+
+        """
+        try:
+            server_uri = self.get_effective_server_uri()
+            # Parse server URI to extract server and port
+            if "://" in server_uri:
+                protocol, host_port = server_uri.split("://", 1)
+                if ":" in host_port:
+                    server, port_str = host_port.split(":", 1)
+                    port = int(port_str)
+                else:
+                    server = host_port
+                    port = 389 if protocol == "ldap" else 636
+                use_ssl = protocol == "ldaps"
+            else:
+                server = server_uri
+                port = 389
+                use_ssl = False
+
+            config = FlextLdapModels.ConnectionConfig(
+                server=server,
+                port=port,
+                use_ssl=use_ssl,
+                bind_dn=self.get_effective_bind_dn(),
+                bind_password=self.get_effective_bind_password(),
+                timeout=self.ldap_connection_timeout,
+            )
+            return FlextResult[FlextLdapModels.ConnectionConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                f"Failed to create connection config: {e}"
+            )
+
+    def merge_configs(
+        self, base_config: dict[str, object], override_config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Merge configuration dictionaries.
+
+        Args:
+            base_config: Base configuration dictionary
+            override_config: Override configuration dictionary
+
+        Returns:
+            FlextResult with merged configuration
+
+        """
+        try:
+            merged = base_config.copy()
+            merged.update(override_config)
+            return FlextResult[dict[str, object]].ok(merged)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Failed to merge Config: {e}")
+
+    def create_modify_config(
+        self, modify_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.ModifyConfig]:
+        """Create modify configuration from data.
+
+        Args:
+            modify_data: Modify operation data
+
+        Returns:
+            FlextResult with modify configuration
+
+        """
+        try:
+            validation_result = self._validate_modify_data(modify_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.ModifyConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            config = FlextLdapModels.ModifyConfig(
+                dn=str(modify_data.get("dn", "")),
+                changes=modify_data.get("changes", {}),  # type: ignore[arg-type]
+            )
+            return FlextResult[FlextLdapModels.ModifyConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.ModifyConfig].fail(
+                f"Failed to create modify config: {e}"
+            )
+
+    def _validate_modify_data(
+        self, modify_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate modify data.
+
+        Args:
+            modify_data: Modify operation data
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not modify_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Modify data cannot be empty"
+                )
+
+            if "dn" not in modify_data:
+                return FlextResult[dict[str, object]].fail(
+                    "DN is required for modify operations"
+                )
+
+            if "changes" not in modify_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Changes are required for modify operations"
+                )
+
+            return FlextResult[dict[str, object]].ok({"valid": True})
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to validate modify data: {e}"
+            )
+
+    def _validate_connection_data(
+        self, connection_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate connection data.
+
+        Args:
+            connection_data: Connection operation data
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not connection_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Connection data cannot be empty"
+                )
+
+            if "server_uri" not in connection_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Server URI is required for connection operations"
+                )
+
+            # Check for other required fields
+            missing_fields = []
+            if "bind_dn" not in connection_data:
+                missing_fields.append("bind_dn")
+            if "bind_password" not in connection_data:
+                missing_fields.append("bind_password")
+            if "base_dn" not in connection_data:
+                missing_fields.append("base_dn")
+
+            if missing_fields:
+                return FlextResult[dict[str, object]].fail(
+                    f"Missing required fields: {', '.join(missing_fields)}"
+                )
+
+            return FlextResult[dict[str, object]].ok({"valid": True})
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to validate connection data: {e}"
+            )
+
+    def _validate_search_data(
+        self, search_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate search data.
+
+        Args:
+            search_data: Search operation data
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not search_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Search data cannot be empty"
+                )
+
+            if "base_dn" not in search_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Base DN is required for search operations"
+                )
+
+            if "filter_str" not in search_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Filter string is required for search operations"
+                )
+
+            return FlextResult[dict[str, object]].ok({"valid": True})
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to validate search data: {e}"
+            )
+
+    def _validate_add_data(
+        self, add_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate add data.
+
+        Args:
+            add_data: Add operation data
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not add_data:
+                return FlextResult[dict[str, object]].fail("Add data cannot be empty")
+
+            if "dn" not in add_data:
+                return FlextResult[dict[str, object]].fail(
+                    "DN is required for add operations"
+                )
+
+            if "attributes" not in add_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Attributes are required for add operations"
+                )
+
+            return FlextResult[dict[str, object]].ok({"valid": True})
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to validate add data: {e}"
+            )
+
+    def _validate_delete_data(
+        self, delete_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate delete data.
+
+        Args:
+            delete_data: Delete operation data
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            if not delete_data:
+                return FlextResult[dict[str, object]].fail(
+                    "Delete data cannot be empty"
+                )
+
+            if "dn" not in delete_data:
+                return FlextResult[dict[str, object]].fail(
+                    "DN is required for delete operations"
+                )
+
+            return FlextResult[dict[str, object]].ok({"valid": True})
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to validate delete data: {e}"
+            )
+
+    def create_connection_config(
+        self, connection_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.ConnectionConfig]:
+        """Create connection configuration from data.
+
+        Args:
+            connection_data: Connection operation data
+
+        Returns:
+            FlextResult with connection configuration
+
+        """
+        try:
+            validation_result = self._validate_connection_data(connection_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            server_uri = str(connection_data.get("server_uri", "ldap://localhost:389"))
+            # Parse server URI to extract server and port
+            if "://" in server_uri:
+                protocol, host_port = server_uri.split("://", 1)
+                if ":" in host_port:
+                    server, port_str = host_port.split(":", 1)
+                    port = int(port_str)
+                else:
+                    server = host_port
+                    port = 389 if protocol == "ldap" else 636
+                use_ssl = protocol == "ldaps"
+            else:
+                server = server_uri
+                port = 389
+                use_ssl = False
+
+            config = FlextLdapModels.ConnectionConfig(
+                server=server,
+                port=port,
+                use_ssl=use_ssl,
+                bind_dn=str(connection_data.get("bind_dn"))
+                if connection_data.get("bind_dn") is not None
+                else None,
+                bind_password=str(connection_data.get("password"))
+                if connection_data.get("password") is not None
+                else None,
+                timeout=self.ldap_connection_timeout,
+            )
+            return FlextResult[FlextLdapModels.ConnectionConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                f"Failed to create connection config: {e}"
+            )
+
+    def create_connection_config_from_env(
+        self,
+    ) -> FlextResult[FlextLdapModels.ConnectionConfig]:
+        """Create connection configuration from environment variables.
+
+        Returns:
+            FlextResult with connection configuration
+
+        """
+        try:
+            # Get environment variables
+            server_uri = os.getenv("LDAP_SERVER_URI")
+            bind_dn = os.getenv("LDAP_BIND_DN")
+            bind_password = os.getenv("LDAP_BIND_PASSWORD")
+            base_dn = os.getenv("LDAP_BASE_DN")
+
+            # Check for missing required environment variables
+            missing_vars = []
+            if not server_uri:
+                missing_vars.append("LDAP_SERVER_URI")
+            if not bind_dn:
+                missing_vars.append("LDAP_BIND_DN")
+            if not bind_password:
+                missing_vars.append("LDAP_BIND_PASSWORD")
+            if not base_dn:
+                missing_vars.append("LDAP_BASE_DN")
+
+            if missing_vars:
+                return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                    f"Missing required environment variables: {', '.join(missing_vars)}"
+                )
+
+            # Create connection data
+            connection_data = {
+                "server_uri": server_uri,
+                "bind_dn": bind_dn,
+                "bind_password": bind_password,
+                "base_dn": base_dn,
+            }
+
+            # Validate the data
+            validation_result = self._validate_connection_data(dict(connection_data))
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            # Create the config
+            config = FlextLdapModels.ConnectionConfig(
+                server=str(server_uri),
+                port=389,
+                use_ssl=False,
+                bind_dn=bind_dn,
+                bind_password=bind_password,
+                timeout=30,
+            )
+            return FlextResult[FlextLdapModels.ConnectionConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.ConnectionConfig].fail(
+                f"Failed to create connection config from env: {e}"
+            )
+
+    def create_search_config(
+        self, search_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.SearchConfig]:
+        """Create search configuration from data.
+
+        Args:
+            search_data: Search operation data
+
+        Returns:
+            FlextResult with search configuration
+
+        """
+        try:
+            validation_result = self._validate_search_data(search_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.SearchConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            config = FlextLdapModels.SearchConfig(
+                base_dn=str(search_data.get("base_dn", "")),
+                search_filter=str(search_data.get("search_filter", "")),
+                attributes=search_data.get("attributes", []),  # type: ignore[arg-type]
+            )
+            return FlextResult[FlextLdapModels.SearchConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.SearchConfig].fail(
+                f"Failed to create search config: {e}"
+            )
+
+    def create_add_config(
+        self, add_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.AddConfig]:
+        """Create add configuration from data.
+
+        Args:
+            add_data: Add operation data
+
+        Returns:
+            FlextResult with add configuration
+
+        """
+        try:
+            validation_result = self._validate_add_data(add_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.AddConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            config = FlextLdapModels.AddConfig(
+                dn=str(add_data.get("dn", "")),
+                attributes=add_data.get("attributes", {}),  # type: ignore[arg-type]
+            )
+            return FlextResult[FlextLdapModels.AddConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.AddConfig].fail(
+                f"Failed to create add config: {e}"
+            )
+
+    def create_delete_config(
+        self, delete_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.DeleteConfig]:
+        """Create delete configuration from data.
+
+        Args:
+            delete_data: Delete operation data
+
+        Returns:
+            FlextResult with delete configuration
+
+        """
+        try:
+            validation_result = self._validate_delete_data(delete_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.DeleteConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            config = FlextLdapModels.DeleteConfig(
+                dn=str(delete_data.get("dn", "")),
+            )
+            return FlextResult[FlextLdapModels.DeleteConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.DeleteConfig].fail(
+                f"Failed to create delete config: {e}"
+            )
+
+    def _create_search_config(
+        self, search_data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.SearchConfig]:
+        """Create search configuration from data.
+
+        Args:
+            search_data: Search operation data
+
+        Returns:
+            FlextResult with search configuration
+
+        """
+        try:
+            validation_result = self._validate_search_data(search_data)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapModels.SearchConfig].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            config = FlextLdapModels.SearchConfig(
+                base_dn=str(search_data.get("base_dn", "")),
+                search_filter=str(search_data.get("search_filter", "")),
+                attributes=search_data.get("attributes", []),  # type: ignore[arg-type]
+            )
+            return FlextResult[FlextLdapModels.SearchConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextLdapModels.SearchConfig].fail(
+                f"Failed to create search config: {e}"
+            )
+
+    def get_default_search_config(
+        self,
+    ) -> FlextResult[FlextLdapModels.SearchConfig]:
+        """Get default search configuration.
+
+        Returns:
+            FlextResult with default search configuration
+
+        """
+        try:
+            default_data = {
+                "base_dn": "dc=example,dc=com",
+                "search_filter": "(objectClass=*)",
+                "attributes": ["*"],
+            }
+            return self._create_search_config(dict(default_data))
+        except Exception as e:
+            return FlextResult[FlextLdapModels.SearchConfig].fail(
+                f"Failed to get default search config: {e}"
+            )
+
     # =========================================================================
     # CREATION METHODS - Integrated from FlextLdapConfigCreationMixin
     # =========================================================================
@@ -243,7 +845,7 @@ class FlextLdapConfigs(FlextConfig):
         environment: str,
         config_data: dict[str, object],
         **overrides: object,
-    ) -> FlextResult[FlextLdapConfigs]:
+    ) -> FlextResult[FlextLdapConfig]:
         """Create configuration with environment-specific defaults."""
         try:
             # Apply overrides if any
@@ -251,19 +853,19 @@ class FlextLdapConfigs(FlextConfig):
                 config_data.update(overrides)
 
             # Use model_validate for proper type handling
-            config: FlextLdapConfigs = cls.model_validate(config_data)
-            return FlextResult[FlextLdapConfigs].ok(config)
+            config: FlextLdapConfig = cls.model_validate(config_data)
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
-            return FlextResult[FlextLdapConfigs].fail(
+            return FlextResult[FlextLdapConfig].fail(
                 f"Failed to create {environment} config: {e}"
             )
 
     @classmethod
     def create_from_connection_config_data(
         cls,
-        connection_data: FlextLdapTypes.ConnectionConfigData,
-    ) -> FlextResult[FlextLdapConfigs]:
-        """Create configuration from ConnectionConfigData structure.
+        connection_data: FlextLdapTypes.LdapConfig.ConnectionConfigData,
+    ) -> FlextResult[FlextLdapConfig]:
+        """Create configuration from FlextLdapTypes.LdapConfig.ConnectionConfigData structure.
 
         Args:
             connection_data: Connection configuration data using DataStructures types
@@ -274,7 +876,9 @@ class FlextLdapConfigs(FlextConfig):
         """
         try:
             # Convert DataStructures format to config format with proper type handling
-            server_val = connection_data.get("server", "")
+            server_val = connection_data.get(
+                "server_uri", connection_data.get("server", "")
+            )
             port_val = connection_data.get("port", 389)
             use_ssl_val = connection_data.get("use_ssl", True)
             bind_dn_val = connection_data.get("bind_dn")
@@ -299,10 +903,10 @@ class FlextLdapConfigs(FlextConfig):
                 "ldap_bind_password": connection_data.get("bind_password"),
             }
 
-            config: FlextLdapConfigs = cls.model_validate(config_data)
-            return FlextResult[FlextLdapConfigs].ok(config)
+            config: FlextLdapConfig = cls.model_validate(config_data)
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
-            return FlextResult[FlextLdapConfigs].fail(
+            return FlextResult[FlextLdapConfig].fail(
                 f"Failed to create config from connection data: {e}"
             )
 
@@ -311,15 +915,15 @@ class FlextLdapConfigs(FlextConfig):
     # =========================================================================
 
     @classmethod
-    def get_global_instance(cls) -> FlextLdapConfigs:
-        """Get the global singleton instance of FlextLdapConfigs."""
+    def get_global_instance(cls) -> FlextLdapConfig:
+        """Get the global singleton instance of FlextLdapConfig."""
         if cls._global_instance is None:
             cls._global_instance = cls()
         return cls._global_instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
-        """Reset the global FlextLdapConfigs instance (mainly for testing)."""
+        """Reset the global FlextLdapConfig instance (mainly for testing)."""
         cls._global_instance = None
 
     # =========================================================================
@@ -437,10 +1041,10 @@ class FlextLdapConfigs(FlextConfig):
     # =========================================================================
 
     @classmethod
-    def create_development_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
+    def create_development_ldap_config(cls) -> FlextResult[FlextLdapConfig]:
         """Create a development LDAP configuration."""
         try:
-            config: FlextLdapConfigs = cls.model_validate({
+            config: FlextLdapConfig = cls.model_validate({
                 "ldap_use_ssl": False,
                 "ldap_enable_debug": True,
                 "ldap_log_queries": True,
@@ -449,17 +1053,17 @@ class FlextLdapConfigs(FlextConfig):
                 "ldap_pool_size": 5,
                 "ldap_retry_attempts": 1,
             })
-            return FlextResult[FlextLdapConfigs].ok(config)
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
-            return FlextResult[FlextLdapConfigs].fail(
+            return FlextResult[FlextLdapConfig].fail(
                 f"Failed to create development config: {e}"
             )
 
     @classmethod
-    def create_test_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
+    def create_test_ldap_config(cls) -> FlextResult[FlextLdapConfig]:
         """Create a test LDAP configuration."""
         try:
-            config: FlextLdapConfigs = cls.model_validate({
+            config: FlextLdapConfig = cls.model_validate({
                 "ldap_use_ssl": False,
                 "ldap_enable_debug": False,
                 "ldap_log_queries": False,
@@ -468,17 +1072,17 @@ class FlextLdapConfigs(FlextConfig):
                 "ldap_pool_size": 2,
                 "ldap_retry_attempts": 1,
             })
-            return FlextResult[FlextLdapConfigs].ok(config)
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
-            return FlextResult[FlextLdapConfigs].fail(
+            return FlextResult[FlextLdapConfig].fail(
                 f"Failed to create test config: {e}"
             )
 
     @classmethod
-    def create_production_ldap_config(cls) -> FlextResult[FlextLdapConfigs]:
+    def create_production_ldap_config(cls) -> FlextResult[FlextLdapConfig]:
         """Create a production LDAP configuration."""
         try:
-            config: FlextLdapConfigs = cls.model_validate({
+            config: FlextLdapConfig = cls.model_validate({
                 "ldap_use_ssl": True,
                 "ldap_enable_debug": False,
                 "ldap_log_queries": False,
@@ -487,14 +1091,14 @@ class FlextLdapConfigs(FlextConfig):
                 "ldap_pool_size": 20,
                 "ldap_retry_attempts": 3,
             })
-            return FlextResult[FlextLdapConfigs].ok(config)
+            return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
-            return FlextResult[FlextLdapConfigs].fail(
+            return FlextResult[FlextLdapConfig].fail(
                 f"Failed to create production config: {e}"
             )
 
 
-# Removed backward compatibility alias - use FlextLdapConfigs directly
+# Removed backward compatibility alias - use FlextLdapConfig directly
 __all__ = [
-    "FlextLdapConfigs",
+    "FlextLdapConfig",
 ]

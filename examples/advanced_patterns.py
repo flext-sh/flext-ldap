@@ -26,7 +26,7 @@ from contextlib import asynccontextmanager
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
     FlextLdapClient,
-    FlextLdapConfigs,
+    FlextLdapConfig,
     FlextLdapModels,
 )
 
@@ -122,7 +122,7 @@ def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLdapConfigs()
+        _settings = FlextLdapConfig()
 
         # 2. Create search request using FlextLdapSearchRequest
         search_request = FlextLdapModels.SearchRequest(
@@ -196,7 +196,7 @@ async def demonstrate_error_recovery() -> None:
         """Retry pattern for LDAP operations.
 
         Returns:
-            str | None: Success message or None if all retries failed.
+            Union[str, None]: Success message or None if all retries failed.
 
         """
 

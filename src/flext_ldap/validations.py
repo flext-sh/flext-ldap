@@ -18,6 +18,10 @@ from flext_ldap.constants import FlextLdapConstants
 class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
     """Centralized validation - SOURCE OF TRUTH for all LDAP validations."""
 
+    def handle(self, message: object) -> FlextResult[FlextResult[object]]:
+        """Handle validation request."""
+        return FlextResult[FlextResult[object]].ok(FlextResult[object].ok(message))
+
     @staticmethod
     def validate_dn(dn: str, context: str = "DN") -> FlextResult[None]:
         """Centralized DN validation - ELIMINATE ALL DUPLICATION."""
@@ -43,12 +47,8 @@ class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
         if not re.match(r"^[\(\)=&!|a-zA-Z0-9\s\-\.\*]+$", filter_str.strip()):
             return FlextResult[None].fail("Filter contains invalid characters")
 
-        # Require parentheses like Filter class
-        if not (
-            filter_str.strip().startswith("(") and filter_str.strip().endswith(")")
-        ):
-            return FlextResult[None].fail("LDAP filter must be enclosed in parentheses")
-
+        # Allow both simple filters (objectClass=person) and complex filters ((objectClass=person))
+        # Simple filters are valid LDAP filters
         return FlextResult[None].ok(None)
 
     @staticmethod
@@ -74,14 +74,14 @@ class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
         if password is None:
             return FlextResult[None].ok(None)
 
-        if len(password) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
+        if len(password) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters",
+                f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
             )
 
-        if len(password) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
+        if len(password) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
             return FlextResult[None].fail(
-                f"Password must be no more than {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters",
+                f"Password must be no more than {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters",
             )
 
         return FlextResult[None].ok(None)
@@ -128,6 +128,77 @@ class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
                 return FlextResult[None].fail(f"Invalid object class name: {oc}")
 
         return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_server_uri(server_uri: str) -> FlextResult[None]:
+        """Validate LDAP server URI."""
+        return FlextLdapValidations.validate_uri(server_uri)
+
+    @staticmethod
+    def validate_port(port: int) -> FlextResult[None]:
+        """Validate LDAP port number."""
+        max_port = 65535
+        if port <= 0 or port > max_port:
+            return FlextResult[None].fail(f"Port must be between 1 and {max_port}")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_timeout(timeout: int) -> FlextResult[None]:
+        """Validate LDAP timeout."""
+        if timeout < 0:
+            return FlextResult[None].fail("Timeout must be non-negative")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_size_limit(size_limit: int) -> FlextResult[None]:
+        """Validate LDAP size limit."""
+        if size_limit < 0:
+            return FlextResult[None].fail("Size limit must be non-negative")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_scope(scope: str) -> FlextResult[None]:
+        """Validate LDAP search scope."""
+        valid_scopes = {"base", "onelevel", "subtree"}
+        if scope.lower() not in valid_scopes:
+            return FlextResult[None].fail(f"Invalid scope: {scope}. Must be one of {valid_scopes}")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_modify_operation(operation: str) -> FlextResult[None]:
+        """Validate LDAP modify operation."""
+        valid_operations = {"MODIFY_REPLACE", "MODIFY_ADD", "MODIFY_DELETE"}
+        if operation not in valid_operations:
+            return FlextResult[None].fail(f"Invalid modify operation: {operation}. Must be one of {valid_operations}")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_object_class(object_class: str) -> FlextResult[None]:
+        """Validate LDAP object class."""
+        valid_classes = {"inetOrgPerson", "organizationalPerson", "groupOfNames", "person", "top"}
+        if object_class not in valid_classes:
+            return FlextResult[None].fail(f"Invalid object class: {object_class}")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def validate_connection_config(config: dict[str, object]) -> FlextResult[None]:
+        """Validate LDAP connection configuration."""
+        try:
+            # Check required fields
+            required_fields = ["server_uri", "bind_dn", "bind_password"]
+            for field in required_fields:
+                if field not in config:
+                    return FlextResult[None].fail(f"Missing required field: {field}")
+
+            # Validate server URI
+            server_uri = str(config["server_uri"])
+            uri_result = FlextLdapValidations.validate_server_uri(server_uri)
+            if uri_result.is_failure:
+                return uri_result
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Connection config validation failed: {e}")
 
 
 __all__ = ["FlextLdapValidations"]

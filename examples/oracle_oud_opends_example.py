@@ -101,16 +101,23 @@ def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -
     logger.info("  Schema Discovered: %s", capabilities["schema_discovered"])
 
     if capabilities["server_info"]:
-        server_info = capabilities["server_info"]
-        logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
-        logger.info("  Description: %s", server_info.get("description", "Unknown"))
-        logger.info(
-            "  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown")
-        )
+        server_info_raw = capabilities["server_info"]
+        if isinstance(server_info_raw, dict):
+            server_info = server_info_raw
+            logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
+            logger.info("  Description: %s", server_info.get("description", "Unknown"))
+            logger.info("  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown"))
+        else:
+            logger.info("  Server info not available")
 
     if capabilities["server_type"]:
         server_type = capabilities["server_type"]
-        logger.info("  Detected Server Type: %s", server_type.value)
+        if hasattr(server_type, 'value'):
+            logger.info("  Detected Server Type: %s", server_type.value)
+            server_type_value = server_type.value
+        else:
+            logger.info("  Detected Server Type: %s", server_type)
+            server_type_value = server_type
 
         if server_type in {
             FlextLdapModels.LdapServerType.ORACLE_OUD,
@@ -118,30 +125,33 @@ def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -
         }:
             logger.info("  ✅ Oracle OUD/OpenDS detected!")
         else:
-            logger.info("  i  Other server type detected: %s", server_type.value)
+            logger.info("  i  Other server type detected: %s", server_type_value)
 
     if capabilities["server_quirks"]:
         quirks = capabilities["server_quirks"]
         logger.info("  Server Quirks:")
-        logger.info("    Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info(
-            "    Case Sensitive Attributes: %s", quirks.case_sensitive_attributes
-        )
-        logger.info("    Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("    Supports VLV: %s", quirks.supports_vlv)
-        logger.info("    Supports Sync: %s", quirks.supports_sync)
-        logger.info("    Max Page Size: %s", quirks.max_page_size)
-        logger.info("    Default Timeout: %s", quirks.default_timeout)
+        if hasattr(quirks, 'case_sensitive_dns'):
+            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
+            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
+            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+            logger.info("    Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
+        else:
+            logger.info("    Server quirks not available")
 
-        # Oracle-specific quirks
-        if "extended_matching_rules" in quirks.filter_syntax_quirks:
-            logger.info("    ✅ Supports Extended Matching Rules")
-        if "atomic_modify" in quirks.modify_operation_quirks:
-            logger.info("    ✅ Supports Atomic Modify Operations")
-        if "referential_integrity" in quirks.modify_operation_quirks:
-            logger.info("    ✅ Supports Referential Integrity")
-        if "virtual_attributes" in quirks.filter_syntax_quirks:
-            logger.info("    ✅ Supports Virtual Attributes")
+        if hasattr(quirks, 'max_page_size'):
+            logger.info("    Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
+            logger.info("    Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+
+            # Oracle-specific quirks
+            if hasattr(quirks, 'filter_syntax_quirks') and "extended_matching_rules" in quirks.filter_syntax_quirks:
+                logger.info("    ✅ Supports Extended Matching Rules")
+            if hasattr(quirks, 'modify_operation_quirks') and "atomic_modify" in quirks.modify_operation_quirks:
+                logger.info("    ✅ Supports Atomic Modify Operations")
+            if hasattr(quirks, 'modify_operation_quirks') and "referential_integrity" in quirks.modify_operation_quirks:
+                logger.info("    ✅ Supports Referential Integrity")
+            if hasattr(quirks, 'filter_syntax_quirks') and "virtual_attributes" in quirks.filter_syntax_quirks:
+                logger.info("    ✅ Supports Virtual Attributes")
 
 
 async def demonstrate_oracle_operations(
@@ -156,7 +166,12 @@ async def demonstrate_oracle_operations(
         logger.warning("No naming contexts available for operations")
         return
 
-    base_dn = server_info["naming_contexts"][0]
+    naming_contexts = server_info["naming_contexts"]
+    if isinstance(naming_contexts, list) and len(naming_contexts) > 0:
+        base_dn = naming_contexts[0]
+    else:
+        logger.warning("No naming contexts available")
+        return
     logger.info("Using search base: %s", base_dn)
 
     # Oracle OUD/OpenDS specific search with extended matching rules
@@ -347,28 +362,37 @@ def demonstrate_oracle_server_types() -> None:
         quirks = detector.get_server_quirks(server_type)
 
         logger.info("Oracle Server: %s", server_info["description"])
-        logger.info("  Detected Type: %s", server_type.value)
-        logger.info("  Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info("  Case Sensitive Attributes: %s", quirks.case_sensitive_attributes)
-        logger.info("  Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("  Supports VLV: %s", quirks.supports_vlv)
-        logger.info("  Supports Sync: %s", quirks.supports_sync)
-        logger.info("  Max Page Size: %s", quirks.max_page_size)
-        logger.info("  Default Timeout: %s", quirks.default_timeout)
+        if hasattr(server_type, 'value'):
+            logger.info("  Detected Type: %s", server_type.value)
+        else:
+            logger.info("  Detected Type: %s", server_type or "unknown")
+
+        if hasattr(quirks, 'case_sensitive_dns'):
+            logger.info("  Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
+            logger.info("  Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+            logger.info("  Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
+            logger.info("  Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+        else:
+            logger.info("  Server quirks not available")
+
+        if hasattr(quirks, 'supports_sync'):
+            logger.info("  Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
+            logger.info("  Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
+            logger.info("  Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
 
         # Show Oracle-specific quirks
-        if "extended_matching_rules" in quirks.filter_syntax_quirks:
+        if hasattr(quirks, 'filter_syntax_quirks') and "extended_matching_rules" in quirks.filter_syntax_quirks:
             logger.info("  ✅ Extended Matching Rules Support")
-        if "atomic_modify" in quirks.modify_operation_quirks:
+        if hasattr(quirks, 'modify_operation_quirks') and "atomic_modify" in quirks.modify_operation_quirks:
             logger.info("  ✅ Atomic Modify Operations")
-        if "referential_integrity" in quirks.modify_operation_quirks:
+        if hasattr(quirks, 'modify_operation_quirks') and "referential_integrity" in quirks.modify_operation_quirks:
             logger.info("  ✅ Referential Integrity")
-        if "virtual_attributes" in quirks.filter_syntax_quirks:
+        if hasattr(quirks, 'filter_syntax_quirks') and "virtual_attributes" in quirks.filter_syntax_quirks:
             logger.info("  ✅ Virtual Attributes Support")
-        if "virtual_attribute_handling" in quirks.modify_operation_quirks:
+        if hasattr(quirks, 'modify_operation_quirks') and "virtual_attribute_handling" in quirks.modify_operation_quirks:
             logger.info("  ✅ Virtual Attribute Handling")
 
-        logger.info()
+        logger.info("")
 
 
 if __name__ == "__main__":
@@ -401,7 +425,7 @@ if __name__ == "__main__":
     asyncio.run(demonstrate_oracle_oud_opends_support())
 
     # Show server type detection
-    asyncio.run(demonstrate_oracle_server_types())
+    demonstrate_oracle_server_types()
 
     print("\nOracle OUD and Sun OpenDS support demonstration completed!")
     print("The client now fully supports all Oracle directory server variants!")

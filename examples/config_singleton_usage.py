@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Example demonstrating FlextLdapConfigs singleton usage.
+"""Example demonstrating FlextLdapConfig singleton usage.
 
-This example shows how to use the FlextLdapConfigs singleton as the single
+This example shows how to use the FlextLdapConfig singleton as the single
 source of truth for LDAP configuration, with parameter overrides to change
 behavior at runtime.
 
@@ -16,7 +16,7 @@ import traceback
 
 from pydantic import SecretStr
 
-from flext_ldap import FlextLdapConfigs, FlextLdapModels
+from flext_ldap import FlextLdapConfig, FlextLdapModels
 
 
 def demonstrate_singleton_pattern() -> None:
@@ -26,17 +26,17 @@ def demonstrate_singleton_pattern() -> None:
         RuntimeError: If singleton pattern validation fails.
 
     """
-    print("FlextLdapConfigs Singleton Pattern Demo")
+    print("FlextLdapConfig Singleton Pattern Demo")
 
     # Clear any existing instance
-    FlextLdapConfigs.reset_global_instance()
+    FlextLdapConfig.reset_global_instance()
 
     # Get first instance
-    config1 = FlextLdapConfigs.get_global_instance()
+    config1 = FlextLdapConfig.get_global_instance()
     print(f"First instance ID: {id(config1)}")
 
     # Get second instance - should be the same
-    config2 = FlextLdapConfigs.get_global_instance()
+    config2 = FlextLdapConfig.get_global_instance()
     print(f"Second instance ID: {id(config2)}")
 
     # Verify they are the same instance
@@ -63,8 +63,8 @@ def demonstrate_environment_loading() -> None:
     )
 
     # Clear and reload to pick up environment variables
-    FlextLdapConfigs.reset_global_instance()
-    config = FlextLdapConfigs.get_global_instance()
+    FlextLdapConfig.reset_global_instance()
+    config = FlextLdapConfig.get_global_instance()
 
     print(f"Bind DN from environment: {config.ldap_bind_dn}")
     print(f"Use SSL from environment: {config.ldap_use_ssl}")
@@ -79,7 +79,7 @@ def demonstrate_factory_methods() -> None:
     print("=== Factory Methods Demo ===")
 
     # Development configuration
-    dev_result = FlextLdapConfigs.create_development_ldap_config()
+    dev_result = FlextLdapConfig.create_development_ldap_config()
     if dev_result.is_success:
         dev_config = dev_result.value
         print("Development Configuration:")
@@ -91,7 +91,7 @@ def demonstrate_factory_methods() -> None:
         print()
 
     # Test configuration
-    test_result = FlextLdapConfigs.create_test_ldap_config()
+    test_result = FlextLdapConfig.create_test_ldap_config()
     if test_result.is_success:
         test_config = test_result.value
         print("Test Configuration:")
@@ -102,7 +102,7 @@ def demonstrate_factory_methods() -> None:
         print()
 
     # Production configuration
-    prod_result = FlextLdapConfigs.create_production_ldap_config()
+    prod_result = FlextLdapConfig.create_production_ldap_config()
     if prod_result.is_success:
         prod_config = prod_result.value
         print("Production Configuration:")
@@ -118,12 +118,12 @@ def demonstrate_parameter_overrides() -> None:
     print("=== Parameter Override Demo ===")
 
     # Get singleton instance
-    config = FlextLdapConfigs.get_global_instance()
+    config = FlextLdapConfig.get_global_instance()
     print(f"Original bind DN: {config.ldap_bind_dn}")
     print(f"Original SSL setting: {config.ldap_use_ssl}")
 
     # Create new instance with overrides using constructor parameters
-    override_config = FlextLdapConfigs(
+    override_config = FlextLdapConfig(
         bind_dn="cn=override-user,dc=test,dc=com",
         bind_password=SecretStr("override-password"),
         use_ssl=True,
@@ -142,7 +142,7 @@ def demonstrate_validation_features() -> None:
 
     try:
         # Test validation with valid configuration
-        valid_config = FlextLdapConfigs(
+        valid_config = FlextLdapConfig(
             ldap_connection=FlextLdapModels.ConnectionConfig(
                 server="localhost",
                 port=389,
@@ -178,7 +178,7 @@ def main() -> None:
 
         print("=" * 50)
         print("✅ All demonstrations completed successfully!")
-        print("✅ FlextLdapConfigs singleton working correctly")
+        print("✅ FlextLdapConfig singleton working correctly")
         print("✅ Environment variable loading functional")
         print("✅ Factory methods providing correct configurations")
         print("✅ Parameter overrides working as expected")
@@ -203,7 +203,7 @@ def main() -> None:
             os.environ.pop(key, None)
 
         # Reset singleton for clean state
-        FlextLdapConfigs.reset_global_instance()
+        FlextLdapConfig.reset_global_instance()
 
 
 if __name__ == "__main__":

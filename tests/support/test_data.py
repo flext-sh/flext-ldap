@@ -153,3 +153,129 @@ EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.Core.StringList] = {
         "cn=users,ou=groups,dc=flext,dc=local",
     ],
 }
+
+# ACL test data
+SAMPLE_ACL_DATA: FlextTypes.Core.Dict = {
+    "unified_acl": {
+        "target": "dc=example,dc=com",
+        "permissions": [
+            {
+                "subject": "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com",
+                "subject_type": "user",
+                "permissions": ["read", "write", "delete"],
+                "scope": "subtree",
+            },
+            {
+                "subject": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
+                "subject_type": "group",
+                "permissions": ["read", "write"],
+                "scope": "subtree",
+            },
+        ],
+    },
+    "openldap_aci": 'target="ldap:///dc=example,dc=com" version 3.0; acl "REDACTED_LDAP_BIND_PASSWORD access"; allow (read,write,delete) userdn="ldap:///uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com";',
+    "oracle_aci": 'target="dc=example,dc=com" version 3.0; acl "REDACTED_LDAP_BIND_PASSWORD access"; allow (read,write,delete) userdn="uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com";',
+    "invalid_acl": "invalid acl format",
+    "empty_acl": "",
+}
+
+# ACL test cases for comprehensive testing
+ACL_TEST_CASES: list[FlextTypes.Core.Dict] = [
+    {
+        "name": "user_read_access",
+        "unified": {
+            "target": "ou=people,dc=example,dc=com",
+            "permissions": [
+                {
+                    "subject": "uid=user1,ou=people,dc=example,dc=com",
+                    "subject_type": "user",
+                    "permissions": ["read"],
+                    "scope": "subtree",
+                }
+            ],
+        },
+        "expected_openldap": 'target="ldap:///ou=people,dc=example,dc=com" version 3.0; acl "user read access"; allow (read) userdn="ldap:///uid=user1,ou=people,dc=example,dc=com";',
+        "expected_oracle": 'target="ou=people,dc=example,dc=com" version 3.0; acl "user read access"; allow (read) userdn="uid=user1,ou=people,dc=example,dc=com";',
+    },
+    {
+        "name": "group_write_access",
+        "unified": {
+            "target": "ou=groups,dc=example,dc=com",
+            "permissions": [
+                {
+                    "subject": "cn=editors,ou=groups,dc=example,dc=com",
+                    "subject_type": "group",
+                    "permissions": ["read", "write"],
+                    "scope": "subtree",
+                }
+            ],
+        },
+        "expected_openldap": 'target="ldap:///ou=groups,dc=example,dc=com" version 3.0; acl "group write access"; allow (read,write) groupdn="ldap:///cn=editors,ou=groups,dc=example,dc=com";',
+        "expected_oracle": 'target="ou=groups,dc=example,dc=com" version 3.0; acl "group write access"; allow (read,write) groupdn="cn=editors,ou=groups,dc=example,dc=com";',
+    },
+    {
+        "name": "anonymous_access",
+        "unified": {
+            "target": "dc=example,dc=com",
+            "permissions": [
+                {
+                    "subject": "anonymous",
+                    "subject_type": "anonymous",
+                    "permissions": ["read"],
+                    "scope": "subtree",
+                }
+            ],
+        },
+        "expected_openldap": 'target="ldap:///dc=example,dc=com" version 3.0; acl "anonymous access"; allow (read) userdn="ldap:///anonymous";',
+        "expected_oracle": 'target="dc=example,dc=com" version 3.0; acl "anonymous access"; allow (read) userdn="anonymous";',
+    },
+]
+
+# Invalid ACL test cases
+INVALID_ACL_CASES: list[FlextTypes.Core.Dict] = [
+    {
+        "name": "missing_target",
+        "unified": {
+            "permissions": [
+                {
+                    "subject": "uid=user1,ou=people,dc=example,dc=com",
+                    "subject_type": "user",
+                    "permissions": ["read"],
+                    "scope": "subtree",
+                }
+            ]
+        },
+    },
+    {
+        "name": "missing_permissions",
+        "unified": {"target": "dc=example,dc=com", "permissions": []},
+    },
+    {
+        "name": "invalid_subject_type",
+        "unified": {
+            "target": "dc=example,dc=com",
+            "permissions": [
+                {
+                    "subject": "uid=user1,ou=people,dc=example,dc=com",
+                    "subject_type": "invalid_type",
+                    "permissions": ["read"],
+                    "scope": "subtree",
+                }
+            ],
+        },
+    },
+    {
+        "name": "invalid_permissions",
+        "unified": {
+            "target": "dc=example,dc=com",
+            "permissions": [
+                {
+                    "subject": "uid=user1,ou=people,dc=example,dc=com",
+                    "subject_type": "user",
+                    "permissions": ["invalid_permission"],
+                    "scope": "subtree",
+                }
+            ],
+        },
+    },
+]

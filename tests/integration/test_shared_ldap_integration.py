@@ -197,9 +197,12 @@ class TestSharedLDAPSkipConditions:
 
     def test_skip_if_no_docker_decorator(self) -> None:
         """Test that skip_if_no_docker decorator works."""
-        # This should not raise an exception
-        decorator = skip_if_no_docker()
-        assert decorator is not None
+        # This should not raise an exception - test the decorator factory
+        @skip_if_no_docker
+        def dummy_test() -> None:
+            pass
+
+        assert dummy_test is not None
 
     def test_docker_availability_check(self) -> None:
         """Test Docker availability check."""

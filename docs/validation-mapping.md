@@ -13,7 +13,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ### **✅ CORRECT Validation Patterns**
 
-1. **Config Layer Validation**: Validation methods in `FlextLdapConfigs` class
+1. **Config Layer Validation**: Validation methods in `FlextLdapConfig` class
 2. **Models Layer Validation**: Validation methods in `FlextLdapModels` classes
 3. **Centralized Validation**: All validation logic delegated to `FlextLdapValidations`
 
@@ -41,7 +41,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
-✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfigs.validate_dn()
+✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfig.validate_dn()
 📍 LOCATION: Line 704 - Client validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~25 lines of duplicate validation logic
@@ -51,7 +51,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
-✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfigs.validate_filter()
+✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfig.validate_filter()
 📍 LOCATION: Line 736 - Client validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~20 lines of duplicate validation logic
@@ -61,7 +61,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
-✅ SHOULD USE: FlextLdapValidations.validate_attributes() or FlextLdapConfigs.validate_attributes()
+✅ SHOULD USE: FlextLdapValidations.validate_attributes() or FlextLdapConfig.validate_attributes()
 📍 LOCATION: Line 768 - Client validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~15 lines of duplicate validation logic
@@ -71,7 +71,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in client layer
-✅ SHOULD USE: FlextLdapValidations.validate_object_classes() or FlextLdapConfigs.validate_object_classes()
+✅ SHOULD USE: FlextLdapValidations.validate_object_classes() or FlextLdapConfig.validate_object_classes()
 📍 LOCATION: Line 793 - Client validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~20 lines of duplicate validation logic
@@ -83,9 +83,9 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
-✅ SHOULD USE: FlextLdapConfigs.validate_configuration_consistency() or FlextLdapValidations.validate_configuration()
+✅ SHOULD USE: FlextLdapConfig.validate_configuration_consistency() or FlextLdapValidations.validate_configuration()
 📍 LOCATION: Line 478 - API validation method
-🔧 REFACTOR: Move to FlextLdapConfigs class for centralized validation
+🔧 REFACTOR: Move to FlextLdapConfig class for centralized validation
 📋 IMPACT: ~30 lines of duplicate validation logic
 ```
 
@@ -93,7 +93,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
-✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfigs.validate_dn()
+✅ SHOULD USE: FlextLdapValidations.validate_dn() or FlextLdapConfig.validate_dn()
 📍 LOCATION: Line 519 - API validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~10 lines of duplicate validation logic
@@ -103,7 +103,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
-✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfigs.validate_filter()
+✅ SHOULD USE: FlextLdapValidations.validate_filter() or FlextLdapConfig.validate_filter()
 📍 LOCATION: Line 541 - API validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~10 lines of duplicate validation logic
@@ -113,7 +113,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 ```python
 ❌ FLEXT VIOLATION: Inline validation method in API layer
-✅ SHOULD USE: FlextLdapValidations.validate_email() or FlextLdapConfigs.validate_email()
+✅ SHOULD USE: FlextLdapValidations.validate_email() or FlextLdapConfig.validate_email()
 📍 LOCATION: Line 563 - API validation method
 🔧 REFACTOR: Move to FlextLdapValidations class for centralized validation
 📋 IMPACT: ~10 lines of duplicate validation logic
@@ -184,7 +184,7 @@ All validation methods in the models module correctly delegate to `FlextLdapVali
 ### **Phase 2: Remove API Layer Validations (12 hours)**
 
 1. **Remove validate_configuration_consistency()** from FlextLdapApi
-   - Delegate to FlextLdapConfigs.validate_configuration_consistency()
+   - Delegate to FlextLdapConfig.validate_configuration_consistency()
    - Update all callers to use centralized validation
 
 2. **Remove validate_dn()** from FlextLdapApi
@@ -240,7 +240,7 @@ class FlextLdapClient:
 
 ```python
 # ✅ CORRECT: Validation in config/models layer
-class FlextLdapConfigs:
+class FlextLdapConfig:
     def validate_bind_dn(cls, value: str | None) -> str | None:
         # Delegate to models layer
         dn_result = FlextLdapModels.DistinguishedName.create(value)
