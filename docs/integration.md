@@ -49,7 +49,7 @@ class UserService:
 
 ```python
 # Environment-based configuration following FLEXT patterns
-from flext_ldap import FlextLdapConfigs
+from Flext_ldap import FlextLdapConfig
 from pydantic import BaseSettings
 
 class AppSettings(BaseSettings):
@@ -67,9 +67,9 @@ class AppSettings(BaseSettings):
     app_name: str = "flext-app"
     debug: bool = False
 
-    def get_ldap_config(self) -> FlextLdapConfigs:
+    def get_ldap_config(self) -> FlextLdapConfig:
         """Create LDAP configuration from app settings."""
-        return FlextLdapConfigs(
+        return FlextLdapConfig(
             host=self.ldap_host,
             port=self.ldap_port,
             use_ssl=self.ldap_use_ssl,

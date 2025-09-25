@@ -26,10 +26,57 @@ class FlextLdapUtilities(FlextUtilities):
     """
 
     # =========================================================================
+    # CONVENIENCE METHODS - Direct access to nested class functionality
+    # =========================================================================
+
+    @staticmethod
+    def normalize_dn(dn: str) -> FlextResult[str]:
+        """Normalize LDAP DN by removing extra spaces."""
+        return FlextLdapUtilities.LdapProcessing.normalize_dn(dn)
+
+    @staticmethod
+    def normalize_filter(filter_str: str) -> FlextResult[str]:
+        """Normalize LDAP filter by removing extra spaces."""
+        return FlextLdapUtilities.LdapProcessing.normalize_filter(filter_str)
+
+    @staticmethod
+    def normalize_attributes(attributes: list[str]) -> FlextResult[list[str]]:
+        """Normalize LDAP attributes list by removing empty values."""
+        return FlextLdapUtilities.LdapProcessing.normalize_attributes(attributes)
+
+    @staticmethod
+    def is_ldap_dn(value: object) -> bool:
+        """Check if value is a valid LDAP DN."""
+        return FlextLdapUtilities.LdapTypeGuards.is_ldap_dn(value)
+
+    @staticmethod
+    def is_ldap_filter(value: object) -> bool:
+        """Check if value is a valid LDAP filter."""
+        if not isinstance(value, str):
+            return False
+        # Basic filter validation
+        return bool(value.strip() and ("=" in value or value.startswith("(")))
+
+    @staticmethod
+    def is_string_list(value: object) -> bool:
+        """Check if value is a list of strings."""
+        return FlextLdapUtilities.LdapTypeGuards.is_string_list(value)
+
+    @staticmethod
+    def dict_to_attributes(attributes_dict: dict[str, object]) -> FlextResult[tuple[list[str], list[object]]]:
+        """Convert dictionary to LDAP attributes format."""
+        return FlextLdapUtilities.LdapConversion.dict_to_attributes(attributes_dict)
+
+    @staticmethod
+    def attributes_to_dict(attribute_names: list[str], attribute_values: list[object]) -> FlextResult[dict[str, str]]:
+        """Convert LDAP attributes to dictionary format."""
+        return FlextLdapUtilities.LdapConversion.attributes_to_dict(attribute_names, attribute_values)
+
+    # =========================================================================
     # TYPE GUARDS - LDAP-specific type checking utilities
     # =========================================================================
 
-    class TypeGuards(FlextHandlers[object, FlextResult[object]]):
+    class LdapTypeGuards(FlextHandlers[object, object]):
         """LDAP type guard functions for runtime type checking."""
 
         @staticmethod
@@ -131,7 +178,8 @@ class FlextLdapUtilities(FlextUtilities):
                 return False
             # All items should be valid entry data
             return all(
-                FlextLdapUtilities.TypeGuards.is_ldap_entry_data(item) for item in value
+                FlextLdapUtilities.LdapTypeGuards.is_ldap_entry_data(item)
+                for item in value
             )
 
         @staticmethod
@@ -191,7 +239,7 @@ class FlextLdapUtilities(FlextUtilities):
     # LDAP-SPECIFIC PROCESSING UTILITIES
     # =========================================================================
 
-    class Processing(FlextHandlers[object, FlextResult[object]]):
+    class LdapProcessing(FlextHandlers[object, object]):
         """LDAP data processing utilities."""
 
         @staticmethod
@@ -225,46 +273,50 @@ class FlextLdapUtilities(FlextUtilities):
     # LDAP-SPECIFIC CONVERSION UTILITIES
     # =========================================================================
 
-    class Conversion(FlextHandlers[object, FlextResult[object]]):
+    class LdapConversion(FlextHandlers[object, object]):
         """LDAP data conversion utilities."""
 
         @staticmethod
         def attributes_to_dict(
-            attribute_names: list[str], attribute_values: list[list[str]]
-        ) -> FlextResult[dict[str, list[str]]]:
+            attribute_names: list[str], attribute_values: list[object]
+        ) -> FlextResult[dict[str, str]]:
             """Convert LDAP attributes to dictionary format."""
             if len(attribute_names) != len(attribute_values):
-                return FlextResult[dict[str, list[str]]].fail(
+                return FlextResult[dict[str, str]].fail(
                     f"Attribute names and values length mismatch: {len(attribute_names)} vs {len(attribute_values)}"
                 )
 
-            result: dict[str, list[str]] = {}
+            result: dict[str, str] = {}
             for i in range(len(attribute_names)):
                 name = attribute_names[i]
                 values = attribute_values[i]
-                result[name] = values
+                # Convert values to single string format (take first value if list)
+                if isinstance(values, str):
+                    result[name] = values
+                elif isinstance(values, list):
+                    if values:
+                        result[name] = str(values[0])  # Take first value
+                    else:
+                        result[name] = ""  # Empty string for empty list
+                else:
+                    result[name] = str(values)
 
-            return FlextResult[dict[str, list[str]]].ok(result)
+            return FlextResult[dict[str, str]].ok(result)
 
         @staticmethod
         def dict_to_attributes(
             attributes_dict: dict[str, object],
-        ) -> FlextResult[tuple[list[str], list[str]]]:
+        ) -> FlextResult[tuple[list[str], list[object]]]:
             """Convert dictionary to LDAP attributes format."""
             attribute_names: list[str] = []
-            attribute_values: list[str] = []
+            attribute_values: list[object] = []
 
             for name, value in attributes_dict.items():
                 attribute_names.append(name)
+                # Keep the original value type for attributes_to_dict compatibility
+                attribute_values.append(value)
 
-                # Convert value to string
-                if isinstance(value, list):
-                    # For lists, join with comma or take first element
-                    attribute_values.append(str(value[0]) if value else "")
-                else:
-                    attribute_values.append(str(value))
-
-            return FlextResult[tuple[list[str], list[str]]].ok((
+            return FlextResult[tuple[list[str], list[object]]].ok((
                 attribute_names,
                 attribute_values,
             ))

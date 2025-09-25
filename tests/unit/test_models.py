@@ -1,4 +1,7 @@
-"""Model tests for flext-ldap entities and value objects.
+"""Comprehensive tests for FlextLdapModels.
+
+This module provides complete test coverage for the FlextLdapModels class
+following FLEXT standards with proper domain separation and centralized fixtures.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,598 +9,542 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+import pytest
 
-from flext_core import FlextTypes
 from flext_ldap import FlextLdapModels
 
 
-class TestFlextLdapDistinguishedName:
-    """Test DN value object with real validation logic."""
+class TestFlextLdapModels:
+    """Comprehensive test suite for FlextLdapModels."""
 
-    def test_dn_creation_with_valid_dns(self) -> None:
-        """Test DN creation with various valid DN formats."""
-        valid_dns = [
-            "cn=test,dc=example,dc=com",
-            "uid=user,ou=people,dc=company,dc=org",
-            "cn=admin,dc=flext,dc=local",
-            "ou=groups,dc=test,dc=com",
-            "cn=Test User,ou=Users,dc=domain,dc=com",
-        ]
+    def test_models_initialization(self) -> None:
+        """Test models initialization."""
+        models = FlextLdapModels()
+        assert models is not None
+        assert hasattr(models, "_container")
+        assert hasattr(models, "_logger")
 
-        for dn_str in valid_dns:
-            result = FlextLdapModels.DistinguishedName.create(dn_str)
-            assert result.is_success, f"Valid DN should work: {dn_str} - {result.error}"
-            # Use value since we verified is_success
-            dn_obj = result.value
-            assert dn_obj.value == dn_str
+    def test_distinguished_name_creation_success(self) -> None:
+        """Test successful DistinguishedName creation."""
+        dn_string = "uid=testuser,ou=people,dc=example,dc=com"
+        dn = FlextLdapModels.DistinguishedName(value=dn_string)
 
-    def test_dn_validation_rejects_invalid_formats(self) -> None:
-        """Test DN validation rejects clearly invalid formats."""
-        invalid_dns = [
-            "",  # Empty string
-            "   ",  # Only whitespace
-            "invalid-format",  # Not DN format
-            "cn=",  # Incomplete
-            "=test,dc=example,dc=com",  # Missing attribute name
-            "cn=test,=example,dc=com",  # Missing attribute name
-        ]
+        assert dn.value == dn_string
+        assert dn.rdn == "uid=testuser"
 
-        for invalid_dn in invalid_dns:
-            result = FlextLdapModels.DistinguishedName.create(invalid_dn)
-            # Should either reject or handle gracefully
-            if not result.is_success:
-                assert result.error  # Should have error message
-            # Some implementations might be more lenient - that's acceptable
+    def test_distinguished_name_creation_failure_empty(self) -> None:
+        """Test DistinguishedName creation with empty value."""
+        with pytest.raises(ValueError, match="Distinguished Name cannot be empty"):
+            FlextLdapModels.DistinguishedName(value="")
 
-    def test_dn_equality_and_comparison(self) -> None:
-        """Test DN equality and string representation."""
-        dn_str = "cn=test,dc=example,dc=com"
-        dn1 = FlextLdapModels.DistinguishedName(value=dn_str)
-        dn2 = FlextLdapModels.DistinguishedName(value=dn_str)
+    def test_distinguished_name_creation_failure_invalid_format(self) -> None:
+        """Test DistinguishedName creation with invalid format."""
+        with pytest.raises(ValueError, match="Invalid DN format"):
+            FlextLdapModels.DistinguishedName(value="invalid-dn-format")
 
-        assert dn1.value == dn2.value
-        assert str(dn1) == dn_str or repr(dn1)  # Should have string representation
-
-
-class TestFlextLdapUser:
-    """Test LDAP user entity with real business logic."""
-
-    def create_test_user(self, **kwargs: object) -> FlextLdapModels.LdapUser:
-        """Create test user with defaults using object for kwargs."""
-        # Create with typed arguments to satisfy MyPy
-        return FlextLdapModels.LdapUser(
-            dn=str(kwargs.get("dn", "cn=testuser,ou=users,dc=example,dc=com")),
-            cn=str(kwargs.get("cn", "Test User")),
-            uid=str(kwargs.get("uid", "testuser")),
-            sn=str(kwargs.get("sn", "User")),
-            given_name=str(kwargs.get("given_name", "Test")),
-            mail=str(kwargs.get("mail", "testuser@example.com")),
-            telephone_number=None,
-            mobile=None,
-            department=None,
-            title=None,
-            organization=None,
-            organizational_unit=None,
-            user_password=None,
-            created_timestamp=None,
-            modified_timestamp=None,
-            object_classes=cast(
-                "list[str]",
-                kwargs.get("object_classes", ["inetOrgPerson", "person"]),
-            ),
-            additional_attributes=cast(
-                "dict[str, str | bytes | list[str] | list[bytes]]",
-                kwargs.get("attributes", {}),
-            ),
+    def test_distinguished_name_create_method_success(self) -> None:
+        """Test DistinguishedName create method success."""
+        result = FlextLdapModels.DistinguishedName.create(
+            "uid=testuser,ou=people,dc=example,dc=com"
         )
 
-    def test_user_creation_with_required_fields(self) -> None:
-        """Test user entity creation with required fields."""
-        user = self.create_test_user()
+        assert result.is_success
+        assert isinstance(result.data, FlextLdapModels.DistinguishedName)
+        assert result.data.value == "uid=testuser,ou=people,dc=example,dc=com"
+
+    def test_distinguished_name_create_method_failure(self) -> None:
+        """Test DistinguishedName create method failure."""
+        result = FlextLdapModels.DistinguishedName.create("invalid-dn")
+
+        assert result.is_failure
+        assert "Invalid DN format" in result.error
+
+    def test_filter_creation_success(self) -> None:
+        """Test successful Filter creation."""
+        filter_expr = "(objectClass=person)"
+        filter_obj = FlextLdapModels.Filter(expression=filter_expr)
+
+        assert filter_obj.expression == filter_expr
+
+    def test_filter_creation_failure_empty(self) -> None:
+        """Test Filter creation with empty expression."""
+        with pytest.raises(ValueError, match="LDAP filter cannot be empty"):
+            FlextLdapModels.Filter(expression="")
+
+    def test_filter_creation_failure_invalid_format(self) -> None:
+        """Test Filter creation with invalid format."""
+        with pytest.raises(
+            ValueError, match="LDAP filter must be enclosed in parentheses"
+        ):
+            FlextLdapModels.Filter(expression="objectClass=person")
+
+    def test_filter_equals_method(self) -> None:
+        """Test Filter equals method."""
+        filter_obj = FlextLdapModels.Filter.equals("objectClass", "person")
+
+        assert filter_obj.expression == "(objectClass=person)"
+
+    def test_filter_starts_with_method(self) -> None:
+        """Test Filter starts_with method."""
+        filter_obj = FlextLdapModels.Filter.starts_with("cn", "Test")
+
+        assert filter_obj.expression == "(cn=Test*)"
+
+    def test_filter_ends_with_method(self) -> None:
+        """Test Filter ends_with method."""
+        filter_obj = FlextLdapModels.Filter.ends_with("mail", "@example.com")
+
+        assert filter_obj.expression == "(mail=*@example.com)"
+
+    def test_filter_contains_method(self) -> None:
+        """Test Filter contains method."""
+        filter_obj = FlextLdapModels.Filter.contains("description", "test")
+
+        assert filter_obj.expression == "(description=*test*)"
+
+    def test_filter_and_method(self) -> None:
+        """Test Filter and method."""
+        filter1 = FlextLdapModels.Filter.equals("objectClass", "person")
+        filter2 = FlextLdapModels.Filter.equals("cn", "Test User")
+        combined = FlextLdapModels.Filter.and_filter([filter1, filter2])
+
+        assert combined.expression == "(&(objectClass=person)(cn=Test User))"
+
+    def test_filter_or_method(self) -> None:
+        """Test Filter or method."""
+        filter1 = FlextLdapModels.Filter.equals("objectClass", "person")
+        filter2 = FlextLdapModels.Filter.equals("objectClass", "group")
+        combined = FlextLdapModels.Filter.or_filter([filter1, filter2])
+
+        assert combined.expression == "(|(objectClass=person)(objectClass=group))"
+
+    def test_filter_not_method(self) -> None:
+        """Test Filter not method."""
+        filter_obj = FlextLdapModels.Filter.equals("objectClass", "person")
+        negated = FlextLdapModels.Filter.not_filter(filter_obj)
+
+        assert negated.expression == "(!(objectClass=person))"
+
+    def test_user_creation_success(self, sample_user: FlextLdapModels.User) -> None:
+        """Test successful User creation."""
+        assert sample_user.uid == "testuser"
+        assert sample_user.cn == "Test User"
+        assert sample_user.sn == "User"
+        assert sample_user.mail == "testuser@example.com"
+
+    def test_user_creation_with_minimal_data(self) -> None:
+        """Test User creation with minimal required data."""
+        user = FlextLdapModels.User(uid="testuser", cn="Test User", sn="User")
 
         assert user.uid == "testuser"
         assert user.cn == "Test User"
         assert user.sn == "User"
-        assert user.dn == "cn=testuser,ou=users,dc=example,dc=com"
-        assert "inetOrgPerson" in user.object_classes
+        assert user.mail is None
 
-    def test_user_business_rule_validation(self) -> None:
-        """Test user business rule validation logic."""
-        # Valid user should pass validation
-        valid_user = self.create_test_user()
-        validation_result = valid_user.validate_business_rules()
-        assert validation_result.is_success, (
-            f"Valid user failed validation: {validation_result.error}"
-        )
+    def test_user_business_rules_validation_success(
+        self, sample_user: FlextLdapModels.User
+    ) -> None:
+        """Test User business rules validation success."""
+        result = sample_user.validate_business_rules()
 
-        # Test user with invalid UID (empty)
-        invalid_user = self.create_test_user(uid="")
-        validation_result = invalid_user.validate_business_rules()
-        if not validation_result.is_success:
-            assert validation_result.error is not None
-            assert "uid" in validation_result.error.lower()
+        assert result.is_success
+        assert result.data is True
 
-    def test_user_immutability_and_copying(self) -> None:
-        """Test that user entity modifications create new instances."""
-        original_user = self.create_test_user()
-
-        # Test immutability by creating copy with different attributes
-        modified_user = self.create_test_user(
-            mail="modified@example.com",
-            given_name="Modified",  # Using valid field instead of phone
-        )
-
-        # Original should remain unchanged
-        assert original_user.mail != modified_user.mail
-        assert original_user.given_name != modified_user.given_name
-        assert original_user is not modified_user
-
-        # Test that model_copy creates new instance
-        copied_user = original_user.model_copy()
-        assert copied_user.uid == original_user.uid
-        assert copied_user.cn == original_user.cn
-        assert copied_user is not original_user
-
-
-class TestFlextLdapGroup:
-    """Test LDAP group entity with real business logic."""
-
-    def create_test_group(self, **kwargs: object) -> FlextLdapModels.Group:
-        """Create test group with defaults using object for kwargs."""
-        # Create with typed arguments to satisfy MyPy
-        return FlextLdapModels.Group(
-            dn=str(kwargs.get("dn", "cn=testgroup,ou=groups,dc=example,dc=com")),
-            cn=str(kwargs.get("cn", "Test Group")),
-            gid_number=None,
-            description=str(kwargs.get("description", "Test group for unit testing")),
-            created_timestamp=None,
-            modified_timestamp=None,
-            object_classes=cast(
-                "list[str]",
-                kwargs.get("object_classes", ["groupOfNames"]),
-            ),
-            additional_attributes=cast(
-                "dict[str, str | bytes | list[str] | list[bytes]]",
-                kwargs.get("attributes", {}),
-            ),
-        )
-
-    def test_group_creation_with_required_fields(self) -> None:
-        """Test group entity creation with required fields."""
-        group = self.create_test_group()
-
-        assert group.cn == "Test Group"
-        assert group.dn == "cn=testgroup,ou=groups,dc=example,dc=com"
-        assert "groupOfNames" in group.object_classes
-        assert isinstance(group.members, list)
-
-    def test_group_business_rule_validation(self) -> None:
-        """Test group business rule validation logic."""
-        # Valid group should pass validation
-        valid_group = self.create_test_group()
-        validation_result = valid_group.validate_business_rules()
-        assert validation_result.is_success, (
-            f"Valid group failed validation: {validation_result.error}"
-        )
-
-        # Test group with invalid CN (empty)
-        invalid_group = self.create_test_group(cn="")
-        validation_result = invalid_group.validate_business_rules()
-        if not validation_result.is_success:
-            assert (
-                validation_result.error and "cn" in validation_result.error.lower()
-            ) or (validation_result.error and "name" in validation_result.error.lower())
-
-    def test_group_member_management(self) -> None:
-        """Test group member management operations."""
-        group = self.create_test_group()
-        member_dn = "cn=user1,ou=users,dc=example,dc=com"
-
-        # Initially no members
-        assert member_dn not in group.members
-        assert len(group.members) == 0
-
-        # Add member by modifying the members list
-        group.members.append(member_dn)
-        assert member_dn in group.members
-        assert len(group.members) == 1
-
-        # Add second member
-        member2_dn = "cn=user2,ou=users,dc=example,dc=com"
-        group.members.append(member2_dn)
-        assert member_dn in group.members
-        assert member2_dn in group.members
-        assert len(group.members) == 2
-
-        # Remove member
-        group.members.remove(member_dn)
-        assert member_dn not in group.members
-        assert member2_dn in group.members
-        assert len(group.members) == 1
-
-    def test_group_duplicate_member_handling(self) -> None:
-        """Test handling of duplicate member additions."""
-        group = self.create_test_group()
-        member_dn = "cn=user1,ou=users,dc=example,dc=com"
-
-        # Add member using direct manipulation since add_member method doesn't exist
-        if member_dn not in group.members:
-            group.members.append(member_dn)
-        assert len(group.members) == 1
-
-        # Try to add same member again - simulate business logic
-        if member_dn not in group.members:
-            group.members.append(member_dn)
-        assert len(group.members) == 1  # Still only one member
-
-        # Should still only have one instance
-        assert len(group.members) == 1
-        assert group.members.count(member_dn) == 1
-
-
-class TestFlextLdapModels:
-    """Test generic LDAP entry with real attribute handling."""
-
-    def create_test_entry(self, **kwargs: object) -> FlextLdapModels.Entry:
-        """Create test entry with defaults using object for kwargs."""
-        # Create with typed arguments to satisfy MyPy
-        return FlextLdapModels.Entry(
-            dn=str(kwargs.get("dn", "cn=testentry,dc=example,dc=com")),
-            object_classes=cast(
-                "FlextTypes.Core.StringList",
-                kwargs.get("object_classes", ["top", "person"]),
-            ),
-            attributes=cast(
-                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
-                kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]}),
-            ),
-            created_timestamp=None,
-            modified_timestamp=None,
-        )
-
-    def test_create_user_request_optional_fields(self) -> None:
-        """Test user creation request with optional fields."""
-        request = FlextLdapModels.CreateUserRequest(
-            dn="cn=fulluser,ou=users,dc=example,dc=com",
-            uid="fulluser",
-            cn="Full User",
+    def test_user_business_rules_validation_failure(self) -> None:
+        """Test User business rules validation failure."""
+        user = FlextLdapModels.User(
+            uid="",  # Invalid empty uid
+            cn="Test User",
             sn="User",
-            given_name="Full",
-            mail="full@example.com",
-            user_password="secret123",
-            telephone_number=None,
-            description=None,
-            department=None,
-            title=None,
-            organization=None,
         )
 
-        assert request.given_name == "Full"
-        assert request.mail == "full@example.com"
-        assert request.user_password == "secret123"
+        result = user.validate_business_rules()
 
-    def test_create_user_request_to_user_entity(self) -> None:
-        """Test converting user request to user entity."""
-        request = FlextLdapModels.CreateUserRequest(
-            dn="cn=convertuser,ou=users,dc=example,dc=com",
-            uid="convertuser",
-            cn="Convert User",
-            sn="User",
-            given_name="Convert",
-            mail="convert@example.com",
-            user_password=None,
-            telephone_number=None,
-            description=None,
-            department=None,
-            title=None,
-            organization=None,
-        )
+        assert result.is_failure
+        assert "uid" in result.error.lower()
 
-        user_entity = request.to_user_entity()
+    def test_user_to_ldap_attributes(self, sample_user: FlextLdapModels.User) -> None:
+        """Test User to LDAP attributes conversion."""
+        attributes = sample_user.to_ldap_attributes()
 
-        assert isinstance(user_entity, FlextLdapModels.LdapUser)
-        assert user_entity.dn == request.dn
-        assert user_entity.uid == request.uid
-        assert user_entity.cn == request.cn
-        assert user_entity.sn == request.sn
-        assert user_entity.mail == request.mail
-        assert "inetOrgPerson" in user_entity.object_classes
+        assert "uid" in attributes
+        assert "cn" in attributes
+        assert "sn" in attributes
+        assert "mail" in attributes
+        assert attributes["uid"] == ["testuser"]
+        assert attributes["cn"] == ["Test User"]
 
-    def test_create_user_request_to_ldap_attributes(self) -> None:
-        """Test converting user request to LDAP attributes dictionary."""
-        request = FlextLdapModels.CreateUserRequest(
-            dn="cn=ldapuser,ou=users,dc=example,dc=com",
-            uid="ldapuser",
-            cn="LDAP User",
-            sn="User",
-            given_name="LDAP",
-            mail="ldap@example.com",
-            user_password=None,
-            telephone_number=None,
-            description=None,
-            department=None,
-            title=None,
-            organization=None,
-        )
+    def test_user_from_ldap_attributes_success(self) -> None:
+        """Test User creation from LDAP attributes success."""
+        ldap_attributes = {
+            "uid": ["testuser"],
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "mail": ["testuser@example.com"],
+        }
 
-        user_entity = request.to_user_entity()
+        result = FlextLdapModels.User.from_ldap_attributes(ldap_attributes)
 
-        assert "inetOrgPerson" in user_entity.object_classes
-        assert "person" in user_entity.object_classes
-        assert user_entity.uid == "ldapuser"
-        assert user_entity.cn == "LDAP User"
-        assert user_entity.mail == "ldap@example.com"
+        assert result.is_success
+        assert result.data.uid == "testuser"
+        assert result.data.cn == "Test User"
 
-    def test_create_user_request_validation(self) -> None:
-        """Test user creation request validation."""
-        # Valid request should pass
-        valid_request = FlextLdapModels.CreateUserRequest(
-            dn="cn=validuser,ou=users,dc=example,dc=com",
-            uid="validuser",
-            cn="Valid User",
-            sn="User",
-            given_name="Valid",
-            mail="validuser@example.com",
-            user_password=None,
-            telephone_number=None,
-            description=None,
-            department=None,
-            title=None,
-            organization=None,
-        )
+    def test_user_from_ldap_attributes_failure(self) -> None:
+        """Test User creation from LDAP attributes failure."""
+        invalid_attributes = {"invalid": ["data"]}
 
-        # Test that valid request creates user entity correctly
-        user_entity = valid_request.to_user_entity()
-        validation_result = user_entity.validate_business_rules()
-        assert validation_result.is_success, (
-            f"Valid request failed validation: {validation_result.error}"
-        )
+        result = FlextLdapModels.User.from_ldap_attributes(invalid_attributes)
 
-        # Test that conversion maintains data integrity
-        assert user_entity.uid == valid_request.uid
-        assert user_entity.cn == valid_request.cn
-        assert user_entity.sn == valid_request.sn
-        assert user_entity.dn == valid_request.dn
+        assert result.is_failure
+        assert "Invalid user attributes" in result.error
 
+    def test_group_creation_success(self, sample_group: FlextLdapModels.Group) -> None:
+        """Test successful Group creation."""
+        assert sample_group.cn == "testgroup"
+        assert sample_group.description == "Test Group"
+        assert len(sample_group.member) == 1
+        assert sample_group.member[0] == "uid=testuser,ou=people,dc=example,dc=com"
 
-class TestBusinessRulesIntegration:
-    """Test integration of business rules across entities."""
-
-    def test_cross_entity_validation(self) -> None:
-        """Test business rules that span multiple entities."""
-        # Create user
-        user = FlextLdapModels.LdapUser(
-            dn="cn=crossuser,ou=users,dc=example,dc=com",
-            uid="crossuser",
-            cn="Cross User",
-            sn="User",
-            given_name="Cross",
-            mail="crossuser@example.com",
-            object_classes=["inetOrgPerson", "person"],
-            additional_attributes={"phone": ["+1-555-0199"]},
-            created_timestamp=None,
-            modified_timestamp=None,
-            telephone_number=None,
-            mobile=None,
-            department=None,
-            title=None,
-            organization=None,
-            organizational_unit=None,
-            user_password=None,
-        )
-
-        # Create group with user as member
+    def test_group_creation_with_empty_members(self) -> None:
+        """Test Group creation with empty members list."""
         group = FlextLdapModels.Group(
-            id="test_cross_group",
-            dn="cn=crossgroup,ou=groups,dc=example,dc=com",
-            cn="Cross Group",
-            description="Cross-validation test group",
-            object_classes=["groupOfNames"],
-            additional_attributes={},
-            members=[user.dn],
-            status="active",
-            created_timestamp=None,
-            modified_timestamp=None,
-            gid_number=None,
+            cn="testgroup", description="Test Group", member=[]
         )
 
-        # Both should validate successfully
-        user_validation = user.validate_business_rules()
-        group_validation = group.validate_business_rules()
+        assert group.cn == "testgroup"
+        assert group.description == "Test Group"
+        assert len(group.member) == 0
 
-        assert user_validation.is_success
-        assert group_validation.is_success
-        assert group.has_member(user.dn)
+    def test_group_business_rules_validation_success(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group business rules validation success."""
+        result = sample_group.validate_business_rules()
 
-    def test_domain_consistency_rules(self) -> None:
-        """Test consistency rules within domain entities."""
-        # Create user request
-        user_request = FlextLdapModels.CreateUserRequest(
-            dn="cn=consistent,ou=users,dc=example,dc=com",
-            uid="consistent",
-            cn="Consistent User",
-            sn="User",
-            given_name="Consistent",
-            mail="consistent@example.com",
-            user_password=None,
-            telephone_number=None,
-            description=None,
-            department=None,
-            title=None,
-            organization=None,
+        assert result.is_success
+        assert result.data is True
+
+    def test_group_business_rules_validation_failure(self) -> None:
+        """Test Group business rules validation failure."""
+        group = FlextLdapModels.Group(
+            cn="",  # Invalid empty cn
+            description="Test Group",
+            member=["uid=testuser,ou=people,dc=example,dc=com"],
         )
 
-        # Convert to entity
-        user_entity = user_request.to_user_entity()
+        result = group.validate_business_rules()
 
-        # Should maintain consistency
-        assert user_entity.uid == user_request.uid
-        assert user_entity.cn == user_request.cn
-        assert user_entity.sn == user_request.sn
-        assert user_entity.dn == user_request.dn
+        assert result.is_failure
+        assert "cn" in result.error.lower()
 
-        # Both should validate
-        request_validation = user_request.validate_business_rules()
-        entity_validation = user_entity.validate_business_rules()
+    def test_group_add_member_success(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group add member success."""
+        initial_count = len(sample_group.member)
+        sample_group.add_member("uid=newuser,ou=people,dc=example,dc=com")
 
-        assert request_validation.is_success
-        assert entity_validation.is_success
+        assert len(sample_group.member) == initial_count + 1
+        assert "uid=newuser,ou=people,dc=example,dc=com" in sample_group.member
 
+    def test_group_add_member_duplicate(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group add member duplicate handling."""
+        initial_count = len(sample_group.member)
+        sample_group.add_member(
+            "uid=testuser,ou=people,dc=example,dc=com"
+        )  # Already exists
 
-class TestRealWorldScenarios:
-    """Test with realistic data patterns from actual LDAP deployments."""
+        assert len(sample_group.member) == initial_count  # No change
 
-    def test_enterprise_user_patterns(self) -> None:
-        """Test enterprise user creation with realistic corporate data."""
-        # Real-world corporate user patterns
-        realistic_users = [
-            {
-                "dn": "cn=john.smith,ou=employees,ou=people,dc=corp,dc=example,dc=com",
-                "uid": "jsmith",
-                "cn": "John Smith",
-                "sn": "Smith",
-                "given_name": "John",
-                "mail": "john.smith@corp.example.com",
-                "phone": "+1-555-0101",
-                "object_classes": ["inetOrgPerson", "person", "organizationalPerson"],
-                "attributes": {
-                    "employeeNumber": ["E123456"],
-                    "department": ["Engineering"],
-                    "title": ["Senior Software Engineer"],
-                    "manager": [
-                        "cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com",
-                    ],
-                },
-            },
-            {
-                "dn": "cn=maria.garcia,ou=contractors,ou=people,dc=corp,dc=example,dc=com",
-                "uid": "mgarcia",
-                "cn": "Maria Garcia",
-                "sn": "Garcia",
-                "given_name": "Maria",
-                "mail": "maria.garcia@external.example.com",
-                "phone": "+1-555-0102",
-                "object_classes": ["inetOrgPerson", "person"],
-                "attributes": {
-                    "employeeType": ["contractor"],
-                    "contractExpiry": ["20251231"],
-                    "department": ["Marketing"],
-                },
-            },
+    def test_group_remove_member_success(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group remove member success."""
+        initial_count = len(sample_group.member)
+        sample_group.remove_member("uid=testuser,ou=people,dc=example,dc=com")
+
+        assert len(sample_group.member) == initial_count - 1
+        assert "uid=testuser,ou=people,dc=example,dc=com" not in sample_group.member
+
+    def test_group_remove_member_not_found(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group remove member when not found."""
+        initial_count = len(sample_group.member)
+        sample_group.remove_member("uid=nonexistent,ou=people,dc=example,dc=com")
+
+        assert len(sample_group.member) == initial_count  # No change
+
+    def test_group_to_ldap_attributes(
+        self, sample_group: FlextLdapModels.Group
+    ) -> None:
+        """Test Group to LDAP attributes conversion."""
+        attributes = sample_group.to_ldap_attributes()
+
+        assert "cn" in attributes
+        assert "description" in attributes
+        assert "member" in attributes
+        assert attributes["cn"] == ["testgroup"]
+        assert attributes["description"] == ["Test Group"]
+
+    def test_group_from_ldap_attributes_success(self) -> None:
+        """Test Group creation from LDAP attributes success."""
+        ldap_attributes = {
+            "cn": ["testgroup"],
+            "description": ["Test Group"],
+            "member": ["uid=testuser,ou=people,dc=example,dc=com"],
+        }
+
+        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attributes)
+
+        assert result.is_success
+        assert result.data.cn == "testgroup"
+        assert result.data.description == "Test Group"
+
+    def test_group_from_ldap_attributes_failure(self) -> None:
+        """Test Group creation from LDAP attributes failure."""
+        invalid_attributes = {"invalid": ["data"]}
+
+        result = FlextLdapModels.Group.from_ldap_attributes(invalid_attributes)
+
+        assert result.is_failure
+        assert "Invalid group attributes" in result.error
+
+    def test_connection_config_creation_success(
+        self, ldap_config: FlextLdapModels.ConnectionConfig
+    ) -> None:
+        """Test successful ConnectionConfig creation."""
+        assert ldap_config.server_uri == "ldap://localhost:389"
+        assert ldap_config.bind_dn == "cn=admin,dc=example,dc=com"
+        assert ldap_config.password == "admin123"
+        assert ldap_config.base_dn == "dc=example,dc=com"
+
+    def test_connection_config_validation_success(
+        self, ldap_config: FlextLdapModels.ConnectionConfig
+    ) -> None:
+        """Test ConnectionConfig validation success."""
+        result = ldap_config.validate()
+
+        assert result.is_success
+        assert result.data is True
+
+    def test_connection_config_validation_failure(
+        self, ldap_config_invalid: FlextLdapModels.ConnectionConfig
+    ) -> None:
+        """Test ConnectionConfig validation failure."""
+        result = ldap_config_invalid.validate()
+
+        assert result.is_failure
+        assert "Invalid configuration" in result.error
+
+    def test_search_config_creation_success(self) -> None:
+        """Test successful SearchConfig creation."""
+        search_config = FlextLdapModels.SearchConfig(
+            base_dn="dc=example,dc=com",
+            search_filter="(objectClass=person)",
+            attributes=["cn", "sn", "mail"],
+        )
+
+        assert search_config.base_dn == "dc=example,dc=com"
+        assert search_config.search_filter == "(objectClass=person)"
+        assert search_config.attributes == ["cn", "sn", "mail"]
+
+    def test_search_config_validation_success(self) -> None:
+        """Test SearchConfig validation success."""
+        search_config = FlextLdapModels.SearchConfig(
+            base_dn="dc=example,dc=com",
+            search_filter="(objectClass=person)",
+            attributes=["cn", "sn", "mail"],
+        )
+
+        result = search_config.validate()
+
+        assert result.is_success
+        assert result.data is True
+
+    def test_search_config_validation_failure(self) -> None:
+        """Test SearchConfig validation failure."""
+        search_config = FlextLdapModels.SearchConfig(
+            base_dn="",  # Invalid empty base_dn
+            search_filter="(objectClass=person)",
+            attributes=["cn", "sn", "mail"],
+        )
+
+        result = search_config.validate()
+
+        assert result.is_failure
+        assert "Invalid search configuration" in result.error
+
+    def test_modify_config_creation_success(self) -> None:
+        """Test successful ModifyConfig creation."""
+        modify_config = FlextLdapModels.ModifyConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com",
+            changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
+        )
+
+        assert modify_config.dn == "uid=testuser,ou=people,dc=example,dc=com"
+        assert "cn" in modify_config.changes
+
+    def test_modify_config_validation_success(self) -> None:
+        """Test ModifyConfig validation success."""
+        modify_config = FlextLdapModels.ModifyConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com",
+            changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
+        )
+
+        result = modify_config.validate()
+
+        assert result.is_success
+        assert result.data is True
+
+    def test_modify_config_validation_failure(self) -> None:
+        """Test ModifyConfig validation failure."""
+        modify_config = FlextLdapModels.ModifyConfig(
+            dn="",  # Invalid empty dn
+            changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
+        )
+
+        result = modify_config.validate()
+
+        assert result.is_failure
+        assert "Invalid modify configuration" in result.error
+
+    def test_add_config_creation_success(self) -> None:
+        """Test successful AddConfig creation."""
+        add_config = FlextLdapModels.AddConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com",
+            attributes={"cn": ["Test User"], "sn": ["User"]},
+        )
+
+        assert add_config.dn == "uid=testuser,ou=people,dc=example,dc=com"
+        assert "cn" in add_config.attributes
+        assert "sn" in add_config.attributes
+
+    def test_add_config_validation_success(self) -> None:
+        """Test AddConfig validation success."""
+        add_config = FlextLdapModels.AddConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com",
+            attributes={"cn": ["Test User"], "sn": ["User"]},
+        )
+
+        result = add_config.validate()
+
+        assert result.is_success
+        assert result.data is True
+
+    def test_add_config_validation_failure(self) -> None:
+        """Test AddConfig validation failure."""
+        add_config = FlextLdapModels.AddConfig(
+            dn="",  # Invalid empty dn
+            attributes={"cn": ["Test User"], "sn": ["User"]},
+        )
+
+        result = add_config.validate()
+
+        assert result.is_failure
+        assert "Invalid add configuration" in result.error
+
+    def test_delete_config_creation_success(self) -> None:
+        """Test successful DeleteConfig creation."""
+        delete_config = FlextLdapModels.DeleteConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com"
+        )
+
+        assert delete_config.dn == "uid=testuser,ou=people,dc=example,dc=com"
+
+    def test_delete_config_validation_success(self) -> None:
+        """Test DeleteConfig validation success."""
+        delete_config = FlextLdapModels.DeleteConfig(
+            dn="uid=testuser,ou=people,dc=example,dc=com"
+        )
+
+        result = delete_config.validate()
+
+        assert result.is_success
+        assert result.data is True
+
+    def test_delete_config_validation_failure(self) -> None:
+        """Test DeleteConfig validation failure."""
+        delete_config = FlextLdapModels.DeleteConfig(
+            dn=""  # Invalid empty dn
+        )
+
+        result = delete_config.validate()
+
+        assert result.is_failure
+        assert "Invalid delete configuration" in result.error
+
+    def test_models_integration_user_group_relationship(self) -> None:
+        """Test integration between User and Group models."""
+        user = FlextLdapModels.User(
+            uid="testuser", cn="Test User", sn="User", mail="testuser@example.com"
+        )
+
+        group = FlextLdapModels.Group(
+            cn="testgroup", description="Test Group", member=[user.dn]
+        )
+
+        assert user.dn in group.member
+        assert group.member[0] == user.dn
+
+    def test_models_integration_filter_search_config(self) -> None:
+        """Test integration between Filter and SearchConfig models."""
+        filter_obj = FlextLdapModels.Filter.equals("objectClass", "person")
+
+        search_config = FlextLdapModels.SearchConfig(
+            base_dn="dc=example,dc=com",
+            search_filter=filter_obj.expression,
+            attributes=["cn", "sn", "mail"],
+        )
+
+        assert search_config.search_filter == filter_obj.expression
+        assert search_config.base_dn == "dc=example,dc=com"
+
+    def test_models_error_handling_consistency(self) -> None:
+        """Test consistent error handling across model methods."""
+        # Test DN validation consistency
+        dn_result = FlextLdapModels.DistinguishedName.create("")
+        assert dn_result.is_failure
+        assert "empty" in dn_result.error.lower()
+
+        # Test Filter validation consistency
+        with pytest.raises(ValueError, match="empty"):
+            FlextLdapModels.Filter(expression="")
+
+        # Test User validation consistency
+        user = FlextLdapModels.User(uid="", cn="Test", sn="User")
+        user_result = user.validate_business_rules()
+        assert user_result.is_failure
+        assert "uid" in user_result.error.lower()
+
+        # Test Group validation consistency
+        group = FlextLdapModels.Group(cn="", description="Test", member=[])
+        group_result = group.validate_business_rules()
+        assert group_result.is_failure
+        assert "cn" in group_result.error.lower()
+
+    def test_models_performance_large_datasets(self) -> None:
+        """Test model performance with large datasets."""
+        # Test large member list in Group
+        large_member_list = [
+            f"uid=user{i},ou=people,dc=example,dc=com" for i in range(1000)
         ]
 
-        for user_data in realistic_users:
-            # Create user entity with realistic data explicitly typed
-            user = FlextLdapModels.LdapUser(
-                id=f"test_{user_data['uid']}",
-                dn=str(user_data["dn"]),
-                uid=str(user_data["uid"]),
-                cn=str(user_data["cn"]),
-                sn=str(user_data["sn"]),
-                given_name=str(user_data["given_name"]),
-                mail=str(user_data["mail"]),
-                telephone_number=None,
-                mobile=None,
-                department=None,
-                title=None,
-                organization=None,
-                organizational_unit=None,
-                user_password=None,
-                created_timestamp=None,
-                modified_timestamp=None,
-                object_classes=cast(
-                    "FlextTypes.Core.StringList",
-                    user_data["object_classes"],
-                ),
-                attributes=cast(
-                    "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
-                    user_data.get("attributes", {}),
-                ),
-                status="active",
-            )
-            # Add attributes and phone data separately
-            # user.attributes already set in constructor, no need to update
-            if "phone" in user_data:
-                user.attributes["phone"] = [str(user_data["phone"])]
+        group = FlextLdapModels.Group(
+            cn="largegroup", description="Large Group", member=large_member_list
+        )
 
-            # Test realistic business rule validation
-            validation_result = user.validate_business_rules()
-            assert validation_result.is_success, (
-                f"Realistic user {user_data['uid']} failed validation: {validation_result.error}"
-            )
+        assert len(group.member) == 1000
+        assert group.member[0] == "uid=user0,ou=people,dc=example,dc=com"
+        assert group.member[999] == "uid=user999,ou=people,dc=example,dc=com"
 
-            # Test realistic attribute access
-            assert user.mail is not None
-            assert user.mail.endswith(".com")
-            # Verify phone through attributes instead of direct field (not in model)
-            phone_attrs = user.attributes.get("phone", [])
-            if phone_attrs and isinstance(phone_attrs, list) and len(phone_attrs) > 0:
-                first_phone = phone_attrs[0]
-                if isinstance(first_phone, str):
-                    assert len(first_phone) >= 10
-            assert user.sn is not None
-            assert user.cn is not None
-            assert user.sn in user.cn
-            assert user.cn is not None
-            assert user.dn.startswith(f"cn={user.cn.lower().replace(' ', '.')}")
+        # Test adding member to large group
+        group.add_member("uid=newuser,ou=people,dc=example,dc=com")
+        assert len(group.member) == 1001
 
-    def test_organizational_group_structures(self) -> None:
-        """Test realistic organizational group hierarchies."""
-        # Real-world organizational structures
-        org_groups = [
-            {
-                "dn": "cn=engineering,ou=departments,dc=corp,dc=example,dc=com",
-                "cn": "Engineering Department",
-                "description": "All engineering staff and contractors",
-                "object_classes": ["groupOfNames", "organizationalGroup"],
-                "members": [
-                    "cn=john.smith,ou=employees,ou=people,dc=corp,dc=example,dc=com",
-                    "cn=alice.johnson,ou=employees,ou=people,dc=corp,dc=example,dc=com",
-                    "cn=bob.wilson,ou=contractors,ou=people,dc=corp,dc=example,dc=com",
-                ],
-            },
-            {
-                "dn": "cn=ldap-admins,ou=security,ou=groups,dc=corp,dc=example,dc=com",
-                "cn": "LDAP Administrators",
-                "description": "Users with LDAP administrative privileges",
-                "object_classes": ["groupOfNames"],
-                "members": ["cn=admin,ou=system,dc=corp,dc=example,dc=com"],
-            },
-        ]
-
-        for group_data in org_groups:
-            # Create group with realistic organizational data
-            cn_str = str(group_data["cn"])
-            group = FlextLdapModels.Group(
-                id=f"test_group_{cn_str.lower().replace(' ', '_')}",
-                dn=str(group_data["dn"]),
-                cn=cn_str,
-                gid_number=None,
-                description=str(group_data.get("description", "")),
-                object_classes=cast(
-                    "FlextTypes.Core.StringList",
-                    group_data["object_classes"],
-                ),
-                members=cast(
-                    "FlextTypes.Core.StringList",
-                    group_data.get("members", []),
-                ),
-                additional_attributes={},
-                status="active",
-                created_timestamp=None,
-                modified_timestamp=None,
-            )
-
-            # Test realistic group validation
-            validation_result = group.validate_business_rules()
-            assert validation_result.is_success, (
-                f"Realistic group {group_data['cn']} failed validation: {validation_result.error}"
-            )
-
-            # Test organizational patterns
-            assert group.dn.startswith("cn=")
-            assert len(group.members) > 0
-            assert all(member.startswith("cn=") for member in group.members)
-            assert group.description is not None
-            assert len(group.description) > 10
+        # Test removing member from large group
+        group.remove_member("uid=user500,ou=people,dc=example,dc=com")
+        assert len(group.member) == 1000
+        assert "uid=user500,ou=people,dc=example,dc=com" not in group.member

@@ -21,7 +21,7 @@ import os
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
     FlextLdapClient,
-    FlextLdapConfigs,
+    FlextLdapConfig,
     FlextLdapModels,
 )
 
@@ -30,8 +30,8 @@ logger = FlextLogger(__name__)
 
 def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
-    # 1. Settings configuration using FlextLdapConfigs
-    FlextLdapConfigs()
+    # 1. Settings configuration using FlextLdapConfig
+    FlextLdapConfig()
 
     # 2. Connection info - will be passed to API methods
 
@@ -138,9 +138,9 @@ def demonstrate_logging_integration() -> None:
 
     # Create settings with logging
     logger.debug("Creating LDAP settings")
-    settings = FlextLdapConfigs()
+    settings = FlextLdapConfig()
 
-    # Use the public field name defined in FlextLdapConfigs
+    # Use the public field name defined in FlextLdapConfig
     logger.debug(
         "Settings created successfully",
         extra={"debug_enabled": settings.ldap_enable_debug},

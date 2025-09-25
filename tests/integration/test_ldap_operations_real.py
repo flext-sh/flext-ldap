@@ -78,7 +78,7 @@ class TestRealLdapConnection:
 class TestRealLdapSearch:
     """Test real LDAP search operations."""
 
-    async def test_search_base_dn(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test searching for base DN entry."""
         client = shared_ldap_client
 
@@ -132,7 +132,7 @@ class TestRealLdapSearch:
 class TestRealLdapCRUD:
     """Test real LDAP CRUD operations."""
 
-    async def test_add_and_delete_ou(self, shared_ldap_client: FlextLdapClient) -> None:
+    async def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test adding and deleting organizational unit."""
         client = shared_ldap_client
 

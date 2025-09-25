@@ -47,7 +47,7 @@ async def demonstrate_generic_ldap_client() -> None:
     try:
         # Connect with automatic schema discovery
         logger.info("Connecting to LDAP server with schema discovery...")
-        connect_result = await client.connect_with_discovery(
+        connect_result = await client.connect(
             server_uri=server_uri,
             bind_dn=bind_dn,
             password=bind_password,
@@ -124,24 +124,29 @@ async def demonstrate_universal_search(
         logger.warning("No naming contexts available for search")
         return
 
-    base_dn = server_info["namingContexts"][0]
+    naming_contexts = server_info["namingContexts"]
+    if isinstance(naming_contexts, list) and len(naming_contexts) > 0:
+        base_dn = naming_contexts[0]
+    else:
+        logger.warning("No naming contexts available")
+        return
+
     logger.info("Using search base: %s", base_dn)
 
     # Search for all entries (universal filter)
     logger.info("Searching for all entries...")
-    search_result = await client.search_generic(
+    search_result = await client.search(
         base_dn=base_dn,
-        search_filter="(objectClass=*)",
+        filter_str="(objectClass=*)",
         attributes=["objectClass", "cn", "sn", "mail"],
-        scope="subtree",
-        size_limit=10,
     )
 
     if search_result.is_success:
         logger.info("Found %d entries", len(search_result.data))
         for i, entry in enumerate(search_result.data[:5]):  # Show first 5
             logger.info("  Entry %d: %s", i + 1, entry.get("dn", "No DN"))
-            attrs = entry.get("attributes", {})
+            attrs_raw = entry.get("attributes", {})
+            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
             if "cn" in attrs:
                 logger.info("    CN: %s", attrs["cn"])
             if "objectClass" in attrs:
@@ -151,18 +156,18 @@ async def demonstrate_universal_search(
 
     # Search for person entries (common across LDAP implementations)
     logger.info("\nSearching for person entries...")
-    person_search = await client.search_generic(
+    person_search = await client.search(
         base_dn=base_dn,
-        search_filter="(|(objectClass=person)(objectClass=inetOrgPerson)(objectClass=user))",
+        filter_str="(|(objectClass=person)(objectClass=inetOrgPerson)(objectClass=user))",
         attributes=["cn", "sn", "givenName", "mail", "objectClass"],
-        scope="subtree",
     )
 
     if person_search.is_success:
         logger.info("Found %d person entries", len(person_search.data))
         for entry in person_search.data[:3]:  # Show first 3
             dn = entry.get("dn", "No DN")
-            attrs = entry.get("attributes", {})
+            attrs_raw = entry.get("attributes", {})
+            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
             logger.info("  Person: %s", dn)
             if "cn" in attrs:
                 logger.info("    Name: %s", attrs["cn"])
@@ -184,7 +189,12 @@ async def demonstrate_universal_crud(
         logger.warning("No naming contexts available for CRUD operations")
         return
 
-    base_dn = server_info["namingContexts"][0]
+    naming_contexts = server_info["namingContexts"]
+    if isinstance(naming_contexts, list) and len(naming_contexts) > 0:
+        base_dn = naming_contexts[0]
+    else:
+        logger.warning("No naming contexts available for test")
+        return
 
     # Create a test entry (universal attributes)
     test_dn = f"cn=testuser,{base_dn}"
@@ -196,15 +206,15 @@ async def demonstrate_universal_crud(
     }
 
     logger.info("Creating test entry: %s", test_dn)
-    create_result = await client.add_entry_generic(test_dn, test_attributes)
+    create_result = await client.add_entry_universal(test_dn, test_attributes)
 
     if create_result.is_success:
         logger.info("Successfully created test entry")
 
         # Modify the entry
         logger.info("Modifying test entry...")
-        modify_changes = {"description": "Modified test user"}
-        modify_result = await client.modify_entry_generic(test_dn, modify_changes)
+        modify_changes: dict[str, object] = {"description": "Modified test user"}
+        modify_result = await client.modify_entry_universal(test_dn, modify_changes)
 
         if modify_result.is_success:
             logger.info("Successfully modified test entry")
@@ -213,7 +223,7 @@ async def demonstrate_universal_crud(
 
         # Delete the test entry
         logger.info("Deleting test entry...")
-        delete_result = await client.delete_entry_generic(test_dn)
+        delete_result = await client.delete_entry_universal(test_dn)
 
         if delete_result.is_success:
             logger.info("Successfully deleted test entry")
@@ -341,23 +351,23 @@ def demonstrate_different_server_types() -> None:
 
     for server in server_examples:
         logger.info("\n%s Server:", server["name"])
-        logger.info("  Type: %s", server["type"].value)
+        server_type = server["type"]
+        if hasattr(server_type, 'value'):
+            logger.info("  Type: %s", server_type.value)
+        else:
+            logger.info("  Type: %s", server_type)
 
         quirks = server["quirks"]
-        logger.info("  Case Sensitive DNs: %s", quirks.get("case_sensitive_dns", True))
-        logger.info(
-            "  Case Sensitive Attributes: %s",
-            quirks.get("case_sensitive_attributes", True),
-        )
-        logger.info(
-            "  Supports Paged Results: %s", quirks.get("supports_paged_results", False)
-        )
-        logger.info("  Supports VLV: %s", quirks.get("supports_vlv", False))
-        logger.info(
-            "  Requires Explicit Bind: %s", quirks.get("requires_explicit_bind", False)
-        )
+        if isinstance(quirks, dict):
+            logger.info("  Case Sensitive DNs: %s", quirks.get("case_sensitive_dns", True))
+            logger.info("  Case Sensitive Attributes: %s", quirks.get("case_sensitive_attributes", True))
+            logger.info("  Supports Paged Results: %s", quirks.get("supports_paged_results", False))
+            logger.info("  Supports VLV: %s", quirks.get("supports_vlv", False))
+            logger.info("  Requires Explicit Bind: %s", quirks.get("requires_explicit_bind", False))
+        else:
+            logger.info("  Server quirks not available")
 
-        if "attribute_name_mappings" in quirks:
+        if isinstance(quirks, dict) and "attribute_name_mappings" in quirks:
             logger.info("  Attribute Mappings: %s", quirks["attribute_name_mappings"])
 
 
@@ -379,7 +389,7 @@ if __name__ == "__main__":
     asyncio.run(demonstrate_generic_ldap_client())
 
     # Show server type adaptations
-    asyncio.run(demonstrate_different_server_types())
+    demonstrate_different_server_types()
 
     print("\nDemonstration completed!")
     print("The FlextLdapClient provides universal compatibility")

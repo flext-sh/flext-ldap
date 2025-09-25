@@ -1,4 +1,7 @@
-"""LDAP test server management.
+"""LDAP test server management using unified FlextTestDocker.
+
+ARCHITECTURAL PRINCIPLE: All Docker operations use FlextTestDocker exclusively
+to eliminate direct docker module usage and provide consistent Docker management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,78 +17,50 @@ import asyncio
 import os
 from typing import cast
 
-import docker
-import docker.errors
-import docker.models.containers
-
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels, FlextLdapTypes
+from flext_tests import FlextTestDocker
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
 
 
 class LdapTestServer:
-    """Manages Docker-based LDAP test server."""
+    """Manages LDAP test server using unified FlextTestDocker."""
 
     def __init__(
         self,
-        container_name: str = "flext-ldap-test-server",
+        container_name: str = "flext-openldap-test",
         port: int = 3390,
         admin_password: str | None = None,
     ) -> None:
-        """Initialize LDAP test server."""
+        """Initialize LDAP test server with FlextTestDocker management."""
         self.container_name = container_name
         self.port = port
         self.admin_password = admin_password or os.getenv(
             "LDAP_TEST_ADMIN_PASSWORD",
             "admin123",
         )
-        self.docker_client = docker.from_env()
-        self._container: docker.models.containers.Container | None = None
+        # Use unified FlextTestDocker instead of direct docker client
+        self.docker_manager = FlextTestDocker()
 
     async def start(self) -> FlextResult[bool]:
-        """Start LDAP server container."""
+        """Start LDAP server container using FlextTestDocker."""
         try:
-            # Stop and remove existing container if it exists
-            await self.stop()
-
-            # Start new container
-            logger.info("Starting LDAP test server on port %s", self.port)
-
-            self._container = self.docker_client.containers.run(
-                image="osixia/openldap:1.5.0",
-                name=self.container_name,
-                ports={"389/tcp": self.port, "636/tcp": self.port + 1},
-                environment={
-                    "LDAP_ORGANISATION": "Flext Test",
-                    "LDAP_DOMAIN": "flext.local",
-                    "LDAP_ADMIN_PASSWORD": self.admin_password or "admin123",
-                    "LDAP_CONFIG_PASSWORD": self.admin_password or "admin123",
-                    "LDAP_READONLY_USER": "false",
-                    "LDAP_RFC2307BIS_SCHEMA": "false",
-                    "LDAP_BACKEND": "mdb",
-                    "LDAP_TLS": "true",
-                    "LDAP_TLS_CRT_FILENAME": "ldap.crt",
-                    "LDAP_TLS_KEY_FILENAME": "ldap.key",
-                    "LDAP_TLS_DH_PARAM_FILENAME": "dhparam.pem",
-                    "LDAP_TLS_CA_CRT_FILENAME": "ca.crt",
-                    "LDAP_TLS_ENFORCE": "false",
-                    "LDAP_TLS_CIPHER_SUITE": "SECURE256:+SECURE128:-VERS-TLS-ALL:+VERS-TLS1.2:-RSA:-DHE-DSS:-CAMELLIA-128-CBC:-CAMELLIA-256-CBC",
-                    "LDAP_TLS_VERIFY_CLIENT": "demand",
-                    "LDAP_REPLICATION": "false",
-                    "KEEP_EXISTING_CONFIG": "false",
-                    "LDAP_REMOVE_CONFIG_AFTER_SETUP": "true",
-                    "LDAP_SSL_HELPER_PREFIX": "ldap",
-                },
-                detach=True,
-                remove=False,
-                auto_remove=False,
+            logger.info(
+                "Starting LDAP test server on port %s using FlextTestDocker", self.port
             )
+
+            # Use FlextTestDocker to start the shared OpenLDAP container
+            start_result = self.docker_manager.start_container(self.container_name)
+            if start_result.is_failure:
+                return FlextResult[bool].fail(
+                    f"Failed to start LDAP container: {start_result.error}"
+                )
 
             # Wait for server to be ready
             if await self.wait_for_ready():
-                logger.info("LDAP test server started successfully")
+                logger.info("LDAP test server started successfully via FlextTestDocker")
                 return FlextResult[bool].ok(data=True)
             return FlextResult[bool].fail("LDAP server failed to start within timeout")
 
@@ -94,19 +69,19 @@ class LdapTestServer:
             return FlextResult[bool].fail(f"Failed to start LDAP server: {e}")
 
     async def stop(self) -> FlextResult[bool]:
-        """Stop and remove LDAP server container."""
+        """Stop LDAP server container using FlextTestDocker."""
         try:
-            # Try to find existing container
-            try:
-                container = self.docker_client.containers.get(self.container_name)
-                logger.info("Stopping existing container: %s", self.container_name)
-                container.stop()
-                container.remove()
-                logger.info("Existing container stopped and removed")
-            except docker.errors.NotFound:
-                logger.debug("No existing container found")
+            logger.info("Stopping LDAP container: %s", self.container_name)
 
-            self._container = None
+            # Use FlextTestDocker to stop the container
+            stop_result = self.docker_manager.stop_container(
+                self.container_name, remove=False
+            )
+            if stop_result.is_failure:
+                logger.warning("Container stop reported failure: %s", stop_result.error)
+                # Don't fail here as the container might already be stopped
+
+            logger.info("LDAP container stop requested via FlextTestDocker")
             return FlextResult[bool].ok(data=True)
 
         except Exception as e:
@@ -115,8 +90,6 @@ class LdapTestServer:
 
     async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
-        # ldap3 already imported at top
-
         try:
             async with asyncio.timeout(timeout_seconds):
                 while True:
@@ -158,8 +131,6 @@ class LdapTestServer:
     async def setup_test_data(self) -> FlextResult[bool]:
         """Set up initial test data in LDAP server."""
         try:
-            # ldap3 and test_data already imported at top
-
             # Connect to LDAP server
             server = FlextLdapTypes.Server(
                 host="localhost",
@@ -226,6 +197,30 @@ class LdapTestServer:
             timeout=30,
         )
 
+    def get_container_logs(self, tail: int = 100) -> FlextResult[str]:
+        """Get container logs using FlextTestDocker."""
+        return self.docker_manager.get_container_logs(self.container_name, tail)
+
+    def execute_container_command(self, command: str) -> FlextResult[str]:
+        """Execute command in container using FlextTestDocker."""
+        return self.docker_manager.execute_container_command(
+            self.container_name, command
+        )
+
+    def get_container_status(self) -> FlextResult[dict]:
+        """Get container status using FlextTestDocker."""
+        status_result = self.docker_manager.get_container_status(self.container_name)
+        if status_result.is_failure:
+            return FlextResult[dict].fail(status_result.error)
+
+        container_info = status_result.value
+        return FlextResult[dict].ok({
+            "name": container_info.name,
+            "status": container_info.status.value,
+            "ports": container_info.ports,
+            "image": container_info.image,
+        })
+
 
 def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:
     """Get test LDAP connection configuration."""
@@ -245,8 +240,6 @@ async def wait_for_ldap_server(
     timeout_seconds: int = 60,
 ) -> bool:
     """Wait for LDAP server to be available."""
-    # ldap3 already imported at top
-
     try:
         async with asyncio.timeout(timeout_seconds):
             while True:

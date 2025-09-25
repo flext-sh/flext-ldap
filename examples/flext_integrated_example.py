@@ -125,12 +125,17 @@ async def demonstrate_universal_operations(
     logger.info("\n=== Universal LDAP Operations ===")
 
     # Get server information using FLEXT patterns
-    server_info = client.get_server_info()
+    server_info: dict[str, object] = client.get_server_info()
     if not server_info or not server_info.get("namingContexts"):
         logger.warning("No naming contexts available for operations")
         return
 
-    base_dn = server_info["namingContexts"][0]
+    naming_contexts = server_info["namingContexts"]
+    if isinstance(naming_contexts, list) and len(naming_contexts) > 0:
+        base_dn = naming_contexts[0]
+    else:
+        logger.warning("No naming contexts available")
+        return
     logger.info("Using search base: %s", base_dn)
 
     # Create FLEXT models for search
@@ -143,17 +148,17 @@ async def demonstrate_universal_operations(
     # Perform search using FLEXT patterns
     search_result = await client.search(
         base_dn=base_dn,
-        search_filter=search_filter.expression,
+        filter_str=search_filter.expression,
         attributes=["cn", "sn", "mail", "objectClass"],
-        scope=search_scope.value,
-        size_limit=10,
+        page_size=10,
     )
 
     if search_result.is_success:
         logger.info("Found %d entries", len(search_result.data))
         for i, entry in enumerate(search_result.data[:3]):  # Show first 3
             logger.info("  Entry %d: %s", i + 1, entry.get("dn", "No DN"))
-            attrs = entry.get("attributes", {})
+            attrs_raw = entry.get("attributes", {})
+            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
             if "cn" in attrs:
                 logger.info("    CN: %s", attrs["cn"])
             if "objectClass" in attrs:
@@ -203,8 +208,8 @@ def demonstrate_flext_models(
     logger.info("FLEXT Types:")
     logger.info("  Entry Attribute Value: %s", FlextLdapTypes.EntryAttributeValue)
     logger.info("  Entry Attribute Dict: %s", FlextLdapTypes.EntryAttributeDict)
-    logger.info("  Search Result: %s", FlextLdapTypes.SearchResult)
-    logger.info("  Connection Server URI: %s", FlextLdapTypes.ConnectionServerURI)
+    logger.info("  Search Result: %s", FlextLdapTypes.LdapDomain.SearchResult)
+    logger.info("  Connection Server URI: %s", FlextLdapTypes.LdapDomain.ServerURI)
 
 
 def demonstrate_server_type_adaptations() -> None:
@@ -237,13 +242,16 @@ def demonstrate_server_type_adaptations() -> None:
         quirks = detector.get_server_quirks(server_type)
 
         logger.info("  %s:", server_info["vendorName"])
-        logger.info("    Detected Type: %s", server_type.value)
-        logger.info("    Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info(
-            "    Case Sensitive Attributes: %s", quirks.case_sensitive_attributes
-        )
-        logger.info("    Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("    Supports VLV: %s", quirks.supports_vlv)
+        logger.info("    Detected Type: %s", server_type or "unknown")
+
+        if quirks and hasattr(quirks, 'case_sensitive_dns'):
+            # Type assertion for pyrefly - using getattr to avoid type checking issues
+            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
+            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
+            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+        else:
+            logger.info("    Server quirks not available")
 
 
 if __name__ == "__main__":
@@ -268,7 +276,7 @@ if __name__ == "__main__":
     asyncio.run(demonstrate_flext_integrated_ldap())
 
     # Show server type adaptations
-    asyncio.run(demonstrate_server_type_adaptations())
+    demonstrate_server_type_adaptations()
 
     print("\nFLEXT Integration demonstration completed!")
     print("All components follow proper FLEXT architectural patterns.")

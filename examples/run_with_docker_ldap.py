@@ -15,20 +15,13 @@ import asyncio
 import importlib
 import importlib.util
 import os
-import sys
 import types
 from pathlib import Path
 
-import docker
-
 from flext_core import FlextLogger
+from flext_tests import FlextTestDocker
 
-# Add docker directory to path to import shared fixtures
-docker_dir = Path(__file__).parent.parent.parent / "docker"
-sys.path.insert(0, str(docker_dir))
-
-# Import after modifying sys.path
-from shared_ldap_fixtures import FlextSharedLDAPContainerManager  # noqa: E402
+# Use FlextTestDocker for container management
 
 logger = FlextLogger(__name__)
 
@@ -63,10 +56,10 @@ def start_openldap_container() -> bool:
 
     """
     try:
-        # Use shared container manager
-        manager = FlextSharedLDAPContainerManager()
-        container = manager.start_container()
-        return container is not None
+        # Use FlextTestDocker for container management
+        docker_manager = FlextTestDocker()
+        result = docker_manager.start_container("flext-openldap-test")
+        return result.is_success
 
     except (RuntimeError, ValueError, TypeError):
         logger.exception("Failed to start shared OpenLDAP container")
@@ -76,9 +69,9 @@ def start_openldap_container() -> bool:
 def stop_openldap_container() -> None:
     """Stop and remove shared OpenLDAP container."""
     try:
-        # Use shared container manager
-        manager = FlextSharedLDAPContainerManager()
-        manager.stop_container()
+        # Use FlextTestDocker for container management
+        docker_manager = FlextTestDocker()
+        docker_manager.stop_container("flext-openldap-test", remove=False)
     except (RuntimeError, ValueError, TypeError) as e:
         logger.warning("Failed to stop shared container: %s", e)
 
@@ -136,14 +129,14 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    # Check if Docker is available by listing containers
+    # Check if Docker is available using FlextTestDocker
     try:
-        docker_client = docker.from_env()
-        # Check connectivity by listing containers
-        containers = docker_client.containers.list()
-        # Use the result to verify Docker connectivity
-        container_count = len(containers) if containers else 0
+        docker_manager = FlextTestDocker()
+        # Test Docker connectivity
+        if not docker_manager.is_container_running():
+            logger.info("Docker is accessible for container management")
     except Exception as e:
+        logger.exception("Docker connectivity check failed")
         raise SystemExit(1) from e
 
     asyncio.run(main())

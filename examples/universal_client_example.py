@@ -104,39 +104,54 @@ def demonstrate_server_capabilities(
     logger.info("  Schema Discovered: %s", capabilities["schema_discovered"])
 
     if capabilities["server_info"]:
-        server_info = capabilities["server_info"]
-        logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
-        logger.info("  Description: %s", server_info.get("description", "Unknown"))
-        logger.info(
-            "  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown")
-        )
+        server_info_raw = capabilities["server_info"]
+        if isinstance(server_info_raw, dict):
+            server_info = server_info_raw
+            logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
+            logger.info("  Description: %s", server_info.get("description", "Unknown"))
+            logger.info("  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown"))
+        else:
+            logger.info("  Server info not available")
 
     if capabilities["server_type"]:
-        logger.info("  Server Type: %s", capabilities["server_type"].value)
+        server_type = capabilities["server_type"]
+        if hasattr(server_type, 'value'):
+            logger.info("  Server Type: %s", server_type.value)
+        else:
+            logger.info("  Server Type: %s", server_type or "unknown")
 
     if capabilities["server_quirks"]:
         quirks = capabilities["server_quirks"]
         logger.info("  Server Quirks:")
-        logger.info("    Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info(
-            "    Case Sensitive Attributes: %s", quirks.case_sensitive_attributes
-        )
-        logger.info("    Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("    Supports VLV: %s", quirks.supports_vlv)
-        logger.info("    Supports Sync: %s", quirks.supports_sync)
-        logger.info("    Max Page Size: %s", quirks.max_page_size)
-        logger.info("    Default Timeout: %s", quirks.default_timeout)
+        if hasattr(quirks, 'case_sensitive_dns'):
+            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
+            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+        else:
+            logger.info("    Server quirks not available")
+        
+        if hasattr(quirks, 'supports_paged_results'):
+            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
+            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+            logger.info("    Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
+            logger.info("    Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
+            logger.info("    Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
 
     if "naming_contexts" in capabilities:
         logger.info("  Naming Contexts: %s", capabilities["naming_contexts"])
 
     if "supported_controls" in capabilities:
-        logger.info("  Supported Controls: %d", len(capabilities["supported_controls"]))
+        supported_controls = capabilities["supported_controls"]
+        if isinstance(supported_controls, (list, tuple)):
+            logger.info("  Supported Controls: %d", len(supported_controls))
+        else:
+            logger.info("  Supported Controls: available")
 
     if "supported_extensions" in capabilities:
-        logger.info(
-            "  Supported Extensions: %d", len(capabilities["supported_extensions"])
-        )
+        supported_extensions = capabilities["supported_extensions"]
+        if isinstance(supported_extensions, (list, tuple)):
+            logger.info("  Supported Extensions: %d", len(supported_extensions))
+        else:
+            logger.info("  Supported Extensions: available")
 
     if "discovered_attributes" in capabilities:
         logger.info(
@@ -161,7 +176,11 @@ async def demonstrate_universal_search(
         logger.warning("No naming contexts available for search operations")
         return
 
-    base_dn = server_info["naming_contexts"][0]
+    naming_contexts = server_info.get("naming_contexts")
+    if not isinstance(naming_contexts, (list, tuple)) or not naming_contexts:
+        logger.warning("No naming contexts available for search operations")
+        return
+    base_dn = naming_contexts[0]
     logger.info("Using search base: %s", base_dn)
 
     # Universal search with all parameters
@@ -222,7 +241,11 @@ async def demonstrate_universal_crud(
         logger.warning("No naming contexts available for CRUD operations")
         return
 
-    base_dn = server_info["naming_contexts"][0]
+    naming_contexts = server_info.get("naming_contexts")
+    if not isinstance(naming_contexts, (list, tuple)) or not naming_contexts:
+        logger.warning("No naming contexts available for CRUD operations")
+        return
+    base_dn = naming_contexts[0]
     test_dn = f"cn=testuser,{base_dn}"
 
     logger.info("Testing CRUD operations with DN: %s", test_dn)
@@ -246,7 +269,7 @@ async def demonstrate_universal_crud(
 
         # Universal Modify Entry
         logger.info("Testing universal modify entry...")
-        modify_changes = {
+        modify_changes: dict[str, object] = {
             "description": "Modified test user description",
             "mail": "modified@example.com",
         }
@@ -285,7 +308,11 @@ async def demonstrate_universal_compare(
         logger.warning("No naming contexts available for compare operations")
         return
 
-    base_dn = server_info["naming_contexts"][0]
+    naming_contexts = server_info.get("naming_contexts")
+    if not isinstance(naming_contexts, (list, tuple)) or not naming_contexts:
+        logger.warning("No naming contexts available for compare operations")
+        return
+    base_dn = naming_contexts[0]
     test_dn = f"cn=admin,{base_dn}"
 
     logger.info("Testing universal compare with DN: %s", test_dn)
@@ -325,9 +352,12 @@ async def demonstrate_universal_extended(
     server_info = client.get_server_info()
     if server_info and "supportedExtensions" in server_info:
         extensions = server_info["supportedExtensions"]
-        logger.info("Supported extensions: %d", len(extensions))
-        for ext in extensions[:5]:  # Show first 5
-            logger.info("  Extension: %s", ext)
+        if isinstance(extensions, (list, tuple)):
+            logger.info("Supported extensions: %d", len(extensions))
+            for ext in extensions[:5]:  # Show first 5
+                logger.info("  Extension: %s", ext)
+        else:
+            logger.info("Supported extensions: available")
 
 
 def demonstrate_server_adaptations(
@@ -413,14 +443,21 @@ def demonstrate_server_type_detection() -> None:
         quirks = detector.get_server_quirks(server_type)
 
         logger.info("Server: %s", server_info["vendorName"])
-        logger.info("  Detected Type: %s", server_type.value)
-        logger.info("  Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info("  Case Sensitive Attributes: %s", quirks.case_sensitive_attributes)
-        logger.info("  Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("  Supports VLV: %s", quirks.supports_vlv)
-        logger.info("  Supports Sync: %s", quirks.supports_sync)
-        logger.info("  Max Page Size: %s", quirks.max_page_size)
-        logger.info("  Default Timeout: %s", quirks.default_timeout)
+        if server_type and hasattr(server_type, 'value'):
+            logger.info("  Detected Type: %s", server_type.value)
+        else:
+            logger.info("  Detected Type: unknown")
+        
+        if quirks:
+            logger.info("  Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
+            logger.info("  Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+            logger.info("  Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
+            logger.info("  Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+            logger.info("  Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
+            logger.info("  Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
+            logger.info("  Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+        else:
+            logger.info("  Server quirks not available")
         logger.info()
 
 

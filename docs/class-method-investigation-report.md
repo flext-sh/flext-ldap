@@ -25,7 +25,7 @@ src/flext_ldap/
 ├── __init__.py          # Main exports and model rebuilding
 ├── api.py               # FlextLdapAPI (unified entry point)
 ├── clients.py           # FlextLdapClient (LDAP operations)
-├── config.py            # FlextLdapConfigs (configuration)
+├── config.py            # FlextLdapConfig (configuration)
 ├── models.py            # FlextLdapModels (unified models)
 ├── protocols.py         # FlextLdapProtocols (interfaces)
 ├── repositories.py      # FlextLdapRepositories (data access)
@@ -77,7 +77,7 @@ class FlextLdapAPI:
     @property
     def client(self) -> FlextLdapClient
     @property
-    def config(self) -> FlextLdapConfigs
+    def config(self) -> FlextLdapConfig
     @property
     def users(self) -> FlextLdapRepositories.UserRepository
     @property
@@ -101,7 +101,7 @@ class FlextLdapAPI:
 **Dependencies**:
 
 - `FlextLdapClient` → Core LDAP operations
-- `FlextLdapConfigs` → Configuration management
+- `FlextLdapConfig` → Configuration management
 - `FlextLdapModels` → Data structures
 - `FlextLdapValidations` → Input validation
 
@@ -164,7 +164,7 @@ class FlextLdapClient:
 
 ```python
 @final
-class FlextLdapConfigs(FlextConfig):
+class FlextLdapConfig(FlextConfig):
     # Singleton Implementation
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
@@ -562,7 +562,7 @@ __all__ = ["FlextExceptions"]
 
 - **Total Methods**: 30 methods + 4 properties
 - **Core Operations**: Authentication, Connection, Search, CRUD, Validation
-- **Dependencies**: FlextLdapClient, FlextLdapConfigs, FlextLdapRepositories, FlextLdapModels
+- **Dependencies**: FlextLdapClient, FlextLdapConfig, FlextLdapRepositories, FlextLdapModels
 
 #### FlextLdapClient Class Structure
 
@@ -585,7 +585,7 @@ FlextLdapAPI
 │   ├── FlextLdapModels (14 nested classes)
 │   ├── FlextLogger (flext-core)
 │   └── ldap3 (third-party)
-├── FlextLdapConfigs (Singleton pattern, extensive configuration)
+├── FlextLdapConfig (Singleton pattern, extensive configuration)
 │   ├── FlextConfig (flext-core)
 │   ├── FlextLdapModels.ConnectionConfig
 │   └── FlextLdapConstants
@@ -707,7 +707,7 @@ FlextLdapValidations (5 validation methods)
 - **FlextLdapAPI**: 30 methods + 4 properties (comprehensive API coverage)
 - **FlextLdapClient**: 35 methods + 1 property (extensive LDAP operations)
 - **FlextLdapModels**: 14 nested classes (unified model organization)
-- **FlextLdapConfigs**: 20+ configuration fields + validation methods
+- **FlextLdapConfig**: 20+ configuration fields + validation methods
 - **FlextLdapRepositories**: 2 specialized repositories with generic base
 - **FlextLdapValidations**: 5 centralized validation methods
 - **FlextLdapTypeGuards**: 7 runtime type checking functions
@@ -1194,7 +1194,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr  # ❌ VIOLATION
 
 ```python
 """
-FlextLdapConfigs - High Impact Configuration Module
+FlextLdapConfig - High Impact Configuration Module
 
 This module has high architectural impact due to:
 - 944 lines of code (second largest)
@@ -1666,7 +1666,7 @@ Validations MUST ONLY be done in config and models, NEVER inline in code
    - All validation logic in one place
    - Reusable across config and models
 
-2. Config Validation (FlextLdapConfigs):
+2. Config Validation (FlextLdapConfig):
    - Use centralized validation methods
    - No inline validation logic
 
@@ -1717,7 +1717,7 @@ All validation methods across the flext-ldap project have been audited and docum
 
 **API Module (4 Violations)**:
 
-- `validate_configuration_consistency()` - Line 478: ❌ FLEXT VIOLATION - Should use FlextLdapConfigs.validate_configuration_consistency()
+- `validate_configuration_consistency()` - Line 478: ❌ Flext VIOLATION - Should use FlextLdapConfig.validate_configuration_consistency()
 - `validate_dn()` - Line 519: ❌ FLEXT VIOLATION - Should use FlextLdapValidations.validate_dn()
 - `validate_filter()` - Line 541: ❌ FLEXT VIOLATION - Should use FlextLdapValidations.validate_filter()
 - `validate_email()` - Line 563: ❌ FLEXT VIOLATION - Should use FlextLdapValidations.validate_email()

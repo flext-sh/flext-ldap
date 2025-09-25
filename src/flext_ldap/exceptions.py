@@ -15,15 +15,6 @@ from typing import TypedDict, Unpack
 from flext_core import FlextExceptions
 
 
-class _LdapExceptionKwargs(TypedDict, total=False):
-    """Type-safe kwargs for LDAP exceptions."""
-
-    code: str | None
-    context: Mapping[str, object] | None
-    correlation_id: str | None
-    config_file: str | None
-
-
 class FlextLdapExceptions(FlextExceptions):
     """LDAP-specific exceptions extending FlextExceptions.
 
@@ -34,6 +25,143 @@ class FlextLdapExceptions(FlextExceptions):
     All LDAP exceptions inherit from FlextExceptions.BaseError and include
     proper error codes, context, and correlation tracking.
     """
+
+    def __init__(self) -> None:
+        """Initialize LDAP exceptions with container and logger."""
+        super().__init__()
+        self._container = None
+        self._logger = None
+
+    def connection_error(
+        self,
+        message: str,
+        server_uri: str,
+        ldap_code: int | None = None,
+    ) -> Exception:
+        """Create connection error."""
+        return self.LdapConnectionError(
+            message, server_uri=server_uri, ldap_code=ldap_code
+        )
+
+    def authentication_error(self, message: str, bind_dn: str) -> Exception:
+        """Create authentication error."""
+        return self.LdapAuthenticationError(message, bind_dn=bind_dn)
+
+    def search_error(
+        self,
+        message: str,
+        filter_str: str,
+        base_dn: str,
+        context: str | None = None,
+    ) -> Exception:
+        """Create search error."""
+        return self.LdapSearchError(
+            message, base_dn=base_dn, filter_str=filter_str, search_context=context
+        )
+
+    def operation_error(
+        self, message: str, dn: str, target: str | None = None
+    ) -> Exception:
+        """Create operation error."""
+        full_message = f"{message} (target: {target})" if target else message
+        return self.LdapModifyError(full_message, dn=dn)
+
+    def validation_error(
+        self,
+        message: str,
+        value: str,
+        field: str | None = None,
+    ) -> Exception:
+        """Create validation error."""
+        full_message = f"{message} (value: {value})"
+        if field:
+            full_message += f" (field: {field})"
+        return self.LdapValidationError(full_message, ldap_field=field)
+
+    def configuration_error(
+        self,
+        message: str,
+        config_key: str,
+        section: str | None = None,
+    ) -> Exception:
+        """Create configuration error."""
+        return self.LdapConfigurationError(
+            message, ldap_config_key=config_key, section=section
+        )
+
+    def type_error(
+        self,
+        message: str,
+        value: str,
+        expected_type: str,
+        actual_type: str | None = None,
+    ) -> Exception:
+        """Create type error."""
+        # Include type information in the error message
+        type_info = f"Expected {expected_type}"
+        if actual_type:
+            type_info += f", got {actual_type}"
+        full_message = f"{message} ({type_info})"
+        return self.LdapValidationError(full_message, ldap_field=value)
+
+    def ldap_error(
+        self,
+        message: str,
+        operation: str,
+        ldap_code: int | None = None,
+    ) -> Exception:
+        """Create LDAP error."""
+        # Include operation and LDAP code in the error message
+        full_message = f"{message} (Operation: {operation}"
+        if ldap_code is not None:
+            full_message += f", LDAP Code: {ldap_code}"
+        full_message += ")"
+        return self.LdapModifyError(full_message, dn=None)
+
+    def user_error(
+        self,
+        message: str,
+        username: str,
+        operation: str | None = None,
+        reason: str | None = None,
+    ) -> Exception:
+        """Create user error."""
+        # Include operation and reason in the error message
+        full_message = f"{message} (User: {username}"
+        if operation:
+            full_message += f", Operation: {operation}"
+        if reason:
+            full_message += f", Reason: {reason}"
+        full_message += ")"
+        return self.LdapEntryNotFoundError(full_message, dn=username)
+
+    def group_error(
+        self,
+        message: str,
+        groupname: str,
+        operation: str | None = None,
+    ) -> Exception:
+        """Create group error."""
+        return self.LdapEntryNotFoundError(message, dn=groupname, operation=operation)
+
+    def connection_failed(
+        self,
+        message: str,
+        server_uri: str | None = None,
+        ldap_code: int | None = None,
+    ) -> Exception:
+        """Create connection failed error."""
+        return self.LdapConnectionError(
+            message, server_uri=server_uri, ldap_code=ldap_code
+        )
+
+    class _LdapExceptionKwargs(TypedDict, total=False):
+        """Type-safe kwargs for LDAP exceptions."""
+
+        code: str | None
+        context: Mapping[str, object] | None
+        correlation_id: str | None
+        config_file: str | None
 
     class LdapConnectionError(FlextExceptions._ConnectionError):
         """LDAP connection failure.
@@ -46,13 +174,15 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             server_uri: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            ldap_code: int | None = None,
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP connection error.
 
             Args:
                 message: Error message
                 server_uri: LDAP server URI that failed
+                ldap_code: LDAP result code
                 **kwargs: Additional context
 
             """
@@ -63,6 +193,19 @@ class FlextLdapExceptions(FlextExceptions):
                 **kwargs,
             )
             self.server_uri = server_uri
+            self.ldap_code = ldap_code
+
+        def __str__(self) -> str:
+            """Return string representation with server URI and LDAP code."""
+            base_str = super().__str__()
+            details = []
+            if self.server_uri:
+                details.append(f"server: {self.server_uri}")
+            if self.ldap_code is not None:
+                details.append(f"code: {self.ldap_code}")
+            if details:
+                return f"{base_str} ({', '.join(details)})"
+            return base_str
 
     class LdapAuthenticationError(FlextExceptions._AuthenticationError):
         """LDAP authentication failure.
@@ -75,7 +218,7 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             bind_dn: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP authentication error.
 
@@ -92,6 +235,13 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.bind_dn = bind_dn
 
+        def __str__(self) -> str:
+            """Return string representation with bind DN details."""
+            base_str = super().__str__()
+            if self.bind_dn:
+                return f"{base_str} (bind_dn: {self.bind_dn})"
+            return base_str
+
     class LdapSearchError(FlextExceptions._OperationError):
         """LDAP search operation failure.
 
@@ -104,7 +254,8 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             base_dn: str | None = None,
             filter_str: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            search_context: str | None = None,
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP search error.
 
@@ -112,6 +263,7 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 base_dn: Search base DN
                 filter_str: LDAP search filter
+                search_context: Additional context information
                 **kwargs: Additional context
 
             """
@@ -122,6 +274,21 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.base_dn = base_dn
             self.filter_str = filter_str
+            self.search_context = search_context
+
+        def __str__(self) -> str:
+            """Return string representation with search details."""
+            base_str = super().__str__()
+            details = []
+            if self.filter_str:
+                details.append(f"filter: {self.filter_str}")
+            if self.base_dn:
+                details.append(f"base: {self.base_dn}")
+            if self.search_context:
+                details.append(f"context: {self.search_context}")
+            if details:
+                return f"{base_str} ({', '.join(details)})"
+            return base_str
 
     class LdapModifyError(FlextExceptions._OperationError):
         """LDAP modify operation failure.
@@ -135,7 +302,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             dn: str | None = None,
             modifications: list[tuple[str, str, object]] | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP modify error.
 
@@ -154,6 +321,13 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.modifications = modifications
 
+        def __str__(self) -> str:
+            """Return string representation with DN details."""
+            base_str = super().__str__()
+            if self.dn:
+                return f"{base_str} (dn: {self.dn})"
+            return base_str
+
     class LdapAddError(FlextExceptions._OperationError):
         """LDAP add operation failure.
 
@@ -166,7 +340,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             dn: str | None = None,
             object_classes: list[str] | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP add error.
 
@@ -196,7 +370,7 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP delete error.
 
@@ -224,7 +398,7 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             ldap_field: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP validation error.
 
@@ -241,6 +415,13 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.ldap_field = ldap_field
 
+        def __str__(self) -> str:
+            """Return string representation with field details."""
+            base_str = super().__str__()
+            if self.ldap_field:
+                return f"{base_str} (field: {self.ldap_field})"
+            return base_str
+
     class LdapConfigurationError(FlextExceptions._ConfigurationError):
         """LDAP configuration error.
 
@@ -252,13 +433,15 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             ldap_config_key: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            section: str | None = None,
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP configuration error.
 
             Args:
                 message: Error message
                 ldap_config_key: LDAP configuration key that is invalid
+                section: Configuration section name
                 **kwargs: Additional context
 
             """
@@ -268,6 +451,19 @@ class FlextLdapExceptions(FlextExceptions):
                 **kwargs,
             )
             self.ldap_config_key = ldap_config_key
+            self.section = section
+
+        def __str__(self) -> str:
+            """Return string representation with config key details."""
+            base_str = super().__str__()
+            details = []
+            if self.ldap_config_key:
+                details.append(f"config: {self.ldap_config_key}")
+            if self.section:
+                details.append(f"section: {self.section}")
+            if details:
+                return f"{base_str} ({', '.join(details)})"
+            return base_str
 
     class LdapTimeoutError(FlextExceptions._TimeoutError):
         """LDAP operation timeout.
@@ -281,7 +477,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             operation: str | None = None,
             timeout_seconds: float | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP timeout error.
 
@@ -310,13 +506,15 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            operation: str | None = None,
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP entry not found error.
 
             Args:
                 message: Error message
                 dn: DN of the entry that was not found
+                operation: Operation that was attempted
                 **kwargs: Additional context
 
             """
@@ -327,6 +525,19 @@ class FlextLdapExceptions(FlextExceptions):
                 **kwargs,
             )
             self.dn = dn
+            self.operation = operation
+
+        def __str__(self) -> str:
+            """Return string representation with DN and operation details."""
+            base_str = super().__str__()
+            details = []
+            if self.dn:
+                details.append(f"dn: {self.dn}")
+            if self.operation:
+                details.append(f"operation: {self.operation}")
+            if details:
+                return f"{base_str} ({', '.join(details)})"
+            return base_str
 
     class LdapEntryAlreadyExistsError(FlextExceptions._AlreadyExistsError):
         """LDAP entry already exists.
@@ -339,7 +550,7 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            **kwargs: Unpack[_LdapExceptionKwargs],
+            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
         ) -> None:
             """Initialize LDAP entry already exists error.
 
