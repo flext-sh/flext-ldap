@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextHandlers, FlextModels, FlextResult
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
@@ -17,6 +19,7 @@ MIN_ACL_PARTS = 6
 class FlextLdapAclManager(FlextHandlers[object, object]):
     """ACL Manager for comprehensive ACL operations."""
 
+    @override
     def __init__(self) -> None:
         """Initialize ACL Manager."""
         # Create a minimal config for FlextHandlers
@@ -40,6 +43,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         self._parsers = FlextLdapAclParsers(config=parser_config)
         self._converters = FlextLdapAclConverters(config=converter_config)
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle ACL operations with proper type safety."""
         try:
@@ -104,7 +108,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
             source_format = message.get("source_format", "auto")
             if not isinstance(source_format, str):
                 source_format = "auto"
-            result = self._converters.UniversalConverter.convert(
+            result = self._converters.convert_acl(
                 acl_data, source_format, target_format
             )
             return FlextResult[object].ok(result)
@@ -138,7 +142,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
     ) -> FlextResult[object]:
         """Convert ACL from one format to another."""
         try:
-            result = self._converters.UniversalConverter.convert(
+            result = self._converters.convert_acl(
                 acl_data, source_format, target_format
             )
             if result.is_success:
@@ -158,9 +162,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
 
             results = []
             for acl in acls:
-                result = self._converters.UniversalConverter.convert(
-                    acl, source_format, target_format
-                )
+                result = self._converters.convert_acl(acl, source_format, target_format)
                 if result.is_failure:
                     return FlextResult[list[object]].fail(
                         f"Batch conversion failed for ACL '{acl}': {result.error}"

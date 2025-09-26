@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import override
 
 from flext_core import (
     FlextHandlers,
@@ -29,6 +30,7 @@ class FlextLdapRepositories(FlextService[None]):
     following FLEXT one-class-per-module standards.
     """
 
+    @override
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""
         return FlextResult[None].ok(None)
@@ -40,6 +42,7 @@ class FlextLdapRepositories(FlextService[None]):
     class Repository(FlextHandlers[object, object], ABC):
         """Base repository interface for LDAP operations."""
 
+        @override
         def __init__(self, client: FlextLdapClient) -> None:
             """Initialize repository with LDAP client."""
             # Create a minimal config for FlextHandlers
@@ -53,6 +56,7 @@ class FlextLdapRepositories(FlextService[None]):
             self._logger = FlextLogger(self.__class__.__name__)
 
         @abstractmethod
+        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle the message and return result."""
 
@@ -91,6 +95,7 @@ class FlextLdapRepositories(FlextService[None]):
     class UserRepository(Repository):
         """Repository for LDAP user operations with real LDAP client integration."""
 
+        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle user message."""
             if isinstance(message, FlextLdapModels.LdapUser):
@@ -340,6 +345,7 @@ class FlextLdapRepositories(FlextService[None]):
     class GroupRepository(Repository):
         """Repository for LDAP group operations with real LDAP client integration."""
 
+        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle group message."""
             if isinstance(message, FlextLdapModels.Group):

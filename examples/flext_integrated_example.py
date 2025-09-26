@@ -244,12 +244,23 @@ def demonstrate_server_type_adaptations() -> None:
         logger.info("  %s:", server_info["vendorName"])
         logger.info("    Detected Type: %s", server_type or "unknown")
 
-        if quirks and hasattr(quirks, 'case_sensitive_dns'):
+        if quirks and hasattr(quirks, "case_sensitive_dns"):
             # Type assertion for pyrefly - using getattr to avoid type checking issues
-            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
-            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
-            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
-            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+            logger.info(
+                "    Case Sensitive DNs: %s",
+                getattr(quirks, "case_sensitive_dns", "unknown"),
+            )
+            logger.info(
+                "    Case Sensitive Attributes: %s",
+                getattr(quirks, "case_sensitive_attributes", "unknown"),
+            )
+            logger.info(
+                "    Supports Paged Results: %s",
+                getattr(quirks, "supports_paged_results", "unknown"),
+            )
+            logger.info(
+                "    Supports VLV: %s", getattr(quirks, "supports_vlv", "unknown")
+            )
         else:
             logger.info("    Server quirks not available")
 

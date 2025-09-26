@@ -15,7 +15,7 @@ import asyncio
 import os
 
 from flext_core import FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapModels, FlextLdapTypes
+from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.typings import MODIFY_REPLACE
 
 
@@ -25,7 +25,10 @@ async def main() -> None:
     client = FlextLdapClient()
 
     # Example 1: Single server connection
-    server_uri = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
+    server_uri = os.getenv(
+        "LDAP_TEST_SERVER",
+        f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+    )
     bind_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
     bind_password = os.getenv("LDAP_TEST_PASSWORD", "")
 
@@ -89,9 +92,7 @@ async def main() -> None:
             # Modify entry
             modify_result: FlextResult[None] = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
-                changes={
-                    "mail": [(MODIFY_REPLACE, ["updated@example.com"])]
-                },
+                changes={"mail": [(MODIFY_REPLACE, ["updated@example.com"])]},
             )
 
             if modify_result.is_success:

@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Final, cast
+from typing import Final, cast, override
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
 
@@ -42,21 +42,26 @@ class FlextLdapModels(FlextModels):
     # VALUE OBJECTS - Immutable LDAP value objects
     # =========================================================================
 
-    @dataclass(frozen=True)
-    class DistinguishedName:
-        """LDAP Distinguished Name value object with RFC 2253 compliance."""
+    class DistinguishedName(FlextModels.Value):
+        """LDAP Distinguished Name value object with RFC 2253 compliance.
 
-        value: str
+        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        """
 
-        def __post_init__(self) -> None:
+        value: str = Field(..., min_length=1, description="Distinguished Name string")
+
+        @field_validator("value")
+        @classmethod
+        def validate_dn_format(cls, v: str) -> str:
             """Validate Distinguished Name format and content."""
-            if not self.value or not self.value.strip():
+            if not v or not v.strip():
                 msg = "Distinguished Name cannot be empty"
                 raise ValueError(msg)
             # Basic DN validation - full RFC 2253 validation would be more complex
-            if "=" not in self.value:
+            if "=" not in v:
                 msg = "Invalid DN format - missing attribute=value pairs"
                 raise ValueError(msg)
+            return v.strip()
 
         @property
         def rdn(self) -> str:
@@ -75,21 +80,26 @@ class FlextLdapModels(FlextModels):
             except ValueError as e:
                 return FlextResult[FlextLdapModels.DistinguishedName].fail(str(e))
 
-    @dataclass(frozen=True)
-    class Filter:
-        """LDAP filter value object with RFC 4515 compliance."""
+    class Filter(FlextModels.Value):
+        """LDAP filter value object with RFC 4515 compliance.
 
-        expression: str
+        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        """
 
-        def __post_init__(self) -> None:
+        expression: str = Field(..., min_length=1, description="LDAP filter expression")
+
+        @field_validator("expression")
+        @classmethod
+        def validate_filter_syntax(cls, v: str) -> str:
             """Validate LDAP filter syntax and format."""
-            if not self.expression or not self.expression.strip():
+            if not v or not v.strip():
                 msg = "LDAP filter cannot be empty"
                 raise ValueError(msg)
             # Basic filter validation
-            if not (self.expression.startswith("(") and self.expression.endswith(")")):
+            if not (v.startswith("(") and v.endswith(")")):
                 msg = "LDAP filter must be enclosed in parentheses"
                 raise ValueError(msg)
+            return v.strip()
 
         @classmethod
         def equals(cls, attribute: str, value: str) -> FlextLdapModels.Filter:
@@ -110,24 +120,27 @@ class FlextLdapModels(FlextModels):
             """Create objectClass filter."""
             return cls(expression=f"(objectClass={object_class})")
 
-    @dataclass(frozen=True)
-    class Scope:
-        """LDAP search scope value object."""
+    class Scope(FlextModels.Value):
+        """LDAP search scope value object.
 
-        value: str
+        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        """
+
+        value: str = Field(..., description="LDAP search scope value")
 
         BASE: Final[str] = "base"
         ONELEVEL: Final[str] = "onelevel"
         SUBTREE: Final[str] = "subtree"
 
-        def __post_init__(self) -> None:
+        @field_validator("value")
+        @classmethod
+        def validate_scope_value(cls, v: str) -> str:
             """Validate LDAP search scope value."""
-            valid_scopes = {self.BASE, self.ONELEVEL, self.SUBTREE}
-            if self.value not in valid_scopes:
-                error_msg = (
-                    f"Invalid scope: {self.value}. Must be one of {valid_scopes}"
-                )
-                raise ValueError(error_msg)
+            valid_scopes = {cls.BASE, cls.ONELEVEL, cls.SUBTREE}
+            if v not in valid_scopes:
+                msg = f"Invalid scope: {v}. Must be one of {valid_scopes}"
+                raise ValueError(msg)
+            return v
 
         @classmethod
         def base(cls) -> FlextLdapModels.Scope:
@@ -162,34 +175,42 @@ class FlextLdapModels(FlextModels):
         IBM_DIRECTORY = "ibm_directory"
         GENERIC = "generic"
 
-    @dataclass(frozen=True)
-    class SchemaAttribute:
-        """LDAP schema attribute definition."""
+    class SchemaAttribute(FlextModels.Value):
+        """LDAP schema attribute definition.
 
-        name: str
-        oid: str
-        syntax: str
-        is_single_valued: bool
-        is_operational: bool = False
-        is_collective: bool = False
-        is_no_user_modification: bool = False
-        usage: str = "userApplications"  # userApplications, directoryOperation, distributedOperation, dSAOperation
-        equality: str | None = None
-        ordering: str | None = None
-        substr: str | None = None
-        superior: str | None = None
+        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        """
 
-    @dataclass(frozen=True)
-    class SchemaObjectClass:
-        """LDAP schema object class definition."""
+        name: str = Field(..., description="Attribute name")
+        oid: str = Field(..., description="Object identifier")
+        syntax: str = Field(..., description="Attribute syntax")
+        is_single_valued: bool = Field(..., description="Single valued attribute")
+        is_operational: bool = Field(default=False, description="Operational attribute")
+        is_collective: bool = Field(default=False, description="Collective attribute")
+        is_no_user_modification: bool = Field(
+            default=False, description="No user modification"
+        )
+        usage: str = Field(default="userApplications", description="Attribute usage")
+        equality: str | None = Field(default=None, description="Equality matching rule")
+        ordering: str | None = Field(default=None, description="Ordering matching rule")
+        substr: str | None = Field(default=None, description="Substring matching rule")
+        superior: str | None = Field(default=None, description="Superior attribute")
 
-        name: str
-        oid: str
-        superior: list[str] = field(default_factory=list)
-        must: list[str] = field(default_factory=list)
-        may: list[str] = field(default_factory=list)
-        kind: str = "STRUCTURAL"  # STRUCTURAL, AUXILIARY, ABSTRACT
-        is_obsolete: bool = False
+    class SchemaObjectClass(FlextModels.Value):
+        """LDAP schema object class definition.
+
+        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        """
+
+        name: str = Field(..., description="Object class name")
+        oid: str = Field(..., description="Object identifier")
+        superior: list[str] = Field(
+            default_factory=list, description="Superior classes"
+        )
+        must: list[str] = Field(default_factory=list, description="Required attributes")
+        may: list[str] = Field(default_factory=list, description="Optional attributes")
+        kind: str = Field(default="STRUCTURAL", description="Object class kind")
+        is_obsolete: bool = Field(default=False, description="Obsolete flag")
 
     @dataclass(frozen=True)
     class ServerQuirks:
@@ -253,7 +274,9 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_dn_field(v: str) -> str:
             """Common DN validation using centralized validation."""
-            validation_result: FlextResult[None] = FlextLdapValidations.validate_dn(v)
+            validation_result: FlextResult[None] = FlextLdapValidations.validate_dn(
+                v
+            ).map(lambda _: None)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return v.strip()
@@ -262,8 +285,8 @@ class FlextLdapModels(FlextModels):
         def validate_email_field(value: str | None) -> str | None:
             """Common email validation using centralized validation."""
             validation_result: FlextResult[None] = FlextLdapValidations.validate_email(
-                value
-            )
+                str(value) if value is not None else ""
+            ).map(lambda _: None)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return value
@@ -272,7 +295,9 @@ class FlextLdapModels(FlextModels):
         def validate_password_field(value: str | None) -> str | None:
             """Common password validation using centralized validation."""
             validation_result: FlextResult[None] = (
-                FlextLdapValidations.validate_password(value)
+                FlextLdapValidations.validate_password(
+                    str(value) if value is not None else ""
+                ).map(lambda _: None)
             )
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
@@ -454,7 +479,9 @@ class FlextLdapModels(FlextModels):
             return attributes
 
         @classmethod
-        def from_ldap_attributes(cls, ldap_attributes: dict[str, list[str]]) -> FlextResult[FlextLdapModels.LdapUser]:
+        def from_ldap_attributes(
+            cls, ldap_attributes: dict[str, list[str]]
+        ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create user from LDAP attributes."""
             try:
                 # Extract DN
@@ -480,7 +507,9 @@ class FlextLdapModels(FlextModels):
                 mail = mail_values[0] if mail_values else None
 
                 telephone_number_values = ldap_attributes.get("telephoneNumber", [])
-                telephone_number = telephone_number_values[0] if telephone_number_values else None
+                telephone_number = (
+                    telephone_number_values[0] if telephone_number_values else None
+                )
 
                 mobile_values = ldap_attributes.get("mobile", [])
                 mobile = mobile_values[0] if mobile_values else None
@@ -495,9 +524,15 @@ class FlextLdapModels(FlextModels):
                 organization = organization_values[0] if organization_values else None
 
                 organizational_unit_values = ldap_attributes.get("ou", [])
-                organizational_unit = organizational_unit_values[0] if organizational_unit_values else None
+                organizational_unit = (
+                    organizational_unit_values[0]
+                    if organizational_unit_values
+                    else None
+                )
 
-                object_classes = ldap_attributes.get("objectClass", ["person", "organizationalPerson", "inetOrgPerson"])
+                object_classes = ldap_attributes.get(
+                    "objectClass", ["person", "organizationalPerson", "inetOrgPerson"]
+                )
 
                 # Create user
                 user = cls(
@@ -528,7 +563,9 @@ class FlextLdapModels(FlextModels):
 
                 return FlextResult[FlextLdapModels.LdapUser].ok(user)
             except Exception as e:
-                return FlextResult[FlextLdapModels.LdapUser].fail(f"Failed to create user from LDAP attributes: {e}")
+                return FlextResult[FlextLdapModels.LdapUser].fail(
+                    f"Failed to create user from LDAP attributes: {e}"
+                )
 
         def get_attribute(
             self,
@@ -748,7 +785,9 @@ class FlextLdapModels(FlextModels):
             return attributes
 
         @classmethod
-        def from_ldap_attributes(cls, ldap_attributes: dict[str, list[str]]) -> FlextResult[FlextLdapModels.Group]:
+        def from_ldap_attributes(
+            cls, ldap_attributes: dict[str, list[str]]
+        ) -> FlextResult[FlextLdapModels.Group]:
             """Create group from LDAP attributes."""
             try:
                 # Extract DN
@@ -767,7 +806,9 @@ class FlextLdapModels(FlextModels):
                 description_values = ldap_attributes.get("description", [])
                 description = description_values[0] if description_values else None
 
-                object_classes = ldap_attributes.get("objectClass", ["groupOfNames", "top"])
+                object_classes = ldap_attributes.get(
+                    "objectClass", ["groupOfNames", "top"]
+                )
 
                 member_dns = ldap_attributes.get("member", [])
                 unique_member_dns = ldap_attributes.get("uniqueMember", [])
@@ -792,7 +833,9 @@ class FlextLdapModels(FlextModels):
 
                 return FlextResult[FlextLdapModels.Group].ok(group)
             except Exception as e:
-                return FlextResult[FlextLdapModels.Group].fail(f"Failed to create group from LDAP attributes: {e}")
+                return FlextResult[FlextLdapModels.Group].fail(
+                    f"Failed to create group from LDAP attributes: {e}"
+                )
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group with enhanced error handling."""
@@ -931,7 +974,7 @@ class FlextLdapModels(FlextModels):
                         for item in attribute_value
                     ]
                 # This should never happen given our type definition, but mypy needs it
-                return [str(attribute_value)]  # type: ignore[unreachable]
+                return [str(attribute_value)]
             except Exception:
                 return None
 
@@ -995,9 +1038,9 @@ class FlextLdapModels(FlextModels):
             ge=0,
         )
 
-        # Paging
-        page_size: int | None = Field(
-            None,
+        # Paging - REQUIRED fields for proper LDAP operations
+        page_size: int = Field(
+            ...,
             description="Page size for paged results",
             ge=1,
         )
@@ -1029,7 +1072,7 @@ class FlextLdapModels(FlextModels):
             """Validate LDAP filter format using centralized validation."""
             validation_result: FlextResult[None] = FlextLdapValidations.validate_filter(
                 v
-            )
+            ).map(lambda _: None)
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return v.strip()
@@ -1047,7 +1090,7 @@ class FlextLdapModels(FlextModels):
                     "base_dn": base_dn,
                     "filter_str": f"(&(objectClass=person)(uid={uid}))",
                     "attributes": attributes or ["uid", "cn", "mail", "sn"],
-                    "page_size": None,
+                    "page_size": 100,  # Default page size
                     "paged_cookie": None,
                 },
             )
@@ -1065,7 +1108,7 @@ class FlextLdapModels(FlextModels):
                     "base_dn": base_dn,
                     "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
                     "attributes": attributes or ["cn", "member", "description"],
-                    "page_size": None,
+                    "page_size": 100,  # Default page size
                     "paged_cookie": None,
                 },
             )
@@ -1113,17 +1156,17 @@ class FlextLdapModels(FlextModels):
         cn: str = Field(..., description="Common Name")
         sn: str = Field(..., description="Surname")
 
-        # Optional user attributes
-        given_name: str | None = Field(None, description="Given Name")
-        mail: str | None = Field(None, description="Email address")
-        user_password: str | None = Field(None, description="User password")
-        telephone_number: str | None = Field(None, description="Phone number")
-        description: str | None = Field(None, description="User description")
+        # Required user attributes - making them required for proper user creation
+        given_name: str = Field(..., description="Given Name")
+        mail: str = Field(..., description="Email address")
+        user_password: str = Field(..., description="User password")
+        telephone_number: str = Field(..., description="Phone number")
+        description: str = Field(..., description="User description")
 
-        # Organizational
-        department: str | None = Field(None, description="Department")
-        title: str | None = Field(None, description="Job title")
-        organization: str | None = Field(None, description="Organization")
+        # Required organizational fields
+        department: str = Field(..., description="Department")
+        title: str = Field(..., description="Job title")
+        organization: str = Field(..., description="Organization")
 
         # LDAP metadata
         object_classes: list[str] = Field(
@@ -1161,7 +1204,19 @@ class FlextLdapModels(FlextModels):
             """Validate password requirements using centralized validation."""
             return cls.validate_password_field(value)
 
-        @field_validator("uid", "cn", "sn")
+        @field_validator(
+            "uid",
+            "cn",
+            "sn",
+            "given_name",
+            "mail",
+            "user_password",
+            "telephone_number",
+            "description",
+            "department",
+            "title",
+            "organization",
+        )
         @classmethod
         def validate_required_string(cls, v: str) -> str:
             """Validate required string fields."""
@@ -1175,6 +1230,12 @@ class FlextLdapModels(FlextModels):
                 return FlextResult[None].fail("UID cannot be empty")
             if not self.cn:
                 return FlextResult[None].fail("Common Name cannot be empty")
+            if not self.given_name:
+                return FlextResult[None].fail("Given Name cannot be empty")
+            if not self.mail:
+                return FlextResult[None].fail("Email cannot be empty")
+            if not self.user_password:
+                return FlextResult[None].fail("Password cannot be empty")
             return FlextResult[None].ok(None)
 
         def to_user_entity(self) -> FlextLdapModels.LdapUser:
@@ -1209,9 +1270,9 @@ class FlextLdapModels(FlextModels):
         dn: str = Field(..., description="Distinguished Name for new group")
         cn: str = Field(..., description="Common Name")
 
-        # Optional group attributes
-        description: str | None = Field(None, description="Group description")
-        members: list[str] | None = Field(None, description="Initial group members")
+        # Required group attributes
+        description: str = Field(..., description="Group description")
+        members: list[str] = Field(..., description="Initial group members")
 
         # LDAP metadata
         object_classes: list[str] = Field(
@@ -1225,11 +1286,20 @@ class FlextLdapModels(FlextModels):
             """Validate Distinguished Name format using centralized validation."""
             return cls.validate_dn_field(v)
 
-        @field_validator("cn")
+        @field_validator("cn", "description")
         @classmethod
         def validate_cn(cls, v: str) -> str:
-            """Validate Common Name."""
+            """Validate Common Name and description."""
             return cls.validate_required_string_field(v)
+
+        @field_validator("members")
+        @classmethod
+        def validate_members(cls, v: list[str]) -> list[str]:
+            """Validate members list."""
+            if not v:
+                error_msg = "Members list cannot be empty"
+                raise ValueError(error_msg)
+            return v
 
     # =========================================================================
     # CONNECTION AND CONFIGURATION ENTITIES
@@ -1431,6 +1501,7 @@ class FlextLdapModels(FlextModels):
             """Get base DN (default empty)."""
             return ""
 
+        @override
         def validate(self) -> FlextResult[None]:
             """Validate connection configuration."""
             try:
@@ -1450,6 +1521,7 @@ class FlextLdapModels(FlextModels):
         dn: str
         changes: dict[str, list[tuple[str, list[str]]]]
 
+        @override
         def validate(self) -> FlextResult[None]:
             """Validate modify configuration."""
             try:
@@ -1468,6 +1540,7 @@ class FlextLdapModels(FlextModels):
         dn: str
         attributes: dict[str, list[str]]
 
+        @override
         def validate(self) -> FlextResult[None]:
             """Validate add configuration."""
             try:
@@ -1485,6 +1558,7 @@ class FlextLdapModels(FlextModels):
 
         dn: str
 
+        @override
         def validate(self) -> FlextResult[None]:
             """Validate delete configuration."""
             try:
@@ -1502,6 +1576,7 @@ class FlextLdapModels(FlextModels):
         search_filter: str
         attributes: list[str]
 
+        @override
         def validate(self) -> FlextResult[None]:
             """Validate search configuration."""
             try:

@@ -15,8 +15,9 @@ from typing import Literal, cast
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_ldap import FlextLdapModels, FlextLdapTypes
+from flext_core import FlextLogger, FlextResult
+from flext_ldap import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 logger = FlextLogger(__name__)
 
@@ -24,7 +25,7 @@ logger = FlextLogger(__name__)
 def create_test_user(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, FlextTypes.Core.StringList],
+    attributes: dict[str, list[str]],
 ) -> FlextResult[bool]:
     """Create a test user in LDAP server."""
     try:
@@ -58,7 +59,7 @@ def create_test_user(
 def create_test_group(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, FlextTypes.Core.StringList],
+    attributes: dict[str, list[str]],
 ) -> FlextResult[bool]:
     """Create a test group in LDAP server."""
     try:
@@ -91,7 +92,7 @@ def create_test_group(
 
 def cleanup_test_entries(
     config: FlextLdapModels.ConnectionConfig,
-    dns: FlextTypes.Core.StringList,
+    dns: list[str],
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
     try:
@@ -168,7 +169,7 @@ def verify_entry_exists(
 def get_entry_attributes(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-) -> FlextResult[FlextTypes.Core.Dict]:
+) -> FlextResult[dict]:
     """Get attributes of an LDAP entry."""
     try:
         server: Server = FlextLdapTypes.Server(
@@ -197,13 +198,13 @@ def get_entry_attributes(
                 attr: entry[attr].value for attr in entry.entry_attributes
             }
             conn.unbind()
-            return FlextResult[FlextTypes.Core.Dict].ok(attributes)
+            return FlextResult[dict].ok(attributes)
         conn.unbind()
-        return FlextResult[FlextTypes.Core.Dict].fail(f"Entry not found: {dn}")
+        return FlextResult[dict].fail(f"Entry not found: {dn}")
 
     except Exception as e:
         logger.exception("Error getting attributes for %s", dn)
-        return FlextResult[FlextTypes.Core.Dict].fail(f"Error getting attributes: {e}")
+        return FlextResult[dict].fail(f"Error getting attributes: {e}")
 
 
 def search_entries(
@@ -211,7 +212,7 @@ def search_entries(
     base_dn: str,
     search_filter: str,
     scope: Literal["base", "onelevel", "subtree"] = "subtree",
-) -> FlextResult[list[FlextTypes.Core.Dict]]:
+) -> FlextResult[list[dict]]:
     """Search for entries in LDAP server."""
     try:
         server: Server = FlextLdapTypes.Server(
@@ -254,11 +255,11 @@ def search_entries(
                 results.append(entry_data)
 
         conn.unbind()
-        return FlextResult[list[FlextTypes.Core.Dict]].ok(results)
+        return FlextResult[list[dict]].ok(results)
 
     except Exception as e:
         logger.exception("Error searching entries")
-        return FlextResult[list[FlextTypes.Core.Dict]].fail(
+        return FlextResult[list[dict]].fail(
             f"Error searching entries: {e}",
         )
 
@@ -266,7 +267,7 @@ def search_entries(
 def modify_entry(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    changes: FlextTypes.Core.Dict,
+    changes: dict,
 ) -> FlextResult[bool]:
     """Modify an LDAP entry."""
     try:

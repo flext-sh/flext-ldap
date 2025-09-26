@@ -24,7 +24,7 @@ config = FlextLdapConfig.from_env()
 # 3. Explicit configuration
 config = FlextLdapConfig(
     host="ldap.example.com",
-    port=636,
+    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     bind_password="REDACTED_LDAP_BIND_PASSWORD-password",
@@ -46,9 +46,9 @@ export FLEXT_LDAP_BIND_PASSWORD="your-password"
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
 # Optional settings
-export FLEXT_LDAP_PORT=636
+export FLEXT_LDAP_PORT=${FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}
 export FLEXT_LDAP_USE_SSL=true
-export FLEXT_LDAP_TIMEOUT=30
+export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
 export FLEXT_LDAP_POOL_SIZE=5
 ```
 
@@ -91,24 +91,24 @@ from Flext_ldap import FlextLdapConfig
 # Production configuration
 PRODUCTION_CONFIG = FlextLdapConfig(
     host="ldap-prod.example.com",
-    port=636,
+    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     bind_dn="cn=service-account,ou=applications,dc=example,dc=com",
     bind_password="${LDAP_PROD_PASSWORD}",
     base_dn="dc=example,dc=com",
-    timeout=30,
+    timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     pool_size=10
 )
 
 # Development configuration
 DEVELOPMENT_CONFIG = FlextLdapConfig(
     host="ldap-dev.example.com",
-    port=389,
+    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=example,dc=com",
     bind_password="${LDAP_DEV_PASSWORD}",
     base_dn="dc=dev,dc=example,dc=com",
-    timeout=10,
+    timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=3
 )
 ```
@@ -196,13 +196,13 @@ docker run -d \
 from Flext_ldap import FlextLdapConfig
 
 TEST_CONFIG = FlextLdapConfig(
-    host="localhost",
-    port=389,
+    host=FlextConstants.Platform.DEFAULT_HOST,
+    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=flext,dc=local",
     bind_password="REDACTED_LDAP_BIND_PASSWORD",
     base_dn="dc=test,dc=flext,dc=local",
-    timeout=5,
+    timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=2
 )
 ```
@@ -274,7 +274,7 @@ from ssl import create_default_context
 
 config = FlextLdapConfig(
     host="ldap.example.com",
-    port=636,
+    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True
@@ -291,8 +291,8 @@ config = FlextLdapConfig(
 # High-traffic configuration
 config = FlextLdapConfig(
     pool_size=20,           # Adjust based on concurrent users
-    connection_timeout=5,   # Fast connection timeout
-    receive_timeout=15,     # Operation timeout
+    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,   # Fast connection timeout
+    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,     # Operation timeout
     max_retries=2          # Retry failed operations
 )
 ```

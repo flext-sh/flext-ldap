@@ -106,13 +106,15 @@ def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -
             server_info = server_info_raw
             logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
             logger.info("  Description: %s", server_info.get("description", "Unknown"))
-            logger.info("  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown"))
+            logger.info(
+                "  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown")
+            )
         else:
             logger.info("  Server info not available")
 
     if capabilities["server_type"]:
         server_type = capabilities["server_type"]
-        if hasattr(server_type, 'value'):
+        if hasattr(server_type, "value"):
             logger.info("  Detected Server Type: %s", server_type.value)
             server_type_value = server_type.value
         else:
@@ -130,27 +132,56 @@ def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -
     if capabilities["server_quirks"]:
         quirks = capabilities["server_quirks"]
         logger.info("  Server Quirks:")
-        if hasattr(quirks, 'case_sensitive_dns'):
-            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
-            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
-            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
-            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
-            logger.info("    Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
+        if hasattr(quirks, "case_sensitive_dns"):
+            logger.info(
+                "    Case Sensitive DNs: %s",
+                getattr(quirks, "case_sensitive_dns", "unknown"),
+            )
+            logger.info(
+                "    Case Sensitive Attributes: %s",
+                getattr(quirks, "case_sensitive_attributes", "unknown"),
+            )
+            logger.info(
+                "    Supports Paged Results: %s",
+                getattr(quirks, "supports_paged_results", "unknown"),
+            )
+            logger.info(
+                "    Supports VLV: %s", getattr(quirks, "supports_vlv", "unknown")
+            )
+            logger.info(
+                "    Supports Sync: %s", getattr(quirks, "supports_sync", "unknown")
+            )
         else:
             logger.info("    Server quirks not available")
 
-        if hasattr(quirks, 'max_page_size'):
-            logger.info("    Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
-            logger.info("    Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+        if hasattr(quirks, "max_page_size"):
+            logger.info(
+                "    Max Page Size: %s", getattr(quirks, "max_page_size", "unknown")
+            )
+            logger.info(
+                "    Default Timeout: %s", getattr(quirks, "default_timeout", "unknown")
+            )
 
             # Oracle-specific quirks
-            if hasattr(quirks, 'filter_syntax_quirks') and "extended_matching_rules" in quirks.filter_syntax_quirks:
+            if (
+                hasattr(quirks, "filter_syntax_quirks")
+                and "extended_matching_rules" in quirks.filter_syntax_quirks
+            ):
                 logger.info("    ✅ Supports Extended Matching Rules")
-            if hasattr(quirks, 'modify_operation_quirks') and "atomic_modify" in quirks.modify_operation_quirks:
+            if (
+                hasattr(quirks, "modify_operation_quirks")
+                and "atomic_modify" in quirks.modify_operation_quirks
+            ):
                 logger.info("    ✅ Supports Atomic Modify Operations")
-            if hasattr(quirks, 'modify_operation_quirks') and "referential_integrity" in quirks.modify_operation_quirks:
+            if (
+                hasattr(quirks, "modify_operation_quirks")
+                and "referential_integrity" in quirks.modify_operation_quirks
+            ):
                 logger.info("    ✅ Supports Referential Integrity")
-            if hasattr(quirks, 'filter_syntax_quirks') and "virtual_attributes" in quirks.filter_syntax_quirks:
+            if (
+                hasattr(quirks, "filter_syntax_quirks")
+                and "virtual_attributes" in quirks.filter_syntax_quirks
+            ):
                 logger.info("    ✅ Supports Virtual Attributes")
 
 
@@ -362,34 +393,66 @@ def demonstrate_oracle_server_types() -> None:
         quirks = detector.get_server_quirks(server_type)
 
         logger.info("Oracle Server: %s", server_info["description"])
-        if hasattr(server_type, 'value'):
+        if hasattr(server_type, "value"):
             logger.info("  Detected Type: %s", server_type.value)
         else:
             logger.info("  Detected Type: %s", server_type or "unknown")
 
-        if hasattr(quirks, 'case_sensitive_dns'):
-            logger.info("  Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
-            logger.info("  Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
-            logger.info("  Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
-            logger.info("  Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
+        if hasattr(quirks, "case_sensitive_dns"):
+            logger.info(
+                "  Case Sensitive DNs: %s",
+                getattr(quirks, "case_sensitive_dns", "unknown"),
+            )
+            logger.info(
+                "  Case Sensitive Attributes: %s",
+                getattr(quirks, "case_sensitive_attributes", "unknown"),
+            )
+            logger.info(
+                "  Supports Paged Results: %s",
+                getattr(quirks, "supports_paged_results", "unknown"),
+            )
+            logger.info(
+                "  Supports VLV: %s", getattr(quirks, "supports_vlv", "unknown")
+            )
         else:
             logger.info("  Server quirks not available")
 
-        if hasattr(quirks, 'supports_sync'):
-            logger.info("  Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
-            logger.info("  Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
-            logger.info("  Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+        if hasattr(quirks, "supports_sync"):
+            logger.info(
+                "  Supports Sync: %s", getattr(quirks, "supports_sync", "unknown")
+            )
+            logger.info(
+                "  Max Page Size: %s", getattr(quirks, "max_page_size", "unknown")
+            )
+            logger.info(
+                "  Default Timeout: %s", getattr(quirks, "default_timeout", "unknown")
+            )
 
         # Show Oracle-specific quirks
-        if hasattr(quirks, 'filter_syntax_quirks') and "extended_matching_rules" in quirks.filter_syntax_quirks:
+        if (
+            hasattr(quirks, "filter_syntax_quirks")
+            and "extended_matching_rules" in quirks.filter_syntax_quirks
+        ):
             logger.info("  ✅ Extended Matching Rules Support")
-        if hasattr(quirks, 'modify_operation_quirks') and "atomic_modify" in quirks.modify_operation_quirks:
+        if (
+            hasattr(quirks, "modify_operation_quirks")
+            and "atomic_modify" in quirks.modify_operation_quirks
+        ):
             logger.info("  ✅ Atomic Modify Operations")
-        if hasattr(quirks, 'modify_operation_quirks') and "referential_integrity" in quirks.modify_operation_quirks:
+        if (
+            hasattr(quirks, "modify_operation_quirks")
+            and "referential_integrity" in quirks.modify_operation_quirks
+        ):
             logger.info("  ✅ Referential Integrity")
-        if hasattr(quirks, 'filter_syntax_quirks') and "virtual_attributes" in quirks.filter_syntax_quirks:
+        if (
+            hasattr(quirks, "filter_syntax_quirks")
+            and "virtual_attributes" in quirks.filter_syntax_quirks
+        ):
             logger.info("  ✅ Virtual Attributes Support")
-        if hasattr(quirks, 'modify_operation_quirks') and "virtual_attribute_handling" in quirks.modify_operation_quirks:
+        if (
+            hasattr(quirks, "modify_operation_quirks")
+            and "virtual_attribute_handling" in quirks.modify_operation_quirks
+        ):
             logger.info("  ✅ Virtual Attribute Handling")
 
         logger.info("")

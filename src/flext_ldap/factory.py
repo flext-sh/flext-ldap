@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
 from flext_core import (
     FlextBus,
@@ -43,16 +43,18 @@ class FlextLdapFactory(FlextHandlers[object, object]):
     advanced FLEXT ecosystem patterns.
     """
 
+    @override
     def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
         """Initialize factory with configuration."""
         super().__init__(config=config)
-        self._container = FlextContainer()
-        self._bus = FlextBus()
-        self._dispatcher = FlextDispatcher()
-        self._processors = FlextProcessors()
-        self._registry = FlextRegistry(self._dispatcher)
+        self._container: FlextContainer = FlextContainer()
+        self._bus: FlextBus = FlextBus()
+        self._dispatcher: FlextDispatcher = FlextDispatcher()
+        self._processors: FlextProcessors = FlextProcessors()
+        self._ldap_registry: FlextRegistry = FlextRegistry(self._dispatcher)
         self._context = FlextContext()
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle factory creation requests with advanced routing."""
         try:
@@ -150,7 +152,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 bus=self._bus,
                 dispatcher=self._dispatcher,
                 processors=self._processors,
-                registry=self._registry,
+                registry=self._ldap_registry,
             )
 
             return FlextResult[object].ok(domain_services)
@@ -180,7 +182,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 bus=self._bus,
                 dispatcher=self._dispatcher,
                 processors=self._processors,
-                registry=self._registry,
+                registry=self._ldap_registry,
             )
 
             # Get CQRS services as nested class

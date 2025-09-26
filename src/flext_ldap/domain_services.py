@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
 from flext_core import (
     FlextBus,
@@ -38,6 +38,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
     and FlextRegistry to provide comprehensive LDAP domain services.
     """
 
+    @override
     def __init__(
         self,
         config: FlextModels.CqrsConfig.Handler,
@@ -50,18 +51,19 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
     ) -> None:
         """Initialize domain services with FLEXT ecosystem components."""
         super().__init__(config=config)
-        self._client = client
-        self._container = container
-        self._bus = bus
-        self._dispatcher = dispatcher
-        self._processors = processors
-        self._registry = registry
+        self._client: FlextLdapClient = client
+        self._container: FlextContainer = container
+        self._bus: FlextBus = bus
+        self._dispatcher: FlextDispatcher = dispatcher
+        self._processors: FlextProcessors = processors
+        self._ldap_registry: FlextRegistry = registry
         self._models = FlextLdapModels
         self._types = FlextLdapTypes
         self._constants = FlextLdapConstants
         self._exceptions = FlextLdapExceptions
         self._context = FlextContext()
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle domain service requests using FLEXT ecosystem patterns."""
         try:
@@ -500,7 +502,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             stored_data = {
                 **event_data,
                 "events_stored": True,
-                "storage_location": "event_store",
+                "storage_location": "flext_container",
             }
             return FlextResult[dict[str, Any]].ok(stored_data)
 
@@ -568,7 +570,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             stored_data = {
                 **command_data,
                 "domain_events_stored": True,
-                "event_store_location": "domain_event_store",
+                "event_store_location": "flext_container",
             }
             return FlextResult[dict[str, Any]].ok(stored_data)
 
@@ -632,6 +634,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
         patterns using FLEXT ecosystem components for sophisticated LDAP operations.
         """
 
+        @override
         def __init__(
             self,
             config: FlextModels.CqrsConfig.Handler,
@@ -649,6 +652,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             self._constants = FlextLdapConstants
             self._exceptions = FlextLdapExceptions
 
+        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle CQRS command and query requests."""
             try:
@@ -783,7 +787,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
                 stored_data = {
                     **executed_data,
                     "command_result_stored": True,
-                    "storage_location": "command_store",
+                    "storage_location": "flext_bus",
                 }
                 return FlextResult[dict[str, Any]].ok(stored_data)
 

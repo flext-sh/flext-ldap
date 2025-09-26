@@ -69,9 +69,11 @@ class TestSharedLDAPIntegration:
         assert shared_ldap_container_manager is not None
 
         # Verify container is running
+        assert hasattr(shared_ldap_container_manager, "is_container_running")
         assert shared_ldap_container_manager.is_container_running()
 
         # Test LDIF export
+        assert hasattr(shared_ldap_container_manager, "get_ldif_export")
         ldif_data = shared_ldap_container_manager.get_ldif_export()
         assert ldif_data is not None
         assert len(ldif_data) > 0
@@ -197,6 +199,7 @@ class TestSharedLDAPSkipConditions:
 
     def test_skip_if_no_docker_decorator(self) -> None:
         """Test that skip_if_no_docker decorator works."""
+
         # This should not raise an exception - test the decorator factory
         @skip_if_no_docker
         def dummy_test() -> None:

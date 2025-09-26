@@ -352,18 +352,29 @@ def demonstrate_different_server_types() -> None:
     for server in server_examples:
         logger.info("\n%s Server:", server["name"])
         server_type = server["type"]
-        if hasattr(server_type, 'value'):
+        if hasattr(server_type, "value"):
             logger.info("  Type: %s", server_type.value)
         else:
             logger.info("  Type: %s", server_type)
 
         quirks = server["quirks"]
         if isinstance(quirks, dict):
-            logger.info("  Case Sensitive DNs: %s", quirks.get("case_sensitive_dns", True))
-            logger.info("  Case Sensitive Attributes: %s", quirks.get("case_sensitive_attributes", True))
-            logger.info("  Supports Paged Results: %s", quirks.get("supports_paged_results", False))
+            logger.info(
+                "  Case Sensitive DNs: %s", quirks.get("case_sensitive_dns", True)
+            )
+            logger.info(
+                "  Case Sensitive Attributes: %s",
+                quirks.get("case_sensitive_attributes", True),
+            )
+            logger.info(
+                "  Supports Paged Results: %s",
+                quirks.get("supports_paged_results", False),
+            )
             logger.info("  Supports VLV: %s", quirks.get("supports_vlv", False))
-            logger.info("  Requires Explicit Bind: %s", quirks.get("requires_explicit_bind", False))
+            logger.info(
+                "  Requires Explicit Bind: %s",
+                quirks.get("requires_explicit_bind", False),
+            )
         else:
             logger.info("  Server quirks not available")
 

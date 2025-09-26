@@ -51,7 +51,7 @@ class FlextLdapConstants(FlextConstants):
 
         # LDAP connection limits - using centralized constants
         MAX_SIZE_LIMIT: Final[int] = (
-            FlextConstants.Performance.MAX_BATCH_SIZE_VALIDATION
+            FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
         )
         DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.Performance.DEFAULT_PAGE_SIZE
 
@@ -182,12 +182,24 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
         DEFAULT_SERVICE_VERSION: Final[str] = "1.0.0"
         MAX_SEARCH_ENTRIES: Final[int] = (
-            FlextConstants.Performance.MAX_BATCH_SIZE_VALIDATION
+            FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
         )
 
         # Valid LDAP user for testing
         VALID_LDAP_USER_NAME: Final[str] = "testuser"
         VALID_LDAP_USER_DESCRIPTION: Final[str] = "Test LDAP User"
+
+    class LdapRetry:
+        """LDAP retry and timing constants."""
+
+        # Server readiness retry timing
+        SERVER_READY_RETRY_DELAY: Final[int] = 2  # seconds
+        SERVER_READY_MAX_RETRIES: Final[int] = 10
+        SERVER_READY_TIMEOUT: Final[int] = 30  # seconds
+
+        # Connection retry timing
+        CONNECTION_RETRY_DELAY: Final[float] = 1.0  # seconds
+        CONNECTION_MAX_RETRIES: Final[int] = 3
 
 
 __all__ = [

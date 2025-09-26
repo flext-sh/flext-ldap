@@ -30,7 +30,6 @@ class TestRealLdapConnection:
 
     async def test_bind_with_correct_credentials(
         self,
-        shared_ldap_client: FlextLdapClient,  # noqa: ARG002
     ) -> None:
         """Test binding with correct REDACTED_LDAP_BIND_PASSWORD credentials."""
         client = FlextLdapClient()
@@ -46,7 +45,6 @@ class TestRealLdapConnection:
 
     async def test_bind_with_incorrect_credentials(
         self,
-        shared_ldap_client: FlextLdapClient,  # noqa: ARG002
     ) -> None:
         """Test binding with incorrect credentials fails properly."""
         client = FlextLdapClient()
@@ -58,7 +56,7 @@ class TestRealLdapConnection:
         )
 
         assert result.is_failure
-        assert (
+        assert result.error and (
             "bind" in result.error.lower() or "authentication" in result.error.lower()
         )
 

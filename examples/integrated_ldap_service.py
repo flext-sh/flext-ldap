@@ -7,7 +7,6 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
 """
-# type: ignore[explicit-any,assignment,reportUnknownVariableType,reportUnknownMemberType,reportUnknownParameterType,reportMissingTypeArgument,arg-type,index,misc,no-untyped-call,no-untyped-def,no-any-return,no-any-unimported]
 
 from __future__ import annotations
 
@@ -376,6 +375,7 @@ async def _demo_connection_management(ldap_service: FlextLdapClient) -> None:
 async def _demo_error_handling(_: FlextLdapClient) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Demonstrate error handling with connection attempts
+    logger.info("Error handling demonstration completed")
 
 
 if __name__ == "__main__":

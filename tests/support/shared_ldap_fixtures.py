@@ -6,24 +6,23 @@ that require Docker containers.
 
 from __future__ import annotations
 
-import subprocess
 from collections.abc import Callable
 
 import pytest
 
+from flext_tests import FlextTestDocker
+
 
 def check_docker_available() -> bool:
-    """Check if Docker is available and running."""
+    """Check if Docker is available and running using FlextTestDocker."""
     try:
-        result = subprocess.run(
-            ["/usr/bin/docker", "info"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+        docker_manager = FlextTestDocker()
+
+        # Use FlextTestDocker to check Docker availability
+        version_result = docker_manager.get_docker_version()
+
+        return version_result.is_success
+    except Exception:
         return False
 
 

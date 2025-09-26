@@ -9,7 +9,7 @@ from collections.abc import AsyncGenerator, Generator
 
 import pytest
 
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextLogger
 from flext_ldap import (
     FlextLdapAPI,
     FlextLdapClient,
@@ -85,25 +85,25 @@ def ldap_api() -> FlextLdapClient:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Core.Dict:
+def test_user_data() -> dict:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> FlextTypes.Core.Dict:
+def test_group_data() -> dict:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Core.Dict]:
+def multiple_test_users() -> list[dict]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Core.Dict]:
+def multiple_test_groups() -> list[dict]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
@@ -256,6 +256,11 @@ async def shared_ldap_client(
     client = FlextLdapClient()
 
     # Connect to shared LDAP server
+    assert isinstance(shared_ldap_config, dict)
+    assert "server_url" in shared_ldap_config
+    assert "bind_dn" in shared_ldap_config
+    assert "password" in shared_ldap_config
+
     result = await client.connect(
         server_uri=str(shared_ldap_config["server_url"]),
         bind_dn=str(shared_ldap_config["bind_dn"]),
@@ -278,6 +283,11 @@ def shared_ldap_connection_config(
     """Get FlextLdapModels.ConnectionConfig for shared LDAP container."""
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
+
+    assert isinstance(shared_ldap_config, dict)
+    assert "server_url" in shared_ldap_config
+    assert "bind_dn" in shared_ldap_config
+    assert "password" in shared_ldap_config
 
     return FlextLdapModels.ConnectionConfig(
         server=str(shared_ldap_config["server_url"]),

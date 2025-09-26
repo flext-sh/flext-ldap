@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.9.0"]
+requires = [ "poetry-core>=1.9.0",]
 build-backend = "poetry.core.masonry.api"
 
 [project]
@@ -8,37 +8,9 @@ version = "0.9.0"
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-keywords = [
-    "flext",
-    "enterprise",
-    "async",
-    "typed",
-    "integration",
-    "adapter",
-    "ldap",
-    "ddd",
-    "clean-architecture",
-]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
-    "Typing :: Typed",
-]
-dependencies = [
-    "pydantic (>=2.11.7)",
-    "pydantic-settings (>=2.10.1)",
-    "ldap3 (>=2.9.1)",
-    "cryptography (>=45.0.5)",
-    "structlog (>=25.4.0)",
-    "flext-core @ file:///home/marlonsc/flext/flext-core",
-    "flext-ldif @ file:///home/marlonsc/flext/flext-ldif",
-]
+keywords = [ "flext", "enterprise", "async", "typed", "integration", "adapter", "ldap", "ddd", "clean-architecture",]
+classifiers = [ "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3 :: Only", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP", "Typing :: Typed",]
+dependencies = [ "pydantic (>=2.11.7)", "pydantic-settings (>=2.10.1)", "ldap3 (>=2.9.1)", "cryptography (>=45.0.5)", "structlog (>=25.4.0)", "flext-core @ file:///home/marlonsc/flext/flext-core", "flext-ldif @ file:///home/marlonsc/flext/flext-ldif",]
 [[project.authors]]
 name = "FLEXT Team"
 email = "team@flext.sh"
@@ -55,105 +27,12 @@ Homepage = "https://github.com/flext-sh/flext"
 Repository = "https://github.com/flext-sh/flext"
 Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 
-
 [tool.ruff]
 extend = "../ruff-shared.toml"
-lint.isort.known-first-party = ["flext_ldap"]
-
-[tool.mypy]
-# Strict mode - enables all recommended checks
-strict = true
-
-# Additional strict checks beyond default strict mode
-check_untyped_defs = true
-disallow_any_decorated = false
-disallow_any_explicit = false
-disallow_any_expr = false           # Too restrictive for real-world usage
-disallow_any_generics = false
-disallow_any_unimported = false
-disallow_incomplete_defs = true
-disallow_subclassing_any = true
-disallow_untyped_calls = false
-disallow_untyped_decorators = false
-disallow_untyped_defs = true
-
-# Warning controls - maximum safety
-warn_no_return = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_configs = true
-warn_unused_ignores = false
-
-# Optional type checking
-no_implicit_optional = true
-strict_optional = true
-
-# Import handling
-ignore_missing_imports = false
-follow_imports = "normal"
-follow_imports_for_stubs = false
-
-# Error reporting
-show_error_codes = true
-show_error_context = true
-show_column_numbers = true
-show_traceback = true
-pretty = true
-color_output = true
-error_summary = true
-
-# Python version and execution
-python_version = "3.13"
-platform = "linux"
-
-# Package structure
-namespace_packages = false
-mypy_path = ["src"]
-files = ["src"]
-
-# Plugins
-plugins = ["pydantic.mypy"]
-
-# Cache
-# sqlite_cache = true
-cache_dir = ".mypy_cache"
-
-# Advanced checks
-strict_equality = true
-extra_checks = true
-local_partial_types = true
-no_implicit_reexport = true
-
-# Performance
-incremental = true
-warn_incomplete_stub = true
-
-exclude = [
-    "__pycache__/",
-    ".*/generate_config.py",
-    ".*/manage.py",
-    ".coverage.*",
-    ".git/",
-    ".mypy_cache/",
-    ".ruff_cache/",
-    ".pytest_cache/",
-    ".venv/",
-    "build/",
-    "dist/",
-    "node_modules/",
-    "vendor/",
-]
-
 
 [tool.bandit]
-exclude_dirs = ["tests", "build", "dist"]
-skips = ["B101", "B601", "B608"]
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
+exclude_dirs = [ "tests", "build", "dist",]
+skips = [ "B101", "B601", "B608",]
 
 [tool.poetry]
 [[tool.poetry.packages]]
@@ -161,58 +40,12 @@ include = "flext_ldap"
 from = "src"
 
 [tool.deptry]
-known_first_party = ["flext_ldap"]
+known_first_party = [ "flext_ldap",]
 
-[tool.pytest.ini_options]
-minversion = "8.0"
-asyncio_mode = "auto"
-addopts = ["-ra", "--strict-config", "--maxfail=1", "--tb=short"]
-testpaths = ["tests"]
-pythonpath = ["src"]
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "slow: Slow tests",
-    "smoke: Smoke tests",
-    "e2e: End-to-end tests",
-    "concurrency: Concurrency tests",
-    "race_condition: Race condition tests",
-    "performance: Performance tests",
-    "mock_heavy: Tests with heavy mocking",
-    "memory: Memory tests",
-    "benchmark: Benchmark tests",
-    "stress: Stress tests",
-    "async_test: Async tests",
-    "factory_test: Factory tests",
-    "timeout: Timeout tests",
-    "regression: Regression tests",
-]
-# filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
-
-
-[tool.coverage.run]
-branch = true
-omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*", "*/.venv/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
-
-[tool.coverage.html]
-directory = "reports/coverage"
-
-[tool.coverage.xml]
-output = "reports/coverage.xml"
+[tool.pyrefly]
+python_version = "3.13"
+target_version = "3.13"
+show_error_codes = true
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
@@ -221,13 +54,39 @@ pydantic-settings = ">=2.10.1"
 ldap3 = ">=2.9.1"
 cryptography = ">=45.0.5"
 structlog = ">=25.4.0"
-flext-ldif = { path = "../flext-ldif", develop = true }
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+asyncio_mode = "auto"
+addopts = [ "-ra", "--strict-config", "--maxfail=1", "--tb=short",]
+testpaths = [ "tests",]
+pythonpath = [ "src",]
+markers = [ "unit: Unit tests", "integration: Integration tests", "slow: Slow tests", "smoke: Smoke tests", "e2e: End-to-end tests", "concurrency: Concurrency tests", "race_condition: Race condition tests", "performance: Performance tests", "mock_heavy: Tests with heavy mocking", "memory: Memory tests", "benchmark: Benchmark tests", "stress: Stress tests", "async_test: Async tests", "factory_test: Factory tests", "timeout: Timeout tests", "regression: Regression tests",]
+
+[tool.coverage.run]
+branch = true
+omit = [ "*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*", "*/.venv/*",]
+
+[tool.coverage.report]
+exclude_lines = [ "pragma: no cover", "def __repr__", "if self.debug:", "if settings.DEBUG", "raise AssertionError", "raise NotImplementedError", "if 0:", "if __name__ == .__main__.:", "class .*\\bProtocol\\):", "@(abc\\.)?abstractmethod",]
+
+[tool.coverage.html]
+directory = "reports/coverage"
+
+[tool.coverage.xml]
+output = "reports/coverage.xml"
+
+[tool.ruff.lint.isort]
+known-first-party = [ "flext_ldap",]
+
+[tool.poetry.dependencies.flext-ldif]
+path = "../flext-ldif"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
 ruff = ">=0.12.3"
 black = ">=25.1.0"
 isort = ">=6.0.1"
-mypy = ">=1.13.0"
 pylint = ">=3.3.0"
 pre-commit = ">=4.0.1"
 vulture = ">=2.13"
@@ -238,6 +97,7 @@ autoflake = ">=2.3.1"
 types-ldap3 = ">=2.9.13.20250622"
 detect-secrets = ">=1.5.0"
 commitizen = ">=4.8.3"
+pyrefly = "^0.34.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=8.4.0"
@@ -273,6 +133,3 @@ types-docker = "^7.1.0.20250809"
 [tool.poetry.group.security.dependencies]
 bandit = ">=1.8.0"
 pip-audit = ">=2.7.3"
-
-[tool.pyright]
-typeCheckingMode = "off"

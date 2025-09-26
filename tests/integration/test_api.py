@@ -172,17 +172,17 @@ class TestLdapClientRealOperations:
         # SEARCH: Verify modifications
         search_request = FlextLdapModels.SearchRequest(
             base_dn=test_dn,
+            filter_str="(objectClass=*)",
             scope="base",
-            search_filter="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=1,
             time_limit=30,
             page_size=None,
             paged_cookie=None,
         )
-        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
-            client.search_with_request(search_request)
-        )
+        search_result: FlextResult[
+            FlextLdapModels.SearchResponse
+        ] = await client.search_with_request(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
         empty_response = FlextLdapModels.SearchResponse(
             entries=[],
@@ -208,9 +208,9 @@ class TestLdapClientRealOperations:
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
-        verify_search: FlextResult[FlextLdapModels.SearchResponse] = (
-            client.search_with_request(search_request)
-        )
+        verify_search: FlextResult[
+            FlextLdapModels.SearchResponse
+        ] = await client.search_with_request(search_request)
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
@@ -351,7 +351,7 @@ class TestLdapServiceRealOperations:
         )
         update_result = await client.update_user_attributes(
             user_request.dn,
-            update_attributes,  # type: ignore[arg-type]
+            update_attributes,
         )
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
@@ -762,8 +762,8 @@ class TestLdapErrorHandlingReal:
         # Test search with invalid base DN
         invalid_search = FlextLdapModels.SearchRequest(
             base_dn="cn=nonexistent,dc=invalid,dc=com",
+            filter_str="(objectClass=*)",
             scope="base",
-            search_filter="(objectClass=*)",
             attributes=[],  # All attributes
             size_limit=10,
             time_limit=30,
@@ -771,9 +771,9 @@ class TestLdapErrorHandlingReal:
             paged_cookie=None,
         )
 
-        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
-            client.search_with_request(invalid_search)
-        )
+        search_result: FlextResult[
+            FlextLdapModels.SearchResponse
+        ] = await client.search_with_request(invalid_search)
         # Should handle gracefully - either return empty results or proper error
         assert search_result.is_success or (
             search_result.error

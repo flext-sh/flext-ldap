@@ -36,6 +36,13 @@ class TestRealUserRepository:
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             cn="testuser",
             sn="User",
+            given_name="Test",
+            telephone_number="555-1234",
+            mobile="555-5678",
+            department="IT",
+            title="Software Engineer",
+            organization="Flext Inc",
+            organizational_unit="Engineering",
             uid="testuser",
             mail="testuser@internal.invalid",
             user_password="testpass123",
@@ -76,8 +83,9 @@ class TestRealUserRepository:
 
         assert result.is_success, f"User retrieval failed: {result.error}"
         assert result.value is not None
-        assert result.value.cn == "getuser"
-        assert result.value.uid == "getuser"
+        user = result.value
+        assert hasattr(user, "cn") and user.cn == "getuser"
+        assert hasattr(user, "uid") and user.uid == "getuser"
 
         await client.delete_entry_universal(dn="cn=getuser,ou=users,dc=flext,dc=local")
         await client.delete_entry_universal(dn="ou=users,dc=flext,dc=local")
@@ -110,8 +118,16 @@ class TestRealUserRepository:
             dn="cn=updateuser,ou=users,dc=flext,dc=local",
             cn="updateuser",
             sn="UpdateUser",
+            given_name="Update",
+            telephone_number="555-9999",
+            mobile="555-8888",
+            department="IT",
+            title="Senior Engineer",
+            organization="Flext Inc",
+            organizational_unit="Engineering",
             uid="updateuser",
             mail="new@internal.invalid",
+            user_password="updatepass123",
         )
 
         result = await repo.save(user)
@@ -241,6 +257,8 @@ class TestRealGroupRepository:
             dn="cn=testgroup,ou=groups,dc=flext,dc=local",
             cn="testgroup",
             member=["cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"],
+            gid_number="1000",
+            description="Test group for integration testing",
         )
 
         result = await repo.save(group)
@@ -291,8 +309,8 @@ class TestRealGroupRepository:
         repo = FlextLdapRepositories.GroupRepository(client=client)
 
         result = await repo.add_member_to_group(
-            group_dn="cn=membergroup,ou=groups,dc=flext,dc=local",
-            member_dn="cn=member1,ou=users,dc=flext,dc=local",
+            _group_dn="cn=membergroup,ou=groups,dc=flext,dc=local",
+            _member_dn="cn=member1,ou=users,dc=flext,dc=local",
         )
 
         assert result.is_success, f"Add member failed: {result.error}"

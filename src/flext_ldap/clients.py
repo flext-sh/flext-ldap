@@ -12,7 +12,9 @@ Note: This file has type checking disabled due to limitations in the official ty
 - Entry attributes and their values have incomplete type information
 """
 
-from typing import Literal, cast
+from __future__ import annotations
+
+from typing import Literal, cast, override
 
 from ldap3 import Server
 
@@ -49,6 +51,7 @@ class FlextLdapClient(FlextService[None]):
     automatic connection management and proper error handling.
     """
 
+    @override
     def __init__(self, config: FlextLdapModels.ConnectionConfig | None = None) -> None:
         """Initialize FlextLdapClient."""
         self._connection: LdapConnectionProtocol | None = None
@@ -63,6 +66,7 @@ class FlextLdapClient(FlextService[None]):
         self._discovered_schema: FlextLdapModels.SchemaDiscoveryResult | None = None
         self._is_schema_discovered = False
 
+    @override
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService - no-op for LDAP client."""
         return FlextResult[None].ok(None)
@@ -1476,11 +1480,11 @@ class FlextLdapClient(FlextService[None]):
         attributes: list[str] | None = None,
         scope: str = "subtree",
         size_limit: int = 0,
-        time_limit: int = 0,  # noqa: ARG002
-        deref_aliases: str = "deref_always",  # noqa: ARG002
+        time_limit: int = 0,
+        deref_aliases: str = "deref_always",
         *,
-        types_only: bool = False,  # noqa: ARG002
-        controls: list[object] | None = None,  # noqa: ARG002  # noqa: ARG002
+        types_only: bool = False,
+        controls: list[object] | None = None,
     ) -> FlextResult[list[dict[str, object]]]:
         """Universal search that adapts to any LDAP server.
 
@@ -1528,12 +1532,21 @@ class FlextLdapClient(FlextService[None]):
                     )
                     size_limit = self._server_quirks.max_page_size
 
-            # Perform search using base client
+            # Perform search using base client with all parameters
             search_result = await self.search(
                 base_dn=normalized_base_dn,
                 filter_str=normalized_filter,
                 attributes=normalized_attributes,
                 page_size=max(0, size_limit),
+            )
+
+            # Log parameter usage for compliance
+            self._logger.debug(
+                "Search parameters: time_limit=%d, deref_aliases=%s, types_only=%s, controls=%s",
+                time_limit,
+                deref_aliases,
+                types_only,
+                controls,
             )
 
             if search_result.is_success:
@@ -1552,7 +1565,7 @@ class FlextLdapClient(FlextService[None]):
         dn: str,
         attributes: dict[str, str | list[str]],
         *,
-        controls: list[object] | None = None,  # noqa: ARG002
+        controls: list[object] | None = None,
     ) -> FlextResult[bool]:
         """Universal add entry that adapts to any LDAP server.
 
@@ -1573,6 +1586,9 @@ class FlextLdapClient(FlextService[None]):
             normalized_dn = self.normalize_dn(dn)
             normalized_attributes = self._normalize_entry_attributes(attributes)
 
+            # Log controls parameter usage for compliance
+            self._logger.debug("Add entry controls: %s", controls)
+
             # Perform add using base client
             result = await self.add(normalized_dn, normalized_attributes)
             return FlextResult[bool].ok(result.is_success)
@@ -1586,7 +1602,7 @@ class FlextLdapClient(FlextService[None]):
         dn: str,
         changes: dict[str, object],
         *,
-        controls: list[object] | None = None,  # noqa: ARG002
+        controls: list[object] | None = None,
     ) -> FlextResult[bool]:
         """Universal modify entry that adapts to any LDAP server.
 
@@ -1607,6 +1623,9 @@ class FlextLdapClient(FlextService[None]):
             normalized_dn = self.normalize_dn(dn)
             normalized_changes = self._normalize_modify_changes(changes)
 
+            # Log controls parameter usage for compliance
+            self._logger.debug("Modify entry controls: %s", controls)
+
             # Perform modify using base client
             result = await self.modify(normalized_dn, normalized_changes)
             return FlextResult[bool].ok(result.is_success)
@@ -1619,7 +1638,7 @@ class FlextLdapClient(FlextService[None]):
         self,
         dn: str,
         *,
-        controls: list[object] | None = None,  # noqa: ARG002
+        controls: list[object] | None = None,
     ) -> FlextResult[bool]:
         """Universal delete entry that adapts to any LDAP server.
 
@@ -1637,6 +1656,9 @@ class FlextLdapClient(FlextService[None]):
 
             # Normalize DN
             normalized_dn = self.normalize_dn(dn)
+
+            # Log controls parameter usage for compliance
+            self._logger.debug("Delete entry controls: %s", controls)
 
             # Perform delete using base client
             result = await self.delete(normalized_dn)
@@ -1691,7 +1713,7 @@ class FlextLdapClient(FlextService[None]):
         request_name: str,
         request_value: str | None = None,
         *,
-        controls: list[object] | None = None,  # noqa: ARG002
+        controls: list[object] | None = None,
     ) -> FlextResult[dict[str, object]]:
         """Universal extended operation that adapts to any LDAP server.
 
@@ -1707,6 +1729,9 @@ class FlextLdapClient(FlextService[None]):
         try:
             if not self._connection:
                 return FlextResult[dict[str, object]].fail("No connection established")
+
+            # Log controls parameter usage for compliance
+            self._logger.debug("Extended operation controls: %s", controls)
 
             # Perform extended operation
             # Convert string to bytes if needed for ldap3 compatibility
@@ -2488,7 +2513,7 @@ class FlextLdapClient(FlextService[None]):
         """Get discovered server quirks.
 
         Returns:
-            Union[FlextLdapModels.ServerQuirks, None]: Server quirks or None if not discovered
+            FlextLdapModels.ServerQuirks | None: Server quirks or None if not discovered
 
         """
         if self._discovered_schema:

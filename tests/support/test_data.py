@@ -4,10 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextTypes
-
 # Sample LDAP entries for testing
-SAMPLE_USER_ENTRY: FlextTypes.Core.Dict = {
+SAMPLE_USER_ENTRY: dict = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
     "attributes": {
         "cn": ["testuser"],
@@ -20,7 +18,7 @@ SAMPLE_USER_ENTRY: FlextTypes.Core.Dict = {
     },
 }
 
-SAMPLE_GROUP_ENTRY: FlextTypes.Core.Dict = {
+SAMPLE_GROUP_ENTRY: dict = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
         "cn": ["testgroup"],
@@ -31,7 +29,7 @@ SAMPLE_GROUP_ENTRY: FlextTypes.Core.Dict = {
 }
 
 # Multiple test users for comprehensive testing
-TEST_USERS: list[FlextTypes.Core.Dict] = [
+TEST_USERS: list[dict] = [
     {
         "dn": "cn=alice,ou=people,dc=flext,dc=local",
         "attributes": {
@@ -70,7 +68,7 @@ TEST_USERS: list[FlextTypes.Core.Dict] = [
     },
 ]
 
-TEST_GROUPS: list[FlextTypes.Core.Dict] = [
+TEST_GROUPS: list[dict] = [
     {
         "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
         "attributes": {
@@ -95,7 +93,7 @@ TEST_GROUPS: list[FlextTypes.Core.Dict] = [
 ]
 
 # Test organizational units
-TEST_OUS: list[FlextTypes.Core.Dict] = [
+TEST_OUS: list[dict] = [
     {
         "dn": "ou=people,dc=flext,dc=local",
         "attributes": {
@@ -115,7 +113,7 @@ TEST_OUS: list[FlextTypes.Core.Dict] = [
 ]
 
 # Invalid test data for error handling tests
-INVALID_ENTRIES: list[FlextTypes.Core.Dict] = [
+INVALID_ENTRIES: list[dict] = [
     {
         "dn": "",  # Empty DN
         "attributes": {"cn": ["invalid"]},
@@ -131,7 +129,7 @@ INVALID_ENTRIES: list[FlextTypes.Core.Dict] = [
 ]
 
 # Search filter test data
-TEST_FILTERS: FlextTypes.Core.Headers = {
+TEST_FILTERS: dict[str, str] = {
     "all_users": "(objectClass=person)",
     "all_groups": "(objectClass=groupOfNames)",
     "specific_user": "(uid=testuser)",
@@ -142,7 +140,7 @@ TEST_FILTERS: FlextTypes.Core.Headers = {
 }
 
 # Expected search results
-EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.Core.StringList] = {
+EXPECTED_SEARCH_RESULTS: dict[str, list[str]] = {
     "all_users": [
         "cn=alice,ou=people,dc=flext,dc=local",
         "cn=bob,ou=people,dc=flext,dc=local",
@@ -155,7 +153,7 @@ EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.Core.StringList] = {
 }
 
 # ACL test data
-SAMPLE_ACL_DATA: FlextTypes.Core.Dict = {
+SAMPLE_ACL_DATA: dict = {
     "unified_acl": {
         "target": "dc=example,dc=com",
         "permissions": [
@@ -180,7 +178,7 @@ SAMPLE_ACL_DATA: FlextTypes.Core.Dict = {
 }
 
 # ACL test cases for comprehensive testing
-ACL_TEST_CASES: list[FlextTypes.Core.Dict] = [
+ACL_TEST_CASES: list[dict] = [
     {
         "name": "user_read_access",
         "unified": {
@@ -232,7 +230,7 @@ ACL_TEST_CASES: list[FlextTypes.Core.Dict] = [
 ]
 
 # Invalid ACL test cases
-INVALID_ACL_CASES: list[FlextTypes.Core.Dict] = [
+INVALID_ACL_CASES: list[dict] = [
     {
         "name": "missing_target",
         "unified": {

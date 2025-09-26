@@ -38,12 +38,14 @@ class TestFlextLdapWorkflowOrchestrator:
         result = workflow_orchestrator.handle(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Message must be a dictionary" in result.error
 
         # Test with invalid message type
         result = workflow_orchestrator.handle("invalid_message")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Message must be a dictionary" in result.error
 
         # Test with valid message but unknown workflow type
@@ -51,6 +53,7 @@ class TestFlextLdapWorkflowOrchestrator:
         result = workflow_orchestrator.handle(message)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Unknown workflow type" in result.error
 
     def test_enterprise_user_provisioning_workflow(
@@ -95,6 +98,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Workflow succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "cleanup_completed" in result.data
 
     def test_compliance_audit_workflow(
@@ -132,6 +136,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Workflow succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "synchronization_reported" in result.data
 
     def test_advanced_security_workflow(
@@ -342,6 +347,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Method succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "cleanup_completed" in result.data
 
     def test_configure_audit_parameters(
@@ -518,6 +524,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Method succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "synchronization_reported" in result.data
 
     def test_assess_security_posture(
@@ -654,12 +661,14 @@ class TestFlextLdapWorkflowOrchestrator:
         result = saga_orchestrator.handle(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Message must be a dictionary" in result.error
 
         # Test with invalid message type
         result = saga_orchestrator.handle("invalid_message")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Message must be a dictionary" in result.error
 
         # Test with valid message but unknown saga type
@@ -667,6 +676,7 @@ class TestFlextLdapWorkflowOrchestrator:
         result = saga_orchestrator.handle(message)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Unknown saga type" in result.error
 
     def test_distributed_user_management_saga(
@@ -702,6 +712,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Saga succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "saga_completed" in result.data
 
     def test_cross_domain_replication_saga(
@@ -736,6 +747,7 @@ class TestFlextLdapWorkflowOrchestrator:
         assert isinstance(result, FlextResult)
         # Saga succeeds with valid data
         assert result.is_success
+        assert result.data is not None
         assert "replication_saga_completed" in result.data
 
     def test_enterprise_migration_saga(

@@ -79,38 +79,29 @@ def demonstrate_factory_methods() -> None:
     print("=== Factory Methods Demo ===")
 
     # Development configuration
-    dev_result = FlextLdapConfig.create_development_ldap_config()
-    if dev_result.is_success:
-        dev_config = dev_result.value
-        print("Development Configuration:")
-        print(f"  Environment: {dev_config.environment}")
-        print(f"  Debug mode: {dev_config.debug}")
-        print(f"  Bind DN: {dev_config.ldap_bind_dn}")
-        print(f"  SSL enabled: {dev_config.ldap_use_ssl}")
-        print(f"  Query logging: {dev_config.ldap_log_queries}")
-        print()
+    dev_config = FlextLdapConfig.create_for_environment("development")
+    print("Development Configuration:")
+    print(f"  Debug mode: {dev_config.ldap_enable_debug}")
+    print(f"  Bind DN: {dev_config.ldap_bind_dn}")
+    print(f"  SSL enabled: {dev_config.ldap_use_ssl}")
+    print(f"  Query logging: {dev_config.ldap_log_queries}")
+    print()
 
     # Test configuration
-    test_result = FlextLdapConfig.create_test_ldap_config()
-    if test_result.is_success:
-        test_config = test_result.value
-        print("Test Configuration:")
-        print(f"  Environment: {test_config.environment}")
-        print(f"  Debug mode: {test_config.ldap_enable_debug}")
-        print(f"  Bind DN: {test_config.ldap_bind_dn}")
-        print(f"  SSL enabled: {test_config.ldap_use_ssl}")
-        print()
+    test_config = FlextLdapConfig.create_for_environment("test")
+    print("Test Configuration:")
+    print(f"  Debug mode: {test_config.ldap_enable_debug}")
+    print(f"  Bind DN: {test_config.ldap_bind_dn}")
+    print(f"  SSL enabled: {test_config.ldap_use_ssl}")
+    print()
 
     # Production configuration
-    prod_result = FlextLdapConfig.create_production_ldap_config()
-    if prod_result.is_success:
-        prod_config = prod_result.value
-        print("Production Configuration:")
-        print(f"  Environment: {prod_config.environment}")
-        print(f"  Debug mode: {prod_config.debug}")
-        print(f"  SSL enabled: {prod_config.ldap_use_ssl}")
-        print(f"  Pool size: {prod_config.ldap_pool_size}")
-        print("✅ Factory methods working correctly\n")
+    prod_config = FlextLdapConfig.create_for_environment("production")
+    print("Production Configuration:")
+    print(f"  Debug mode: {prod_config.ldap_enable_debug}")
+    print(f"  SSL enabled: {prod_config.ldap_use_ssl}")
+    print(f"  Pool size: {prod_config.ldap_pool_size}")
+    print("✅ Factory methods working correctly\n")
 
 
 def demonstrate_parameter_overrides() -> None:
@@ -155,8 +146,8 @@ def demonstrate_validation_features() -> None:
         # Validation happens automatically during instantiation
         # If we got here, validation passed
         print("✅ Valid configuration passed validation")
-        print(f"   Server: {valid_config.get_effective_server_uri()}")
-        print(f"   Bind DN: {valid_config.get_effective_bind_dn()}")
+        print(f"   Server: {valid_config.ldap_server_uri}")
+        print(f"   Bind DN: {valid_config.ldap_bind_dn}")
 
     except Exception as e:
         print(f"❌ Configuration validation error: {e}")

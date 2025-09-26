@@ -148,12 +148,15 @@ def demonstrate_logging_integration() -> None:
 
     # Test validation with logging
     logger.debug("Testing settings validation")
-    result = settings.validate_business_rules()
-
-    if result.is_success:
-        logger.info("Settings validation passed")
-    else:
-        logger.error("Configuration validation failed", extra={"error": result.error})
+    try:
+        # Configuration validation happens automatically during instantiation
+        # Test by accessing configuration properties
+        connection_config = settings.get_connection_config()
+        logger.info(
+            "Settings validation passed - connection config: %s", connection_config
+        )
+    except Exception:
+        logger.exception("Settings validation failed")
 
 
 async def main() -> None:

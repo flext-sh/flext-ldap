@@ -17,9 +17,13 @@ import pytest
 from ldap3 import Server
 
 from flext_core import (
+    FlextBus,
     FlextContainer,
+    FlextDispatcher,
     FlextLogger,
     FlextModels,
+    FlextProcessors,
+    FlextRegistry,
     FlextResult,
     FlextTypes,
 )
@@ -41,8 +45,7 @@ from flext_ldap.factory import FlextLdapFactory
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.services import FlextLdapAdvancedService
 from flext_ldap.workflows import FlextLdapWorkflowOrchestrator
-
-from .support.test_data import (
+from tests.support.test_data import (
     SAMPLE_ACL_DATA,
     SAMPLE_GROUP_ENTRY,
     SAMPLE_USER_ENTRY,
@@ -155,13 +158,38 @@ def ldap_api() -> FlextLdapAPI:
 @pytest.fixture
 def domain_services() -> FlextLdapDomainServices:
     """Get domain services instance."""
-    return FlextLdapDomainServices()
+    # Create mock instances for the required parameters
+    config = FlextModels.CqrsConfig.Handler(
+        handler_id="test_handler", handler_name="test_handler"
+    )
+    client = FlextLdapClient()
+    container = FlextContainer()
+    dispatcher = FlextDispatcher()
+    bus = FlextBus()
+    processors = FlextProcessors()
+    registry = FlextRegistry(dispatcher=dispatcher)
+
+    return FlextLdapDomainServices(
+        config=config,
+        client=client,
+        container=container,
+        bus=bus,
+        dispatcher=dispatcher,
+        processors=processors,
+        registry=registry,
+    )
 
 
 @pytest.fixture
 def advanced_service() -> FlextLdapAdvancedService:
     """Get advanced service instance."""
-    return FlextLdapAdvancedService()
+    # Create mock instances for the required parameters
+    config = FlextModels.CqrsConfig.Handler(
+        handler_id="test_handler", handler_name="test_handler"
+    )
+    client = FlextLdapClient()
+
+    return FlextLdapAdvancedService(config=config, client=client)
 
 
 @pytest.fixture
@@ -233,7 +261,10 @@ def acl_constants() -> FlextLdapAclConstants:
 @pytest.fixture
 def acl_converters() -> FlextLdapAclConverters:
     """Get ACL converters instance."""
-    return FlextLdapAclConverters()
+    config = FlextModels.CqrsConfig.Handler(
+        handler_id="test_handler", handler_name="test_handler"
+    )
+    return FlextLdapAclConverters(config=config)
 
 
 @pytest.fixture
@@ -245,7 +276,10 @@ def acl_manager() -> FlextLdapAclManager:
 @pytest.fixture
 def acl_parsers() -> FlextLdapAclParsers:
     """Get ACL parsers instance."""
-    return FlextLdapAclParsers()
+    config = FlextModels.CqrsConfig.Handler(
+        handler_id="test_handler", handler_name="test_handler"
+    )
+    return FlextLdapAclParsers(config=config)
 
 
 @pytest.fixture
@@ -266,13 +300,21 @@ def sample_acl_data() -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_user() -> FlextLdapModels.User:
+def sample_user() -> FlextLdapModels.LdapUser:
     """Get sample user entity."""
-    return FlextLdapModels.User(
-        uid="testuser",
+    return FlextLdapModels.LdapUser(
+        dn="cn=testuser,ou=people,dc=example,dc=com",
         cn="Test User",
+        uid="testuser",
         sn="User",
+        given_name="Test",
         mail="testuser@example.com",
+        telephone_number="+1234567890",
+        mobile="+0987654321",
+        department="IT",
+        title="Software Engineer",
+        organization="Example Corp",
+        organizational_unit="Engineering",
         user_password="password123",
     )
 
@@ -281,9 +323,11 @@ def sample_user() -> FlextLdapModels.User:
 def sample_group() -> FlextLdapModels.Group:
     """Get sample group entity."""
     return FlextLdapModels.Group(
+        dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
+        gid_number=1000,
         description="Test Group",
-        member=["uid=testuser,ou=people,dc=example,dc=com"],
+        members=["uid=testuser,ou=people,dc=example,dc=com"],
     )
 
 
@@ -422,26 +466,32 @@ def shared_ldap_config() -> dict[str, str]:
 
 
 @pytest.fixture(scope="session")
+def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
+    """Shared LDAP connection configuration for integration tests."""
+    return FlextLdapModels.ConnectionConfig(
+        server="ldap://localhost:3390",
+        port=3390,
+        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+        bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+        use_ssl=False,
+        timeout=30,
+    )
+
+
+@pytest.fixture(scope="session")
 def shared_ldap_client(shared_ldap_config: dict[str, str]) -> FlextLdapClient:
     """Shared LDAP client for integration tests."""
     config = FlextLdapModels.ConnectionConfig(
         server=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
         bind_password=shared_ldap_config["password"],
-        timeout=30
+        timeout=30,
     )
     return FlextLdapClient(config=config)
-    """Shared LDAP configuration for integration tests."""
-    return {
-        "server_url": "ldap://localhost:3390",
-        "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        "password": "REDACTED_LDAP_BIND_PASSWORD123",
-        "base_dn": "dc=flext,dc=local",
-    }
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_container() -> Generator[str]:
+def shared_ldap_container() -> str:
     """Managed LDAP container for tests."""
     # Skip Docker tests for now due to flext_tests import issues
     pytest.skip("Docker tests temporarily disabled due to flext_tests import issues")
@@ -548,6 +598,7 @@ __all__ = [
     "sample_valid_filter",
     "shared_ldap_client",
     "shared_ldap_config",
+    "shared_ldap_connection_config",
     "shared_ldap_container",
     "shared_ldap_container_manager",
     "shared_ldif_data",
