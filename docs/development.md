@@ -410,17 +410,19 @@ class TestLdapOperations:
 # tests/conftest.py
 import pytest
 import asyncio
-import docker
+from flext_tests import FlextTestDocker
+from flext_core import FlextResult
 from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
 def ldap_server():
-    """Docker LDAP server for integration tests."""
-    client = docker.from_env()
+    """Docker LDAP server for integration tests using FlextTestDocker."""
+    docker_manager = FlextTestDocker()
 
-    # Start LDAP container
-    container = client.containers.run(
-        "osixia/openldap:1.5.0",
+    # Start LDAP container using FlextTestDocker
+    container_result = docker_manager.run_container(
+        image="osixia/openldap:1.5.0",
+        name="flext-ldap-test-server",
         ports={"389/tcp": 3390},
         environment={
             "LDAP_ORGANISATION": "FLEXT Test",
@@ -429,11 +431,22 @@ def ldap_server():
         },
         detach=True,
         remove=True,
-        name="flext-ldap-test-server"
     )
 
-    # Wait for server to be ready
-    time.sleep(10)
+    if container_result.is_failure:
+        pytest.skip(f"Failed to start LDAP container: {container_result.error}")
+
+    container_id = container_result.unwrap()
+
+    # Wait for server to be ready using FlextTestDocker health check
+    health_result = docker_manager.wait_for_container_health(
+        container_name="flext-ldap-test-server",
+        health_command="ldapsearch -x -H ldap://localhost:389 -b '' -s base",
+        timeout=30
+    )
+
+    if health_result.is_failure:
+        pytest.skip(f"LDAP server not ready: {health_result.error}")
 
     # Configure flext-ldap for testing
     test_config = FlextLdapConfig(
@@ -445,10 +458,10 @@ def ldap_server():
     )
     set_flext_ldap_config(test_config)
 
-    yield container
+    yield container_id
 
-    # Cleanup
-    container.stop()
+    # Cleanup using FlextTestDocker
+    docker_manager.stop_container("flext-ldap-test-server", remove=True)
 
 @pytest.fixture
 async def authenticated_user():

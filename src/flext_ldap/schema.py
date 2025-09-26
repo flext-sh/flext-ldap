@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from typing import override
 
 from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
 from flext_ldap.models import FlextLdapModels
@@ -38,6 +39,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
     class GenericQuirksDetector(QuirksDetector):
         """Generic quirks detector for unknown LDAP servers."""
 
+        @override
         def __init__(self) -> None:
             """Initialize generic quirks detector."""
             # Create a minimal handler config for the base class
@@ -48,6 +50,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             )
             super().__init__(config=config)
 
+        @override
         def handle(self, message: object) -> FlextResult[FlextResult[object]]:
             """Handle quirks detection message.
 

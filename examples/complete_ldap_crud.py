@@ -27,7 +27,9 @@ from flext_ldap import (
 logger = FlextLogger(__name__)
 
 # LDAP connection settings
-LDAP_URI: Final[str] = f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:389"
+LDAP_URI: Final[str] = (
+    f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+)
 BASE_DN: Final[str] = "dc=example,dc=com"
 USERS_DN: Final[str] = f"ou=users,{BASE_DN}"
 GROUPS_DN: Final[str] = f"ou=groups,{BASE_DN}"
@@ -234,7 +236,9 @@ def main() -> int:
     """
     logger.info("FLEXT-LDAP Complete CRUD Example")
     logger.info("=" * 50)
-    logger.info("Ensure LDAP server is running on localhost:389")
+    logger.info(
+        f"Ensure LDAP server is running on {FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+    )
     logger.info("Base DN: dc=example,dc=com")
     logger.info("Admin DN: cn=admin,dc=example,dc=com")
     logger.info("=" * 50)

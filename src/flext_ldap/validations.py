@@ -11,194 +11,192 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextHandlers, FlextModels, FlextResult
-from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextConstants, FlextResult
 
 
-class FlextLdapValidations(FlextHandlers[object, FlextResult[object]]):
-    """Centralized validation - SOURCE OF TRUTH for all LDAP validations."""
-
-    def handle(self, message: object) -> FlextResult[FlextResult[object]]:
-        """Handle validation request."""
-        return FlextResult[FlextResult[object]].ok(FlextResult[object].ok(message))
+class FlextLdapValidations:
+    """Centralized LDAP validations to eliminate circular dependencies."""
 
     @staticmethod
-    def validate_dn(dn: str, context: str = "DN") -> FlextResult[None]:
+    def validate_dn(dn: str, context: str = "DN") -> FlextResult[bool]:
         """Centralized DN validation - ELIMINATE ALL DUPLICATION."""
+        if dn is None:
+            return FlextResult[bool].fail(f"{context} cannot be None")
         if not dn or not dn.strip():
-            return FlextResult[None].fail(f"{context} cannot be empty")
+            return FlextResult[bool].fail(f"{context} cannot be empty")
 
         # Basic DN format validation (RFC 2253) - must contain = and proper structure
         if (
             not re.match(r"^[a-zA-Z0-9=,\s\-\._]+$", dn.strip())
             or "=" not in dn.strip()
         ):
-            return FlextResult[None].fail(f"{context} contains invalid characters")
+            return FlextResult[bool].fail(f"{context} contains invalid characters")
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_filter(filter_str: str) -> FlextResult[None]:
+    def validate_filter(filter_str: str) -> FlextResult[bool]:
         """Centralized LDAP filter validation - ELIMINATE ALL DUPLICATION."""
+        if filter_str is None:
+            return FlextResult[bool].fail("Filter cannot be None")
         if not filter_str or not filter_str.strip():
-            return FlextResult[None].fail("Filter cannot be empty")
+            return FlextResult[bool].fail("Filter cannot be empty")
 
         # Basic filter format validation
-        if not re.match(r"^[\(\)=&!|a-zA-Z0-9\s\-\.\*]+$", filter_str.strip()):
-            return FlextResult[None].fail("Filter contains invalid characters")
+        filter_str = filter_str.strip()
+        if not filter_str.startswith("(") or not filter_str.endswith(")"):
+            return FlextResult[bool].fail("Filter must be enclosed in parentheses")
 
-        # Allow both simple filters (objectClass=person) and complex filters ((objectClass=person))
-        # Simple filters are valid LDAP filters
-        return FlextResult[None].ok(None)
-
-    @staticmethod
-    def validate_email(email: str | None) -> FlextResult[None]:
-        """Centralized email validation using FlextModels.EmailAddress - ELIMINATE ALL DUPLICATION."""
-        if email is None:
-            return FlextResult[None].ok(None)
-
-        # Use FlextModels.create_validated_email for validation
-        email_result: FlextResult[FlextModels.EmailAddress] = (
-            FlextModels.create_validated_email(email)
-        )
-        if email_result.is_failure:
-            return FlextResult[None].fail(
-                f"Email validation failed: {email_result.error or 'invalid format'}",
-            )
-
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_password(password: str | None) -> FlextResult[None]:
-        """Centralized password validation - ELIMINATE ALL DUPLICATION."""
-        if password is None:
-            return FlextResult[None].ok(None)
-
-        if len(password) < FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH:
-            return FlextResult[None].fail(
-                f"Password must be at least {FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
-            )
-
-        if len(password) > FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH:
-            return FlextResult[None].fail(
-                f"Password must be no more than {FlextLdapConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters",
-            )
-
-        return FlextResult[None].ok(None)
-
-    @staticmethod
-    def validate_uri(uri: str) -> FlextResult[None]:
-        """Centralized URI validation - ELIMINATE ALL DUPLICATION."""
-        if not uri or not uri.strip():
-            return FlextResult[None].fail("URI cannot be empty")
-
-        # Validate LDAP URI format specifically
-        if not uri.strip().startswith(
-            (
-                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP,
-                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS,
-            ),
-        ):
-            return FlextResult[None].fail(
-                f"URI must start with {FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP} or {FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS}",
-            )
-
-        return FlextResult[None].ok(None)
-
-    @staticmethod
-    def validate_attributes(attributes: list[str]) -> FlextResult[None]:
-        """Centralized LDAP attribute names validation - ELIMINATE ALL DUPLICATION."""
+    def validate_attributes(attributes: list[str]) -> FlextResult[bool]:
+        """Centralized LDAP attributes validation - ELIMINATE ALL DUPLICATION."""
+        if attributes is None:
+            return FlextResult[bool].fail("Attributes list cannot be empty")
         if not attributes:
-            return FlextResult[None].fail("Attributes list cannot be empty")
+            return FlextResult[bool].fail("Attributes list cannot be empty")
 
         for attr in attributes:
-            if not isinstance(attr, str) or not attr.strip():
-                return FlextResult[None].fail(f"Invalid attribute name: {attr}")
+            if not attr or not attr.strip():
+                return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
+            if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attr.strip()):
+                return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
 
-        return FlextResult[None].ok(None)
-
-    @staticmethod
-    def validate_object_classes(object_classes: list[str]) -> FlextResult[None]:
-        """Centralized LDAP object class names validation - ELIMINATE ALL DUPLICATION."""
-        if not object_classes:
-            return FlextResult[None].fail("Object classes list cannot be empty")
-
-        for oc in object_classes:
-            if not isinstance(oc, str) or not oc.strip():
-                return FlextResult[None].fail(f"Invalid object class name: {oc}")
-
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_server_uri(server_uri: str) -> FlextResult[None]:
-        """Validate LDAP server URI."""
-        return FlextLdapValidations.validate_uri(server_uri)
+    def validate_server_uri(server_uri: str) -> FlextResult[bool]:
+        """Centralized server URI validation - ELIMINATE ALL DUPLICATION."""
+        if server_uri is None:
+            return FlextResult[bool].fail("URI cannot be None")
+        if not server_uri or not server_uri.strip():
+            return FlextResult[bool].fail("URI cannot be empty")
+
+        server_uri = server_uri.strip()
+        if not server_uri.startswith(("ldap://", "ldaps://")):
+            return FlextResult[bool].fail("URI must start with ldap:// or ldaps://")
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_port(port: int) -> FlextResult[None]:
-        """Validate LDAP port number."""
-        max_port = 65535
+    def validate_port(port: int) -> FlextResult[bool]:
+        """Centralized port validation - ELIMINATE ALL DUPLICATION."""
+        if port is None:
+            return FlextResult[bool].fail("Port cannot be None")
+
+        max_port = FlextConstants.Network.MAX_PORT
         if port <= 0 or port > max_port:
-            return FlextResult[None].fail(f"Port must be between 1 and {max_port}")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail(f"Port must be between 1 and {max_port}")
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_timeout(timeout: int) -> FlextResult[None]:
-        """Validate LDAP timeout."""
+    def validate_timeout(timeout: int) -> FlextResult[bool]:
+        """Centralized timeout validation - ELIMINATE ALL DUPLICATION."""
+        if timeout is None:
+            return FlextResult[bool].fail("Timeout cannot be None")
+
         if timeout < 0:
-            return FlextResult[None].fail("Timeout must be non-negative")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Timeout must be non-negative")
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_size_limit(size_limit: int) -> FlextResult[None]:
-        """Validate LDAP size limit."""
+    def validate_size_limit(size_limit: int) -> FlextResult[bool]:
+        """Centralized size limit validation - ELIMINATE ALL DUPLICATION."""
+        if size_limit is None:
+            return FlextResult[bool].fail("Size limit cannot be None")
+
         if size_limit < 0:
-            return FlextResult[None].fail("Size limit must be non-negative")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Size limit must be non-negative")
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_scope(scope: str) -> FlextResult[None]:
-        """Validate LDAP search scope."""
+    def validate_scope(scope: str) -> FlextResult[bool]:
+        """Centralized scope validation - ELIMINATE ALL DUPLICATION."""
+        if scope is None:
+            return FlextResult[bool].fail("Scope cannot be None")
+
         valid_scopes = {"base", "onelevel", "subtree"}
         if scope.lower() not in valid_scopes:
-            return FlextResult[None].fail(f"Invalid scope: {scope}. Must be one of {valid_scopes}")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail(
+                f"Invalid scope: {scope}. Must be one of {valid_scopes}"
+            )
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_modify_operation(operation: str) -> FlextResult[None]:
-        """Validate LDAP modify operation."""
-        valid_operations = {"MODIFY_REPLACE", "MODIFY_ADD", "MODIFY_DELETE"}
-        if operation not in valid_operations:
-            return FlextResult[None].fail(f"Invalid modify operation: {operation}. Must be one of {valid_operations}")
-        return FlextResult[None].ok(None)
+    def validate_modify_operation(operation: str) -> FlextResult[bool]:
+        """Centralized modify operation validation - ELIMINATE ALL DUPLICATION."""
+        if operation is None:
+            return FlextResult[bool].fail("Operation cannot be None")
+
+        valid_operations = {"add", "delete", "replace"}
+        if operation.lower() not in valid_operations:
+            return FlextResult[bool].fail(
+                f"Invalid operation: {operation}. Must be one of {valid_operations}"
+            )
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_object_class(object_class: str) -> FlextResult[None]:
-        """Validate LDAP object class."""
-        valid_classes = {"inetOrgPerson", "organizationalPerson", "groupOfNames", "person", "top"}
-        if object_class not in valid_classes:
-            return FlextResult[None].fail(f"Invalid object class: {object_class}")
-        return FlextResult[None].ok(None)
+    def validate_object_class(object_class: str) -> FlextResult[bool]:
+        """Centralized object class validation - ELIMINATE ALL DUPLICATION."""
+        if object_class is None:
+            return FlextResult[bool].fail("Object class cannot be None")
+
+        if not object_class or not object_class.strip():
+            return FlextResult[bool].fail("Object class cannot be empty")
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_connection_config(config: dict[str, object]) -> FlextResult[None]:
-        """Validate LDAP connection configuration."""
-        try:
-            # Check required fields
-            required_fields = ["server_uri", "bind_dn", "bind_password"]
-            for field in required_fields:
-                if field not in config:
-                    return FlextResult[None].fail(f"Missing required field: {field}")
+    def validate_email(email: str) -> FlextResult[bool]:
+        """Centralized email validation using regex."""
+        if email is None:
+            return FlextResult[bool].fail("Email cannot be None")
 
-            # Validate server URI
-            server_uri = str(config["server_uri"])
-            uri_result = FlextLdapValidations.validate_server_uri(server_uri)
-            if uri_result.is_failure:
-                return uri_result
+        # Basic email validation regex
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if re.match(email_pattern, email):
+            return FlextResult[bool].ok(True)
+        return FlextResult[bool].fail("Invalid email format")
 
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Connection config validation failed: {e}")
+    @staticmethod
+    def validate_password(password: str) -> FlextResult[bool]:
+        """Centralized password validation - ELIMINATE ALL DUPLICATION."""
+        if password is None:
+            return FlextResult[bool].fail("Password cannot be None")
+
+        min_length = FlextConstants.Security.MIN_PASSWORD_LENGTH
+        max_length = FlextConstants.Security.MAX_PASSWORD_LENGTH
+
+        if len(password) < min_length:
+            return FlextResult[bool].fail(
+                f"Password must be at least {min_length} characters"
+            )
+
+        if len(password) > max_length:
+            return FlextResult[bool].fail(
+                f"Password must be no more than {max_length} characters"
+            )
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def validate_connection_config(config: dict[str, object]) -> FlextResult[bool]:
+        """Centralized connection config validation - ELIMINATE ALL DUPLICATION."""
+        if config is None:
+            return FlextResult[bool].fail("Config cannot be None")
+
+        required_fields = ["server", "port", "bind_dn", "bind_password"]
+        for field in required_fields:
+            if field not in config or config[field] is None:
+                return FlextResult[bool].fail(f"Missing required field: {field}")
+
+        return FlextResult[bool].ok(True)
 
 
 __all__ = ["FlextLdapValidations"]

@@ -19,6 +19,7 @@ from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels, FlextLdapTypes
+from flext_ldap.constants import FlextLdapConstants
 from flext_tests import FlextTestDocker
 from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
@@ -120,7 +121,9 @@ class LdapTestServer:
                         logger.info("LDAP server is ready")
                     except Exception as e:
                         logger.debug("LDAP server not ready yet: %s", e)
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(
+                            FlextLdapConstants.LdapRetry.SERVER_READY_RETRY_DELAY
+                        )
                     else:
                         return True
 
@@ -211,7 +214,8 @@ class LdapTestServer:
         """Get container status using FlextTestDocker."""
         status_result = self.docker_manager.get_container_status(self.container_name)
         if status_result.is_failure:
-            return FlextResult[dict].fail(status_result.error)
+            error_msg = status_result.error or "Unknown error"
+            return FlextResult[dict].fail(error_msg)
 
         container_info = status_result.value
         return FlextResult[dict].ok({

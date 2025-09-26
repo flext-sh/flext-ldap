@@ -109,13 +109,15 @@ def demonstrate_server_capabilities(
             server_info = server_info_raw
             logger.info("  Vendor: %s", server_info.get("vendorName", "Unknown"))
             logger.info("  Description: %s", server_info.get("description", "Unknown"))
-            logger.info("  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown"))
+            logger.info(
+                "  LDAP Version: %s", server_info.get("supportedLDAPVersion", "Unknown")
+            )
         else:
             logger.info("  Server info not available")
 
     if capabilities["server_type"]:
         server_type = capabilities["server_type"]
-        if hasattr(server_type, 'value'):
+        if hasattr(server_type, "value"):
             logger.info("  Server Type: %s", server_type.value)
         else:
             logger.info("  Server Type: %s", server_type or "unknown")
@@ -123,18 +125,35 @@ def demonstrate_server_capabilities(
     if capabilities["server_quirks"]:
         quirks = capabilities["server_quirks"]
         logger.info("  Server Quirks:")
-        if hasattr(quirks, 'case_sensitive_dns'):
-            logger.info("    Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
-            logger.info("    Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
+        if hasattr(quirks, "case_sensitive_dns"):
+            logger.info(
+                "    Case Sensitive DNs: %s",
+                getattr(quirks, "case_sensitive_dns", "unknown"),
+            )
+            logger.info(
+                "    Case Sensitive Attributes: %s",
+                getattr(quirks, "case_sensitive_attributes", "unknown"),
+            )
         else:
             logger.info("    Server quirks not available")
-        
-        if hasattr(quirks, 'supports_paged_results'):
-            logger.info("    Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
-            logger.info("    Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
-            logger.info("    Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
-            logger.info("    Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
-            logger.info("    Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+
+        if hasattr(quirks, "supports_paged_results"):
+            logger.info(
+                "    Supports Paged Results: %s",
+                getattr(quirks, "supports_paged_results", "unknown"),
+            )
+            logger.info(
+                "    Supports VLV: %s", getattr(quirks, "supports_vlv", "unknown")
+            )
+            logger.info(
+                "    Supports Sync: %s", getattr(quirks, "supports_sync", "unknown")
+            )
+            logger.info(
+                "    Max Page Size: %s", getattr(quirks, "max_page_size", "unknown")
+            )
+            logger.info(
+                "    Default Timeout: %s", getattr(quirks, "default_timeout", "unknown")
+            )
 
     if "naming_contexts" in capabilities:
         logger.info("  Naming Contexts: %s", capabilities["naming_contexts"])
@@ -443,22 +462,39 @@ def demonstrate_server_type_detection() -> None:
         quirks = detector.get_server_quirks(server_type)
 
         logger.info("Server: %s", server_info["vendorName"])
-        if server_type and hasattr(server_type, 'value'):
+        if server_type and hasattr(server_type, "value"):
             logger.info("  Detected Type: %s", server_type.value)
         else:
             logger.info("  Detected Type: unknown")
-        
+
         if quirks:
-            logger.info("  Case Sensitive DNs: %s", getattr(quirks, 'case_sensitive_dns', 'unknown'))
-            logger.info("  Case Sensitive Attributes: %s", getattr(quirks, 'case_sensitive_attributes', 'unknown'))
-            logger.info("  Supports Paged Results: %s", getattr(quirks, 'supports_paged_results', 'unknown'))
-            logger.info("  Supports VLV: %s", getattr(quirks, 'supports_vlv', 'unknown'))
-            logger.info("  Supports Sync: %s", getattr(quirks, 'supports_sync', 'unknown'))
-            logger.info("  Max Page Size: %s", getattr(quirks, 'max_page_size', 'unknown'))
-            logger.info("  Default Timeout: %s", getattr(quirks, 'default_timeout', 'unknown'))
+            logger.info(
+                "  Case Sensitive DNs: %s",
+                getattr(quirks, "case_sensitive_dns", "unknown"),
+            )
+            logger.info(
+                "  Case Sensitive Attributes: %s",
+                getattr(quirks, "case_sensitive_attributes", "unknown"),
+            )
+            logger.info(
+                "  Supports Paged Results: %s",
+                getattr(quirks, "supports_paged_results", "unknown"),
+            )
+            logger.info(
+                "  Supports VLV: %s", getattr(quirks, "supports_vlv", "unknown")
+            )
+            logger.info(
+                "  Supports Sync: %s", getattr(quirks, "supports_sync", "unknown")
+            )
+            logger.info(
+                "  Max Page Size: %s", getattr(quirks, "max_page_size", "unknown")
+            )
+            logger.info(
+                "  Default Timeout: %s", getattr(quirks, "default_timeout", "unknown")
+            )
         else:
             logger.info("  Server quirks not available")
-        logger.info()
+        logger.info("")
 
 
 if __name__ == "__main__":
@@ -484,7 +520,7 @@ if __name__ == "__main__":
     asyncio.run(demonstrate_universal_client())
 
     # Show server type detection
-    asyncio.run(demonstrate_server_type_detection())
+    demonstrate_server_type_detection()
 
     print("\nUniversal LDAP client demonstration completed!")
     print("The client can now handle ANY LDAP server in ANY form!")

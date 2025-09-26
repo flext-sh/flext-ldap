@@ -149,8 +149,11 @@ class TestRealLdifImport:
         }
 
         # Import from LDIF structure
+        dn_value = ldif_entry["dn"]
+        if isinstance(dn_value, list):
+            dn_value = dn_value[0] if dn_value else ""
         result = await client.add_entry_universal(
-            dn=ldif_entry["dn"],
+            dn=str(dn_value),
             attributes={k: v for k, v in ldif_entry.items() if k != "dn"},
         )
 
@@ -191,8 +194,11 @@ class TestRealLdifImport:
         }
 
         # Import from LDIF structure
+        dn_value = ldif_user["dn"]
+        if isinstance(dn_value, list):
+            dn_value = dn_value[0] if dn_value else ""
         result = await client.add_entry_universal(
-            dn=ldif_user["dn"],
+            dn=str(dn_value),
             attributes={k: v for k, v in ldif_user.items() if k != "dn"},
         )
 
@@ -237,8 +243,11 @@ class TestRealLdifImport:
         }
 
         # Import from LDIF structure
+        dn_value = ldif_group["dn"]
+        if isinstance(dn_value, list):
+            dn_value = dn_value[0] if dn_value else ""
         result = await client.add_entry_universal(
-            dn=ldif_group["dn"],
+            dn=str(dn_value),
             attributes={k: v for k, v in ldif_group.items() if k != "dn"},
         )
 
@@ -286,8 +295,11 @@ class TestRealLdifRoundTrip:
             "mail": "original@flext.local",
         }
 
+        dn_value = original_user["dn"]
+        if isinstance(dn_value, list):
+            dn_value = dn_value[0] if dn_value else ""
         await client.add_entry_universal(
-            dn=original_user["dn"],
+            dn=str(dn_value),
             attributes={k: v for k, v in original_user.items() if k != "dn"},
         )
 
@@ -311,9 +323,23 @@ class TestRealLdifRoundTrip:
             "mail": exported_data.get("mail"),
         }
 
+        dn_value = reimported_user["dn"]
+        if isinstance(dn_value, list):
+            dn_value = dn_value[0] if dn_value else ""
+        # Convert attributes to proper format
+        attributes: dict[str, list[str] | str] = {}
+        for k, v in reimported_user.items():
+            if k != "dn":
+                if isinstance(v, list):
+                    attributes[k] = [str(item) for item in v if item is not None]
+                elif v is None:
+                    attributes[k] = []
+                else:
+                    attributes[k] = [str(v)]
+
         import_result = await client.add_entry_universal(
-            dn=reimported_user["dn"],
-            attributes={k: v for k, v in reimported_user.items() if k != "dn"},
+            dn=str(dn_value),
+            attributes=attributes,
         )
 
         assert import_result.is_success

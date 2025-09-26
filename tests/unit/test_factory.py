@@ -142,6 +142,7 @@ class TestFlextLdapFactory:
         result = factory.handle("invalid_message")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Message must be a dictionary" in result.error
 
     def test_handle_missing_factory_type(self, factory: FlextLdapFactory) -> None:
@@ -151,6 +152,7 @@ class TestFlextLdapFactory:
         result = factory.handle(message)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Factory type must be a string" in result.error
 
     def test_handle_unknown_factory_type(self, factory: FlextLdapFactory) -> None:
@@ -160,6 +162,7 @@ class TestFlextLdapFactory:
         result = factory.handle(message)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Unknown factory type: unknown_type" in result.error
 
     def test_create_client_success(self) -> None:
@@ -182,6 +185,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_client(config)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Missing required fields" in result.error
 
     def test_create_client_invalid_server_uri(self) -> None:
@@ -195,6 +199,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_client(config)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Server URI must start with ldap:// or ldaps://" in result.error
 
     def test_create_user_request_success(self) -> None:
@@ -204,7 +209,14 @@ class TestFlextLdapFactory:
             "uid": "testuser",
             "cn": "Test User",
             "sn": "User",
+            "given_name": "Test",
             "mail": "testuser@example.com",
+            "user_password": "password123",
+            "telephone_number": "+1234567890",
+            "description": "Test user",
+            "department": "IT",
+            "title": "Developer",
+            "organization": "Example Corp",
         }
 
         result = FlextLdapFactory.create_user_request(user_data)
@@ -227,6 +239,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_user_request(user_data)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Missing required fields" in result.error
 
     def test_create_user_request_invalid_email(self) -> None:
@@ -236,12 +249,20 @@ class TestFlextLdapFactory:
             "uid": "testuser",
             "cn": "Test User",
             "sn": "User",
+            "given_name": "Test",
             "mail": "invalid-email",  # Invalid email format
+            "user_password": "password123",
+            "telephone_number": "+1234567890",
+            "description": "Test user",
+            "department": "IT",
+            "title": "Developer",
+            "organization": "Example Corp",
         }
 
         result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Mail must be a valid email address" in result.error
 
     def test_create_user_request_non_strict_validation(self) -> None:
@@ -251,7 +272,14 @@ class TestFlextLdapFactory:
             "uid": "testuser",
             "cn": "Test User",
             "sn": "User",
+            "given_name": "Test",
             "mail": "testuser@example.com",  # Valid email format
+            "user_password": "password123",
+            "telephone_number": "+1234567890",
+            "description": "Test user",
+            "department": "IT",
+            "title": "Developer",
+            "organization": "Example Corp",
         }
 
         result = FlextLdapFactory.create_user_request(
@@ -288,6 +316,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_search_request(search_data)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Missing required fields" in result.error
 
     def test_create_search_request_with_defaults(self) -> None:
@@ -300,9 +329,12 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_search_request(search_data)
 
         assert result.is_success
+        assert result.data is not None
         assert result.data.scope == "subtree"  # Default value
         assert result.data.attributes == []  # Default value
-        assert result.data.page_size > 0  # Default value from constants
+        assert (
+            result.data.page_size is not None and result.data.page_size > 0
+        )  # Default value from constants
 
     def test_create_bulk_operation_config_success(self) -> None:
         """Test successful bulk operation configuration creation."""
@@ -333,6 +365,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_bulk_operation_config(operation_data)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid operation type" in result.error
 
     def test_create_bulk_operation_config_empty_items(self) -> None:
@@ -342,6 +375,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_bulk_operation_config(operation_data)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Items data cannot be empty" in result.error
 
     def test_create_bulk_operation_config_invalid_batch_size(self) -> None:
@@ -355,6 +389,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_bulk_operation_config(operation_data)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Batch size must be greater than 0" in result.error
 
     def test_create_advanced_service_deprecated(self) -> None:
@@ -377,6 +412,7 @@ class TestFlextLdapFactory:
         result = FlextLdapFactory.create_advanced_service(client_config)
 
         assert result.is_failure
+        assert result.error is not None
         assert "Client configuration validation failed" in result.error
 
     def test_validation_methods(self) -> None:
@@ -395,6 +431,7 @@ class TestFlextLdapFactory:
         invalid_config = {}
         result = FlextLdapFactory._validate_client_config(invalid_config)
         assert result.is_failure
+        assert result.error is not None
         assert "Missing required fields" in result.error
 
     def test_validate_user_data_methods(self) -> None:
@@ -405,7 +442,14 @@ class TestFlextLdapFactory:
             "uid": "testuser",
             "cn": "Test User",
             "sn": "User",
+            "given_name": "Test",
             "mail": "testuser@example.com",
+            "user_password": "password123",
+            "telephone_number": "+1234567890",
+            "description": "Test user",
+            "department": "IT",
+            "title": "Developer",
+            "organization": "Example Corp",
         }
 
         result = FlextLdapFactory._validate_user_data(valid_user_data)
@@ -421,6 +465,7 @@ class TestFlextLdapFactory:
 
         result = FlextLdapFactory._validate_user_data(invalid_user_data)
         assert result.is_failure
+        assert result.error is not None
         assert "DN must be a non-empty string" in result.error
 
     def test_apply_defaults_methods(self) -> None:
@@ -462,6 +507,7 @@ class TestFlextLdapFactory:
 
             result = factory.handle(message)
             assert result.is_failure
+            assert result.error is not None
             assert "Factory creation failed" in result.error
 
     def test_factory_ecosystem_integration(self, factory: FlextLdapFactory) -> None:
@@ -471,10 +517,10 @@ class TestFlextLdapFactory:
         assert factory._bus is not None
         assert factory._dispatcher is not None
         assert factory._processors is not None
-        assert factory._registry is not None
+        assert factory._ldap_registry is not None
         assert factory._context is not None
 
         # Test that registry is properly configured (check that it exists and is initialized)
-        assert hasattr(factory._registry, "_dispatcher") or hasattr(
-            factory._registry, "dispatcher"
+        assert hasattr(factory._ldap_registry, "_dispatcher") or hasattr(
+            factory._ldap_registry, "dispatcher"
         )

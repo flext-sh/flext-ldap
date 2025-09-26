@@ -15,6 +15,8 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextResult, FlextService
 from flext_ldap.acl import (
     FlextLdapAclManager,
@@ -44,6 +46,7 @@ class FlextLdapAPI(FlextService[None]):
     **PYTHON 3.13+ COMPATIBILITY**: Uses modern async/await patterns and latest type features.
     """
 
+    @override
     def __init__(self, config: FlextLdapConfig | None = None) -> None:
         """Initialize the LDAP API service."""
         super().__init__()
@@ -57,6 +60,7 @@ class FlextLdapAPI(FlextService[None]):
         """Create a new FlextLdapAPI instance (factory method)."""
         return cls()
 
+    @override
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""
         return FlextResult[None].ok(None)
@@ -304,14 +308,14 @@ class FlextLdapAPI(FlextService[None]):
     def validate_dn(self, dn: str) -> FlextResult[None]:
         """Validate DN format with enhanced error handling."""
         try:
-            return self.validations.validate_dn(dn)
+            return self.validations.validate_dn(dn).map(lambda _: None)
         except Exception as e:
             return FlextResult[None].fail(f"DN validation failed: {e}")
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP filter format with enhanced error handling."""
         try:
-            return self.validations.validate_filter(filter_str)
+            return self.validations.validate_filter(filter_str).map(lambda _: None)
         except Exception as e:
             return FlextResult[None].fail(f"Filter validation failed: {e}")
 

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict, Unpack
+from typing import TypedDict, Unpack, override
 
 from flext_core import FlextExceptions
 
@@ -26,6 +26,7 @@ class FlextLdapExceptions(FlextExceptions):
     proper error codes, context, and correlation tracking.
     """
 
+    @override
     def __init__(self) -> None:
         """Initialize LDAP exceptions with container and logger."""
         super().__init__()
@@ -169,6 +170,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP server connection fails or is lost.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -195,6 +197,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.server_uri = server_uri
             self.ldap_code = ldap_code
 
+        @override
         def __str__(self) -> str:
             """Return string representation with server URI and LDAP code."""
             base_str = super().__str__()
@@ -213,6 +216,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP bind or authentication fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -235,6 +239,7 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.bind_dn = bind_dn
 
+        @override
         def __str__(self) -> str:
             """Return string representation with bind DN details."""
             base_str = super().__str__()
@@ -248,6 +253,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP search operation fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -276,6 +282,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.filter_str = filter_str
             self.search_context = search_context
 
+        @override
         def __str__(self) -> str:
             """Return string representation with search details."""
             base_str = super().__str__()
@@ -296,6 +303,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP modify operation fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -321,6 +329,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.modifications = modifications
 
+        @override
         def __str__(self) -> str:
             """Return string representation with DN details."""
             base_str = super().__str__()
@@ -334,6 +343,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP add operation fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -365,6 +375,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP delete operation fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -393,6 +404,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP data validation fails.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -415,6 +427,7 @@ class FlextLdapExceptions(FlextExceptions):
             )
             self.ldap_field = ldap_field
 
+        @override
         def __str__(self) -> str:
             """Return string representation with field details."""
             base_str = super().__str__()
@@ -428,6 +441,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP configuration is invalid or missing.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -453,6 +467,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.ldap_config_key = ldap_config_key
             self.section = section
 
+        @override
         def __str__(self) -> str:
             """Return string representation with config key details."""
             base_str = super().__str__()
@@ -471,6 +486,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when LDAP operation exceeds timeout limit.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -501,6 +517,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when requested LDAP entry does not exist.
         """
 
+        @override
         def __init__(
             self,
             message: str,
@@ -527,6 +544,7 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.operation = operation
 
+        @override
         def __str__(self) -> str:
             """Return string representation with DN and operation details."""
             base_str = super().__str__()
@@ -545,6 +563,7 @@ class FlextLdapExceptions(FlextExceptions):
         Raised when attempting to create an entry that already exists.
         """
 
+        @override
         def __init__(
             self,
             message: str,

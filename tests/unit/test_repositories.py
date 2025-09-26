@@ -61,6 +61,7 @@ class TestUserRepository:
             uid="testuser",
             cn="Test User",
             sn="User",
+            mail="testuser@example.com",
         )
 
         result = user_repository.handle(user)
@@ -75,6 +76,7 @@ class TestUserRepository:
         result = user_repository.handle("invalid_message")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid message type" in result.error
 
     async def test_user_repository_find_by_dn_empty_dn(
@@ -84,6 +86,7 @@ class TestUserRepository:
         result = await user_repository.find_by_dn("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_user_repository_find_by_dn_whitespace_dn(
@@ -93,6 +96,7 @@ class TestUserRepository:
         result = await user_repository.find_by_dn("   ")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_user_repository_find_by_dn_valid_dn(
@@ -113,6 +117,7 @@ class TestUserRepository:
         result = await user_repository.find_user_by_uid("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "UID cannot be empty" in result.error
 
     async def test_user_repository_find_user_by_uid_whitespace_uid(
@@ -122,6 +127,7 @@ class TestUserRepository:
         result = await user_repository.find_user_by_uid("   ")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "UID cannot be empty" in result.error
 
     async def test_user_repository_find_user_by_uid_valid_uid(
@@ -140,6 +146,7 @@ class TestUserRepository:
         result = await user_repository.find_users_by_filter("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Filter cannot be empty" in result.error
 
     async def test_user_repository_find_users_by_filter_whitespace_filter(
@@ -149,6 +156,7 @@ class TestUserRepository:
         result = await user_repository.find_users_by_filter("   ")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Filter cannot be empty" in result.error
 
     async def test_user_repository_find_users_by_filter_valid_filter(
@@ -167,6 +175,7 @@ class TestUserRepository:
         result = await user_repository.save("invalid_entity")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid entity type" in result.error
 
     async def test_user_repository_save_user_missing_uid(
@@ -178,11 +187,13 @@ class TestUserRepository:
             uid="",  # Empty UID
             cn="Test User",
             sn="User",
+            mail="testuser@example.com",
         )
 
         result = await user_repository.save(user)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "User ID (uid) is required" in result.error
 
     async def test_user_repository_save_user_missing_sn(
@@ -194,11 +205,13 @@ class TestUserRepository:
             uid="testuser",
             cn="Test User",
             sn="",  # Empty surname
+            mail="testuser@example.com",
         )
 
         result = await user_repository.save(user)
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Surname (sn) is required" in result.error
 
     async def test_user_repository_save_valid_user(
@@ -225,6 +238,7 @@ class TestUserRepository:
         result = await user_repository.update("", {"cn": ["New Name"]})
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_user_repository_update_empty_attributes(
@@ -236,6 +250,7 @@ class TestUserRepository:
         )
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Attributes cannot be empty" in result.error
 
     async def test_user_repository_update_valid_data(
@@ -257,6 +272,7 @@ class TestUserRepository:
         result = await user_repository.delete("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_user_repository_delete_valid_dn(
@@ -277,6 +293,7 @@ class TestUserRepository:
         result = await user_repository.search("", "(objectClass=person)")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Base DN cannot be empty" in result.error
 
     async def test_user_repository_search_empty_filter(
@@ -286,6 +303,7 @@ class TestUserRepository:
         result = await user_repository.search("dc=example,dc=com", "")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Filter cannot be empty" in result.error
 
     async def test_user_repository_search_valid_params(
@@ -320,6 +338,7 @@ class TestUserRepository:
         result = await user_repository.exists("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_user_repository_exists_valid_dn(
@@ -368,6 +387,7 @@ class TestGroupRepository:
         result = group_repository.handle("invalid_message")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid message type" in result.error
 
     async def test_group_repository_find_by_dn_valid_dn(
@@ -433,6 +453,7 @@ class TestGroupRepository:
         result = await group_repository.save("invalid_entity")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid entity type" in result.error
 
     async def test_group_repository_update_empty_dn(
@@ -442,6 +463,7 @@ class TestGroupRepository:
         result = await group_repository.update("", {"cn": ["New Name"]})
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_group_repository_update_empty_attributes(
@@ -453,6 +475,7 @@ class TestGroupRepository:
         )
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "Attributes cannot be empty" in result.error
 
     async def test_group_repository_update_valid_data(
@@ -474,6 +497,7 @@ class TestGroupRepository:
         result = await group_repository.delete("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_group_repository_delete_valid_dn(
@@ -528,6 +552,7 @@ class TestGroupRepository:
         result = await group_repository.exists("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     async def test_group_repository_exists_valid_dn(
@@ -562,6 +587,7 @@ class TestRepositoryErrorHandling:
 
         # User repository should fail for empty DN
         assert user_result.is_failure
+        assert user_result.error is not None
         assert "DN cannot be empty" in user_result.error
 
         # Group repository should succeed for valid DN
@@ -587,7 +613,9 @@ class TestRepositoryErrorHandling:
         # Both should fail for empty attributes
         assert user_result.is_failure
         assert group_result.is_failure
+        assert user_result.error is not None
         assert "Attributes cannot be empty" in user_result.error
+        assert group_result.error is not None
         assert "Attributes cannot be empty" in group_result.error
 
     async def test_repository_entity_type_validation(
@@ -606,5 +634,7 @@ class TestRepositoryErrorHandling:
         # Both should fail for invalid entity types
         assert user_result.is_failure
         assert group_result.is_failure
+        assert user_result.error is not None
+        assert group_result.error is not None
         assert "Invalid entity type" in user_result.error
         assert "Invalid entity type" in group_result.error

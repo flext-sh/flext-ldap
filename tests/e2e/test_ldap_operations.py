@@ -55,12 +55,12 @@ class TestLdapE2EOperations:
             sn="User",
             given_name="Test",
             mail="testuser@example.com",
-            description=None,
-            telephone_number=None,
-            user_password=None,
-            department=None,
-            title=None,
-            organization=None,
+            description="Test User Description",
+            telephone_number="123-456-7890",
+            user_password="password123",
+            department="IT",
+            title="Developer",
+            organization="Example Corp",
         )
 
         # Test user creation request structure

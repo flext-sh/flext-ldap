@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
 from flext_core import FlextHandlers, FlextModels, FlextResult
 from flext_ldap.clients import FlextLdapClient
@@ -27,6 +27,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
     error handling clarity.
     """
 
+    @override
     def __init__(
         self, config: FlextModels.CqrsConfig.Handler, client: FlextLdapClient
     ) -> None:
@@ -38,6 +39,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
         self._constants = FlextLdapConstants
         self._exceptions = FlextLdapExceptions
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle workflow orchestration requests."""
         try:
@@ -761,6 +763,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
         across multiple LDAP operations with compensation support.
         """
 
+        @override
         def __init__(
             self, config: FlextModels.CqrsConfig.Handler, client: FlextLdapClient
         ) -> None:
@@ -773,6 +776,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             self._exceptions = FlextLdapExceptions
             self._saga_steps: list[dict[str, Any]] = []
 
+        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle Saga orchestration requests."""
             try:

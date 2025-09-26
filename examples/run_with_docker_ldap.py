@@ -21,8 +21,6 @@ from pathlib import Path
 from flext_core import FlextLogger
 from flext_tests import FlextTestDocker
 
-# Use FlextTestDocker for container management
-
 logger = FlextLogger(__name__)
 
 

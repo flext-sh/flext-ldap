@@ -1,14 +1,4 @@
-[tool.pyright]
-include = ["flext_ldap/"]
-exclude = ["tests/"]
-typeCheckingMode = "basic"
-reportMissingImports = true
-reportMissingTypeStubs = false
-reportUnknownMemberType = false
-reportUnknownArgumentType = false
-reportUnknownVariableType = false
-reportPrivateUsage = "warning"
-reportTypeCommentUsage = "error"
-reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "error"
-reportInconsistentConstructor = "error"
+[tool.pyrefly]
+python_version = "3.13"
+target_version = "3.13"
+show_error_codes = true

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, TypeVar
+from typing import Literal, Protocol
 
 from flext_core import FlextTypes
 
@@ -20,15 +20,6 @@ from flext_core import FlextTypes
 # =============================================================================
 
 # LDAP domain TypeVars
-TLdapEntry = TypeVar("TLdapEntry")
-TLdapAttribute = TypeVar("TLdapAttribute")
-TLdapConnection = TypeVar("TLdapConnection")
-TLdapFilter = TypeVar("TLdapFilter")
-TLdapSchema = TypeVar("TLdapSchema")
-TLdapQuery = TypeVar("TLdapQuery")
-TLdapResult = TypeVar("TLdapResult")
-TLdapOperation = TypeVar("TLdapOperation")
-
 # Module-level type aliases for compatibility
 Attributes = list[str]
 ModifyChanges = dict[str, list[tuple[str, list[str]]]]
@@ -150,6 +141,45 @@ class FlextLdapTypes(FlextTypes):
         type EntryAttributeValue = str | list[str]
         type EntryAttributeDict = dict[str, EntryAttributeValue]
 
+    # =========================================================================
+    # LDAP PROJECT TYPES - Domain-specific project types extending FlextTypes
+    # =========================================================================
+
+    class Project(FlextTypes.Project):
+        """LDAP-specific project types extending FlextTypes.Project.
+
+        Adds LDAP/directory services-specific project types while inheriting
+        generic types from FlextTypes. Follows domain separation principle:
+        LDAP domain owns directory-specific types.
+        """
+
+        # LDAP-specific project types extending the generic ones
+        type LdapProjectType = Literal[
+            # LDAP-specific types
+            "ldap-service",
+            "directory-service",
+            "ldap-client",
+            "identity-provider",
+            "ldap-sync",
+            "directory-sync",
+            "user-provisioning",
+            "ldap-gateway",
+            "authentication-service",
+            "sso-service",
+            "directory-api",
+            "ldap-proxy",
+            "identity-management",
+            "user-directory",
+            "group-management",
+            "ldap-migration",
+        ]
+
+        # LDAP-specific project configurations
+        type LdapProjectConfig = dict[str, FlextTypes.Core.ConfigValue | object]
+        type DirectoryConfig = dict[str, str | int | bool | list[str]]
+        type AuthenticationConfig = dict[str, bool | str | dict[str, object]]
+        type SyncConfig = dict[str, FlextTypes.Core.ConfigValue | object]
+
 
 # =============================================================================
 # LDAP PROTOCOL DEFINITIONS - LDAP-specific protocols
@@ -192,7 +222,7 @@ class LdapConnectionProtocol(Protocol):
         self,
         search_base: str,
         search_filter: str,
-        search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
+        search_scope: Literal[BASE, LEVEL, SUBTREE],
         attributes: list[str] | None = None,
         paged_size: int | None = None,
         paged_cookie: str | bytes | None = None,
@@ -207,9 +237,7 @@ class LdapConnectionProtocol(Protocol):
         """Add entry to LDAP directory."""
         ...
 
-    def modify(
-        self, dn: str, changes: dict[str, list[tuple[str, list[str]]]]
-    ) -> bool:
+    def modify(self, dn: str, changes: dict[str, list[tuple[str, list[str]]]]) -> bool:
         """Modify LDAP entry."""
         ...
 
@@ -233,29 +261,16 @@ class LdapConnectionProtocol(Protocol):
 # =========================================================================
 
 __all__: list[str] = [
-    # LDAP constants
     "BASE",
     "LEVEL",
     "MODIFY_ADD",
     "MODIFY_DELETE",
     "MODIFY_REPLACE",
     "SUBTREE",
-    # Legacy aliases (for compatibility)
     "Attributes",
-    # LDAP Types class
     "FlextLdapTypes",
-    # LDAP protocols
     "LdapAttribute",
     "LdapConnectionProtocol",
     "LdapEntry",
     "ModifyChanges",
-    # LDAP-specific TypeVars
-    "TLdapAttribute",
-    "TLdapConnection",
-    "TLdapEntry",
-    "TLdapFilter",
-    "TLdapOperation",
-    "TLdapQuery",
-    "TLdapResult",
-    "TLdapSchema",
 ]
