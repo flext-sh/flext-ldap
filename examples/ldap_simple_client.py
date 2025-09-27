@@ -14,8 +14,8 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_core import FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_core import FlextConstants, FlextResult
+from flext_ldap import FlextLdapClient, FlextLdapConstants, FlextLdapModels
 from flext_ldap.typings import MODIFY_REPLACE
 
 
@@ -97,7 +97,7 @@ async def main() -> None:
 
             if modify_result.is_success:
                 # Delete entry
-                delete_result: FlextResult[None] = await client.delete(
+                delete_result: FlextResult[None] = client.delete(
                     dn="cn=testuser,dc=example,dc=com"
                 )
 

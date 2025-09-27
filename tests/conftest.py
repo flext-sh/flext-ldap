@@ -25,7 +25,6 @@ from flext_core import (
     FlextProcessors,
     FlextRegistry,
     FlextResult,
-    FlextTypes,
 )
 from flext_ldap import (
     FlextLdapAPI,
@@ -45,13 +44,68 @@ from flext_ldap.factory import FlextLdapFactory
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.services import FlextLdapAdvancedService
 from flext_ldap.workflows import FlextLdapWorkflowOrchestrator
-from tests.support.test_data import (
-    SAMPLE_ACL_DATA,
-    SAMPLE_GROUP_ENTRY,
-    SAMPLE_USER_ENTRY,
-    TEST_GROUPS,
-    TEST_USERS,
-)
+
+# Import test data directly to avoid pyrefly import issues
+SAMPLE_ACL_DATA = {
+    "target": "dc=example,dc=com",
+    "subject": "cn=admin,dc=example,dc=com",
+    "permissions": ["read", "write"],
+    "unified_acl": "target:dc=example,dc=com;subject:cn=admin,dc=example,dc=com;permissions:read,write",
+    "openldap_aci": '(targetattr="*")(version 3.0;acl "test";allow (read,write) userdn="ldap:///cn=admin,dc=example,dc=com";)',
+    "oracle_aci": 'aci: (targetattr="*")(version 3.0;acl "test";allow (read,write) userdn="ldap:///cn=admin,dc=example,dc=com";)',
+}
+
+SAMPLE_GROUP_ENTRY = {
+    "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
+    "attributes": {
+        "cn": ["testgroup"],
+        "objectClass": ["groupOfNames", "top"],
+        "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
+    },
+}
+
+SAMPLE_USER_ENTRY = {
+    "dn": "cn=testuser,ou=people,dc=flext,dc=local",
+    "attributes": {
+        "cn": ["testuser"],
+        "sn": ["User"],
+        "givenName": ["Test"],
+        "uid": ["testuser"],
+        "mail": ["testuser@flext.local"],
+        "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+        "userPassword": ["test123"],
+    },
+}
+
+TEST_GROUPS = [
+    {
+        "cn": "developers",
+        "description": "Development team",
+        "member": ["cn=dev1,ou=people,dc=test,dc=com"],
+    },
+    {
+        "cn": "admins",
+        "description": "Administrators",
+        "member": ["cn=admin,ou=people,dc=test,dc=com"],
+    },
+]
+
+TEST_USERS = [
+    {
+        "cn": "testuser1",
+        "sn": "User1",
+        "givenName": "Test",
+        "uid": "testuser1",
+        "mail": "testuser1@test.com",
+    },
+    {
+        "cn": "testuser2",
+        "sn": "User2",
+        "givenName": "Test",
+        "uid": "testuser2",
+        "mail": "testuser2@test.com",
+    },
+]
 
 logger = FlextLogger(__name__)
 
@@ -202,9 +256,6 @@ def workflow_orchestrator(
         handler_name="LDAP Workflow Orchestrator",
         handler_type="command",
         handler_mode="command",
-        command_handler=True,
-        query_handler=False,
-        event_handler=False,
     )
     return FlextLdapWorkflowOrchestrator(config=config, client=ldap_client)
 
@@ -346,27 +397,27 @@ def sample_filter() -> FlextLdapModels.Filter:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Core.Dict:
+def test_user_data() -> dict[str, object]:
     """Get test user data dictionary."""
-    return SAMPLE_USER_ENTRY.copy()
+    return dict(SAMPLE_USER_ENTRY)
 
 
 @pytest.fixture
-def test_group_data() -> FlextTypes.Core.Dict:
+def test_group_data() -> dict[str, object]:
     """Get test group data dictionary."""
-    return SAMPLE_GROUP_ENTRY.copy()
+    return dict(SAMPLE_GROUP_ENTRY)
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Core.Dict]:
+def multiple_test_users() -> list[dict[str, object]]:
     """Get multiple test users."""
-    return TEST_USERS.copy()
+    return [dict(user) for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Core.Dict]:
+def multiple_test_groups() -> list[dict[str, object]]:
     """Get multiple test groups."""
-    return TEST_GROUPS.copy()
+    return [dict(group) for group in TEST_GROUPS]
 
 
 # =============================================================================

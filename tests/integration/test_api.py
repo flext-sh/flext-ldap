@@ -204,7 +204,7 @@ class TestLdapClientRealOperations:
         assert "updated@example.com" in str(mail_value), "Email should be updated"
 
         # DELETE: Remove user entry
-        delete_result = await client.delete(test_dn)
+        delete_result = client.delete(test_dn)
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
@@ -579,8 +579,8 @@ class TestLdapServiceRealOperations:
         assert verified_group is None  # Should not exist
 
         # Cleanup users
-        await client.delete(user_dn)
-        await client.delete(user2_dn)
+        client.delete(user_dn)
+        client.delete(user2_dn)
 
 
 @pytest.mark.integration
@@ -697,8 +697,8 @@ class TestLdapValidationRealOperations:
         # Some LDAP servers might allow overwrites, others might fail - either is valid behavior
 
         # Cleanup
-        await client.delete(valid_user_request.dn)
-        await client.delete(ou_dn)
+        client.delete(valid_user_request.dn)
+        client.delete(ou_dn)
 
 
 @pytest.mark.integration
@@ -803,7 +803,7 @@ class TestLdapErrorHandlingReal:
         )
 
         # Test delete non-existent entry
-        delete_result = await client.delete(
+        delete_result = client.delete(
             f"cn=nonexistent-{uuid4().hex},ou=nonexistent,{clean_ldap_container['base_dn']}",
         )
         # Should handle gracefully

@@ -33,7 +33,7 @@ async def main() -> None:
     await _demo_user_operations(ldap_service)
     await _demo_group_operations(ldap_service)
     await _demo_connection_management(ldap_service)
-    await _demo_error_handling(ldap_service)
+    _demo_error_handling(ldap_service)
 
 
 def _initialize_ldap_service() -> FlextLdapClient:
@@ -372,7 +372,7 @@ async def _demo_connection_management(ldap_service: FlextLdapClient) -> None:
         logger.debug(f"Demo operation encountered exception: {e}")
 
 
-async def _demo_error_handling(_: FlextLdapClient) -> None:
+def _demo_error_handling(_: FlextLdapClient) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Demonstrate error handling with connection attempts
     logger.info("Error handling demonstration completed")

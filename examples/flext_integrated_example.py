@@ -185,8 +185,9 @@ def demonstrate_flext_models(
     )
     if dn_result.is_success:
         dn_obj = dn_result.data
-        logger.info("  DN: %s", dn_obj.value)
-        logger.info("  RDN: %s", dn_obj.rdn)
+        if isinstance(dn_obj, FlextLdapModels.DistinguishedName):
+            logger.info("  DN: %s", dn_obj.value)
+            logger.info("  RDN: %s", dn_obj.rdn)
 
     # LDAP Filter
     filter_obj = FlextLdapModels.Filter.equals("cn", "testuser")

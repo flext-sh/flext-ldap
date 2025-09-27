@@ -14,9 +14,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-import threading
 import warnings
-from typing import ClassVar
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -33,19 +31,21 @@ class FlextLdapConfig(FlextConfig):
     - Extends FlextConfig from flext-core
     - No nested classes within Config
     - All defaults from FlextLdapConstants
-    - Dependency injection integration with flext-core container
+    - Uses enhanced singleton pattern with inverse dependency injection
     - Uses Pydantic 2.11+ features (SecretStr for secrets)
     """
 
-    # Singleton pattern attributes
-    _global_instance: ClassVar[FlextLdapConfig | None] = None
-    _lock: ClassVar[threading.Lock] = threading.Lock()
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
         case_sensitive=False,
+        extra="ignore",
+        # Inherit enhanced Pydantic 2.11+ features from FlextConfig
         validate_assignment=True,
-        use_enum_values=True,
-        arbitrary_types_allowed=True,
+        str_strip_whitespace=True,
+        json_schema_extra={
+            "title": "FLEXT LDAP Configuration",
+            "description": "Enterprise LDAP configuration extending FlextConfig",
+        },
     )
 
     # LDAP Connection Configuration using FlextLdapConstants for defaults
@@ -289,13 +289,15 @@ class FlextLdapConfig(FlextConfig):
     def create_for_environment(
         cls, environment: str, **overrides: object
     ) -> FlextLdapConfig:
-        """Create configuration for specific environment."""
-        return cls(environment=environment, **overrides)
+        """Create configuration for specific environment using enhanced singleton pattern."""
+        return super().get_or_create_shared_instance(
+            project_name="flext-ldap", environment=environment, **overrides
+        )  # type: ignore[return-value]
 
     @classmethod
     def create_default(cls) -> FlextLdapConfig:
-        """Create default configuration instance."""
-        return cls()
+        """Create default configuration instance using enhanced singleton pattern."""
+        return super().get_or_create_shared_instance(project_name="flext-ldap")  # type: ignore[return-value]
 
     def get_effective_bind_password(self) -> str | None:
         """Get the effective bind password (safely extract from SecretStr)."""
@@ -303,20 +305,21 @@ class FlextLdapConfig(FlextConfig):
             return self.ldap_bind_password.get_secret_value()
         return None
 
-    # Singleton pattern override for proper typing
     @classmethod
     def get_global_instance(cls) -> FlextLdapConfig:
-        """Get the global singleton instance of FlextLdapConfig."""
-        if cls._global_instance is None:
-            with cls._lock:
-                if cls._global_instance is None:
-                    cls._global_instance = cls()
-        return cls._global_instance
+        """Get the global singleton instance using enhanced FlextConfig pattern."""
+        # Force creation of the correct type by calling the constructor
+        try:
+            return cls()
+        except Exception:
+            # Fallback to parent method with type override
+            return super().get_global_instance()  # type: ignore[return-value]
 
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global FlextLdapConfig instance (mainly for testing)."""
-        cls._global_instance = None
+        # Use the enhanced FlextConfig reset mechanism
+        super().reset_global_instance()
 
     @staticmethod
     def create_from_connection_config_data(
@@ -324,15 +327,22 @@ class FlextLdapConfig(FlextConfig):
     ) -> FlextResult[FlextLdapConfig]:
         """Create config from connection data."""
         try:
-            config = FlextLdapConfig(
-                ldap_server_uri=str(data.get("server", "ldap://localhost")),
-                ldap_port=int(str(data.get("port", 389))),
-                ldap_bind_dn=str(data.get("bind_dn", "")),
-                ldap_bind_password=SecretStr(str(data.get("bind_password", "")))
-                if data.get("bind_password")
+            # Create new instance with the provided values
+            bind_password_value = data.get("bind_password")
+            config_kwargs = {
+                "ldap_server_uri": str(
+                    data.get("server_uri", data.get("server", "ldap://localhost"))
+                ),
+                "ldap_port": int(str(data.get("port", 389))),
+                "ldap_bind_dn": str(data.get("bind_dn", ""))
+                if data.get("bind_dn")
                 else None,
-                ldap_base_dn=str(data.get("base_dn", "")),
-            )
+                "ldap_bind_password": SecretStr(str(bind_password_value))
+                if bind_password_value
+                else None,
+                "ldap_base_dn": str(data.get("base_dn", "")),
+            }
+            config = FlextLdapConfig(**config_kwargs)
             return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
             return FlextResult[FlextLdapConfig].fail(f"Config creation failed: {e}")
@@ -375,10 +385,15 @@ class FlextLdapConfig(FlextConfig):
     ) -> FlextResult[FlextLdapModels.SearchConfig]:
         """Create search config from data."""
         try:
+            attributes_data = data.get("attributes", [])
+            if not isinstance(attributes_data, list):
+                attributes_data = []
+            # Ensure all attributes are strings
+            str_attributes = [str(attr) for attr in attributes_data if attr is not None]
             config = FlextLdapModels.SearchConfig(
                 base_dn=str(data.get("base_dn", "")),
                 search_filter=str(data.get("filter_str", "(objectClass=*)")),
-                attributes=data.get("attributes", []),
+                attributes=str_attributes,
             )
             return FlextResult[FlextLdapModels.SearchConfig].ok(config)
         except Exception as e:

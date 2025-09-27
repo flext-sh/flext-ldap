@@ -9,6 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
 
 from flext_core import FlextResult
@@ -242,7 +245,6 @@ class TestFlextLdapAPI:
         api = FlextLdapAPI()
 
         # Test concurrent operations
-        import threading
 
         results = []
 
@@ -281,8 +283,6 @@ class TestFlextLdapAPI:
     def test_api_performance(self) -> None:
         """Test API performance characteristics."""
         api = FlextLdapAPI()
-
-        import time
 
         # Test validation performance
         start_time = time.time()

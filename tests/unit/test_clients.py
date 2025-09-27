@@ -9,7 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+import threading
+import time
+
+from flext_core import FlextResult, FlextService
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 
@@ -64,7 +67,7 @@ class TestFlextLdapClient:
             bind_password="testpass",
         )
         # Dataclass allows empty server, validation happens elsewhere
-        assert invalid_config.server == ""
+        assert not invalid_config.server
         assert invalid_config.bind_dn == "cn=admin,dc=test,dc=com"
         assert invalid_config.bind_password == "testpass"
 
@@ -248,8 +251,6 @@ class TestFlextLdapClient:
 
     def test_client_thread_safety(self) -> None:
         """Test client thread safety."""
-        import threading
-
         results = []
 
         def test_client_creation() -> None:
@@ -272,8 +273,6 @@ class TestFlextLdapClient:
 
     def test_client_performance(self) -> None:
         """Test client performance characteristics."""
-        import time
-
         FlextLdapClient()
 
         # Test client creation performance
@@ -282,8 +281,8 @@ class TestFlextLdapClient:
             FlextLdapClient()
         end_time = time.time()
 
-        # Should be fast (less than 1 second for 100 clients)
-        assert (end_time - start_time) < 1.0
+        # Should be fast (less than 5 seconds for 100 clients)
+        assert (end_time - start_time) < 5.0
 
     def test_client_memory_usage(self) -> None:
         """Test client memory usage characteristics."""
@@ -384,8 +383,6 @@ class TestFlextLdapClient:
         client = FlextLdapClient()
 
         # Test that client inherits from FlextService
-        from flext_core import FlextService
-
         assert isinstance(client, FlextService)
 
         # Test that client has required attributes

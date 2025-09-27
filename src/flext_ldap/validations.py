@@ -18,7 +18,7 @@ class FlextLdapValidations:
     """Centralized LDAP validations to eliminate circular dependencies."""
 
     @staticmethod
-    def validate_dn(dn: str, context: str = "DN") -> FlextResult[bool]:
+    def validate_dn(dn: str | None, context: str = "DN") -> FlextResult[bool]:
         """Centralized DN validation - ELIMINATE ALL DUPLICATION."""
         if dn is None:
             return FlextResult[bool].fail(f"{context} cannot be None")
@@ -35,7 +35,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_filter(filter_str: str) -> FlextResult[bool]:
+    def validate_filter(filter_str: str | None) -> FlextResult[bool]:
         """Centralized LDAP filter validation - ELIMINATE ALL DUPLICATION."""
         if filter_str is None:
             return FlextResult[bool].fail("Filter cannot be None")
@@ -50,7 +50,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_attributes(attributes: list[str]) -> FlextResult[bool]:
+    def validate_attributes(attributes: list[str] | None) -> FlextResult[bool]:
         """Centralized LDAP attributes validation - ELIMINATE ALL DUPLICATION."""
         if attributes is None:
             return FlextResult[bool].fail("Attributes list cannot be empty")
@@ -66,7 +66,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_server_uri(server_uri: str) -> FlextResult[bool]:
+    def validate_server_uri(server_uri: str | None) -> FlextResult[bool]:
         """Centralized server URI validation - ELIMINATE ALL DUPLICATION."""
         if server_uri is None:
             return FlextResult[bool].fail("URI cannot be None")
@@ -80,7 +80,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_port(port: int) -> FlextResult[bool]:
+    def validate_port(port: int | None) -> FlextResult[bool]:
         """Centralized port validation - ELIMINATE ALL DUPLICATION."""
         if port is None:
             return FlextResult[bool].fail("Port cannot be None")
@@ -92,7 +92,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_timeout(timeout: int) -> FlextResult[bool]:
+    def validate_timeout(timeout: int | None) -> FlextResult[bool]:
         """Centralized timeout validation - ELIMINATE ALL DUPLICATION."""
         if timeout is None:
             return FlextResult[bool].fail("Timeout cannot be None")
@@ -103,7 +103,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_size_limit(size_limit: int) -> FlextResult[bool]:
+    def validate_size_limit(size_limit: int | None) -> FlextResult[bool]:
         """Centralized size limit validation - ELIMINATE ALL DUPLICATION."""
         if size_limit is None:
             return FlextResult[bool].fail("Size limit cannot be None")
@@ -114,35 +114,33 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_scope(scope: str) -> FlextResult[bool]:
+    def validate_scope(scope: str | None) -> FlextResult[bool]:
         """Centralized scope validation - ELIMINATE ALL DUPLICATION."""
         if scope is None:
             return FlextResult[bool].fail("Scope cannot be None")
 
         valid_scopes = {"base", "onelevel", "subtree"}
         if scope.lower() not in valid_scopes:
-            return FlextResult[bool].fail(
-                f"Invalid scope: {scope}. Must be one of {valid_scopes}"
-            )
+            error_msg = f"Invalid scope: {scope}. Must be one of {', '.join(sorted(valid_scopes))}"
+            return FlextResult[bool].fail(error_msg)
 
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_modify_operation(operation: str) -> FlextResult[bool]:
+    def validate_modify_operation(operation: str | None) -> FlextResult[bool]:
         """Centralized modify operation validation - ELIMINATE ALL DUPLICATION."""
         if operation is None:
             return FlextResult[bool].fail("Operation cannot be None")
 
         valid_operations = {"add", "delete", "replace"}
         if operation.lower() not in valid_operations:
-            return FlextResult[bool].fail(
-                f"Invalid operation: {operation}. Must be one of {valid_operations}"
-            )
+            error_msg = f"Invalid operation: {operation}. Must be one of {', '.join(sorted(valid_operations))}"
+            return FlextResult[bool].fail(error_msg)
 
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_object_class(object_class: str) -> FlextResult[bool]:
+    def validate_object_class(object_class: str | None) -> FlextResult[bool]:
         """Centralized object class validation - ELIMINATE ALL DUPLICATION."""
         if object_class is None:
             return FlextResult[bool].fail("Object class cannot be None")
@@ -153,7 +151,7 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_email(email: str) -> FlextResult[bool]:
+    def validate_email(email: str | None) -> FlextResult[bool]:
         """Centralized email validation using regex."""
         if email is None:
             return FlextResult[bool].fail("Email cannot be None")
@@ -165,7 +163,7 @@ class FlextLdapValidations:
         return FlextResult[bool].fail("Invalid email format")
 
     @staticmethod
-    def validate_password(password: str) -> FlextResult[bool]:
+    def validate_password(password: str | None) -> FlextResult[bool]:
         """Centralized password validation - ELIMINATE ALL DUPLICATION."""
         if password is None:
             return FlextResult[bool].fail("Password cannot be None")

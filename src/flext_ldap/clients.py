@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Literal, cast, override
 
 from ldap3 import Server
+from pydantic import SecretStr
 
 from flext_core import (
     FlextContainer,
@@ -768,7 +769,12 @@ class FlextLdapClient(FlextService[None]):
             if request.organization:
                 ldap3_attributes["o"] = [request.organization]
             if request.user_password:
-                ldap3_attributes["userPassword"] = [request.user_password]
+                password_value = (
+                    request.user_password.get_secret_value()
+                    if isinstance(request.user_password, SecretStr)
+                    else request.user_password
+                )
+                ldap3_attributes["userPassword"] = [password_value]
 
             return FlextResult[dict[str, list[str]]].ok(ldap3_attributes)
 
@@ -1297,7 +1303,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Modify entry failed")
             return FlextResult[None].fail(f"Modify entry failed: {e}")
 
-    async def delete(self, dn: str) -> FlextResult[None]:
+    def delete(self, dn: str) -> FlextResult[None]:
         """Delete entry from LDAP directory (low-level operation).
 
         Args:
@@ -1661,7 +1667,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.debug("Delete entry controls: %s", controls)
 
             # Perform delete using base client
-            result = await self.delete(normalized_dn)
+            result = self.delete(normalized_dn)
             return FlextResult[bool].ok(result.is_success)
 
         except Exception as e:
