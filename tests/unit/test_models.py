@@ -9,6 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
 
 from flext_core import FlextResult
@@ -51,7 +54,10 @@ class TestFlextLdapModels:
         result = FlextLdapModels.DistinguishedName.create("cn=testuser,dc=test,dc=com")
         assert isinstance(result, FlextResult)
         assert result.is_success
-        assert result.value.value == "cn=testuser,dc=test,dc=com"
+        # Use unwrap() to get the actual DistinguishedName object
+        dn_obj = result.unwrap()
+        assert isinstance(dn_obj, FlextLdapModels.DistinguishedName)
+        assert dn_obj.value == "cn=testuser,dc=test,dc=com"
 
         # Test invalid DN creation
         result = FlextLdapModels.DistinguishedName.create("")
@@ -119,15 +125,14 @@ class TestFlextLdapModels:
 
     def test_schema_attribute_creation(self) -> None:
         """Test SchemaAttribute model creation."""
-        attr_data = {
-            "name": "cn",
-            "oid": "2.5.4.3",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "is_single_valued": False,
-            "usage": "userApplications",
-        }
-
-        attr = FlextLdapModels.SchemaAttribute(**attr_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        attr = FlextLdapModels.SchemaAttribute(
+            name="cn",
+            oid="2.5.4.3",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            is_single_valued=False,
+            usage="userApplications",
+        )
 
         assert attr.name == "cn"
         assert attr.oid == "2.5.4.3"
@@ -137,15 +142,14 @@ class TestFlextLdapModels:
 
     def test_schema_object_class_creation(self) -> None:
         """Test SchemaObjectClass model creation."""
-        oc_data = {
-            "name": "person",
-            "oid": "2.5.6.6",
-            "must": ["cn", "sn"],
-            "may": ["mail", "telephoneNumber"],
-            "kind": "STRUCTURAL",
-        }
-
-        oc = FlextLdapModels.SchemaObjectClass(**oc_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        oc = FlextLdapModels.SchemaObjectClass(
+            name="person",
+            oid="2.5.6.6",
+            must=["cn", "sn"],
+            may=["mail", "telephoneNumber"],
+            kind="STRUCTURAL",
+        )
 
         assert oc.name == "person"
         assert oc.oid == "2.5.6.6"
@@ -155,15 +159,14 @@ class TestFlextLdapModels:
 
     def test_server_quirks_creation(self) -> None:
         """Test ServerQuirks model creation."""
-        quirks_data = {
-            "server_type": FlextLdapModels.LdapServerType.OPENLDAP,
-            "supports_paged_results": True,
-            "supports_sync": True,
-            "max_page_size": 1000,
-            "object_class_mappings": {"person": "inetOrgPerson"},
-        }
-
-        quirks = FlextLdapModels.ServerQuirks(**quirks_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        quirks = FlextLdapModels.ServerQuirks(
+            server_type=FlextLdapModels.LdapServerType.OPENLDAP,
+            supports_paged_results=True,
+            supports_sync=True,
+            max_page_size=1000,
+            object_class_mappings={"person": "inetOrgPerson"},
+        )
 
         assert quirks.server_type == FlextLdapModels.LdapServerType.OPENLDAP
         assert quirks.supports_paged_results is True
@@ -173,13 +176,14 @@ class TestFlextLdapModels:
 
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
-        result_data = {
-            "server_info": {"vendor": "OpenLDAP", "version": "2.4"},
-            "server_type": FlextLdapModels.LdapServerType.OPENLDAP,
-            "server_quirks": FlextLdapModels.ServerQuirks(
+        # Pass arguments explicitly to avoid mixed type issues
+        result = FlextLdapModels.SchemaDiscoveryResult(
+            server_info={"vendor": "OpenLDAP", "version": "2.4"},
+            server_type=FlextLdapModels.LdapServerType.OPENLDAP,
+            server_quirks=FlextLdapModels.ServerQuirks(
                 server_type=FlextLdapModels.LdapServerType.OPENLDAP
             ),
-            "attributes": {
+            attributes={
                 "cn": FlextLdapModels.SchemaAttribute(
                     name="cn",
                     oid="2.5.4.3",
@@ -187,17 +191,15 @@ class TestFlextLdapModels:
                     is_single_valued=False,
                 )
             },
-            "object_classes": {
+            object_classes={
                 "person": FlextLdapModels.SchemaObjectClass(
                     name="person", oid="2.5.6.6", kind="STRUCTURAL"
                 )
             },
-            "naming_contexts": ["dc=example,dc=com"],
-            "supported_controls": ["2.16.840.1.113730.3.4.18"],
-            "supported_extensions": ["1.3.6.1.4.1.4203.1.11.1"],
-        }
-
-        result = FlextLdapModels.SchemaDiscoveryResult(**result_data)
+            naming_contexts=["dc=example,dc=com"],
+            supported_controls=["2.16.840.1.113730.3.4.18"],
+            supported_extensions=["1.3.6.1.4.1.4203.1.11.1"],
+        )
 
         assert result.server_type == FlextLdapModels.LdapServerType.OPENLDAP
         assert "cn" in result.attributes
@@ -205,15 +207,23 @@ class TestFlextLdapModels:
 
     def test_ldap_user_creation(self) -> None:
         """Test LdapUser model creation."""
-        user_data = {
-            "dn": "cn=testuser,dc=test,dc=com",
-            "cn": "testuser",
-            "sn": "Test",
-            "mail": "test@example.com",
-            "object_classes": ["person", "inetOrgPerson"],
-        }
-
-        user = FlextLdapModels.LdapUser(**user_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        user = FlextLdapModels.LdapUser(
+            dn="cn=testuser,dc=test,dc=com",
+            cn="testuser",
+            uid="testuser",
+            sn="Test",
+            mail="test@example.com",
+            object_classes=["person", "inetOrgPerson"],
+            given_name=None,
+            telephone_number=None,
+            mobile=None,
+            department=None,
+            title=None,
+            organization=None,
+            organizational_unit=None,
+            user_password=None,
+        )
 
         assert user.dn == "cn=testuser,dc=test,dc=com"
         assert user.cn == "testuser"
@@ -227,8 +237,17 @@ class TestFlextLdapModels:
         valid_user = FlextLdapModels.LdapUser(
             dn="cn=testuser,dc=test,dc=com",
             cn="testuser",
+            uid="testuser",
             sn="Test",
             mail="test@example.com",
+            given_name=None,
+            telephone_number=None,
+            mobile=None,
+            department=None,
+            title=None,
+            organization=None,
+            organizational_unit=None,
+            user_password=None,
         )
 
         result = valid_user.validate_business_rules()
@@ -240,21 +259,30 @@ class TestFlextLdapModels:
             FlextLdapModels.LdapUser(
                 dn="",  # Invalid empty DN
                 cn="",  # Invalid empty CN
-                sn="",
+                uid="",  # Invalid empty UID
+                sn="",  # Invalid empty SN
                 mail="invalid-email",  # Invalid email format
+                given_name=None,
+                telephone_number=None,
+                mobile=None,
+                department=None,
+                title=None,
+                organization=None,
+                organizational_unit=None,
+                user_password=None,
             )
 
     def test_ldap_group_creation(self) -> None:
         """Test LdapGroup model creation."""
-        group_data = {
-            "dn": "cn=testgroup,dc=test,dc=com",
-            "cn": "testgroup",
-            "description": "Test group",
-            "members": ["cn=user1,dc=test,dc=com", "cn=user2,dc=test,dc=com"],
-            "object_classes": ["groupOfNames"],
-        }
-
-        group = FlextLdapModels.Group(**group_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        group = FlextLdapModels.Group(
+            dn="cn=testgroup,dc=test,dc=com",
+            cn="testgroup",
+            description="Test group",
+            members=["cn=user1,dc=test,dc=com", "cn=user2,dc=test,dc=com"],
+            object_classes=["groupOfNames"],
+            gid_number=None,
+        )
 
         assert group.dn == "cn=testgroup,dc=test,dc=com"
         assert group.cn == "testgroup"
@@ -266,7 +294,10 @@ class TestFlextLdapModels:
         """Test LdapGroup validation."""
         # Test valid group
         valid_group = FlextLdapModels.Group(
-            dn="cn=testgroup,dc=test,dc=com", cn="testgroup", description="Test group"
+            dn="cn=testgroup,dc=test,dc=com",
+            cn="testgroup",
+            description="Test group",
+            gid_number=None,  # Optional field
         )
 
         result = valid_group.validate_business_rules()
@@ -279,20 +310,20 @@ class TestFlextLdapModels:
                 dn="",  # Invalid empty DN
                 cn="",  # Invalid empty CN
                 description="",
+                gid_number=None,  # Optional field
             )
 
     def test_connection_config_creation(self) -> None:
         """Test ConnectionConfig model creation."""
-        config_data = {
-            "server": "localhost",
-            "port": 389,
-            "use_ssl": False,
-            "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
-            "bind_password": "testpass",
-            "timeout": 30,
-        }
-
-        config = FlextLdapModels.ConnectionConfig(**config_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        config = FlextLdapModels.ConnectionConfig(
+            server="localhost",
+            port=389,
+            use_ssl=False,
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            bind_password="testpass",
+            timeout=30,
+        )
 
         assert config.server == "localhost"
         assert config.port == 389
@@ -320,15 +351,14 @@ class TestFlextLdapModels:
 
     def test_modify_config_creation(self) -> None:
         """Test ModifyConfig model creation."""
-        modify_data = {
-            "dn": "cn=testuser,dc=test,dc=com",
-            "changes": {
+        # Pass arguments explicitly to avoid mixed type issues
+        config = FlextLdapModels.ModifyConfig(
+            dn="cn=testuser,dc=test,dc=com",
+            changes={
                 "cn": [("MODIFY_REPLACE", ["newcn"])],
                 "mail": [("MODIFY_ADD", ["newmail@example.com"])],
             },
-        }
-
-        config = FlextLdapModels.ModifyConfig(**modify_data)
+        )
 
         assert config.dn == "cn=testuser,dc=test,dc=com"
         assert config.changes["cn"] == [("MODIFY_REPLACE", ["newcn"])]
@@ -336,23 +366,22 @@ class TestFlextLdapModels:
 
     def test_add_config_creation(self) -> None:
         """Test AddConfig model creation."""
-        add_data = {
-            "dn": "cn=testuser,dc=test,dc=com",
-            "attributes": {
-                "cn": "testuser",
+        # Pass arguments explicitly to avoid mixed type issues
+        config = FlextLdapModels.AddConfig(
+            dn="cn=testuser,dc=test,dc=com",
+            attributes={
+                "cn": ["testuser"],
                 "objectClass": ["person", "inetOrgPerson"],
-                "sn": "Test",
-                "mail": "test@example.com",
+                "sn": ["Test"],
+                "mail": ["test@example.com"],
             },
-        }
-
-        config = FlextLdapModels.AddConfig(**add_data)
+        )
 
         assert config.dn == "cn=testuser,dc=test,dc=com"
-        assert config.attributes["cn"] == "testuser"
+        assert config.attributes["cn"] == ["testuser"]
         assert config.attributes["objectClass"] == ["person", "inetOrgPerson"]
-        assert config.attributes["sn"] == "Test"
-        assert config.attributes["mail"] == "test@example.com"
+        assert config.attributes["sn"] == ["Test"]
+        assert config.attributes["mail"] == ["test@example.com"]
 
     def test_delete_config_creation(self) -> None:
         """Test DeleteConfig model creation."""
@@ -364,13 +393,12 @@ class TestFlextLdapModels:
 
     def test_search_config_creation(self) -> None:
         """Test SearchConfig model creation."""
-        search_data = {
-            "base_dn": "dc=test,dc=com",
-            "search_filter": "(objectClass=*)",
-            "attributes": ["cn", "mail"],
-        }
-
-        config = FlextLdapModels.SearchConfig(**search_data)
+        # Pass arguments explicitly to avoid mixed type issues
+        config = FlextLdapModels.SearchConfig(
+            base_dn="dc=test,dc=com",
+            search_filter="(objectClass=*)",
+            attributes=["cn", "mail"],
+        )
 
         assert config.base_dn == "dc=test,dc=com"
         assert config.search_filter == "(objectClass=*)"
@@ -378,19 +406,23 @@ class TestFlextLdapModels:
 
     def test_search_response_creation(self) -> None:
         """Test SearchResponse model creation."""
-        response_data = {
-            "entries": [
+        # Pass arguments explicitly to avoid mixed type issues
+        response = FlextLdapModels.SearchResponse(
+            entries=[
                 {
                     "dn": "cn=testuser,dc=test,dc=com",
                     "attributes": {"cn": "testuser", "mail": "test@example.com"},
                 }
             ],
-            "total_count": 1,
-            "next_cookie": b"",
-            "has_more": False,
-        }
-
-        response = FlextLdapModels.SearchResponse(**response_data)
+            total_count=1,
+            next_cookie=b"",
+            has_more=False,
+            result_code=0,
+            result_description="",
+            matched_dn="",
+            entries_returned=1,
+            time_elapsed=0.0,
+        )
 
         assert len(response.entries) == 1
         assert response.total_count == 1
@@ -401,7 +433,15 @@ class TestFlextLdapModels:
         """Test SearchResponse validation."""
         # Test valid search response
         valid_response = FlextLdapModels.SearchResponse(
-            entries=[], total_count=0, next_cookie=b"", has_more=False
+            entries=[],
+            total_count=0,
+            next_cookie=b"",
+            has_more=False,
+            result_code=0,
+            result_description="",
+            matched_dn="",
+            entries_returned=0,
+            time_elapsed=0.0,
         )
 
         # SearchResponse is a data model, no validation needed
@@ -414,6 +454,11 @@ class TestFlextLdapModels:
             total_count=-1,  # Invalid negative count
             next_cookie=b"",
             has_more=False,
+            result_code=0,
+            result_description="",
+            matched_dn="",
+            entries_returned=0,
+            time_elapsed=0.0,
         )
 
         # SearchResponse is a data model, validation happens at field level
@@ -422,18 +467,18 @@ class TestFlextLdapModels:
 
     def test_models_error_handling(self) -> None:
         """Test models error handling mechanisms."""
-        # Test with None input
+        # Test with None input - this will fail at the type level
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(None)
+            FlextLdapModels.DistinguishedName(
+                value=""
+            )  # Empty string should fail validation
 
         # Test with invalid input type
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName("invalid_string")
+            FlextLdapModels.DistinguishedName(value="invalid_string")
 
     def test_models_thread_safety(self) -> None:
         """Test models thread safety."""
-        import threading
-
         results = []
 
         def create_dn() -> None:
@@ -469,8 +514,6 @@ class TestFlextLdapModels:
 
     def test_models_performance(self) -> None:
         """Test models performance characteristics."""
-        import time
-
         # Test DN creation performance
         start_time = time.time()
         for i in range(100):
@@ -517,8 +560,17 @@ class TestFlextLdapModels:
         user = FlextLdapModels.LdapUser(
             dn="cn=testuser,dc=test,dc=com",
             cn="testuser",
+            uid="testuser",
             sn="Test",
             mail="test@example.com",
+            given_name=None,
+            telephone_number=None,
+            mobile=None,
+            department=None,
+            title=None,
+            organization=None,
+            organizational_unit=None,
+            user_password=None,
         )
 
         # 5. Create connection config

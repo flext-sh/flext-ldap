@@ -96,9 +96,7 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
 async def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result: FlextResult[FlextLdapModels.DistinguishedName] = (
-        FlextLdapModels.DistinguishedName.create("")
-    )
+    dn_result = FlextLdapModels.DistinguishedName.create("")
     if not dn_result.is_success:
         pass
 

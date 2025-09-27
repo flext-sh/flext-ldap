@@ -131,7 +131,7 @@ if __name__ == "__main__":
     try:
         docker_manager = FlextTestDocker()
         # Test Docker connectivity
-        if not docker_manager.is_container_running():
+        if not docker_manager.get_container_status("test-container").is_success:
             logger.info("Docker is accessible for container management")
     except Exception as e:
         logger.exception("Docker connectivity check failed")

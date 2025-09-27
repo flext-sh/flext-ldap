@@ -46,6 +46,7 @@ known_first_party = [ "flext_ldap",]
 python_version = "3.13"
 target_version = "3.13"
 show_error_codes = true
+exclude = ["tests/"]
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"

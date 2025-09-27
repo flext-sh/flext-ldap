@@ -4,44 +4,40 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from .fixtures import (
-    ldap_connection,
-    real_ldap_server,
-    test_group_data,
-    test_user_data,
-)
-from .helpers import (
-    cleanup_test_entries,
-    create_test_group,
-    create_test_user,
-    verify_entry_exists,
-)
-from .ldap_server import (
-    LdapTestServer,
-    get_test_ldap_config,
-    wait_for_ldap_server,
-)
-from .test_data import (
-    SAMPLE_GROUP_ENTRY,
-    SAMPLE_USER_ENTRY,
-    TEST_GROUPS,
-    TEST_USERS,
-)
+from . import fixtures, helpers, shared_ldap_fixtures, test_data
+
+# Import specific items for backward compatibility
+ldap_connection = fixtures.ldap_connection
+real_ldap_server = fixtures.real_ldap_server
+test_group_data = fixtures.test_group_data
+test_user_data = fixtures.test_user_data
+
+cleanup_test_entries = helpers.cleanup_test_entries
+create_test_group = helpers.create_test_group
+create_test_user = helpers.create_test_user
+
+check_docker_available = shared_ldap_fixtures.check_docker_available
+skip_if_no_docker = shared_ldap_fixtures.skip_if_no_docker
+
+SAMPLE_ACL_DATA = test_data.SAMPLE_ACL_DATA
+SAMPLE_GROUP_ENTRY = test_data.SAMPLE_GROUP_ENTRY
+SAMPLE_USER_ENTRY = test_data.SAMPLE_USER_ENTRY
+TEST_GROUPS = test_data.TEST_GROUPS
+TEST_USERS = test_data.TEST_USERS
 
 __all__ = [
+    "SAMPLE_ACL_DATA",
     "SAMPLE_GROUP_ENTRY",
     "SAMPLE_USER_ENTRY",
     "TEST_GROUPS",
     "TEST_USERS",
-    "LdapTestServer",
+    "check_docker_available",
     "cleanup_test_entries",
     "create_test_group",
     "create_test_user",
-    "get_test_ldap_config",
     "ldap_connection",
     "real_ldap_server",
+    "skip_if_no_docker",
     "test_group_data",
     "test_user_data",
-    "verify_entry_exists",
-    "wait_for_ldap_server",
 ]

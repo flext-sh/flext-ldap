@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import Literal, Protocol
 
+from ldap3 import SIMPLE, Connection, Server
+
 from flext_core import FlextTypes
 
 # =============================================================================
@@ -47,6 +49,25 @@ class FlextLdapTypes(FlextTypes):
     - Centralized type management
     - Python 3.13+ syntax
     """
+
+    # =========================================================================
+    # LDAP3 TYPE ALIASES - Direct type aliases for ldap3 library types
+    # =========================================================================
+
+    # Core LDAP3 types
+    Server = Server
+    Connection = Connection
+    SIMPLE = SIMPLE
+
+    # LDAP scope constants - using proper literal types
+    BASE: Literal["BASE"] = "BASE"
+    LEVEL: Literal["LEVEL"] = "LEVEL"
+    SUBTREE: Literal["SUBTREE"] = "SUBTREE"
+
+    # LDAP modify operation constants
+    MODIFY_ADD: Literal["MODIFY_ADD"] = "MODIFY_ADD"
+    MODIFY_DELETE: Literal["MODIFY_DELETE"] = "MODIFY_DELETE"
+    MODIFY_REPLACE: Literal["MODIFY_REPLACE"] = "MODIFY_REPLACE"
 
     # =========================================================================
     # LDAP DOMAIN TYPES - LDAP-specific type definitions
@@ -222,7 +243,7 @@ class LdapConnectionProtocol(Protocol):
         self,
         search_base: str,
         search_filter: str,
-        search_scope: Literal[BASE, LEVEL, SUBTREE],
+        search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
         attributes: list[str] | None = None,
         paged_size: int | None = None,
         paged_cookie: str | bytes | None = None,

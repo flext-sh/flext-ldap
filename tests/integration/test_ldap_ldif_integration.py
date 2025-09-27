@@ -15,7 +15,6 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import cast
 
 import pytest
 
@@ -106,7 +105,7 @@ async def test_entries(ldap_client: FlextLdapClient) -> AsyncGenerator[list[str]
 
     # Cleanup
     for dn in reversed(test_dns):
-        await ldap_client.delete(dn)
+        ldap_client.delete(dn)
 
 
 class TestLdapLdifExport:
@@ -254,7 +253,7 @@ sn: ImportedUser
 
         # Cleanup
         for dn in reversed(imported_dns):
-            await ldap_client.delete(dn)
+            ldap_client.delete(dn)
 
     @pytest.mark.asyncio
     async def test_import_ldif_file_to_ldap(
@@ -306,7 +305,7 @@ sn: FileUser
 
             # Cleanup
             for dn in reversed(imported_dns):
-                await ldap_client.delete(dn)
+                ldap_client.delete(dn)
 
 
 class TestEntryConversion:
@@ -338,6 +337,7 @@ class TestEntryConversion:
         assert ldif_entry.dn == ldap_entry.dn
         assert ldif_entry.attributes == ldap_entry.attributes
         assert "objectClass" in ldif_entry.attributes
+        assert ldif_entry.attributes["objectClass"] is not None
         assert "person" in ldif_entry.attributes["objectClass"]
 
     def test_ldif_entry_to_ldap_entry_conversion(self) -> None:
@@ -443,10 +443,11 @@ class TestRoundTripConversion:
             cn_values = parsed_entry.attributes.get_attribute("cn")
             sn_values = parsed_entry.attributes.get_attribute("sn")
             # Cast original_entry to dict for safe access
-            original_dict = cast("dict[str, object]", original_entry)
-            original_attrs = cast("dict[str, object]", original_dict["attributes"])
-            assert cn_values == original_attrs["cn"]
-            assert sn_values == original_attrs["sn"]
+            original_dict = original_entry
+            original_attrs = original_dict["attributes"]
+            if isinstance(original_attrs, dict):
+                assert cn_values == original_attrs["cn"]
+                assert sn_values == original_attrs["sn"]
 
         # Note: We don't reimport to avoid duplicates, but structure is verified
 

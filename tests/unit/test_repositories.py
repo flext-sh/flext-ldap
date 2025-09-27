@@ -62,6 +62,14 @@ class TestUserRepository:
             cn="Test User",
             sn="User",
             mail="testuser@example.com",
+            given_name="Test",
+            telephone_number="+1234567890",
+            mobile="+1234567890",
+            department="IT",
+            title="Software Engineer",
+            organization="Example Corp",
+            organizational_unit="Engineering",
+            user_password="testpassword",
         )
 
         result = user_repository.handle(user)
@@ -188,6 +196,14 @@ class TestUserRepository:
             cn="Test User",
             sn="User",
             mail="testuser@example.com",
+            given_name="Test",
+            telephone_number="+1234567890",
+            mobile="+1234567890",
+            department="IT",
+            title="Software Engineer",
+            organization="Example Corp",
+            organizational_unit="Engineering",
+            user_password="testpassword",
         )
 
         result = await user_repository.save(user)
@@ -206,6 +222,14 @@ class TestUserRepository:
             cn="Test User",
             sn="",  # Empty surname
             mail="testuser@example.com",
+            given_name="Test",
+            telephone_number="+1234567890",
+            mobile="+1234567890",
+            department="IT",
+            title="Software Engineer",
+            organization="Example Corp",
+            organizational_unit="Engineering",
+            user_password="testpassword",
         )
 
         result = await user_repository.save(user)
@@ -224,6 +248,14 @@ class TestUserRepository:
             cn="Test User",
             sn="User",
             mail="testuser@example.com",
+            given_name="Test",
+            telephone_number="+1234567890",
+            mobile="+1234567890",
+            department="IT",
+            title="Software Engineer",
+            organization="Example Corp",
+            organizational_unit="Engineering",
+            user_password="testpassword",
         )
 
         result = await user_repository.save(user)

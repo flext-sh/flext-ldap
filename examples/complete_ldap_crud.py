@@ -21,6 +21,7 @@ from typing import Final, cast
 from flext_core import FlextConstants, FlextLogger, FlextResult
 from flext_ldap import (
     FlextLdapClient,
+    FlextLdapConstants,
     FlextLdapModels,
 )
 
@@ -61,13 +62,19 @@ async def create_sample_users(api: FlextLdapClient) -> None:
     ]
 
     for user_data in users_to_create:
+        # Ensure mail is provided as required field
+        mail_value = user_data.get("mail")
+        if not mail_value:
+            logger.warning(f"Skipping user {user_data['cn']} - no email provided")
+            continue
+
         request = FlextLdapModels.CreateUserRequest(
             dn=user_data["dn"],
             uid=user_data["uid"],
             cn=user_data["cn"],
             sn=user_data["sn"],
             given_name=user_data.get("given_name"),
-            mail=user_data.get("mail"),
+            mail=mail_value,  # Now guaranteed to be str
             description=None,
             telephone_number=None,
             user_password=None,
@@ -109,7 +116,7 @@ async def search_users(api: FlextLdapClient) -> None:
             mail_value: object = user.get("mail", ["No email"])
 
             # Helper function to safely convert to string
-            def safe_str(value: object) -> str:
+            def safe_str(value: str | bytes | None) -> str:
                 if value is None:
                     return "Unknown"
                 if isinstance(value, bytes):
@@ -120,19 +127,19 @@ async def search_users(api: FlextLdapClient) -> None:
             cn_str: str = "Unknown"
             if isinstance(cn_value, list) and cn_value:
                 # Type-safe access to list element
-                first_cn: object = cn_value[0]
+                first_cn: str | bytes | None = cn_value[0]
                 cn_str = safe_str(first_cn)
             elif cn_value is not None:
-                cn_str = safe_str(cn_value)
+                cn_str = safe_str(cast("str | bytes | None", cn_value))
 
             # Handle mail value
             mail_str: str = "No email"
             if isinstance(mail_value, list) and mail_value:
                 # Type-safe access to list element
-                first_mail: object = mail_value[0]
+                first_mail: str | bytes | None = mail_value[0]
                 mail_str = safe_str(first_mail)
             elif mail_value is not None:
-                mail_str = safe_str(mail_value)
+                mail_str = safe_str(cast("str | bytes | None", mail_value))
 
             logger.info(f"  - {cn_str} ({mail_str})")
     else:
@@ -177,7 +184,7 @@ async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
             # Use delete_entry method if available
             delete_method = getattr(api, "delete_entry", None)
             if delete_method:
-                result = await delete_method(user_dn)
+                result = delete_method(user_dn)
                 typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
                 if typed_result.is_success:
