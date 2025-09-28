@@ -288,14 +288,46 @@ class FlextLdapConfig(FlextConfig):
         cls, environment: str, **overrides: object
     ) -> FlextLdapConfig:
         """Create configuration for specific environment using enhanced singleton pattern."""
-        return super().get_or_create_shared_instance(
-            project_name="flext-ldap", environment=environment, **overrides
+        return cls(
+            **super()
+            .get_or_create_shared_instance(
+                project_name="flext-ldap", environment=environment, **overrides
+            )
+            .model_dump()
         )
 
     @classmethod
     def create_default(cls) -> FlextLdapConfig:
         """Create default configuration instance using enhanced singleton pattern."""
-        return super().get_or_create_shared_instance(project_name="flext-ldap")
+        return cls(
+            **super()
+            .get_or_create_shared_instance(project_name="flext-ldap")
+            .model_dump()
+        )
+
+    def create_connection_config_from_env(self) -> FlextResult[dict[str, object]]:
+        """Create connection configuration from environment variables.
+
+        Returns:
+            FlextResult[dict[str, object]]: Connection configuration dictionary
+
+        """
+        try:
+            # Get configuration values from environment or defaults
+            config_dict = {
+                "server": self.ldap_server_uri or "ldap://localhost",
+                "port": self.ldap_port or 389,
+                "bind_dn": self.ldap_bind_dn,
+                "bind_password": self.ldap_bind_password,
+                "base_dn": self.ldap_base_dn,
+                "use_ssl": self.ldap_use_ssl,
+                "timeout": self.ldap_connection_timeout,
+            }
+            return FlextResult[dict[str, object]].ok(config_dict)  # type: ignore[arg-type]
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to create connection config: {e}"
+            )
 
     def get_effective_bind_password(self) -> str | None:
         """Get the effective bind password (safely extract from SecretStr)."""
@@ -311,7 +343,8 @@ class FlextLdapConfig(FlextConfig):
             return cls()
         except Exception:
             # Fallback to parent method with type override
-            return super().get_global_instance()
+            config = super().get_global_instance()
+            return cls(**config.model_dump())
 
     @classmethod
     def reset_global_instance(cls) -> None:

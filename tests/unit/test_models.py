@@ -279,7 +279,7 @@ class TestFlextLdapModels:
             dn="cn=testgroup,dc=test,dc=com",
             cn="testgroup",
             description="Test group",
-            members=["cn=user1,dc=test,dc=com", "cn=user2,dc=test,dc=com"],
+            member_dns=["cn=user1,dc=test,dc=com", "cn=user2,dc=test,dc=com"],
             object_classes=["groupOfNames"],
             gid_number=None,
         )
@@ -287,7 +287,10 @@ class TestFlextLdapModels:
         assert group.dn == "cn=testgroup,dc=test,dc=com"
         assert group.cn == "testgroup"
         assert group.description == "Test group"
-        assert group.members == ["cn=user1,dc=test,dc=com", "cn=user2,dc=test,dc=com"]
+        assert group.member_dns == [
+            "cn=user1,dc=test,dc=com",
+            "cn=user2,dc=test,dc=com",
+        ]
         assert group.object_classes == ["groupOfNames"]
 
     def test_ldap_group_validation(self) -> None:

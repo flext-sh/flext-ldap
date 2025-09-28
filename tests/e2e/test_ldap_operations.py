@@ -59,6 +59,7 @@ class TestLdapE2EOperations:
             telephone_number="123-456-7890",
             user_password="password123",
             department="IT",
+            organizational_unit="Engineering",
             title="Developer",
             organization="Example Corp",
         )
@@ -209,6 +210,7 @@ class TestLdapE2EWithDockerServer:
             telephone_number=None,
             user_password=None,
             department=None,
+            organizational_unit=None,
             title=None,
             organization=None,
         )

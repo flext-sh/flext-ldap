@@ -14,6 +14,7 @@ from typing import Any, override
 
 from flext_core import (
     FlextBus,
+    FlextConstants,
     FlextContainer,
     FlextContext,
     FlextDispatcher,
@@ -122,8 +123,6 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             orchestrator = FlextLdapWorkflowOrchestrator(
                 config=self.config,
                 client=client_result.value,
-                bus=self._bus,
-                dispatcher=self._dispatcher,
             )
 
             return FlextResult[object].ok(orchestrator)
@@ -153,6 +152,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 client=client_result.value,
                 container=self._container,
                 bus=self._bus,
+                dispatcher=self._dispatcher,
                 processors=self._processors,
                 registry=self._ldap_registry,
             )
@@ -176,32 +176,38 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                     f"Client creation failed: {client_result.error}"
                 )
 
-            # Create command query services with ecosystem components
-            cqrs_services = FlextLdapCommandQueryServices(
-                config=self.config,
-                client=client_result.value,
-                container=self._container,
-                bus=self._bus,
-                dispatcher=self._dispatcher,
-                processors=self._processors,
-                registry=self._ldap_registry,
-                context=self._context,
+            # NOTE: Command query services and handlers not yet implemented
+            # These classes need to be implemented before this factory can be used
+            # cqrs_services = FlextLdapCommandQueryServices(
+            #     config=self.config,
+            #     client=client_result.value,
+            #     container=self._container,
+            #     bus=self._bus,
+            #     dispatcher=self._dispatcher,
+            #     processors=self._processors,
+            #     registry=self._ldap_registry,
+            #     context=self._context,
+            # )
+            #
+            # # Register command handlers
+            # command_handlers = [
+            #     FlextLdapCreateUserCommandHandler(),
+            #     FlextLdapUpdateUserCommandHandler(),
+            #     FlextLdapDeleteUserCommandHandler(),
+            #     FlextLdapCreateGroupCommandHandler(),
+            #     FlextLdapUpdateGroupCommandHandler(),
+            #     FlextLdapDeleteGroupCommandHandler(),
+            # ]
+            #
+            # for handler in command_handlers:
+            #     self._dispatcher.register_handler(handler)
+            #
+            # return FlextResult[object].ok(cqrs_services)
+
+            # Temporary return until implementation is complete
+            return FlextResult[object].fail(
+                "Command query services not yet implemented"
             )
-
-            # Register command handlers
-            command_handlers = [
-                FlextLdapCreateUserCommandHandler(),
-                FlextLdapUpdateUserCommandHandler(),
-                FlextLdapDeleteUserCommandHandler(),
-                FlextLdapCreateGroupCommandHandler(),
-                FlextLdapUpdateGroupCommandHandler(),
-                FlextLdapDeleteGroupCommandHandler(),
-            ]
-
-            for handler in command_handlers:
-                self._dispatcher.register_handler(handler)
-
-            return FlextResult[object].ok(cqrs_services)
 
         except Exception as e:
             return FlextResult[object].fail(
@@ -222,15 +228,18 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                     f"Client creation failed: {client_result.error}"
                 )
 
-            # Create saga orchestrator with ecosystem components
-            saga_orchestrator = FlextLdapSagaOrchestrator(
-                config=self.config,
-                client=client_result.value,
-                bus=self._bus,
-                context=self._context,
-            )
+            # NOTE: Saga orchestrator not yet implemented
+            # saga_orchestrator = FlextLdapSagaOrchestrator(
+            #     config=self.config,
+            #     client=client_result.value,
+            #     bus=self._bus,
+            #     context=self._context,
+            # )
+            #
+            # return FlextResult[object].ok(saga_orchestrator)
 
-            return FlextResult[object].ok(saga_orchestrator)
+            # Temporary return until implementation is complete
+            return FlextResult[object].fail("Saga orchestrator not yet implemented")
 
         except Exception as e:
             return FlextResult[object].fail(f"Saga orchestrator creation failed: {e}")
@@ -286,7 +295,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         """
         try:
             # Validate required fields
-            required_fields = ["dn", "uid", "cn", "sn"]
+            required_fields = ["dn", "uid", "cn", "sn", "mail"]
             missing_fields = [
                 field for field in required_fields if field not in user_data
             ]
@@ -312,11 +321,12 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 cn=validated_data["cn"],
                 sn=validated_data["sn"],
                 given_name=validated_data.get("given_name"),
-                mail=validated_data.get("mail"),
+                mail=validated_data["mail"],
                 telephone_number=validated_data.get("telephone_number"),
                 department=validated_data.get("department"),
                 title=validated_data.get("title"),
                 organization=validated_data.get("organization"),
+                organizational_unit=validated_data.get("organizational_unit"),
                 user_password=validated_data.get("user_password"),
                 description=validated_data.get("description"),
             )
@@ -326,6 +336,62 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         except Exception as e:
             return FlextResult[FlextLdapModels.CreateUserRequest].fail(
                 f"Request creation failed: {e}"
+            )
+
+    @classmethod
+    def create_advanced_service(
+        cls, client_config: dict[str, object], service_config: dict[str, object]
+    ) -> FlextResult[FlextLdapAdvancedService]:
+        """Create advanced service with enhanced configuration.
+
+        Args:
+            client_config: Client configuration dictionary
+            service_config: Service configuration dictionary
+
+        Returns:
+            FlextResult containing the created service or error
+
+        """
+        try:
+            # Create client configuration object
+            client_config_obj = FlextLdapModels.ConnectionConfig(
+                server=str(client_config["server_uri"]),
+                port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+                use_ssl=False,
+                bind_dn=None,
+                bind_password=None,
+                timeout=FlextConstants.Network.DEFAULT_TIMEOUT,
+            )
+
+            # Create client from config
+            client = FlextLdapClient(config=client_config_obj)
+
+            # Create service config
+            handler_type_value = service_config.get("handler_type", "command")
+            if not isinstance(handler_type_value, str) or handler_type_value not in {
+                "command",
+                "query",
+                "event",
+                "saga",
+            }:
+                handler_type_value = "command"
+
+            service_handler_config = FlextModels.CqrsConfig.Handler(
+                handler_id=str(service_config.get("handler_id", "advanced_service")),
+                handler_name=str(
+                    service_config.get("handler_name", "Advanced Service")
+                ),
+                handler_type=handler_type_value,
+            )
+
+            # Create advanced service with client and config
+            service = FlextLdapAdvancedService(
+                config=service_handler_config, client=client
+            )
+            return FlextResult[FlextLdapAdvancedService].ok(service)
+        except Exception as e:
+            return FlextResult[FlextLdapAdvancedService].fail(
+                f"Service creation failed: {e}"
             )
 
     @staticmethod

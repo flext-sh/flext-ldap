@@ -79,6 +79,7 @@ async def create_sample_users(api: FlextLdapClient) -> None:
             telephone_number=None,
             user_password=None,
             department=None,
+            organizational_unit=None,
             title=None,
             organization=None,
         )

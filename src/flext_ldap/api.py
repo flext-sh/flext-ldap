@@ -44,6 +44,13 @@ class FlextLdapAPI(FlextService[None]):
     - Direct use of flext-core centralized services
 
     **PYTHON 3.13+ COMPATIBILITY**: Uses modern async/await patterns and latest type features.
+
+    Implements FlextLdapProtocols through structural subtyping:
+    - LdapConnectionProtocol: connect, is_connected methods (delegates to client)
+    - LdapSearchProtocol: search, search_entries methods
+    - LdapModifyProtocol: via client delegation
+    - LdapAuthenticationProtocol: via client delegation
+    - LdapValidationProtocol: via client delegation
     """
 
     @override
@@ -150,6 +157,191 @@ class FlextLdapAPI(FlextService[None]):
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Unbind failed: {e}")
+
+    async def disconnect(self) -> FlextResult[None]:
+        """Disconnect from LDAP server - implements LdapConnectionProtocol.
+
+        Alias for unbind to match protocol interface.
+
+        Returns:
+            FlextResult[None]: Disconnect success status
+
+        """
+        return await self.unbind()
+
+    # =============================================================================
+    # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance
+    # =============================================================================
+
+    async def search(
+        self,
+        search_base: str,
+        search_filter: str,
+        attributes: list[str] | None = None,
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Perform LDAP search operation - implements LdapSearchProtocol.
+
+        Args:
+            search_base: LDAP search base DN
+            search_filter: LDAP search filter
+            attributes: List of attributes to retrieve
+
+        Returns:
+            FlextResult[list[dict[str, object]]]: Search results
+
+        """
+        # Get search response and extract entries
+        search_result = await self.search_entries(
+            search_base, search_filter, "subtree", attributes
+        )
+        if search_result.is_failure:
+            return FlextResult[list[dict[str, object]]].fail(
+                search_result.error or "Search failed"
+            )
+
+        response = search_result.unwrap()
+        return FlextResult[list[dict[str, object]]].ok(response.entries)
+
+    async def search_one(
+        self,
+        search_base: str,
+        search_filter: str,
+        attributes: list[str] | None = None,
+    ) -> FlextResult[dict[str, object] | None]:
+        """Perform LDAP search for single entry - implements LdapSearchProtocol.
+
+        Args:
+            search_base: LDAP search base DN
+            search_filter: LDAP search filter
+            attributes: List of attributes to retrieve
+
+        Returns:
+            FlextResult[dict[str, object] | None]: Single search result or None
+
+        """
+        # Use existing search method and return first result
+        search_result = await self.search(search_base, search_filter, attributes)
+        if search_result.is_failure:
+            return FlextResult[dict[str, object] | None].fail(
+                search_result.error or "Search failed"
+            )
+
+        results = search_result.unwrap()
+        if not results:
+            return FlextResult[dict[str, object] | None].ok(None)
+
+        return FlextResult[dict[str, object] | None].ok(results[0])
+
+    async def add_entry(
+        self, dn: str, attributes: dict[str, str | list[str]]
+    ) -> FlextResult[bool]:
+        """Add new LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+
+        Returns:
+            FlextResult[bool]: Add operation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return await client.add_entry(dn, attributes)
+
+    async def modify_entry(
+        self, dn: str, changes: dict[str, object]
+    ) -> FlextResult[bool]:
+        """Modify existing LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to modify
+            changes: Attribute changes to apply
+
+        Returns:
+            FlextResult[bool]: Modify operation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return await client.modify_entry(dn, changes)
+
+    async def delete_entry(self, dn: str) -> FlextResult[bool]:
+        """Delete LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to delete
+
+        Returns:
+            FlextResult[bool]: Delete operation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return await client.delete_entry(dn)
+
+    async def authenticate_user(
+        self, username: str, password: str
+    ) -> FlextResult[bool]:
+        """Authenticate user against LDAP - implements LdapAuthenticationProtocol.
+
+        Args:
+            username: Username for authentication
+            password: Password for authentication
+
+        Returns:
+            FlextResult[bool]: Authentication success status
+
+        """
+        # Delegate to client and convert result
+        client = self.client
+        auth_result = await client.authenticate_user(username, password)
+        if auth_result.is_failure:
+            return FlextResult[bool].fail(auth_result.error or "Authentication failed")
+        return FlextResult[bool].ok(True)
+
+    async def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+        """Validate user credentials against LDAP - implements LdapAuthenticationProtocol.
+
+        Args:
+            dn: User distinguished name
+            password: User password
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return await client.validate_credentials(dn, password)
+
+    def validate_dn(self, dn: str) -> FlextResult[bool]:
+        """Validate distinguished name format - implements LdapValidationProtocol.
+
+        Args:
+            dn: Distinguished name to validate
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return client.validate_dn(dn)
+
+    def validate_entry(self, entry: dict[str, object]) -> FlextResult[bool]:
+        """Validate LDAP entry structure - implements LdapValidationProtocol.
+
+        Args:
+            entry: LDAP entry to validate
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Delegate to client
+        client = self.client
+        return client.validate_entry(entry)
 
     # =============================================================================
     # SEARCH METHODS - Enhanced with proper error handling and validation
@@ -304,13 +496,6 @@ class FlextLdapAPI(FlextService[None]):
             return FlextResult[bool].ok(True)
         except Exception as e:
             return FlextResult[bool].fail(f"Configuration validation failed: {e}")
-
-    def validate_dn(self, dn: str) -> FlextResult[None]:
-        """Validate DN format with enhanced error handling."""
-        try:
-            return self.validations.validate_dn(dn).map(lambda _: None)
-        except Exception as e:
-            return FlextResult[None].fail(f"DN validation failed: {e}")
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP filter format with enhanced error handling."""

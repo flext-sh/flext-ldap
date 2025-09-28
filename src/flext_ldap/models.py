@@ -11,12 +11,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import ClassVar, cast
 
-from pydantic import Field, SecretStr, ValidationInfo, field_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationInfo,
+    computed_field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from flext_core import FlextConstants, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
@@ -35,8 +45,30 @@ class FlextLdapModels(FlextModels):
     Into a single unified class following FLEXT patterns. ALL LDAP data structures
     are now available as nested classes within FlextLdapModels.
 
+    Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation and serialization.
     NO legacy compatibility maintained - clean consolidated implementation only.
     """
+
+    # Enhanced base configuration for all LDAP models
+    model_config = ConfigDict(
+        validate_assignment=True,
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
+        validate_return=True,
+        ser_json_timedelta="iso8601",
+        ser_json_bytes="base64",
+        serialize_by_alias=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        validate_default=True,
+        # LDAP-specific configurations
+        frozen=False,  # Allow mutable LDAP models for attribute updates
+        extra="forbid",  # Strict LDAP attribute validation
+        # LDAP serialization features
+        json_encoders={
+            datetime: lambda v: v.isoformat() if v else None,
+        },
+    )
 
     # =========================================================================
     # VALUE OBJECTS - Immutable LDAP value objects
@@ -46,27 +78,130 @@ class FlextLdapModels(FlextModels):
         """LDAP Distinguished Name value object with RFC 2253 compliance.
 
         Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation.
         """
 
-        value: str = Field(..., min_length=1, description="Distinguished Name string")
+        model_config = ConfigDict(
+            validate_assignment=True,
+            str_strip_whitespace=True,
+            frozen=True,  # DN is immutable value object
+            extra="forbid",
+            # LDAP-specific serialization
+        )
+
+        value: str = Field(
+            ...,
+            min_length=1,
+            description="Distinguished Name string",
+            pattern=r"^[a-zA-Z]+=.+",  # Basic DN pattern
+            examples=[
+                "cn=John Doe,ou=users,dc=example,dc=com",
+                "uid=admin,dc=ldap,dc=local",
+            ],
+        )
 
         @field_validator("value")
         @classmethod
         def validate_dn_format(cls, v: str) -> str:
-            """Validate Distinguished Name format and content."""
+            """Enhanced DN validation with RFC 2253 compliance."""
             if not v or not v.strip():
-                msg = "Distinguished Name cannot be empty"
-                raise ValueError(msg)
-            # Basic DN validation - full RFC 2253 validation would be more complex
+                error_msg = "Distinguished Name cannot be empty"
+                raise ValueError(error_msg)
+
+            # Enhanced DN validation - check for proper attribute=value pairs
             if "=" not in v:
-                msg = "Invalid DN format - missing attribute=value pairs"
-                raise ValueError(msg)
+                error_msg = "Invalid DN format - missing attribute=value pairs"
+                raise ValueError(error_msg)
+
+            # Check for valid DN components
+            components = v.split(",")
+            for comp in components:
+                component = comp.strip()
+                if "=" not in component:
+                    error_msg = f"Invalid DN component: {component}"
+                    raise ValueError(error_msg)
+
+                attr, value = component.split("=", 1)
+                if not attr.strip() or not value.strip():
+                    error_msg = f"Empty attribute or value in DN component: {component}"
+                    raise ValueError(error_msg)
+
             return v.strip()
 
+        @model_validator(mode="after")
+        def validate_dn_structure(self) -> FlextLdapModels.DistinguishedName:
+            """Cross-field validation for DN structure integrity."""
+            # Validate DN has at least one component
+            components = self.value.split(",")
+            if len(components) < 1:
+                error_msg = "DN must have at least one component"
+                raise ValueError(error_msg)
+
+            # Validate no duplicate attributes in RDN
+            rdn_attrs = []
+            first_component = components[0].strip()
+            if "+" in first_component:  # Multi-valued RDN
+                rdn_parts = first_component.split("+")
+                for part in rdn_parts:
+                    attr = part.split("=")[0].strip().lower()
+                    if attr in rdn_attrs:
+                        error_msg = f"Duplicate attribute in RDN: {attr}"
+                        raise ValueError(error_msg)
+                    rdn_attrs.append(attr)
+
+            return self
+
+        @computed_field
         @property
         def rdn(self) -> str:
-            """Get the Relative Distinguished Name (first component)."""
+            """Computed field: Get the Relative Distinguished Name (first component)."""
             return self.value.split(",")[0].strip()
+
+        @property
+        @computed_field
+        def parent_dn(self) -> str | None:
+            """Computed field for parent Distinguished Name."""
+            components = self.value.split(",")
+            if len(components) <= 1:
+                return None
+            return ",".join(components[1:]).strip()
+
+        @computed_field
+        @property
+        def rdn_attribute(self) -> str:
+            """Computed field: Get the RDN attribute name."""
+            rdn = self.rdn
+            if "=" in rdn:
+                return rdn.split("=")[0].strip().lower()
+            return ""
+
+        @computed_field
+        @property
+        def rdn_value(self) -> str:
+            """Computed field: Get the RDN value."""
+            rdn = self.rdn
+            if "=" in rdn:
+                return rdn.split("=", 1)[1].strip()
+            return ""
+
+        @computed_field
+        @property
+        def components_count(self) -> int:
+            """Computed field: Number of DN components."""
+            return len(self.value.split(","))
+
+        @field_serializer("value")
+        def serialize_dn(self, value: str) -> str:
+            """Custom serializer for DN normalization."""
+            # Normalize DN format for consistent serialization
+            components = []
+            for comp in value.split(","):
+                component = comp.strip()
+                if "=" in component:
+                    attr, val = component.split("=", 1)
+                    # Normalize attribute name to lowercase, preserve value case
+                    components.append(f"{attr.strip().lower()}={val.strip()}")  # type: ignore[arg-type]
+            return ",".join(components)
 
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
@@ -81,9 +216,9 @@ class FlextLdapModels(FlextModels):
                 if "value" in kwargs:
                     kwargs["value"] = str(kwargs["value"])
                 # Convert all kwargs to proper types for Pydantic validation
-                typed_kwargs = {
-                    k: str(v) if k == "value" else v for k, v in kwargs.items()
-                }
+                typed_kwargs: dict[str, str] = {}
+                for k, v in kwargs.items():
+                    typed_kwargs[k] = str(v)
                 dn_obj = cls(**typed_kwargs)
                 return FlextResult[object].ok(dn_obj)
             except ValueError as e:
@@ -342,7 +477,7 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     class LdapUser(FlextLdapEntityBase):
-        """LDAP User entity with enterprise attributes.
+        """LDAP User entity with enterprise attributes and advanced Pydantic 2.11 features.
 
         **CENTRALIZED APPROACH**: All user operations follow centralized patterns:
         - FlextLdapModels.LdapUser.* for user-specific operations
@@ -397,6 +532,49 @@ class FlextLdapModels(FlextModels):
             default=None, description="Modification timestamp"
         )
 
+        @computed_field
+        @property
+        def full_name(self) -> str:
+            """Computed field for user's full name."""
+            if self.given_name and self.sn:
+                return f"{self.given_name} {self.sn}"
+            if self.given_name:
+                return self.given_name
+            if self.sn:
+                return self.sn
+            return self.cn
+
+        @computed_field
+        @property
+        def is_active(self) -> bool:
+            """Computed field indicating if user is active."""
+            return self.status != "disabled" if self.status else True
+
+        @computed_field
+        @property
+        def has_contact_info(self) -> bool:
+            """Computed field indicating if user has complete contact information."""
+            return bool(self.mail and (self.telephone_number or self.mobile))
+
+        @computed_field
+        @property
+        def organizational_path(self) -> str:
+            """Computed field for full organizational hierarchy."""
+            path_parts = []
+            if self.organization:
+                path_parts.append(self.organization)
+            if self.organizational_unit:
+                path_parts.append(self.organizational_unit)
+            if self.department:
+                path_parts.append(self.department)
+            return " > ".join(path_parts) if path_parts else "No organization"
+
+        @computed_field
+        @property
+        def rdn(self) -> str:
+            """Computed field for Relative Distinguished Name."""
+            return self.dn.split(",")[0] if "," in self.dn else self.dn
+
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
@@ -423,6 +601,44 @@ class FlextLdapModels(FlextModels):
                 msg = "At least one object class is required"
                 raise ValueError(msg)
             return v
+
+        @model_validator(mode="after")
+        def validate_user_consistency(self) -> FlextLdapModels.LdapUser:
+            """Model validator for cross-field validation and business rules."""
+            # Ensure person object class is present
+            if "person" not in self.object_classes:
+                msg = "User must have 'person' object class"
+                raise ValueError(msg)
+
+            # Note: Required field validation is handled at repository level
+            # to allow tests to verify repository validation logic
+
+            # Set display_name from cn if not provided
+            if not self.display_name:
+                self.display_name = self.cn
+
+            # Validate organizational consistency
+            if self.department and not self.organizational_unit:
+                msg = "Department requires organizational unit"
+                raise ValueError(msg)
+
+            return self
+
+        @field_serializer("user_password")
+        def serialize_password(self, value: str | SecretStr | None) -> str | None:
+            """Field serializer for password handling."""
+            if value is None:
+                return None
+            if isinstance(value, SecretStr):
+                return "[PROTECTED]"
+            return "[PROTECTED]" if value else None
+
+        @field_serializer("dn")
+        def serialize_dn(self, value: str) -> str:
+            """Field serializer for DN normalization."""
+            # Normalize DN formatting (remove extra spaces)
+            components = [component.strip() for component in value.split(",")]
+            return ",".join(components)
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate user business rules with enhanced error handling."""
@@ -980,7 +1196,7 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     class SearchRequest(FlextLdapBaseModel, FlextLdapValidationMixin):
-        """LDAP Search Request entity with comprehensive parameters."""
+        """LDAP Search Request entity with comprehensive parameters and advanced Pydantic 2.11 features."""
 
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
@@ -1011,12 +1227,12 @@ class FlextLdapModels(FlextModels):
 
         # Paging - Optional for proper test compatibility
         page_size: int | None = Field(
-            None,
+            default=None,
             description="Page size for paged results",
             ge=1,
         )
         paged_cookie: bytes | None = Field(
-            None,
+            default=None,
             description="Paging cookie for continuation",
         )
 
@@ -1030,6 +1246,47 @@ class FlextLdapModels(FlextModels):
             description="Alias dereferencing: never, searching, finding, always",
             pattern="^(never|searching|finding|always)$",
         )
+
+        @computed_field
+        @property
+        def is_paged_search(self) -> bool:
+            """Computed field indicating if this is a paged search."""
+            return self.page_size is not None and self.page_size > 0
+
+        @computed_field
+        @property
+        def search_complexity(self) -> str:
+            """Computed field for search complexity assessment."""
+            max_filter_complexity = 2  # Maximum filter complexity threshold
+            if self.scope == "base":
+                return "simple"
+            if self.scope == "onelevel":
+                return "moderate"
+            if (
+                "*" in self.filter_str
+                or self.filter_str.count("&") > max_filter_complexity
+            ):
+                return "complex"
+            return "standard"
+
+        @computed_field
+        @property
+        def normalized_scope(self) -> str:
+            """Computed field for normalized scope value."""
+            return self.scope.lower()
+
+        @computed_field
+        @property
+        def estimated_result_count(self) -> int:
+            """Computed field for estimated result count based on search parameters."""
+            if self.scope == "base":
+                return 1
+            if self.scope == "onelevel":
+                return min(self.size_limit, 100)  # Estimate for one level
+            # Subtree search - more conservative estimate
+            if "uid=" in self.filter_str or "cn=" in self.filter_str:
+                return min(self.size_limit, 10)  # Specific attribute search
+            return min(self.size_limit, 1000)  # Broader search
 
         @field_validator("base_dn")
         @classmethod
@@ -1047,6 +1304,64 @@ class FlextLdapModels(FlextModels):
             if validation_result.is_failure:
                 raise ValueError(validation_result.error)
             return v.strip()
+
+        @field_validator("attributes")
+        @classmethod
+        def validate_attributes(cls, v: list[str] | None) -> list[str] | None:
+            """Validate attribute list."""
+            if v is not None:
+                # Remove duplicates and empty strings using set comprehension
+                cleaned_attrs = list({attr.strip() for attr in v if attr.strip()})
+                return cleaned_attrs or None
+            return v
+
+        @model_validator(mode="after")
+        def validate_search_consistency(self) -> FlextLdapModels.SearchRequest:
+            """Model validator for cross-field validation and search optimization."""
+            max_time_limit_seconds = 300  # 5 minutes maximum
+            max_page_multiplier = 100  # Maximum page size multiplier
+
+            # Validate paging consistency
+            if self.page_size is not None and self.page_size <= 0:
+                msg = "Page size must be positive if specified"
+                raise ValueError(msg)
+
+            # Optimize size limit for paged searches
+            if (
+                self.is_paged_search
+                and self.page_size is not None
+                and self.size_limit > self.page_size * max_page_multiplier
+            ):
+                # Automatically adjust size limit for very large paged searches
+                self.size_limit = min(
+                    self.size_limit, self.page_size * max_page_multiplier
+                )
+
+            # Validate time limit is reasonable
+            if self.time_limit > max_time_limit_seconds:
+                msg = f"Time limit should not exceed {max_time_limit_seconds} seconds for performance"
+                raise ValueError(msg)
+
+            # Validate scope and filter combination
+            if self.scope == "base" and ("*" in self.filter_str):
+                msg = "Base scope searches should not use wildcard filters"
+                raise ValueError(msg)
+
+            return self
+
+        @field_serializer("paged_cookie")
+        def serialize_cookie(self, value: bytes | None) -> str | None:
+            """Field serializer for paging cookie."""
+            if value is None:
+                return None
+            # Encode bytes as base64 for JSON serialization
+            return base64.b64encode(value).decode("ascii")
+
+        @field_serializer("filter_str")
+        def serialize_filter(self, value: str) -> str:
+            """Field serializer for LDAP filter normalization."""
+            # Normalize whitespace in filter
+            return " ".join(value.split())
 
         @classmethod
         def create_user_search(
@@ -1136,6 +1451,7 @@ class FlextLdapModels(FlextModels):
 
         # Optional organizational fields
         department: str | None = Field(None, description="Department")
+        organizational_unit: str | None = Field(None, description="Organizational Unit")
         title: str | None = Field(None, description="Job title")
         organization: str | None = Field(None, description="Organization")
 
@@ -1217,7 +1533,6 @@ class FlextLdapModels(FlextModels):
         def to_user_entity(self) -> FlextLdapModels.LdapUser:
             """Convert request to user entity."""
             return FlextLdapModels.LdapUser(
-                id=f"user_{self.uid}",
                 dn=self.dn,
                 uid=self.uid,
                 cn=self.cn,
@@ -1229,7 +1544,7 @@ class FlextLdapModels(FlextModels):
                 department=self.department,
                 title=self.title,
                 organization=self.organization,
-                organizational_unit=None,
+                organizational_unit=self.organizational_unit,
                 user_password=self.user_password,
                 object_classes=self.object_classes,
                 additional_attributes=self.additional_attributes,

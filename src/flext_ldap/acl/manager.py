@@ -158,7 +158,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
 
             results = []
             for acl in acls:
-                result = self._converters.convert_acl(acl, source_format, target_format)
+                result = self.converters.convert_acl(acl, source_format, target_format)
                 if result.is_failure:
                     return FlextResult[list[object]].fail(
                         f"Batch conversion failed for ACL '{acl}': {result.error}"
@@ -176,11 +176,11 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         try:
             # Use parser to validate ACL syntax
             if format_type == "openldap":
-                result = self._parsers.OpenLdapAclParser.parse(acl_string)
+                result = self.parsers.OpenLdapAclParser.parse(acl_string)
             elif format_type == "oracle":
-                result = self._parsers.OracleAclParser.parse(acl_string)
+                result = self.parsers.OracleAclParser.parse(acl_string)
             elif format_type == "aci":
-                result = self._parsers.AciParser.parse(acl_string)
+                result = self.parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[bool].fail(f"Unsupported ACL format: {format_type}")
 
