@@ -22,6 +22,7 @@ from flext_core import FlextTypes
 # =============================================================================
 
 # LDAP domain TypeVars
+
 # Module-level type aliases for compatibility
 Attributes = list[str]
 ModifyChanges = dict[str, list[tuple[str, list[str]]]]

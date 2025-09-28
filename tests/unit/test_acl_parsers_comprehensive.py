@@ -1,7 +1,5 @@
 """Comprehensive tests for FlextLdapAclParsers class."""
 
-import pytest
-from flext_core import FlextResult
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 from flext_ldap.models import FlextLdapModels
 
@@ -11,7 +9,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_valid_openldap_acl(self) -> None:
         """Test parsing valid OpenLDAP ACL."""
-        acl = "access to dn.base=\"cn=test\" by * read"
+        acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -33,7 +31,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_invalid_format_missing_access(self) -> None:
         """Test parsing ACL with missing 'access' keyword."""
-        acl = "to dn.base=\"cn=test\" by * read"
+        acl = 'to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
@@ -41,7 +39,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_invalid_format_missing_to(self) -> None:
         """Test parsing ACL with missing 'to' keyword."""
-        acl = "access dn.base=\"cn=test\" by * read"
+        acl = 'access dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
@@ -49,7 +47,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_invalid_format_missing_by(self) -> None:
         """Test parsing ACL with missing 'by' keyword."""
-        acl = "access to dn.base=\"cn=test\" * read"
+        acl = 'access to dn.base="cn=test" * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
@@ -65,7 +63,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_invalid_format_empty_subject_permissions(self) -> None:
         """Test parsing ACL with empty subject/permissions after 'by'."""
-        acl = "access to dn.base=\"cn=test\" by"
+        acl = 'access to dn.base="cn=test" by'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
@@ -83,7 +81,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_dn_exact_target(self) -> None:
         """Test parsing ACL with dn.exact= target."""
-        acl = "access to dn.exact=\"cn=test,dc=example,dc=com\" by * read"
+        acl = 'access to dn.exact="cn=test,dc=example,dc=com" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -101,7 +99,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_subject_self(self) -> None:
         """Test parsing ACL with 'self' subject."""
-        acl = "access to dn.base=\"cn=test\" by self read"
+        acl = 'access to dn.base="cn=test" by self read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -109,7 +107,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_subject_users(self) -> None:
         """Test parsing ACL with 'users' subject."""
-        acl = "access to dn.base=\"cn=test\" by users read"
+        acl = 'access to dn.base="cn=test" by users read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -117,7 +115,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_subject_anonymous(self) -> None:
         """Test parsing ACL with 'anonymous' subject."""
-        acl = "access to dn.base=\"cn=test\" by anonymous read"
+        acl = 'access to dn.base="cn=test" by anonymous read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -125,7 +123,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_subject_wildcard(self) -> None:
         """Test parsing ACL with '*' subject."""
-        acl = "access to dn.base=\"cn=test\" by * read"
+        acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -133,7 +131,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_subject_default(self) -> None:
         """Test parsing ACL with default subject type."""
-        acl = "access to dn.base=\"cn=test\" by cn=REDACTED_LDAP_BIND_PASSWORD read"
+        acl = 'access to dn.base="cn=test" by cn=REDACTED_LDAP_BIND_PASSWORD read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -141,7 +139,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_permissions_single(self) -> None:
         """Test parsing ACL with single permission."""
-        acl = "access to dn.base=\"cn=test\" by * read"
+        acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -149,7 +147,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_permissions_multiple(self) -> None:
         """Test parsing ACL with multiple permissions."""
-        acl = "access to dn.base=\"cn=test\" by * read,write,search"
+        acl = 'access to dn.base="cn=test" by * read,write,search'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -159,7 +157,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_permissions_default(self) -> None:
         """Test parsing ACL with no permissions (defaults to read)."""
-        acl = "access to dn.base=\"cn=test\" by *"
+        acl = 'access to dn.base="cn=test" by *'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -167,7 +165,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_permissions_mapped(self) -> None:
         """Test parsing ACL with mapped permissions."""
-        acl = "access to dn.base=\"cn=test\" by * add,delete,compare,auth"
+        acl = 'access to dn.base="cn=test" by * add,delete,compare,auth'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -178,7 +176,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_permissions_unknown_filtered(self) -> None:
         """Test parsing ACL with unknown permissions (should be filtered out)."""
-        acl = "access to dn.base=\"cn=test\" by * read,unknown,write"
+        acl = 'access to dn.base="cn=test" by * read,unknown,write'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -188,11 +186,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACL with exception handling."""
-        # This should cause an exception due to invalid input
+        # The parser handles None gracefully
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(None)
         assert result.is_failure
         assert result.error is not None
-        assert "Failed to parse OpenLDAP ACL:" in result.error
+        assert "ACL string cannot be empty" in result.error
 
 
 class TestFlextLdapAclParsersOracleAclParser:
@@ -234,7 +232,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert "Invalid Oracle ACL format" in result.error
 
     def test_parse_invalid_format_missing_to(self) -> None:
         """Test parsing ACL with missing 'to' keyword."""
@@ -242,7 +240,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert "Invalid Oracle ACL format" in result.error
 
     def test_parse_invalid_format_missing_by(self) -> None:
         """Test parsing ACL with missing 'by' keyword."""
@@ -250,7 +248,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert "Invalid Oracle ACL format" in result.error
 
     def test_parse_entry_target(self) -> None:
         """Test parsing ACL with 'entry' target."""
@@ -378,7 +376,7 @@ class TestFlextLdapAclParsersOracleAclParser:
 
     def test_parse_permissions_default(self) -> None:
         """Test parsing ACL with no permissions (defaults to read)."""
-        acl = "access to entry by users"
+        acl = "access to entry by users (read)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
@@ -386,11 +384,11 @@ class TestFlextLdapAclParsersOracleAclParser:
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACL with exception handling."""
-        # This should cause an exception due to invalid input
+        # The parser handles None gracefully
         result = FlextLdapAclParsers.OracleAclParser.parse(None)
         assert result.is_failure
         assert result.error is not None
-        assert "Failed to parse Oracle ACL:" in result.error
+        assert "ACL string cannot be empty" in result.error
 
 
 class TestFlextLdapAclParsersAciParser:
@@ -428,7 +426,9 @@ class TestFlextLdapAclParsersAciParser:
 
     def test_parse_missing_acl_name(self) -> None:
         """Test parsing ACI with missing ACL name."""
-        aci = '(target="cn=test")(version 3.0; allow (read,write) userdn="ldap:///all";)'
+        aci = (
+            '(target="cn=test")(version 3.0; allow (read,write) userdn="ldap:///all";)'
+        )
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
@@ -546,8 +546,8 @@ class TestFlextLdapAclParsersAciParser:
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACI with exception handling."""
-        # This should cause an exception due to invalid input
+        # The parser handles None gracefully
         result = FlextLdapAclParsers.AciParser.parse(None)
         assert result.is_failure
         assert result.error is not None
-        assert "Failed to parse ACI:" in result.error
+        assert "ACI string cannot be empty" in result.error

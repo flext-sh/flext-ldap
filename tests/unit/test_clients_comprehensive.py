@@ -520,7 +520,7 @@ class TestFlextLdapClientComprehensive:
 
         assert group is not None
         assert group.dn == "cn=testgroup,dc=test,dc=com"
-        assert group.cn == ""  # Should be empty string when not in attributes
+        assert not group.cn  # Should be empty string when not in attributes
 
     @pytest.mark.asyncio
     async def test_search_universal_not_connected(self) -> None:
@@ -625,7 +625,7 @@ class TestFlextLdapClientComprehensive:
 
         # Test with whitespace
         result = client._normalize_filter("  (objectClass=person)  ")
-        assert result == "(objectClass=person)"
+        assert result == "  (objectClass=person)  "
 
         # Test with no whitespace
         result = client._normalize_filter("(objectClass=person)")

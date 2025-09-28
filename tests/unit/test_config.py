@@ -53,7 +53,7 @@ class TestFlextLdapConfig:
             "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
         }
 
-        result = configs.create_from_connection_config_data(minimal_config)  # type: ignore[arg-type]
+        result = configs.create_from_connection_config_data(minimal_config)
 
         # Should succeed with default values
         assert result.is_success
@@ -102,7 +102,7 @@ class TestFlextLdapConfig:
             "attributes": ["cn", "sn", "mail"],
         }
 
-        result = configs.create_search_config(search_data)  # type: ignore[arg-type]
+        result = configs.create_search_config(search_data)
 
         assert result.is_success
         assert isinstance(result.data, FlextLdapModels.SearchConfig)
@@ -116,7 +116,7 @@ class TestFlextLdapConfig:
 
         # Test with invalid data that would cause Pydantic validation to fail
         invalid_data = {"base_dn": None, "filter_str": None, "attributes": "invalid"}
-        result = configs.create_search_config(invalid_data)  # type: ignore[arg-type]
+        result = configs.create_search_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
@@ -135,7 +135,7 @@ class TestFlextLdapConfig:
             "values": ["New Name"],
         }
 
-        result = configs.create_modify_config(modify_data)  # type: ignore[arg-type]
+        result = configs.create_modify_config(modify_data)
 
         assert result.is_success
         assert isinstance(result.data, dict)
@@ -155,7 +155,7 @@ class TestFlextLdapConfig:
             "attribute": None,
             "values": "invalid",
         }
-        result = configs.create_modify_config(invalid_data)  # type: ignore[arg-type]
+        result = configs.create_modify_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
@@ -184,7 +184,7 @@ class TestFlextLdapConfig:
             },
         }
 
-        result = configs.create_add_config(add_data)  # type: ignore[arg-type]
+        result = configs.create_add_config(add_data)
 
         assert result.is_success
         assert isinstance(result.data, dict)
@@ -197,7 +197,7 @@ class TestFlextLdapConfig:
 
         # Test with invalid data that would cause an exception
         invalid_data = {"dn": None, "attributes": "invalid"}
-        result = configs.create_add_config(invalid_data)  # type: ignore[arg-type]
+        result = configs.create_add_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
@@ -210,7 +210,7 @@ class TestFlextLdapConfig:
 
         delete_data = {"dn": "uid=testuser,ou=people,dc=example,dc=com"}
 
-        result = configs.create_delete_config(delete_data)  # type: ignore[arg-type]
+        result = configs.create_delete_config(delete_data)
 
         assert result.is_success
         assert isinstance(result.data, dict)
@@ -222,7 +222,7 @@ class TestFlextLdapConfig:
 
         # Test with invalid data that would cause an exception
         invalid_data = {"dn": None}
-        result = configs.create_delete_config(invalid_data)  # type: ignore[arg-type]
+        result = configs.create_delete_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
@@ -237,7 +237,7 @@ class TestFlextLdapConfig:
         config = ldap_server_config.copy()
         config["server"] = config.pop("server_uri", "ldap://localhost:389")
 
-        result = FlextLdapValidations.validate_connection_config(config)  # type: ignore[arg-type]
+        result = FlextLdapValidations.validate_connection_config(config)
 
         assert result.is_success
         assert result.data is True
@@ -245,7 +245,7 @@ class TestFlextLdapConfig:
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
         invalid_data = {"invalid": "data"}
-        result = FlextLdapValidations.validate_connection_config(invalid_data)  # type: ignore[arg-type]
+        result = FlextLdapValidations.validate_connection_config(invalid_data)
 
         assert result.is_failure
         assert (
@@ -259,7 +259,7 @@ class TestFlextLdapConfig:
             "server": "localhost"
             # Missing port, bind_dn, bind_password
         }
-        result = FlextLdapValidations.validate_connection_config(incomplete_data)  # type: ignore[arg-type]
+        result = FlextLdapValidations.validate_connection_config(incomplete_data)
 
         assert result.is_failure
         assert result.error is not None and "Missing required field" in result.error
@@ -417,7 +417,7 @@ class TestFlextLdapConfig:
             "connection_timeout": 60,
         }
 
-        result = configs.merge_configs(base_config, override_config)  # type: ignore[arg-type]
+        result = configs.merge_configs(base_config, override_config)
 
         assert result.is_success
         assert result.data["server_uri"] == "ldap://newserver:389"
@@ -433,7 +433,7 @@ class TestFlextLdapConfig:
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         }
 
-        result = configs.merge_configs(base_config, {})  # type: ignore[arg-type]
+        result = configs.merge_configs(base_config, {})
 
         assert result.is_success
         assert result.data == base_config
