@@ -365,13 +365,13 @@ class FlextLdapModels(FlextModels):
         telephone_number: str | None = Field(None, description="Primary phone number")
         mobile: str | None = Field(None, description="Mobile phone number")
 
-        # Organizational - making required for tests
+        # Organizational
         department: str | None = Field(None, description="Department")
         title: str | None = Field(None, description="Job title")
         organization: str | None = Field(None, description="Organization")
         organizational_unit: str | None = Field(None, description="Organizational Unit")
 
-        # Authentication - making required for tests
+        # Authentication
         user_password: str | SecretStr | None = Field(None, description="User password")
 
         # LDAP metadata
@@ -380,12 +380,7 @@ class FlextLdapModels(FlextModels):
             description="LDAP object classes",
         )
 
-        # Legacy compatibility fields
-        id: str = Field(default="", description="Legacy ID field")
-        attributes: FlextLdapTypes.LdapEntries.EntryAttributeDict = Field(
-            default_factory=dict,
-            description="Legacy attributes dict",
-        )
+        # Core enterprise fields
         status: str | None = Field(default=None, description="User status")
         created_at: datetime | None = Field(
             default=None, description="Creation timestamp"
@@ -393,14 +388,13 @@ class FlextLdapModels(FlextModels):
         display_name: str | None = Field(default=None, description="Display Name")
         modified_at: str | None = Field(
             default=None,
-            description="Last modification timestamp (legacy field)",
+            description="Last modification timestamp",
         )
-        # Test compatibility fields
         created_timestamp: datetime | None = Field(
-            default=None, description="Creation timestamp (test compatibility)"
+            default=None, description="Creation timestamp"
         )
         modified_timestamp: datetime | None = Field(
-            default=None, description="Modification timestamp (test compatibility)"
+            default=None, description="Modification timestamp"
         )
 
         @field_validator("dn")
@@ -560,8 +554,6 @@ class FlextLdapModels(FlextModels):
                     object_classes=object_classes,
                     user_password=None,  # Never store passwords from LDAP
                     additional_attributes={},
-                    id="",
-                    attributes={},
                     status="active",
                     created_at=None,
                     display_name=cn,
@@ -672,8 +664,6 @@ class FlextLdapModels(FlextModels):
                     else None,
                     # Use defaults for other fields
                     object_classes=["person", "organizationalPerson", "inetOrgPerson"],
-                    id="",
-                    attributes={},
                     status="active",
                     display_name=cn,  # Use cn as display name by default
                 )
@@ -710,27 +700,17 @@ class FlextLdapModels(FlextModels):
             description="Unique Member Distinguished Names",
         )
 
-        # Legacy compatibility
-        id: str = Field(default="", description="Legacy ID field")
-        members: list[str] = Field(
-            default_factory=list,
-            description="Legacy members list",
-        )
-        attributes: FlextLdapTypes.LdapEntries.EntryAttributeDict = Field(
-            default_factory=dict,
-            description="Legacy attributes dict",
-        )
+        # Core enterprise fields
         status: str | None = Field(default=None, description="Group status")
         modified_at: str | None = Field(
             default=None,
-            description="Last modification timestamp (legacy field)",
+            description="Last modification timestamp",
         )
-        # Test compatibility fields
         created_timestamp: datetime | None = Field(
-            default=None, description="Creation timestamp (test compatibility)"
+            default=None, description="Creation timestamp"
         )
         modified_timestamp: datetime | None = Field(
-            default=None, description="Modification timestamp (test compatibility)"
+            default=None, description="Modification timestamp"
         )
 
         # Metadata
@@ -758,16 +738,6 @@ class FlextLdapModels(FlextModels):
                 return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Business rule validation failed: {e}")
-
-        @property
-        def member(self) -> list[str]:
-            """Legacy member property - returns member_dns for backward compatibility."""
-            return self.member_dns
-
-        @member.setter
-        def member(self, value: list[str]) -> None:
-            """Set member_dns from legacy member property."""
-            self.member_dns = value
 
         def to_ldap_attributes(self) -> dict[str, list[str]]:
             """Convert group to LDAP attributes format."""
@@ -835,10 +805,7 @@ class FlextLdapModels(FlextModels):
                     description=description,
                     member_dns=member_dns,
                     unique_member_dns=unique_member_dns,
-                    members=member_dns,  # Legacy compatibility
                     object_classes=object_classes,
-                    id="",
-                    attributes={},
                     status="active",
                     additional_attributes={},
                     created_timestamp=None,
@@ -855,9 +822,7 @@ class FlextLdapModels(FlextModels):
             """Check if DN is a member of this group with enhanced error handling."""
             try:
                 return (
-                    member_dn in self.member_dns
-                    or member_dn in self.unique_member_dns
-                    or member_dn in self.members
+                    member_dn in self.member_dns or member_dn in self.unique_member_dns
                 )
             except Exception:
                 return False
@@ -867,8 +832,6 @@ class FlextLdapModels(FlextModels):
             try:
                 if member_dn not in self.member_dns:
                     self.member_dns.append(member_dn)
-                if member_dn not in self.members:
-                    self.members.append(member_dn)
                 return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to add member: {e}")
@@ -878,8 +841,6 @@ class FlextLdapModels(FlextModels):
             try:
                 if member_dn in self.member_dns:
                     self.member_dns.remove(member_dn)
-                if member_dn in self.members:
-                    self.members.remove(member_dn)
                     return FlextResult[None].ok(None)
                 return FlextResult[None].fail(f"Member {member_dn} not found in group")
             except Exception as e:
@@ -905,9 +866,6 @@ class FlextLdapModels(FlextModels):
                     # Use defaults for other fields
                     member_dns=[],
                     unique_member_dns=[],
-                    id="",
-                    members=[],
-                    attributes={},
                     status="active",
                     object_classes=["groupOfNames", "top"],
                 )
@@ -1139,7 +1097,7 @@ class FlextLdapModels(FlextModels):
         total_count: int = Field(0, description="Total number of entries")
         has_more: bool = Field(default=False, description="More results available")
 
-        # Legacy compatibility
+        # Core response fields
         result_code: int = Field(0, description="LDAP result code")
         result_description: str = Field("", description="Result description")
         matched_dn: str = Field("", description="Matched DN")
@@ -1156,7 +1114,7 @@ class FlextLdapModels(FlextModels):
                 entries = info.data["entries"]
                 if isinstance(entries, list):
                     # Type-safe length calculation
-                    return len(entries)  # type: ignore[arg-type]
+                    return len(entries)
                 return 0
             return v
 
@@ -1446,11 +1404,6 @@ class FlextLdapModels(FlextModels):
             default_factory=datetime.now,
             description="Operation timestamp",
         )
-
-        @property
-        def is_success(self) -> bool:
-            """Alias for success field for backward compatibility."""
-            return self.success
 
         @classmethod
         def success_result(

@@ -39,6 +39,7 @@ from flext_ldap.typings import (
     LdapEntry,
     ModifyChanges,
 )
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapClient(FlextService[None]):
@@ -2536,7 +2537,7 @@ class FlextLdapClient(FlextService[None]):
         return self._is_schema_discovered
 
     def normalize_attribute_name(self, attribute_name: str) -> str:
-        """Normalize attribute name according to server quirks.
+        """Normalize attribute name using FlextLdapUtilities.
 
         Args:
             attribute_name: Attribute name to normalize
@@ -2545,11 +2546,10 @@ class FlextLdapClient(FlextService[None]):
             str: Normalized attribute name
 
         """
-        # Return as-is since schema discovery is not fully implemented
-        return attribute_name
+        return FlextLdapUtilities.normalize_attribute_name(attribute_name)
 
     def normalize_object_class(self, object_class: str) -> str:
-        """Normalize object class name according to server quirks.
+        """Normalize object class name using FlextLdapUtilities.
 
         Args:
             object_class: Object class name to normalize
@@ -2558,11 +2558,10 @@ class FlextLdapClient(FlextService[None]):
             str: Normalized object class name
 
         """
-        # Return as-is since schema discovery is not fully implemented
-        return object_class
+        return FlextLdapUtilities.normalize_object_class(object_class)
 
     def normalize_dn(self, dn: str) -> str:
-        """Normalize DN according to server quirks.
+        """Normalize DN using FlextLdapUtilities.
 
         Args:
             dn: DN to normalize
@@ -2571,8 +2570,7 @@ class FlextLdapClient(FlextService[None]):
             str: Normalized DN
 
         """
-        # Return as-is since schema discovery is not fully implemented
-        return dn
+        return FlextLdapUtilities.normalize_dn(dn)
 
 
 __all__ = [

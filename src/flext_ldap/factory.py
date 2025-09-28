@@ -87,8 +87,8 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         try:
             client_config = message.get("client_config", {})
 
-            # Create client using ecosystem patterns
-            client_result = self.create_client(client_config)
+            # Create client using internal ecosystem patterns
+            client_result = self._create_client_internal(client_config)
             if client_result.is_failure:
                 return FlextResult[object].fail(
                     f"Client creation failed: {client_result.error}"
@@ -111,8 +111,8 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         try:
             client_config = message.get("client_config", {})
 
-            # Create client using ecosystem patterns
-            client_result = self.create_client(client_config)
+            # Create client using internal ecosystem patterns
+            client_result = self._create_client_internal(client_config)
             if client_result.is_failure:
                 return FlextResult[object].fail(
                     f"Client creation failed: {client_result.error}"
@@ -120,7 +120,10 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
             # Create workflow orchestrator with ecosystem components
             orchestrator = FlextLdapWorkflowOrchestrator(
-                config=self.config, client=client_result.value
+                config=self.config,
+                client=client_result.value,
+                bus=self._bus,
+                dispatcher=self._dispatcher,
             )
 
             return FlextResult[object].ok(orchestrator)
@@ -137,8 +140,8 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         try:
             client_config = message.get("client_config", {})
 
-            # Create client using ecosystem patterns
-            client_result = self.create_client(client_config)
+            # Create client using internal ecosystem patterns
+            client_result = self._create_client_internal(client_config)
             if client_result.is_failure:
                 return FlextResult[object].fail(
                     f"Client creation failed: {client_result.error}"
@@ -150,7 +153,6 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 client=client_result.value,
                 container=self._container,
                 bus=self._bus,
-                dispatcher=self._dispatcher,
                 processors=self._processors,
                 registry=self._ldap_registry,
             )
@@ -167,15 +169,15 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         try:
             client_config = message.get("client_config", {})
 
-            # Create client using ecosystem patterns
-            client_result = self.create_client(client_config)
+            # Create client using internal ecosystem patterns
+            client_result = self._create_client_internal(client_config)
             if client_result.is_failure:
                 return FlextResult[object].fail(
                     f"Client creation failed: {client_result.error}"
                 )
 
-            # Create command query services through domain services
-            domain_services = FlextLdapDomainServices(
+            # Create command query services with ecosystem components
+            cqrs_services = FlextLdapCommandQueryServices(
                 config=self.config,
                 client=client_result.value,
                 container=self._container,
@@ -183,16 +185,21 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 dispatcher=self._dispatcher,
                 processors=self._processors,
                 registry=self._ldap_registry,
+                context=self._context,
             )
 
-            # Get CQRS services as nested class
-            cqrs_result = domain_services.get_cqrs_services(self.config)
-            if cqrs_result.is_failure:
-                return FlextResult[object].fail(
-                    f"CQRS services creation failed: {cqrs_result.error}"
-                )
+            # Register command handlers
+            command_handlers = [
+                FlextLdapCreateUserCommandHandler(),
+                FlextLdapUpdateUserCommandHandler(),
+                FlextLdapDeleteUserCommandHandler(),
+                FlextLdapCreateGroupCommandHandler(),
+                FlextLdapUpdateGroupCommandHandler(),
+                FlextLdapDeleteGroupCommandHandler(),
+            ]
 
-            cqrs_services = cqrs_result.value
+            for handler in command_handlers:
+                self._dispatcher.register_handler(handler)
 
             return FlextResult[object].ok(cqrs_services)
 
@@ -208,16 +215,19 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         try:
             client_config = message.get("client_config", {})
 
-            # Create client using ecosystem patterns
-            client_result = self.create_client(client_config)
+            # Create client using internal ecosystem patterns
+            client_result = self._create_client_internal(client_config)
             if client_result.is_failure:
                 return FlextResult[object].fail(
                     f"Client creation failed: {client_result.error}"
                 )
 
             # Create saga orchestrator with ecosystem components
-            saga_orchestrator = FlextLdapWorkflowOrchestrator.SagaOrchestrator(
-                config=self.config, client=client_result.value
+            saga_orchestrator = FlextLdapSagaOrchestrator(
+                config=self.config,
+                client=client_result.value,
+                bus=self._bus,
+                context=self._context,
             )
 
             return FlextResult[object].ok(saga_orchestrator)
@@ -225,70 +235,10 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         except Exception as e:
             return FlextResult[object].fail(f"Saga orchestrator creation failed: {e}")
 
-    @staticmethod
-    def create_advanced_service(
-        client_config: dict[str, Any], service_config: dict[str, Any] | None = None
-    ) -> FlextResult[FlextLdapAdvancedService]:
-        """DEPRECATED: Create an advanced LDAP service with full configuration.
-
-        This method is deprecated and will be removed in a future version.
-        Use FlextLdapFactory.handle() with factory_type="advanced_service" instead.
-
-        Args:
-            client_config: Configuration for LDAP client
-            service_config: Configuration for the service
-
-        Returns:
-            FlextResult containing the configured service or error
-
-        """
-        try:
-            # Validate client configuration
-            client_validation = FlextLdapFactory._validate_client_config(client_config)
-            if client_validation.is_failure:
-                return FlextResult[FlextLdapAdvancedService].fail(
-                    f"Client configuration validation failed: {client_validation.error}"
-                )
-
-            # Create client
-            client_result = FlextLdapFactory.create_client(client_config)
-            if client_result.is_failure:
-                return FlextResult[FlextLdapAdvancedService].fail(
-                    f"Client creation failed: {client_result.error}"
-                )
-
-            client = client_result.value
-
-            # Create service configuration
-            service_config_dict = service_config or {}
-            handler_config = FlextModels.CqrsConfig.Handler(
-                handler_id=service_config_dict.get(
-                    "handler_id", "ldap_advanced_service"
-                ),
-                handler_name=service_config_dict.get(
-                    "handler_name", "LDAP Advanced Service"
-                ),
-                handler_type=service_config_dict.get("handler_type", "command"),
-                command_timeout=service_config_dict.get("timeout", 30),
-                max_command_retries=service_config_dict.get("retry_count", 3),
-            )
-
-            # Create service
-            service = FlextLdapAdvancedService(config=handler_config, client=client)
-
-            return FlextResult[FlextLdapAdvancedService].ok(service)
-
-        except Exception as e:
-            return FlextResult[FlextLdapAdvancedService].fail(
-                f"Service creation failed: {e}"
-            )
-
-    @staticmethod
-    def create_client(config: dict[str, Any]) -> FlextResult[FlextLdapClient]:
-        """DEPRECATED: Create an LDAP client with configuration validation.
-
-        This method is deprecated and will be removed in a future version.
-        Use FlextLdapFactory.handle() with factory_type="client" instead.
+    def _create_client_internal(
+        self, config: dict[str, Any]
+    ) -> FlextResult[FlextLdapClient]:
+        """Internal client creation with configuration validation.
 
         Args:
             config: Client configuration dictionary
@@ -299,7 +249,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         """
         try:
             # Validate configuration
-            validation_result = FlextLdapFactory._validate_client_config(config)
+            validation_result = self._validate_client_config(config)
             if validation_result.is_failure:
                 return FlextResult[FlextLdapClient].fail(
                     f"Configuration validation failed: {validation_result.error}"

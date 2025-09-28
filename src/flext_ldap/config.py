@@ -14,8 +14,6 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-import warnings
-
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -292,12 +290,12 @@ class FlextLdapConfig(FlextConfig):
         """Create configuration for specific environment using enhanced singleton pattern."""
         return super().get_or_create_shared_instance(
             project_name="flext-ldap", environment=environment, **overrides
-        )  # type: ignore[return-value]
+        )
 
     @classmethod
     def create_default(cls) -> FlextLdapConfig:
         """Create default configuration instance using enhanced singleton pattern."""
-        return super().get_or_create_shared_instance(project_name="flext-ldap")  # type: ignore[return-value]
+        return super().get_or_create_shared_instance(project_name="flext-ldap")
 
     def get_effective_bind_password(self) -> str | None:
         """Get the effective bind password (safely extract from SecretStr)."""
@@ -313,7 +311,7 @@ class FlextLdapConfig(FlextConfig):
             return cls()
         except Exception:
             # Fallback to parent method with type override
-            return super().get_global_instance()  # type: ignore[return-value]
+            return super().get_global_instance()
 
     @classmethod
     def reset_global_instance(cls) -> None:
@@ -346,38 +344,6 @@ class FlextLdapConfig(FlextConfig):
             return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
             return FlextResult[FlextLdapConfig].fail(f"Config creation failed: {e}")
-
-    @staticmethod
-    def create_connection_config_from_env() -> FlextResult[dict[str, object]]:
-        """Create connection config from environment variables.
-
-        DEPRECATED: Use FlextLdapConfig.get_global_instance() with Pydantic 2 Settings instead.
-        This method will be removed in a future version.
-        """
-        warnings.warn(
-            "create_connection_config_from_env is deprecated. "
-            "Use FlextLdapConfig.get_global_instance() with Pydantic 2 Settings instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        # Use the singleton config instance for environment handling
-        config_instance = FlextLdapConfig.get_global_instance()
-
-        try:
-            # Return configuration based on Pydantic fields, not direct os.getenv()
-            config = {
-                "server": config_instance.ldap_server_uri,
-                "port": config_instance.ldap_port,
-                "bind_dn": config_instance.ldap_bind_dn,
-                "bind_password": config_instance.get_effective_bind_password(),
-                "base_dn": config_instance.ldap_base_dn,
-            }
-            return FlextResult[dict[str, object]].ok(dict(config))
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Environment config creation failed: {e}"
-            )
 
     @staticmethod
     def create_search_config(

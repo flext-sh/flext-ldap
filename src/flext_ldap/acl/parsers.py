@@ -415,7 +415,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 acl_name = name_match.group(1)
 
                 # Extract grant type (allow or deny)
-                grant_type_match = re.search(r";\s*(allow | deny)\s+", aci)
+                grant_type_match = re.search(r";\s*(allow|deny)\s+", aci)
                 if not grant_type_match:
                     return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing grant type"
@@ -424,7 +424,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 grant_type = grant_type_match.group(1)
 
                 # Extract permissions
-                perms_match = re.search(r"(allow | deny)\s+\(([^)]+)\)", aci)
+                perms_match = re.search(r"(allow|deny)\s+\(([^)]+)\)", aci)
                 if not perms_match:
                     return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing permissions"
@@ -434,7 +434,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 permissions_list = [p.strip() for p in perms_str.split(",")]
 
                 # Extract subject
-                subject_match = re.search(r'(userdn | groupdn)="([^"]+)"', aci)
+                subject_match = re.search(r'(userdn|groupdn)="([^"]+)"', aci)
                 if not subject_match:
                     return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing subject"
