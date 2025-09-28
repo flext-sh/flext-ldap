@@ -26,7 +26,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
         MIN_ACL_PARTS = 4
 
         @classmethod
-        def parse(cls, acl: str) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+        def parse(cls, acl: str | None) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Parse OpenLDAP ACL string to unified ACL format.
 
             Args:
@@ -189,7 +189,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
         """Parse Oracle Directory ACL format."""
 
         @staticmethod
-        def parse(acl_string: str) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+        def parse(acl_string: str | None) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Parse Oracle ACL string to unified representation."""
             try:
                 if not acl_string or not acl_string.strip():

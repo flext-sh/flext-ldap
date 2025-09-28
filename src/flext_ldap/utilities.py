@@ -45,6 +45,18 @@ class FlextLdapUtilities(FlextUtilities):
         return FlextLdapUtilities.LdapProcessing.normalize_attributes(attributes)
 
     @staticmethod
+    def normalize_attribute_name(attribute_name: str) -> str:
+        """Normalize LDAP attribute name by removing extra spaces."""
+        return FlextLdapUtilities.LdapProcessing.normalize_attribute_name(
+            attribute_name
+        )
+
+    @staticmethod
+    def normalize_object_class(object_class: str) -> str:
+        """Normalize LDAP object class name by removing extra spaces."""
+        return FlextLdapUtilities.LdapProcessing.normalize_object_class(object_class)
+
+    @staticmethod
     def is_ldap_dn(value: object) -> bool:
         """Check if value is a valid LDAP DN."""
         return FlextLdapUtilities.LdapTypeGuards.is_ldap_dn(value)
@@ -295,6 +307,22 @@ class FlextLdapUtilities(FlextUtilities):
             # Remove leading/trailing spaces
             normalized = filter_str.strip()
             return FlextResult[str].ok(normalized)
+
+        @staticmethod
+        def normalize_attribute_name(attribute_name: str) -> str:
+            """Normalize LDAP attribute name by removing extra spaces."""
+            if not attribute_name:
+                return attribute_name
+            # Remove leading/trailing spaces
+            return attribute_name.strip()
+
+        @staticmethod
+        def normalize_object_class(object_class: str) -> str:
+            """Normalize LDAP object class name by removing extra spaces."""
+            if not object_class:
+                return object_class
+            # Remove leading/trailing spaces
+            return object_class.strip()
 
         @staticmethod
         def normalize_attributes(attributes: list[str]) -> FlextResult[list[str]]:

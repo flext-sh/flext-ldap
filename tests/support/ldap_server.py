@@ -15,13 +15,31 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 import asyncio
 import os
-from typing import cast
+from typing import cast, Protocol, TypedDict
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels, FlextLdapTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_tests import FlextTestDocker
-from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
+from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
+
+
+class ContainerInfo(TypedDict):
+    """Container information from Docker."""
+    name: str
+    status: object  # Status enum, but we'll access .value
+    ports: str
+    image: str
+
+
+class DockerManagerProtocol(Protocol):
+    """Protocol for Docker manager with required methods."""
+    def start_container(self, container_name: str) -> FlextResult[bool]: ...
+    def stop_container(self, container_name: str, remove: bool) -> FlextResult[bool]: ...
+    def get_container_logs(self, container_name: str, tail: int) -> FlextResult[str]: ...
+    def execute_container_command(self, container_name: str, command: str) -> FlextResult[str]: ...
+    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]: ...
+    def get_docker_version(self) -> FlextResult[str]: ...
 
 logger = FlextLogger(__name__)
 
@@ -43,7 +61,8 @@ class LdapTestServer:
             "REDACTED_LDAP_BIND_PASSWORD123",
         )
         # Use unified FlextTestDocker instead of direct docker client
-        self.docker_manager = FlextTestDocker()
+        self.docker_manager: DockerManagerProtocol = cast(DockerManagerProtocol, FlextTestDocker())
+        self._container: object | None = None  # For backward compatibility
 
     async def start(self) -> FlextResult[bool]:
         """Start LDAP server container using FlextTestDocker."""
@@ -210,19 +229,19 @@ class LdapTestServer:
             self.container_name, command
         )
 
-    def get_container_status(self) -> FlextResult[dict]:
+    def get_container_status(self) -> FlextResult[dict[str, str]]:
         """Get container status using FlextTestDocker."""
         status_result = self.docker_manager.get_container_status(self.container_name)
         if status_result.is_failure:
             error_msg = status_result.error or "Unknown error"
-            return FlextResult[dict].fail(error_msg)
+            return FlextResult[dict[str, str]].fail(error_msg)
 
-        container_info = status_result.value
-        return FlextResult[dict].ok({
-            "name": container_info.name,
-            "status": container_info.status.value,
-            "ports": container_info.ports,
-            "image": container_info.image,
+        container_info: ContainerInfo = cast(ContainerInfo, status_result.value)
+        return FlextResult[dict[str, str]].ok({
+            "name": container_info["name"],
+            "status": str(container_info["status"]),  # Convert status to string
+            "ports": container_info["ports"],
+            "image": container_info["image"],
         })
 
 

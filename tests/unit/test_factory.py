@@ -116,8 +116,13 @@ class TestFlextLdapFactoryCreateAdvancedService:
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "password",
         }
+        service_config = {
+            "handler_id": "test_service",
+            "handler_name": "Test Service",
+            "handler_type": "command",
+        }
 
-        result = FlextLdapFactory.create_advanced_service(client_config)
+        result = FlextLdapFactory.create_advanced_service(client_config, service_config)
         assert result.is_failure
         assert result.error is not None
         assert "Server URI must start with ldap:// or ldaps://" in result.error
@@ -128,8 +133,13 @@ class TestFlextLdapFactoryCreateAdvancedService:
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "password",
         }
+        service_config = {
+            "handler_id": "test_service",
+            "handler_name": "Test Service",
+            "handler_type": "command",
+        }
 
-        result = FlextLdapFactory.create_advanced_service(client_config)
+        result = FlextLdapFactory.create_advanced_service(client_config, service_config)
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['server_uri']" in result.error
@@ -141,8 +151,13 @@ class TestFlextLdapFactoryCreateAdvancedService:
             "bind_dn": 123,  # Invalid type
             "bind_password": "password",
         }
+        service_config = {
+            "handler_id": "test_service",
+            "handler_name": "Test Service",
+            "handler_type": "command",
+        }
 
-        result = FlextLdapFactory.create_advanced_service(client_config)
+        result = FlextLdapFactory.create_advanced_service(client_config, service_config)
         assert result.is_failure
         assert result.error is not None
         assert "Bind DN must be a string" in result.error
@@ -154,8 +169,15 @@ class TestFlextLdapFactoryCreateAdvancedService:
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": 123,  # Invalid type
         }
+        service_config = {
+            "handler_id": "test_service",
+            "handler_name": "Test Service",
+            "handler_type": "command",
+            "timeout": 60,
+            "retry_count": 5,
+        }
 
-        result = FlextLdapFactory.create_advanced_service(client_config)
+        result = FlextLdapFactory.create_advanced_service(client_config, service_config)
         assert result.is_failure
         assert result.error is not None
         assert "Bind password must be a string" in result.error

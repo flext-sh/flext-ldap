@@ -121,6 +121,7 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
                     telephone_number=str(user_data.get("telephone_number", "")),
                     description=str(user_data.get("description", "")),
                     department=str(user_data.get("department", "")),
+                    organizational_unit=str(user_data.get("organizational_unit", "")),
                     title=str(user_data.get("title", "")),
                     organization=str(user_data.get("organization", "")),
                 )
@@ -152,11 +153,13 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
             results = []
             for group_data in groups:
                 # Convert dict to CreateGroupRequest model
+                members_data = group_data.get("members", [])
+                members = list(members_data) if isinstance(members_data, list) else []
                 create_request = self._models.CreateGroupRequest(
                     dn=str(group_data.get("dn", "")),
                     cn=str(group_data.get("cn", "")),
                     description=str(group_data.get("description", "")),
-                    members=group_data.get("members", []),
+                    members=members,
                 )
                 result = await self._client.create_group(create_request)
                 if result.is_success:
@@ -196,6 +199,7 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
                     telephone_number=str(user_data.get("telephone_number", "")),
                     description=str(user_data.get("description", "")),
                     department=str(user_data.get("department", "")),
+                    organizational_unit=str(user_data.get("organizational_unit", "")),
                     title=str(user_data.get("title", "")),
                     organization=str(user_data.get("organization", "")),
                 )
@@ -244,7 +248,12 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
         try:
             base_dn = str(search_criteria.get("base_dn", "dc=example,dc=com"))
             filter_str = str(search_criteria.get("filter_str", "(objectClass=*)"))
-            attributes = search_criteria.get("attributes", ["cn", "sn", "mail"])
+            attributes_value = search_criteria.get("attributes", ["cn", "sn", "mail"])
+            attributes = (
+                [str(attr) for attr in attributes_value]
+                if isinstance(attributes_value, list)
+                else ["cn", "sn", "mail"]
+            )
 
             search_request = self._models.SearchRequest(
                 base_dn=base_dn,
@@ -434,7 +443,7 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
                 f"Server status check failed: {e}"
             )
 
-    def get_performance_metrics(self) -> dict[str, dict[str, int]]:
+    def get_performance_metrics(self) -> dict[str, dict[str, float | int]]:
         """Get performance metrics."""
         try:
             return {

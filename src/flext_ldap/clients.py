@@ -51,6 +51,13 @@ class FlextLdapClient(FlextService[None]):
 
     The client supports both synchronous and asynchronous operations, with
     automatic connection management and proper error handling.
+
+    Implements FlextLdapProtocols through structural subtyping:
+    - LdapConnectionProtocol: connect, disconnect, is_connected methods
+    - LdapSearchProtocol: search, search_one methods
+    - LdapModifyProtocol: add_entry, modify_entry, delete_entry methods
+    - LdapAuthenticationProtocol: authenticate_user, validate_credentials methods
+    - LdapValidationProtocol: validate_dn, validate_entry methods
     """
 
     @override
@@ -907,6 +914,182 @@ class FlextLdapClient(FlextService[None]):
         """
         return await self.unbind()
 
+    async def disconnect(self) -> FlextResult[None]:
+        """Disconnect from LDAP server - implements LdapConnectionProtocol.
+
+        Alias for close_connection to match protocol interface.
+
+        Returns:
+            FlextResult[None]: Disconnect success status
+
+        """
+        return await self.close_connection()
+
+    # =============================================================================
+    # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance
+
+    async def search_one(
+        self,
+        search_base: str,
+        search_filter: str,
+        attributes: list[str] | None = None,
+    ) -> FlextResult[dict[str, object] | None]:
+        """Perform LDAP search for single entry - implements LdapSearchProtocol.
+
+        Args:
+            search_base: LDAP search base DN
+            search_filter: LDAP search filter
+            attributes: List of attributes to retrieve
+
+        Returns:
+            FlextResult[dict[str, object] | None]: Single search result or None
+
+        """
+        # Use existing search method and return first result
+        search_result = await self.search(search_base, search_filter, attributes)
+        if search_result.is_failure:
+            return FlextResult[dict[str, object] | None].fail(
+                search_result.error or "Search failed"
+            )
+
+        results = search_result.unwrap()
+        if not results:
+            return FlextResult[dict[str, object] | None].ok(None)
+
+        return FlextResult[dict[str, object] | None].ok(results[0])
+
+    async def add_entry(
+        self, dn: str, attributes: dict[str, str | list[str]]
+    ) -> FlextResult[bool]:
+        """Add new LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+
+        Returns:
+            FlextResult[bool]: Add operation success status
+
+        """
+        # Delegate to existing add_entry_universal method
+        return await self.add_entry_universal(dn, attributes)
+
+    async def modify_entry(
+        self, dn: str, changes: dict[str, object]
+    ) -> FlextResult[bool]:
+        """Modify existing LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to modify
+            changes: Attribute changes to apply
+
+        Returns:
+            FlextResult[bool]: Modify operation success status
+
+        """
+        # Delegate to existing modify_entry_universal method
+        return await self.modify_entry_universal(dn, changes)
+
+    async def delete_entry(self, dn: str) -> FlextResult[bool]:
+        """Delete LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to delete
+
+        Returns:
+            FlextResult[bool]: Delete operation success status
+
+        """
+        # Delegate to existing delete_entry_universal method
+        return await self.delete_entry_universal(dn)
+
+    async def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+        """Validate user credentials against LDAP - implements LdapAuthenticationProtocol.
+
+        Args:
+            dn: User distinguished name
+            password: User password
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Use existing authenticate_user logic adapted for DN-based validation
+        try:
+            # Create a test connection with the provided credentials
+            base_uri = (
+                self._config.server_uri if self._config else "ldap://localhost:389"
+            )
+            test_config = FlextLdapModels.ConnectionConfig(
+                server=base_uri.replace("ldap://", "")
+                .replace("ldaps://", "")
+                .split(":")[0],
+                port=int(base_uri.split(":")[-1]) if ":" in base_uri else 389,
+                bind_dn=dn,
+                bind_password=password,
+            )
+            test_client = FlextLdapClient(test_config)
+            connection_result = await test_client.bind(dn, password)
+            await test_client.disconnect()
+            return FlextResult[bool].ok(connection_result.is_success)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Credential validation failed: {e}")
+
+    def validate_dn(self, dn: str) -> FlextResult[bool]:
+        """Validate distinguished name format - implements LdapValidationProtocol.
+
+        Args:
+            dn: Distinguished name to validate
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Basic DN format validation
+        if not dn or not dn.strip():
+            return FlextResult[bool].fail("DN cannot be empty")
+
+        # Check for basic DN structure (contains = and comma-separated components)
+        if "=" not in dn:
+            return FlextResult[bool].fail("DN must contain attribute=value pairs")
+
+        # More sophisticated validation could be added here
+        try:
+            # Split by commas and validate each component has =
+            components = [comp.strip() for comp in dn.split(",")]
+            for comp in components:
+                if "=" not in comp:
+                    return FlextResult[bool].fail(f"Invalid DN component: {comp}")
+
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"DN validation failed: {e}")
+
+    def validate_entry(self, entry: dict[str, object]) -> FlextResult[bool]:
+        """Validate LDAP entry structure - implements LdapValidationProtocol.
+
+        Args:
+            entry: LDAP entry to validate
+
+        Returns:
+            FlextResult[bool]: Validation success status
+
+        """
+        # Basic entry validation
+        if not entry:
+            return FlextResult[bool].fail("Entry cannot be empty")
+
+        # Check for required objectClass attribute
+        if "objectClass" not in entry:
+            return FlextResult[bool].fail("Entry must have objectClass attribute")
+
+        # Validate that objectClass is a list or string
+        object_class = entry["objectClass"]
+        if not isinstance(object_class, (str, list)):
+            return FlextResult[bool].fail("objectClass must be string or list")
+
+        return FlextResult[bool].ok(True)
+
     async def update_group(
         self,
         dn: str,
@@ -987,7 +1170,7 @@ class FlextLdapClient(FlextService[None]):
             members = []
 
             if hasattr(entry, "member"):
-                member_attr = entry.member
+                member_attr = getattr(entry, "member")
                 if hasattr(member_attr, "value"):
                     if isinstance(member_attr.value, list):
                         members = [str(m) for m in member_attr.value]
@@ -1136,6 +1319,7 @@ class FlextLdapClient(FlextService[None]):
                     dn,
                     ldap3_changes,
                 )
+            success = False
 
             if not success:
                 return FlextResult[bool].fail(
@@ -1412,10 +1596,10 @@ class FlextLdapClient(FlextService[None]):
         return FlextLdapModels.LdapUser(
             dn=str(entry.entry_dn),
             cn=cn,
-            uid=get_attribute_value("uid"),
-            sn=get_attribute_value("sn"),
+            uid=get_attribute_value("uid") or "unknown",
+            sn=get_attribute_value("sn") or "unknown",
             given_name=get_attribute_value("givenName"),
-            mail=get_attribute_value("mail"),
+            mail=get_attribute_value("mail") or "unknown@example.com",
             telephone_number=get_attribute_value("telephoneNumber"),
             mobile=get_attribute_value("mobile"),
             department=get_attribute_value("departmentNumber"),
@@ -1965,14 +2149,33 @@ class FlextLdapClient(FlextService[None]):
                 attributes_dict = result["attributes"]
                 for attr_name, attr_value in attributes_dict.items():
                     normalized_name = self.normalize_attribute_name(attr_name)
-                    normalized_attributes[normalized_name] = attr_value
+                    # Normalize and trim attribute values
+                    if isinstance(attr_value, list):
+                        normalized_value = [
+                            str(v).strip() if isinstance(v, str) else v
+                            for v in attr_value
+                        ]
+                    elif isinstance(attr_value, str):
+                        normalized_value = attr_value.strip()
+                    else:
+                        normalized_value = attr_value
+                    normalized_attributes[normalized_name] = normalized_value
                 normalized_result["attributes"] = normalized_attributes
             else:
                 # Handle flat result format
                 for key, value in result.items():
                     if key != "dn":
                         normalized_name = self.normalize_attribute_name(key)
-                        normalized_result[normalized_name] = value
+                        # Trim string values
+                        if isinstance(value, str):
+                            normalized_result[normalized_name] = value.strip()
+                        elif isinstance(value, list):
+                            normalized_result[normalized_name] = [
+                                str(v).strip() if isinstance(v, str) else v
+                                for v in value
+                            ]
+                        else:
+                            normalized_result[normalized_name] = value
                     else:
                         normalized_result[key] = self.normalize_dn(str(value))
 
@@ -2570,7 +2773,10 @@ class FlextLdapClient(FlextService[None]):
             str: Normalized DN
 
         """
-        return FlextLdapUtilities.normalize_dn(dn)
+        result = FlextLdapUtilities.normalize_dn(dn)
+        if result.is_failure:
+            return dn  # Return original DN if normalization fails
+        return result.unwrap()
 
 
 __all__ = [

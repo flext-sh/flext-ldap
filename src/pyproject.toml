@@ -1,4 +1,0 @@
-[tool.pyrefly]
-python_version = "3.13"
-target_version = "3.13"
-show_error_codes = true

@@ -197,39 +197,54 @@ class FlextLdapRepositories(FlextService[None]):
                         "Invalid entity type - must be LdapUser"
                     )
 
+                # Type is already validated by isinstance check
+                user_entity = entity
+
                 # Railway pattern: Validate entity -> Create user request -> Save to LDAP
                 # Validate required fields
-                if not entity.uid:
+                if not user_entity.uid:
                     return FlextResult[object].fail("User ID (uid) is required")
-                if not entity.sn:
+                if not user_entity.sn:
                     return FlextResult[object].fail("Surname (sn) is required")
 
                 user_request = FlextLdapModels.CreateUserRequest(
-                    dn=entity.dn,
-                    uid=entity.uid,
-                    cn=entity.cn,
-                    sn=entity.sn,
-                    given_name=getattr(entity, "given_name", None),
-                    mail=getattr(entity, "mail", None),
-                    telephone_number=getattr(entity, "telephone_number", None),
-                    department=getattr(entity, "department", None),
-                    title=getattr(entity, "title", None),
-                    organization=getattr(entity, "organization", None),
-                    user_password=getattr(entity, "user_password", None),
-                    description=getattr(entity, "description", None),
+                    dn=user_entity.dn,
+                    uid=user_entity.uid,
+                    cn=user_entity.cn,
+                    sn=user_entity.sn,
+                    given_name=getattr(user_entity, "given_name", None),
+                    mail=getattr(user_entity, "mail", None),
+                    telephone_number=getattr(user_entity, "telephone_number", None),
+                    department=getattr(user_entity, "department", None),
+                    organizational_unit=getattr(
+                        user_entity, "organizational_unit", None
+                    ),
+                    title=getattr(user_entity, "title", None),
+                    organization=getattr(user_entity, "organization", None),
+                    user_password=getattr(user_entity, "user_password", None),
+                    description=getattr(user_entity, "description", None),
                 )
 
                 # Create user using LDAP client
-                create_result = await self._client.create_user(user_request)
-                if create_result.is_failure:
-                    return FlextResult[object].fail(
-                        f"User creation failed: {create_result.error}"
-                    )
+                try:
+                    create_result = await self._client.create_user(user_request)
+                    if create_result.is_failure:
+                        return FlextResult[object].fail(
+                            f"User creation failed: {create_result.error}"
+                        )
 
-                return FlextResult[object].ok(create_result.value)
+                    return FlextResult[object].ok(create_result.value)
+                except Exception as e:
+                    # Debug: Log the exception
+                    return FlextResult[object].fail(
+                        f"User creation failed with exception: {e}"
+                    )
 
             except Exception as e:
                 return FlextResult[object].fail(f"User save failed: {e}")
+
+            # This should never be reached, but added for type safety
+            return FlextResult[object].fail("Unexpected error in user save")
 
         async def update(
             self, dn: str, attributes: dict[str, object]

@@ -58,6 +58,7 @@ def _demo_create_primary_user(_service: FlextLdapAPI) -> None:
         # phone=None,  # Field not available in CreateUserRequest
         mail="john.doe@example.com",
         department=None,
+        organizational_unit=None,
         title=None,
         organization=None,
     )
@@ -107,6 +108,7 @@ def _demo_create_additional_users(_service: FlextLdapAPI) -> None:
             given_name=None,
             # phone=None,  # Field not available in CreateUserRequest
             department=None,
+            organizational_unit=None,
             title=None,
             organization=None,
         )
@@ -150,6 +152,7 @@ async def demonstrate_connection_handling() -> None:
         user_password=None,
         # phone=None,  # Field not available in CreateUserRequest
         department=None,
+        organizational_unit=None,
         title=None,
         organization=None,
     )

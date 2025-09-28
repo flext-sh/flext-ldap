@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -350,8 +351,8 @@ class TestFlextLdapAclManager:
     def test_acl_manager_initialization(self, acl_manager: FlextLdapAclManager) -> None:
         """Test ACL manager initialization."""
         assert acl_manager is not None
-        assert hasattr(acl_manager, "_parsers")
-        assert hasattr(acl_manager, "_converters")
+        assert hasattr(acl_manager, "parsers")
+        assert hasattr(acl_manager, "converters")
 
     def test_create_acl_success(
         self,
@@ -562,7 +563,7 @@ class TestFlextLdapAclParsers:
         """Test successful OpenLDAP ACI parsing."""
         with patch.object(acl_parsers, "handle") as mock_handle:
             mock_handle.return_value = FlextResult[dict[str, object]].ok(
-                sample_acl_data["unified_acl"]
+                cast(dict[str, object], sample_acl_data["unified_acl"])
             )
 
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])
