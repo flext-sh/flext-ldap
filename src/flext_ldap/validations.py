@@ -184,7 +184,9 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_connection_config(config: dict[str, object]) -> FlextResult[bool]:
+    def validate_connection_config(
+        config: dict[str, object] | None,
+    ) -> FlextResult[bool]:
         """Centralized connection config validation - ELIMINATE ALL DUPLICATION."""
         if config is None:
             return FlextResult[bool].fail("Config cannot be None")

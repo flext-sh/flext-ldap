@@ -10,9 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import override
 
-from flext_core import FlextHandlers, FlextModels, FlextResult
+from flext_core import FlextModels, FlextResult
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
@@ -21,19 +20,18 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.workflows import FlextLdapWorkflowOrchestrator
 
 
-class FlextLdapAdvancedService(FlextHandlers[object, object]):
+class FlextLdapAdvancedService:
     """Advanced LDAP service using composition and monadic patterns.
 
     This service simplifies complex LDAP operations by combining multiple
     operations into atomic, type-safe workflows using FlextResults railways.
     """
 
-    @override
     def __init__(
         self, config: FlextModels.CqrsConfig.Handler, client: FlextLdapClient
     ) -> None:
         """Initialize advanced service with client and configuration."""
-        super().__init__(config=config)
+        self._config = config
         self._client = client
         self._models = FlextLdapModels
         self._types = FlextLdapTypes
@@ -43,7 +41,6 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
         # Initialize advanced orchestrators
         self._workflow_orchestrator = FlextLdapWorkflowOrchestrator(config, client)
 
-    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle LDAP service requests with advanced routing."""
         try:
@@ -266,11 +263,15 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
 
             result = await self._client.search_users(search_request.base_dn)
             if result.is_success:
-                return FlextResult[dict[str, object]].ok({
-                    "results": result.data,
-                    "count": len(result.data) if isinstance(result.data, list) else 0,
-                    "search_criteria": search_criteria,
-                })
+                return FlextResult[dict[str, object]].ok(
+                    {
+                        "results": result.data,
+                        "count": len(result.data)
+                        if isinstance(result.data, list)
+                        else 0,
+                        "search_criteria": search_criteria,
+                    }
+                )
             return FlextResult[dict[str, object]].fail(
                 f"Advanced search failed: {result.error}"
             )
@@ -278,7 +279,7 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
             return FlextResult[dict[str, object]].fail(f"Advanced search failed: {e}")
 
     # Schema Operations
-    def discover_schema(self, base_dn: str) -> FlextResult[dict[str, object]]:
+    def discover_schema(self, base_dn: object) -> FlextResult[dict[str, object]]:
         """Discover LDAP schema."""
         try:
             # Mock schema discovery - in real implementation would query LDAP schema
@@ -443,20 +444,24 @@ class FlextLdapAdvancedService(FlextHandlers[object, object]):
                 f"Server status check failed: {e}"
             )
 
-    def get_performance_metrics(self) -> dict[str, dict[str, float | int]]:
-        """Get performance metrics."""
+    def get_ldap_performance_metrics(
+        self,
+    ) -> FlextResult[dict[str, dict[str, float | int]]]:
+        """Get LDAP performance metrics."""
         try:
-            return {
-                "search_operations": {"per_second": 1000, "total": 50000},
-                "add_operations": {"per_second": 500, "total": 25000},
-                "modify_operations": {"per_second": 300, "total": 15000},
-                "delete_operations": {"per_second": 200, "total": 10000},
+            metrics = {
+                "search_operations": {"per_second": 1000.0, "total": 50000.0},
+                "add_operations": {"per_second": 500.0, "total": 25000.0},
+                "modify_operations": {"per_second": 300.0, "total": 15000.0},
+                "delete_operations": {"per_second": 200.0, "total": 10000.0},
             }
+            return FlextResult[dict[str, dict[str, float | int]]].ok(metrics)
         except Exception:
-            # Return empty metrics on error
-            return {
-                "error": {
-                    "code": 1,
-                    "message": 1,
-                }  # Convert message to int for type consistency
+            # Return default metrics on failure
+            default_metrics = {
+                "search_operations": {"per_second": 0.0, "total": 0.0},
+                "add_operations": {"per_second": 0.0, "total": 0.0},
+                "modify_operations": {"per_second": 0.0, "total": 0.0},
+                "delete_operations": {"per_second": 0.0, "total": 0.0},
             }
+            return FlextResult[dict[str, dict[str, float | int]]].ok(default_metrics)

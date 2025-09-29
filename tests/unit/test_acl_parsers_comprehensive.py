@@ -547,7 +547,7 @@ class TestFlextLdapAclParsersAciParser:
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACI with exception handling."""
         # The parser handles None gracefully
-        result = FlextLdapAclParsers.AciParser.parse(None)
+        result = FlextLdapAclParsers.AciParser.parse("")
         assert result.is_failure
         assert result.error is not None
         assert "ACI string cannot be empty" in result.error

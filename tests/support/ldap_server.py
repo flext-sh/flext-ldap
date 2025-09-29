@@ -26,6 +26,7 @@ from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 class ContainerInfo(TypedDict):
     """Container information from Docker."""
+
     name: str
     status: object  # Status enum, but we'll access .value
     ports: str
@@ -34,12 +35,22 @@ class ContainerInfo(TypedDict):
 
 class DockerManagerProtocol(Protocol):
     """Protocol for Docker manager with required methods."""
+
     def start_container(self, container_name: str) -> FlextResult[bool]: ...
-    def stop_container(self, container_name: str, remove: bool) -> FlextResult[bool]: ...
-    def get_container_logs(self, container_name: str, tail: int) -> FlextResult[str]: ...
-    def execute_container_command(self, container_name: str, command: str) -> FlextResult[str]: ...
-    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]: ...
+    def stop_container(
+        self, container_name: str, remove: bool
+    ) -> FlextResult[bool]: ...
+    def get_container_logs(
+        self, container_name: str, tail: int
+    ) -> FlextResult[str]: ...
+    def execute_container_command(
+        self, container_name: str, command: str
+    ) -> FlextResult[str]: ...
+    def get_container_status(
+        self, container_name: str
+    ) -> FlextResult[ContainerInfo]: ...
     def get_docker_version(self) -> FlextResult[str]: ...
+
 
 logger = FlextLogger(__name__)
 
@@ -61,7 +72,9 @@ class LdapTestServer:
             "REDACTED_LDAP_BIND_PASSWORD123",
         )
         # Use unified FlextTestDocker instead of direct docker client
-        self.docker_manager: DockerManagerProtocol = cast(DockerManagerProtocol, FlextTestDocker())
+        self.docker_manager: DockerManagerProtocol = cast(
+            DockerManagerProtocol, FlextTestDocker()
+        )
         self._container: object | None = None  # For backward compatibility
 
     async def start(self) -> FlextResult[bool]:
@@ -236,13 +249,15 @@ class LdapTestServer:
             error_msg = status_result.error or "Unknown error"
             return FlextResult[dict[str, str]].fail(error_msg)
 
-        container_info: ContainerInfo = cast(ContainerInfo, status_result.value)
-        return FlextResult[dict[str, str]].ok({
-            "name": container_info["name"],
-            "status": str(container_info["status"]),  # Convert status to string
-            "ports": container_info["ports"],
-            "image": container_info["image"],
-        })
+        container_info: ContainerInfo = status_result.value
+        return FlextResult[dict[str, str]].ok(
+            {
+                "name": container_info["name"],
+                "status": str(container_info["status"]),  # Convert status to string
+                "ports": container_info["ports"],
+                "image": container_info["image"],
+            }
+        )
 
 
 def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:

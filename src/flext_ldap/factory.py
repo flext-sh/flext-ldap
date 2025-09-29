@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import override
 
 from flext_core import (
     FlextBus,
@@ -82,11 +82,13 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Factory creation failed: {e}")
 
     def _create_advanced_service_ecosystem(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Create advanced service with full ecosystem integration."""
         try:
             client_config = message.get("client_config", {})
+            if not isinstance(client_config, dict):
+                return FlextResult[object].fail("client_config must be a dictionary")
 
             # Create client using internal ecosystem patterns
             client_result = self._create_client_internal(client_config)
@@ -106,11 +108,13 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Advanced service creation failed: {e}")
 
     def _create_workflow_orchestrator_ecosystem(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Create workflow orchestrator with full ecosystem integration."""
         try:
             client_config = message.get("client_config", {})
+            if not isinstance(client_config, dict):
+                return FlextResult[object].fail("client_config must be a dictionary")
 
             # Create client using internal ecosystem patterns
             client_result = self._create_client_internal(client_config)
@@ -133,11 +137,13 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             )
 
     def _create_domain_services_ecosystem(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Create domain services with full ecosystem integration."""
         try:
             client_config = message.get("client_config", {})
+            if not isinstance(client_config, dict):
+                return FlextResult[object].fail("client_config must be a dictionary")
 
             # Create client using internal ecosystem patterns
             client_result = self._create_client_internal(client_config)
@@ -163,11 +169,13 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Domain services creation failed: {e}")
 
     def _create_command_query_services_ecosystem(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Create command query services with full ecosystem integration."""
         try:
             client_config = message.get("client_config", {})
+            if not isinstance(client_config, dict):
+                return FlextResult[object].fail("client_config must be a dictionary")
 
             # Create client using internal ecosystem patterns
             client_result = self._create_client_internal(client_config)
@@ -215,11 +223,13 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             )
 
     def _create_saga_orchestrator_ecosystem(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Create saga orchestrator with full ecosystem integration."""
         try:
             client_config = message.get("client_config", {})
+            if not isinstance(client_config, dict):
+                return FlextResult[object].fail("client_config must be a dictionary")
 
             # Create client using internal ecosystem patterns
             client_result = self._create_client_internal(client_config)
@@ -245,7 +255,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Saga orchestrator creation failed: {e}")
 
     def _create_client_internal(
-        self, config: dict[str, Any]
+        self, config: dict[str, object]
     ) -> FlextResult[FlextLdapClient]:
         """Internal client creation with configuration validation.
 
@@ -264,11 +274,15 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                     f"Configuration validation failed: {validation_result.error}"
                 )
 
-            # Create client configuration
+            # Create client configuration with type narrowing
+            server_uri = config.get("server_uri")
+            bind_dn = config.get("bind_dn")
+            bind_password = config.get("bind_password")
+
             client_config = FlextLdapModels.ConnectionConfig(
-                server=config["server_uri"],
-                bind_dn=config.get("bind_dn"),
-                bind_password=config.get("bind_password"),
+                server=str(server_uri) if server_uri else "ldap://localhost",
+                bind_dn=str(bind_dn) if bind_dn else None,
+                bind_password=str(bind_password) if bind_password else None,
             )
 
             # Create client with configuration
@@ -281,7 +295,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
     @staticmethod
     def create_user_request(
-        user_data: dict[str, Any], *, validation_strict: bool = True
+        user_data: dict[str, object], *, validation_strict: bool = True
     ) -> FlextResult[FlextLdapModels.CreateUserRequest]:
         """Create a user request with validation and defaults.
 
@@ -353,13 +367,51 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
         """
         try:
-            # Create client configuration object
+            # Validate required fields first
+            if "server_uri" not in client_config:
+                return FlextResult[FlextLdapAdvancedService].fail(
+                    "Missing required fields: ['server_uri']"
+                )
+
+            # Validate bind_dn type if present
+            bind_dn_value = client_config.get("bind_dn")
+            if bind_dn_value is not None and not isinstance(bind_dn_value, str):
+                return FlextResult[FlextLdapAdvancedService].fail(
+                    "Bind DN must be a string"
+                )
+
+            # Validate bind_password type if present
+            bind_password_value = client_config.get("bind_password")
+            if bind_password_value is not None and not isinstance(
+                bind_password_value, str
+            ):
+                return FlextResult[FlextLdapAdvancedService].fail(
+                    "Bind password must be a string"
+                )
+
+            # Validate server_uri type and format
+            server_uri_value = client_config.get("server_uri")
+            if not isinstance(server_uri_value, str):
+                return FlextResult[FlextLdapAdvancedService].fail(
+                    "Server URI must be a string"
+                )
+
+            # Validate server URI format
+            if not (
+                server_uri_value.startswith("ldap://")
+                or server_uri_value.startswith("ldaps://")
+            ):
+                return FlextResult[FlextLdapAdvancedService].fail(
+                    "Server URI must start with ldap:// or ldaps://"
+                )
+
+            # Create client configuration object with validated values
             client_config_obj = FlextLdapModels.ConnectionConfig(
-                server=str(client_config["server_uri"]),
+                server=server_uri_value,
                 port=FlextLdapConstants.Protocol.DEFAULT_PORT,
                 use_ssl=False,
-                bind_dn=None,
-                bind_password=None,
+                bind_dn=bind_dn_value,
+                bind_password=bind_password_value,
                 timeout=FlextConstants.Network.DEFAULT_TIMEOUT,
             )
 
@@ -396,7 +448,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
     @staticmethod
     def create_search_request(
-        search_data: dict[str, Any],
+        search_data: dict[str, object],
     ) -> FlextResult[FlextLdapModels.SearchRequest]:
         """Create a search request with validation and defaults.
 
@@ -442,8 +494,8 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
     @staticmethod
     def create_bulk_operation_config(
-        operation_data: dict[str, Any],
-    ) -> FlextResult[dict[str, Any]]:
+        operation_data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Create bulk operation configuration with validation.
 
         Args:
@@ -457,37 +509,39 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             # Validate operation type
             operation_type = operation_data.get("operation_type")
             if not isinstance(operation_type, str):
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Operation type must be a string"
                 )
 
             valid_operations = ["create", "update", "delete", "bulk_update"]
             if operation_type not in valid_operations:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Invalid operation type. Must be one of: {valid_operations}"
                 )
 
             # Validate data
             items_data = operation_data.get("items_data")
             if not isinstance(items_data, list):
-                return FlextResult[dict[str, Any]].fail("Items data must be a list")
+                return FlextResult[dict[str, object]].fail("Items data must be a list")
 
             if len(items_data) == 0:
-                return FlextResult[dict[str, Any]].fail("Items data cannot be empty")
+                return FlextResult[dict[str, object]].fail("Items data cannot be empty")
 
             # Apply defaults and validation
             batch_size = operation_data.get("batch_size", 10)
             if not isinstance(batch_size, int):
-                return FlextResult[dict[str, Any]].fail("Batch size must be an integer")
+                return FlextResult[dict[str, object]].fail(
+                    "Batch size must be an integer"
+                )
 
             # Validate batch size using constant
             if batch_size <= 0:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Batch size must be greater than 0"
                 )
 
             if batch_size > FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Batch size cannot exceed {FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE}"
                 )
 
@@ -503,10 +557,10 @@ class FlextLdapFactory(FlextHandlers[object, object]):
                 ),
             }
 
-            return FlextResult[dict[str, Any]].ok(config)
+            return FlextResult[dict[str, object]].ok(config)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Bulk operation configuration failed: {e}"
             )
 
@@ -515,7 +569,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
     # =============================================================================
 
     @staticmethod
-    def _validate_client_config(config: dict[str, Any]) -> FlextResult[None]:
+    def _validate_client_config(config: dict[str, object]) -> FlextResult[None]:
         """Validate client configuration."""
         try:
             # Required fields
@@ -531,10 +585,12 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             if not isinstance(server_uri, str):
                 return FlextResult[None].fail("Server URI must be a string")
 
-            if not server_uri.startswith((
-                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP,
-                FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS,
-            )):
+            if not server_uri.startswith(
+                (
+                    FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAP,
+                    FlextLdapConstants.Protocol.PROTOCOL_PREFIX_LDAPS,
+                )
+            ):
                 return FlextResult[None].fail(
                     "Server URI must start with ldap:// or ldaps://"
                 )
@@ -564,7 +620,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
     @staticmethod
-    def _validate_user_data(user_data: dict[str, Any]) -> FlextResult[None]:
+    def _validate_user_data(user_data: dict[str, object]) -> FlextResult[None]:
         """Validate user data for strict validation."""
         try:
             # Validate DN format
@@ -601,7 +657,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             return FlextResult[None].fail(f"User data validation failed: {e}")
 
     @staticmethod
-    def _apply_user_defaults(user_data: dict[str, Any]) -> dict[str, Any]:
+    def _apply_user_defaults(user_data: dict[str, object]) -> dict[str, object]:
         """Apply default values to user data."""
         defaults = {
             "scope": "subtree",
@@ -616,7 +672,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
         return result
 
     @staticmethod
-    def _apply_search_defaults(search_data: dict[str, Any]) -> dict[str, Any]:
+    def _apply_search_defaults(search_data: dict[str, object]) -> dict[str, object]:
         """Apply default values to search data."""
         defaults = {
             "scope": "subtree",

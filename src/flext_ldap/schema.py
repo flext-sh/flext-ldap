@@ -33,7 +33,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
     # QUIRKS DETECTION - Server-specific behavior detection
     # =========================================================================
 
-    class QuirksDetector(FlextHandlers[object, FlextResult[object]], ABC):
+    class QuirksDetector(FlextHandlers[object, object], ABC):
         """Abstract base class for LDAP server quirks detection."""
 
     class GenericQuirksDetector(QuirksDetector):
@@ -51,7 +51,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             super().__init__(config=config)
 
         @override
-        def handle(self, message: object) -> FlextResult[FlextResult[object]]:
+        def handle(self, message: object) -> FlextResult[object]:
             """Handle quirks detection message.
 
             Args:
@@ -62,12 +62,10 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             """
             if not message:
-                return FlextResult[FlextResult[object]].fail("Message cannot be empty")
+                return FlextResult[object].fail("Message cannot be empty")
 
             # For generic detection, return a basic success result
-            return FlextResult[FlextResult[object]].ok(
-                FlextResult[object].ok({"detected": True, "type": "generic"})
-            )
+            return FlextResult[object].ok({"detected": True, "type": "generic"})
 
         def detect_server_type(self, server_info: object) -> str | None:
             """Detect LDAP server type from server info.

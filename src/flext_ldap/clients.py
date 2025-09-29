@@ -1586,12 +1586,29 @@ class FlextLdapClient(FlextService[None]):
                 return None
 
         cn = get_attribute_value("cn")
+        uid = get_attribute_value("uid")
+        sn = get_attribute_value("sn")
+
+        # Validate required fields - must have either attributes or be extractable from DN
         if not cn:
             cn = (
                 entry.entry_dn.split(",")[0].split("=")[1]
                 if "=" in entry.entry_dn
-                else "Unknown"
+                else None
             )
+
+        # Check if we have any actual LDAP attributes (not just DN-extractable data)
+        mail = get_attribute_value("mail")
+        has_attributes = any([get_attribute_value("cn"), uid, sn, mail])
+
+        # If no actual LDAP attributes are present, this is invalid
+        if not has_attributes:
+            raise ValueError(
+                "Cannot create user from entry: missing required LDAP attributes"
+            )
+
+        # Use fallback values only if we have some valid attributes
+        cn = cn or "Unknown"
 
         return FlextLdapModels.LdapUser(
             dn=str(entry.entry_dn),
@@ -1902,7 +1919,7 @@ class FlextLdapClient(FlextService[None]):
     async def extended_operation_universal(
         self,
         request_name: str,
-        request_value: str | None = None,
+        request_value: str | bytes | None = None,
         *,
         controls: list[object] | None = None,
     ) -> FlextResult[dict[str, object]]:
@@ -2046,17 +2063,21 @@ class FlextLdapClient(FlextService[None]):
         }
 
         if self._discovered_schema:
-            capabilities.update({
-                "naming_contexts": list(self._discovered_schema.naming_contexts),
-                "supported_controls": list(self._discovered_schema.supported_controls),
-                "supported_extensions": list(
-                    self._discovered_schema.supported_extensions
-                ),
-                "discovered_attributes": len(self._discovered_schema.attributes),
-                "discovered_object_classes": len(
-                    self._discovered_schema.object_classes
-                ),
-            })
+            capabilities.update(
+                {
+                    "naming_contexts": list(self._discovered_schema.naming_contexts),
+                    "supported_controls": list(
+                        self._discovered_schema.supported_controls
+                    ),
+                    "supported_extensions": list(
+                        self._discovered_schema.supported_extensions
+                    ),
+                    "discovered_attributes": len(self._discovered_schema.attributes),
+                    "discovered_object_classes": len(
+                        self._discovered_schema.object_classes
+                    ),
+                }
+            )
 
         return capabilities
 
@@ -2085,14 +2106,24 @@ class FlextLdapClient(FlextService[None]):
     def _normalize_entry_attributes(
         self, attributes: dict[str, str | list[str]]
     ) -> dict[str, str | list[str]]:
-        """Normalize entry attributes according to server quirks."""
-        if not self._server_quirks or not self._schema_discovery:
-            return attributes
-
+        """Normalize entry attributes - always trim whitespace, apply server quirks if available."""
         normalized = {}
         for attr_name, attr_value in attributes.items():
-            normalized_name = self.normalize_attribute_name(attr_name)
-            normalized[normalized_name] = attr_value
+            # Always normalize attribute names if server quirks are available
+            if self._server_quirks and self._schema_discovery:
+                normalized_name = self.normalize_attribute_name(attr_name)
+            else:
+                normalized_name = attr_name
+
+            # Always trim whitespace from attribute values
+            if isinstance(attr_value, list):
+                normalized[normalized_name] = [
+                    v.strip() if isinstance(v, str) else v for v in attr_value
+                ]
+            elif isinstance(attr_value, str):
+                normalized[normalized_name] = attr_value.strip()
+            else:
+                normalized[normalized_name] = attr_value
 
         return normalized
 
@@ -2116,14 +2147,28 @@ class FlextLdapClient(FlextService[None]):
                 and isinstance(item[1], list)
                 for item in change_value
             ):
-                # Already in correct format
-                normalized[normalized_name] = change_value
+                # Already in correct format - trim whitespace from values
+                normalized_changes = []
+                for operation, values in change_value:
+                    trimmed_values = [
+                        v.strip() if isinstance(v, str) else v for v in values
+                    ]
+                    normalized_changes.append((operation, trimmed_values))
+                normalized[normalized_name] = normalized_changes
             else:
-                # Convert to MODIFY_REPLACE format
+                # Convert to MODIFY_REPLACE format and trim whitespace
                 if isinstance(change_value, list):
-                    str_values = [str(v) for v in change_value]
+                    str_values = [
+                        str(v).strip() if isinstance(v, str) else str(v)
+                        for v in change_value
+                    ]
                 else:
-                    str_values = [str(change_value)]
+                    value_str = str(change_value)
+                    str_values = [
+                        value_str.strip()
+                        if isinstance(change_value, str)
+                        else value_str
+                    ]
                 normalized[normalized_name] = [(MODIFY_REPLACE, str_values)]
 
         return normalized

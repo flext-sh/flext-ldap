@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
 
-from flext_core import FlextHandlers, FlextModels, FlextResult
+from flext_core import FlextResult
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 
@@ -16,34 +15,15 @@ from flext_ldap.acl.parsers import FlextLdapAclParsers
 MIN_ACL_PARTS = 6
 
 
-class FlextLdapAclManager(FlextHandlers[object, object]):
+class FlextLdapAclManager:
     """ACL Manager for comprehensive ACL operations."""
 
-    @override
     def __init__(self) -> None:
         """Initialize ACL Manager."""
-        # Create a minimal config for FlextHandlers
-        config = FlextModels.CqrsConfig.Handler(
-            handler_id=f"{self.__class__.__name__}_handler",
-            handler_name=f"{self.__class__.__name__}",
-            handler_type="command",
-        )
-        super().__init__(config=config)
-        # Initialize parsers and converters with config
-        parser_config = FlextModels.CqrsConfig.Handler(
-            handler_id="acl_parser_handler",
-            handler_name="ACLParser",
-            handler_type="query",
-        )
-        converter_config = FlextModels.CqrsConfig.Handler(
-            handler_id="acl_converter_handler",
-            handler_name="ACLConverter",
-            handler_type="command",
-        )
-        self.parsers = FlextLdapAclParsers(config=parser_config)
-        self.converters = FlextLdapAclConverters(config=converter_config)
+        # Initialize parsers and converters - unified classes without config
+        self.parsers = FlextLdapAclParsers()
+        self.converters = FlextLdapAclConverters()
 
-    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle ACL operations with proper type safety."""
         try:

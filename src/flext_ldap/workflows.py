@@ -9,9 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
-
-from flext_core import FlextHandlers, FlextModels, FlextResult
+from flext_core import FlextModels, FlextResult
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
@@ -19,7 +17,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
+class FlextLdapWorkflowOrchestrator:
     """Advanced workflow orchestrator using FlextResults railways.
 
     This class orchestrates complex LDAP workflows using monadic composition
@@ -27,19 +25,17 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
     error handling clarity.
     """
 
-    @override
     def __init__(
         self, config: FlextModels.CqrsConfig.Handler, client: FlextLdapClient
     ) -> None:
         """Initialize workflow orchestrator with client and configuration."""
-        super().__init__(config=config)
+        self._config = config
         self._client = client
         self._models = FlextLdapModels
         self._types = FlextLdapTypes
         self._constants = FlextLdapConstants
         self._exceptions = FlextLdapExceptions
 
-    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle workflow orchestration requests."""
         try:
@@ -67,7 +63,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Workflow orchestration failed: {e}")
 
     def _orchestrate_enterprise_user_provisioning(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Orchestrate enterprise user provisioning workflow using FlextResults railways."""
         try:
@@ -116,7 +112,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Enterprise provisioning failed: {e}")
 
     def _orchestrate_organizational_restructure(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Orchestrate organizational restructure workflow using FlextResults railways."""
         try:
@@ -167,7 +163,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Organizational restructure failed: {e}")
 
     def _orchestrate_compliance_audit_workflow(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Orchestrate compliance audit workflow using FlextResults railways."""
         try:
@@ -212,7 +208,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Compliance audit failed: {e}")
 
     def _orchestrate_multi_domain_synchronization(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Orchestrate multi-domain synchronization workflow using FlextResults railways."""
         try:
@@ -257,7 +253,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"Multi-domain synchronization failed: {e}")
 
     def _orchestrate_advanced_security_workflow(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Orchestrate advanced security workflow using FlextResults railways."""
         try:
@@ -304,8 +300,8 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
     # =============================================================================
 
     def _validate_provisioning_request(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate provisioning request using FlextResults railway."""
         try:
             required_fields = [
@@ -318,19 +314,19 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             ]
 
             if missing_fields:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Missing required fields: {missing_fields}"
                 )
 
             # Additional validation logic here
-            return FlextResult[dict[str, Any]].ok(message)
+            return FlextResult[dict[str, object]].ok(message)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Validation failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
 
     def _prepare_provisioning_environment(
-        self, validated_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, validated_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Prepare provisioning environment using FlextResults railway."""
         try:
             # Environment preparation logic
@@ -339,16 +335,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "environment_ready": True,
                 "preparation_timestamp": id(self),
             }
-            return FlextResult[dict[str, Any]].ok(prepared_data)
+            return FlextResult[dict[str, object]].ok(prepared_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Environment preparation failed: {e}"
             )
 
     def _execute_user_provisioning(
-        self, prepared_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, prepared_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute user provisioning using FlextResults railway."""
         try:
             # User provisioning logic
@@ -357,14 +353,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "provisioning_completed": True,
                 "provisioned_users": [],
             }
-            return FlextResult[dict[str, Any]].ok(provisioned_data)
+            return FlextResult[dict[str, object]].ok(provisioned_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"User provisioning failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"User provisioning failed: {e}")
 
     def _verify_provisioning_success(
-        self, provisioned_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, provisioned_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Verify provisioning success using FlextResults railway."""
         try:
             # Verification logic
@@ -373,14 +369,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "verification_passed": True,
                 "verification_timestamp": id(self),
             }
-            return FlextResult[dict[str, Any]].ok(verified_data)
+            return FlextResult[dict[str, object]].ok(verified_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Verification failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Verification failed: {e}")
 
     def _notify_provisioning_completion(
-        self, verified_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, verified_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Notify provisioning completion using FlextResults railway."""
         try:
             # Notification logic
@@ -389,18 +385,18 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "notifications_sent": True,
                 "workflow_completed": True,
             }
-            return FlextResult[dict[str, Any]].ok(final_data)
+            return FlextResult[dict[str, object]].ok(final_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Notification failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Notification failed: {e}")
 
     # =============================================================================
     # Organizational Restructure Railway Steps
     # =============================================================================
 
     def _analyze_organizational_structure(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Analyze organizational structure using FlextResults railway."""
         try:
             analysis_data = {
@@ -408,14 +404,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "structure_analyzed": True,
                 "analysis_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(analysis_data)
+            return FlextResult[dict[str, object]].ok(analysis_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Structure analysis failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Structure analysis failed: {e}"
+            )
 
     def _plan_restructure_operations(
-        self, analysis_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, analysis_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Plan restructure operations using FlextResults railway."""
         try:
             planned_data = {
@@ -423,14 +421,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "operations_planned": True,
                 "operation_plan": {},
             }
-            return FlextResult[dict[str, Any]].ok(planned_data)
+            return FlextResult[dict[str, object]].ok(planned_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Operation planning failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Operation planning failed: {e}"
+            )
 
     def _backup_current_structure(
-        self, planned_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, planned_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Backup current structure using FlextResults railway."""
         try:
             backed_up_data = {
@@ -438,14 +438,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "backup_completed": True,
                 "backup_location": "secure_storage",
             }
-            return FlextResult[dict[str, Any]].ok(backed_up_data)
+            return FlextResult[dict[str, object]].ok(backed_up_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Backup failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Backup failed: {e}")
 
     def _execute_restructure_operations(
-        self, backed_up_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, backed_up_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute restructure operations using FlextResults railway."""
         try:
             restructured_data = {
@@ -453,16 +453,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "restructure_completed": True,
                 "operations_executed": [],
             }
-            return FlextResult[dict[str, Any]].ok(restructured_data)
+            return FlextResult[dict[str, object]].ok(restructured_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Restructure execution failed: {e}"
             )
 
     def _validate_restructure_success(
-        self, restructured_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, restructured_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate restructure success using FlextResults railway."""
         try:
             validated_data = {
@@ -470,16 +470,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "restructure_validated": True,
                 "validation_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(validated_data)
+            return FlextResult[dict[str, object]].ok(validated_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Restructure validation failed: {e}"
             )
 
     def _cleanup_restructure_resources(
-        self, validated_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, validated_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Cleanup restructure resources using FlextResults railway."""
         try:
             final_data = {
@@ -487,18 +487,18 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "cleanup_completed": True,
                 "resources_freed": True,
             }
-            return FlextResult[dict[str, Any]].ok(final_data)
+            return FlextResult[dict[str, object]].ok(final_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Cleanup failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Cleanup failed: {e}")
 
     # =============================================================================
     # Compliance Audit Railway Steps
     # =============================================================================
 
     def _configure_audit_parameters(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Configure audit parameters using FlextResults railway."""
         try:
             configured_data = {
@@ -506,14 +506,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "audit_configured": True,
                 "audit_parameters": {},
             }
-            return FlextResult[dict[str, Any]].ok(configured_data)
+            return FlextResult[dict[str, object]].ok(configured_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Audit configuration failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Audit configuration failed: {e}"
+            )
 
     def _discover_audit_targets(
-        self, configured_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, configured_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Discover audit targets using FlextResults railway."""
         try:
             discovered_data = {
@@ -521,14 +523,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "targets_discovered": True,
                 "audit_targets": [],
             }
-            return FlextResult[dict[str, Any]].ok(discovered_data)
+            return FlextResult[dict[str, object]].ok(discovered_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Target discovery failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Target discovery failed: {e}")
 
     def _analyze_compliance_violations(
-        self, discovered_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, discovered_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Analyze compliance violations using FlextResults railway."""
         try:
             analyzed_data = {
@@ -536,14 +538,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "violations_analyzed": True,
                 "compliance_violations": [],
             }
-            return FlextResult[dict[str, Any]].ok(analyzed_data)
+            return FlextResult[dict[str, object]].ok(analyzed_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Violation analysis failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Violation analysis failed: {e}"
+            )
 
     def _generate_compliance_report(
-        self, analyzed_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, analyzed_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Generate compliance report using FlextResults railway."""
         try:
             reported_data = {
@@ -551,14 +555,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "report_generated": True,
                 "compliance_report": {},
             }
-            return FlextResult[dict[str, Any]].ok(reported_data)
+            return FlextResult[dict[str, object]].ok(reported_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Report generation failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Report generation failed: {e}")
 
     def _execute_remediation_actions(
-        self, reported_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, reported_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute remediation actions using FlextResults railway."""
         try:
             final_data = {
@@ -566,10 +570,10 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "remediation_completed": True,
                 "actions_executed": [],
             }
-            return FlextResult[dict[str, Any]].ok(final_data)
+            return FlextResult[dict[str, object]].ok(final_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Remediation execution failed: {e}"
             )
 
@@ -578,8 +582,8 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
     # =============================================================================
 
     def _discover_domain_targets(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Discover domain targets using FlextResults railway."""
         try:
             discovered_data = {
@@ -587,14 +591,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "domains_discovered": True,
                 "domain_targets": [],
             }
-            return FlextResult[dict[str, Any]].ok(discovered_data)
+            return FlextResult[dict[str, object]].ok(discovered_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Domain discovery failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Domain discovery failed: {e}")
 
     def _compare_domain_states(
-        self, discovered_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, discovered_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Compare domain states using FlextResults railway."""
         try:
             compared_data = {
@@ -602,14 +606,14 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "states_compared": True,
                 "state_differences": [],
             }
-            return FlextResult[dict[str, Any]].ok(compared_data)
+            return FlextResult[dict[str, object]].ok(compared_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"State comparison failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"State comparison failed: {e}")
 
     def _execute_domain_synchronization(
-        self, compared_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, compared_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute domain synchronization using FlextResults railway."""
         try:
             synchronized_data = {
@@ -617,16 +621,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "synchronization_completed": True,
                 "sync_operations": [],
             }
-            return FlextResult[dict[str, Any]].ok(synchronized_data)
+            return FlextResult[dict[str, object]].ok(synchronized_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Synchronization execution failed: {e}"
             )
 
     def _validate_synchronization_success(
-        self, synchronized_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, synchronized_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate synchronization success using FlextResults railway."""
         try:
             validated_data = {
@@ -634,16 +638,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "synchronization_validated": True,
                 "validation_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(validated_data)
+            return FlextResult[dict[str, object]].ok(validated_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Synchronization validation failed: {e}"
             )
 
     def _generate_synchronization_report(
-        self, validated_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, validated_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Generate synchronization report using FlextResults railway."""
         try:
             final_data = {
@@ -651,18 +655,18 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "synchronization_reported": True,
                 "synchronization_report": {},
             }
-            return FlextResult[dict[str, Any]].ok(final_data)
+            return FlextResult[dict[str, object]].ok(final_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Report generation failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Report generation failed: {e}")
 
     # =============================================================================
     # Advanced Security Workflow Railway Steps
     # =============================================================================
 
     def _assess_security_posture(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Assess security posture using FlextResults railway."""
         try:
             assessed_data = {
@@ -670,14 +674,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "security_assessed": True,
                 "security_assessment": {},
             }
-            return FlextResult[dict[str, Any]].ok(assessed_data)
+            return FlextResult[dict[str, object]].ok(assessed_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Security assessment failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Security assessment failed: {e}"
+            )
 
     def _apply_security_measures(
-        self, assessed_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, assessed_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Apply security measures using FlextResults railway."""
         try:
             secured_data = {
@@ -685,14 +691,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "security_applied": True,
                 "security_measures": [],
             }
-            return FlextResult[dict[str, Any]].ok(secured_data)
+            return FlextResult[dict[str, object]].ok(secured_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Security application failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Security application failed: {e}"
+            )
 
     def _establish_security_monitoring(
-        self, secured_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, secured_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Establish security monitoring using FlextResults railway."""
         try:
             monitored_data = {
@@ -700,16 +708,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "monitoring_established": True,
                 "monitoring_configuration": {},
             }
-            return FlextResult[dict[str, Any]].ok(monitored_data)
+            return FlextResult[dict[str, object]].ok(monitored_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Monitoring establishment failed: {e}"
             )
 
     def _configure_security_response(
-        self, monitored_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, monitored_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Configure security response using FlextResults railway."""
         try:
             configured_data = {
@@ -717,16 +725,16 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "response_configured": True,
                 "response_procedures": [],
             }
-            return FlextResult[dict[str, Any]].ok(configured_data)
+            return FlextResult[dict[str, object]].ok(configured_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Response configuration failed: {e}"
             )
 
     def _audit_security_implementation(
-        self, configured_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, configured_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Audit security implementation using FlextResults railway."""
         try:
             final_data = {
@@ -734,10 +742,10 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 "security_audited": True,
                 "audit_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(final_data)
+            return FlextResult[dict[str, object]].ok(final_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Security audit failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Security audit failed: {e}")
 
     def get_saga_orchestrator(
         self, config: FlextModels.CqrsConfig.Handler
@@ -756,27 +764,25 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
             )
 
     # Nested Saga Orchestrator Class - follows FLEXT single unified class pattern
-    class SagaOrchestrator(FlextHandlers[object, object]):
+    class SagaOrchestrator:
         """Advanced Saga orchestrator for distributed LDAP operations.
 
         This nested class implements the Saga pattern for managing distributed transactions
         across multiple LDAP operations with compensation support.
         """
 
-        @override
         def __init__(
             self, config: FlextModels.CqrsConfig.Handler, client: FlextLdapClient
         ) -> None:
             """Initialize Saga orchestrator with client and configuration."""
-            super().__init__(config=config)
+            self._config = config
             self._client = client
             self._models = FlextLdapModels
             self._types = FlextLdapTypes
             self._constants = FlextLdapConstants
             self._exceptions = FlextLdapExceptions
-            self._saga_steps: list[dict[str, Any]] = []
+            self._saga_steps: list[dict[str, object]] = []
 
-        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle Saga orchestration requests."""
             try:
@@ -799,7 +805,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 return FlextResult[object].fail(f"Saga orchestration failed: {e}")
 
         def _execute_distributed_user_management_saga(
-            self, message: dict[str, Any]
+            self, message: dict[str, object]
         ) -> FlextResult[object]:
             """Execute distributed user management saga with compensation."""
             try:
@@ -820,7 +826,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 )
 
         def _execute_cross_domain_replication_saga(
-            self, message: dict[str, Any]
+            self, message: dict[str, object]
         ) -> FlextResult[object]:
             """Execute cross-domain replication saga with compensation."""
             try:
@@ -842,7 +848,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 )
 
         def _execute_enterprise_migration_saga(
-            self, message: dict[str, Any]
+            self, message: dict[str, object]
         ) -> FlextResult[object]:
             """Execute enterprise migration saga with compensation."""
             try:
@@ -863,26 +869,32 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                     f"Enterprise migration saga failed: {e}"
                 )
 
-        def _execute_saga_steps(self, _message: dict[str, Any]) -> FlextResult[object]:
+        def _execute_saga_steps(
+            self, _message: dict[str, object]
+        ) -> FlextResult[object]:
             """Execute saga steps using FlextResults railway."""
             try:
                 # Saga step execution logic
-                self._saga_steps.append({
-                    "step": "user_creation",
-                    "status": "completed",
-                    "timestamp": id(self),
-                })
+                self._saga_steps.append(
+                    {
+                        "step": "user_creation",
+                        "status": "completed",
+                        "timestamp": id(self),
+                    }
+                )
 
-                return FlextResult[object].ok({
-                    "saga_completed": True,
-                    "steps_executed": len(self._saga_steps),
-                })
+                return FlextResult[object].ok(
+                    {
+                        "saga_completed": True,
+                        "steps_executed": len(self._saga_steps),
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(f"Saga step execution failed: {e}")
 
         def _compensate_saga_steps(
-            self, saga_steps: list[dict[str, Any]]
+            self, saga_steps: list[dict[str, object]]
         ) -> FlextResult[object]:
             """Compensate saga steps using FlextResults railway."""
             try:
@@ -892,29 +904,35 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                     for step in reversed(saga_steps)
                 ]
 
-                return FlextResult[object].ok({
-                    "compensation_completed": True,
-                    "compensated_steps": compensated_steps,
-                })
+                return FlextResult[object].ok(
+                    {
+                        "compensation_completed": True,
+                        "compensated_steps": compensated_steps,
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(f"Saga compensation failed: {e}")
 
         def _execute_replication_saga_steps(
-            self, _message: dict[str, Any]
+            self, _message: dict[str, object]
         ) -> FlextResult[object]:
             """Execute replication saga steps using FlextResults railway."""
             try:
-                self._saga_steps.append({
-                    "step": "replication_sync",
-                    "status": "completed",
-                    "timestamp": id(self),
-                })
+                self._saga_steps.append(
+                    {
+                        "step": "replication_sync",
+                        "status": "completed",
+                        "timestamp": id(self),
+                    }
+                )
 
-                return FlextResult[object].ok({
-                    "replication_saga_completed": True,
-                    "steps_executed": len(self._saga_steps),
-                })
+                return FlextResult[object].ok(
+                    {
+                        "replication_saga_completed": True,
+                        "steps_executed": len(self._saga_steps),
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(
@@ -922,7 +940,7 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                 )
 
         def _compensate_replication_steps(
-            self, saga_steps: list[dict[str, Any]]
+            self, saga_steps: list[dict[str, object]]
         ) -> FlextResult[object]:
             """Compensate replication steps using FlextResults railway."""
             try:
@@ -935,35 +953,41 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                     for step in reversed(saga_steps)
                 ]
 
-                return FlextResult[object].ok({
-                    "replication_compensation_completed": True,
-                    "compensated_steps": compensated_steps,
-                })
+                return FlextResult[object].ok(
+                    {
+                        "replication_compensation_completed": True,
+                        "compensated_steps": compensated_steps,
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(f"Replication compensation failed: {e}")
 
         def _execute_migration_saga_steps(
-            self, _message: dict[str, Any]
+            self, _message: dict[str, object]
         ) -> FlextResult[object]:
             """Execute migration saga steps using FlextResults railway."""
             try:
-                self._saga_steps.append({
-                    "step": "data_migration",
-                    "status": "completed",
-                    "timestamp": id(self),
-                })
+                self._saga_steps.append(
+                    {
+                        "step": "data_migration",
+                        "status": "completed",
+                        "timestamp": id(self),
+                    }
+                )
 
-                return FlextResult[object].ok({
-                    "migration_saga_completed": True,
-                    "steps_executed": len(self._saga_steps),
-                })
+                return FlextResult[object].ok(
+                    {
+                        "migration_saga_completed": True,
+                        "steps_executed": len(self._saga_steps),
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(f"Migration saga execution failed: {e}")
 
         def _compensate_migration_steps(
-            self, saga_steps: list[dict[str, Any]]
+            self, saga_steps: list[dict[str, object]]
         ) -> FlextResult[object]:
             """Compensate migration steps using FlextResults railway."""
             try:
@@ -976,10 +1000,12 @@ class FlextLdapWorkflowOrchestrator(FlextHandlers[object, object]):
                     for step in reversed(saga_steps)
                 ]
 
-                return FlextResult[object].ok({
-                    "migration_compensation_completed": True,
-                    "compensated_steps": compensated_steps,
-                })
+                return FlextResult[object].ok(
+                    {
+                        "migration_compensation_completed": True,
+                        "compensated_steps": compensated_steps,
+                    }
+                )
 
             except Exception as e:
                 return FlextResult[object].fail(f"Migration compensation failed: {e}")

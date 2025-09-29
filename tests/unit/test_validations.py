@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap import FlextLdapValidations
+from flext_ldap.constants import FlextLdapConstants
 
 
 class TestFlextLdapValidations:
@@ -169,7 +170,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test password validation with too long password."""
-        long_password = "a" * 1000  # Very long password
+        long_password = (
+            "a" * 200  # Password longer than 128 characters
+        )  # Very long password
         result = validations.validate_password(long_password)
 
         assert result.is_failure
@@ -233,7 +236,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test successful server URI validation."""
-        result = validations.validate_server_uri("ldap://localhost:389")
+        result = validations.validate_server_uri(
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+        )
 
         assert result.is_success
         assert result.data is True
@@ -273,7 +278,7 @@ class TestFlextLdapValidations:
 
     def test_validate_port_success(self, validations: FlextLdapValidations) -> None:
         """Test successful port validation."""
-        result = validations.validate_port(389)
+        result = validations.validate_port(FlextLdapConstants.Protocol.DEFAULT_PORT)
 
         assert result.is_success
         assert result.data is True
@@ -311,7 +316,7 @@ class TestFlextLdapValidations:
 
     def test_validate_timeout_success(self, validations: FlextLdapValidations) -> None:
         """Test successful timeout validation."""
-        result = validations.validate_timeout(30)
+        result = validations.validate_timeout(FlextLdapConstants.DEFAULT_TIMEOUT)
 
         assert result.is_success
         assert result.data is True
@@ -392,6 +397,7 @@ class TestFlextLdapValidations:
         result = validations.validate_scope("one")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid scope: one" in result.error
         assert "base" in result.error
         assert "subtree" in result.error
@@ -431,6 +437,7 @@ class TestFlextLdapValidations:
         result = validations.validate_modify_operation("MODIFY_REPLACE")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid operation: MODIFY_REPLACE. Must be one of" in result.error
         assert "add" in result.error
         assert "delete" in result.error
@@ -554,9 +561,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test successful connection config validation."""
-        config = {
-            "server": "ldap://localhost:389",
-            "port": 389,
+        config: dict[str, object] = {
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
             "base_dn": "dc=example,dc=com",
@@ -571,7 +578,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with missing fields."""
-        config = {
+        config: dict[str, object] = {
             "server": "ldap://localhost:389"
             # Missing bind_dn, password, base_dn
         }
@@ -586,9 +593,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with invalid fields."""
-        config = {
+        config: dict[str, object] = {
             "server": "invalid-uri",
-            "port": 389,
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
             "base_dn": "dc=example,dc=com",
@@ -628,13 +635,19 @@ class TestFlextLdapValidations:
         attributes_result = validations.validate_attributes(["cn", "sn", "mail"])
         assert attributes_result.is_success
 
-        server_uri_result = validations.validate_server_uri("ldap://localhost:389")
+        server_uri_result = validations.validate_server_uri(
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+        )
         assert server_uri_result.is_success
 
-        port_result = validations.validate_port(389)
+        port_result = validations.validate_port(
+            FlextLdapConstants.Protocol.DEFAULT_PORT
+        )
         assert port_result.is_success
 
-        timeout_result = validations.validate_timeout(30)
+        timeout_result = validations.validate_timeout(
+            FlextLdapConstants.DEFAULT_TIMEOUT
+        )
         assert timeout_result.is_success
 
         scope_result = validations.validate_scope("subtree")
@@ -711,7 +724,9 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test validations performance with large datasets."""
         # Test large attributes list
-        large_attributes = [f"attr{i}" for i in range(1000)]
+        large_attributes = [
+            f"attr{i}" for i in range(FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE)
+        ]
         attributes_result = validations.validate_attributes(large_attributes)
         assert attributes_result.is_success
 

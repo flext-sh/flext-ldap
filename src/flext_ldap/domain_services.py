@@ -10,14 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import Any
 
 from flext_core import (
     FlextBus,
     FlextContainer,
     FlextContext,
     FlextDispatcher,
-    FlextHandlers,
     FlextModels,
     FlextProcessors,
     FlextRegistry,
@@ -30,7 +29,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapDomainServices(FlextHandlers[object, object]):
+class FlextLdapDomainServices:
     """Advanced domain services orchestrator using FLEXT ecosystem patterns.
 
     This class implements sophisticated domain service patterns using
@@ -38,7 +37,6 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
     and FlextRegistry to provide comprehensive LDAP domain services.
     """
 
-    @override
     def __init__(
         self,
         config: FlextModels.CqrsConfig.Handler,
@@ -50,20 +48,19 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
         registry: FlextRegistry,
     ) -> None:
         """Initialize domain services with FLEXT ecosystem components."""
-        super().__init__(config=config)
+        self._config = config
         self._client: FlextLdapClient = client
         self._container: FlextContainer = container
         self._bus: FlextBus = bus
         self._dispatcher: FlextDispatcher = dispatcher
         self._processors: FlextProcessors = processors
-        self._ldap_registry: FlextRegistry = registry
+        self._registry: FlextRegistry = registry
         self._models = FlextLdapModels
         self._types = FlextLdapTypes
         self._constants = FlextLdapConstants
         self._exceptions = FlextLdapExceptions
         self._context = FlextContext()
 
-    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle domain service requests using FLEXT ecosystem patterns."""
         try:
@@ -627,14 +624,13 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             )
 
     # Nested CQRS Services Class - follows FLEXT single unified class pattern
-    class CqrsServices(FlextHandlers[object, object]):
+    class CqrsServices:
         """Advanced CQRS command and query services for flext-ldap.
 
         This nested class implements Command Query Responsibility Segregation (CQRS)
         patterns using FLEXT ecosystem components for sophisticated LDAP operations.
         """
 
-        @override
         def __init__(
             self,
             config: FlextModels.CqrsConfig.Handler,
@@ -643,7 +639,7 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             dispatcher: FlextDispatcher,
         ) -> None:
             """Initialize CQRS services with FLEXT ecosystem components."""
-            super().__init__(config=config)
+            self._config = config
             self._client = client
             self._bus = bus
             self._dispatcher = dispatcher
@@ -652,7 +648,6 @@ class FlextLdapDomainServices(FlextHandlers[object, object]):
             self._constants = FlextLdapConstants
             self._exceptions = FlextLdapExceptions
 
-        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle CQRS command and query requests."""
             try:

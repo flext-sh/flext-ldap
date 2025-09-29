@@ -123,7 +123,7 @@ class TestFlextLdapUtilities:
 
     def test_dict_to_attributes_valid(self) -> None:
         """Test dict to LDAP attributes conversion."""
-        data = {"cn": "John Doe", "mail": "john@example.com"}
+        data: dict[str, object] = {"cn": "John Doe", "mail": "john@example.com"}
         result = FlextLdapUtilities.dict_to_attributes(data)
         assert result.is_success
         assert isinstance(result.data, tuple)
@@ -143,8 +143,8 @@ class TestFlextLdapUtilities:
 
     def test_attributes_to_dict_valid(self) -> None:
         """Test LDAP attributes to dict conversion."""
-        names = ["cn", "mail"]
-        values = ["John Doe", "john@example.com"]
+        names: list[str] = ["cn", "mail"]
+        values: list[object] = ["John Doe", "john@example.com"]
         result = FlextLdapUtilities.attributes_to_dict(names, values)
         assert result.is_success
         assert isinstance(result.data, dict)
@@ -192,87 +192,87 @@ class TestFlextLdapUtilities:
 
 
 class TestFlextLdapUtilitiesLdapTypeGuards:
-    """Tests for FlextLdapUtilities.LdapTypeGuards nested class."""
+    """Tests for FlextLdapUtilities.TypeGuards nested class."""
 
     def test_ensure_string_list_valid_list(self) -> None:
         """Test string list conversion with valid list."""
-        result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list(["a", "b"])
+        result = FlextLdapUtilities.TypeGuards.ensure_string_list(["a", "b"])
         assert result == ["a", "b"]
 
     def test_ensure_string_list_single_string(self) -> None:
         """Test string list conversion with single string."""
-        result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list("test")
+        result = FlextLdapUtilities.TypeGuards.ensure_string_list("test")
         assert result == ["test"]
 
     def test_ensure_string_list_empty_list(self) -> None:
         """Test string list conversion with empty list."""
-        result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list([])
+        result = FlextLdapUtilities.TypeGuards.ensure_string_list([])
         assert result == []
 
     def test_is_string_list_valid(self) -> None:
         """Test string list type guard."""
-        assert FlextLdapUtilities.LdapTypeGuards.is_string_list(["a", "b"]) is True
-        assert FlextLdapUtilities.LdapTypeGuards.is_string_list([]) is True
+        assert FlextLdapUtilities.TypeGuards.is_string_list(["a", "b"]) is True
+        assert FlextLdapUtilities.TypeGuards.is_string_list([]) is True
 
     def test_is_string_list_invalid(self) -> None:
         """Test string list type guard with invalid data."""
-        assert FlextLdapUtilities.LdapTypeGuards.is_string_list([1, 2]) is False
-        assert FlextLdapUtilities.LdapTypeGuards.is_string_list("string") is False
+        assert FlextLdapUtilities.TypeGuards.is_string_list([1, 2]) is False
+        assert FlextLdapUtilities.TypeGuards.is_string_list("string") is False
 
     def test_is_bytes_list_valid(self) -> None:
         """Test bytes list type guard."""
-        assert FlextLdapUtilities.LdapTypeGuards.is_bytes_list([b"a", b"b"]) is True
+        assert FlextLdapUtilities.TypeGuards.is_bytes_list([b"a", b"b"]) is True
 
     def test_is_bytes_list_invalid(self) -> None:
         """Test bytes list type guard with invalid data."""
-        assert FlextLdapUtilities.LdapTypeGuards.is_bytes_list(["a", "b"]) is False
+        assert FlextLdapUtilities.TypeGuards.is_bytes_list(["a", "b"]) is False
 
     def test_ensure_ldap_dn_valid(self) -> None:
         """Test LDAP DN validation."""
         dn = "cn=user,dc=example,dc=com"
-        result = FlextLdapUtilities.LdapTypeGuards.ensure_ldap_dn(dn)
+        result = FlextLdapUtilities.TypeGuards.ensure_ldap_dn(dn)
         assert result == dn
 
     def test_ensure_ldap_dn_whitespace(self) -> None:
         """Test LDAP DN validation with whitespace."""
-        result = FlextLdapUtilities.LdapTypeGuards.ensure_ldap_dn("  cn=user  ")
+        result = FlextLdapUtilities.TypeGuards.ensure_ldap_dn("  cn=user  ")
         assert result == "cn=user"
 
 
 class TestFlextLdapUtilitiesLdapProcessing:
-    """Tests for FlextLdapUtilities.LdapProcessing nested class."""
+    """Tests for FlextLdapUtilities.Processing nested class."""
 
     def test_normalize_dn_success(self) -> None:
         """Test DN normalization success case."""
         dn = "cn=user , ou=people ,dc=example,dc=com"
-        result = FlextLdapUtilities.LdapProcessing.normalize_dn(dn)
+        result = FlextLdapUtilities.Processing.normalize_dn(dn)
         assert result.is_success
         normalized = result.data
         assert "cn=user , ou=people ,dc=example,dc=com" in normalized
 
     def test_normalize_dn_failure(self) -> None:
         """Test DN normalization failure case."""
-        result = FlextLdapUtilities.LdapProcessing.normalize_dn("")
+        result = FlextLdapUtilities.Processing.normalize_dn("")
         assert result.is_failure
         assert result.error is not None
 
     def test_normalize_filter_success(self) -> None:
         """Test filter normalization success case."""
         filter_str = "( objectClass = person )"
-        result = FlextLdapUtilities.LdapProcessing.normalize_filter(filter_str)
+        result = FlextLdapUtilities.Processing.normalize_filter(filter_str)
         assert result.is_success
         assert "( objectClass = person )" in result.data
 
     def test_normalize_filter_failure(self) -> None:
         """Test filter normalization failure case."""
-        result = FlextLdapUtilities.LdapProcessing.normalize_filter("")
+        result = FlextLdapUtilities.Processing.normalize_filter("")
         assert result.is_failure
         assert result.error is not None
 
     def test_normalize_attributes_success(self) -> None:
         """Test attributes normalization success case."""
         attrs = ["cn", "", "mail", "  ", "uid", "sn"]
-        result = FlextLdapUtilities.LdapProcessing.normalize_attributes(attrs)
+        result = FlextLdapUtilities.Processing.normalize_attributes(attrs)
         assert result.is_success
         assert "cn" in result.data
         assert "mail" in result.data
@@ -282,24 +282,24 @@ class TestFlextLdapUtilitiesLdapProcessing:
 
     def test_normalize_attributes_failure(self) -> None:
         """Test attributes normalization failure case."""
-        result = FlextLdapUtilities.LdapProcessing.normalize_attributes([])
+        result = FlextLdapUtilities.Processing.normalize_attributes([])
         assert result.is_failure
         assert result.error is not None
 
     def test_attributes_to_dict_success(self) -> None:
         """Test attributes to dict conversion success case."""
-        names = ["cn", "mail"]
-        values = ["John", "john@example.com"]
-        result = FlextLdapUtilities.LdapConversion.attributes_to_dict(names, values)
+        names: list[str] = ["cn", "mail"]
+        values: list[object] = ["John", "john@example.com"]
+        result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_success
         assert result.data["cn"] == "John"
         assert result.data["mail"] == "john@example.com"
 
     def test_attributes_to_dict_mismatch(self) -> None:
         """Test attributes to dict conversion with mismatched lengths."""
-        names = ["cn", "mail"]
-        values = ["John"]  # Missing one value
-        result = FlextLdapUtilities.LdapConversion.attributes_to_dict(names, values)
+        names: list[str] = ["cn", "mail"]
+        values: list[object] = ["John"]  # Missing one value
+        result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_failure
         assert result.error is not None
         assert "length mismatch" in result.error

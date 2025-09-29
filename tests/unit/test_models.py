@@ -15,6 +15,7 @@ import time
 import pytest
 
 from flext_core import FlextResult
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
@@ -164,14 +165,14 @@ class TestFlextLdapModels:
             server_type=FlextLdapModels.LdapServerType.OPENLDAP,
             supports_paged_results=True,
             supports_sync=True,
-            max_page_size=1000,
+            max_page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
             object_class_mappings={"person": "inetOrgPerson"},
         )
 
         assert quirks.server_type == FlextLdapModels.LdapServerType.OPENLDAP
         assert quirks.supports_paged_results is True
         assert quirks.supports_sync is True
-        assert quirks.max_page_size == 1000
+        assert quirks.max_page_size == FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
         assert quirks.object_class_mappings == {"person": "inetOrgPerson"}
 
     def test_schema_discovery_result_creation(self) -> None:
@@ -321,34 +322,42 @@ class TestFlextLdapModels:
         # Pass arguments explicitly to avoid mixed type issues
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=389,
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
             use_ssl=False,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             bind_password="testpass",
-            timeout=30,
+            timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
         )
 
         assert config.server == "localhost"
-        assert config.port == 389
+        assert config.port == FlextLdapConstants.Protocol.DEFAULT_PORT
         assert config.use_ssl is False
         assert config.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com"
         assert config.bind_password == "testpass"
-        assert config.timeout == 30
+        assert config.timeout == FlextLdapConstants.DEFAULT_TIMEOUT
 
     def test_connection_config_properties(self) -> None:
         """Test ConnectionConfig properties."""
         config = FlextLdapModels.ConnectionConfig(
-            server="localhost", port=389, use_ssl=False
+            server="localhost",
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            use_ssl=False,
         )
 
         # Test server_uri property
-        assert config.server_uri == "ldap://localhost:389"
+        assert (
+            config.server_uri
+            == f"ldap://localhost:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+        )
 
         # Test password property
         assert config.password is None
 
         config_with_password = FlextLdapModels.ConnectionConfig(
-            server="localhost", port=389, use_ssl=False, bind_password="testpass"
+            server="localhost",
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            use_ssl=False,
+            bind_password="testpass",
         )
         assert config_with_password.password == "testpass"
 
@@ -536,14 +545,14 @@ class TestFlextLdapModels:
         # Use a non-frozen model for extensibility testing
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=389,
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             bind_password="testpass",
         )
 
         # Verify configuration is properly set
         assert config.server == "localhost"
-        assert config.port == 389
+        assert config.port == FlextLdapConstants.Protocol.DEFAULT_PORT
         assert config.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com"
         assert config.bind_password == "testpass"
 
@@ -579,7 +588,7 @@ class TestFlextLdapModels:
         # 5. Create connection config
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=389,
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             bind_password="testpass",
         )

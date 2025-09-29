@@ -13,9 +13,7 @@ from abc import ABC, abstractmethod
 from typing import override
 
 from flext_core import (
-    FlextHandlers,
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextService,
 )
@@ -39,24 +37,15 @@ class FlextLdapRepositories(FlextService[None]):
         """Execute the main domain operation asynchronously (required by FlextService)."""
         return FlextResult[None].ok(None)
 
-    class Repository(FlextHandlers[object, object], ABC):
+    class Repository(ABC):
         """Base repository interface for LDAP operations."""
 
-        @override
         def __init__(self, client: FlextLdapClient) -> None:
             """Initialize repository with LDAP client."""
-            # Create a minimal config for FlextHandlers
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id=f"{self.__class__.__name__}_handler",
-                handler_name=f"{self.__class__.__name__}",
-                handler_type="query",
-            )
-            super().__init__(config=config)
             self._client = client
             self._logger = FlextLogger(self.__class__.__name__)
 
         @abstractmethod
-        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle the message and return result."""
 

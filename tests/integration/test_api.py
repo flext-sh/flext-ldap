@@ -20,6 +20,7 @@ from flext_ldap import (
     FlextLdapClient,
     FlextLdapModels,
 )
+from flext_ldap.constants import FlextLdapConstants
 
 # Skip all integration tests when LDAP server is not available
 pytestmark = pytest.mark.skip(
@@ -84,7 +85,7 @@ class TestLdapClientRealOperations:
             filter_str="(objectClass=*)",
             attributes=[],  # Get all attributes
             size_limit=10,
-            time_limit=30,  # 30 seconds timeout
+            time_limit=FlextLdapConstants.DEFAULT_TIMEOUT,  # Default timeout from constants
             page_size=None,
             paged_cookie=None,
         )
@@ -181,7 +182,7 @@ class TestLdapClientRealOperations:
             scope="base",
             attributes=[],  # All attributes
             size_limit=1,
-            time_limit=30,
+            time_limit=FlextLdapConstants.DEFAULT_TIMEOUT,
             page_size=None,
             paged_cookie=None,
         )
@@ -292,7 +293,6 @@ class TestLdapServiceRealOperations:
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
         default_user = FlextLdapModels.LdapUser(
-            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -322,7 +322,6 @@ class TestLdapServiceRealOperations:
         get_result = await client.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
         default_user = FlextLdapModels.LdapUser(
-            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -365,7 +364,6 @@ class TestLdapServiceRealOperations:
         updated_get_result = await client.get_user(user_request.dn)
         assert updated_get_result.is_success
         default_user = FlextLdapModels.LdapUser(
-            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -669,7 +667,6 @@ class TestLdapValidationRealOperations:
 
         # Verify the user follows business rules
         default_user = FlextLdapModels.LdapUser(
-            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -770,7 +767,7 @@ class TestLdapErrorHandlingReal:
             scope="base",
             attributes=[],  # All attributes
             size_limit=10,
-            time_limit=30,
+            time_limit=FlextLdapConstants.DEFAULT_TIMEOUT,
             page_size=None,
             paged_cookie=None,
         )
