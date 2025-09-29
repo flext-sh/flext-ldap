@@ -7,19 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import override
 
-from flext_core import FlextHandlers, FlextResult
+from flext_core import FlextResult
 from flext_ldap.models import FlextLdapModels
 
 # Constants for ACL parsing
 MIN_ACL_PARTS = 6
 
 
-class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
+class FlextLdapAclParsers:
     """ACL parsers for different LDAP server formats."""
 
-    class OpenLdapAclParser(FlextHandlers[object, FlextResult[object]]):
+    class OpenLdapAclParser:
         """Parse OpenLDAP ACL format."""
 
         # Minimum number of parts required for valid OpenLDAP ACL
@@ -185,7 +184,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 permissions=permissions, denied_permissions=[], grant_type="allow"
             )
 
-    class OracleAclParser(FlextHandlers[object, FlextResult[object]]):
+    class OracleAclParser:
         """Parse Oracle Directory ACL format."""
 
         @staticmethod
@@ -372,7 +371,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 permissions=permissions, denied_permissions=[], grant_type="allow"
             )
 
-    class AciParser(FlextHandlers[object, FlextResult[object]]):
+    class AciParser:
         """Parse 389 DS/Apache DS ACI format."""
 
         @classmethod
@@ -495,7 +494,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                     f"Failed to parse ACI: {e}"
                 )
 
-    class MicrosoftAdConverter(FlextHandlers[object, FlextResult[object]]):
+    class MicrosoftAdConverter:
         """Convert unified ACL format to Microsoft Active Directory format."""
 
         @staticmethod
@@ -561,7 +560,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
             perms_str = ",".join(permissions.permissions)
             return f"allow({perms_str})"
 
-    class OpenLdapConverter(FlextHandlers[object, FlextResult[object]]):
+    class OpenLdapConverter:
         """Convert unified ACL format to OpenLDAP format."""
 
         @staticmethod
@@ -635,7 +634,7 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 return "none"
             return ",".join(permissions.permissions)
 
-    class AciConverter(FlextHandlers[object, FlextResult[object]]):
+    class AciConverter:
         """Convert unified ACL format to ACI (389 DS/Apache DS) format."""
 
         @staticmethod
@@ -692,7 +691,6 @@ class FlextLdapAclParsers(FlextHandlers[object, FlextResult[object]]):
                 return ",".join(permissions.denied_permissions)
             return ",".join(permissions.permissions)
 
-    @override
     def handle(self, message: object) -> FlextResult[FlextResult[object]]:
         """Handle ACL parsing operations with proper type safety."""
         try:

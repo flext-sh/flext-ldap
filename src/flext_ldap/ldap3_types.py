@@ -11,5 +11,7 @@ from __future__ import annotations
 
 from ldap3 import Connection as _Connection
 
-# Type alias for the actual Connection type
+# Export Connection for use in other modules
 Connection = _Connection
+
+__all__ = ["Connection"]

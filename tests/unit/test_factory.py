@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flext_core import FlextModels
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.factory import FlextLdapFactory
 
 
@@ -15,7 +16,7 @@ class TestFlextLdapFactory:
             handler_id="test_handler",
             handler_name="Test Handler",
             handler_type="command",
-            command_timeout=30,
+            command_timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
             max_command_retries=3,
         )
         factory = FlextLdapFactory(config)
@@ -28,7 +29,7 @@ class TestFlextLdapFactory:
             handler_id="test_handler",
             handler_name="Test Handler",
             handler_type="command",
-            command_timeout=30,
+            command_timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
             max_command_retries=3,
         )
         factory = FlextLdapFactory(config)
@@ -44,7 +45,7 @@ class TestFlextLdapFactory:
             handler_id="test_handler",
             handler_name="Test Handler",
             handler_type="command",
-            command_timeout=30,
+            command_timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
             max_command_retries=3,
         )
         factory = FlextLdapFactory(config)
@@ -60,7 +61,7 @@ class TestFlextLdapFactory:
             handler_id="test_handler",
             handler_name="Test Handler",
             handler_type="command",
-            command_timeout=30,
+            command_timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
             max_command_retries=3,
         )
         factory = FlextLdapFactory(config)
@@ -76,7 +77,7 @@ class TestFlextLdapFactory:
             handler_id="test_handler",
             handler_name="Test Handler",
             handler_type="command",
-            command_timeout=30,
+            command_timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
             max_command_retries=3,
         )
         factory = FlextLdapFactory(config)
@@ -92,12 +93,12 @@ class TestFlextLdapFactoryCreateAdvancedService:
 
     def test_create_advanced_service_success(self) -> None:
         """Test successful advanced service creation."""
-        client_config = {
-            "server_uri": "ldap://localhost:389",
+        client_config: dict[str, object] = {
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "password",
         }
-        service_config = {
+        service_config: dict[str, object] = {
             "handler_id": "test_service",
             "handler_name": "Test Service",
             "handler_type": "command",
@@ -111,12 +112,12 @@ class TestFlextLdapFactoryCreateAdvancedService:
 
     def test_create_advanced_service_invalid_server_uri(self) -> None:
         """Test advanced service creation with invalid server URI."""
-        client_config = {
-            "server_uri": "invalid://localhost:389",
+        client_config: dict[str, object] = {
+            "server_uri": f"invalid://localhost:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "password",
         }
-        service_config = {
+        service_config: dict[str, object] = {
             "handler_id": "test_service",
             "handler_name": "Test Service",
             "handler_type": "command",
@@ -129,11 +130,11 @@ class TestFlextLdapFactoryCreateAdvancedService:
 
     def test_create_advanced_service_missing_server_uri(self) -> None:
         """Test advanced service creation with missing server URI."""
-        client_config = {
+        client_config: dict[str, object] = {
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "password",
         }
-        service_config = {
+        service_config: dict[str, object] = {
             "handler_id": "test_service",
             "handler_name": "Test Service",
             "handler_type": "command",
@@ -146,12 +147,12 @@ class TestFlextLdapFactoryCreateAdvancedService:
 
     def test_create_advanced_service_invalid_bind_dn_type(self) -> None:
         """Test advanced service creation with invalid bind DN type."""
-        client_config = {
-            "server_uri": "ldap://localhost:389",
+        client_config: dict[str, object] = {
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": 123,  # Invalid type
             "bind_password": "password",
         }
-        service_config = {
+        service_config: dict[str, object] = {
             "handler_id": "test_service",
             "handler_name": "Test Service",
             "handler_type": "command",
@@ -164,12 +165,12 @@ class TestFlextLdapFactoryCreateAdvancedService:
 
     def test_create_advanced_service_invalid_bind_password_type(self) -> None:
         """Test advanced service creation with invalid bind password type."""
-        client_config = {
-            "server_uri": "ldap://localhost:389",
+        client_config: dict[str, object] = {
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": 123,  # Invalid type
         }
-        service_config = {
+        service_config: dict[str, object] = {
             "handler_id": "test_service",
             "handler_name": "Test Service",
             "handler_type": "command",

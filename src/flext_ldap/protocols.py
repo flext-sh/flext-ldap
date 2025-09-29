@@ -206,13 +206,6 @@ class FlextLdapProtocols(FlextProtocols):
             """
             ...
 
-    # Convenience aliases for easier downstream usage
-    ConnectionProtocol = LdapConnectionProtocol
-    SearchProtocol = LdapSearchProtocol
-    ModifyProtocol = LdapModifyProtocol
-    AuthenticationProtocol = LdapAuthenticationProtocol
-    ValidationProtocol = LdapValidationProtocol
-
 
 __all__ = [
     "FlextLdapProtocols",

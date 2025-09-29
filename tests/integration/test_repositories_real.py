@@ -89,8 +89,13 @@ class TestRealUserRepository:
         assert result.is_success, f"User retrieval failed: {result.error}"
         assert result.value is not None
         user = result.value
-        assert hasattr(user, "cn") and user.cn == "getuser"
-        assert hasattr(user, "uid") and user.uid == "getuser"
+        if isinstance(user, dict):
+            assert user.get("cn") == "getuser"
+            assert user.get("uid") == "getuser"
+        else:
+            # For non-dict objects, use getattr for safe attribute access
+            assert getattr(user, "cn", None) == "getuser"
+            assert getattr(user, "uid", None) == "getuser"
 
         await client.delete_entry_universal(dn="cn=getuser,ou=users,dc=flext,dc=local")
         await client.delete_entry_universal(dn="ou=users,dc=flext,dc=local")
@@ -261,8 +266,8 @@ class TestRealGroupRepository:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=flext,dc=local",
             cn="testgroup",
-            member=["cn=admin,dc=flext,dc=local"],
-            gid_number="1000",
+            member_dns=["cn=admin,dc=flext,dc=local"],
+            gid_number=1000,
             description="Test group for integration testing",
         )
 

@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap import FlextLdapExceptions
+from flext_ldap.constants import FlextLdapConstants
 
 
 class TestFlextLdapExceptions:
@@ -26,23 +27,34 @@ class TestFlextLdapExceptions:
         """Test connection error creation."""
         exceptions = FlextLdapExceptions()
 
-        error = exceptions.connection_error("Connection failed", "ldap://localhost:389")
+        error = exceptions.connection_error(
+            "Connection failed",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
-        assert "ldap://localhost:389" in str(error)
+        assert (
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            in str(error)
+        )
 
     def test_connection_error_with_ldap_code(self) -> None:
         """Test connection error with LDAP result code."""
         exceptions = FlextLdapExceptions()
 
         error = exceptions.connection_error(
-            "Connection failed", "ldap://localhost:389", ldap_code=49
+            "Connection failed",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            ldap_code=49,
         )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
-        assert "ldap://localhost:389" in str(error)
+        assert (
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            in str(error)
+        )
         assert "49" in str(error)
 
     def test_authentication_error_creation(self) -> None:
@@ -284,10 +296,14 @@ class TestFlextLdapExceptions:
 
         # Test with server URI
         error2 = exceptions.connection_failed(
-            "Connection timeout", server_uri="ldap://localhost:389"
+            "Connection timeout",
+            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
         assert isinstance(error2, Exception)
-        assert "ldap://localhost:389" in str(error2)
+        assert (
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            in str(error2)
+        )
 
         # Test with LDAP code
         error3 = exceptions.connection_failed("Connection timeout", ldap_code=81)
@@ -334,13 +350,19 @@ class TestFlextLdapExceptions:
         exceptions = FlextLdapExceptions()
 
         # Test that all exceptions have meaningful string representations
-        error = exceptions.connection_error("Connection failed", "ldap://localhost:389")
+        error = exceptions.connection_error(
+            "Connection failed",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        )
         error_str = str(error)
 
         assert isinstance(error_str, str)
         assert len(error_str) > 0
         assert "Connection failed" in error_str
-        assert "ldap://localhost:389" in error_str
+        assert (
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            in error_str
+        )
 
     def test_exception_error_messages(self) -> None:
         """Test exception error messages."""
@@ -483,7 +505,8 @@ class TestFlextLdapExceptions:
 
         # Test complete workflow with different exception types
         connection_error = exceptions.connection_error(
-            "Connection failed", "ldap://localhost:389"
+            "Connection failed",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
         assert isinstance(connection_error, Exception)
 
@@ -558,7 +581,8 @@ class TestFlextLdapExceptions:
         # Test creating many exceptions
         for i in range(100):
             error = exceptions.connection_error(
-                f"Connection failed {i}", f"ldap://server{i}:389"
+                f"Connection failed {i}",
+                f"ldap://server{i}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             )
             assert isinstance(error, Exception)
             assert str(i) in str(error)

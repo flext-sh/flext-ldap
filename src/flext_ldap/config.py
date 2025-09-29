@@ -81,7 +81,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_base_dn: str = Field(
-        default=FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_BASE,
+        default=FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
         description="LDAP base distinguished name for searches",
     )
 
@@ -109,7 +109,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_operation_timeout: int = Field(
-        default=60,
+        default=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,
         ge=1,
         le=600,
         description="LDAP operation timeout in seconds",
@@ -136,7 +136,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_cache_ttl: int = Field(
-        default=300,  # 5 minutes
+        default=FlextConstants.Defaults.TIMEOUT * 10,
         ge=0,
         le=3600,
         description="LDAP cache TTL in seconds",
@@ -151,7 +151,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_retry_delay: int = Field(
-        default=1,
+        default=int(FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY),
         ge=0,
         le=60,
         description="Delay between retry attempts in seconds",
@@ -196,11 +196,11 @@ class FlextLdapConfig(FlextConfig):
             return v
 
         # Basic DN validation
-        if len(v) < FlextLdapConstants.LdapValidation.MIN_DN_LENGTH:
+        if len(v) < FlextLdapConstants.Validation.MIN_DN_LENGTH:
             msg = f"LDAP bind DN too short: {v}"
             raise ValueError(msg)
 
-        if len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
+        if len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP bind DN too long: {v}"
             raise ValueError(msg)
 
@@ -216,7 +216,7 @@ class FlextLdapConfig(FlextConfig):
     @classmethod
     def validate_base_dn(cls, v: str) -> str:
         """Validate LDAP base DN format."""
-        if v and len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
+        if v and len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP base DN too long: {v}"
             raise ValueError(msg)
         return v
@@ -323,7 +323,7 @@ class FlextLdapConfig(FlextConfig):
                 "use_ssl": self.ldap_use_ssl,
                 "timeout": self.ldap_connection_timeout,
             }
-            return FlextResult[dict[str, object]].ok(config_dict)  # type: ignore[arg-type]
+            return FlextResult[dict[str, object]].ok(dict[str, object](config_dict))
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to create connection config: {e}"
@@ -401,50 +401,67 @@ class FlextLdapConfig(FlextConfig):
             )
 
     @staticmethod
-    def create_modify_config(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def create_modify_config(
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, str | list[str]]]:
         """Create modify config from data."""
         try:
-            config = {
+            values = data.get("values", [])
+            if not isinstance(values, list):
+                values = []
+            config: dict[str, str | list[str]] = {
                 "dn": str(data.get("dn", "")),
                 "operation": str(data.get("operation", "replace")),
                 "attribute": str(data.get("attribute", "")),
-                "values": data.get("values", []),
+                "values": [str(v) for v in values if v is not None],
             }
-            return FlextResult[dict[str, object]].ok(dict(config))
+            return FlextResult[dict[str, str | list[str]]].ok(config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[dict[str, str | list[str]]].fail(
                 f"Modify config creation failed: {e}"
             )
 
     @staticmethod
-    def create_add_config(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def create_add_config(
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, str | dict[str, list[str]]]]:
         """Create add config from data."""
         try:
-            config = {
+            attributes = data.get("attributes", {})
+            if not isinstance(attributes, dict):
+                attributes = {}
+            config: dict[str, str | dict[str, list[str]]] = {
                 "dn": str(data.get("dn", "")),
-                "attributes": data.get("attributes", {}),
+                "attributes": {
+                    str(k): [
+                        str(v) for v in (vals if isinstance(vals, list) else [vals])
+                    ]
+                    for k, vals in attributes.items()
+                },
             }
-            return FlextResult[dict[str, object]].ok(dict(config))
+            return FlextResult[dict[str, str | dict[str, list[str]]]].ok(config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[dict[str, str | dict[str, list[str]]]].fail(
                 f"Add config creation failed: {e}"
             )
 
     @staticmethod
-    def create_delete_config(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def create_delete_config(
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, str]]:
         """Create delete config from data."""
         try:
-            config = {
+            config: dict[str, str] = {
                 "dn": str(data.get("dn", "")),
             }
-            return FlextResult[dict[str, object]].ok(dict(config))
+            return FlextResult[dict[str, str]].ok(config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[dict[str, str]].fail(
                 f"Delete config creation failed: {e}"
             )
 
     @staticmethod
-    def get_default_search_config() -> FlextResult[dict[str, object]]:
+    def get_default_search_config() -> FlextResult[dict[str, str | int | list[str]]]:
         """Get default search configuration."""
         config = {
             "base_dn": "dc=example,dc=com",
@@ -454,7 +471,7 @@ class FlextLdapConfig(FlextConfig):
             "size_limit": 100,
             "time_limit": 30,
         }
-        return FlextResult[dict[str, object]].ok(dict(config))
+        return FlextResult[dict[str, str | int | list[str]]].ok(config)
 
     @staticmethod
     def merge_configs(
@@ -464,7 +481,7 @@ class FlextLdapConfig(FlextConfig):
         try:
             merged = base_config.copy()
             merged.update(override_config)
-            return FlextResult[dict[str, object]].ok(dict(merged))
+            return FlextResult[dict[str, object]].ok(merged)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
 

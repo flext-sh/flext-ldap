@@ -194,13 +194,14 @@ class FlextLdapModels(FlextModels):
         def serialize_dn(self, value: str) -> str:
             """Custom serializer for DN normalization."""
             # Normalize DN format for consistent serialization
-            components = []
+            components: list[str] = []
             for comp in value.split(","):
                 component = comp.strip()
                 if "=" in component:
                     attr, val = component.split("=", 1)
                     # Normalize attribute name to lowercase, preserve value case
-                    components.append(f"{attr.strip().lower()}={val.strip()}")  # type: ignore[arg-type]
+                    normalized_component = f"{attr.strip().lower()}={val.strip()}"
+                    components.append(normalized_component)
             return ",".join(components)
 
         @classmethod
@@ -1444,7 +1445,7 @@ class FlextLdapModels(FlextModels):
 
         # Optional user attributes - can be provided as None
         given_name: str | None = Field(None, description="Given Name")
-        mail: str = Field(..., description="Email address")
+        mail: str | None = Field(None, description="Email address")
         user_password: str | SecretStr | None = Field(None, description="User password")
         telephone_number: str | None = Field(None, description="Phone number")
         description: str | None = Field(None, description="User description")
@@ -1483,6 +1484,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_email(cls, value: str | None) -> str | None:
             """Validate email format using centralized validation."""
+            if value is None:
+                return None
             return cls.validate_email_field(value)
 
         @field_validator("user_password")
@@ -1501,7 +1504,6 @@ class FlextLdapModels(FlextModels):
             "uid",
             "cn",
             "sn",
-            "mail",
         )
         @classmethod
         def validate_required_string(cls, v: str) -> str:

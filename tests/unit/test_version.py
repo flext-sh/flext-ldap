@@ -274,10 +274,12 @@ class TestFlextLdapVersion:
         assert isinstance(branch, str)
         # Branch can be empty for development builds
         if len(branch) > 0:
-            assert branch in {"main", "master", "develop", "dev"} or branch.startswith((
-                "feature/",
-                "release/",
-            ))
+            assert branch in {"main", "master", "develop", "dev"} or branch.startswith(
+                (
+                    "feature/",
+                    "release/",
+                )
+            )
 
     def test_build_format(self) -> None:
         """Test that build information is properly formatted."""

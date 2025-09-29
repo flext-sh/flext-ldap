@@ -32,6 +32,7 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapValidations,
 )
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.acl import (
     FlextLdapAclConstants,
     FlextLdapAclConverters,
@@ -146,11 +147,11 @@ def ldap_config() -> FlextLdapModels.ConnectionConfig:
     """Get standard LDAP connection configuration."""
     return FlextLdapModels.ConnectionConfig(
         server="localhost",
-        port=389,
+        port=FlextLdapConstants.Protocol.DEFAULT_PORT,
         use_ssl=False,
         bind_dn="cn=admin,dc=example,dc=com",
         bind_password="admin123",
-        timeout=30,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
 
 
@@ -159,11 +160,11 @@ def ldap_config_invalid() -> FlextLdapModels.ConnectionConfig:
     """Get invalid LDAP configuration for error testing."""
     return FlextLdapModels.ConnectionConfig(
         server="",  # Invalid empty server
-        port=389,
+        port=FlextLdapConstants.Protocol.DEFAULT_PORT,
         use_ssl=False,
         bind_dn="",  # Invalid empty DN
         bind_password="",  # Invalid empty password
-        timeout=30,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
 
 
@@ -171,11 +172,11 @@ def ldap_config_invalid() -> FlextLdapModels.ConnectionConfig:
 def ldap_server_config() -> dict[str, Any]:
     """Get LDAP server configuration for testing."""
     return {
-        "server_uri": "ldap://localhost:389",
+        "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         "bind_dn": "cn=admin,dc=example,dc=com",
         "bind_password": "admin123",
         "base_dn": "dc=example,dc=com",
-        "port": 389,
+        "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
         "use_ssl": False,
         "use_tls": False,
     }
@@ -312,10 +313,7 @@ def acl_constants() -> FlextLdapAclConstants:
 @pytest.fixture
 def acl_converters() -> FlextLdapAclConverters:
     """Get ACL converters instance."""
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="test_handler", handler_name="test_handler"
-    )
-    return FlextLdapAclConverters(config=config)
+    return FlextLdapAclConverters()
 
 
 @pytest.fixture
@@ -327,10 +325,7 @@ def acl_manager() -> FlextLdapAclManager:
 @pytest.fixture
 def acl_parsers() -> FlextLdapAclParsers:
     """Get ACL parsers instance."""
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="test_handler", handler_name="test_handler"
-    )
-    return FlextLdapAclParsers(config=config)
+    return FlextLdapAclParsers()
 
 
 @pytest.fixture
@@ -378,7 +373,7 @@ def sample_group() -> FlextLdapModels.Group:
         cn="testgroup",
         gid_number=1000,
         description="Test Group",
-        members=["uid=testuser,ou=people,dc=example,dc=com"],
+        member_dns=["uid=testuser,ou=people,dc=example,dc=com"],
     )
 
 
@@ -469,7 +464,9 @@ def sample_invalid_email() -> str:
 @pytest.fixture
 def mock_ldap_server() -> Server:
     """Get mock LDAP server for testing."""
-    return Server("localhost", port=389, get_info="ALL")
+    return Server(
+        "localhost", port=FlextLdapConstants.Protocol.DEFAULT_PORT, get_info="ALL"
+    )
 
 
 @pytest.fixture
@@ -481,17 +478,19 @@ def mock_connection_result() -> FlextResult[bool]:
 @pytest.fixture
 def mock_search_result() -> FlextResult[list[dict[str, Any]]]:
     """Get mock search result."""
-    return FlextResult[list[dict[str, Any]]].ok([
-        {
-            "dn": "uid=testuser,ou=people,dc=example,dc=com",
-            "attributes": {
-                "uid": ["testuser"],
-                "cn": ["Test User"],
-                "sn": ["User"],
-                "mail": ["testuser@example.com"],
-            },
-        }
-    ])
+    return FlextResult[list[dict[str, Any]]].ok(
+        [
+            {
+                "dn": "uid=testuser,ou=people,dc=example,dc=com",
+                "attributes": {
+                    "uid": ["testuser"],
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "mail": ["testuser@example.com"],
+                },
+            }
+        ]
+    )
 
 
 @pytest.fixture
@@ -525,7 +524,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
         bind_dn="cn=admin,dc=flext,dc=local",
         bind_password="admin123",
         use_ssl=False,
-        timeout=30,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
 
 
@@ -536,7 +535,7 @@ def shared_ldap_client(shared_ldap_config: dict[str, str]) -> FlextLdapClient:
         server=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
         bind_password=shared_ldap_config["password"],
-        timeout=30,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
     return FlextLdapClient(config=config)
 
@@ -589,7 +588,7 @@ def skip_if_no_docker() -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_ldap_state() -> Generator[None]:
+def clean_ldap_state() -> None:
     """Clean LDAP state before and after each test."""
     # Pre-test cleanup - skip for now as we don't have test entries yet
     return
@@ -598,10 +597,10 @@ def clean_ldap_state() -> Generator[None]:
 
 
 @pytest.fixture(autouse=True)
-def clean_ldap_container() -> Generator[None]:
+def clean_ldap_container():
     """Clean LDAP container state."""
     # Pre-test cleanup
-    return
+    yield
     # Post-test cleanup
 
 

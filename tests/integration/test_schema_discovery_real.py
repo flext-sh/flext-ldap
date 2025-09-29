@@ -127,7 +127,11 @@ class TestRealServerQuirksDetection:
         # Get quirks for detected type
         quirks = detector.get_server_quirks(str(server_type))
         assert quirks is not None
-        assert hasattr(quirks, "server_type") and quirks.server_type == str(server_type)
+        if isinstance(quirks, dict):
+            assert quirks.get("server_type") == str(server_type)
+        else:
+            # For non-dict objects, use getattr for safe attribute access
+            assert getattr(quirks, "server_type", None) == str(server_type)
 
     async def test_openldap_quirks_detection(
         self, shared_ldap_client: FlextLdapClient

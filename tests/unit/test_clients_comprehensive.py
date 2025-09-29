@@ -123,9 +123,17 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock user entry
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
         class MockEntry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=testuser,dc=test,dc=com"
+                self.entry_attributes = {"cn": ["testuser"]}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
 
         result = client._authenticate_user_credentials(MockEntry(), "testpass")
         assert result.is_failure
@@ -137,10 +145,17 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock empty entry
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
         class MockEntry:
             def __init__(self) -> None:
                 self.entry_dn = ""
                 self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
 
         result = client._create_user_from_entry_result(MockEntry())
         assert result.is_failure
@@ -180,46 +195,13 @@ class TestFlextLdapClientComprehensive:
             def unbind(self) -> bool:
                 return True
 
-            def search(
-                self,
-                _search_base: str,
-                _search_filter: str,
-                _search_scope: str,
-                _attributes: list[str] | None = None,
-                _paged_size: int | None = None,
-                _paged_cookie: str | bytes | None = None,
-                _controls: list[object] | None = None,
-            ) -> bool:
-                # Mock implementation
-                return True
+            # Only implement LdapConnectionProtocol methods
+            # (bind, unbind, connect, disconnect, is_connected are inherited or implemented elsewhere)
 
-            def add(
-                self, _dn: str, _attributes: dict[str, str | list[str]] | None = None
-            ) -> bool:
-                # Mock implementation
-                return True
+        from typing import cast
+        from flext_ldap.typings import LdapConnectionProtocol
 
-            def modify(
-                self, _dn: str, _changes: dict[str, list[tuple[str, list[str]]]]
-            ) -> bool:
-                # Mock implementation
-                return True
-
-            def delete(self, _dn: str) -> bool:
-                # Mock implementation
-                return True
-
-            def compare(self, _dn: str, _attribute: str, _value: str) -> bool:
-                # Mock implementation
-                return True
-
-            def extended(
-                self, _request_name: str, _request_value: str | bytes | None = None
-            ) -> bool:
-                # Mock implementation
-                return True
-
-        client._connection = MockConnection()
+        client._connection = cast(LdapConnectionProtocol, MockConnection())
 
         request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
@@ -294,41 +276,63 @@ class TestFlextLdapClientComprehensive:
         """Test create_user when not connected."""
         client = FlextLdapClient()
 
-        user_data = {
-            "dn": "cn=testuser,dc=test,dc=com",
-            "cn": "Test User",
-            "sn": "User",
-            "uid": "testuser",
-            "mail": "test@example.com",
-        }
+        user_request = FlextLdapModels.CreateUserRequest(
+            dn="cn=testuser,dc=test,dc=com",
+            cn="Test User",
+            sn="User",
+            uid="testuser",
+            mail="test@example.com",
+            given_name=None,
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
+        )
 
-        result = await client.create_user(user_data)
+        result = await client.create_user(user_request)
         assert result.is_failure
         assert result.error is not None
         assert "No connection established" in result.error
 
     def test_build_user_attributes_missing_required_fields(self) -> None:
-        """Test _build_user_attributes with missing required fields."""
+        """Test _build_user_attributes with minimal required fields and optional None values."""
         client = FlextLdapClient()
 
-        user_data = {
-            "dn": "cn=testuser,dc=test,dc=com",
-            # Missing required cn, sn, uid
-        }
+        user_data = FlextLdapModels.CreateUserRequest(
+            dn="cn=testuser,dc=test,dc=com",
+            uid="testuser",
+            cn="Test User",
+            sn="User",
+            given_name=None,
+            mail=None,
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
+        )
 
         result = client._build_user_attributes(user_data)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to build user attributes" in result.error
+        assert result.is_success
+        attributes = result.unwrap()
+        assert attributes["uid"] == ["testuser"]
+        assert attributes["cn"] == ["Test User"]
+        assert attributes["sn"] == ["User"]
+        assert "mail" not in attributes  # Optional fields with None are not included
 
     def test_add_user_to_ldap_not_connected(self) -> None:
         """Test _add_user_to_ldap when not connected."""
         client = FlextLdapClient()
 
         attributes = {
-            "cn": "Test User",
-            "sn": "User",
-            "uid": "testuser",
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "uid": ["testuser"],
             "objectClass": ["inetOrgPerson", "top"],
         }
 
@@ -352,13 +356,14 @@ class TestFlextLdapClientComprehensive:
         """Test create_group when not connected."""
         client = FlextLdapClient()
 
-        group_data = {
-            "dn": "cn=testgroup,dc=test,dc=com",
-            "cn": "Test Group",
-            "objectClass": ["groupOfNames", "top"],
-        }
+        group_request = FlextLdapModels.CreateGroupRequest(
+            dn="cn=testgroup,dc=test,dc=com",
+            cn="Test Group",
+            description="Test group",
+            members=["cn=user1,dc=test,dc=com"],
+        )
 
-        result = await client.create_group(group_data)
+        result = await client.create_group(group_request)
         assert result.is_failure
         assert result.error is not None
         assert "No connection established" in result.error
@@ -545,10 +550,17 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock entry with empty attributes
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
         class MockEntry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=testuser,dc=test,dc=com"
                 self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
 
         # This should raise a validation error due to required fields
         with pytest.raises(Exception):
@@ -559,10 +571,17 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock entry with empty attributes
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
         class MockEntry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=testgroup,dc=test,dc=com"
                 self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
 
         group = client._create_group_from_entry(MockEntry())
 
@@ -601,7 +620,7 @@ class TestFlextLdapClientComprehensive:
         """Test modify_entry_universal when not connected."""
         client = FlextLdapClient()
 
-        changes = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        changes: dict[str, object] = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
         result = await client.modify_entry_universal(
             "cn=testuser,dc=test,dc=com", changes
         )
@@ -694,7 +713,7 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock entry attributes
-        attributes = {
+        attributes: dict[str, str | list[str]] = {
             "cn": ["  Test User  "],
             "sn": ["User"],
             "mail": ["test@example.com"],
@@ -711,7 +730,7 @@ class TestFlextLdapClientComprehensive:
         """Test _normalize_modify_changes method."""
         client = FlextLdapClient()
 
-        changes = {
+        changes: dict[str, object] = {
             "cn": [("MODIFY_REPLACE", ["  Test User  "])],
             "sn": [("MODIFY_REPLACE", ["User"])],
         }
@@ -727,7 +746,7 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock search results
-        results = [
+        results: list[dict[str, object]] = [
             {
                 "dn": "cn=testuser,dc=test,dc=com",
                 "attributes": {"cn": ["  Test User  "], "sn": ["User"]},
@@ -737,5 +756,10 @@ class TestFlextLdapClientComprehensive:
         result = client._normalize_search_results(results)
         assert len(result) == 1
         # Without server quirks setup, normalization doesn't run
-        assert result[0]["attributes"]["cn"] == ["  Test User  "]
-        assert result[0]["attributes"]["sn"] == ["User"]
+        result_list: list[dict[str, object]] = result
+        first_result = result_list[0]
+        assert isinstance(first_result, dict)
+        attributes = first_result.get("attributes")
+        assert isinstance(attributes, dict)
+        assert attributes["cn"] == ["  Test User  "]
+        assert attributes["sn"] == ["User"]

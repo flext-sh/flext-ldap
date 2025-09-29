@@ -19,6 +19,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdifAclParser, FlextLdifAPI, FlextLdifModels
 
 # Skip all integration tests until flext-ldif API is standardized
@@ -36,7 +37,7 @@ async def ldap_client() -> AsyncGenerator[FlextLdapClient]:
         use_ssl=False,
         bind_dn="cn=admin,dc=flext,dc=local",
         bind_password="admin123",
-        timeout=30,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
 
     client = FlextLdapClient(config=config)
@@ -227,12 +228,17 @@ sn: ImportedUser
         # Convert LDIF entries to LDAP and add to server
         imported_dns = []
         for ldif_entry in ldif_entries:
+            # Convert LdifAttributes to dict[str, EntryAttributeValue]
+            ldap_attributes = {}
+            for attr_name, attr_values in ldif_entry.attributes.data.items():
+                if len(attr_values.values) == 1:
+                    ldap_attributes[attr_name] = attr_values.values[0]
+                else:
+                    ldap_attributes[attr_name] = attr_values.values
+
             ldap_entry = FlextLdapModels.Entry(
-                dn=ldif_entry.dn,
-                attributes=ldif_entry.attributes,
-                object_classes=ldif_entry.attributes.get_attribute("objectClass")
-                if ldif_entry.attributes
-                else [],
+                dn=str(ldif_entry.dn),
+                attributes=ldap_attributes,
             )
 
             add_result = await ldap_client.add_entry_universal(
@@ -286,12 +292,17 @@ sn: FileUser
             # Import to LDAP
             imported_dns = []
             for ldif_entry in ldif_entries:
+                # Convert LdifAttributes to dict[str, EntryAttributeValue]
+                ldap_attributes = {}
+                for attr_name, attr_values in ldif_entry.attributes.data.items():
+                    if len(attr_values.values) == 1:
+                        ldap_attributes[attr_name] = attr_values.values[0]
+                    else:
+                        ldap_attributes[attr_name] = attr_values.values
+
                 ldap_entry = FlextLdapModels.Entry(
-                    dn=ldif_entry.dn,
-                    attributes=ldif_entry.attributes,
-                    object_classes=ldif_entry.attributes.get_attribute("objectClass")
-                    if ldif_entry.attributes
-                    else [],
+                    dn=str(ldif_entry.dn),
+                    attributes=ldap_attributes,
                 )
 
                 add_result = await ldap_client.add_entry_universal(
@@ -337,32 +348,42 @@ class TestEntryConversion:
         assert ldif_entry.dn == ldap_entry.dn
         assert ldif_entry.attributes == ldap_entry.attributes
         assert "objectClass" in ldif_entry.attributes
-        assert ldif_entry.attributes["objectClass"] is not None
-        assert "person" in ldif_entry.attributes["objectClass"]
+        object_classes = ldif_entry.attributes["objectClass"]
+        assert object_classes is not None
+        assert isinstance(object_classes, list)
+        assert "person" in object_classes
 
     def test_ldif_entry_to_ldap_entry_conversion(self) -> None:
-        ldif_entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "objectClass": ["inetOrgPerson"],
-                "cn": ["test"],
-                "sn": ["Test"],
-                "uid": ["test123"],
-            },
-        })
+        ldif_entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "objectClass": ["inetOrgPerson"],
+                    "cn": ["test"],
+                    "sn": ["Test"],
+                    "uid": ["test123"],
+                },
+            }
+        )
 
         assert ldif_entry_result.is_success
         ldif_entry = ldif_entry_result.unwrap()
 
+        # Convert LdifAttributes to dict[str, EntryAttributeValue]
+        ldap_attributes = {}
+        for attr_name, attr_values in ldif_entry.attributes.data.items():
+            if len(attr_values.values) == 1:
+                ldap_attributes[attr_name] = attr_values.values[0]
+            else:
+                ldap_attributes[attr_name] = attr_values.values
+
         ldap_entry = FlextLdapModels.Entry(
-            dn=ldif_entry.dn.value,
-            attributes=ldif_entry.attributes.data,
-            object_classes=ldif_entry.get_attribute("objectClass") or [],
+            dn=str(ldif_entry.dn),
+            attributes=ldap_attributes,
         )
 
-        assert ldap_entry.dn == ldif_entry.dn.value
-        assert ldap_entry.attributes == ldif_entry.attributes.data
-        assert "inetOrgPerson" in ldap_entry.object_classes
+        assert ldap_entry.dn == str(ldif_entry.dn)
+        assert ldap_entry.attributes == ldif_entry.attributes
 
 
 class TestAclIntegration:

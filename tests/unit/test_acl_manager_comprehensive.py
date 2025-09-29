@@ -152,11 +152,13 @@ class TestFlextLdapAclManagerComprehensive:
         """Test handle method exception handling."""
         manager = FlextLdapAclManager()
         # Mock an exception by passing invalid data that will cause an error
-        result = manager.handle({
-            "operation": "parse",
-            "acl_string": None,
-            "format": "openldap",
-        })
+        result = manager.handle(
+            {
+                "operation": "parse",
+                "acl_string": None,
+                "format": "openldap",
+            }
+        )
         assert result.is_failure
         assert result.error is not None
         assert "ACL string must be provided" in result.error
@@ -221,45 +223,51 @@ class TestFlextLdapAclManagerConvertAcl:
     """Tests for FlextLdapAclManager.convert_acl method."""
 
     def test_convert_acl_success(self) -> None:
-        """Test convert_acl method with valid input."""
+        """Test convert_acl method returns not implemented."""
         manager = FlextLdapAclManager()
         acl_data = 'access to dn.base="cn=test" by * read'
         result = manager.convert_acl(acl_data, "openldap", "active_directory")
-        assert result.is_success
-        assert result.data is not None
+
+        # Converters now honestly return not implemented
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
     def test_convert_acl_conversion_failure(self) -> None:
-        """Test convert_acl method with conversion failure."""
+        """Test convert_acl method returns not implemented."""
         manager = FlextLdapAclManager()
         acl_data = ""
         result = manager.convert_acl(acl_data, "openldap", "active_directory")
-        assert result.is_success
-        assert result.data is not None
-        assert "Converted  from openldap to active_directory" in str(result.data)
+
+        # Converters now honestly return not implemented
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
     def test_convert_acl_exception_handling(self) -> None:
-        """Test convert_acl method exception handling."""
+        """Test convert_acl method returns not implemented."""
         manager = FlextLdapAclManager()
         # Test with empty string instead of None
         result = manager.convert_acl("", "openldap", "active_directory")
-        assert result.is_success
-        assert result.data is not None
+
+        # Converters now honestly return not implemented
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclManagerBatchConvert:
     """Tests for FlextLdapAclManager.batch_convert method."""
 
     def test_batch_convert_success(self) -> None:
-        """Test batch_convert method with valid ACLs."""
+        """Test batch_convert method returns not implemented."""
         manager = FlextLdapAclManager()
         acls = [
             'access to dn.base="cn=test1" by * read',
             'access to dn.base="cn=test2" by * write',
         ]
         result = manager.batch_convert(acls, "openldap", "active_directory")
-        assert result.is_success
-        assert result.data is not None
-        assert len(result.data) == 2
+
+        # Converters now honestly return not implemented
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
     def test_batch_convert_empty_list(self) -> None:
         """Test batch_convert method with empty ACL list."""
@@ -270,17 +278,17 @@ class TestFlextLdapAclManagerBatchConvert:
         assert "ACL list cannot be empty" in result.error
 
     def test_batch_convert_conversion_failure(self) -> None:
-        """Test batch_convert method with conversion failure."""
+        """Test batch_convert method returns not implemented."""
         manager = FlextLdapAclManager()
         acls = [
             'access to dn.base="cn=test1" by * read',
             "",  # This will be handled gracefully
         ]
         result = manager.batch_convert(acls, "openldap", "active_directory")
-        assert result.is_success
-        assert result.data is not None
-        assert len(result.data) == 2
-        assert "Converted  from openldap to active_directory" in str(result.data[1])
+
+        # Converters now honestly return not implemented
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
     def test_batch_convert_exception_handling(self) -> None:
         """Test batch_convert method exception handling."""

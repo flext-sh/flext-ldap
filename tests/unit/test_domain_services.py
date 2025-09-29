@@ -39,7 +39,9 @@ class TestFlextLdapDomainServices:
         """Test handling invalid message type."""
         result = domain_services.handle("invalid_message")
         assert result.is_failure
-        assert "Message must be a dictionary" in result.error
+        assert (
+            result.error is not None and "Message must be a dictionary" in result.error
+        )
 
     def test_handle_missing_service_type(
         self, domain_services: FlextLdapDomainServices
@@ -48,7 +50,9 @@ class TestFlextLdapDomainServices:
         message = {"data": "test"}
         result = domain_services.handle(message)
         assert result.is_failure
-        assert "Service type must be a string" in result.error
+        assert (
+            result.error is not None and "Service type must be a string" in result.error
+        )
 
     def test_handle_invalid_service_type(
         self, domain_services: FlextLdapDomainServices
@@ -57,7 +61,9 @@ class TestFlextLdapDomainServices:
         message = {"service_type": 123}
         result = domain_services.handle(message)
         assert result.is_failure
-        assert "Service type must be a string" in result.error
+        assert (
+            result.error is not None and "Service type must be a string" in result.error
+        )
 
     def test_handle_unknown_service_type(
         self, domain_services: FlextLdapDomainServices
@@ -66,7 +72,10 @@ class TestFlextLdapDomainServices:
         message = {"service_type": "unknown_service"}
         result = domain_services.handle(message)
         assert result.is_failure
-        assert "Unknown service type: unknown_service" in result.error
+        assert (
+            result.error is not None
+            and "Unknown service type: unknown_service" in result.error
+        )
 
     def test_handle_user_aggregate_management(
         self, domain_services: FlextLdapDomainServices
@@ -138,7 +147,9 @@ class TestFlextLdapDomainServices:
     ) -> None:
         """Test CQRS command handler initialization."""
         # Test that the nested CqrsCommandHandler class exists and can be instantiated
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result is not None
         assert cqrs_services_result.is_success
 
@@ -152,7 +163,9 @@ class TestFlextLdapDomainServices:
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS query handler initialization."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result is not None
         assert cqrs_services_result.is_success
 
@@ -166,103 +179,137 @@ class TestFlextLdapDomainServices:
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS command handler with invalid message."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         result = cqrs_services.handle("invalid_message")
         assert result.is_failure
-        assert "Message must be a dictionary" in result.error
+        assert (
+            result.error is not None and "Message must be a dictionary" in result.error
+        )
 
     def test_cqrs_command_handler_missing_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS command handler with missing operation_type."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         message = {"data": "test"}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Operation type must be a string" in result.error
+        assert (
+            result.error is not None
+            and "Operation type must be a string" in result.error
+        )
 
     def test_cqrs_command_handler_invalid_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS command handler with invalid operation_type."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         message = {"operation_type": 123}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Operation type must be a string" in result.error
+        assert (
+            result.error is not None
+            and "Operation type must be a string" in result.error
+        )
 
     def test_cqrs_command_handler_unknown_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS command handler with unknown operation_type."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         message = {"operation_type": "unknown_operation"}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Unknown operation type: unknown_operation" in result.error
+        assert (
+            result.error is not None
+            and "Unknown operation type: unknown_operation" in result.error
+        )
 
     def test_cqrs_query_handler_invalid_message(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS query handler with invalid message."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         result = cqrs_services.handle("invalid_message")
         assert result.is_failure
-        assert "Message must be a dictionary" in result.error
+        assert (
+            result.error is not None and "Message must be a dictionary" in result.error
+        )
 
     def test_cqrs_query_handler_missing_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS query handler with missing operation_type."""
-        cqrs_services_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_services_result = domain_services.get_cqrs_services(
+            domain_services._config
+        )
         assert cqrs_services_result.is_success
         cqrs_services = cqrs_services_result.data
 
         message = {"data": "test"}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Operation type must be a string" in result.error
+        assert (
+            result.error is not None
+            and "Operation type must be a string" in result.error
+        )
 
     def test_cqrs_query_handler_invalid_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS query handler with invalid operation_type."""
-        cqrs_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_result = domain_services.get_cqrs_services(domain_services._config)
         assert cqrs_result.is_success
         cqrs_services = cqrs_result.unwrap()
 
         message = {"operation_type": 123}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Operation type must be a string" in result.error
+        assert (
+            result.error is not None
+            and "Operation type must be a string" in result.error
+        )
 
     def test_cqrs_query_handler_unknown_operation_type(
         self, domain_services: FlextLdapDomainServices
     ) -> None:
         """Test CQRS query handler with unknown operation_type."""
-        cqrs_result = domain_services.get_cqrs_services(domain_services.config)
+        cqrs_result = domain_services.get_cqrs_services(domain_services._config)
         assert cqrs_result.is_success
         cqrs_services = cqrs_result.unwrap()
 
         message = {"operation_type": "unknown_operation"}
         result = cqrs_services.handle(message)
         assert result.is_failure
-        assert "Unknown operation type: unknown_operation" in result.error
+        assert (
+            result.error is not None
+            and "Unknown operation type: unknown_operation" in result.error
+        )
 
     def test_domain_services_error_handling(
         self, domain_services: FlextLdapDomainServices

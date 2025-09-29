@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels
 from flext_ldap.acl.converters import FlextLdapAclConverters
 
 
@@ -18,22 +17,12 @@ class TestFlextLdapAclConvertersComprehensive:
 
     def test_converters_initialization(self) -> None:
         """Test converters initialization."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
         assert converters is not None
 
     def test_handle_valid_acl_conversion_request(self) -> None:
         """Test handle method with valid ACL conversion request."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         message = {
             "acl_content": "access to * by * read",
@@ -42,34 +31,30 @@ class TestFlextLdapAclConvertersComprehensive:
         }
 
         result = converters.handle(message)
+        # Handle succeeds, but nested conversion result is not implemented
         assert result.is_success
         assert result.data is not None
-        assert result.data.is_success
+        assert hasattr(result.data, "is_failure")
+        assert result.data.is_failure
+        assert "not implemented" in result.data.error.lower()
 
     def test_handle_valid_acl_conversion_request_default_formats(self) -> None:
         """Test handle method with valid ACL conversion request using default formats."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         message = {"acl_content": "access to * by * read"}
 
         result = converters.handle(message)
+        # Handle succeeds, but conversion result inside is not implemented
         assert result.is_success
         assert result.data is not None
-        assert result.data.is_success
+        assert hasattr(result.data, "is_failure")
+        assert result.data.is_failure
+        assert "not implemented" in result.data.error.lower()
 
     def test_handle_invalid_message_type(self) -> None:
         """Test handle method with invalid message type."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         result = converters.handle("invalid_message")
         assert result.is_failure
@@ -78,12 +63,7 @@ class TestFlextLdapAclConvertersComprehensive:
 
     def test_handle_missing_acl_content(self) -> None:
         """Test handle method with missing acl_content."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         message = {"source_format": "OPENLDAP", "target_format": "ACTIVE_DIRECTORY"}
 
@@ -94,48 +74,30 @@ class TestFlextLdapAclConvertersComprehensive:
 
     def test_handle_empty_dict(self) -> None:
         """Test handle method with empty dictionary."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         result = converters.handle({})
         assert result.is_failure
         assert result.error is not None
         assert "Invalid ACL conversion request" in result.error
 
-    def test_convert_acl_success(self) -> None:
-        """Test convert_acl method with successful conversion."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+    def test_convert_acl_not_implemented(self) -> None:
+        """Test convert_acl method returns not implemented error."""
+        converters = FlextLdapAclConverters()
 
         result = converters.convert_acl(
             "access to * by * read", "OPENLDAP", "ACTIVE_DIRECTORY"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted access to * by * read from OPENLDAP to ACTIVE_DIRECTORY"
-            in str(result.data)
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_convert_acl_different_formats(self) -> None:
-        """Test convert_acl method with different format combinations."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        """Test convert_acl method returns not implemented for all format combinations."""
+        converters = FlextLdapAclConverters()
 
-        # Test various format combinations
+        # Test various format combinations - all should return not implemented
         test_cases = [
             ("OPENLDAP", "ORACLE"),
             ("ACTIVE_DIRECTORY", "OPENLDAP"),
@@ -145,45 +107,38 @@ class TestFlextLdapAclConvertersComprehensive:
 
         for source, target in test_cases:
             result = converters.convert_acl("test acl", source, target)
-            assert result.is_success
-            assert result.data is not None
-            assert f"Converted test acl from {source} to {target}" in str(result.data)
+            assert result.is_failure
+            assert result.error is not None
+            assert "not implemented" in result.error.lower()
 
     def test_convert_acl_exception_handling(self) -> None:
-        """Test convert_acl method exception handling."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        """Test convert_acl method returns not implemented."""
+        converters = FlextLdapAclConverters()
 
-        # Mock an exception by passing None values
+        # Even with None values, should return not implemented
         result = converters.convert_acl(None, None, None)
-        assert (
-            result.is_success
-        )  # The current implementation doesn't raise exceptions for None values
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
-        # Test with actual content
+        # Test with actual content - still not implemented
         result = converters.convert_acl("valid acl", "source", "target")
-        assert result.is_success
+        assert result.is_failure
+        assert "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersOpenLdapConverter:
     """Comprehensive tests for OpenLdapConverter class."""
 
-    def test_to_microsoft_ad_success(self) -> None:
-        """Test to_microsoft_ad method with successful conversion."""
+    def test_to_microsoft_ad_not_implemented(self) -> None:
+        """Test to_microsoft_ad method returns not implemented."""
         result = FlextLdapAclConverters.OpenLdapConverter.to_microsoft_ad(
             "access to * by * read"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted OpenLDAP ACL to Microsoft AD format: access to * by * read"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -191,7 +146,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -199,7 +154,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -207,7 +162,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -215,12 +170,9 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         result = FlextLdapAclConverters.OpenLdapConverter.to_microsoft_ad(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            f"Converted OpenLDAP ACL to Microsoft AD format: {complex_acl}"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -228,12 +180,9 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
             "access to * by * read"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted OpenLDAP ACL to Oracle format: access to * by * read"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -241,7 +190,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -249,7 +198,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -257,7 +206,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -265,9 +214,9 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         result = FlextLdapAclConverters.OpenLdapConverter.to_oracle(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert f"Converted OpenLDAP ACL to Oracle format: {complex_acl}" in result.data
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersMicrosoftAdConverter:
@@ -279,12 +228,9 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
             "CN=TestUser,OU=Users,DC=example,DC=com:RP"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted Microsoft AD ACL to OpenLDAP format: CN=TestUser,OU=Users,DC=example,DC=com:RP"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -292,7 +238,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -300,7 +246,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -308,7 +254,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -316,12 +262,9 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         result = FlextLdapAclConverters.MicrosoftAdConverter.to_openldap(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            f"Converted Microsoft AD ACL to OpenLDAP format: {complex_acl}"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -329,12 +272,9 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
             "CN=TestUser,OU=Users,DC=example,DC=com:RP"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted Microsoft AD ACL to Oracle format: CN=TestUser,OU=Users,DC=example,DC=com:RP"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -342,7 +282,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -350,7 +290,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -358,7 +298,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -366,11 +306,9 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         result = FlextLdapAclConverters.MicrosoftAdConverter.to_oracle(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            f"Converted Microsoft AD ACL to Oracle format: {complex_acl}" in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersOracleConverter:
@@ -382,12 +320,9 @@ class TestFlextLdapAclConvertersOracleConverter:
             "GRANT READ ON ou=people,dc=example,dc=com TO cn=admin,dc=example,dc=com"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted Oracle ACL to OpenLDAP format: GRANT READ ON ou=people,dc=example,dc=com TO cn=admin,dc=example,dc=com"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -395,7 +330,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -403,7 +338,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -411,7 +346,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -419,9 +354,9 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         result = FlextLdapAclConverters.OracleConverter.to_openldap(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert f"Converted Oracle ACL to OpenLDAP format: {complex_acl}" in result.data
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_success(self) -> None:
         """Test to_microsoft_ad method with successful conversion."""
@@ -429,12 +364,9 @@ class TestFlextLdapAclConvertersOracleConverter:
             "GRANT READ ON ou=people,dc=example,dc=com TO cn=admin,dc=example,dc=com"
         )
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            "Converted Oracle ACL to Microsoft AD format: GRANT READ ON ou=people,dc=example,dc=com TO cn=admin,dc=example,dc=com"
-            in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -442,7 +374,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -450,7 +382,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -458,7 +390,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "ACL content cannot be empty" in result.error
+        assert "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -466,31 +398,31 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         result = FlextLdapAclConverters.OracleConverter.to_microsoft_ad(complex_acl)
 
-        assert result.is_success
-        assert result.data is not None
-        assert (
-            f"Converted Oracle ACL to Microsoft AD format: {complex_acl}" in result.data
-        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersIntegration:
     """Integration tests for ACL converters."""
 
-    def test_full_conversion_workflow(self) -> None:
-        """Test full conversion workflow from OpenLDAP to Microsoft AD to Oracle."""
-        # OpenLDAP to Microsoft AD
+    def test_full_conversion_workflow_not_implemented(self) -> None:
+        """Test that conversion workflow returns not implemented."""
+        # OpenLDAP to Microsoft AD - not implemented
         result1 = FlextLdapAclConverters.OpenLdapConverter.to_microsoft_ad(
             "access to * by * read"
         )
-        assert result1.is_success
+        assert result1.is_failure
+        assert "not implemented" in result1.error.lower()
 
-        # Microsoft AD to Oracle
-        result2 = FlextLdapAclConverters.MicrosoftAdConverter.to_oracle(result1.data)
-        assert result2.is_success
+        # All converters return not implemented
+        result2 = FlextLdapAclConverters.MicrosoftAdConverter.to_oracle("test")
+        assert result2.is_failure
+        assert "not implemented" in result2.error.lower()
 
-        # Oracle back to OpenLDAP
-        result3 = FlextLdapAclConverters.OracleConverter.to_openldap(result2.data)
-        assert result3.is_success
+        result3 = FlextLdapAclConverters.OracleConverter.to_openldap("test")
+        assert result3.is_failure
+        assert "not implemented" in result3.error.lower()
 
     def test_converter_error_propagation(self) -> None:
         """Test that errors are properly propagated through the conversion chain."""
@@ -507,12 +439,7 @@ class TestFlextLdapAclConvertersIntegration:
 
     def test_converter_handle_method_integration(self) -> None:
         """Test integration with the main handle method."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="TestAclConverter",
-            default_id="test-acl-converter",
-        )
-        converters = FlextLdapAclConverters(config=config)
+        converters = FlextLdapAclConverters()
 
         # Test with various format combinations
         test_cases = [
@@ -535,6 +462,8 @@ class TestFlextLdapAclConvertersIntegration:
 
         for test_case in test_cases:
             result = converters.handle(test_case)
+            # Handle succeeds, but nested conversion is not implemented
             assert result.is_success
             assert result.data is not None
-            assert result.data.is_success
+            assert result.data.is_failure
+            assert "not implemented" in result.data.error.lower()

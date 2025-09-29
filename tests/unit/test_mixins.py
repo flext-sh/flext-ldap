@@ -105,16 +105,20 @@ class TestFlextLdapMixins:
     def test_business_rules_mixin_validate_pipeline_step(self) -> None:
         """Test business rules mixin validate_pipeline_step method."""
         # Test with valid step
-        step = {"name": "test", "command": "echo"}
-        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(step)
+        valid_step: dict[str, object] = {"name": "test", "command": "echo"}
+        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(valid_step)
         assert result.is_success
 
         # Test with missing name
-        step = {"command": "echo"}
-        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(step)
+        step_missing_name: dict[str, object] = {"command": "echo"}
+        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(
+            step_missing_name
+        )
         assert not result.is_success
 
         # Test with missing command
-        step = {"name": "test"}
-        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(step)
+        step_missing_command: dict[str, object] = {"name": "test"}
+        result = FlextLdapMixins.BusinessRulesMixin.validate_pipeline_step(
+            step_missing_command
+        )
         assert not result.is_success

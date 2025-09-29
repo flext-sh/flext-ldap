@@ -23,18 +23,6 @@ from flext_core import FlextTypes
 
 # LDAP domain TypeVars
 
-# Module-level type aliases for compatibility
-Attributes = list[str]
-ModifyChanges = dict[str, list[tuple[str, list[str]]]]
-
-# LDAP constants for compatibility
-BASE = "BASE"
-LEVEL = "LEVEL"
-SUBTREE = "SUBTREE"
-MODIFY_ADD = "MODIFY_ADD"
-MODIFY_DELETE = "MODIFY_DELETE"
-MODIFY_REPLACE = "MODIFY_REPLACE"
-
 
 class FlextLdapTypes(FlextTypes):
     """Unified LDAP types class extending FlextTypes with LDAP-specific type definitions.
@@ -309,8 +297,22 @@ class LdapConnectionProtocol(Protocol):
 
 
 # =========================================================================
-# PUBLIC API EXPORTS - Essential types only
+# PUBLIC API EXPORTS - Essential types at module level
 # =========================================================================
+
+# Export constants from FlextLdapTypes at module level
+BASE = FlextLdapTypes.BASE
+LEVEL = FlextLdapTypes.LEVEL
+SUBTREE = FlextLdapTypes.SUBTREE
+MODIFY_ADD = FlextLdapTypes.MODIFY_ADD
+MODIFY_DELETE = FlextLdapTypes.MODIFY_DELETE
+MODIFY_REPLACE = FlextLdapTypes.MODIFY_REPLACE
+
+# Type aliases at module level for common use
+ModifyChanges = FlextLdapTypes.LdapDomain.ModifyChanges
+
+# Missing type alias that needs to be exported
+Attributes = FlextLdapTypes.LdapDomain.AttributeDict
 
 __all__: list[str] = [
     "BASE",

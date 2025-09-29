@@ -40,7 +40,7 @@ def create_test_user(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
@@ -74,7 +74,7 @@ def create_test_group(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
@@ -107,7 +107,7 @@ def cleanup_test_entries(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         cleaned_count = 0
@@ -147,7 +147,7 @@ def verify_entry_exists(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         success: bool = conn.search(
@@ -183,7 +183,7 @@ def get_entry_attributes(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         success: bool = conn.search(
@@ -226,7 +226,7 @@ def search_entries(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         ldap_scope: Literal["BASE", "LEVEL", "SUBTREE"]
@@ -282,7 +282,7 @@ def modify_entry(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=FlextLdapTypes.SIMPLE,  # type: ignore[assignment]
+            authentication=FlextLdapTypes.SIMPLE,
         )
 
         # Convert changes to ldap3 format

@@ -121,8 +121,9 @@ class FlextLdapConstants(FlextConstants):
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
         GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
 
-    class LdapValidation:
-        """LDAP-specific validation constants."""
+    # LDAP-specific validation constants
+    class Validation(FlextConstants.Validation):
+        """LDAP-specific validation constants extending base validation."""
 
         # LDAP DN validation
         MIN_DN_PARTS: Final[int] = 2
@@ -141,8 +142,9 @@ class FlextLdapConstants(FlextConstants):
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
 
-    class LdapMessages:
-        """LDAP-specific error and validation messages."""
+    # LDAP-specific error and validation messages
+    class Messages(FlextConstants.Messages):
+        """LDAP-specific error and validation messages extending base messages."""
 
         # LDAP validation messages
         HOST_CANNOT_BE_EMPTY: Final[str] = "Host cannot be empty"
@@ -151,19 +153,15 @@ class FlextLdapConstants(FlextConstants):
         INVALID_DN_FORMAT: Final[str] = "Invalid DN format"
         INVALID_SEARCH_FILTER: Final[str] = "Invalid LDAP search filter"
         CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed: {0}"
-        OPERATION_FAILED: Final[str] = "Operation {0} failed"
 
         # LDAP error messages following FLEXT standards
         INVALID_EMAIL_FORMAT: Final[str] = "Invalid email format"
         EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 
-    class LdapErrors:
-        """LDAP-specific error codes - extend universal error codes."""
-
-        # Base universal error from flext-core
-        VALIDATION_ERROR: Final[str] = f"LDAP_{FlextConstants.Errors.VALIDATION_ERROR}"
-        CONNECTION_ERROR: Final[str] = f"LDAP_{FlextConstants.Errors.CONNECTION_ERROR}"
+    # LDAP-specific error codes
+    class Errors(FlextConstants.Errors):
+        """LDAP-specific error codes extending universal error codes."""
 
         # LDAP-specific errors
         LDAP_BIND_ERROR: Final[str] = "LDAP_BIND_ERROR"
@@ -174,8 +172,9 @@ class FlextLdapConstants(FlextConstants):
         LDAP_INVALID_DN: Final[str] = "LDAP_INVALID_DN"
         LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
 
-    class LdapDefaults:
-        """LDAP-specific default values."""
+    # LDAP-specific default values
+    class Defaults(FlextConstants.Defaults):
+        """LDAP-specific default values extending base defaults."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
         DEFAULT_SEARCH_BASE: Final[str] = ""
