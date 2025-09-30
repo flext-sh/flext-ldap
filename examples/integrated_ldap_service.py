@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapClient
+from flext_ldap.models import FlextLdapModels
 
 logger = FlextLogger(__name__)
 
@@ -82,7 +83,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapClient) -> Non
             for ou_dn in ous_to_verify:
                 # Search for the OU to verify it exists
                 search_result: FlextResult[
-                    list[dict[str, object]]
+                    list[FlextLdapModels.Entry]
                 ] = await ldap_service.search(
                     base_dn=ou_dn,
                     filter_str="(objectClass=organizationalUnit)",

@@ -22,10 +22,8 @@ from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdifAclParser, FlextLdifAPI, FlextLdifModels
 
-# Skip all integration tests until flext-ldif API is standardized
-pytestmark = pytest.mark.skip(
-    "LDIF integration tests temporarily disabled during refactoring"
-)
+# Integration tests - require flext-ldif and Docker LDAP server
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture

@@ -23,6 +23,7 @@ from flext_ldap.acl import (
 )
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.repositories import FlextLdapRepositories
@@ -178,7 +179,7 @@ class FlextLdapAPI(FlextService[None]):
         search_base: str,
         search_filter: str,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform LDAP search operation - implements LdapSearchProtocol.
 
         Args:
@@ -187,27 +188,27 @@ class FlextLdapAPI(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult[list[dict[str, object]]]: Search results
+            FlextResult[list[FlextLdapModels.Entry]]: Entry models search results
 
         """
         # Get search response and extract entries
         search_result = await self.search_entries(
-            search_base, search_filter, "subtree", attributes
+            search_base, search_filter, FlextLdapConstants.Scopes.SUBTREE, attributes
         )
         if search_result.is_failure:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 search_result.error or "Search failed"
             )
 
         response = search_result.unwrap()
-        return FlextResult[list[dict[str, object]]].ok(response.entries)
+        return FlextResult[list[FlextLdapModels.Entry]].ok(response.entries)
 
     async def search_one(
         self,
         search_base: str,
         search_filter: str,
         attributes: list[str] | None = None,
-    ) -> FlextResult[dict[str, object] | None]:
+    ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Perform LDAP search for single entry - implements LdapSearchProtocol.
 
         Args:
@@ -216,21 +217,21 @@ class FlextLdapAPI(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult[dict[str, object] | None]: Single search result or None
+            FlextResult[FlextLdapModels.Entry | None]: Single Entry model result or None
 
         """
         # Use existing search method and return first result
         search_result = await self.search(search_base, search_filter, attributes)
         if search_result.is_failure:
-            return FlextResult[dict[str, object] | None].fail(
+            return FlextResult[FlextLdapModels.Entry | None].fail(
                 search_result.error or "Search failed"
             )
 
         results = search_result.unwrap()
         if not results:
-            return FlextResult[dict[str, object] | None].ok(None)
+            return FlextResult[FlextLdapModels.Entry | None].ok(None)
 
-        return FlextResult[dict[str, object] | None].ok(results[0])
+        return FlextResult[FlextLdapModels.Entry | None].ok(results[0])
 
     async def add_entry(
         self, dn: str, attributes: dict[str, str | list[str]]
@@ -329,11 +330,11 @@ class FlextLdapAPI(FlextService[None]):
         client = self.client
         return client.validate_dn(dn)
 
-    def validate_entry(self, entry: dict[str, object]) -> FlextResult[bool]:
+    def validate_entry(self, entry: FlextLdapModels.Entry) -> FlextResult[bool]:
         """Validate LDAP entry structure - implements LdapValidationProtocol.
 
         Args:
-            entry: LDAP entry to validate
+            entry: LDAP Entry model to validate
 
         Returns:
             FlextResult[bool]: Validation success status
@@ -352,7 +353,7 @@ class FlextLdapAPI(FlextService[None]):
         base_dn: str,
         cn: str | None = None,
         filter_str: str | None = None,
-        scope: str = "subtree",
+        scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for LDAP groups with enhanced validation."""
@@ -385,7 +386,7 @@ class FlextLdapAPI(FlextService[None]):
         self,
         base_dn: str,
         filter_str: str,
-        scope: str = "subtree",
+        scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: list[str] | None = None,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for LDAP entries using search_with_request with enhanced validation."""
@@ -408,7 +409,7 @@ class FlextLdapAPI(FlextService[None]):
                 filter_str=filter_str,
                 scope=scope,
                 attributes=attributes or [],
-                page_size=100,
+                page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
                 paged_cookie=b"",
             )
             return await self.client.search_with_request(request)

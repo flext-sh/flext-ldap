@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Generator
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import pytest
 from ldap3 import Server
@@ -26,6 +26,11 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
 )
+
+# Import centralized Docker fixtures
+
+if TYPE_CHECKING:
+    from flext_tests import FlextTestDocker
 from flext_ldap import (
     FlextLdapAPI,
     FlextLdapClient,
@@ -529,29 +534,58 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_client(shared_ldap_config: dict[str, str]) -> FlextLdapClient:
-    """Shared LDAP client for integration tests."""
-    config = FlextLdapModels.ConnectionConfig(
-        server=shared_ldap_config["server_url"],
+async def shared_ldap_client(
+    shared_ldap_config: dict[str, str], shared_ldap_container: str
+) -> Generator[FlextLdapClient]:
+    """Shared LDAP client for integration tests using centralized container."""
+    # Ensure container is running by depending on shared_ldap_container
+    _ = shared_ldap_container  # Container dependency ensures it's started
+
+    client = FlextLdapClient()
+
+    # Connect to the LDAP server with proper parameters
+    connect_result = await client.connect(
+        server_uri=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
-        bind_password=shared_ldap_config["password"],
-        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
+        password=shared_ldap_config["password"],
     )
-    return FlextLdapClient(config=config)
+
+    if connect_result.is_failure:
+        pytest.skip(f"Failed to connect to LDAP server: {connect_result.error}")
+
+    yield client
+
+    # Disconnect when done
+    try:
+        await client.disconnect()
+    except Exception:
+        pass  # Best effort cleanup
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_container() -> str:
-    """Managed LDAP container for tests."""
-    # Skip Docker tests for now due to flext_tests import issues
-    pytest.skip("Docker tests temporarily disabled due to flext_tests import issues")
-    return "flext-openldap-test"
+def shared_ldap_container(flext_docker: "FlextTestDocker") -> Generator[str]:
+    """Managed LDAP container for tests using centralized FlextTestDocker."""
+    import os
+
+    # Use centralized docker-compose file for OpenLDAP
+    compose_file = os.path.expanduser("~/flext/docker/docker-compose.openldap.yml")
+
+    # Start OpenLDAP stack using docker-compose
+    start_result = flext_docker.start_compose_stack(compose_file)
+    if start_result.is_failure:
+        pytest.skip(f"OpenLDAP container failed to start: {start_result.error}")
+
+    container_name = "flext-openldap-test"
+    yield container_name
+
+    # Cleanup handled by FlextTestDocker automatically
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_container_manager() -> None:
-    """Docker control manager for LDAP containers."""
-    pytest.skip("Docker tests temporarily disabled due to flext_tests import issues")
+def shared_ldap_container_manager(flext_docker: "FlextTestDocker") -> Generator["FlextTestDocker"]:
+    """Docker control manager for LDAP containers using centralized FlextTestDocker."""
+
+    yield flext_docker
 
 
 @pytest.fixture

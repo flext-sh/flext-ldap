@@ -14,10 +14,8 @@ from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
 from ..support.shared_ldap_fixtures import check_docker_available, skip_if_no_docker
 
-# Skip all integration tests when LDAP server is not available
-pytestmark = pytest.mark.skip(
-    reason="Integration tests require LDAP server - skipping when no server available"
-)
+# Mark as integration tests - container will auto-start via centralized fixtures
+pytestmark = pytest.mark.integration
 
 
 class TestSharedLDAPIntegration:

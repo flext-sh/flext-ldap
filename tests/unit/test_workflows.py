@@ -39,7 +39,7 @@ class TestFlextLdapWorkflowOrchestrator:
         result = workflow.handle("invalid_message")
         assert result.is_failure
         assert result.error is not None
-        assert "Message must be a dictionary" in result.error
+        assert "Message must be DomainMessage model or dictionary" in result.error
 
     def test_handle_missing_workflow_type(self) -> None:
         """Test handling message with missing workflow type."""

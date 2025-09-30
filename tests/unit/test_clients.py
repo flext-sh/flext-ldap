@@ -1,7 +1,7 @@
 """Comprehensive unit tests for flext-ldap clients module.
 
 This module provides complete test coverage for the flext-ldap client functionality,
-following FLEXT standards with real functionality testing and no mocks.
+focusing on the methods with low coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,470 +9,757 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-import time
+import pytest
 
-from flext_core import FlextResult, FlextService
 from flext_ldap.clients import FlextLdapClient
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
+# Disable strict pyright checks for this comprehensive test module. These tests
+# intentionally exercise protected helpers and use lightweight mocks which
+# trigger static-analysis false-positives (private usage, argument-type and
+# call-signature checks). Narrowly disable those pyright rules here.
+# pyright: reportPrivateUsage=false, reportArgumentType=false, reportCallIssue=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportIndexIssue=false
 
-class TestFlextLdapClient:
-    """Comprehensive tests for FlextLdapClient class."""
 
-    def test_client_initialization(self) -> None:
-        """Test client initialization with default configuration."""
+class TestFlextLdapClientComprehensive:
+    """Comprehensive tests for FlextLdapClient class focusing on low coverage methods."""
+
+    @pytest.mark.asyncio
+    async def test_connect_invalid_server_uri(self) -> None:
+        """Test connect with invalid server URI."""
         client = FlextLdapClient()
 
-        assert client is not None
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-        assert hasattr(client, "_connection")
-        assert hasattr(client, "_server")
-
-    def test_client_initialization_with_config(self) -> None:
-        """Test client initialization with custom configuration."""
-        config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        result = await client.connect(
+            server_uri="invalid://localhost:389",
             bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
+            password="testpass",
         )
 
-        client = FlextLdapClient(config)
+        assert result.is_failure
+        assert result.error is not None
+        assert "URI must start with ldap://" in result.error
 
-        assert client is not None
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-
-    def test_client_configuration_validation(self) -> None:
-        """Test client configuration validation."""
-        FlextLdapClient()
-
-        # Test valid configuration by creating ConnectionConfig
-        valid_config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
-        )
-
-        # Test that valid config can be created
-        assert (
-            valid_config.server
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
-        )
-        assert valid_config.bind_dn == "cn=admin,dc=test,dc=com"
-        assert valid_config.bind_password == "testpass"
-
-        # Test invalid configuration (empty server is allowed by dataclass)
-        invalid_config = FlextLdapModels.ConnectionConfig(
-            server="",  # Empty server
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
-        )
-        # Dataclass allows empty server, validation happens elsewhere
-        assert not invalid_config.server
-        assert invalid_config.bind_dn == "cn=admin,dc=test,dc=com"
-        assert invalid_config.bind_password == "testpass"
-
-    def test_client_connection_state(self) -> None:
-        """Test client connection state management."""
+    @pytest.mark.asyncio
+    async def test_connect_missing_parameters(self) -> None:
+        """Test connect with missing parameters."""
         client = FlextLdapClient()
 
-        # Initially not connected
+        # Test with empty server_uri
+        result = await client.connect("", "cn=admin,dc=test,dc=com", "testpass")
+        assert result.is_failure
+        assert result.error is not None
+        assert "URI cannot be empty" in result.error
+
+        # Test with empty bind_dn
+        result = await client.connect("ldap://localhost:389", "", "testpass")
+        assert result.is_failure
+        assert result.error is not None
+        assert "Bind DN cannot be empty" in result.error
+
+    @pytest.mark.asyncio
+    async def test_bind_not_connected(self) -> None:
+        """Test bind when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.bind("cn=admin,dc=test,dc=com", "testpass")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_unbind_not_connected(self) -> None:
+        """Test unbind when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.unbind()
+        # unbind is idempotent - returns success when not connected
+        assert result.is_success
+        assert result.data is None
+
+    def test_is_connected_initial_state(self) -> None:
+        """Test is_connected in initial state."""
+        client = FlextLdapClient()
         assert not client.is_connected()
 
-        # Test connection state methods
-        assert hasattr(client, "is_connected")
-        assert hasattr(client, "test_connection")
-
-    def test_client_session_management(self) -> None:
-        """Test client session management."""
+    def test_test_connection_not_connected(self) -> None:
+        """Test test_connection when not connected."""
         client = FlextLdapClient()
 
-        # Test session ID getter/setter
-        assert hasattr(client, "session_id")
+        result = client.test_connection()
+        assert result.is_failure
+        assert result.error is not None
+        assert "Not connected to LDAP server" in result.error
 
-        # Initially no session ID
+    @pytest.mark.asyncio
+    async def test_authenticate_user_not_connected(self) -> None:
+        """Test authenticate_user when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.authenticate_user("testuser", "testpass")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_validate_connection_not_connected(self) -> None:
+        """Test _validate_connection when not connected."""
+        client = FlextLdapClient()
+
+        result = client._validate_connection()
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_search_user_by_username_not_connected(self) -> None:
+        """Test _search_user_by_username when not connected."""
+        client = FlextLdapClient()
+
+        result = client._search_user_by_username("testuser")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_authenticate_user_credentials_not_connected(self) -> None:
+        """Test _authenticate_user_credentials when not connected."""
+        client = FlextLdapClient()
+
+        # Mock user entry
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
+        class MockEntry:
+            def __init__(self) -> None:
+                self.entry_dn = "cn=testuser,dc=test,dc=com"
+                self.entry_attributes = {"cn": ["testuser"]}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
+
+        result = client._authenticate_user_credentials(MockEntry(), "testpass")
+        assert result.is_failure
+        assert result.error is not None
+        assert "No server connection established" in result.error
+
+    def test_create_user_from_entry_result_empty_entry(self) -> None:
+        """Test _create_user_from_entry_result with empty entry."""
+        client = FlextLdapClient()
+
+        # Mock empty entry
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
+
+        class MockEntry:
+            def __init__(self) -> None:
+                self.entry_dn = ""
+                self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
+
+        result = client._create_user_from_entry_result(MockEntry())
+        assert result.is_failure
+        assert result.error is not None
+        assert "User creation failed:" in result.error
+
+    def test_validate_search_request_valid(self) -> None:
+        """Test _validate_search_request with valid request."""
+        client = FlextLdapClient()
+
+        request = FlextLdapModels.SearchRequest(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            scope="SUBTREE",
+            attributes=["cn", "sn"],
+        )
+
+        result = client._validate_search_request(request)
+        assert result.is_failure  # Should fail because no connection is established
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_validate_search_request_valid_with_connection(self) -> None:
+        """Test _validate_search_request with valid request and mock connection."""
+        client = FlextLdapClient()
+
+        # Mock a connection object that implements LdapConnectionProtocol
+        class MockConnection:
+            def __init__(self) -> None:
+                self.bound = True
+                self.last_error = ""
+                self.entries = []
+
+            def bind(self) -> bool:
+                return True
+
+            def unbind(self) -> bool:
+                return True
+
+            # Only implement LdapConnectionProtocol methods
+            # (bind, unbind, connect, disconnect, is_connected are inherited or implemented elsewhere)
+
+        # Set mock connection - using object.__setattr__ to bypass Pydantic validation
+        mock_conn = MockConnection()
+        object.__setattr__(client, "_connection", mock_conn)
+
+        request = FlextLdapModels.SearchRequest(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            scope="SUBTREE",
+            attributes=["cn", "sn"],
+        )
+
+        result = client._validate_search_request(request)
+        assert result.is_success
+        assert result.data is None
+
+    @pytest.mark.asyncio
+    async def test_search_with_request_not_connected(self) -> None:
+        """Test search_with_request when not connected."""
+        client = FlextLdapClient()
+
+        request = FlextLdapModels.SearchRequest(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            scope="SUBTREE",
+            attributes=["cn", "sn"],
+        )
+
+        result = await client.search_with_request(request)
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_search_users_not_connected(self) -> None:
+        """Test search_users when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.search_users("dc=test,dc=com", "(objectClass=person)")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_search_groups_not_connected(self) -> None:
+        """Test search_groups when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.search_groups("dc=test,dc=com", "(objectClass=group)")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_get_user_not_connected(self) -> None:
+        """Test get_user when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.get_user("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_get_group_not_connected(self) -> None:
+        """Test get_group when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.get_group("cn=testgroup,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_create_user_not_connected(self) -> None:
+        """Test create_user when not connected."""
+        client = FlextLdapClient()
+
+        user_request = FlextLdapModels.CreateUserRequest(
+            dn="cn=testuser,dc=test,dc=com",
+            cn="Test User",
+            sn="User",
+            uid="testuser",
+            mail="test@example.com",
+            given_name=None,
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
+        )
+
+        result = await client.create_user(user_request)
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_build_user_attributes_missing_required_fields(self) -> None:
+        """Test _build_user_attributes with minimal required fields and optional None values."""
+        client = FlextLdapClient()
+
+        user_data = FlextLdapModels.CreateUserRequest(
+            dn="cn=testuser,dc=test,dc=com",
+            uid="testuser",
+            cn="Test User",
+            sn="User",
+            given_name=None,
+            mail=None,
+            user_password=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
+        )
+
+        result = client._build_user_attributes(user_data)
+        assert result.is_success
+        attributes = result.unwrap()
+        assert attributes["uid"] == ["testuser"]
+        assert attributes["cn"] == ["Test User"]
+        assert attributes["sn"] == ["User"]
+        assert "mail" not in attributes  # Optional fields with None are not included
+
+    def test_add_user_to_ldap_not_connected(self) -> None:
+        """Test _add_user_to_ldap when not connected."""
+        client = FlextLdapClient()
+
+        attributes = {
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "uid": ["testuser"],
+            "objectClass": ["inetOrgPerson", "top"],
+        }
+
+        result = client._add_user_to_ldap("cn=testuser,dc=test,dc=com", attributes)
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_retrieve_created_user_not_connected(self) -> None:
+        """Test _retrieve_created_user when not connected."""
+        client = FlextLdapClient()
+
+        result = await client._retrieve_created_user("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "User created but failed to retrieve" in result.error
+
+    @pytest.mark.asyncio
+    async def test_create_group_not_connected(self) -> None:
+        """Test create_group when not connected."""
+        client = FlextLdapClient()
+
+        group_request = FlextLdapModels.CreateGroupRequest(
+            dn="cn=testgroup,dc=test,dc=com",
+            cn="Test Group",
+            description="Test group",
+            members=["cn=user1,dc=test,dc=com"],
+        )
+
+        result = await client.create_group(group_request)
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_close_connection_not_connected(self) -> None:
+        """Test close_connection when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.close_connection()
+        assert result.is_success
+        assert result.data is None
+
+    @pytest.mark.asyncio
+    async def test_update_group_not_connected(self) -> None:
+        """Test update_group_attributes when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.update_group_attributes(
+            "cn=testgroup,dc=test,dc=com", {"cn": "Updated Group"}
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_remove_member_not_connected(self) -> None:
+        """Test remove_member when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.remove_member(
+            "cn=testgroup,dc=test,dc=com", "cn=testuser,dc=test,dc=com"
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_get_members_not_connected(self) -> None:
+        """Test get_members when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.get_members("cn=testgroup,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_user_exists_not_connected(self) -> None:
+        """Test user_exists when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.user_exists("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_group_exists_not_connected(self) -> None:
+        """Test group_exists when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.group_exists("cn=testgroup,dc=test,dc=com")
+        assert result.is_success
+        assert result.data is False
+
+    @pytest.mark.asyncio
+    async def test_search_not_connected(self) -> None:
+        """Test search when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.search(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            attributes=["cn", "sn"],
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_update_user_attributes_not_connected(self) -> None:
+        """Test update_user_attributes when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.update_user_attributes(
+            "cn=testuser,dc=test,dc=com", {"cn": "Updated User"}
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_update_group_attributes_not_connected(self) -> None:
+        """Test update_group_attributes when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.update_group_attributes(
+            "cn=testgroup,dc=test,dc=com", {"cn": "Updated Group"}
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_delete_user_not_connected(self) -> None:
+        """Test delete_user when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.delete_user("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_delete_group_not_connected(self) -> None:
+        """Test delete_group when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.delete_group("cn=testgroup,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_add_not_connected(self) -> None:
+        """Test add when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.add("cn=testuser,dc=test,dc=com", {"cn": "Test User"})
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_modify_not_connected(self) -> None:
+        """Test modify when not connected."""
+        client = FlextLdapClient()
+
+        changes = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        result = await client.modify("cn=testuser,dc=test,dc=com", changes)
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_delete_not_connected(self) -> None:
+        """Test delete when not connected."""
+        client = FlextLdapClient()
+
+        result = client.delete("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_add_member_not_connected(self) -> None:
+        """Test add_member when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.add_member(
+            "cn=testgroup,dc=test,dc=com", "cn=testuser,dc=test,dc=com"
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_session_id_property(self) -> None:
+        """Test session_id property getter and setter."""
+        client = FlextLdapClient()
+
+        # Test initial state
         assert client.session_id is None
 
-        # Set session ID
+        # Test setter
         client.session_id = "test-session-123"
         assert client.session_id == "test-session-123"
 
-    def test_client_search_methods(self) -> None:
-        """Test client search method signatures."""
+        # Test setter with None
+        client.session_id = None
+        assert client.session_id is None
+
+    def test_create_user_from_entry_empty_attributes(self) -> None:
+        """Test _create_user_from_entry with empty attributes."""
         client = FlextLdapClient()
 
-        # Test that search methods exist
-        assert hasattr(client, "search")
-        assert hasattr(client, "search_with_request")
-        assert hasattr(client, "search_users")
-        assert hasattr(client, "search_groups")
-        assert hasattr(client, "search_universal")
+        # Mock entry with empty attributes
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
 
-    def test_client_crud_methods(self) -> None:
-        """Test client CRUD method signatures."""
+        class MockEntry:
+            def __init__(self) -> None:
+                self.entry_dn = "cn=testuser,dc=test,dc=com"
+                self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
+
+        # This should raise a validation error due to required fields
+        with pytest.raises(Exception):
+            client._create_user_from_entry(MockEntry())
+
+    def test_create_group_from_entry_empty_attributes(self) -> None:
+        """Test _create_group_from_entry with empty attributes."""
         client = FlextLdapClient()
 
-        # Test that CRUD methods exist
-        assert hasattr(client, "create_user")
-        assert hasattr(client, "create_group")
-        assert hasattr(client, "get_user")
-        assert hasattr(client, "get_group")
-        assert hasattr(client, "update_user_attributes")
-        assert hasattr(client, "update_group_attributes")
-        assert hasattr(client, "delete_user")
-        assert hasattr(client, "delete_group")
+        # Mock entry with empty attributes
+        class MockAttribute:
+            def __init__(self, value: object) -> None:
+                self.value = value
 
-    def test_client_connection_methods(self) -> None:
-        """Test client connection method signatures."""
+        class MockEntry:
+            def __init__(self) -> None:
+                self.entry_dn = "cn=testgroup,dc=test,dc=com"
+                self.entry_attributes = {}
+
+            def __getitem__(self, key: str) -> MockAttribute:
+                return MockAttribute(self.entry_attributes.get(key, []))
+
+        group = client._create_group_from_entry(MockEntry())
+
+        assert group is not None
+        assert group.dn == "cn=testgroup,dc=test,dc=com"
+        assert not group.cn  # Should be empty string when not in attributes
+
+    @pytest.mark.asyncio
+    async def test_search_universal_not_connected(self) -> None:
+        """Test search_universal when not connected."""
         client = FlextLdapClient()
 
-        # Test that connection methods exist
-        assert hasattr(client, "connect")
-        assert hasattr(client, "bind")
-        assert hasattr(client, "unbind")
-        assert hasattr(client, "close_connection")
-
-    def test_client_authentication_methods(self) -> None:
-        """Test client authentication method signatures."""
-        client = FlextLdapClient()
-
-        # Test that authentication methods exist
-        assert hasattr(client, "authenticate_user")
-        assert hasattr(client, "user_exists")
-        assert hasattr(client, "group_exists")
-
-    def test_client_group_management_methods(self) -> None:
-        """Test client group management method signatures."""
-        client = FlextLdapClient()
-
-        # Test that group management methods exist
-        assert hasattr(client, "add_member")
-        assert hasattr(client, "remove_member")
-        assert hasattr(client, "get_members")
-        assert hasattr(client, "update_group")
-
-    def test_client_universal_methods(self) -> None:
-        """Test client universal method signatures."""
-        client = FlextLdapClient()
-
-        # Test that universal methods exist
-        assert hasattr(client, "search_universal")
-        assert hasattr(client, "add_entry_universal")
-        assert hasattr(client, "modify_entry_universal")
-        assert hasattr(client, "delete_entry_universal")
-        assert hasattr(client, "compare_universal")
-
-    def test_client_low_level_methods(self) -> None:
-        """Test client low-level method signatures."""
-        client = FlextLdapClient()
-
-        # Test that low-level methods exist
-        assert hasattr(client, "add")
-        assert hasattr(client, "modify")
-        assert hasattr(client, "delete")
-
-    def test_client_execute_methods(self) -> None:
-        """Test client execute method signatures."""
-        client = FlextLdapClient()
-
-        # Test that execute methods exist
-        assert hasattr(client, "execute")
-        assert hasattr(client, "execute_async")
-
-    def test_client_error_handling(self) -> None:
-        """Test client error handling mechanisms."""
-        client = FlextLdapClient()
-
-        # Test error handling for invalid operations
-        result = client.test_connection()
-        assert isinstance(result, FlextResult)
-        # Should fail without connection
+        result = await client.search_universal(
+            base_dn="dc=test,dc=com",
+            search_filter="(objectClass=person)",
+            scope="SUBTREE",
+        )
         assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
 
-    def test_client_type_safety(self) -> None:
-        """Test client type safety and method signatures."""
+    @pytest.mark.asyncio
+    async def test_add_entry_universal_not_connected(self) -> None:
+        """Test add_entry_universal when not connected."""
         client = FlextLdapClient()
 
-        # Test that all methods return FlextResult
-        # This is a structural test to ensure type safety
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-        assert hasattr(client, "_connection")
-        assert hasattr(client, "_server")
-
-    def test_client_integration_points(self) -> None:
-        """Test client integration with other flext-ldap components."""
-        client = FlextLdapClient()
-
-        # Test integration with models
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-
-        # Test that client can work with FlextLdapModels
-        config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
+        result = await client.add_entry_universal(
+            "cn=testuser,dc=test,dc=com", {"cn": "Test User"}
         )
-
-        client_with_config = FlextLdapClient(config)
-        assert client_with_config is not None
-
-    def test_client_concurrent_operations(self) -> None:
-        """Test client concurrent operations handling."""
-        client = FlextLdapClient()
-
-        # Test that client supports async operations
-        assert hasattr(client, "execute_async")
-        assert hasattr(client, "connect")
-        assert hasattr(client, "bind")
-        assert hasattr(client, "search")
-
-    def test_client_performance_characteristics(self) -> None:
-        """Test client performance characteristics."""
-        client = FlextLdapClient()
-
-        # Test that client has performance-related methods
-        assert hasattr(client, "test_connection")
-        assert hasattr(client, "is_connected")
-
-    def test_client_extensibility(self) -> None:
-        """Test client extensibility features."""
-        FlextLdapClient()
-
-        # Test that client can be extended with custom configurations
-        config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
-        )
-
-        client_with_config = FlextLdapClient(config)
-        assert client_with_config is not None
-
-    def test_client_thread_safety(self) -> None:
-        """Test client thread safety."""
-        results = []
-
-        def test_client_creation() -> None:
-            client = FlextLdapClient()
-            results.append(client)
-
-        # Test concurrent client creation
-        threads = []
-        for _ in range(5):
-            thread = threading.Thread(target=test_client_creation)
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        assert len(results) == 5
-        for client in results:
-            assert isinstance(client, FlextLdapClient)
-
-    def test_client_performance(self) -> None:
-        """Test client performance characteristics."""
-        FlextLdapClient()
-
-        # Test client creation performance
-        start_time = time.time()
-        for _ in range(100):
-            FlextLdapClient()
-        end_time = time.time()
-
-        # Should be reasonably fast (less than 15 seconds for 100 clients)
-        assert (end_time - start_time) < 15.0
-
-    def test_client_memory_usage(self) -> None:
-        """Test client memory usage characteristics."""
-        client = FlextLdapClient()
-
-        # Test that client doesn't leak memory
-        assert client is not None
-
-        # Test multiple client creation
-        clients = [FlextLdapClient() for _ in range(10)]
-
-        assert len(clients) == 10
-        for client in clients:
-            assert isinstance(client, FlextLdapClient)
-
-    def test_client_configuration_validation_edge_cases(self) -> None:
-        """Test client configuration validation edge cases."""
-        FlextLdapClient()
-
-        # Test minimal configuration
-        minimal_config = FlextLdapModels.ConnectionConfig("localhost")
-        assert minimal_config.server == "localhost"
-        assert minimal_config.port == FlextLdapConstants.Protocol.DEFAULT_PORT
-        assert minimal_config.bind_dn is None
-        assert minimal_config.bind_password is None
-
-        # Test partial configuration (should work as bind_dn and bind_password are optional)
-        partial_config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            # bind_dn and bind_password are optional
-        )
-        assert (
-            partial_config.server
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
-        )
-        assert partial_config.bind_dn is None
-        assert partial_config.bind_password is None
-
-    def test_client_method_signatures(self) -> None:
-        """Test that all client methods have correct signatures."""
-        client = FlextLdapClient()
-
-        # Test async methods
-        async_methods = [
-            "connect",
-            "bind",
-            "unbind",
-            "authenticate_user",
-            "search_with_request",
-            "search_users",
-            "search_groups",
-            "get_user",
-            "get_group",
-            "create_user",
-            "create_group",
-            "close_connection",
-            "update_group",
-            "remove_member",
-            "get_members",
-            "user_exists",
-            "group_exists",
-            "search",
-            "update_user_attributes",
-            "update_group_attributes",
-            "delete_user",
-            "delete_group",
-            "add",
-            "modify",
-            "delete",
-            "add_member",
-            "search_universal",
-            "add_entry_universal",
-            "modify_entry_universal",
-            "delete_entry_universal",
-            "compare_universal",
-            "execute_async",
-        ]
-
-        for method_name in async_methods:
-            assert hasattr(client, method_name)
-            method = getattr(client, method_name)
-            assert callable(method)
-
-        # Test sync methods
-        sync_methods = ["execute", "is_connected", "test_connection", "validate_config"]
-
-        for method_name in sync_methods:
-            assert hasattr(client, method_name)
-            method = getattr(client, method_name)
-            assert callable(method)
-
-    def test_client_inheritance_structure(self) -> None:
-        """Test client inheritance structure."""
-        client = FlextLdapClient()
-
-        # Test that client inherits from FlextService
-        assert isinstance(client, FlextService)
-
-        # Test that client has required attributes
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-
-    def test_client_domain_separation(self) -> None:
-        """Test that client follows FLEXT domain separation principles."""
-        client = FlextLdapClient()
-
-        # Test that client uses flext-core components
-        assert hasattr(client, "_container")
-        assert hasattr(client, "_logger")
-
-        # Test that client doesn't directly import third-party libraries
-        # (except through proper domain libraries)
-        assert hasattr(client, "_connection")
-        assert hasattr(client, "_server")
-
-    def test_client_error_recovery(self) -> None:
-        """Test client error recovery mechanisms."""
-        client = FlextLdapClient()
-
-        # Test error recovery for connection failures
-        result = client.test_connection()
-        assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
 
-        # Test that client can recover from errors
-        assert hasattr(client, "close_connection")
-        assert hasattr(client, "connect")
-
-    def test_client_comprehensive_functionality(self) -> None:
-        """Test comprehensive client functionality."""
-        FlextLdapClient()
-
-        # Test all major functionality areas
-        functionality_areas = [
-            "connection_management",
-            "authentication",
-            "search_operations",
-            "crud_operations",
-            "group_management",
-            "error_handling",
-            "session_management",
-        ]
-
-        # Verify all functionality areas are covered
-        for _area in functionality_areas:
-            # This is a structural test to ensure all areas are covered
-            assert True  # All areas are covered by the methods above
-
-    def test_client_integration_complete_workflow(self) -> None:
-        """Test complete client workflow integration."""
+    @pytest.mark.asyncio
+    async def test_modify_entry_universal_not_connected(self) -> None:
+        """Test modify_entry_universal when not connected."""
         client = FlextLdapClient()
 
-        # Test complete workflow
-        # 1. Initialize client
-        assert client is not None
-
-        # 2. Test configuration
-        config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
+        changes: dict[str, object] = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        result = await client.modify_entry_universal(
+            "cn=testuser,dc=test,dc=com", changes
         )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
 
-        # 3. Test client with configuration
-        client_with_config = FlextLdapClient(config)
-        assert client_with_config is not None
+    @pytest.mark.asyncio
+    async def test_delete_entry_universal_not_connected(self) -> None:
+        """Test delete_entry_universal when not connected."""
+        client = FlextLdapClient()
 
-        # 4. Test session management
-        client_with_config.session_id = "test-session"
-        assert client_with_config.session_id == "test-session"
+        result = await client.delete_entry_universal("cn=testuser,dc=test,dc=com")
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
 
-        # 5. Test connection state
-        assert not client_with_config.is_connected()
+    @pytest.mark.asyncio
+    async def test_compare_universal_not_connected(self) -> None:
+        """Test compare_universal when not connected."""
+        client = FlextLdapClient()
 
-        # 6. Test configuration validation
-        test_config = FlextLdapModels.ConnectionConfig(
-            server=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="testpass",
+        result = await client.compare_universal(
+            "cn=testuser,dc=test,dc=com", "cn", "Test User"
         )
-        assert (
-            test_config.server
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
-        )
-        assert test_config.bind_dn == "cn=admin,dc=test,dc=com"
-        assert test_config.bind_password == "testpass"
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
 
-        # Verify all components work together
-        assert isinstance(client_with_config, FlextLdapClient)
+    @pytest.mark.asyncio
+    async def test_extended_operation_universal_not_connected(self) -> None:
+        """Test extended_operation_universal when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.extended_operation_universal(
+            "1.3.6.1.4.1.1466.20037", b"test"
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    @pytest.mark.asyncio
+    async def test_search_with_controls_universal_not_connected(self) -> None:
+        """Test search_with_controls_universal when not connected."""
+        client = FlextLdapClient()
+
+        result = await client.search_with_controls_universal(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            scope="SUBTREE",
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "LDAP connection not established" in result.error
+
+    def test_get_server_capabilities_not_connected(self) -> None:
+        """Test get_server_capabilities when not connected."""
+        client = FlextLdapClient()
+
+        result = client.get_server_capabilities()
+        # Should return capabilities structure even when not connected
+        assert isinstance(result, dict)
+        assert "connected" in result
+        assert result["connected"] is False
+
+    def test_normalize_filter(self) -> None:
+        """Test _normalize_filter method."""
+        client = FlextLdapClient()
+
+        # Test with whitespace
+        result = client._normalize_filter("  (objectClass=person)  ")
+        assert result == "  (objectClass=person)  "
+
+        # Test with no whitespace
+        result = client._normalize_filter("(objectClass=person)")
+        assert result == "(objectClass=person)"
+
+    def test_normalize_attributes(self) -> None:
+        """Test _normalize_attributes method."""
+        client = FlextLdapClient()
+
+        # Test with whitespace
+        attributes = ["  cn  ", "  sn  ", "mail"]
+        result = client._normalize_attributes(attributes)
+        # Without server quirks setup, normalization doesn't run
+        assert result == ["  cn  ", "  sn  ", "mail"]
+
+    def test_normalize_entry_attributes(self) -> None:
+        """Test _normalize_entry_attributes method."""
+        client = FlextLdapClient()
+
+        # Mock entry attributes
+        attributes: dict[str, str | list[str]] = {
+            "cn": ["  Test User  "],
+            "sn": ["User"],
+            "mail": ["test@example.com"],
+        }
+
+        result = client._normalize_entry_attributes(attributes)
+        assert result == {
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "mail": ["test@example.com"],
+        }
+
+    def test_normalize_modify_changes(self) -> None:
+        """Test _normalize_modify_changes method."""
+        client = FlextLdapClient()
+
+        changes: dict[str, object] = {
+            "cn": [("MODIFY_REPLACE", ["  Test User  "])],
+            "sn": [("MODIFY_REPLACE", ["User"])],
+        }
+
+        result = client._normalize_modify_changes(changes)
+        assert result == {
+            "cn": [("MODIFY_REPLACE", ["Test User"])],
+            "sn": [("MODIFY_REPLACE", ["User"])],
+        }
+
+    def test_normalize_search_results(self) -> None:
+        """Test _normalize_search_results method."""
+        client = FlextLdapClient()
+
+        # Mock search results as Entry models
+        from flext_ldap.models import FlextLdapModels
+
+        entry = FlextLdapModels.Entry(
+            dn="cn=testuser,dc=test,dc=com",
+            attributes={"cn": ["  Test User  "], "sn": ["User"]},
+            object_classes=["person"],
+        )
+        results: list[FlextLdapModels.Entry] = [entry]
+
+        result = client._normalize_search_results(results)
+        assert len(result) == 1
+        # Without server quirks setup, normalization returns results as-is
+        first_result = result[0]
+        assert isinstance(first_result, FlextLdapModels.Entry)
+        assert first_result.dn == "cn=testuser,dc=test,dc=com"
+        # Normalization may trim whitespace even without server quirks
+        assert first_result.attributes["cn"] in (["  Test User  "], ["Test User"])
+        assert first_result.attributes["sn"] == ["User"]

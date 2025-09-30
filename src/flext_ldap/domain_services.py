@@ -62,26 +62,33 @@ class FlextLdapDomainServices:
         self._context = FlextContext()
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle domain service requests using FLEXT ecosystem patterns."""
+        """Handle domain service requests using DomainMessage model."""
         try:
-            if not isinstance(message, dict):
-                return FlextResult[object].fail("Message must be a dictionary")
-
-            service_type = message.get("service_type")
-            if not isinstance(service_type, str):
-                return FlextResult[object].fail("Service type must be a string")
+            # Accept either DomainMessage model or dict for backward compatibility
+            if isinstance(message, FlextLdapModels.DomainMessage):
+                service_type = message.message_type
+                message_data = message.data
+            elif isinstance(message, dict):
+                service_type = message.get("service_type")
+                message_data = message
+                if not isinstance(service_type, str):
+                    return FlextResult[object].fail("Service type must be a string")
+            else:
+                return FlextResult[object].fail(
+                    "Message must be DomainMessage model or dictionary"
+                )
 
             # Route to advanced domain services
             if service_type == "user_aggregate_management":
-                return self._handle_user_aggregate_management(message)
+                return self._handle_user_aggregate_management(message_data)
             if service_type == "organization_domain_service":
-                return self._handle_organization_domain_service(message)
+                return self._handle_organization_domain_service(message_data)
             if service_type == "security_policy_enforcement":
-                return self._handle_security_policy_enforcement(message)
+                return self._handle_security_policy_enforcement(message_data)
             if service_type == "audit_trail_management":
-                return self._handle_audit_trail_management(message)
+                return self._handle_audit_trail_management(message_data)
             if service_type == "event_sourcing_orchestration":
-                return self._handle_event_sourcing_orchestration(message)
+                return self._handle_event_sourcing_orchestration(message_data)
             return FlextResult[object].fail(f"Unknown service type: {service_type}")
 
         except Exception as e:
@@ -657,22 +664,31 @@ class FlextLdapDomainServices:
             self._exceptions = FlextLdapExceptions
 
         def handle(self, message: object) -> FlextResult[object]:
-            """Handle CQRS command and query requests."""
+            """Handle CQRS command and query requests using CQRS models."""
             try:
-                if not isinstance(message, dict):
-                    return FlextResult[object].fail("Message must be a dictionary")
+                # Accept CqrsCommand, CqrsQuery, or dict for backward compatibility
+                if isinstance(message, FlextLdapModels.CqrsCommand):
+                    return self._handle_command(message.model_dump())
+                elif isinstance(message, FlextLdapModels.CqrsQuery):
+                    return self._handle_query(message.model_dump())
+                elif isinstance(message, dict):
+                    operation_type = message.get("operation_type")
+                    if not isinstance(operation_type, str):
+                        return FlextResult[object].fail(
+                            "Operation type must be a string"
+                        )
 
-                operation_type = message.get("operation_type")
-                if not isinstance(operation_type, str):
-                    return FlextResult[object].fail("Operation type must be a string")
-
-                if operation_type == "command":
-                    return self._handle_command(message)
-                if operation_type == "query":
-                    return self._handle_query(message)
-                return FlextResult[object].fail(
-                    f"Unknown operation type: {operation_type}"
-                )
+                    if operation_type == "command":
+                        return self._handle_command(message)
+                    if operation_type == "query":
+                        return self._handle_query(message)
+                    return FlextResult[object].fail(
+                        f"Unknown operation type: {operation_type}"
+                    )
+                else:
+                    return FlextResult[object].fail(
+                        "Message must be CqrsCommand, CqrsQuery, or dictionary"
+                    )
 
             except Exception as e:
                 return FlextResult[object].fail(f"CQRS service handling failed: {e}")

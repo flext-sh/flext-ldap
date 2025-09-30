@@ -122,3 +122,32 @@ class TestFlextLdapMixins:
             step_missing_command
         )
         assert not result.is_success
+
+    def test_validation_mixin_validate_non_negative_number(self) -> None:
+        """Test validate_non_negative_number - covers lines 61-63."""
+        # Test with positive number
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", 5.0)
+        assert result.is_success
+
+        # Test with zero
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", 0.0)
+        assert result.is_success
+
+        # Test with negative number (covers lines 61-63)
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", -1.0)
+        assert not result.is_success
+        assert "must be non-negative" in result.error
+
+    def test_validation_mixin_validate_enum_value(self) -> None:
+        """Test validate_enum_value - covers lines 70-74."""
+        valid_values = ["pending", "running", "completed"]
+
+        # Test with valid value
+        result = FlextLdapMixins.ValidationMixin.validate_enum_value("status", "pending", valid_values)
+        assert result.is_success
+
+        # Test with invalid value (covers lines 70-74)
+        result = FlextLdapMixins.ValidationMixin.validate_enum_value("status", "invalid", valid_values)
+        assert not result.is_success
+        assert "Invalid status" in result.error
+        assert "Must be one of" in result.error

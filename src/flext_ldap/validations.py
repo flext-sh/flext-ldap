@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextConstants, FlextResult
+from flext_core import FlextConstants, FlextResult, FlextUtilities
 
 
 class FlextLdapValidations:
@@ -81,13 +81,14 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_port(port: int | None) -> FlextResult[bool]:
-        """Centralized port validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized port validation - delegates to flext-core FlextUtilities.Validation."""
         if port is None:
             return FlextResult[bool].fail("Port cannot be None")
 
-        max_port = FlextConstants.Network.MAX_PORT
-        if port <= 0 or port > max_port:
-            return FlextResult[bool].fail(f"Port must be between 1 and {max_port}")
+        # Use flext-core validation (returns FlextResult[int])
+        core_result = FlextUtilities.Validation.validate_port(port)
+        if core_result.is_failure:
+            return FlextResult[bool].fail(core_result.error or "Port validation failed")
 
         return FlextResult[bool].ok(True)
 
@@ -152,15 +153,18 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_email(email: str | None) -> FlextResult[bool]:
-        """Centralized email validation using regex."""
+        """Centralized email validation - delegates to flext-core FlextUtilities.Validation."""
         if email is None:
             return FlextResult[bool].fail("Email cannot be None")
 
-        # Basic email validation regex
-        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        if re.match(email_pattern, email):
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail("Invalid email format")
+        # Use flext-core validation (returns FlextResult[str])
+        core_result = FlextUtilities.Validation.validate_email(email)
+        if core_result.is_failure:
+            return FlextResult[bool].fail(
+                core_result.error or "Email validation failed"
+            )
+
+        return FlextResult[bool].ok(True)
 
     @staticmethod
     def validate_password(password: str | None) -> FlextResult[bool]:

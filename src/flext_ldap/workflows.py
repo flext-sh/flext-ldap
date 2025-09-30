@@ -37,26 +37,33 @@ class FlextLdapWorkflowOrchestrator:
         self._exceptions = FlextLdapExceptions
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle workflow orchestration requests."""
+        """Handle workflow orchestration requests using DomainMessage model."""
         try:
-            if not isinstance(message, dict):
-                return FlextResult[object].fail("Message must be a dictionary")
-
-            workflow_type = message.get("workflow_type")
-            if not isinstance(workflow_type, str):
-                return FlextResult[object].fail("Workflow type must be a string")
+            # Accept DomainMessage model or dict for backward compatibility
+            if isinstance(message, FlextLdapModels.DomainMessage):
+                workflow_type = message.message_type
+                message_data = message.data
+            elif isinstance(message, dict):
+                workflow_type = message.get("workflow_type")
+                message_data = message
+                if not isinstance(workflow_type, str):
+                    return FlextResult[object].fail("Workflow type must be a string")
+            else:
+                return FlextResult[object].fail(
+                    "Message must be DomainMessage model or dictionary"
+                )
 
             # Route to advanced workflow orchestrators
             if workflow_type == "enterprise_user_provisioning":
-                return self._orchestrate_enterprise_user_provisioning(message)
+                return self._orchestrate_enterprise_user_provisioning(message_data)
             if workflow_type == "organizational_restructure":
-                return self._orchestrate_organizational_restructure(message)
+                return self._orchestrate_organizational_restructure(message_data)
             if workflow_type == "compliance_audit_workflow":
-                return self._orchestrate_compliance_audit_workflow(message)
+                return self._orchestrate_compliance_audit_workflow(message_data)
             if workflow_type == "multi_domain_synchronization":
-                return self._orchestrate_multi_domain_synchronization(message)
+                return self._orchestrate_multi_domain_synchronization(message_data)
             if workflow_type == "advanced_security_workflow":
-                return self._orchestrate_advanced_security_workflow(message)
+                return self._orchestrate_advanced_security_workflow(message_data)
             return FlextResult[object].fail(f"Unknown workflow type: {workflow_type}")
 
         except Exception as e:
@@ -784,21 +791,28 @@ class FlextLdapWorkflowOrchestrator:
             self._saga_steps: list[dict[str, object]] = []
 
         def handle(self, message: object) -> FlextResult[object]:
-            """Handle Saga orchestration requests."""
+            """Handle Saga orchestration requests using DomainMessage model."""
             try:
-                if not isinstance(message, dict):
-                    return FlextResult[object].fail("Message must be a dictionary")
-
-                saga_type = message.get("saga_type")
-                if not isinstance(saga_type, str):
-                    return FlextResult[object].fail("Saga type must be a string")
+                # Accept DomainMessage model or dict for backward compatibility
+                if isinstance(message, FlextLdapModels.DomainMessage):
+                    saga_type = message.message_type
+                    message_data = message.data
+                elif isinstance(message, dict):
+                    saga_type = message.get("saga_type")
+                    message_data = message
+                    if not isinstance(saga_type, str):
+                        return FlextResult[object].fail("Saga type must be a string")
+                else:
+                    return FlextResult[object].fail(
+                        "Message must be DomainMessage model or dictionary"
+                    )
 
                 if saga_type == "distributed_user_management":
-                    return self._execute_distributed_user_management_saga(message)
+                    return self._execute_distributed_user_management_saga(message_data)
                 if saga_type == "cross_domain_replication":
-                    return self._execute_cross_domain_replication_saga(message)
+                    return self._execute_cross_domain_replication_saga(message_data)
                 if saga_type == "enterprise_migration_saga":
-                    return self._execute_enterprise_migration_saga(message)
+                    return self._execute_enterprise_migration_saga(message_data)
                 return FlextResult[object].fail(f"Unknown saga type: {saga_type}")
 
             except Exception as e:

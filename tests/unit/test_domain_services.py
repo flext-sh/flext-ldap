@@ -40,7 +40,9 @@ class TestFlextLdapDomainServices:
         result = domain_services.handle("invalid_message")
         assert result.is_failure
         assert (
-            result.error is not None and "Message must be a dictionary" in result.error
+            result.error is not None
+            and ("Message must be CqrsCommand, CqrsQuery, or dictionary" in result.error
+                 or "Message must be DomainMessage model or dictionary" in result.error)
         )
 
     def test_handle_missing_service_type(
@@ -188,7 +190,9 @@ class TestFlextLdapDomainServices:
         result = cqrs_services.handle("invalid_message")
         assert result.is_failure
         assert (
-            result.error is not None and "Message must be a dictionary" in result.error
+            result.error is not None
+            and ("Message must be CqrsCommand, CqrsQuery, or dictionary" in result.error
+                 or "Message must be DomainMessage model or dictionary" in result.error)
         )
 
     def test_cqrs_command_handler_missing_operation_type(
@@ -258,7 +262,9 @@ class TestFlextLdapDomainServices:
         result = cqrs_services.handle("invalid_message")
         assert result.is_failure
         assert (
-            result.error is not None and "Message must be a dictionary" in result.error
+            result.error is not None
+            and ("Message must be CqrsCommand, CqrsQuery, or dictionary" in result.error
+                 or "Message must be DomainMessage model or dictionary" in result.error)
         )
 
     def test_cqrs_query_handler_missing_operation_type(

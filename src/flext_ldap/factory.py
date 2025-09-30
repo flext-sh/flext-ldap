@@ -58,25 +58,33 @@ class FlextLdapFactory(FlextHandlers[object, object]):
 
     @override
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle factory creation requests with advanced routing."""
+        """Handle factory creation requests with advanced routing using DomainMessage."""
         try:
-            if not isinstance(message, dict):
-                return FlextResult[object].fail("Message must be a dictionary")
+            # Accept either DomainMessage model or dict for backward compatibility
+            if isinstance(message, FlextLdapModels.DomainMessage):
+                factory_type = message.message_type
+                message_data = message.data
+            elif isinstance(message, dict):
+                factory_type = message.get("factory_type")
+                message_data = message
+                if not isinstance(factory_type, str):
+                    return FlextResult[object].fail("Factory type must be a string")
+            else:
+                return FlextResult[object].fail(
+                    "Message must be DomainMessage model or dictionary"
+                )
 
-            factory_type = message.get("factory_type")
-            if not isinstance(factory_type, str):
-                return FlextResult[object].fail("Factory type must be a string")
-
+            # Route to appropriate factory method
             if factory_type == "advanced_service":
-                return self._create_advanced_service_ecosystem(message)
+                return self._create_advanced_service_ecosystem(message_data)
             if factory_type == "workflow_orchestrator":
-                return self._create_workflow_orchestrator_ecosystem(message)
+                return self._create_workflow_orchestrator_ecosystem(message_data)
             if factory_type == "domain_services":
-                return self._create_domain_services_ecosystem(message)
+                return self._create_domain_services_ecosystem(message_data)
             if factory_type == "command_query_services":
-                return self._create_command_query_services_ecosystem(message)
+                return self._create_command_query_services_ecosystem(message_data)
             if factory_type == "saga_orchestrator":
-                return self._create_saga_orchestrator_ecosystem(message)
+                return self._create_saga_orchestrator_ecosystem(message_data)
             return FlextResult[object].fail(f"Unknown factory type: {factory_type}")
 
         except Exception as e:
@@ -478,7 +486,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
             request = FlextLdapModels.SearchRequest(
                 base_dn=validated_data["base_dn"],
                 filter_str=validated_data["filter_str"],
-                scope=validated_data.get("scope", "subtree"),
+                scope=validated_data.get("scope", FlextLdapConstants.Scopes.SUBTREE),
                 attributes=validated_data.get("attributes", []),
                 page_size=validated_data.get(
                     "page_size", FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
@@ -667,7 +675,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
     def _apply_user_defaults(user_data: dict[str, object]) -> dict[str, object]:
         """Apply default values to user data."""
         defaults = {
-            "scope": "subtree",
+            "scope": FlextLdapConstants.Scopes.SUBTREE,
             "attributes": [],
         }
 
@@ -682,7 +690,7 @@ class FlextLdapFactory(FlextHandlers[object, object]):
     def _apply_search_defaults(search_data: dict[str, object]) -> dict[str, object]:
         """Apply default values to search data."""
         defaults = {
-            "scope": "subtree",
+            "scope": FlextLdapConstants.Scopes.SUBTREE,
             "attributes": [],
             "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
             "paged_cookie": b"",

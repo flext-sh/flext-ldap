@@ -75,7 +75,7 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
 
     try:
         # 1. Basic search using correct API
-        search_result: FlextResult[list[dict[str, object]]] = await api.search(
+        search_result: FlextResult[list[FlextLdapModels.Entry]] = await api.search(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail", "uid"],

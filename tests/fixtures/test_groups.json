@@ -1,0 +1,33 @@
+[
+    {
+        "dn": "cn=developers,ou=groups,dc=example,dc=com",
+        "cn": "developers",
+        "gid_number": 1000,
+        "description": "Development Team",
+        "member_dns": [
+            "uid=testuser1,ou=people,dc=example,dc=com",
+            "uid=testuser2,ou=people,dc=example,dc=com"
+        ],
+        "object_classes": ["groupOfNames", "top"]
+    },
+    {
+        "dn": "cn=admins,ou=groups,dc=example,dc=com",
+        "cn": "admins",
+        "gid_number": 1001,
+        "description": "System Administrators",
+        "member_dns": [
+            "uid=admin,ou=people,dc=example,dc=com"
+        ],
+        "object_classes": ["groupOfNames", "top"]
+    },
+    {
+        "dn": "cn=sales,ou=groups,dc=example,dc=com",
+        "cn": "sales",
+        "gid_number": 1002,
+        "description": "Sales Team",
+        "member_dns": [
+            "uid=testuser2,ou=people,dc=example,dc=com"
+        ],
+        "object_classes": ["groupOfNames", "top"]
+    }
+]

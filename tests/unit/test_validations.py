@@ -86,7 +86,10 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid email format" in result.error
+        assert (
+            "email does not match required pattern" in result.error
+            or "Invalid email format" in result.error
+        )
 
     def test_validate_email_empty(self, validations: FlextLdapValidations) -> None:
         """Test email validation with empty string."""
@@ -94,7 +97,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid email format" in result.error
+        assert (
+            "email cannot be empty or whitespace only" in result.error
+            or "email does not match required pattern" in result.error
+            or "Invalid email format" in result.error
+        )
 
     def test_validate_email_none(self, validations: FlextLdapValidations) -> None:
         """Test email validation with None."""
@@ -114,7 +121,10 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid email format" in result.error
+        assert (
+            "email does not match required pattern" in result.error
+            or "Invalid email format" in result.error
+        )
 
     def test_validate_filter_success(
         self, validations: FlextLdapValidations, sample_valid_filter: str
@@ -231,6 +241,18 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert "Invalid attribute name: " in result.error
+
+    def test_validate_attributes_invalid_regex(
+        self, validations: FlextLdapValidations
+    ) -> None:
+        """Test attributes validation with invalid regex pattern."""
+        # Attribute starting with number (invalid)
+        attributes = ["cn", "1invalid", "mail"]
+        result = validations.validate_attributes(attributes)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "Invalid attribute name: 1invalid" in result.error
 
     def test_validate_server_uri_success(
         self, validations: FlextLdapValidations

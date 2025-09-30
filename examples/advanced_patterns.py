@@ -154,7 +154,7 @@ async def demonstrate_async_patterns() -> None:
             "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[dict[str, object]]]]] = []
+            tasks: list[Awaitable[FlextResult[list[FlextLdapModels.Entry]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
