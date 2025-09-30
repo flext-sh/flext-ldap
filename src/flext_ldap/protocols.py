@@ -155,14 +155,14 @@ class FlextLdapProtocols(FlextProtocols):
         def search(
             self,
             search_base: str,
-            search_filter: str,
+            filter_str: str,
             attributes: list[str] | None = None,
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Perform LDAP search operation.
 
             Args:
                 search_base: LDAP search base DN
-                search_filter: LDAP search filter
+                filter_str: LDAP search filter
                 attributes: List of attributes to retrieve
 
             Returns:
@@ -174,14 +174,14 @@ class FlextLdapProtocols(FlextProtocols):
         def search_one(
             self,
             search_base: str,
-            search_filter: str,
+            filter_str: str,
             attributes: list[str] | None = None,
         ) -> FlextResult[dict[str, object] | None]:
             """Perform LDAP search for single entry.
 
             Args:
                 search_base: LDAP search base DN
-                search_filter: LDAP search filter
+                filter_str: LDAP search filter
                 attributes: List of attributes to retrieve
 
             Returns:

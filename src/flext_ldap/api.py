@@ -177,14 +177,14 @@ class FlextLdapAPI(FlextService[None]):
     async def search(
         self,
         search_base: str,
-        search_filter: str,
+        filter_str: str,
         attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform LDAP search operation - implements LdapSearchProtocol.
 
         Args:
             search_base: LDAP search base DN
-            search_filter: LDAP search filter
+            filter_str: LDAP search filter
             attributes: List of attributes to retrieve
 
         Returns:
@@ -193,7 +193,7 @@ class FlextLdapAPI(FlextService[None]):
         """
         # Get search response and extract entries
         search_result = await self.search_entries(
-            search_base, search_filter, FlextLdapConstants.Scopes.SUBTREE, attributes
+            search_base, filter_str, FlextLdapConstants.Scopes.SUBTREE, attributes
         )
         if search_result.is_failure:
             return FlextResult[list[FlextLdapModels.Entry]].fail(
