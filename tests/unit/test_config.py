@@ -825,7 +825,8 @@ class TestFlextLdapConfig:
     def test_create_connection_config_from_env_exception(self) -> None:
         """Test create_connection_config_from_env exception - covers lines 385-386."""
         # Test with valid minimal data
-        result = FlextLdapConfig.create_connection_config_from_env({"server_uri": "ldap://test"})
+        config = FlextLdapConfig()
+        result = config.create_connection_config_from_env()
         # Should succeed or fail gracefully
         assert isinstance(result.is_success, bool)
 

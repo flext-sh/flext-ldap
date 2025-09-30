@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextModels
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.factory import FlextLdapFactory
@@ -36,6 +38,7 @@ class TestFlextLdapFactory:
 
         result = factory.handle("invalid_message")
         assert result.is_failure
+        assert result.error is not None
         assert result.error is not None
         assert "Message must be DomainMessage model or dictionary" in result.error
 
@@ -79,6 +82,7 @@ class TestFlextLdapFactory:
         result = factory.handle({})
         assert result.is_failure
         assert result.error is not None
+        assert result.error is not None
         assert "Factory type must be a string" in result.error
 
     def test_handle_invalid_factory_type(self) -> None:
@@ -94,6 +98,7 @@ class TestFlextLdapFactory:
 
         result = factory.handle({"factory_type": 123})
         assert result.is_failure
+        assert result.error is not None
         assert result.error is not None
         assert "Factory type must be a string" in result.error
 
@@ -171,7 +176,6 @@ class TestFlextLdapFactoryCreateAdvancedService:
         result = FlextLdapFactory.create_advanced_service(client_config, service_config)
         assert result.is_success
         assert result.data is not None
-
 
     def test_create_advanced_service_invalid_server_uri(self) -> None:
         """Test advanced service creation with invalid server URI."""
@@ -267,7 +271,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "description": "Test user account",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_success
         assert result.data is not None
         assert result.data.dn == user_data["dn"]
@@ -285,7 +291,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",  # Required field
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_success
         assert result.data is not None
         assert result.data.dn == user_data["dn"]
@@ -303,7 +311,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['dn']" in result.error
@@ -317,7 +327,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['uid']" in result.error
@@ -331,7 +343,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['cn']" in result.error
@@ -345,7 +359,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(
+            cast("dict[str, object]", user_data)
+        )
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['sn']" in result.error
@@ -360,7 +376,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)
+        result = FlextLdapFactory.create_user_request(
+            cast(dict[str, object], user_data), validation_strict=True
+        )
         assert result.is_failure
         assert result.error is not None
         assert "DN cannot be empty" in result.error
@@ -375,7 +393,9 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "invalid-email",  # Invalid email format
         }
 
-        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)
+        result = FlextLdapFactory.create_user_request(
+            cast(dict[str, object], user_data), validation_strict=True
+        )
         assert result.is_failure
         assert result.error is not None
         assert "Mail must be a valid email address" in result.error
@@ -416,12 +436,15 @@ class TestFlextLdapFactorySearchRequest:
             "attributes": ["cn", "mail"],
         }
 
-        result = FlextLdapFactory.create_search_request(search_data)
+        result = FlextLdapFactory.create_search_request(
+            cast("dict[str, object]", search_data)
+        )
         assert result.is_success
         search_request = result.unwrap()
         assert search_request.base_dn == "dc=example,dc=com"
         assert search_request.filter_str == "(objectClass=person)"
         assert search_request.scope == "SUBTREE"
+        assert search_request.attributes is not None
         assert "cn" in search_request.attributes
         assert "mail" in search_request.attributes
 
@@ -431,7 +454,9 @@ class TestFlextLdapFactorySearchRequest:
             "filter_str": "(objectClass=person)",
         }
 
-        result = FlextLdapFactory.create_search_request(search_data)
+        result = FlextLdapFactory.create_search_request(
+            cast("dict[str, object]", search_data)
+        )
         assert result.is_failure
         assert result.error is not None
 
@@ -442,14 +467,18 @@ class TestFlextLdapFactorySearchRequest:
             "filter_str": "(objectClass=*)",  # Required field
         }
 
-        result = FlextLdapFactory.create_search_request(search_data)
+        result = FlextLdapFactory.create_search_request(
+            cast("dict[str, object]", search_data)
+        )
         assert result.is_success
         search_request = result.unwrap()
         assert search_request.base_dn == "dc=example,dc=com"
         assert search_request.filter_str == "(objectClass=*)"
         # Should have defaults
         assert search_request.scope is not None
-        assert search_request.page_size == FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
+        assert (
+            search_request.page_size == FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
+        )
 
 
 class TestFlextLdapFactoryBulkOperationConfig:
@@ -468,14 +497,16 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "rollback_on_failure": False,
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_success
         config = result.unwrap()
         assert config["operation_type"] == "create"
         assert config["batch_size"] == 5
         assert config["continue_on_error"] is True
         assert config["rollback_on_failure"] is False
-        assert len(config["items_data"]) == 2
+        assert len(cast(list, config["items_data"])) == 2
 
     def test_create_bulk_operation_config_minimal(self) -> None:
         """Test bulk operation config creation with minimal data."""
@@ -484,7 +515,9 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "items_data": [{"dn": "cn=user1,ou=people,dc=example,dc=com"}],
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_success
         config = result.unwrap()
         assert config["operation_type"] == "update"
@@ -501,9 +534,11 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "items_data": [{"dn": "cn=user1,ou=people,dc=example,dc=com"}],
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_failure
-        assert "Invalid operation type" in result.error
+        assert "Invalid operation type" in cast(str, result.error)
 
     def test_create_bulk_operation_config_missing_items_data(self) -> None:
         """Test bulk operation config with missing items_data."""
@@ -511,9 +546,11 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "operation_type": "create",
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_failure
-        assert "Items data must be a list" in result.error
+        assert "Items data must be a list" in cast(str, result.error)
 
     def test_create_bulk_operation_config_empty_items_data(self) -> None:
         """Test bulk operation config with empty items_data."""
@@ -522,9 +559,11 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "items_data": [],
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_failure
-        assert "Items data cannot be empty" in result.error
+        assert "Items data cannot be empty" in cast(str, result.error)
 
     def test_create_bulk_operation_config_invalid_batch_size(self) -> None:
         """Test bulk operation config with invalid batch size."""
@@ -534,9 +573,11 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "batch_size": -1,
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_failure
-        assert "Batch size must be greater than 0" in result.error
+        assert "Batch size must be greater than 0" in cast(str, result.error)
 
     def test_create_bulk_operation_config_batch_size_exceeds_limit(self) -> None:
         """Test bulk operation config with batch size exceeding limit."""
@@ -546,6 +587,8 @@ class TestFlextLdapFactoryBulkOperationConfig:
             "batch_size": 100,  # Exceeds DEFAULT_PAGE_SIZE (10)
         }
 
-        result = FlextLdapFactory.create_bulk_operation_config(config_data)
+        result = FlextLdapFactory.create_bulk_operation_config(
+            cast("dict[str, object]", config_data)
+        )
         assert result.is_failure
-        assert "Batch size cannot exceed" in result.error
+        assert "Batch size cannot exceed" in cast(str, result.error)

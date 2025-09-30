@@ -41,16 +41,16 @@ class TestLdapClientRealOperations:
     @pytest.mark.asyncio
     async def test_client_connection_real_server(
         self,
-        clean_ldap_container: FlextTypes.Core.Dict,
+        shared_ldap_config: dict[str, str],
     ) -> None:
         """Test real LDAP server connection."""
         client = FlextLdapClient()
 
         # Connect to real LDAP server
         result = await client.connect(
-            str(clean_ldap_container["server_url"]),
-            str(clean_ldap_container["bind_dn"]),
-            str(clean_ldap_container["password"]),
+            shared_ldap_config["server_url"],
+            shared_ldap_config["bind_dn"],
+            shared_ldap_config["password"],
         )
 
         # Verify connection succeeded
@@ -64,21 +64,16 @@ class TestLdapClientRealOperations:
     @pytest.mark.asyncio
     async def test_client_search_real_entries(
         self,
-        ldap_api: FlextLdapClient,
-        clean_ldap_container: FlextTypes.Core.Dict,
+        shared_ldap_client: FlextLdapClient,
+        shared_ldap_config: dict[str, str],
     ) -> None:
         """Test searching real LDAP entries."""
-        # Setup: Connect to LDAP server
-        client = ldap_api
-        await client.connect(
-            str(clean_ldap_container["server_url"]),
-            str(clean_ldap_container["bind_dn"]),
-            str(clean_ldap_container["password"]),
-        )
+        # Use already connected client
+        client = shared_ldap_client
 
         # Search for base DN - should exist
         search_request = FlextLdapModels.SearchRequest(
-            base_dn=str(clean_ldap_container["base_dn"]),
+            base_dn=shared_ldap_config["base_dn"],
             scope="base",
             filter_str="(objectClass=*)",
             attributes=[],  # Get all attributes
@@ -203,7 +198,9 @@ class TestLdapClientRealOperations:
         )
         assert search_data.entries, "User entry should exist"
 
-        entry_data: FlextTypes.Core.Dict = search_data.entries[0]
+        entry_data: dict[str, object] = cast(
+            dict[str, object], search_data.entries[0].attributes
+        )
         mail_value: object = entry_data.get("mail", "")
         assert "updated@example.com" in str(mail_value), "Email should be updated"
 
@@ -503,7 +500,7 @@ class TestLdapServiceRealOperations:
             "description": ["Updated group description"],
         }
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
-        update_result = await client.update_group(
+        update_result = await client.update_group_attributes(
             group_request.dn,
             cast("dict[str, object]", update_attributes_5),
         )

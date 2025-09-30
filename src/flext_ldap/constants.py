@@ -188,6 +188,12 @@ class FlextLdapConstants(FlextConstants):
         VALID_LDAP_USER_NAME: Final[str] = "testuser"
         VALID_LDAP_USER_DESCRIPTION: Final[str] = "Test LDAP User"
 
+        # Default values for LDAP models
+        DEFAULT_DEPARTMENT: Final[str] = "IT"
+        DEFAULT_ORGANIZATION: Final[str] = "Company"
+        DEFAULT_TITLE: Final[str] = "Employee"
+        DEFAULT_STATUS: Final[str] = "active"
+
     class LdapRetry:
         """LDAP retry and timing constants."""
 

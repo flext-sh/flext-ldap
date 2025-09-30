@@ -6,21 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextHandlers, FlextResult
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 
 
-class FlextLdapAclManager:
+class FlextLdapAclManager(FlextHandlers[object, object]):
     """ACL Manager for comprehensive ACL operations."""
 
     def __init__(self) -> None:
         """Initialize ACL Manager."""
         # Initialize parsers and converters - unified classes without config
-        self.parsers = FlextLdapAclParsers()
-        self.converters = FlextLdapAclConverters()
+        self.parsers: FlextLdapAclParsers = FlextLdapAclParsers()
+        self.converters: FlextLdapAclConverters = FlextLdapAclConverters()
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle ACL operations with proper type safety."""
         try:

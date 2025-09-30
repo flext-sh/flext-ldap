@@ -114,7 +114,9 @@ class TestUserRepositoryCoverage:
         self, user_repository: FlextLdapRepositories.UserRepository
     ) -> None:
         """Test delete user success path - covers lines 289, 291-292."""
-        result = await user_repository.delete("uid=testuser,ou=people,dc=example,dc=com")
+        result = await user_repository.delete(
+            "uid=testuser,ou=people,dc=example,dc=com"
+        )
         assert isinstance(result, FlextResult)
 
     async def test_search_users_success_path(
@@ -133,7 +135,9 @@ class TestUserRepositoryCoverage:
         self, user_repository: FlextLdapRepositories.UserRepository
     ) -> None:
         """Test exists when user not found - covers lines 362, 368-371."""
-        result = await user_repository.exists("uid=nonexistent,ou=people,dc=example,dc=com")
+        result = await user_repository.exists(
+            "uid=nonexistent,ou=people,dc=example,dc=com"
+        )
         assert isinstance(result, FlextResult)
 
 
@@ -187,7 +191,9 @@ class TestGroupRepositoryCoverage:
         self, group_repository: FlextLdapRepositories.GroupRepository
     ) -> None:
         """Test delete group exception handler - covers lines 481-482."""
-        result = await group_repository.delete("cn=testgroup,ou=groups,dc=example,dc=com")
+        result = await group_repository.delete(
+            "cn=testgroup,ou=groups,dc=example,dc=com"
+        )
         assert isinstance(result, FlextResult)
 
     async def test_find_group_by_cn_exception_handler(
@@ -220,7 +226,9 @@ class TestGroupRepositoryCoverage:
         self, group_repository: FlextLdapRepositories.GroupRepository
     ) -> None:
         """Test exists group exception handler - covers lines 530-531."""
-        result = await group_repository.exists("cn=testgroup,ou=groups,dc=example,dc=com")
+        result = await group_repository.exists(
+            "cn=testgroup,ou=groups,dc=example,dc=com"
+        )
         assert isinstance(result, FlextResult)
 
 
@@ -886,7 +894,9 @@ class TestRepositoryErrorPaths:
         self, user_repository: FlextLdapRepositories.UserRepository
     ) -> None:
         """Test update method executes."""
-        result = await user_repository.update("cn=test,dc=test,dc=com", {"mail": ["test@example.com"]})
+        result = await user_repository.update(
+            "cn=test,dc=test,dc=com", {"mail": ["test@example.com"]}
+        )
         assert isinstance(result, FlextResult)
 
     async def test_user_repository_delete_coverage(
@@ -935,7 +945,9 @@ class TestRepositoryErrorPaths:
         self, group_repository: FlextLdapRepositories.GroupRepository
     ) -> None:
         """Test update executes."""
-        result = await group_repository.update("cn=test,dc=test,dc=com", {"description": ["Test"]})
+        result = await group_repository.update(
+            "cn=test,dc=test,dc=com", {"description": ["Test"]}
+        )
         assert isinstance(result, FlextResult)
 
     async def test_group_repository_delete_coverage(
