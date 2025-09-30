@@ -232,7 +232,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid Oracle ACL format" in result.error
+        assert "Missing required keywords in Oracle ACL" in result.error
 
     def test_parse_invalid_format_missing_to(self) -> None:
         """Test parsing ACL with missing 'to' keyword."""
@@ -240,7 +240,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid Oracle ACL format" in result.error
+        assert "Missing required keywords in Oracle ACL" in result.error
 
     def test_parse_invalid_format_missing_by(self) -> None:
         """Test parsing ACL with missing 'by' keyword."""
@@ -248,7 +248,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid Oracle ACL format" in result.error
+        assert "Missing required keywords in Oracle ACL" in result.error
 
     def test_parse_entry_target(self) -> None:
         """Test parsing ACL with 'entry' target."""

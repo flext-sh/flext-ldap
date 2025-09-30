@@ -19,6 +19,7 @@ from flext_core import (
 )
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdapRepositories(FlextService[None]):
@@ -95,8 +96,11 @@ class FlextLdapRepositories(FlextService[None]):
             """Find user by distinguished name using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate DN -> Search LDAP -> Create user model
-                if not dn or not dn.strip():
-                    return FlextResult[object].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[object].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
 
                 # Search for user using LDAP client
                 search_result = await self._client.get_user(dn)
@@ -153,9 +157,10 @@ class FlextLdapRepositories(FlextService[None]):
             """Find users by LDAP filter using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate filter -> Search LDAP -> Return users
-                if not filter_expr or not filter_expr.strip():
+                filter_validation = FlextLdapValidations.validate_filter(filter_expr)
+                if filter_validation.is_failure:
                     return FlextResult[list[FlextLdapModels.LdapUser]].fail(
-                        "Filter cannot be empty"
+                        filter_validation.error or "Filter validation failed"
                     )
 
                 # Use basic user search with the correct client method signature
@@ -241,8 +246,11 @@ class FlextLdapRepositories(FlextService[None]):
             """Update user attributes in LDAP using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate inputs -> Update LDAP -> Return result
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
                 if not attributes:
                     return FlextResult[bool].fail("Attributes cannot be empty")
 
@@ -264,8 +272,11 @@ class FlextLdapRepositories(FlextService[None]):
             """Delete user from LDAP using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate DN -> Delete from LDAP -> Return result
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
 
                 # Delete user using LDAP client
                 delete_result = await self._client.delete_user(dn)
@@ -289,10 +300,17 @@ class FlextLdapRepositories(FlextService[None]):
             """Search for users with pagination using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate inputs -> Search LDAP -> Return results
-                if not base_dn or not base_dn.strip():
-                    return FlextResult[list[object]].fail("Base DN cannot be empty")
-                if not filter_str or not filter_str.strip():
-                    return FlextResult[list[object]].fail("Filter cannot be empty")
+                base_dn_validation = FlextLdapValidations.validate_dn(base_dn)
+                if base_dn_validation.is_failure:
+                    return FlextResult[list[object]].fail(
+                        base_dn_validation.error or "Base DN validation failed"
+                    )
+
+                filter_validation = FlextLdapValidations.validate_filter(filter_str)
+                if filter_validation.is_failure:
+                    return FlextResult[list[object]].fail(
+                        filter_validation.error or "Filter validation failed"
+                    )
 
                 # Use default page_size if None provided
                 effective_page_size = page_size or 100
@@ -327,8 +345,11 @@ class FlextLdapRepositories(FlextService[None]):
             """Check if user exists using FlextResults railway pattern."""
             try:
                 # Railway pattern: Validate DN -> Search LDAP -> Return existence
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
 
                 # Check if user exists using LDAP client
                 user_result = await self._client.get_user(dn)
@@ -430,8 +451,11 @@ class FlextLdapRepositories(FlextService[None]):
         ) -> FlextResult[bool]:
             """Update group attributes in LDAP."""
             try:
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
                 if not attributes:
                     return FlextResult[bool].fail("Attributes cannot be empty")
                 # Mock implementation - replace with actual LDAP client calls
@@ -442,8 +466,11 @@ class FlextLdapRepositories(FlextService[None]):
         async def delete(self, dn: str) -> FlextResult[bool]:
             """Delete group from LDAP."""
             try:
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
                 # Mock implementation - replace with actual LDAP client calls
                 return FlextResult[bool].ok(True)
             except Exception as e:
@@ -488,8 +515,11 @@ class FlextLdapRepositories(FlextService[None]):
         async def exists(self, dn: str) -> FlextResult[bool]:
             """Check if group exists."""
             try:
-                if not dn or not dn.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                dn_validation = FlextLdapValidations.validate_dn(dn)
+                if dn_validation.is_failure:
+                    return FlextResult[bool].fail(
+                        dn_validation.error or "DN validation failed"
+                    )
                 # Mock implementation - replace with actual LDAP client calls
                 return FlextResult[bool].ok(True)
             except Exception as e:

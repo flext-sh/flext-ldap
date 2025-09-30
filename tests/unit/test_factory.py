@@ -204,7 +204,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "description": "Test user account",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_success
         assert result.data is not None
         assert result.data.dn == user_data["dn"]
@@ -222,7 +222,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",  # Required field
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_success
         assert result.data is not None
         assert result.data.dn == user_data["dn"]
@@ -240,7 +240,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['dn']" in result.error
@@ -254,7 +254,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['uid']" in result.error
@@ -268,7 +268,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['cn']" in result.error
@@ -282,7 +282,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data)
+        result = FlextLdapFactory.create_user_request(user_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert "Missing required fields: ['sn']" in result.error
@@ -297,10 +297,10 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "testuser@example.com",
         }
 
-        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)
+        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
-        assert "DN must be a non-empty string" in result.error
+        assert "DN cannot be empty" in result.error
 
     def test_create_user_request_strict_validation_invalid_email(self) -> None:
         """Test user request creation with invalid email in strict validation."""
@@ -312,7 +312,7 @@ class TestFlextLdapFactoryCreateUserRequest:
             "mail": "invalid-email",  # Invalid email format
         }
 
-        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)
+        result = FlextLdapFactory.create_user_request(user_data, validation_strict=True)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert "Mail must be a valid email address" in result.error

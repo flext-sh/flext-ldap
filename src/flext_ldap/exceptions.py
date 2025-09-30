@@ -588,6 +588,30 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
 
 
+# Export nested exception classes for easier importing
+LdapConnectionError = FlextLdapExceptions.LdapConnectionError
+LdapAuthenticationError = FlextLdapExceptions.LdapAuthenticationError
+LdapSearchError = FlextLdapExceptions.LdapSearchError
+LdapModifyError = FlextLdapExceptions.LdapModifyError
+LdapAddError = FlextLdapExceptions.LdapAddError
+LdapDeleteError = FlextLdapExceptions.LdapDeleteError
+LdapValidationError = FlextLdapExceptions.LdapValidationError
+LdapConfigurationError = FlextLdapExceptions.LdapConfigurationError
+LdapTimeoutError = FlextLdapExceptions.LdapTimeoutError
+LdapEntryNotFoundError = FlextLdapExceptions.LdapEntryNotFoundError
+LdapEntryAlreadyExistsError = FlextLdapExceptions.LdapEntryAlreadyExistsError
+
 __all__ = [
     "FlextLdapExceptions",
+    "LdapConnectionError",
+    "LdapAuthenticationError",
+    "LdapSearchError",
+    "LdapModifyError",
+    "LdapAddError",
+    "LdapDeleteError",
+    "LdapValidationError",
+    "LdapConfigurationError",
+    "LdapTimeoutError",
+    "LdapEntryNotFoundError",
+    "LdapEntryAlreadyExistsError",
 ]

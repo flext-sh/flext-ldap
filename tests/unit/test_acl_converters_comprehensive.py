@@ -36,6 +36,7 @@ class TestFlextLdapAclConvertersComprehensive:
         assert result.data is not None
         assert hasattr(result.data, "is_failure")
         assert result.data.is_failure
+        assert result.data.error is not None
         assert "not implemented" in result.data.error.lower()
 
     def test_handle_valid_acl_conversion_request_default_formats(self) -> None:
@@ -50,6 +51,7 @@ class TestFlextLdapAclConvertersComprehensive:
         assert result.data is not None
         assert hasattr(result.data, "is_failure")
         assert result.data.is_failure
+        assert result.data.error is not None
         assert "not implemented" in result.data.error.lower()
 
     def test_handle_invalid_message_type(self) -> None:
@@ -91,7 +93,7 @@ class TestFlextLdapAclConvertersComprehensive:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_convert_acl_different_formats(self) -> None:
         """Test convert_acl method returns not implemented for all format combinations."""
@@ -109,7 +111,9 @@ class TestFlextLdapAclConvertersComprehensive:
             result = converters.convert_acl("test acl", source, target)
             assert result.is_failure
             assert result.error is not None
-            assert "not implemented" in result.error.lower()
+            assert (
+                result.error is not None and "not implemented" in result.error.lower()
+            )
 
     def test_convert_acl_exception_handling(self) -> None:
         """Test convert_acl method returns not implemented."""
@@ -119,12 +123,12 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.convert_acl(None, None, None)
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
         # Test with actual content - still not implemented
         result = converters.convert_acl("valid acl", "source", "target")
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersOpenLdapConverter:
@@ -138,7 +142,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -146,7 +150,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -154,7 +158,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -162,7 +166,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -172,7 +176,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -182,7 +186,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -190,7 +194,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -198,7 +202,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -206,7 +210,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -216,7 +220,7 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersMicrosoftAdConverter:
@@ -230,7 +234,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -238,7 +242,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -246,7 +250,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -254,7 +258,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -264,7 +268,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -274,7 +278,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -282,7 +286,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -290,7 +294,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -298,7 +302,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -308,7 +312,7 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersOracleConverter:
@@ -322,7 +326,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -330,7 +334,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -338,7 +342,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -346,7 +350,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -356,7 +360,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_success(self) -> None:
         """Test to_microsoft_ad method with successful conversion."""
@@ -366,7 +370,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -374,7 +378,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -382,7 +386,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -390,7 +394,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -400,7 +404,7 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclConvertersIntegration:
@@ -413,15 +417,18 @@ class TestFlextLdapAclConvertersIntegration:
             "access to * by * read"
         )
         assert result1.is_failure
+        assert result1.error is not None
         assert "not implemented" in result1.error.lower()
 
         # All converters return not implemented
         result2 = FlextLdapAclConverters.MicrosoftAdConverter.to_oracle("test")
         assert result2.is_failure
+        assert result2.error is not None
         assert "not implemented" in result2.error.lower()
 
         result3 = FlextLdapAclConverters.OracleConverter.to_openldap("test")
         assert result3.is_failure
+        assert result3.error is not None
         assert "not implemented" in result3.error.lower()
 
     def test_converter_error_propagation(self) -> None:
@@ -466,4 +473,5 @@ class TestFlextLdapAclConvertersIntegration:
             assert result.is_success
             assert result.data is not None
             assert result.data.is_failure
+            assert result.data.error is not None
             assert "not implemented" in result.data.error.lower()

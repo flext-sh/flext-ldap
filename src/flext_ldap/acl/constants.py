@@ -103,5 +103,10 @@ class FlextLdapAclConstants(FlextConstants):
             "Syntax pattern not directly translatable between formats"
         )
 
+    class Parsing:
+        """ACL parsing constants."""
+
+        MIN_ACL_PARTS: Final[int] = 4  # Minimum parts for valid ACL (OpenLDAP format)
+
 
 __all__ = ["FlextLdapAclConstants"]

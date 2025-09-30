@@ -230,7 +230,7 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_convert_acl_conversion_failure(self) -> None:
         """Test convert_acl method returns not implemented."""
@@ -240,7 +240,7 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_convert_acl_exception_handling(self) -> None:
         """Test convert_acl method returns not implemented."""
@@ -250,7 +250,7 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
 
 class TestFlextLdapAclManagerBatchConvert:
@@ -267,7 +267,7 @@ class TestFlextLdapAclManagerBatchConvert:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_batch_convert_empty_list(self) -> None:
         """Test batch_convert method with empty ACL list."""
@@ -288,7 +288,7 @@ class TestFlextLdapAclManagerBatchConvert:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_batch_convert_exception_handling(self) -> None:
         """Test batch_convert method exception handling."""

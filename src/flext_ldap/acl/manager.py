@@ -11,9 +11,6 @@ from flext_core import FlextResult
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 
-# Constants for ACL parsing
-MIN_ACL_PARTS = 6
-
 
 class FlextLdapAclManager:
     """ACL Manager for comprehensive ACL operations."""

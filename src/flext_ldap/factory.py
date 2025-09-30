@@ -31,6 +31,7 @@ from flext_ldap.domain_services import (
 )
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services import FlextLdapAdvancedService
+from flext_ldap.validations import FlextLdapValidations
 from flext_ldap.workflows import (
     FlextLdapWorkflowOrchestrator,
 )
@@ -623,10 +624,16 @@ class FlextLdapFactory(FlextHandlers[object, object]):
     def _validate_user_data(user_data: dict[str, object]) -> FlextResult[None]:
         """Validate user data for strict validation."""
         try:
-            # Validate DN format
+            # Validate DN format using centralized validation
             dn = user_data.get("dn", "")
-            if not isinstance(dn, str) or not dn.strip():
-                return FlextResult[None].fail("DN must be a non-empty string")
+            if not isinstance(dn, str):
+                return FlextResult[None].fail("DN must be a string")
+
+            dn_validation = FlextLdapValidations.validate_dn(dn)
+            if dn_validation.is_failure:
+                return FlextResult[None].fail(
+                    dn_validation.error or "DN validation failed"
+                )
 
             # Validate UID format
             uid = user_data.get("uid", "")

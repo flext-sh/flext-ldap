@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import Sequence
 
 from flext_core import FlextResult, FlextUtilities
+from flext_ldap.exceptions import FlextLdapExceptions
 
 
 class FlextLdapUtilities(FlextUtilities):
@@ -232,19 +233,26 @@ class FlextLdapUtilities(FlextUtilities):
         @staticmethod
         def ensure_ldap_dn(value: object) -> str:
             """Ensure value is a valid LDAP DN."""
+            exceptions = FlextLdapExceptions()
+
             if not isinstance(value, str):
                 error_msg = "DN must be a string"
-                raise TypeError(error_msg)
+                raise exceptions.type_error(
+                    error_msg,
+                    value=str(value),
+                    expected_type="str",
+                    actual_type=type(value).__name__,
+                )
 
             dn = value.strip()
             if not dn:
                 error_msg = "DN cannot be empty"
-                raise ValueError(error_msg)
+                raise exceptions.validation_error(error_msg, value=dn, field="dn")
 
             # Basic DN validation
             if "=" not in dn:
                 error_msg = "DN must contain at least one '=' character"
-                raise ValueError(error_msg)
+                raise exceptions.validation_error(error_msg, value=dn, field="dn")
 
             # Check for empty components
             parts = dn.split(",")
@@ -252,14 +260,14 @@ class FlextLdapUtilities(FlextUtilities):
                 stripped_part = part.strip()
                 if not stripped_part:
                     error_msg = "DN cannot have empty components"
-                    raise ValueError(error_msg)
+                    raise exceptions.validation_error(error_msg, value=dn, field="dn")
                 if "=" not in part:
                     error_msg = "DN component must contain '='"
-                    raise ValueError(error_msg)
+                    raise exceptions.validation_error(error_msg, value=part, field="dn")
                 attr_name, _attr_value = part.split("=", 1)
                 if not attr_name.strip():
                     error_msg = "DN attribute name cannot be empty"
-                    raise ValueError(error_msg)
+                    raise exceptions.validation_error(error_msg, value=part, field="dn")
                 # Note: Empty attribute values are valid in LDAP DNs (e.g., cn=,dc=example)
 
             return dn

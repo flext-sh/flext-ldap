@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+# No Any imports - use object for polymorphic types per FLEXT standards
 
 from flext_core import (
     FlextBus,
@@ -88,7 +88,7 @@ class FlextLdapDomainServices:
             return FlextResult[object].fail(f"Domain service handling failed: {e}")
 
     def _handle_user_aggregate_management(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Handle user aggregate management using CQRS patterns."""
         try:
@@ -123,7 +123,7 @@ class FlextLdapDomainServices:
             return FlextResult[object].fail(f"User aggregate management failed: {e}")
 
     def _handle_organization_domain_service(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Handle organization domain service using DDD patterns."""
         try:
@@ -162,7 +162,7 @@ class FlextLdapDomainServices:
             return FlextResult[object].fail(f"Organization domain service failed: {e}")
 
     def _handle_security_policy_enforcement(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Handle security policy enforcement using advanced patterns."""
         try:
@@ -197,7 +197,7 @@ class FlextLdapDomainServices:
             return FlextResult[object].fail(f"Security policy enforcement failed: {e}")
 
     def _handle_audit_trail_management(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Handle audit trail management using event sourcing patterns."""
         try:
@@ -232,7 +232,7 @@ class FlextLdapDomainServices:
             return FlextResult[object].fail(f"Audit trail management failed: {e}")
 
     def _handle_event_sourcing_orchestration(
-        self, message: dict[str, Any]
+        self, message: dict[str, object]
     ) -> FlextResult[object]:
         """Handle event sourcing orchestration using advanced patterns."""
         try:
@@ -271,8 +271,8 @@ class FlextLdapDomainServices:
     # =============================================================================
 
     def _process_user_command(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process user command using CQRS pattern."""
         try:
             # Use FlextBus for command processing
@@ -281,14 +281,16 @@ class FlextLdapDomainServices:
                 "command_processed": True,
                 "processing_timestamp": id(self),
             }
-            return FlextResult[dict[str, Any]].ok(command_data)
+            return FlextResult[dict[str, object]].ok(command_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Command processing failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Command processing failed: {e}"
+            )
 
     def _execute_user_domain_logic(
-        self, command_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute user domain logic using DDD patterns."""
         try:
             # Use FlextProcessors for domain logic execution
@@ -297,16 +299,16 @@ class FlextLdapDomainServices:
                 "domain_logic_executed": True,
                 "domain_events": [],
             }
-            return FlextResult[dict[str, Any]].ok(domain_data)
+            return FlextResult[dict[str, object]].ok(domain_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Domain logic execution failed: {e}"
             )
 
     def _publish_user_domain_events(
-        self, domain_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, domain_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Publish user domain events using event sourcing."""
         try:
             # Use FlextDispatcher for event publishing
@@ -315,30 +317,30 @@ class FlextLdapDomainServices:
                 "events_published": True,
                 "published_events": [],
             }
-            return FlextResult[dict[str, Any]].ok(event_data)
+            return FlextResult[dict[str, object]].ok(event_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Event publishing failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Event publishing failed: {e}")
 
     def _execute_user_query(
-        self, event_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, event_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute user query using CQRS read side."""
         try:
             # Use FlextRegistry for query execution
             query_data = {**event_data, "query_executed": True, "query_results": {}}
-            return FlextResult[dict[str, Any]].ok(query_data)
+            return FlextResult[dict[str, object]].ok(query_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Query execution failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Query execution failed: {e}")
 
     # =============================================================================
     # Organization Domain Service Railway Steps
     # =============================================================================
 
     def _execute_organization_domain_service(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Execute organization domain service using DDD patterns."""
         try:
             # Use FlextContainer for domain service execution
@@ -347,16 +349,16 @@ class FlextLdapDomainServices:
                 "domain_service_executed": True,
                 "service_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(service_data)
+            return FlextResult[dict[str, object]].ok(service_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Domain service execution failed: {e}"
             )
 
     def _persist_organization_changes(
-        self, service_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, service_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Persist organization changes using repository pattern."""
         try:
             # Use FlextContainer for repository operations
@@ -365,16 +367,16 @@ class FlextLdapDomainServices:
                 "changes_persisted": True,
                 "persistence_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(persisted_data)
+            return FlextResult[dict[str, object]].ok(persisted_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Repository persistence failed: {e}"
             )
 
     def _update_organization_aggregate(
-        self, persisted_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, persisted_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Update organization aggregate using DDD patterns."""
         try:
             # Use FlextProcessors for aggregate updates
@@ -383,14 +385,14 @@ class FlextLdapDomainServices:
                 "aggregate_updated": True,
                 "aggregate_version": 1,
             }
-            return FlextResult[dict[str, Any]].ok(aggregate_data)
+            return FlextResult[dict[str, object]].ok(aggregate_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Aggregate update failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Aggregate update failed: {e}")
 
     def _validate_organization_specifications(
-        self, aggregate_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, aggregate_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate organization specifications using DDD patterns."""
         try:
             # Use FlextContext for specification validation
@@ -399,10 +401,10 @@ class FlextLdapDomainServices:
                 "specifications_validated": True,
                 "validation_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(validated_data)
+            return FlextResult[dict[str, object]].ok(validated_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Specification validation failed: {e}"
             )
 
@@ -411,20 +413,20 @@ class FlextLdapDomainServices:
     # =============================================================================
 
     def _evaluate_security_policies(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Evaluate security policies using advanced patterns."""
         try:
             # Use FlextRegistry for policy evaluation
             policy_data = {**message, "policies_evaluated": True, "policy_results": {}}
-            return FlextResult[dict[str, Any]].ok(policy_data)
+            return FlextResult[dict[str, object]].ok(policy_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Policy evaluation failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Policy evaluation failed: {e}")
 
     def _enforce_security_policies(
-        self, policy_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, policy_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Enforce security policies using advanced patterns."""
         try:
             # Use FlextDispatcher for policy enforcement
@@ -433,14 +435,16 @@ class FlextLdapDomainServices:
                 "policies_enforced": True,
                 "enforcement_actions": [],
             }
-            return FlextResult[dict[str, Any]].ok(enforcement_data)
+            return FlextResult[dict[str, object]].ok(enforcement_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Policy enforcement failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Policy enforcement failed: {e}"
+            )
 
     def _audit_security_actions(
-        self, enforcement_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, enforcement_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Audit security actions using advanced patterns."""
         try:
             # Use FlextBus for security auditing
@@ -449,14 +453,14 @@ class FlextLdapDomainServices:
                 "security_audited": True,
                 "audit_trail": [],
             }
-            return FlextResult[dict[str, Any]].ok(audit_data)
+            return FlextResult[dict[str, object]].ok(audit_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Security audit failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Security audit failed: {e}")
 
     def _generate_security_response(
-        self, audit_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, audit_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Generate security response using advanced patterns."""
         try:
             # Use FlextProcessors for response generation
@@ -465,18 +469,18 @@ class FlextLdapDomainServices:
                 "security_response_generated": True,
                 "response_actions": [],
             }
-            return FlextResult[dict[str, Any]].ok(response_data)
+            return FlextResult[dict[str, object]].ok(response_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Security response failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Security response failed: {e}")
 
     # =============================================================================
     # Audit Trail Management Railway Steps
     # =============================================================================
 
     def _capture_audit_events(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Capture audit events using event sourcing patterns."""
         try:
             # Use FlextContext for event capture
@@ -485,14 +489,14 @@ class FlextLdapDomainServices:
                 "audit_events_captured": True,
                 "captured_events": [],
             }
-            return FlextResult[dict[str, Any]].ok(event_data)
+            return FlextResult[dict[str, object]].ok(event_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Event capture failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Event capture failed: {e}")
 
     def _store_audit_events(
-        self, event_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, event_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Store audit events using event sourcing patterns."""
         try:
             # Use FlextContainer for event storage
@@ -501,14 +505,14 @@ class FlextLdapDomainServices:
                 "events_stored": True,
                 "storage_location": "flext_container",
             }
-            return FlextResult[dict[str, Any]].ok(stored_data)
+            return FlextResult[dict[str, object]].ok(stored_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Event storage failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Event storage failed: {e}")
 
     def _replay_audit_events(
-        self, stored_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, stored_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Replay audit events using event sourcing patterns."""
         try:
             # Use FlextProcessors for event replay
@@ -517,14 +521,14 @@ class FlextLdapDomainServices:
                 "events_replayed": True,
                 "replay_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(replayed_data)
+            return FlextResult[dict[str, object]].ok(replayed_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Event replay failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Event replay failed: {e}")
 
     def _query_audit_trail(
-        self, replayed_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, replayed_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Query audit trail using event sourcing patterns."""
         try:
             # Use FlextRegistry for audit queries
@@ -533,18 +537,18 @@ class FlextLdapDomainServices:
                 "audit_trail_queried": True,
                 "query_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(query_data)
+            return FlextResult[dict[str, object]].ok(query_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Audit query failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Audit query failed: {e}")
 
     # =============================================================================
     # Event Sourcing Orchestration Railway Steps
     # =============================================================================
 
     def _process_event_sourcing_command(
-        self, message: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process event sourcing command using advanced patterns."""
         try:
             # Use FlextBus for command processing
@@ -553,14 +557,16 @@ class FlextLdapDomainServices:
                 "event_sourcing_command_processed": True,
                 "command_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(command_data)
+            return FlextResult[dict[str, object]].ok(command_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Command processing failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Command processing failed: {e}"
+            )
 
     def _store_domain_events(
-        self, command_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, command_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Store domain events using event sourcing patterns."""
         try:
             # Use FlextContainer for event storage
@@ -569,14 +575,14 @@ class FlextLdapDomainServices:
                 "domain_events_stored": True,
                 "event_store_location": "flext_container",
             }
-            return FlextResult[dict[str, Any]].ok(stored_data)
+            return FlextResult[dict[str, object]].ok(stored_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Event storage failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Event storage failed: {e}")
 
     def _update_read_projections(
-        self, stored_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, stored_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Update read projections using event sourcing patterns."""
         try:
             # Use FlextProcessors for projection updates
@@ -585,14 +591,14 @@ class FlextLdapDomainServices:
                 "read_projections_updated": True,
                 "projection_updates": [],
             }
-            return FlextResult[dict[str, Any]].ok(projection_data)
+            return FlextResult[dict[str, object]].ok(projection_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Projection update failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Projection update failed: {e}")
 
     def _rebuild_read_models(
-        self, projection_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, projection_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Rebuild read models using event sourcing patterns."""
         try:
             # Use FlextRegistry for read model rebuilding
@@ -601,10 +607,12 @@ class FlextLdapDomainServices:
                 "read_models_rebuilt": True,
                 "model_rebuild_results": {},
             }
-            return FlextResult[dict[str, Any]].ok(model_data)
+            return FlextResult[dict[str, object]].ok(model_data)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Read model rebuild failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Read model rebuild failed: {e}"
+            )
 
     def get_cqrs_services(
         self, config: FlextModels.CqrsConfig.Handler
@@ -669,7 +677,7 @@ class FlextLdapDomainServices:
             except Exception as e:
                 return FlextResult[object].fail(f"CQRS service handling failed: {e}")
 
-        def _handle_command(self, message: dict[str, Any]) -> FlextResult[object]:
+        def _handle_command(self, message: dict[str, object]) -> FlextResult[object]:
             """Handle command operations using CQRS patterns."""
             try:
                 # CQRS Command Pattern: Validate → Execute → Store → Notify
@@ -704,7 +712,7 @@ class FlextLdapDomainServices:
             except Exception as e:
                 return FlextResult[object].fail(f"Command handling failed: {e}")
 
-        def _handle_query(self, message: dict[str, Any]) -> FlextResult[object]:
+        def _handle_query(self, message: dict[str, object]) -> FlextResult[object]:
             """Handle query operations using CQRS patterns."""
             try:
                 # CQRS Query Pattern: Validate → Execute → Transform → Return
@@ -738,8 +746,8 @@ class FlextLdapDomainServices:
         # =============================================================================
 
         def _validate_command(
-            self, message: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, message: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Validate command using CQRS patterns."""
             try:
                 # Use FlextBus for command validation
@@ -748,16 +756,16 @@ class FlextLdapDomainServices:
                     "command_validated": True,
                     "validation_results": {},
                 }
-                return FlextResult[dict[str, Any]].ok(validated_data)
+                return FlextResult[dict[str, object]].ok(validated_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Command validation failed: {e}"
                 )
 
         def _execute_command(
-            self, validated_data: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, validated_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Execute command using CQRS patterns."""
             try:
                 # Use FlextDispatcher for command execution
@@ -766,16 +774,16 @@ class FlextLdapDomainServices:
                     "command_executed": True,
                     "execution_results": {},
                 }
-                return FlextResult[dict[str, Any]].ok(executed_data)
+                return FlextResult[dict[str, object]].ok(executed_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Command execution failed: {e}"
                 )
 
         def _store_command_result(
-            self, executed_data: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, executed_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Store command result using CQRS patterns."""
             try:
                 # Use FlextBus for result storage
@@ -784,14 +792,16 @@ class FlextLdapDomainServices:
                     "command_result_stored": True,
                     "storage_location": "flext_bus",
                 }
-                return FlextResult[dict[str, Any]].ok(stored_data)
+                return FlextResult[dict[str, object]].ok(stored_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(f"Command storage failed: {e}")
+                return FlextResult[dict[str, object]].fail(
+                    f"Command storage failed: {e}"
+                )
 
         def _notify_command_completion(
-            self, stored_data: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, stored_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Notify command completion using CQRS patterns."""
             try:
                 # Use FlextDispatcher for notifications
@@ -800,10 +810,10 @@ class FlextLdapDomainServices:
                     "command_completion_notified": True,
                     "notifications_sent": [],
                 }
-                return FlextResult[dict[str, Any]].ok(notification_data)
+                return FlextResult[dict[str, object]].ok(notification_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Command notification failed: {e}"
                 )
 
@@ -812,8 +822,8 @@ class FlextLdapDomainServices:
         # =============================================================================
 
         def _validate_query(
-            self, message: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, message: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Validate query using CQRS patterns."""
             try:
                 # Use FlextBus for query validation
@@ -822,14 +832,16 @@ class FlextLdapDomainServices:
                     "query_validated": True,
                     "validation_results": {},
                 }
-                return FlextResult[dict[str, Any]].ok(validated_data)
+                return FlextResult[dict[str, object]].ok(validated_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(f"Query validation failed: {e}")
+                return FlextResult[dict[str, object]].fail(
+                    f"Query validation failed: {e}"
+                )
 
         def _execute_query(
-            self, validated_data: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, validated_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Execute query using CQRS patterns."""
             try:
                 # Use FlextDispatcher for query execution
@@ -838,14 +850,16 @@ class FlextLdapDomainServices:
                     "query_executed": True,
                     "execution_results": {},
                 }
-                return FlextResult[dict[str, Any]].ok(executed_data)
+                return FlextResult[dict[str, object]].ok(executed_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(f"Query execution failed: {e}")
+                return FlextResult[dict[str, object]].fail(
+                    f"Query execution failed: {e}"
+                )
 
         def _transform_query_results(
-            self, executed_data: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            self, executed_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Transform query results using CQRS patterns."""
             try:
                 # Use FlextBus for result transformation
@@ -854,9 +868,9 @@ class FlextLdapDomainServices:
                     "query_results_transformed": True,
                     "transformed_results": {},
                 }
-                return FlextResult[dict[str, Any]].ok(transformed_data)
+                return FlextResult[dict[str, object]].ok(transformed_data)
 
             except Exception as e:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Query transformation failed: {e}"
                 )

@@ -326,7 +326,7 @@ class TestUserRepository:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert result.error is not None
-        assert "Base DN cannot be empty" in result.error
+        assert "DN cannot be empty" in result.error
 
     async def test_user_repository_search_empty_filter(
         self, user_repository: FlextLdapRepositories.UserRepository
