@@ -414,7 +414,7 @@ class TestFlextLdapModels:
         # Pass arguments explicitly to avoid mixed type issues
         config = FlextLdapModels.SearchConfig(
             base_dn="dc=test,dc=com",
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=["cn", "mail"],
         )
 
@@ -700,6 +700,7 @@ class TestFlextLdapModels:
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             timeout=30,
             pool_size=5,
+            pool_keepalive=30,
         )
 
         assert info.server == "ldap.example.com"
@@ -882,6 +883,8 @@ class TestFlextLdapModels:
             message_type="UserCommand",
             data={"action": "create", "uid": "testuser"},
             metadata={"correlation_id": "corr-001"},
+            timestamp=None,
+            processed=False,
         )
 
         assert message.message_id == "msg-001"
@@ -906,6 +909,11 @@ class TestFlextLdapModels:
             total_count=2,
             has_more=False,
             next_cookie=None,
+            result_code=0,
+            result_description="Success",
+            matched_dn="",
+            entries_returned=2,
+            time_elapsed=0.0,
         )
 
         assert len(response.entries) == 2
@@ -1321,6 +1329,13 @@ class TestFlextLdapModels:
                 cn="Test",
                 sn="User",
                 mail="not-an-email",  # Invalid email
+                given_name=None,
+                telephone_number=None,
+                description=None,
+                department=None,
+                organizational_unit=None,
+                title=None,
+                organization=None,
             )
 
         # Test empty uid
@@ -1330,6 +1345,13 @@ class TestFlextLdapModels:
                 uid="",  # Empty uid
                 cn="Test",
                 sn="User",
+                given_name=None,
+                telephone_number=None,
+                description=None,
+                department=None,
+                organizational_unit=None,
+                title=None,
+                organization=None,
             )
 
         # Test whitespace-only password
@@ -1340,6 +1362,13 @@ class TestFlextLdapModels:
                 cn="Test",
                 sn="User",
                 user_password="   ",  # Whitespace-only password
+                given_name=None,
+                telephone_number=None,
+                description=None,
+                department=None,
+                organizational_unit=None,
+                title=None,
+                organization=None,
             )
 
     def test_create_group_request_invalid(self) -> None:
@@ -1561,6 +1590,7 @@ class TestFlextLdapModels:
             success=True,
             result_message="User created successfully",
             target_dn="uid=john,ou=people,dc=example,dc=com",
+            duration_ms=0.0,
         )
         assert success.success is True
         assert "created successfully" in success.result_message
@@ -1572,6 +1602,7 @@ class TestFlextLdapModels:
             result_code=32,
             result_message="No such object",
             data={"reason": "Entry does not exist"},
+            duration_ms=0.0,
         )
         assert error.success is False
         assert "No such object" in error.result_message
@@ -1952,6 +1983,7 @@ class TestFlextLdapModels:
         result = FlextLdapModels.LdapUser.from_ldap_attributes(ldap_attrs)
 
         assert result.is_failure
+        assert result.error is not None
         assert "DN is required" in result.error
 
     def test_group_to_ldap_attributes(self) -> None:
@@ -2369,6 +2401,7 @@ class TestFlextLdapModels:
 
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_failure
+        assert result.error is not None
         assert "DN is required" in result.error
 
     def test_search_request_search_complexity_simple(self) -> None:
@@ -2474,6 +2507,13 @@ class TestFlextLdapModels:
             sn="User",
             mail="test@example.com",
             user_password="password123",
+            given_name=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
         )
 
         result = request.validate_business_rules()
@@ -2489,6 +2529,12 @@ class TestFlextLdapModels:
             given_name="Test",
             mail="test@example.com",
             user_password="password123",
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
         )
 
         # Test conversion to user entity
@@ -2938,6 +2984,7 @@ class TestFlextLdapModels:
 
         # Factory should catch exception and return failure result
         assert result.is_failure
+        assert result.error is not None
         assert "creation failed" in result.error.lower()
 
     def test_connection_config_validate_empty_server(self) -> None:
@@ -2949,6 +2996,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "Server cannot be empty" in result.error
 
     def test_connection_config_validate_invalid_port_zero(self) -> None:
@@ -2960,6 +3008,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid port number" in result.error
 
     def test_connection_config_validate_invalid_port_too_high(self) -> None:
@@ -2971,6 +3020,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid port number" in result.error
 
     def test_connection_config_validate_success(self) -> None:
@@ -2994,6 +3044,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     def test_modify_config_validate_empty_changes(self) -> None:
@@ -3007,6 +3058,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "Changes cannot be empty" in result.error
 
     def test_modify_config_validate_success(self) -> None:
@@ -3032,6 +3084,7 @@ class TestFlextLdapModels:
 
         result = config.validate()
         assert result.is_failure
+        assert result.error is not None
         assert "DN cannot be empty" in result.error
 
     def test_add_config_validate_success(self) -> None:

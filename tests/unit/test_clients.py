@@ -595,7 +595,7 @@ class TestFlextLdapClientComprehensive:
 
         result = await client.search_universal(
             base_dn="dc=test,dc=com",
-            search_filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             scope="SUBTREE",
         )
         assert result.is_failure

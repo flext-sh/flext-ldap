@@ -74,9 +74,9 @@ class TestLdapClientRealOperations:
         # Search for base DN - should exist
         search_request = FlextLdapModels.SearchRequest(
             base_dn=shared_ldap_config["base_dn"],
-            scope="base",
+            scope="subtree",
             filter_str="(objectClass=*)",
-            attributes=[],  # Get all attributes
+            attributes=None,  # Get all attributes
             size_limit=10,
             time_limit=FlextLdapConstants.DEFAULT_TIMEOUT,  # Default timeout from constants
             page_size=None,

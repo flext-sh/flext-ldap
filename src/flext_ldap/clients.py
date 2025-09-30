@@ -497,20 +497,56 @@ class FlextLdapClient(FlextService[None]):
             for entry in self._connection.entries:
                 # Build attributes dict from ldap3 entry
                 attributes: dict[str, object] = {}
-                for attr_name in entry.entry_attributes:
-                    attr_value = entry[attr_name].value
-                    if isinstance(attr_value, list) and len(attr_value) == 1:
-                        attributes[attr_name] = attr_value[0]
-                    else:
-                        attributes[attr_name] = attr_value
+
+                # Handle case where entry.entry_attributes might be a list instead of dict
+                entry_attrs = (
+                    entry.entry_attributes if hasattr(entry, "entry_attributes") else {}
+                )
+
+                if isinstance(entry_attrs, dict):
+                    for attr_name in entry_attrs:
+                        attr_value = entry[attr_name].value
+                        if isinstance(attr_value, list) and len(attr_value) == 1:
+                            attributes[attr_name] = attr_value[0]
+                        else:
+                            attributes[attr_name] = attr_value
+                elif isinstance(entry_attrs, list):
+                    # Handle case where entry_attributes is a list
+                    # This might happen in error conditions or with certain LDAP servers
+                    self._logger.warning(
+                        f"entry.entry_attributes is a list instead of dict for DN {entry.entry_dn}"
+                    )
+                else:
+                    self._logger.warning(
+                        f"Unexpected type for entry.entry_attributes: {type(entry_attrs)}"
+                    )
+
+                # Get object classes safely
+                object_classes: list[str] = []
+                if isinstance(entry_attrs, dict):
+                    object_classes = entry_attrs.get("objectClass", [])
+                    if isinstance(object_classes, str):
+                        object_classes = [object_classes]
+                    elif not isinstance(object_classes, list):
+                        object_classes = []
+                elif hasattr(entry, "entry_attributes") and hasattr(
+                    entry.entry_attributes, "get"
+                ):
+                    # Fallback for dict-like objects
+                    try:
+                        object_classes = entry.entry_attributes.get("objectClass", [])
+                        if isinstance(object_classes, str):
+                            object_classes = [object_classes]
+                        elif not isinstance(object_classes, list):
+                            object_classes = []
+                    except AttributeError:
+                        pass
 
                 # Create Entry model instance
                 entry_model = FlextLdapModels.Entry(
                     dn=str(entry.entry_dn),
                     attributes=attributes,
-                    object_classes=entry.entry_attributes.get("objectClass", [])
-                    if hasattr(entry, "entry_attributes")
-                    else [],
+                    object_classes=object_classes,
                 )
                 entries.append(entry_model)
 
@@ -1713,7 +1749,7 @@ class FlextLdapClient(FlextService[None]):
     async def search_universal(
         self,
         base_dn: str,
-        search_filter: str,
+        filter_str: str,
         attributes: list[str] | None = None,
         scope: str = "subtree",
         size_limit: int = 0,
@@ -1727,7 +1763,7 @@ class FlextLdapClient(FlextService[None]):
 
         Args:
             base_dn: Base DN for search
-            search_filter: LDAP search filter
+            filter_str: LDAP search filter
             attributes: Attributes to return (None for all)
             scope: Search scope (base, onelevel, subtree, children)
             size_limit: Maximum number of entries to return
@@ -1748,7 +1784,7 @@ class FlextLdapClient(FlextService[None]):
 
             # Normalize inputs according to server quirks
             normalized_base_dn = self.normalize_dn(base_dn)
-            normalized_filter = self._normalize_filter(search_filter)
+            normalized_filter = self._normalize_filter(filter_str)
             normalized_attributes = (
                 self._normalize_attributes(attributes) if attributes else None
             )

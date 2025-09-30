@@ -164,13 +164,11 @@ class FlextLdapModels(FlextModels):
 
             return self
 
-        @computed_field
         @property
         def rdn(self) -> str:
-            """Computed field: Get the Relative Distinguished Name (first component)."""
+            """Property: Get the Relative Distinguished Name (first component)."""
             return self.value.split(",")[0].strip()
 
-        @property
         @computed_field
         def parent_dn(self) -> str | None:
             """Computed field for parent Distinguished Name."""
@@ -180,25 +178,22 @@ class FlextLdapModels(FlextModels):
             return ",".join(components[1:]).strip()
 
         @computed_field
-        @property
         def rdn_attribute(self) -> str:
             """Computed field: Get the RDN attribute name."""
-            rdn = self.rdn
+            rdn = self.value.split(",")[0].strip()
             if "=" in rdn:
                 return rdn.split("=")[0].strip().lower()
             return ""
 
         @computed_field
-        @property
         def rdn_value(self) -> str:
             """Computed field: Get the RDN value."""
-            rdn = self.rdn
+            rdn = self.value.split(",")[0].strip()
             if "=" in rdn:
                 return rdn.split("=", 1)[1].strip()
             return ""
 
         @computed_field
-        @property
         def components_count(self) -> int:
             """Computed field: Number of DN components."""
             return len(self.value.split(","))
@@ -594,7 +589,6 @@ class FlextLdapModels(FlextModels):
             return v
 
         @computed_field
-        @property
         def full_name(self) -> str:
             """Computed field for user's full name."""
             if self.given_name and self.sn:
@@ -606,19 +600,16 @@ class FlextLdapModels(FlextModels):
             return self.cn
 
         @computed_field
-        @property
         def is_active(self) -> bool:
             """Computed field indicating if user is active."""
             return self.status != "disabled" if self.status else True
 
         @computed_field
-        @property
         def has_contact_info(self) -> bool:
             """Computed field indicating if user has complete contact information."""
             return bool(self.mail and (self.telephone_number or self.mobile))
 
         @computed_field
-        @property
         def organizational_path(self) -> str:
             """Computed field for full organizational hierarchy."""
             path_parts = []
@@ -631,7 +622,6 @@ class FlextLdapModels(FlextModels):
             return " > ".join(path_parts) if path_parts else "No organization"
 
         @computed_field
-        @property
         def rdn(self) -> str:
             """Computed field for Relative Distinguished Name."""
             return self.dn.split(",")[0] if "," in self.dn else self.dn
@@ -1341,13 +1331,11 @@ class FlextLdapModels(FlextModels):
         )
 
         @computed_field
-        @property
         def is_paged_search(self) -> bool:
             """Computed field indicating if this is a paged search."""
             return self.page_size is not None and self.page_size > 0
 
         @computed_field
-        @property
         def search_complexity(self) -> str:
             """Computed field for search complexity assessment."""
             max_filter_complexity = 2  # Maximum filter complexity threshold
@@ -1363,13 +1351,11 @@ class FlextLdapModels(FlextModels):
             return "standard"
 
         @computed_field
-        @property
         def normalized_scope(self) -> str:
             """Computed field for normalized scope value."""
             return self.scope.lower()
 
         @computed_field
-        @property
         def estimated_result_count(self) -> int:
             """Computed field for estimated result count based on search parameters."""
             if self.scope == "base":
@@ -1547,17 +1533,17 @@ class FlextLdapModels(FlextModels):
         sn: str = Field(..., description="Surname")
 
         # Optional user attributes - can be provided as None
-        given_name: str | None = Field(None, description="Given Name")
-        mail: str | None = Field(None, description="Email address")
-        user_password: str | SecretStr | None = Field(None, description="User password")
-        telephone_number: str | None = Field(None, description="Phone number")
-        description: str | None = Field(None, description="User description")
+        given_name: str | None = Field(default=None, description="Given Name")
+        mail: str | None = Field(default=None, description="Email address")
+        user_password: str | SecretStr | None = Field(default=None, description="User password")
+        telephone_number: str | None = Field(default=None, description="Phone number")
+        description: str | None = Field(default=None, description="User description")
 
         # Optional organizational fields
-        department: str | None = Field(None, description="Department")
-        organizational_unit: str | None = Field(None, description="Organizational Unit")
-        title: str | None = Field(None, description="Job title")
-        organization: str | None = Field(None, description="Organization")
+        department: str | None = Field(default=None, description="Department")
+        organizational_unit: str | None = Field(default=None, description="Organizational Unit")
+        title: str | None = Field(default=None, description="Job title")
+        organization: str | None = Field(default=None, description="Organization")
 
         # LDAP metadata
         object_classes: list[str] = Field(
@@ -1967,7 +1953,7 @@ class FlextLdapModels(FlextModels):
         """LDAP search operation configuration value object."""
 
         base_dn: str
-        search_filter: str
+        filter_str: str
         attributes: list[str]
 
         def validate(self) -> FlextResult[None]:
