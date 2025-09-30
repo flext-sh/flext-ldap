@@ -1283,6 +1283,8 @@ class FlextLdapClient(FlextService[None]):
                 entry_attributes: dict[str, object] = {}
                 for attr_name in entry.entry_attributes:
                     attr_value = entry[attr_name].value
+                    if attr_value is None:
+                        continue  # Skip None values
                     if isinstance(attr_value, list) and len(attr_value) == 1:
                         entry_attributes[attr_name] = attr_value[0]
                     else:
@@ -1292,8 +1294,10 @@ class FlextLdapClient(FlextService[None]):
                 entry_model = FlextLdapModels.Entry(
                     dn=str(entry.entry_dn),
                     attributes=entry_attributes,
-                    object_classes=entry.entry_attributes.get("objectClass", [])
-                    if hasattr(entry, "entry_attributes")
+                    object_classes=entry_attributes.get("objectClass", [])
+                    if isinstance(entry_attributes.get("objectClass"), list)
+                    else [entry_attributes.get("objectClass")]
+                    if entry_attributes.get("objectClass")
                     else [],
                 )
                 results.append(entry_model)

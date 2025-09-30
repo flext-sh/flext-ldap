@@ -24,6 +24,7 @@ from flext_ldap.models import FlextLdapModels
 # Testing ACL model conversion and transformation patterns
 # ===================================================================
 
+
 class TestFlextLdapModels:
     """Comprehensive tests for FlextLdapModels class."""
 
@@ -660,6 +661,13 @@ class TestFlextLdapModels:
             sn="User",
             mail="newuser@example.com",
             user_password="securepass123",
+            given_name=None,
+            telephone_number=None,
+            description=None,
+            department=None,
+            organizational_unit=None,
+            title=None,
+            organization=None,
         )
 
         assert request.uid == "newuser"
@@ -966,7 +974,7 @@ class TestFlextLdapModels:
     def test_oracle_acl_model(self) -> None:
         """Test OracleAcl model for Oracle LDAP ACLs."""
         acl_result = FlextLdapModels.OracleAcl.create(
-            orclaci_value="aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///anyone\";)",
+            orclaci_value='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
             target_type="entry",
             permissions=["read"],
         )
@@ -979,7 +987,7 @@ class TestFlextLdapModels:
     def test_aci_format_model(self) -> None:
         """Test AciFormat model for ACI representations."""
         aci_result = FlextLdapModels.AciFormat.create(
-            aci_value="(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///anyone\";)",
+            aci_value='(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
             target_attrs=["cn", "mail"],
             acl_name="test-aci",
             grant_type="allow",
@@ -1800,14 +1808,14 @@ class TestFlextLdapModels:
 
         # Create OpenLDAP ACL with proper field names
         openldap_acl = FlextLdapModels.OpenLdapAcl(
-            access_line="access to dn.subtree=\"ou=users,dc=example,dc=com\" by group.exact=\"cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com\" write",
-            target_spec="dn.subtree=\"ou=users,dc=example,dc=com\"",
+            access_line='access to dn.subtree="ou=users,dc=example,dc=com" by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write',
+            target_spec='dn.subtree="ou=users,dc=example,dc=com"',
         )
 
         # Verify ACL structure
         assert "ou=users,dc=example,dc=com" in openldap_acl.access_line
-        assert openldap_acl.target_spec == "dn.subtree=\"ou=users,dc=example,dc=com\""
-        
+        assert openldap_acl.target_spec == 'dn.subtree="ou=users,dc=example,dc=com"'
+
         # Verify we can use the target and subject we created
         assert target.target_type == "dn"
         assert target.scope == "subtree"
@@ -1875,7 +1883,11 @@ class TestFlextLdapModels:
         assert attributes["title"] == ["Senior Engineer"]
         assert attributes["o"] == ["Example Corp"]
         assert attributes["ou"] == ["Engineering"]
-        assert attributes["objectClass"] == ["person", "organizationalPerson", "inetOrgPerson"]
+        assert attributes["objectClass"] == [
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ]
 
     def test_ldap_user_from_ldap_attributes(self) -> None:
         """Test LdapUser.from_ldap_attributes() factory method."""
@@ -1947,7 +1959,10 @@ class TestFlextLdapModels:
         group = FlextLdapModels.Group(
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             cn="REDACTED_LDAP_BIND_PASSWORDs",
-            member_dns=["uid=REDACTED_LDAP_BIND_PASSWORD1,ou=users,dc=example,dc=com", "uid=REDACTED_LDAP_BIND_PASSWORD2,ou=users,dc=example,dc=com"],
+            member_dns=[
+                "uid=REDACTED_LDAP_BIND_PASSWORD1,ou=users,dc=example,dc=com",
+                "uid=REDACTED_LDAP_BIND_PASSWORD2,ou=users,dc=example,dc=com",
+            ],
             description="Administrator group",
             gid_number=1000,
             object_classes=["groupOfNames", "posixGroup"],
@@ -1969,7 +1984,10 @@ class TestFlextLdapModels:
         ldap_attrs = {
             "dn": ["cn=developers,ou=groups,dc=example,dc=com"],
             "cn": ["developers"],
-            "member": ["uid=dev1,ou=users,dc=example,dc=com", "uid=dev2,ou=users,dc=example,dc=com"],
+            "member": [
+                "uid=dev1,ou=users,dc=example,dc=com",
+                "uid=dev2,ou=users,dc=example,dc=com",
+            ],
             "description": ["Development team"],
             "gidNumber": ["2000"],
             "objectClass": ["groupOfNames", "posixGroup"],
@@ -1989,6 +2007,7 @@ class TestFlextLdapModels:
     def test_cqrs_command_direct_creation(self) -> None:
         """Test CqrsCommand direct instantiation."""
         import time
+
         timestamp = int(time.time() * 1000)
 
         command = FlextLdapModels.CqrsCommand(
@@ -2008,6 +2027,7 @@ class TestFlextLdapModels:
     def test_cqrs_query_direct_creation(self) -> None:
         """Test CqrsQuery direct instantiation."""
         import time
+
         timestamp = int(time.time() * 1000)
 
         query = FlextLdapModels.CqrsQuery(
@@ -2027,6 +2047,7 @@ class TestFlextLdapModels:
     def test_cqrs_event_direct_creation(self) -> None:
         """Test CqrsEvent direct instantiation."""
         import time
+
         timestamp = int(time.time() * 1000)
 
         event = FlextLdapModels.CqrsEvent(
@@ -2049,6 +2070,7 @@ class TestFlextLdapModels:
     def test_domain_message_direct_creation(self) -> None:
         """Test DomainMessage direct instantiation."""
         import time
+
         timestamp = int(time.time() * 1000)
 
         message = FlextLdapModels.DomainMessage(
@@ -2081,13 +2103,13 @@ class TestFlextLdapModels:
                 "mail": ["test@example.com"],
             },
         )
-        
+
         # Test getting string attribute
         cn_value = entry.get_attribute("cn")
         assert cn_value is not None
         assert isinstance(cn_value, list)
         assert cn_value == ["Test User"]
-        
+
         # Test getting mail attribute
         mail_value = entry.get_attribute("mail")
         assert mail_value is not None
@@ -2105,7 +2127,7 @@ class TestFlextLdapModels:
                 ],
             },
         )
-        
+
         # Test getting multi-valued attribute
         object_classes = entry.get_attribute("objectClass")
         assert object_classes is not None
@@ -2123,7 +2145,7 @@ class TestFlextLdapModels:
                 "emptyAttr": [],  # Empty list edge case
             },
         )
-        
+
         # Test empty attribute list returns empty list
         empty_attr = entry.get_attribute("emptyAttr")
         assert empty_attr is not None
@@ -2136,11 +2158,11 @@ class TestFlextLdapModels:
             dn="cn=testuser,dc=example,dc=com",
             attributes={"cn": ["Test User"]},
         )
-        
+
         # Test missing attribute returns None
         missing_attr = entry.get_attribute("nonexistent")
         assert missing_attr is None
-        
+
         # Test another missing attribute
         missing_mail = entry.get_attribute("mail")
         assert missing_mail is None
@@ -2151,11 +2173,11 @@ class TestFlextLdapModels:
             dn="cn=testuser,dc=example,dc=com",
             attributes={"cn": ["Test User"], "sn": ["User"]},
         )
-        
+
         # Test setting existing attribute
         entry.set_attribute("cn", ["Modified User"])
         assert entry.get_attribute("cn") == ["Modified User"]
-        
+
         # Test adding new attribute
         entry.set_attribute("mail", ["newmail@example.com"])
         assert entry.get_attribute("mail") == ["newmail@example.com"]
@@ -2170,12 +2192,12 @@ class TestFlextLdapModels:
                 "mail": ["test@example.com"],
             },
         )
-        
+
         # Test existing attributes
         assert entry.has_attribute("cn") is True
         assert entry.has_attribute("sn") is True
         assert entry.has_attribute("mail") is True
-        
+
         # Test non-existing attributes
         assert entry.has_attribute("nonexistent") is False
         assert entry.has_attribute("telephoneNumber") is False
@@ -2188,18 +2210,16 @@ class TestFlextLdapModels:
             attributes={"cn": ["Test User"]},
         )
         assert entry1.get_rdn() == "cn=testuser"
-        
+
         # Test DN with multiple components
         entry2 = FlextLdapModels.Entry(
             dn="uid=jdoe,ou=people,ou=users,dc=company,dc=com",
             attributes={"uid": ["jdoe"]},
         )
         assert entry2.get_rdn() == "uid=jdoe"
-        
+
         # Test single component DN (no commas)
-        entry3 = FlextLdapModels.Entry(
-            dn="dc=com", attributes={"dc": ["com"]}
-        )
+        entry3 = FlextLdapModels.Entry(dn="dc=com", attributes={"dc": ["com"]})
         assert entry3.get_rdn() == "dc=com"
 
     def test_entry_contains_operator(self) -> None:
@@ -2212,15 +2232,15 @@ class TestFlextLdapModels:
                 "mail": ["test@example.com"],
             },
         )
-        
+
         # Test 'in' operator for existing attributes
         assert "cn" in entry
         assert "sn" in entry
         assert "mail" in entry
-        
+
         # Test 'in' operator for DN (always True)
         assert "dn" in entry
-        
+
         # Test 'in' operator for non-existing attributes
         assert "nonexistent" not in entry
         assert "telephoneNumber" not in entry
@@ -2235,15 +2255,15 @@ class TestFlextLdapModels:
                 "mail": ["test@example.com"],
             },
         )
-        
+
         # Test bracket notation for attributes
         assert entry["cn"] == ["Test User"]
         assert entry["sn"] == ["User"]
         assert entry["mail"] == ["test@example.com"]
-        
+
         # Test bracket notation for DN
         assert entry["dn"] == "cn=testuser,dc=example,dc=com"
-        
+
         # Test bracket notation for missing attribute
         missing = entry["nonexistent"]
         assert missing is None
@@ -2257,23 +2277,23 @@ class TestFlextLdapModels:
                 "mail": ["test@example.com"],
             },
         )
-        
+
         # Test get() with existing attribute
         cn_value = entry.get("cn")
         assert cn_value == ["Test User"]
-        
+
         # Test get() for DN
         dn_value = entry.get("dn")
         assert dn_value == "cn=testuser,dc=example,dc=com"
-        
+
         # Test get() with missing attribute and default
         phone = entry.get("telephoneNumber", ["555-0000"])
         assert phone == ["555-0000"]
-        
+
         # Test get() with missing attribute and None default
         missing = entry.get("nonexistent")
         assert missing is None
-        
+
         # Test get() with missing attribute and custom default
         description = entry.get("description", ["No description"])
         assert description == ["No description"]
@@ -2295,7 +2315,7 @@ class TestFlextLdapModels:
                 "uid=user2,ou=users,dc=example,dc=com",
             ],
         }
-        
+
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
@@ -2313,7 +2333,7 @@ class TestFlextLdapModels:
             "objectClass": ["groupOfNames", "top"],
             "member": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
         }
-        
+
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
@@ -2333,7 +2353,7 @@ class TestFlextLdapModels:
                 "uid=user2,ou=users,dc=example,dc=com",
             ],
         }
-        
+
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
@@ -2346,7 +2366,7 @@ class TestFlextLdapModels:
             "cn": ["Test Group"],
             "member": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
         }
-        
+
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_failure
         assert "DN is required" in result.error
@@ -2396,7 +2416,7 @@ class TestFlextLdapModels:
             filter_str="(objectClass=*)",
             scope="SUBTREE",  # Uppercase
         )
-        
+
         assert search.normalized_scope == "subtree"
 
     def test_search_request_estimated_result_count_base(self) -> None:
@@ -2406,7 +2426,7 @@ class TestFlextLdapModels:
             filter_str="(objectClass=person)",  # Non-wildcard for base scope
             scope="base",
         )
-        
+
         assert search.estimated_result_count == 1
 
     def test_search_request_estimated_result_count_onelevel(self) -> None:
@@ -2417,7 +2437,7 @@ class TestFlextLdapModels:
             scope="onelevel",
             size_limit=50,
         )
-        
+
         # Should be min(size_limit, 100)
         assert search.estimated_result_count == 50
 
@@ -2429,7 +2449,7 @@ class TestFlextLdapModels:
             scope="subtree",
             size_limit=100,
         )
-        
+
         # Should be min(size_limit, 10) for specific attribute search
         assert search.estimated_result_count == 10
 
@@ -2441,7 +2461,7 @@ class TestFlextLdapModels:
             scope="subtree",
             size_limit=2000,
         )
-        
+
         # Should be min(size_limit, 1000) for broader search
         assert search.estimated_result_count == 1000
 
@@ -2455,7 +2475,7 @@ class TestFlextLdapModels:
             mail="test@example.com",
             user_password="password123",
         )
-        
+
         result = request.validate_business_rules()
         assert result.is_success
 
@@ -2494,7 +2514,7 @@ class TestFlextLdapModels:
             given_name="John",
             mail="jdoe@example.com",
         )
-        
+
         assert user.display_name == "John Doe"
 
     def test_ldap_user_display_name_with_given_name_only(self) -> None:
@@ -2507,7 +2527,7 @@ class TestFlextLdapModels:
             given_name="John",
             mail="john@example.com",
         )
-        
+
         assert user.display_name == "John"
 
     def test_ldap_user_display_name_with_sn_only(self) -> None:
@@ -2519,7 +2539,7 @@ class TestFlextLdapModels:
             sn="Doe",
             mail="doe@example.com",
         )
-        
+
         assert user.display_name == "Doe"
 
     def test_ldap_user_display_name_fallback_to_cn(self) -> None:
@@ -2531,7 +2551,7 @@ class TestFlextLdapModels:
             sn="",
             mail="test@example.com",
         )
-        
+
         assert user.display_name == "Test User"
 
     def test_ldap_user_is_active_status_enabled(self) -> None:
@@ -2544,7 +2564,7 @@ class TestFlextLdapModels:
             mail="active@example.com",
             status="active",
         )
-        
+
         assert user.is_active is True
 
     def test_ldap_user_is_active_status_disabled(self) -> None:
@@ -2557,7 +2577,7 @@ class TestFlextLdapModels:
             mail="disabled@example.com",
             status="disabled",
         )
-        
+
         assert user.is_active is False
 
     def test_ldap_user_is_active_no_status(self) -> None:
@@ -2569,7 +2589,7 @@ class TestFlextLdapModels:
             sn="User",
             mail="nostatus@example.com",
         )
-        
+
         assert user.is_active is True
 
     def test_ldap_user_has_contact_info_complete(self) -> None:
@@ -2583,7 +2603,7 @@ class TestFlextLdapModels:
             telephone_number="555-1234",
             mobile="555-5678",
         )
-        
+
         assert user.has_contact_info is True
 
     def test_ldap_user_has_contact_info_mail_and_phone(self) -> None:
@@ -2596,7 +2616,7 @@ class TestFlextLdapModels:
             mail="phone@example.com",
             telephone_number="555-1234",
         )
-        
+
         assert user.has_contact_info is True
 
     def test_ldap_user_has_contact_info_incomplete(self) -> None:
@@ -2608,7 +2628,7 @@ class TestFlextLdapModels:
             sn="User",
             mail="incomplete@example.com",
         )
-        
+
         assert user.has_contact_info is False
 
     def test_ldap_user_organizational_path_complete(self) -> None:
@@ -2623,8 +2643,10 @@ class TestFlextLdapModels:
             organizational_unit="Engineering",
             department="Software Development",
         )
-        
-        assert user.organizational_path == "ACME Corp > Engineering > Software Development"
+
+        assert (
+            user.organizational_path == "ACME Corp > Engineering > Software Development"
+        )
 
     def test_ldap_user_organizational_path_partial(self) -> None:
         """Test LdapUser.organizational_path with partial hierarchy."""
@@ -2635,10 +2657,11 @@ class TestFlextLdapModels:
             sn="User",
             mail="partial@example.com",
             organization="ACME Corp",
+            organizational_unit="Engineering",  # Required when department is set
             department="IT",
         )
-        
-        assert user.organizational_path == "ACME Corp > IT"
+
+        assert user.organizational_path == "ACME Corp > Engineering > IT"
 
     def test_ldap_user_organizational_path_empty(self) -> None:
         """Test LdapUser.organizational_path with no organization."""
@@ -2649,7 +2672,7 @@ class TestFlextLdapModels:
             sn="User",
             mail="noorg@example.com",
         )
-        
+
         assert user.organizational_path == "No organization"
 
     def test_ldap_user_rdn_extraction(self) -> None:
@@ -2661,7 +2684,7 @@ class TestFlextLdapModels:
             sn="User",
             mail="test@example.com",
         )
-        
+
         assert user.rdn == "uid=testuser"
 
     def test_ldap_user_rdn_single_component(self) -> None:
@@ -2673,5 +2696,352 @@ class TestFlextLdapModels:
             sn="Root",
             mail="root@example.com",
         )
-        
+
         assert user.rdn == "dc=com"
+
+    # =========================================================================
+    # PHASE 2.1.5 BATCH 4: CONFIG VALIDATION METHODS (74% → 80% TARGET)
+    # =========================================================================
+
+    # =========================================================================
+    # Phase 2.1.5 Batch 5: LdapUser factory methods and advanced validation
+    # Coverage target: Lines 629-631, 643-644, 667-671, 701-733, 873-924
+    # =========================================================================
+
+    def test_ldap_user_validate_object_classes_empty(self) -> None:
+        """Test LdapUser validation with empty object_classes."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdapModels.LdapUser(
+                dn="uid=test,ou=users,dc=example,dc=com",
+                cn="Test User",
+                uid="test",
+                sn="User",
+                mail="test@example.com",
+                object_classes=[],  # Empty - should fail
+            )
+
+        # Verify error message mentions object class requirement
+        assert "object class" in str(exc_info.value).lower()
+
+    def test_ldap_user_validate_person_object_class_missing(self) -> None:
+        """Test LdapUser validation without 'person' object class."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdapModels.LdapUser(
+                dn="uid=test,ou=users,dc=example,dc=com",
+                cn="Test User",
+                uid="test",
+                sn="User",
+                mail="test@example.com",
+                object_classes=["inetOrgPerson"],  # Missing 'person'
+            )
+
+        # Verify error message mentions 'person' object class
+        assert "person" in str(exc_info.value).lower()
+
+    def test_ldap_user_serialize_password_none(self) -> None:
+        """Test password serialization with None value."""
+        user = FlextLdapModels.LdapUser(
+            dn="uid=test,ou=users,dc=example,dc=com",
+            cn="Test User",
+            uid="test",
+            sn="User",
+            mail="test@example.com",
+            user_password=None,  # None password
+        )
+        # Serialize to dict to trigger serializer
+        user_dict = user.model_dump()
+        assert user_dict["user_password"] is None
+
+    def test_ldap_user_serialize_password_secret_str(self) -> None:
+        """Test password serialization with SecretStr."""
+
+        user = FlextLdapModels.LdapUser(
+            dn="uid=test,ou=users,dc=example,dc=com",
+            cn="Test User",
+            uid="test",
+            sn="User",
+            mail="test@example.com",
+            user_password="secret123",  # Will be converted to SecretStr
+        )
+        # Serialize to dict to trigger serializer
+        user_dict = user.model_dump()
+        assert user_dict["user_password"] == "[PROTECTED]"
+
+    def test_ldap_user_to_ldap_attributes_minimal(self) -> None:
+        """Test to_ldap_attributes() with minimal user data."""
+        user = FlextLdapModels.LdapUser(
+            dn="uid=minimal,ou=users,dc=example,dc=com",
+            cn="Minimal User",
+            uid="minimal",
+            sn="User",
+            mail="minimal@example.com",
+        )
+        ldap_dict = user.to_ldap_attributes()
+
+        # Verify core attributes are present
+        assert ldap_dict["dn"] == ["uid=minimal,ou=users,dc=example,dc=com"]
+        assert ldap_dict["cn"] == ["Minimal User"]
+        assert ldap_dict["uid"] == ["minimal"]
+        assert ldap_dict["sn"] == ["User"]
+        assert ldap_dict["mail"] == ["minimal@example.com"]
+        assert "objectClass" in ldap_dict
+
+    def test_ldap_user_to_ldap_attributes_complete(self) -> None:
+        """Test to_ldap_attributes() with all optional fields populated."""
+        user = FlextLdapModels.LdapUser(
+            dn="uid=complete,ou=users,dc=example,dc=com",
+            cn="Complete User",
+            uid="complete",
+            sn="User",
+            given_name="Complete",
+            mail="complete@example.com",
+            telephone_number="555-1111",
+            mobile="555-2222",
+            department="Engineering",
+            title="Senior Engineer",
+            organization="ACME Corp",
+            organizational_unit="IT",
+            object_classes=["person", "organizationalPerson", "inetOrgPerson"],
+        )
+        ldap_dict = user.to_ldap_attributes()
+
+        # Verify all attributes are present
+        assert ldap_dict["dn"] == ["uid=complete,ou=users,dc=example,dc=com"]
+        assert ldap_dict["cn"] == ["Complete User"]
+        assert ldap_dict["uid"] == ["complete"]
+        assert ldap_dict["sn"] == ["User"]
+        assert ldap_dict["givenName"] == ["Complete"]
+        assert ldap_dict["mail"] == ["complete@example.com"]
+        assert ldap_dict["telephoneNumber"] == ["555-1111"]
+        assert ldap_dict["mobile"] == ["555-2222"]
+        assert ldap_dict["department"] == ["Engineering"]
+        assert ldap_dict["title"] == ["Senior Engineer"]
+        assert ldap_dict["o"] == ["ACME Corp"]
+        assert ldap_dict["ou"] == ["IT"]
+        assert ldap_dict["objectClass"] == [
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ]
+
+    def test_ldap_user_to_ldap_attributes_with_additional_attributes(self) -> None:
+        """Test to_ldap_attributes() with additional_attributes."""
+        user = FlextLdapModels.LdapUser(
+            dn="uid=extra,ou=users,dc=example,dc=com",
+            cn="Extra User",
+            uid="extra",
+            sn="User",
+            mail="extra@example.com",
+            additional_attributes={
+                "customAttr": "value1",
+                "listAttr": ["value2", "value3"],
+                "numericAttr": "42",  # Must be string per model validation
+            },
+        )
+        ldap_dict = user.to_ldap_attributes()
+
+        # Verify additional attributes are converted to string lists
+        assert ldap_dict["customAttr"] == ["value1"]
+        assert ldap_dict["listAttr"] == ["value2", "value3"]
+        assert ldap_dict["numericAttr"] == ["42"]
+
+    def test_ldap_user_create_minimal_factory(self) -> None:
+        """Test create_minimal() factory with minimal parameters."""
+        result = FlextLdapModels.LdapUser.create_minimal(
+            dn="uid=factory,ou=users,dc=example,dc=com",
+            cn="Factory User",
+            mail="factory@example.com",  # Required for email validation
+        )
+
+        assert result.is_success
+        user = result.unwrap()
+        assert user.dn == "uid=factory,ou=users,dc=example,dc=com"
+        assert user.cn == "Factory User"
+        assert user.mail == "factory@example.com"
+        assert user.uid == ""  # Default empty string
+        assert user.sn == ""  # Default empty string
+        assert user.object_classes == [
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ]
+
+    def test_ldap_user_create_minimal_with_uid(self) -> None:
+        """Test create_minimal() factory with uid parameter."""
+        result = FlextLdapModels.LdapUser.create_minimal(
+            dn="uid=factory2,ou=users,dc=example,dc=com",
+            cn="Factory User 2",
+            uid="factory2",
+            mail="factory2@example.com",
+        )
+
+        assert result.is_success
+        user = result.unwrap()
+        assert user.uid == "factory2"
+
+    def test_ldap_user_create_minimal_with_all_optionals(self) -> None:
+        """Test create_minimal() factory with all optional parameters."""
+        result = FlextLdapModels.LdapUser.create_minimal(
+            dn="uid=full,ou=users,dc=example,dc=com",
+            cn="Full Factory User",
+            uid="full",
+            sn="User",
+            given_name="Full",
+            mail="full@example.com",
+            telephone_number="555-3333",
+            mobile="555-4444",
+            department="Sales",
+            title="Sales Manager",
+            organization="ACME Inc",
+            organizational_unit="Sales",
+            user_password="secret456",
+        )
+
+        assert result.is_success
+        user = result.unwrap()
+        assert user.sn == "User"
+        assert user.given_name == "Full"
+        assert user.mail == "full@example.com"
+        assert user.telephone_number == "555-3333"
+        assert user.mobile == "555-4444"
+        assert user.department == "Sales"
+        assert user.title == "Sales Manager"
+        assert user.organization == "ACME Inc"
+        assert user.organizational_unit == "Sales"
+        assert user.user_password is not None
+
+    def test_ldap_user_create_minimal_with_none_password(self) -> None:
+        """Test create_minimal() factory with explicit None password."""
+        result = FlextLdapModels.LdapUser.create_minimal(
+            dn="uid=nopass,ou=users,dc=example,dc=com",
+            cn="No Password User",
+            mail="nopass@example.com",
+            user_password=None,
+        )
+
+        assert result.is_success
+        user = result.unwrap()
+        assert user.user_password is None
+
+    def test_ldap_user_create_minimal_error_handling(self) -> None:
+        """Test create_minimal() factory error handling with invalid data."""
+        # Try to create user with empty mail which triggers email validation error
+        result = FlextLdapModels.LdapUser.create_minimal(
+            dn="uid=invalid,ou=users,dc=example,dc=com",
+            cn="Invalid User",
+            mail="",  # Empty mail triggers validation error
+        )
+
+        # Factory should catch exception and return failure result
+        assert result.is_failure
+        assert "creation failed" in result.error.lower()
+
+    def test_connection_config_validate_empty_server(self) -> None:
+        """Test ConnectionConfig.validate() with empty server."""
+        config = FlextLdapModels.ConnectionConfig(
+            server="",  # Empty server
+            port=389,
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "Server cannot be empty" in result.error
+
+    def test_connection_config_validate_invalid_port_zero(self) -> None:
+        """Test ConnectionConfig.validate() with port 0."""
+        config = FlextLdapModels.ConnectionConfig(
+            server="ldap.example.com",
+            port=0,  # Invalid port
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "Invalid port number" in result.error
+
+    def test_connection_config_validate_invalid_port_too_high(self) -> None:
+        """Test ConnectionConfig.validate() with port > 65535."""
+        config = FlextLdapModels.ConnectionConfig(
+            server="ldap.example.com",
+            port=70000,  # Too high
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "Invalid port number" in result.error
+
+    def test_connection_config_validate_success(self) -> None:
+        """Test ConnectionConfig.validate() with valid data."""
+        config = FlextLdapModels.ConnectionConfig(
+            server="ldap.example.com",
+            port=389,
+        )
+
+        result = config.validate()
+        assert result.is_success
+
+    def test_modify_config_validate_empty_dn(self) -> None:
+        """Test ModifyConfig.validate() with empty DN."""
+        from flext_ldap.models import FlextLdapModels
+
+        config = FlextLdapModels.ModifyConfig(
+            dn="",  # Empty DN
+            changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "DN cannot be empty" in result.error
+
+    def test_modify_config_validate_empty_changes(self) -> None:
+        """Test ModifyConfig.validate() with empty changes."""
+        from flext_ldap.models import FlextLdapModels
+
+        config = FlextLdapModels.ModifyConfig(
+            dn="cn=test,dc=example,dc=com",
+            changes={},  # Empty changes
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "Changes cannot be empty" in result.error
+
+    def test_modify_config_validate_success(self) -> None:
+        """Test ModifyConfig.validate() with valid data."""
+        from flext_ldap.models import FlextLdapModels
+
+        config = FlextLdapModels.ModifyConfig(
+            dn="cn=test,dc=example,dc=com",
+            changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
+        )
+
+        result = config.validate()
+        assert result.is_success
+
+    def test_add_config_validate_empty_dn(self) -> None:
+        """Test AddConfig.validate() with empty DN."""
+        from flext_ldap.models import FlextLdapModels
+
+        config = FlextLdapModels.AddConfig(
+            dn="",  # Empty DN
+            attributes={"objectClass": ["person"], "cn": ["Test"]},
+        )
+
+        result = config.validate()
+        assert result.is_failure
+        assert "DN cannot be empty" in result.error
+
+    def test_add_config_validate_success(self) -> None:
+        """Test AddConfig.validate() with valid data."""
+        from flext_ldap.models import FlextLdapModels
+
+        config = FlextLdapModels.AddConfig(
+            dn="cn=test,dc=example,dc=com",
+            attributes={"objectClass": ["person"], "cn": ["Test"]},
+        )
+
+        result = config.validate()
+        assert result.is_success

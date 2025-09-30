@@ -82,7 +82,7 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
         )
 
         if search_result.is_success:
-            entries: list[dict[str, object]] = search_result.value or []
+            entries: list[FlextLdapModels.Entry] = search_result.value or []
             logger.info(f"Found {len(entries)} entries")
 
             for entry in entries[:3]:  # Show first 3 entries

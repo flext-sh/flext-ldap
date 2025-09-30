@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from typing import cast
 
 from flext_ldap.mixins import FlextLdapMixins
 
@@ -126,28 +127,38 @@ class TestFlextLdapMixins:
     def test_validation_mixin_validate_non_negative_number(self) -> None:
         """Test validate_non_negative_number - covers lines 61-63."""
         # Test with positive number
-        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", 5.0)
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number(
+            "test", 5.0
+        )
         assert result.is_success
 
         # Test with zero
-        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", 0.0)
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number(
+            "test", 0.0
+        )
         assert result.is_success
 
         # Test with negative number (covers lines 61-63)
-        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number("test", -1.0)
+        result = FlextLdapMixins.ValidationMixin.validate_non_negative_number(
+            "test", -1.0
+        )
         assert not result.is_success
-        assert "must be non-negative" in result.error
+        assert "must be non-negative" in cast(str, result.error)
 
     def test_validation_mixin_validate_enum_value(self) -> None:
         """Test validate_enum_value - covers lines 70-74."""
         valid_values = ["pending", "running", "completed"]
 
         # Test with valid value
-        result = FlextLdapMixins.ValidationMixin.validate_enum_value("status", "pending", valid_values)
+        result = FlextLdapMixins.ValidationMixin.validate_enum_value(
+            "status", "pending", valid_values
+        )
         assert result.is_success
 
         # Test with invalid value (covers lines 70-74)
-        result = FlextLdapMixins.ValidationMixin.validate_enum_value("status", "invalid", valid_values)
+        result = FlextLdapMixins.ValidationMixin.validate_enum_value(
+            "status", "invalid", valid_values
+        )
         assert not result.is_success
-        assert "Invalid status" in result.error
-        assert "Must be one of" in result.error
+        assert "Invalid status" in cast(str, result.error)
+        assert "Must be one of" in cast(str, result.error)

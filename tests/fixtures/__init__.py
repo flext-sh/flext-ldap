@@ -60,9 +60,7 @@ class TestFixtures:
 
             return FlextResult[str].ok(content)
         except Exception as e:
-            return FlextResult[str].fail(
-                f"Failed to load LDIF fixture {filename}: {e}"
-            )
+            return FlextResult[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
     def load_docker_config() -> FlextResult[dict[str, Any]]:
@@ -70,9 +68,7 @@ class TestFixtures:
         try:
             filepath = FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return FlextResult[dict[str, Any]].fail(
-                    "Docker config file not found"
-                )
+                return FlextResult[dict[str, Any]].fail("Docker config file not found")
 
             with open(filepath) as f:
                 config = json.load(f)

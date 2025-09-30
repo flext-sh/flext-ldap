@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import cast
 from urllib.parse import urlparse
 
 from flext_core import FlextLogger, FlextResult
@@ -123,7 +122,7 @@ async def _demo_user_operations(ldap_service: FlextLdapClient) -> None:
         try:
             # Search for existing users in the people OU
             search_result: FlextResult[
-                list[dict[str, object]]
+                list[FlextLdapModels.Entry]
             ] = await ldap_service.search(
                 base_dn="ou=people,dc=flext,dc=local",
                 filter_str="(objectClass=person)",
@@ -131,30 +130,24 @@ async def _demo_user_operations(ldap_service: FlextLdapClient) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                user_entries: list[dict[str, object]] = search_result.value
+                user_entries: list[FlextLdapModels.Entry] = search_result.value
                 for user_entry in user_entries:
-                    attributes_raw = user_entry.get("attributes", {})
-                    if not isinstance(attributes_raw, dict):
-                        continue
-                    # Type assertion for LDAP attributes
-                    attributes: dict[str, list[str | bytes]] = cast(
-                        "dict[str, list[str | bytes]]", attributes_raw
-                    )
-                    uid = attributes.get("uid", ["N/A"])[0]
-                    cn = attributes.get("cn", ["N/A"])[0]
-                    # Ensure string conversion for safe f-string interpolation
-                    uid_str = (
-                        uid.decode("utf-8") if isinstance(uid, bytes) else str(uid)
-                    )
-                    cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
-                    logger.debug(f"Found user: {uid_str} ({cn_str})")
+                    # Access attributes directly from Entry model
+                    uid_raw = user_entry.get_attribute("uid")
+                    cn_raw = user_entry.get_attribute("cn")
+
+                    # Extract first value from list
+                    uid = uid_raw[0] if uid_raw else "N/A"
+                    cn = cn_raw[0] if cn_raw else "N/A"
+
+                    logger.debug(f"Found user: {uid} ({cn})")
 
                 # Perform user search validation
                 await _perform_user_search_validation(ldap_service, "demo_session")
             else:
                 # Test wildcard search
                 wildcard_result: FlextResult[
-                    list[dict[str, object]]
+                    list[FlextLdapModels.Entry]
                 ] = await ldap_service.search(
                     base_dn="dc=flext,dc=local",
                     filter_str="(objectClass=*)",
@@ -182,7 +175,7 @@ async def _perform_user_search_validation(
 ) -> None:
     """Perform REAL user search validation with different filters."""
     # Test 1: Search by object class
-    search_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+    search_result: FlextResult[list[FlextLdapModels.Entry]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
@@ -192,7 +185,9 @@ async def _perform_user_search_validation(
         pass
 
     # Test 2: Search with compound filter
-    compound_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+    compound_result: FlextResult[
+        list[FlextLdapModels.Entry]
+    ] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
@@ -202,7 +197,7 @@ async def _perform_user_search_validation(
         pass
 
     # Test 3: Base scope search on root
-    base_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+    base_result: FlextResult[list[FlextLdapModels.Entry]] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(objectClass=*)",
         attributes=["dc", "objectClass"],
@@ -210,13 +205,8 @@ async def _perform_user_search_validation(
 
     if base_result.is_success and base_result.value:
         entry = base_result.value[0]
-        attributes_raw = entry.get("attributes", {})
-        if isinstance(attributes_raw, dict):
-            # Type assertion for LDAP attributes
-            attributes: dict[str, list[str | bytes]] = cast(
-                "dict[str, list[str | bytes]]", attributes_raw
-            )
-            attributes.get("objectClass", [])
+        # Access attributes directly from Entry model
+        entry.get_attribute("objectClass")
 
 
 async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
@@ -237,7 +227,7 @@ async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
         try:
             # Search for existing groups in the groups OU
             search_result: FlextResult[
-                list[dict[str, object]]
+                list[FlextLdapModels.Entry]
             ] = await ldap_service.search(
                 base_dn="ou=groups,dc=flext,dc=local",
                 filter_str="(objectClass=groupOfNames)",
@@ -245,39 +235,26 @@ async def _demo_group_operations(ldap_service: FlextLdapClient) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                group_search_entries: list[dict[str, object]] = search_result.value
+                group_search_entries: list[FlextLdapModels.Entry] = search_result.value
                 for group_entry in group_search_entries:
-                    attributes_raw = group_entry.get("attributes", {})
-                    if not isinstance(attributes_raw, dict):
-                        continue
-                    # Type assertion for LDAP attributes
-                    attributes: dict[str, list[str | bytes]] = cast(
-                        "dict[str, list[str | bytes]]", attributes_raw
-                    )
-                    cn_list = attributes.get("cn", ["N/A"])
-                    cn = cn_list[0] if cn_list else "N/A"
-                    description_list = attributes.get(
-                        "description",
-                        ["No description"],
-                    )
+                    # Access attributes directly from Entry model
+                    cn_raw = group_entry.get_attribute("cn")
+                    description_raw = group_entry.get_attribute("description")
+
+                    # Extract first value from list
+                    cn = cn_raw[0] if cn_raw else "N/A"
                     description = (
-                        description_list[0] if description_list else "No description"
+                        description_raw[0] if description_raw else "No description"
                     )
-                    # Ensure string conversion for safe f-string interpolation
-                    cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
-                    description_str = (
-                        description.decode("utf-8")
-                        if isinstance(description, bytes)
-                        else str(description)
-                    )
-                    logger.debug(f"Found group: {cn_str} - {description_str}")
+
+                    logger.debug(f"Found group: {cn} - {description}")
 
                 # Perform group search validation
                 await _perform_group_search_validation(ldap_service, "demo_session")
             else:
                 # Test alternative group object classes
                 alt_result: FlextResult[
-                    list[dict[str, object]]
+                    list[FlextLdapModels.Entry]
                 ] = await ldap_service.search(
                     base_dn="ou=groups,dc=flext,dc=local",
                     filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
@@ -301,31 +278,26 @@ async def _perform_group_search_validation(
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     # Test 1: Search for all group types
-    all_groups_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+    all_groups_result: FlextResult[
+        list[FlextLdapModels.Entry]
+    ] = await ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
     )
 
     if all_groups_result.is_success:
-        group_entries: list[dict[str, object]] = all_groups_result.value or []
+        group_entries: list[FlextLdapModels.Entry] = all_groups_result.value or []
         for group_entry in group_entries:
-            attributes_raw = group_entry.get("attributes", {})
-            if not isinstance(attributes_raw, dict):
-                continue
-            # Type assertion for LDAP attributes
-            attributes: dict[str, list[str | bytes]] = cast(
-                "dict[str, list[str | bytes]]", attributes_raw
-            )
-            cn_list = attributes.get("cn", ["Unknown"])
-            cn = cn_list[0] if cn_list else "Unknown"
-            object_class = attributes.get("objectClass", [])
-            # Ensure string conversion for safe f-string interpolation
-            cn_str = cn.decode("utf-8") if isinstance(cn, bytes) else str(cn)
-            object_class_str = str(
-                object_class
-            )  # object_class is already a list, convert to string representation
-            logger.debug(f"Group: {cn_str}, Class: {object_class_str}")
+            # Access attributes directly from Entry model
+            cn_raw = group_entry.get_attribute("cn")
+            object_class_raw = group_entry.get_attribute("objectClass")
+
+            # Extract values
+            cn = cn_raw[0] if cn_raw else "Unknown"
+            object_class_str = str(object_class_raw) if object_class_raw else "[]"
+
+            logger.debug(f"Group: {cn}, Class: {object_class_str}")
 
     # Test 2: Search groups with wildcards
     wildcard_result = await ldap_service.search(
@@ -338,7 +310,7 @@ async def _perform_group_search_validation(
         pass
 
     # Test 3: Search with scope validation
-    scope_result: FlextResult[list[dict[str, object]]] = await ldap_service.search(
+    scope_result: FlextResult[list[FlextLdapModels.Entry]] = await ldap_service.search(
         base_dn="ou=groups,dc=flext,dc=local",
         filter_str="(objectClass=*)",
         attributes=[

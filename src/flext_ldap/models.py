@@ -521,21 +521,35 @@ class FlextLdapModels(FlextModels):
         cn: str = Field(..., description="Common Name")
         uid: str = Field(..., description="User ID")
         sn: str = Field(..., description="Surname")
-        given_name: str | None = Field(None, description="Given Name")
+        given_name: str | None = Field(default=None, description="Given Name")
 
         # Contact information
-        mail: str = Field(..., description="Primary email address")
-        telephone_number: str | None = Field(None, description="Primary phone number")
-        mobile: str | None = Field(None, description="Mobile phone number")
+        mail: str | None = Field(default=None, description="Primary email address")
+        telephone_number: str | None = Field(
+            default=None, description="Primary phone number"
+        )
+        mobile: str | None = Field(default=None, description="Mobile phone number")
 
         # Organizational
-        department: str | None = Field(None, description="Department")
-        title: str | None = Field(None, description="Job title")
-        organization: str | None = Field(None, description="Organization")
-        organizational_unit: str | None = Field(None, description="Organizational Unit")
+        department: str | None = Field(
+            default=FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT,
+            description="Department",
+        )
+        title: str | None = Field(
+            default=FlextLdapConstants.Defaults.DEFAULT_TITLE, description="Job title"
+        )
+        organization: str | None = Field(
+            default=FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION,
+            description="Organization",
+        )
+        organizational_unit: str | None = Field(
+            default=None, description="Organizational Unit"
+        )
 
         # Authentication
-        user_password: str | SecretStr | None = Field(None, description="User password")
+        user_password: str | SecretStr | None = Field(
+            default=None, description="User password"
+        )
 
         # LDAP metadata
         object_classes: list[str] = Field(
@@ -544,7 +558,10 @@ class FlextLdapModels(FlextModels):
         )
 
         # Core enterprise fields
-        status: str | None = Field(default=None, description="User status")
+        status: str | None = Field(
+            default=FlextLdapConstants.Defaults.DEFAULT_STATUS,
+            description="User status",
+        )
         created_at: datetime | None = Field(
             default=None, description="Creation timestamp"
         )
@@ -559,6 +576,22 @@ class FlextLdapModels(FlextModels):
         modified_timestamp: datetime | None = Field(
             default=None, description="Modification timestamp"
         )
+
+        @field_validator("department", "title", "organization", "status", mode="before")
+        @classmethod
+        def set_defaults_from_constants(cls, v, info):
+            """Set defaults from constants if None is provided."""
+            if v is None:
+                field_name = info.field_name
+                if field_name == "department":
+                    return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
+                elif field_name == "title":
+                    return FlextLdapConstants.Defaults.DEFAULT_TITLE
+                elif field_name == "organization":
+                    return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
+                elif field_name == "status":
+                    return FlextLdapConstants.Defaults.DEFAULT_STATUS
+            return v
 
         @computed_field
         @property
@@ -940,7 +973,7 @@ class FlextLdapModels(FlextModels):
         # Core identification
         dn: str = Field(..., description="Distinguished Name")
         cn: str = Field(..., description="Common Name")
-        gid_number: int | None = Field(None, description="Group ID Number")
+        gid_number: int | None = Field(default=None, description="Group ID Number")
 
         # Group membership
         member_dns: list[str] = Field(
@@ -966,7 +999,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # Metadata
-        description: str | None = Field(None, description="Group description")
+        description: str | None = Field(default=None, description="Group description")
         object_classes: list[str] = Field(
             default_factory=lambda: ["groupOfNames", "top"],
             description="LDAP object classes",
@@ -1673,7 +1706,7 @@ class FlextLdapModels(FlextModels):
         """LDAP Connection Information entity."""
 
         # Connection details
-        server: str = Field(..., description="LDAP server hostname/IP")
+        server: str = Field(default="localhost", description="LDAP server hostname/IP")
         port: int = Field(
             FlextLdapConstants.Protocol.DEFAULT_PORT,
             description="LDAP server port",
@@ -1684,8 +1717,10 @@ class FlextLdapModels(FlextModels):
         use_tls: bool = Field(default=False, description="Use StartTLS")
 
         # Authentication
-        bind_dn: str | None = Field(None, description="Bind Distinguished Name")
-        bind_password: SecretStr | None = Field(None, description="Bind password")
+        bind_dn: str | None = Field(default=None, description="Bind Distinguished Name")
+        bind_password: SecretStr | None = Field(
+            default=None, description="Bind password"
+        )
 
         # Connection options - using centralized constants
         timeout: int = Field(
@@ -1709,7 +1744,9 @@ class FlextLdapModels(FlextModels):
             default=True,
             description="Verify SSL certificates",
         )
-        ca_certs_file: str | None = Field(None, description="CA certificates file path")
+        ca_certs_file: str | None = Field(
+            default=None, description="CA certificates file path"
+        )
 
         @field_validator("server")
         @classmethod
@@ -1737,13 +1774,13 @@ class FlextLdapModels(FlextModels):
         """LDAP Error entity with detailed information."""
 
         # Error details
-        error_code: int = Field(..., description="LDAP error code")
-        error_message: str = Field(..., description="Error message")
-        matched_dn: str = Field("", description="Matched DN")
+        error_code: int = Field(default=0, description="LDAP error code")
+        error_message: str = Field(default="", description="Error message")
+        matched_dn: str = Field(default="", description="Matched DN")
 
         # Context
-        operation: str = Field("", description="Operation that failed")
-        target_dn: str = Field("", description="Target DN")
+        operation: str = Field(default="", description="Operation that failed")
+        target_dn: str = Field(default="", description="Target DN")
 
         # Additional details
         server_info: dict[str, object] = Field(
@@ -1771,13 +1808,13 @@ class FlextLdapModels(FlextModels):
         """LDAP Operation Result entity."""
 
         # Result status
-        success: bool = Field(..., description="Operation success status")
-        result_code: int = Field(0, description="LDAP result code")
-        result_message: str = Field("", description="Result message")
+        success: bool = Field(default=True, description="Operation success status")
+        result_code: int = Field(default=0, description="LDAP result code")
+        result_message: str = Field(default="", description="Result message")
 
         # Operation details
-        operation_type: str = Field("", description="Type of operation")
-        target_dn: str = Field("", description="Target DN")
+        operation_type: str = Field(default="", description="Type of operation")
+        target_dn: str = Field(default="", description="Target DN")
 
         # Performance metrics
         duration_ms: float = Field(
@@ -2255,15 +2292,15 @@ class FlextLdapModels(FlextModels):
     class CqrsCommand(FlextLdapBaseModel):
         """CQRS Command message envelope."""
 
-        command_type: str = Field(..., description="Command type identifier")
-        command_id: str = Field(..., description="Unique command identifier")
+        command_type: str = Field(default="", description="Command type identifier")
+        command_id: str = Field(default="", description="Unique command identifier")
         payload: dict[str, object] = Field(
             default_factory=dict, description="Command payload data"
         )
         metadata: dict[str, object] = Field(
             default_factory=dict, description="Command metadata"
         )
-        timestamp: int | None = Field(None, description="Command timestamp")
+        timestamp: int | None = Field(default=None, description="Command timestamp")
 
         @classmethod
         def create(
@@ -2292,15 +2329,15 @@ class FlextLdapModels(FlextModels):
     class CqrsQuery(FlextLdapBaseModel):
         """CQRS Query message envelope."""
 
-        query_type: str = Field(..., description="Query type identifier")
-        query_id: str = Field(..., description="Unique query identifier")
+        query_type: str = Field(default="", description="Query type identifier")
+        query_id: str = Field(default="", description="Unique query identifier")
         parameters: dict[str, object] = Field(
             default_factory=dict, description="Query parameters"
         )
         metadata: dict[str, object] = Field(
             default_factory=dict, description="Query metadata"
         )
-        timestamp: int | None = Field(None, description="Query timestamp")
+        timestamp: int | None = Field(default=None, description="Query timestamp")
 
         @classmethod
         def create(
@@ -2329,17 +2366,17 @@ class FlextLdapModels(FlextModels):
     class CqrsEvent(FlextLdapBaseModel):
         """CQRS Event message envelope for domain events."""
 
-        event_type: str = Field(..., description="Event type identifier")
-        event_id: str = Field(..., description="Unique event identifier")
-        aggregate_id: str = Field(..., description="Aggregate root identifier")
+        event_type: str = Field(default="", description="Event type identifier")
+        event_id: str = Field(default="", description="Unique event identifier")
+        aggregate_id: str = Field(default="", description="Aggregate root identifier")
         payload: dict[str, object] = Field(
             default_factory=dict, description="Event payload data"
         )
         metadata: dict[str, object] = Field(
             default_factory=dict, description="Event metadata"
         )
-        timestamp: int = Field(..., description="Event timestamp")
-        version: int = Field(1, description="Event version")
+        timestamp: int = Field(default=0, description="Event timestamp")
+        version: int = Field(default=1, description="Event version")
 
         @classmethod
         def create(

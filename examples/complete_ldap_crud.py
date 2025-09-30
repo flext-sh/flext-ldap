@@ -109,7 +109,7 @@ async def search_users(api: FlextLdapClient) -> None:
     )
 
     if result.is_success:
-        users: list[dict[str, object]] = result.value or []
+        users: list[FlextLdapModels.Entry] = result.value or []
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
