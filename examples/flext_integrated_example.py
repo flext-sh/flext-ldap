@@ -156,9 +156,8 @@ async def demonstrate_universal_operations(
     if search_result.is_success:
         logger.info("Found %d entries", len(search_result.data))
         for i, entry in enumerate(search_result.data[:3]):  # Show first 3
-            logger.info("  Entry %d: %s", i + 1, entry.get("dn", "No DN"))
-            attrs_raw = entry.get("attributes", {})
-            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
+            logger.info("  Entry %d: %s", i + 1, entry.dn)
+            attrs = entry.attributes
             if "cn" in attrs:
                 logger.info("    CN: %s", attrs["cn"])
             if "objectClass" in attrs:

@@ -233,7 +233,7 @@ async def demonstrate_universal_search(
     logger.info("Performing search with controls...")
     controls_result = await client.search_with_controls_universal(
         base_dn=base_dn,
-        search_filter="(objectClass=person)",
+        filter_str="(objectClass=person)",
         attributes=["cn", "sn"],
         scope="subtree",
         controls=None,  # Could add paged results control here

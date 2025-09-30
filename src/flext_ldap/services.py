@@ -42,20 +42,31 @@ class FlextLdapAdvancedService:
         self._workflow_orchestrator = FlextLdapWorkflowOrchestrator(config, client)
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle LDAP service requests with advanced routing."""
+        """Handle LDAP service requests with advanced routing using models."""
         try:
-            if not isinstance(message, dict):
-                return FlextResult[object].fail("Message must be a dictionary")
+            # Accept DomainMessage model or dict for backward compatibility
+            if isinstance(message, FlextLdapModels.DomainMessage):
+                operation = message.message_type
+                message_dict = message.data
+            elif isinstance(message, dict):
+                operation = message.get("operation")
+                message_dict = message
+                if not isinstance(operation, str):
+                    return FlextResult[object].fail("Operation must be a string")
+            else:
+                return FlextResult[object].fail(
+                    "Message must be DomainMessage model or dictionary"
+                )
 
-            operation = message.get("operation")
-            if not isinstance(operation, str):
-                return FlextResult[object].fail("Operation must be a string")
+            # Extract operation from dict if needed for backward compatibility
+            if not operation and "operation" in message_dict:
+                operation = message_dict["operation"]
 
             # Route to advanced service operations using workflow orchestrator
             if operation == "authenticate_and_create_session":
                 # Delegate to enterprise user provisioning workflow
                 workflow_message = {
-                    **message,
+                    **message_dict,
                     "workflow_type": "enterprise_user_provisioning",
                     "operation": "authenticate_and_create_session",
                 }
@@ -63,7 +74,7 @@ class FlextLdapAdvancedService:
             if operation == "bulk_user_operations":
                 # Delegate to organizational restructure workflow
                 workflow_message = {
-                    **message,
+                    **message_dict,
                     "workflow_type": "organizational_restructure",
                     "operation": "bulk_user_operations",
                 }
@@ -71,7 +82,7 @@ class FlextLdapAdvancedService:
             if operation == "group_membership_workflow":
                 # Delegate to multi-domain synchronization workflow
                 workflow_message = {
-                    **message,
+                    **message_dict,
                     "workflow_type": "multi_domain_synchronization",
                     "operation": "group_membership_workflow",
                 }
@@ -79,7 +90,7 @@ class FlextLdapAdvancedService:
             if operation == "user_lifecycle_management":
                 # Delegate to compliance audit workflow
                 workflow_message = {
-                    **message,
+                    **message_dict,
                     "workflow_type": "compliance_audit_workflow",
                     "operation": "user_lifecycle_management",
                 }
@@ -87,7 +98,7 @@ class FlextLdapAdvancedService:
             if operation == "directory_health_check":
                 # Delegate to advanced security workflow
                 workflow_message = {
-                    **message,
+                    **message_dict,
                     "workflow_type": "advanced_security_workflow",
                     "operation": "directory_health_check",
                 }
@@ -244,7 +255,11 @@ class FlextLdapAdvancedService:
         """Advanced search with complex criteria."""
         try:
             base_dn = str(search_criteria.get("base_dn", "dc=example,dc=com"))
-            filter_str = str(search_criteria.get("filter_str", "(objectClass=*)"))
+            filter_str = str(
+                search_criteria.get(
+                    "filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER
+                )
+            )
             attributes_value = search_criteria.get("attributes", ["cn", "sn", "mail"])
             attributes = (
                 [str(attr) for attr in attributes_value]

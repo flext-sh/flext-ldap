@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
+
+if TYPE_CHECKING:
+    from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapProtocols(FlextProtocols):
@@ -154,7 +157,7 @@ class FlextLdapProtocols(FlextProtocols):
             search_base: str,
             search_filter: str,
             attributes: list[str] | None = None,
-        ) -> FlextResult[list[dict[str, object]]]:
+        ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Perform LDAP search operation.
 
             Args:
@@ -163,7 +166,7 @@ class FlextLdapProtocols(FlextProtocols):
                 attributes: List of attributes to retrieve
 
             Returns:
-                FlextResult[list[dict[str, object]]]: Search results
+                FlextResult[list[FlextLdapModels.Entry]]: Search results
 
             """
             ...

@@ -14,6 +14,7 @@ from abc import ABC
 from typing import override
 
 from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
@@ -104,8 +105,8 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
                 supports_paged_results=True,
                 supports_vlv=False,
                 supports_sync=False,
-                max_page_size=1000,
-                default_timeout=30,
+                max_page_size=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                default_timeout=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
                 supports_start_tls=True,
                 requires_explicit_bind=False,
             )

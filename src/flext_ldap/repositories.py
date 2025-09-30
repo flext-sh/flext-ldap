@@ -18,6 +18,7 @@ from flext_core import (
     FlextService,
 )
 from flext_ldap.clients import FlextLdapClient
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.validations import FlextLdapValidations
 
@@ -313,7 +314,9 @@ class FlextLdapRepositories(FlextService[None]):
                     )
 
                 # Use default page_size if None provided
-                effective_page_size = page_size or 100
+                effective_page_size = (
+                    page_size or FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
+                )
                 self._logger.debug(
                     "Searching users: base_dn=%s, filter=%s, page_size=%s, paged_cookie=%s",
                     base_dn,
@@ -405,7 +408,9 @@ class FlextLdapRepositories(FlextService[None]):
             """Search groups by LDAP filter."""
             try:
                 # Use default page_size if None provided
-                effective_page_size = page_size or 100
+                effective_page_size = (
+                    page_size or FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
+                )
                 self._logger.debug(
                     "Searching groups: base_dn=%s, filter=%s, page_size=%s, paged_cookie=%s",
                     base_dn,

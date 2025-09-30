@@ -100,7 +100,7 @@ async def search_users(api: FlextLdapClient) -> None:
     """Search for users using FlextLdapClient."""
     logger.info("Searching for users...")
 
-    result: FlextResult[list[dict[str, object]]] = await api.search(
+    result: FlextResult[list[FlextLdapModels.Entry]] = await api.search(
         base_dn=USERS_DN,
         filter_str="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],

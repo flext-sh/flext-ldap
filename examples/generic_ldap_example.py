@@ -144,9 +144,8 @@ async def demonstrate_universal_search(
     if search_result.is_success:
         logger.info("Found %d entries", len(search_result.data))
         for i, entry in enumerate(search_result.data[:5]):  # Show first 5
-            logger.info("  Entry %d: %s", i + 1, entry.get("dn", "No DN"))
-            attrs_raw = entry.get("attributes", {})
-            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
+            logger.info("  Entry %d: %s", i + 1, entry.dn)
+            attrs = entry.attributes
             if "cn" in attrs:
                 logger.info("    CN: %s", attrs["cn"])
             if "objectClass" in attrs:
@@ -165,9 +164,8 @@ async def demonstrate_universal_search(
     if person_search.is_success:
         logger.info("Found %d person entries", len(person_search.data))
         for entry in person_search.data[:3]:  # Show first 3
-            dn = entry.get("dn", "No DN")
-            attrs_raw = entry.get("attributes", {})
-            attrs = attrs_raw if isinstance(attrs_raw, dict) else {}
+            dn = entry.dn
+            attrs = entry.attributes
             logger.info("  Person: %s", dn)
             if "cn" in attrs:
                 logger.info("    Name: %s", attrs["cn"])

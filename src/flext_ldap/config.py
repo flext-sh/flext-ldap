@@ -398,7 +398,11 @@ class FlextLdapConfig(FlextConfig):
             str_attributes = [str(attr) for attr in attributes_data if attr is not None]
             config = FlextLdapModels.SearchConfig(
                 base_dn=str(data.get("base_dn", "")),
-                search_filter=str(data.get("filter_str", "(objectClass=*)")),
+                search_filter=str(
+                    data.get(
+                        "filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER
+                    )
+                ),
                 attributes=str_attributes,
             )
             return FlextResult[FlextLdapModels.SearchConfig].ok(config)
@@ -471,12 +475,16 @@ class FlextLdapConfig(FlextConfig):
     def get_default_search_config() -> FlextResult[dict[str, str | int | list[str]]]:
         """Get default search configuration."""
         config = {
-            "base_dn": "dc=example,dc=com",
-            "filter_str": "(objectClass=*)",
-            "scope": "subtree",
-            "attributes": ["cn", "sn", "mail"],
-            "size_limit": 100,
-            "time_limit": 30,
+            "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
+            "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+            "scope": FlextLdapConstants.Scopes.SUBTREE,
+            "attributes": [
+                FlextLdapConstants.Attributes.COMMON_NAME,
+                FlextLdapConstants.Attributes.SURNAME,
+                FlextLdapConstants.Attributes.MAIL,
+            ],
+            "size_limit": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+            "time_limit": FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
         }
         return FlextResult[dict[str, str | int | list[str]]].ok(config)
 

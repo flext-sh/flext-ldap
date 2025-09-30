@@ -155,7 +155,7 @@ class FlextLdapConstants(FlextConstants):
         CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed: {0}"
 
         # LDAP error messages following FLEXT standards
-        INVALID_EMAIL_FORMAT: Final[str] = "Invalid email format"
+        # INVALID_EMAIL_FORMAT inherited from FlextConstants.Messages
         EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 

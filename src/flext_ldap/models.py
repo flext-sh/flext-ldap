@@ -1230,6 +1230,27 @@ class FlextLdapModels(FlextModels):
             except Exception:
                 return self.dn
 
+        def __contains__(self, key: str) -> bool:
+            """Support 'key in entry' syntax for backward compatibility."""
+            if key == "dn":
+                return True
+            return self.has_attribute(key)
+
+        def __getitem__(self, key: str) -> str | list[str] | None:
+            """Support entry['key'] syntax for backward compatibility."""
+            if key == "dn":
+                return self.dn
+            return self.get_attribute(key)
+
+        def get(
+            self, key: str, default: str | list[str] | None = None
+        ) -> str | list[str] | None:
+            """Support entry.get('key', default) syntax for backward compatibility."""
+            if key == "dn":
+                return self.dn
+            result = self.get_attribute(key)
+            return result if result is not None else default
+
     # =========================================================================
     # LDAP OPERATION ENTITIES - Request/Response Objects
     # =========================================================================
@@ -1452,8 +1473,8 @@ class FlextLdapModels(FlextModels):
     class SearchResponse(FlextLdapBaseModel):
         """LDAP Search Response entity."""
 
-        # Results
-        entries: list[dict[str, object]] = Field(
+        # Results - using Entry models for type-safe entries
+        entries: list["FlextLdapModels.Entry"] = Field(
             default_factory=list,
             description="Search result entries",
         )
