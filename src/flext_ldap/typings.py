@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol
+from typing import Literal
 
 from ldap3 import Connection, Server
 
@@ -221,110 +221,10 @@ class FlextLdapTypes(FlextTypes):
         type SyncConfig = dict[str, FlextLdapTypes.Core.ConfigValue | object]
 
 
-# =============================================================================
-# LDAP PROTOCOL DEFINITIONS - LDAP-specific protocols
-# =============================================================================
-
-
-class LdapAttribute(Protocol):
-    """Protocol for LDAP attribute objects."""
-
-    value: object
-
-
-class LdapEntry(Protocol):
-    """Protocol for LDAP entry objects."""
-
-    entry_dn: str
-    entry_attributes: dict[str, list[str]]
-
-    def __getitem__(self, key: str) -> LdapAttribute:
-        """Get attribute by key."""
-        ...
-
-
-class LdapConnectionProtocol(Protocol):
-    """Protocol for LDAP connection with proper type annotations."""
-
-    bound: bool
-    last_error: str
-    entries: list[LdapEntry]
-
-    def bind(self) -> bool:
-        """Bind to LDAP server."""
-        ...
-
-    def unbind(self) -> bool:
-        """Unbind from LDAP server."""
-        ...
-
-    def search(
-        self,
-        search_base: str,
-        search_filter: str,
-        search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
-        attributes: list[str] | None = None,
-        paged_size: int | None = None,
-        paged_cookie: str | bytes | None = None,
-        controls: list[object] | None = None,
-    ) -> bool:
-        """Search LDAP directory."""
-        ...
-
-    def add(
-        self, dn: str, attributes: dict[str, str | list[str]] | None = None
-    ) -> bool:
-        """Add entry to LDAP directory."""
-        ...
-
-    def modify(self, dn: str, changes: dict[str, list[tuple[str, list[str]]]]) -> bool:
-        """Modify LDAP entry."""
-        ...
-
-    def delete(self, dn: str) -> bool:
-        """Delete LDAP entry."""
-        ...
-
-    def compare(self, dn: str, attribute: str, value: str) -> bool:
-        """Compare attribute value."""
-        ...
-
-    def extended(
-        self, request_name: str, request_value: str | bytes | None = None
-    ) -> bool:
-        """Perform extended LDAP operation."""
-        ...
-
-
 # =========================================================================
-# PUBLIC API EXPORTS - Essential types at module level
+# PUBLIC API EXPORTS - Only FlextLdapTypes (no module-level re-exports)
 # =========================================================================
-
-# Export constants from FlextLdapTypes at module level
-BASE = FlextLdapTypes.BASE
-LEVEL = FlextLdapTypes.LEVEL
-SUBTREE = FlextLdapTypes.SUBTREE
-MODIFY_ADD = FlextLdapTypes.MODIFY_ADD
-MODIFY_DELETE = FlextLdapTypes.MODIFY_DELETE
-MODIFY_REPLACE = FlextLdapTypes.MODIFY_REPLACE
-
-# Type aliases at module level for common use
-ModifyChanges = FlextLdapTypes.LdapDomain.ModifyChanges
-
-# Missing type alias that needs to be exported
-Attributes = FlextLdapTypes.LdapDomain.AttributeDict
 
 __all__: list[str] = [
-    "BASE",
-    "LEVEL",
-    "MODIFY_ADD",
-    "MODIFY_DELETE",
-    "MODIFY_REPLACE",
-    "SUBTREE",
-    "Attributes",
     "FlextLdapTypes",
-    "LdapAttribute",
-    "LdapConnectionProtocol",
-    "LdapEntry",
-    "ModifyChanges",
 ]

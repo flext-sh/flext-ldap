@@ -15,8 +15,12 @@ import asyncio
 import os
 
 from flext_core import FlextConstants, FlextResult
-from flext_ldap import FlextLdapClient, FlextLdapConstants, FlextLdapModels
-from flext_ldap.typings import MODIFY_REPLACE
+from flext_ldap import (
+    FlextLdapClient,
+    FlextLdapConstants,
+    FlextLdapModels,
+    FlextLdapTypes,
+)
 
 
 async def main() -> None:
@@ -92,7 +96,9 @@ async def main() -> None:
             # Modify entry
             modify_result: FlextResult[None] = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
-                changes={"mail": [(MODIFY_REPLACE, ["updated@example.com"])]},
+                changes={
+                    "mail": [(FlextLdapTypes.MODIFY_REPLACE, ["updated@example.com"])]
+                },
             )
 
             if modify_result.is_success:

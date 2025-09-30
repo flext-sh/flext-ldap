@@ -9,10 +9,8 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult
+from flext_ldap.acl.constants import FlextLdapAclConstants
 from flext_ldap.models import FlextLdapModels
-
-# Constants for ACL parsing
-MIN_ACL_PARTS = 6
 
 
 class FlextLdapAclParsers:
@@ -20,9 +18,6 @@ class FlextLdapAclParsers:
 
     class OpenLdapAclParser:
         """Parse OpenLDAP ACL format."""
-
-        # Minimum number of parts required for valid OpenLDAP ACL
-        MIN_ACL_PARTS = 4
 
         @classmethod
         def parse(cls, acl: str | None) -> FlextResult[FlextLdapModels.UnifiedAcl]:
@@ -46,7 +41,7 @@ class FlextLdapAclParsers:
 
                 # Find "access to" keywords
                 if (
-                    len(parts) < cls.MIN_ACL_PARTS
+                    len(parts) < FlextLdapAclConstants.Parsing.MIN_ACL_PARTS
                     or parts[0] != "access"
                     or parts[1] != "to"
                 ):
@@ -200,7 +195,7 @@ class FlextLdapAclParsers:
                 # Format: access to <target> by <subject> (<permissions>)
                 parts = acl_string.strip().split()
 
-                if len(parts) < MIN_ACL_PARTS:
+                if len(parts) < FlextLdapAclConstants.Parsing.MIN_ACL_PARTS:
                     return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid Oracle ACL format"
                     )

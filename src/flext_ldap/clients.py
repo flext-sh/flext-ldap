@@ -14,9 +14,9 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import Literal, cast, override
+from typing import Literal, override
 
-from ldap3 import Server
+from ldap3 import Connection, Server
 from pydantic import SecretStr
 
 from flext_core import (
@@ -25,21 +25,15 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-from flext_ldap.ldap3_types import Connection
+from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.schema import FlextLdapSchema
-from flext_ldap.typings import (
-    BASE,
-    LEVEL,
-    MODIFY_ADD,
-    MODIFY_DELETE,
-    MODIFY_REPLACE,
-    SUBTREE,
-    LdapConnectionProtocol,
-    LdapEntry,
-    ModifyChanges,
-)
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap.validations import FlextLdapValidations
+
+# Connection imported directly from ldap3 above
 
 
 class FlextLdapClient(FlextService[None]):
@@ -63,7 +57,8 @@ class FlextLdapClient(FlextService[None]):
     @override
     def __init__(self, config: FlextLdapModels.ConnectionConfig | None = None) -> None:
         """Initialize FlextLdapClient."""
-        self._connection: LdapConnectionProtocol | None = None
+        # Use concrete ldap3.Connection type since it's untyped and Protocol check fails
+        self._connection: Connection | None = None
         self._server: Server | None = None
         self._logger = FlextLogger(__name__)
         self._config = config
@@ -107,63 +102,70 @@ class FlextLdapClient(FlextService[None]):
 
         """
         try:
-            # Validate inputs
-            if not server_uri or not server_uri.strip():
-                return FlextResult[bool].fail("Server URI cannot be empty")
+            # Use centralized server URI validation
+            uri_validation = FlextLdapValidations.validate_server_uri(server_uri)
+            if uri_validation.is_failure:
+                return FlextResult[bool].fail(
+                    uri_validation.error or "Server URI validation failed"
+                )
 
-            if not bind_dn or not bind_dn.strip():
-                return FlextResult[bool].fail("Bind DN cannot be empty")
+            # Use centralized DN validation for bind_dn
+            bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn, "Bind DN")
+            if bind_dn_validation.is_failure:
+                return FlextResult[bool].fail(
+                    bind_dn_validation.error or "Bind DN validation failed"
+                )
 
-            if not password or not password.strip():
-                return FlextResult[bool].fail("Password cannot be empty")
+            # Use centralized password validation
+            password_validation = FlextLdapValidations.validate_password(password)
+            if password_validation.is_failure:
+                return FlextResult[bool].fail(
+                    password_validation.error or "Password validation failed"
+                )
 
             self._logger.info("Connecting to LDAP server: %s", server_uri)
 
             # Apply connection options if provided with proper type checking
             if connection_options:
-                # Extract and validate server options with proper type casting
+                # Extract and validate server options with proper type validation
                 port_value = connection_options.get("port")
-                port = (
-                    cast("int | None", port_value)
-                    if isinstance(port_value, int)
-                    else None
-                )
+                port: int | None = port_value if isinstance(port_value, int) else None
 
                 use_ssl_value = connection_options.get("use_ssl")
                 use_ssl = use_ssl_value if isinstance(use_ssl_value, bool) else False
 
                 get_info_value = connection_options.get("get_info")
-                # Valid get_info values for ldap3
-                valid_get_info_values = {"NO_INFO", "DSA", "SCHEMA", "ALL"}
-                get_info: Literal["ALL", "DSA", "NO_INFO", "SCHEMA"] = cast(
-                    "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                    get_info_value
-                    if isinstance(get_info_value, str)
-                    and get_info_value in valid_get_info_values
-                    else "DSA",
-                )
+                # Valid get_info values for ldap3 - use proper type narrowing
+                get_info: Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+                if isinstance(get_info_value, str) and get_info_value in (
+                    "NO_INFO",
+                    "DSA",
+                    "SCHEMA",
+                    "ALL",
+                ):
+                    get_info = get_info_value  # Narrowed by isinstance and in check
+                else:
+                    get_info = "DSA"
 
                 mode_value = connection_options.get("mode")
-                # Valid mode values for ldap3
-                valid_mode_values = {
-                    "IP_SYSTEM_DEFAULT",
-                    "IP_V4_ONLY",
-                    "IP_V6_ONLY",
-                    "IP_V4_PREFERRED",
-                    "IP_V6_PREFERRED",
-                }
+                # Valid mode values for ldap3 - use proper type narrowing
                 mode: Literal[
                     "IP_SYSTEM_DEFAULT",
                     "IP_V4_ONLY",
                     "IP_V4_PREFERRED",
                     "IP_V6_ONLY",
                     "IP_V6_PREFERRED",
-                ] = cast(
-                    "Literal['IP_SYSTEM_DEFAULT', 'IP_V4_ONLY', 'IP_V4_PREFERRED', 'IP_V6_ONLY', 'IP_V6_PREFERRED']",
-                    mode_value
-                    if isinstance(mode_value, str) and mode_value in valid_mode_values
-                    else "IP_SYSTEM_DEFAULT",
-                )
+                ]
+                if isinstance(mode_value, str) and mode_value in (
+                    "IP_SYSTEM_DEFAULT",
+                    "IP_V4_ONLY",
+                    "IP_V6_ONLY",
+                    "IP_V4_PREFERRED",
+                    "IP_V6_PREFERRED",
+                ):
+                    mode = mode_value  # Narrowed by isinstance and in check
+                else:
+                    mode = "IP_SYSTEM_DEFAULT"
 
                 self._server = Server(
                     server_uri,
@@ -175,9 +177,9 @@ class FlextLdapClient(FlextService[None]):
             else:
                 self._server = Server(server_uri)
 
-            self._connection = cast(
-                "LdapConnectionProtocol",
-                Connection(self._server, bind_dn, password, auto_bind=True),
+            # Use concrete ldap3.Connection type
+            self._connection = Connection(
+                self._server, bind_dn, password, auto_bind=True
             )
 
             if not self._connection.bound:
@@ -218,9 +220,9 @@ class FlextLdapClient(FlextService[None]):
             # Create new connection with provided credentials
             if not self._server:
                 return FlextResult[bool].fail("No server connection established")
-            self._connection = cast(
-                "LdapConnectionProtocol",
-                Connection(self._server, bind_dn, password, auto_bind=True),
+            # Use concrete ldap3.Connection type
+            self._connection = Connection(
+                self._server, bind_dn, password, auto_bind=True
             )
 
             if not self._connection.bound:
@@ -281,7 +283,7 @@ class FlextLdapClient(FlextService[None]):
                 self._connection.search(
                     "",
                     "(objectClass=*)",
-                    "SUBTREE",
+                    FlextLdapTypes.SUBTREE,
                     attributes=["objectClass"],
                 )
             return FlextResult[bool].ok(True)
@@ -330,11 +332,15 @@ class FlextLdapClient(FlextService[None]):
             return FlextResult[None].fail("No connection established")
         return FlextResult[None].ok(None)
 
-    def _search_user_by_username(self, username: str) -> FlextResult[LdapEntry]:
+    def _search_user_by_username(
+        self, username: str
+    ) -> FlextResult[FlextLdapProtocols.LdapEntry]:
         """Search for user by username using railway pattern."""
         try:
             if not self._connection:
-                return FlextResult[LdapEntry].fail("No connection established")
+                return FlextResult[FlextLdapProtocols.LdapEntry].fail(
+                    "No connection established"
+                )
 
             search_filter = f"(|(uid={username})(cn={username}))"
             search_base = "ou=users,dc=example,dc=com"  # Default base
@@ -342,49 +348,57 @@ class FlextLdapClient(FlextService[None]):
             self._connection.search(
                 search_base,
                 search_filter,
-                "SUBTREE",
+                FlextLdapTypes.SUBTREE,
                 attributes=["*"],
             )
 
             if not self._connection.entries:
-                return FlextResult[LdapEntry].fail("User not found")
+                return FlextResult[FlextLdapProtocols.LdapEntry].fail("User not found")
 
-            return FlextResult[LdapEntry].ok(self._connection.entries[0])
+            return FlextResult[FlextLdapProtocols.LdapEntry].ok(
+                self._connection.entries[0]
+            )
 
         except Exception as e:
-            return FlextResult[LdapEntry].fail(f"User search failed: {e}")
+            return FlextResult[FlextLdapProtocols.LdapEntry].fail(
+                f"User search failed: {e}"
+            )
 
     def _authenticate_user_credentials(
-        self, user_entry: LdapEntry, password: str
-    ) -> FlextResult[LdapEntry]:
+        self, user_entry: FlextLdapProtocols.LdapEntry, password: str
+    ) -> FlextResult[FlextLdapProtocols.LdapEntry]:
         """Authenticate user credentials using railway pattern."""
         try:
             if not self._server:
-                return FlextResult[LdapEntry].fail("No server connection established")
+                return FlextResult[FlextLdapProtocols.LdapEntry].fail(
+                    "No server connection established"
+                )
 
             user_dn = str(user_entry.entry_dn)
-            test_connection = cast(
-                "LdapConnectionProtocol",
-                Connection(
-                    self._server,
-                    user_dn,
-                    password,
-                    auto_bind=False,
-                ),
+            # Use concrete ldap3.Connection type
+            test_connection: Connection = Connection(
+                self._server,
+                user_dn,
+                password,
+                auto_bind=False,
             )
 
             if not test_connection.bind():
                 test_connection.unbind()
-                return FlextResult[LdapEntry].fail("Authentication failed")
+                return FlextResult[FlextLdapProtocols.LdapEntry].fail(
+                    "Authentication failed"
+                )
 
             test_connection.unbind()
-            return FlextResult[LdapEntry].ok(user_entry)
+            return FlextResult[FlextLdapProtocols.LdapEntry].ok(user_entry)
 
         except Exception as e:
-            return FlextResult[LdapEntry].fail(f"Authentication failed: {e}")
+            return FlextResult[FlextLdapProtocols.LdapEntry].fail(
+                f"Authentication failed: {e}"
+            )
 
     def _create_user_from_entry_result(
-        self, user_entry: LdapEntry
+        self, user_entry: FlextLdapProtocols.LdapEntry
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create user from LDAP entry using railway pattern."""
         try:
@@ -399,7 +413,7 @@ class FlextLdapClient(FlextService[None]):
         self,
         request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[None]:
-        """Validate search request parameters (sync validation for early returns).
+        """Validate search request parameters.
 
         Args:
             request: Search request to validate.
@@ -408,11 +422,19 @@ class FlextLdapClient(FlextService[None]):
             FlextResult[None] indicating validation success or error.
 
         """
-        if not request.base_dn or not request.base_dn.strip():
-            return FlextResult[None].fail("Base DN cannot be empty")
+        # Use centralized DN validation
+        base_dn_validation = FlextLdapValidations.validate_dn(request.base_dn)
+        if base_dn_validation.is_failure:
+            return FlextResult[None].fail(
+                base_dn_validation.error or "Base DN validation failed"
+            )
 
-        if not request.filter_str or not request.filter_str.strip():
-            return FlextResult[None].fail("Search filter cannot be empty")
+        # Use centralized filter validation
+        filter_validation = FlextLdapValidations.validate_filter(request.filter_str)
+        if filter_validation.is_failure:
+            return FlextResult[None].fail(
+                filter_validation.error or "Filter validation failed"
+            )
 
         if not self._connection:
             return FlextResult[None].fail("No connection established")
@@ -441,23 +463,14 @@ class FlextLdapClient(FlextService[None]):
         # If validation passes, perform the actual search
         try:
             # Convert scope string to ldap3 scope (case-insensitive)
-            scope_map: dict[
-                str,
-                Literal[
-                    "BASE",
-                    "LEVEL",
-                    "SUBTREE",
-                ],
-            ] = {
-                "base": BASE,
-                "onelevel": LEVEL,
-                "subtree": SUBTREE,
+            scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+                "base": FlextLdapTypes.BASE,
+                "onelevel": FlextLdapTypes.LEVEL,
+                "subtree": FlextLdapTypes.SUBTREE,
             }
-            ldap3_scope: Literal[
-                "BASE",
-                "LEVEL",
-                "SUBTREE",
-            ] = scope_map.get(request.scope.lower(), SUBTREE)
+            ldap3_scope: Literal["BASE", "LEVEL", "SUBTREE"] = scope_map.get(
+                request.scope.lower(), FlextLdapTypes.SUBTREE
+            )
 
             # Check connection is available
             if self._connection is None:
@@ -537,7 +550,9 @@ class FlextLdapClient(FlextService[None]):
                 search_filter = "(objectClass=inetOrgPerson)"
 
             # Perform search
-            self._connection.search(base_dn, search_filter, SUBTREE, attributes=["*"])
+            self._connection.search(
+                base_dn, search_filter, FlextLdapTypes.SUBTREE, attributes=["*"]
+            )
 
             users: list[FlextLdapModels.LdapUser] = []
             for entry in self._connection.entries:
@@ -588,11 +603,11 @@ class FlextLdapClient(FlextService[None]):
                 search_filter = "(objectClass=groupOfNames)"
 
             # Determine scope
-            scope_value: Literal["BASE", "LEVEL", "SUBTREE"] = SUBTREE
+            scope_value: Literal["BASE", "LEVEL", "SUBTREE"] = FlextLdapTypes.SUBTREE
             if scope == "base":
-                scope_value = BASE
+                scope_value = FlextLdapTypes.BASE
             elif scope == "onelevel":
-                scope_value = LEVEL
+                scope_value = FlextLdapTypes.LEVEL
 
             # Perform search
             self._connection.search(
@@ -623,10 +638,11 @@ class FlextLdapClient(FlextService[None]):
 
         """
         try:
-            # Validate DN first
-            if not dn or not dn.strip():
+            # Validate DN using centralized validation
+            dn_validation = FlextLdapValidations.validate_dn(dn)
+            if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
-                    "DN cannot be empty",
+                    dn_validation.error or "DN validation failed"
                 )
 
             if not self._connection:
@@ -637,7 +653,7 @@ class FlextLdapClient(FlextService[None]):
             success = self._connection.search(
                 dn,
                 "(objectClass=*)",
-                BASE,
+                FlextLdapTypes.BASE,
                 attributes=["*"],
             )
 
@@ -676,10 +692,11 @@ class FlextLdapClient(FlextService[None]):
 
         """
         try:
-            # Validate DN first
-            if not dn or not dn.strip():
+            # Validate DN using centralized validation
+            dn_validation = FlextLdapValidations.validate_dn(dn)
+            if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.Group | None].fail(
-                    "DN cannot be empty",
+                    dn_validation.error or "DN validation failed"
                 )
 
             if not self._connection:
@@ -690,7 +707,7 @@ class FlextLdapClient(FlextService[None]):
             success = self._connection.search(
                 dn,
                 "(objectClass=*)",
-                BASE,
+                FlextLdapTypes.BASE,
                 attributes=["*"],
             )
 
@@ -799,9 +816,10 @@ class FlextLdapClient(FlextService[None]):
             if not self._connection:
                 return FlextResult[None].fail("No connection established")
 
+            # dict[str, list[str]] is compatible with dict[str, str | list[str]]
             success = self._connection.add(
                 dn=user_dn,
-                attributes=cast("dict[str, str | list[str]]", attributes),
+                attributes=attributes,
             )
 
             if not success:
@@ -874,10 +892,10 @@ class FlextLdapClient(FlextService[None]):
             if request.description:
                 ldap3_attributes["description"] = [request.description]
 
-            # Create group
+            # Create group - ldap3_attributes already has correct type
             success = self._connection.add(
                 dn=group_dn,
-                attributes=cast("dict[str, str | list[str]]", ldap3_attributes),
+                attributes=ldap3_attributes,
             )
 
             if not success:
@@ -1045,25 +1063,12 @@ class FlextLdapClient(FlextService[None]):
             FlextResult[bool]: Validation success status
 
         """
-        # Basic DN format validation
-        if not dn or not dn.strip():
-            return FlextResult[bool].fail("DN cannot be empty")
+        # Use centralized DN validation
+        dn_validation = FlextLdapValidations.validate_dn(dn)
+        if dn_validation.is_failure:
+            return FlextResult[bool].fail(dn_validation.error or "DN validation failed")
 
-        # Check for basic DN structure (contains = and comma-separated components)
-        if "=" not in dn:
-            return FlextResult[bool].fail("DN must contain attribute=value pairs")
-
-        # More sophisticated validation could be added here
-        try:
-            # Split by commas and validate each component has =
-            components = [comp.strip() for comp in dn.split(",")]
-            for comp in components:
-                if "=" not in comp:
-                    return FlextResult[bool].fail(f"Invalid DN component: {comp}")
-
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"DN validation failed: {e}")
+        return FlextResult[bool].ok(True)
 
     def validate_entry(self, entry: dict[str, object]) -> FlextResult[bool]:
         """Validate LDAP entry structure - implements LdapValidationProtocol.
@@ -1123,7 +1128,7 @@ class FlextLdapClient(FlextService[None]):
                 return FlextResult[None].fail("No connection established")
 
             changes: dict[str, list[tuple[str, list[str]]]] = {
-                "member": [(MODIFY_DELETE, [member_dn])],
+                "member": [(FlextLdapTypes.MODIFY_DELETE, [member_dn])],
             }
             success = self._connection.modify(
                 group_dn,
@@ -1159,7 +1164,7 @@ class FlextLdapClient(FlextService[None]):
             self._connection.search(
                 group_dn,
                 "(objectClass=*)",
-                "BASE",
+                FlextLdapTypes.BASE,
                 attributes=["member"],
             )
 
@@ -1261,7 +1266,7 @@ class FlextLdapClient(FlextService[None]):
             success = self._connection.search(
                 base_dn,
                 filter_str,
-                SUBTREE,
+                FlextLdapTypes.SUBTREE,
                 attributes=attributes,
                 paged_size=page_size if page_size > 0 else None,
                 paged_cookie=paged_cookie,
@@ -1310,9 +1315,11 @@ class FlextLdapClient(FlextService[None]):
                 return FlextResult[bool].fail("No connection established")
 
             # Convert attributes to LDAP modification format
-            ldap3_changes: ModifyChanges = {}
+            ldap3_changes: FlextLdapTypes.LdapDomain.ModifyChanges = {}
             for attr_name, attr_value in attributes.items():
-                ldap3_changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
+                ldap3_changes[attr_name] = [
+                    (FlextLdapTypes.MODIFY_REPLACE, [str(attr_value)])
+                ]
 
                 # Perform modification
                 success = self._connection.modify(
@@ -1352,9 +1359,11 @@ class FlextLdapClient(FlextService[None]):
                 return FlextResult[bool].fail("No connection established")
 
             # Convert attributes to LDAP modification format
-            changes: ModifyChanges = {}
+            changes: FlextLdapTypes.LdapDomain.ModifyChanges = {}
             for attr_name, attr_value in attributes.items():
-                changes[attr_name] = [(MODIFY_REPLACE, [str(attr_value)])]
+                changes[attr_name] = [
+                    (FlextLdapTypes.MODIFY_REPLACE, [str(attr_value)])
+                ]
 
             # Perform modification
             success = self._connection.modify(dn, changes)
@@ -1530,7 +1539,7 @@ class FlextLdapClient(FlextService[None]):
                 return FlextResult[None].fail("No connection established")
 
             changes: dict[str, list[tuple[str, list[str]]]] = {
-                "member": [(MODIFY_ADD, [member_dn])],
+                "member": [(FlextLdapTypes.MODIFY_ADD, [member_dn])],
             }
             success = self._connection.modify(
                 group_dn,
@@ -1558,7 +1567,9 @@ class FlextLdapClient(FlextService[None]):
         """Set session ID."""
         self._session_id = value
 
-    def _create_user_from_entry(self, entry: LdapEntry) -> FlextLdapModels.LdapUser:
+    def _create_user_from_entry(
+        self, entry: FlextLdapProtocols.LdapEntry
+    ) -> FlextLdapModels.LdapUser:
         """Create LdapUser from LDAP entry.
 
         Args:
@@ -1603,8 +1614,11 @@ class FlextLdapClient(FlextService[None]):
 
         # If no actual LDAP attributes are present, this is invalid
         if not has_attributes:
-            raise ValueError(
-                "Cannot create user from entry: missing required LDAP attributes"
+            exceptions = FlextLdapExceptions()
+            raise exceptions.validation_error(
+                "Cannot create user from entry: missing required LDAP attributes",
+                value=str(entry.entry_dn),
+                field="entry",
             )
 
         # Use fallback values only if we have some valid attributes
@@ -1626,7 +1640,9 @@ class FlextLdapClient(FlextService[None]):
             user_password=None,
         )
 
-    def _create_group_from_entry(self, entry: LdapEntry) -> FlextLdapModels.Group:
+    def _create_group_from_entry(
+        self, entry: FlextLdapProtocols.LdapEntry
+    ) -> FlextLdapModels.Group:
         """Create Group from LDAP entry.
 
         Args:
@@ -2005,13 +2021,13 @@ class FlextLdapClient(FlextService[None]):
             # Convert scope string to proper literal type
             ldap_scope: Literal["BASE", "LEVEL", "SUBTREE"]
             if scope.lower() == "base":
-                ldap_scope = "BASE"
+                ldap_scope = FlextLdapTypes.BASE
             elif scope.lower() == "level":
-                ldap_scope = "LEVEL"
+                ldap_scope = FlextLdapTypes.LEVEL
             elif scope.lower() == "subtree":
-                ldap_scope = "SUBTREE"
+                ldap_scope = FlextLdapTypes.SUBTREE
             else:
-                ldap_scope = "SUBTREE"  # Default to subtree
+                ldap_scope = FlextLdapTypes.SUBTREE  # Default to subtree
 
             # Perform search with controls
             success = self._connection.search(
@@ -2156,7 +2172,7 @@ class FlextLdapClient(FlextService[None]):
                     normalized_changes.append((operation, trimmed_values))
                 normalized[normalized_name] = normalized_changes
             else:
-                # Convert to MODIFY_REPLACE format and trim whitespace
+                # Convert to FlextLdapTypes.MODIFY_REPLACE format and trim whitespace
                 if isinstance(change_value, list):
                     str_values = [
                         str(v).strip() if isinstance(v, str) else str(v)
@@ -2169,7 +2185,9 @@ class FlextLdapClient(FlextService[None]):
                         if isinstance(change_value, str)
                         else value_str
                     ]
-                normalized[normalized_name] = [(MODIFY_REPLACE, str_values)]
+                normalized[normalized_name] = [
+                    (FlextLdapTypes.MODIFY_REPLACE, str_values)
+                ]
 
         return normalized
 
@@ -2367,7 +2385,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["*", "+"],
             )
 
@@ -2434,7 +2452,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["namingContexts"],
             )
 
@@ -2476,7 +2494,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base=subschema_dn.value,
                 search_filter="(objectClass=subschema)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["attributeTypes"],
             )
 
@@ -2525,7 +2543,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base=subschema_dn.value,
                 search_filter="(objectClass=subschema)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["objectClasses"],
             )
 
@@ -2565,7 +2583,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["supportedControl"],
             )
 
@@ -2598,7 +2616,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["supportedExtension"],
             )
 
@@ -2659,7 +2677,7 @@ class FlextLdapClient(FlextService[None]):
             search_result = self._connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapTypes.BASE,
                 attributes=["subschemaSubentry"],
             )
 

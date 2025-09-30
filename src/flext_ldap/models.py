@@ -15,7 +15,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from pydantic import (
     ConfigDict,
@@ -30,6 +30,7 @@ from pydantic import (
 
 from flext_core import FlextConstants, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
@@ -104,14 +105,16 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_dn_format(cls, v: str) -> str:
             """Enhanced DN validation with RFC 2253 compliance."""
+            exceptions = FlextLdapExceptions()
+
             if not v or not v.strip():
                 error_msg = "Distinguished Name cannot be empty"
-                raise ValueError(error_msg)
+                raise exceptions.validation_error(error_msg, value=v, field="dn")
 
             # Enhanced DN validation - check for proper attribute=value pairs
             if "=" not in v:
                 error_msg = "Invalid DN format - missing attribute=value pairs"
-                raise ValueError(error_msg)
+                raise exceptions.validation_error(error_msg, value=v, field="dn")
 
             # Check for valid DN components
             components = v.split(",")
@@ -119,23 +122,31 @@ class FlextLdapModels(FlextModels):
                 component = comp.strip()
                 if "=" not in component:
                     error_msg = f"Invalid DN component: {component}"
-                    raise ValueError(error_msg)
+                    raise exceptions.validation_error(
+                        error_msg, value=component, field="dn"
+                    )
 
                 attr, value = component.split("=", 1)
                 if not attr.strip() or not value.strip():
                     error_msg = f"Empty attribute or value in DN component: {component}"
-                    raise ValueError(error_msg)
+                    raise exceptions.validation_error(
+                        error_msg, value=component, field="dn"
+                    )
 
             return v.strip()
 
         @model_validator(mode="after")
         def validate_dn_structure(self) -> FlextLdapModels.DistinguishedName:
             """Cross-field validation for DN structure integrity."""
+            exceptions = FlextLdapExceptions()
+
             # Validate DN has at least one component
             components = self.value.split(",")
             if len(components) < 1:
                 error_msg = "DN must have at least one component"
-                raise ValueError(error_msg)
+                raise exceptions.validation_error(
+                    error_msg, value=self.value, field="dn"
+                )
 
             # Validate no duplicate attributes in RDN
             rdn_attrs = []
@@ -146,7 +157,9 @@ class FlextLdapModels(FlextModels):
                     attr = part.split("=")[0].strip().lower()
                     if attr in rdn_attrs:
                         error_msg = f"Duplicate attribute in RDN: {attr}"
-                        raise ValueError(error_msg)
+                        raise exceptions.validation_error(
+                            error_msg, value=attr, field="rdn"
+                        )
                     rdn_attrs.append(attr)
 
             return self
@@ -237,13 +250,15 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_filter_syntax(cls, v: str) -> str:
             """Validate LDAP filter syntax and format."""
+            exceptions = FlextLdapExceptions()
+
             if not v or not v.strip():
                 msg = "LDAP filter cannot be empty"
-                raise ValueError(msg)
+                raise exceptions.validation_error(msg, value=v, field="filter")
             # Basic filter validation
             if not (v.startswith("(") and v.endswith(")")):
                 msg = "LDAP filter must be enclosed in parentheses"
-                raise ValueError(msg)
+                raise exceptions.validation_error(msg, value=v, field="filter")
             return v.strip()
 
         @classmethod
@@ -284,7 +299,8 @@ class FlextLdapModels(FlextModels):
             valid_scopes = {cls.BASE, cls.ONELEVEL, cls.SUBTREE}
             if v not in valid_scopes:
                 msg = f"Invalid scope: {v}. Must be one of {valid_scopes}"
-                raise ValueError(msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(msg, value=v, field="scope")
             return v
 
         @classmethod
@@ -423,7 +439,9 @@ class FlextLdapModels(FlextModels):
                 v
             ).map(lambda _: None)
             if validation_result.is_failure:
-                raise ValueError(validation_result.error)
+                exceptions = FlextLdapExceptions()
+                error_msg = validation_result.error or "DN validation failed"
+                raise exceptions.validation_error(error_msg, value=v, field="dn")
             return v.strip()
 
         @staticmethod
@@ -433,7 +451,11 @@ class FlextLdapModels(FlextModels):
                 str(value) if value is not None else ""
             ).map(lambda _: None)
             if validation_result.is_failure:
-                raise ValueError(validation_result.error)
+                exceptions = FlextLdapExceptions()
+                error_msg = validation_result.error or "Email validation failed"
+                raise exceptions.validation_error(
+                    error_msg, value=str(value) if value else "", field="email"
+                )
             return value
 
         @staticmethod
@@ -445,7 +467,11 @@ class FlextLdapModels(FlextModels):
                 ).map(lambda _: None)
             )
             if validation_result.is_failure:
-                raise ValueError(validation_result.error)
+                exceptions = FlextLdapExceptions()
+                error_msg = validation_result.error or "Password validation failed"
+                raise exceptions.validation_error(
+                    error_msg, value="***", field="password"
+                )
             return value
 
         @staticmethod
@@ -453,7 +479,8 @@ class FlextLdapModels(FlextModels):
             """Common validation for required string fields."""
             if not v or not v.strip():
                 msg = "Required field cannot be empty"
-                raise ValueError(msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(msg, value=v, field="required_string")
             return v.strip()
 
     class FlextLdapEntityBase(FlextLdapBaseModel, FlextLdapValidationMixin):
@@ -600,16 +627,23 @@ class FlextLdapModels(FlextModels):
             """Validate object classes."""
             if not v:
                 msg = "At least one object class is required"
-                raise ValueError(msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(
+                    msg, value=str(v), field="object_classes"
+                )
             return v
 
         @model_validator(mode="after")
         def validate_user_consistency(self) -> FlextLdapModels.LdapUser:
             """Model validator for cross-field validation and business rules."""
+            exceptions = FlextLdapExceptions()
+
             # Ensure person object class is present
             if "person" not in self.object_classes:
                 msg = "User must have 'person' object class"
-                raise ValueError(msg)
+                raise exceptions.validation_error(
+                    msg, value=str(self.object_classes), field="object_classes"
+                )
 
             # Note: Required field validation is handled at repository level
             # to allow tests to verify repository validation logic
@@ -621,7 +655,9 @@ class FlextLdapModels(FlextModels):
             # Validate organizational consistency
             if self.department and not self.organizational_unit:
                 msg = "Department requires organizational unit"
-                raise ValueError(msg)
+                raise exceptions.validation_error(
+                    msg, value=str(self.department), field="department"
+                )
 
             return self
 
@@ -805,7 +841,10 @@ class FlextLdapModels(FlextModels):
                 self.additional_attributes[name] = value
             except Exception as e:
                 msg = f"Failed to set attribute {name}: {e}"
-                raise ValueError(msg) from e
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(
+                    msg, value=str(value), field=name
+                ) from e
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name (first component) with enhanced error handling."""
@@ -862,18 +901,14 @@ class FlextLdapModels(FlextModels):
                     sn=sn,
                     given_name=given_name,
                     mail=mail,
-                    telephone_number=cast("str | None", telephone_number)
+                    telephone_number=telephone_number
                     if telephone_number is not None
                     else None,
-                    mobile=cast("str | None", mobile) if mobile is not None else None,
-                    department=cast("str | None", department)
-                    if department is not None
-                    else None,
-                    title=cast("str | None", title) if title is not None else None,
-                    organization=cast("str | None", organization)
-                    if organization is not None
-                    else None,
-                    organizational_unit=cast("str | None", organizational_unit)
+                    mobile=mobile if mobile is not None else None,
+                    department=department if department is not None else None,
+                    title=title if title is not None else None,
+                    organization=organization if organization is not None else None,
+                    organizational_unit=organizational_unit
                     if organizational_unit is not None
                     else None,
                     user_password=user_password.get_secret_value()
@@ -1176,7 +1211,10 @@ class FlextLdapModels(FlextModels):
                 self.attributes[name] = value
             except Exception as e:
                 msg = f"Failed to set attribute {name}: {e}"
-                raise ValueError(msg) from e
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(
+                    msg, value=str(value), field=name
+                ) from e
 
         def has_attribute(self, name: str) -> bool:
             """Check if attribute exists with enhanced error handling."""
@@ -1303,7 +1341,11 @@ class FlextLdapModels(FlextModels):
                 v
             ).map(lambda _: None)
             if validation_result.is_failure:
-                raise ValueError(validation_result.error)
+                exceptions = FlextLdapExceptions()
+                error_msg = validation_result.error or "Filter validation failed"
+                raise exceptions.validation_error(
+                    error_msg, value=v, field="filter_str"
+                )
             return v.strip()
 
         @field_validator("attributes")
@@ -1319,13 +1361,16 @@ class FlextLdapModels(FlextModels):
         @model_validator(mode="after")
         def validate_search_consistency(self) -> FlextLdapModels.SearchRequest:
             """Model validator for cross-field validation and search optimization."""
+            exceptions = FlextLdapExceptions()
             max_time_limit_seconds = 300  # 5 minutes maximum
             max_page_multiplier = 100  # Maximum page size multiplier
 
             # Validate paging consistency
             if self.page_size is not None and self.page_size <= 0:
                 msg = "Page size must be positive if specified"
-                raise ValueError(msg)
+                raise exceptions.validation_error(
+                    msg, value=str(self.page_size), field="page_size"
+                )
 
             # Optimize size limit for paged searches
             if (
@@ -1341,12 +1386,16 @@ class FlextLdapModels(FlextModels):
             # Validate time limit is reasonable
             if self.time_limit > max_time_limit_seconds:
                 msg = f"Time limit should not exceed {max_time_limit_seconds} seconds for performance"
-                raise ValueError(msg)
+                raise exceptions.validation_error(
+                    msg, value=str(self.time_limit), field="time_limit"
+                )
 
             # Validate scope and filter combination
             if self.scope == "base" and ("*" in self.filter_str):
                 msg = "Base scope searches should not use wildcard filters"
-                raise ValueError(msg)
+                raise exceptions.validation_error(
+                    msg, value=self.filter_str, field="filter_str"
+                )
 
             return self
 
@@ -1589,7 +1638,10 @@ class FlextLdapModels(FlextModels):
             """Validate members list."""
             if not v:
                 error_msg = "Members list cannot be empty"
-                raise ValueError(error_msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(
+                    error_msg, value=str(v), field="members"
+                )
             return v
 
     # =========================================================================
@@ -1652,7 +1704,8 @@ class FlextLdapModels(FlextModels):
                 msg = (
                     f"Port must be between 1 and {FlextLdapConstants.Protocol.MAX_PORT}"
                 )
-                raise ValueError(msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(msg, value=str(v), field="port")
             return v
 
     # =========================================================================
@@ -1689,7 +1742,8 @@ class FlextLdapModels(FlextModels):
             """Validate LDAP error code."""
             if v < 0:
                 msg = "Error code must be non-negative"
-                raise ValueError(msg)
+                exceptions = FlextLdapExceptions()
+                raise exceptions.validation_error(msg, value=str(v), field="error_code")
             return v
 
     class OperationResult(FlextLdapBaseModel):
@@ -2171,6 +2225,167 @@ class FlextLdapModels(FlextModels):
             except Exception as e:
                 return FlextResult[FlextLdapModels.ConversionResult].fail(
                     f"Conversion result creation failed: {e}"
+                )
+
+    # =========================================================================
+    # CQRS MESSAGE MODELS - Command Query Responsibility Segregation
+    # =========================================================================
+
+    class CqrsCommand(FlextLdapBaseModel):
+        """CQRS Command message envelope."""
+
+        command_type: str = Field(..., description="Command type identifier")
+        command_id: str = Field(..., description="Unique command identifier")
+        payload: dict[str, object] = Field(
+            default_factory=dict, description="Command payload data"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Command metadata"
+        )
+        timestamp: int | None = Field(None, description="Command timestamp")
+
+        @classmethod
+        def create(
+            cls,
+            command_type: str,
+            command_id: str,
+            payload: dict[str, object] | None = None,
+            metadata: dict[str, object] | None = None,
+            timestamp: int | None = None,
+        ) -> FlextResult[FlextLdapModels.CqrsCommand]:
+            """Create CQRS command message."""
+            try:
+                instance = cls(
+                    command_type=command_type,
+                    command_id=command_id,
+                    payload=payload or {},
+                    metadata=metadata or {},
+                    timestamp=timestamp,
+                )
+                return FlextResult[FlextLdapModels.CqrsCommand].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdapModels.CqrsCommand].fail(
+                    f"CQRS command creation failed: {e}"
+                )
+
+    class CqrsQuery(FlextLdapBaseModel):
+        """CQRS Query message envelope."""
+
+        query_type: str = Field(..., description="Query type identifier")
+        query_id: str = Field(..., description="Unique query identifier")
+        parameters: dict[str, object] = Field(
+            default_factory=dict, description="Query parameters"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Query metadata"
+        )
+        timestamp: int | None = Field(None, description="Query timestamp")
+
+        @classmethod
+        def create(
+            cls,
+            query_type: str,
+            query_id: str,
+            parameters: dict[str, object] | None = None,
+            metadata: dict[str, object] | None = None,
+            timestamp: int | None = None,
+        ) -> FlextResult[FlextLdapModels.CqrsQuery]:
+            """Create CQRS query message."""
+            try:
+                instance = cls(
+                    query_type=query_type,
+                    query_id=query_id,
+                    parameters=parameters or {},
+                    metadata=metadata or {},
+                    timestamp=timestamp,
+                )
+                return FlextResult[FlextLdapModels.CqrsQuery].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdapModels.CqrsQuery].fail(
+                    f"CQRS query creation failed: {e}"
+                )
+
+    class CqrsEvent(FlextLdapBaseModel):
+        """CQRS Event message envelope for domain events."""
+
+        event_type: str = Field(..., description="Event type identifier")
+        event_id: str = Field(..., description="Unique event identifier")
+        aggregate_id: str = Field(..., description="Aggregate root identifier")
+        payload: dict[str, object] = Field(
+            default_factory=dict, description="Event payload data"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Event metadata"
+        )
+        timestamp: int = Field(..., description="Event timestamp")
+        version: int = Field(1, description="Event version")
+
+        @classmethod
+        def create(
+            cls,
+            event_type: str,
+            event_id: str,
+            aggregate_id: str,
+            timestamp: int,
+            payload: dict[str, object] | None = None,
+            metadata: dict[str, object] | None = None,
+            version: int = 1,
+        ) -> FlextResult[FlextLdapModels.CqrsEvent]:
+            """Create CQRS event message."""
+            try:
+                instance = cls(
+                    event_type=event_type,
+                    event_id=event_id,
+                    aggregate_id=aggregate_id,
+                    payload=payload or {},
+                    metadata=metadata or {},
+                    timestamp=timestamp,
+                    version=version,
+                )
+                return FlextResult[FlextLdapModels.CqrsEvent].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdapModels.CqrsEvent].fail(
+                    f"CQRS event creation failed: {e}"
+                )
+
+    class DomainMessage(FlextLdapBaseModel):
+        """Generic domain message envelope for CQRS infrastructure."""
+
+        message_type: str = Field(..., description="Message type identifier")
+        message_id: str = Field(..., description="Unique message identifier")
+        data: dict[str, object] = Field(
+            default_factory=dict, description="Message data"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Message metadata"
+        )
+        timestamp: int | None = Field(None, description="Message timestamp")
+        processed: bool = Field(False, description="Message processed flag")
+
+        @classmethod
+        def create(
+            cls,
+            message_type: str,
+            message_id: str,
+            data: dict[str, object] | None = None,
+            metadata: dict[str, object] | None = None,
+            timestamp: int | None = None,
+            processed: bool = False,
+        ) -> FlextResult[FlextLdapModels.DomainMessage]:
+            """Create domain message."""
+            try:
+                instance = cls(
+                    message_type=message_type,
+                    message_id=message_id,
+                    data=data or {},
+                    metadata=metadata or {},
+                    timestamp=timestamp,
+                    processed=processed,
+                )
+                return FlextResult[FlextLdapModels.DomainMessage].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdapModels.DomainMessage].fail(
+                    f"Domain message creation failed: {e}"
                 )
 
 

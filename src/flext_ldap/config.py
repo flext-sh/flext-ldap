@@ -19,6 +19,7 @@ from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextConfig, FlextConstants, FlextResult
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
 
 
@@ -185,7 +186,8 @@ class FlextLdapConfig(FlextConfig):
         """Validate LDAP server URI format."""
         if not v.startswith(("ldap://", "ldaps://")):
             msg = f"Invalid LDAP server URI: {v}. Must start with ldap:// or ldaps://"
-            raise ValueError(msg)
+            exceptions = FlextLdapExceptions()
+            raise exceptions.configuration_error(msg, config_key="ldap_server_uri")
         return v
 
     @field_validator("ldap_bind_dn")
@@ -195,20 +197,22 @@ class FlextLdapConfig(FlextConfig):
         if v is None:
             return v
 
+        exceptions = FlextLdapExceptions()
+
         # Basic DN validation
         if len(v) < FlextLdapConstants.Validation.MIN_DN_LENGTH:
             msg = f"LDAP bind DN too short: {v}"
-            raise ValueError(msg)
+            raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
         if len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP bind DN too long: {v}"
-            raise ValueError(msg)
+            raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
         if "=" not in v:
             msg = (
                 f"Invalid LDAP bind DN format: {v}. Must contain attribute=value pairs"
             )
-            raise ValueError(msg)
+            raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
         return v
 
@@ -218,26 +222,29 @@ class FlextLdapConfig(FlextConfig):
         """Validate LDAP base DN format."""
         if v and len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP base DN too long: {v}"
-            raise ValueError(msg)
+            exceptions = FlextLdapExceptions()
+            raise exceptions.validation_error(msg, value=v, field="ldap_base_dn")
         return v
 
     @model_validator(mode="after")
     def validate_ldap_configuration_consistency(self) -> FlextLdapConfig:
         """Validate LDAP configuration consistency."""
+        exceptions = FlextLdapExceptions()
+
         # Validate authentication configuration
         if self.ldap_bind_dn is not None and self.ldap_bind_password is None:
             msg = "Bind password is required when bind DN is specified"
-            raise ValueError(msg)
+            raise exceptions.configuration_error(msg, config_key="ldap_bind_password")
 
         # Validate caching configuration
         if self.ldap_enable_caching and self.ldap_cache_ttl <= 0:
             msg = "Cache TTL must be positive when caching is enabled"
-            raise ValueError(msg)
+            raise exceptions.configuration_error(msg, config_key="ldap_cache_ttl")
 
         # Validate SSL configuration consistency
         if self.ldap_server_uri.startswith("ldaps://") and not self.ldap_use_ssl:
             msg = "SSL must be enabled for ldaps:// server URIs"
-            raise ValueError(msg)
+            raise exceptions.configuration_error(msg, config_key="ldap_use_ssl")
 
         return self
 

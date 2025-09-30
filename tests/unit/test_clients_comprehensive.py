@@ -37,7 +37,7 @@ class TestFlextLdapClientComprehensive:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Connection failed:" in result.error
+        assert "URI must start with ldap://" in result.error
 
     @pytest.mark.asyncio
     async def test_connect_missing_parameters(self) -> None:
@@ -48,7 +48,7 @@ class TestFlextLdapClientComprehensive:
         result = await client.connect("", "cn=admin,dc=test,dc=com", "testpass")
         assert result.is_failure
         assert result.error is not None
-        assert "Server URI cannot be empty" in result.error
+        assert "URI cannot be empty" in result.error
 
         # Test with empty bind_dn
         result = await client.connect("ldap://localhost:389", "", "testpass")
@@ -199,9 +199,11 @@ class TestFlextLdapClientComprehensive:
             # (bind, unbind, connect, disconnect, is_connected are inherited or implemented elsewhere)
 
         from typing import cast
-        from flext_ldap.typings import LdapConnectionProtocol
+        from flext_ldap.protocols import FlextLdapProtocols
 
-        client._connection = cast(LdapConnectionProtocol, MockConnection())
+        client._connection = cast(
+            FlextLdapProtocols.Ldap3ConnectionProtocol, MockConnection()
+        )
 
         request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",

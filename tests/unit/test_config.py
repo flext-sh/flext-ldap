@@ -100,7 +100,7 @@ class TestFlextLdapConfig:
         """Test successful search config creation."""
         configs = FlextLdapConfig()
 
-        search_data = {
+        search_data: dict[str, object] = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -119,7 +119,11 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause Pydantic validation to fail
-        invalid_data = {"base_dn": None, "filter_str": None, "attributes": "invalid"}
+        invalid_data: dict[str, object] = {
+            "base_dn": None,
+            "filter_str": None,
+            "attributes": "invalid",
+        }
         result = configs.create_search_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
@@ -132,7 +136,7 @@ class TestFlextLdapConfig:
         """Test successful modify config creation."""
         configs = FlextLdapConfig()
 
-        modify_data = {
+        modify_data: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "operation": "replace",
             "attribute": "cn",
@@ -153,7 +157,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types = {
+        data_with_types: dict[str, object] = {
             "dn": None,
             "operation": None,
             "attribute": None,
@@ -172,7 +176,7 @@ class TestFlextLdapConfig:
         """Test successful add config creation."""
         configs = FlextLdapConfig()
 
-        add_data = {
+        add_data: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": [
@@ -550,7 +554,7 @@ class TestFlextLdapConfig:
         conn_result = configs.create_from_connection_config_data(conn_config)
         assert conn_result.is_success
 
-        search_config = {
+        search_config: dict[str, object] = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -558,7 +562,7 @@ class TestFlextLdapConfig:
         search_result = configs.create_search_config(search_config)
         assert search_result.is_success
 
-        add_config = {
+        add_config: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
@@ -771,8 +775,8 @@ class TestFlextLdapConfig:
     def test_merge_configs(self) -> None:
         """Test merge_configs method."""
         configs = FlextLdapConfig()
-        base_config = {"server": "ldap://localhost", "port": 389}
-        override_config = {"port": 636, "use_ssl": True}
+        base_config: dict[str, object] = {"server": "ldap://localhost", "port": 389}
+        override_config: dict[str, object] = {"port": 636, "use_ssl": True}
 
         result = configs.merge_configs(base_config, override_config)
 

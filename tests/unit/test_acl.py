@@ -284,7 +284,7 @@ class TestFlextLdapAclConverters:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert "not implemented" in result.error.lower()
+        assert result.error is not None and "not implemented" in result.error.lower()
 
     def test_convert_between_formats_success(
         self,
@@ -874,6 +874,7 @@ class TestAclIntegration:
             str(sample_acl_data["openldap_aci"]), "openldap", "oracle"
         )
         assert convert_result.is_failure
+        assert convert_result.error is not None
         assert "not implemented" in convert_result.error.lower()
 
         # Test batch conversion - now returns not implemented
@@ -881,6 +882,7 @@ class TestAclIntegration:
             [str(sample_acl_data["openldap_aci"])], "openldap", "oracle"
         )
         assert batch_result.is_failure
+        assert batch_result.error is not None
         assert "not implemented" in batch_result.error.lower()
 
         # Test ACL syntax validation (may fail if parser not fully implemented)
