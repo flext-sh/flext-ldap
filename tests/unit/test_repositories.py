@@ -17,12 +17,12 @@ class TestFlextLdapRepositories:
     """Comprehensive test suite for FlextLdapRepositories."""
 
     def test_repositories_initialization(
-        self, base_repository: FlextLdapRepositories.UserRepository
+        self, user_repository: FlextLdapRepositories.UserRepository
     ) -> None:
         """Test repositories initialization."""
-        assert base_repository is not None
-        assert hasattr(base_repository, "_client")
-        assert hasattr(base_repository, "_logger")
+        assert user_repository is not None
+        assert hasattr(user_repository, "_client")
+        assert hasattr(user_repository, "_logger")
 
     def test_repositories_execute(self) -> None:
         """Test repositories execute method."""
