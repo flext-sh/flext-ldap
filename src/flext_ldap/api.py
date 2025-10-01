@@ -26,12 +26,12 @@ from flext_core import (
     FlextBus,
     FlextContainer,
     FlextContext,
+    FlextLogger,
     FlextResult,
     FlextService,
 )
-from flext_ldap.acl import (
-    FlextLdapAclManager,
-)
+
+from flext_ldap.acl import FlextLdapAclManager
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -64,6 +64,7 @@ class FlextLdap(FlextService[None]):
         self._container = FlextContainer.get_global()
         self._context = FlextContext()
         self._bus = FlextBus()
+        self._logger = FlextLogger(__name__)
 
         # Lazy-loaded components
         self._client: FlextLdapClient | None = None
@@ -596,10 +597,11 @@ class FlextLdapAPI(FlextLdap):
                     result.error or "LDIF parsing failed"
                 )
 
-            # Emit event
-            await self._bus.emit(
-                "ldap.ldif.imported",
-                {"path": str(path), "count": len(result.value or [])},
+            # Log import event
+            self._logger.info(
+                "LDIF import successful",
+                path=str(path),
+                entry_count=len(result.value or []),
             )
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(result.value or [])
@@ -626,9 +628,9 @@ class FlextLdapAPI(FlextLdap):
             if result.is_failure:
                 return FlextResult[bool].fail(result.error or "LDIF writing failed")
 
-            # Emit event
-            await self._bus.emit(
-                "ldap.ldif.exported", {"path": str(path), "count": len(entries)}
+            # Log export event
+            self._logger.info(
+                "LDIF export successful", path=str(path), entry_count=len(entries)
             )
 
             return FlextResult[bool].ok(True)
