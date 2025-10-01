@@ -35,7 +35,7 @@ from flext_ldap.acl import (
 )
 
 # Main domain API - primary entry point
-from flext_ldap.api import FlextLdapAPI
+from flext_ldap.api import FlextLdap, FlextLdapAPI
 
 # Core domain components
 from flext_ldap.clients import FlextLdapClient
@@ -68,6 +68,7 @@ from flext_ldap.validations import FlextLdapValidations
 
 # Main domain exports following FLEXT standards
 __all__ = [
+    "FlextLdap",
     "FlextLdapAPI",
     "FlextLdapAclConstants",
     "FlextLdapAclConverters",
