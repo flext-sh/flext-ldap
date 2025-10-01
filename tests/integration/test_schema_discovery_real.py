@@ -220,7 +220,7 @@ class TestRealUniversalOperations:
         # Use universal search
         result = await client.search_universal(
             base_dn="dc=flext,dc=local",
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=["dc", "objectClass"],
         )
 
@@ -259,6 +259,6 @@ class TestRealUniversalOperations:
         discovery_time = time.time() - start_time
 
         assert result.is_success
-        assert discovery_time < 10.0, (
-            f"Schema discovery took {discovery_time}s (too slow)"
-        )
+        assert (
+            discovery_time < 10.0
+        ), f"Schema discovery took {discovery_time}s (too slow)"

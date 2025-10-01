@@ -33,9 +33,9 @@ class TestSharedSchemaDiscovery:
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
 
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
         assert schema_result.value is not None
 
         # Verify schema data structure
@@ -52,9 +52,9 @@ class TestSharedSchemaDiscovery:
         """Test server type detection with shared LDAP server."""
         # Get server info first
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data.server_type is not None
@@ -72,9 +72,9 @@ class TestSharedSchemaDiscovery:
         """Test server capabilities discovery with shared LDAP server."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data.server_info is not None
@@ -96,9 +96,9 @@ class TestSharedSchemaDiscovery:
         """Test server quirks detection with shared LDAP server."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data.server_quirks is not None
@@ -118,9 +118,9 @@ class TestSharedSchemaDiscovery:
         """Test quirks detector with shared server information."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data.server_info is not None
@@ -147,14 +147,14 @@ class TestSharedSchemaDiscovery:
         discovery_time = end_time - start_time
 
         # Verify discovery succeeded
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         # Verify reasonable performance (should complete within 10 seconds)
-        assert discovery_time < 10.0, (
-            f"Schema discovery took too long: {discovery_time:.2f}s"
-        )
+        assert (
+            discovery_time < 10.0
+        ), f"Schema discovery took too long: {discovery_time:.2f}s"
 
         # Log performance for monitoring
 
@@ -179,9 +179,9 @@ class TestSharedSchemaDiscovery:
         try:
             # Test schema discovery
             schema_result = await client.discover_schema()
-            assert schema_result.is_success, (
-                f"Schema discovery failed: {schema_result.error}"
-            )
+            assert (
+                schema_result.is_success
+            ), f"Schema discovery failed: {schema_result.error}"
 
             schema_data = schema_result.value
             assert schema_data is not None
@@ -197,9 +197,9 @@ class TestSharedSchemaDiscovery:
         """Test schema components discovery with shared LDAP server."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data is not None
@@ -223,9 +223,9 @@ class TestSharedSchemaDiscovery:
         """Test schema normalization with shared LDAP server."""
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
 
         schema_data = schema_result.value
         assert schema_data is not None
@@ -248,13 +248,13 @@ class TestSharedUniversalOperations:
         # Test base search
         search_result = await shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             scope="base",
         )
 
-        assert search_result.is_success, (
-            f"Universal search failed: {search_result.error}"
-        )
+        assert (
+            search_result.is_success
+        ), f"Universal search failed: {search_result.error}"
         assert search_result.value is not None
         assert len(search_result.value) > 0
 
@@ -280,9 +280,9 @@ class TestSharedUniversalOperations:
             # Just verify the operation was attempted
             assert modify_result.error is not None
         else:
-            assert modify_result.is_success, (
-                f"Universal modify failed: {modify_result.error}"
-            )
+            assert (
+                modify_result.is_success
+            ), f"Universal modify failed: {modify_result.error}"
 
     async def test_universal_add_with_shared_server(
         self,
@@ -307,7 +307,7 @@ class TestSharedUniversalOperations:
         if not add_result.is_success:
             # Verify the entry exists by searching
             search_result = await shared_ldap_client.search_universal(
-                base_dn=test_dn, search_filter="(objectClass=*)", scope="base"
+                base_dn=test_dn, filter_str="(objectClass=*)", scope="base"
             )
             # If search succeeds, entry exists (which is OK)
             if search_result.is_success:
@@ -347,9 +347,9 @@ class TestSharedUniversalOperations:
         # If add succeeded, try to delete it
         if add_result.is_success:
             delete_result = await shared_ldap_client.delete_entry_universal(test_dn)
-            assert delete_result.is_success, (
-                f"Universal delete failed: {delete_result.error}"
-            )
+            assert (
+                delete_result.is_success
+            ), f"Universal delete failed: {delete_result.error}"
         else:
             # If add failed, entry might already exist, try to delete it anyway
             delete_result = await shared_ldap_client.delete_entry_universal(test_dn)

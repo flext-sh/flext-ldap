@@ -83,9 +83,9 @@ class TestLdapClientRealOperations:
             paged_cookie=None,
         )
 
-        result: FlextResult[
-            FlextLdapModels.SearchResponse
-        ] = await client.search_with_request(search_request)
+        result: FlextResult[FlextLdapModels.SearchResponse] = (
+            await client.search_with_request(search_request)
+        )
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"
@@ -179,9 +179,9 @@ class TestLdapClientRealOperations:
             page_size=None,
             paged_cookie=None,
         )
-        search_result: FlextResult[
-            FlextLdapModels.SearchResponse
-        ] = await client.search_with_request(search_request)
+        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+            await client.search_with_request(search_request)
+        )
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
         empty_response = FlextLdapModels.SearchResponse(
             entries=[],
@@ -209,9 +209,9 @@ class TestLdapClientRealOperations:
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
-        verify_search: FlextResult[
-            FlextLdapModels.SearchResponse
-        ] = await client.search_with_request(search_request)
+        verify_search: FlextResult[FlextLdapModels.SearchResponse] = (
+            await client.search_with_request(search_request)
+        )
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
@@ -390,9 +390,9 @@ class TestLdapServiceRealOperations:
             ou_dn,
             user_request.uid,
         )
-        assert search_result.is_success, (
-            f"Failed to search users: {search_result.error}"
-        )
+        assert (
+            search_result.is_success
+        ), f"Failed to search users: {search_result.error}"
         default_users: list[FlextLdapModels.LdapUser] = []
         found_users = (
             search_result.unwrap() if search_result.is_success else default_users
@@ -470,9 +470,9 @@ class TestLdapServiceRealOperations:
 
         # CREATE: Real group creation
         create_result = await client.create_group(group_request)
-        assert create_result.is_success, (
-            f"Failed to create group: {create_result.error}"
-        )
+        assert (
+            create_result.is_success
+        ), f"Failed to create group: {create_result.error}"
 
         # READ: Verify group exists
         get_result = await client.get_group(group_request.dn)
@@ -504,9 +504,9 @@ class TestLdapServiceRealOperations:
             group_request.dn,
             cast("dict[str, object]", update_attributes_5),
         )
-        assert update_result.is_success, (
-            f"Failed to update group: {update_result.error}"
-        )
+        assert (
+            update_result.is_success
+        ), f"Failed to update group: {update_result.error}"
 
         # MEMBERS: Test member operations
         # Create another user to add
@@ -525,15 +525,15 @@ class TestLdapServiceRealOperations:
 
         # Add member
         add_member_result = await client.add_member(group_request.dn, user2_dn)
-        assert add_member_result.is_success, (
-            f"Failed to add member: {add_member_result.error}"
-        )
+        assert (
+            add_member_result.is_success
+        ), f"Failed to add member: {add_member_result.error}"
 
         # Verify member was added
         members_result = await client.get_members(group_request.dn)
-        assert members_result.is_success, (
-            f"Failed to get members: {members_result.error}"
-        )
+        assert (
+            members_result.is_success
+        ), f"Failed to get members: {members_result.error}"
         default_members: FlextTypes.Core.StringList = []
         members_list = (
             members_result.unwrap() if members_result.is_success else default_members
@@ -543,9 +543,9 @@ class TestLdapServiceRealOperations:
 
         # Remove member
         remove_member_result = await client.remove_member(group_request.dn, user2_dn)
-        assert remove_member_result.is_success, (
-            f"Failed to remove member: {remove_member_result.error}"
-        )
+        assert (
+            remove_member_result.is_success
+        ), f"Failed to remove member: {remove_member_result.error}"
 
         # Verify member was removed
         members_after_remove = await client.get_members(group_request.dn)
@@ -561,9 +561,9 @@ class TestLdapServiceRealOperations:
 
         # DELETE: Remove group
         delete_result = await client.delete_group(group_request.dn)
-        assert delete_result.is_success, (
-            f"Failed to delete group: {delete_result.error}"
-        )
+        assert (
+            delete_result.is_success
+        ), f"Failed to delete group: {delete_result.error}"
 
         # Verify deletion
         verify_result = await client.get_group(group_request.dn)
@@ -656,9 +656,9 @@ class TestLdapValidationRealOperations:
 
         # Should succeed with valid business rules
         create_result = await client.create_user(valid_user_request)
-        assert create_result.is_success, (
-            f"Valid user should be created: {create_result.error}"
-        )
+        assert (
+            create_result.is_success
+        ), f"Valid user should be created: {create_result.error}"
 
         # Verify the user follows business rules
         default_user = FlextLdapModels.LdapUser(
@@ -684,9 +684,9 @@ class TestLdapValidationRealOperations:
             create_result.unwrap() if create_result.is_success else default_user
         )
         validation_result = created_user.validate_business_rules()
-        assert validation_result.is_success, (
-            "Created user should pass business rule validation"
-        )
+        assert (
+            validation_result.is_success
+        ), "Created user should pass business rule validation"
 
         # Test duplicate user creation (should fail)
         _duplicate_result = await client.create_user(valid_user_request)
@@ -767,9 +767,9 @@ class TestLdapErrorHandlingReal:
             paged_cookie=None,
         )
 
-        search_result: FlextResult[
-            FlextLdapModels.SearchResponse
-        ] = await client.search_with_request(invalid_search)
+        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+            await client.search_with_request(invalid_search)
+        )
         # Should handle gracefully - either return empty results or proper error
         assert search_result.is_success or (
             search_result.error

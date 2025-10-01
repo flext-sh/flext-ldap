@@ -11,6 +11,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 - Properties like conn.entries and entry.entry_dn are not fully typed
 - Entry attributes and their values have incomplete type information
 """
+
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportGeneralTypeIssues=false
 
 import asyncio

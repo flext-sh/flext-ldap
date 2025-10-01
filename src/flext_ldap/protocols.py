@@ -71,9 +71,9 @@ class FlextLdapProtocols(FlextProtocols):
             self,
             search_base: str,
             search_filter: str,
-            search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
+            _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
             attributes: list[str] | None = None,
-            paged_size: int | None = None,
+            _paged_size: int | None = None,
             paged_cookie: str | bytes | None = None,
             controls: list[object] | None = None,
         ) -> bool:

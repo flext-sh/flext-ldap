@@ -221,25 +221,16 @@ class FlextLdapRepositories(FlextService[None]):
                 )
 
                 # Create user using LDAP client
-                try:
-                    create_result = await self._client.create_user(user_request)
-                    if create_result.is_failure:
-                        return FlextResult[object].fail(
-                            f"User creation failed: {create_result.error}"
-                        )
-
-                    return FlextResult[object].ok(create_result.value)
-                except Exception as e:
-                    # Debug: Log the exception
+                create_result = await self._client.create_user(user_request)
+                if create_result.is_failure:
                     return FlextResult[object].fail(
-                        f"User creation failed with exception: {e}"
+                        f"User creation failed: {create_result.error}"
                     )
+
+                return FlextResult[object].ok(create_result.value)
 
             except Exception as e:
                 return FlextResult[object].fail(f"User save failed: {e}")
-
-            # This should never be reached, but added for type safety
-            return FlextResult[object].fail("Unexpected error in user save")
 
         async def update(
             self, dn: str, attributes: dict[str, object]

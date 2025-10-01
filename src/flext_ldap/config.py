@@ -398,7 +398,7 @@ class FlextLdapConfig(FlextConfig):
             str_attributes = [str(attr) for attr in attributes_data if attr is not None]
             config = FlextLdapModels.SearchConfig(
                 base_dn=str(data.get("base_dn", "")),
-                search_filter=str(
+                filter_str=str(
                     data.get(
                         "filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER
                     )

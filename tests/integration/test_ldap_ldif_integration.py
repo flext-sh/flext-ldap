@@ -20,7 +20,8 @@ import pytest
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldif import FlextLdifAclParser, FlextLdifAPI, FlextLdifModels
+from flext_ldif.acl import FlextLdifAclParser
+from flext_ldif import FlextLdifModels
 
 # Integration tests - require flext-ldif and Docker LDAP server
 pytestmark = pytest.mark.integration
@@ -54,7 +55,7 @@ async def ldap_client() -> AsyncGenerator[FlextLdapClient]:
 
 
 @pytest.fixture
-def ldif_api() -> FlextLdifAPI:
+def ldif_api():
     """Create LDIF API instance."""
     return FlextLdifAPI()
 
@@ -139,9 +140,9 @@ class TestLdapLdifExport:
         # Generate LDIF string using flext-ldif
         ldif_content_result = ldif_api.write(ldif_entries)
 
-        assert ldif_content_result.is_success, (
-            f"LDIF generation failed: {ldif_content_result.error}"
-        )
+        assert (
+            ldif_content_result.is_success
+        ), f"LDIF generation failed: {ldif_content_result.error}"
         ldif_content = ldif_content_result.unwrap()
 
         # Validate LDIF content

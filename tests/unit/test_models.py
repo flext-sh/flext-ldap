@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import cast
 
 import pytest
 
@@ -419,7 +420,7 @@ class TestFlextLdapModels:
         )
 
         assert config.base_dn == "dc=test,dc=com"
-        assert config.search_filter == "(objectClass=*)"
+        assert config.filter_str == "(objectClass=*)"
         assert config.attributes == ["cn", "mail"]
 
     def test_search_response_creation(self) -> None:
@@ -1085,7 +1086,7 @@ class TestFlextLdapModels:
         )
 
         assert dn_result.is_success
-        dn = dn_result.unwrap()
+        dn = cast(FlextLdapModels.DistinguishedName, dn_result.unwrap())
         assert "uid=testuser" in dn.value
 
     def test_filter_helper_methods(self) -> None:
@@ -1554,7 +1555,7 @@ class TestFlextLdapModels:
             size_limit=100,
             time_limit=30,
         )
-        assert len(with_attrs.attributes) == 3
+        assert with_attrs.attributes is not None and len(with_attrs.attributes) == 3
         assert with_attrs.size_limit == 100
 
     def test_connection_config_uri_generation(self) -> None:
@@ -1984,7 +1985,7 @@ class TestFlextLdapModels:
 
         assert result.is_failure
         assert result.error is not None
-        assert "DN is required" in result.error
+        assert result.error and "DN is required" in result.error
 
     def test_group_to_ldap_attributes(self) -> None:
         """Test Group.to_ldap_attributes() conversion method."""
@@ -2402,7 +2403,7 @@ class TestFlextLdapModels:
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_failure
         assert result.error is not None
-        assert "DN is required" in result.error
+        assert result.error and "DN is required" in result.error
 
     def test_search_request_search_complexity_simple(self) -> None:
         """Test SearchRequest.search_complexity computed field - simple."""
@@ -2985,7 +2986,7 @@ class TestFlextLdapModels:
         # Factory should catch exception and return failure result
         assert result.is_failure
         assert result.error is not None
-        assert "creation failed" in result.error.lower()
+        assert result.error and "creation failed" in result.error.lower()
 
     def test_connection_config_validate_empty_server(self) -> None:
         """Test ConnectionConfig.validate() with empty server."""
@@ -2997,7 +2998,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "Server cannot be empty" in result.error
+        assert result.error and "Server cannot be empty" in result.error
 
     def test_connection_config_validate_invalid_port_zero(self) -> None:
         """Test ConnectionConfig.validate() with port 0."""
@@ -3009,7 +3010,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid port number" in result.error
+        assert result.error and "Invalid port number" in result.error
 
     def test_connection_config_validate_invalid_port_too_high(self) -> None:
         """Test ConnectionConfig.validate() with port > 65535."""
@@ -3021,7 +3022,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid port number" in result.error
+        assert result.error and "Invalid port number" in result.error
 
     def test_connection_config_validate_success(self) -> None:
         """Test ConnectionConfig.validate() with valid data."""
@@ -3059,7 +3060,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "Changes cannot be empty" in result.error
+        assert result.error and "Changes cannot be empty" in result.error
 
     def test_modify_config_validate_success(self) -> None:
         """Test ModifyConfig.validate() with valid data."""

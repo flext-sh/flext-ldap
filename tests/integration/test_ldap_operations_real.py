@@ -294,9 +294,9 @@ class TestRealLdapAuthentication:
             password="testpass123",
         )
 
-        assert auth_result.is_success, (
-            f"User authentication failed: {auth_result.error}"
-        )
+        assert (
+            auth_result.is_success
+        ), f"User authentication failed: {auth_result.error}"
 
         # Cleanup (reconnect as admin)
         await client.connect(
