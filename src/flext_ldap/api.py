@@ -560,19 +560,26 @@ class FlextLdapAPI(FlextLdap):
                 from flext_ldif import FlextLdif
 
                 self._ldif = FlextLdif()
-            except ImportError:
-                # FlextLdif not available, return a stub
+            except (ImportError, AttributeError, TypeError) as exc:
+                # FlextLdif not available or initialization failed, return a stub
+                self._logger.warning(
+                    "FlextLdif initialization failed, using stub",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                )
+                error_msg = str(exc)
+
                 class _LdifStub:
                     def parse_file(self, _path: Path) -> FlextResult[list]:
                         return FlextResult[list].fail(
-                            "FlextLdif not installed. Install with: pip install flext-ldif"
+                            f"FlextLdif not available: {error_msg}. Install with: pip install flext-ldif"
                         )
 
                     def write_file(
                         self, _entries: list, _path: Path
                     ) -> FlextResult[bool]:
                         return FlextResult[bool].fail(
-                            "FlextLdif not installed. Install with: pip install flext-ldif"
+                            f"FlextLdif not available: {error_msg}. Install with: pip install flext-ldif"
                         )
 
                 self._ldif = _LdifStub()

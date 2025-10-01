@@ -677,9 +677,11 @@ class FlextLdapModels(FlextModels):
                 self.display_name = self.cn
 
             # Validate organizational consistency
-            if (self.department and
-                self.department != FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT and
-                not self.organizational_unit):
+            if (
+                self.department
+                and self.department != FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
+                and not self.organizational_unit
+            ):
                 msg = "Department requires organizational unit"
                 raise exceptions.validation_error(
                     msg, value=str(self.department), field="department"
@@ -901,18 +903,38 @@ class FlextLdapModels(FlextModels):
                 sn_raw = kwargs.get("sn")
                 given_name_raw = kwargs.get("given_name")
                 mail_raw = kwargs.get("mail")
-                telephone_number = kwargs.get("telephone_number")
-                mobile = kwargs.get("mobile")
-                department = kwargs.get("department")
-                title = kwargs.get("title")
-                organization = kwargs.get("organization")
-                organizational_unit = kwargs.get("organizational_unit")
+                telephone_number_raw = kwargs.get("telephone_number")
+                mobile_raw = kwargs.get("mobile")
+                department_raw = kwargs.get("department")
+                title_raw = kwargs.get("title")
+                organization_raw = kwargs.get("organization")
+                organizational_unit_raw = kwargs.get("organizational_unit")
                 user_password_raw = kwargs.get("user_password")
 
                 # Convert to proper types
                 sn = str(sn_raw) if sn_raw is not None else ""
-                given_name = str(given_name_raw) if given_name_raw is not None else None
+                given_name: str | None = (
+                    str(given_name_raw) if given_name_raw is not None else None
+                )
                 mail = str(mail_raw) if mail_raw is not None else ""
+                telephone_number: str | None = (
+                    str(telephone_number_raw)
+                    if telephone_number_raw is not None
+                    else None
+                )
+                mobile: str | None = str(mobile_raw) if mobile_raw is not None else None
+                department: str | None = (
+                    str(department_raw) if department_raw is not None else None
+                )
+                title: str | None = str(title_raw) if title_raw is not None else None
+                organization: str | None = (
+                    str(organization_raw) if organization_raw is not None else None
+                )
+                organizational_unit: str | None = (
+                    str(organizational_unit_raw)
+                    if organizational_unit_raw is not None
+                    else None
+                )
 
                 # Create user_password SecretStr if provided
                 user_password = None
@@ -927,19 +949,15 @@ class FlextLdapModels(FlextModels):
                     sn=sn,
                     given_name=given_name,
                     mail=mail,
-                    telephone_number=telephone_number
-                    if telephone_number is not None
-                    else None,
-                    mobile=mobile if mobile is not None else None,
-                    department=department if department is not None else None,
-                    title=title if title is not None else None,
-                    organization=organization if organization is not None else None,
-                    organizational_unit=organizational_unit
-                    if organizational_unit is not None
-                    else None,
-                    user_password=user_password.get_secret_value()
-                    if user_password
-                    else None,
+                    telephone_number=telephone_number,
+                    mobile=mobile,
+                    department=department,
+                    title=title,
+                    organization=organization,
+                    organizational_unit=organizational_unit,
+                    user_password=(
+                        user_password.get_secret_value() if user_password else None
+                    ),
                     # Use defaults for other fields
                     object_classes=["person", "organizationalPerson", "inetOrgPerson"],
                     status="active",
@@ -1334,7 +1352,7 @@ class FlextLdapModels(FlextModels):
         )
 
         @computed_field
-        def is_paged_search(self) -> bool:
+        def is_paged_search(self) -> bool:  # type: ignore[truthy-function]
             """Computed field indicating if this is a paged search."""
             return self.page_size is not None and self.page_size > 0
 
@@ -1417,7 +1435,7 @@ class FlextLdapModels(FlextModels):
 
             # Optimize size limit for paged searches
             if (
-                self.is_paged_search
+                self.is_paged_search  # type: ignore[truthy-function]
                 and self.page_size is not None
                 and self.size_limit > self.page_size * max_page_multiplier
             ):
