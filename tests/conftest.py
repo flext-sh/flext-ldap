@@ -27,7 +27,8 @@ from flext_core import (
     FlextResult,
 )
 
-# Import centralized Docker fixtures
+# Import test support fixtures
+from tests.support.fixtures import clean_ldap_container, real_ldap_server  # noqa: F401
 
 if TYPE_CHECKING:
     pass
@@ -46,6 +47,7 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.domain_services import FlextLdapDomainServices
+
 # FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
 from flext_ldap.repositories import FlextLdapRepositories
 
@@ -246,7 +248,6 @@ def domain_services() -> FlextLdapDomainServices:
 # =============================================================================
 
 
-
 @pytest.fixture
 def group_repository(
     ldap_client: FlextLdapClient,
@@ -256,10 +257,10 @@ def group_repository(
 
 
 @pytest.fixture
-def base_repository(
+def user_repository(
     ldap_client: FlextLdapClient,
 ) -> FlextLdapRepositories.UserRepository:
-    """Get base repository instance."""
+    """Get user repository instance."""
     return FlextLdapRepositories.UserRepository(client=ldap_client)
 
 
@@ -576,17 +577,8 @@ def skip_if_no_docker() -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_ldap_state() -> None:
-    """Clean LDAP state before and after each test."""
-    # Pre-test cleanup - skip for now as we don't have test entries yet
-    return
-    # Post-test cleanup - skip cleanup when we don't have actual test entries
-    # The cleanup should be handled by specific test fixtures that create entries
-
-
-@pytest.fixture(autouse=True)
-def clean_ldap_container():
-    """Clean LDAP container state."""
+def clean_ldap_state():
+    """Clean LDAP state between tests."""
     # Pre-test cleanup
     yield
     # Post-test cleanup
@@ -602,13 +594,10 @@ __all__ = [
     "acl_manager",
     "acl_models",
     "acl_parsers",
-    "advanced_service",
-    "base_repository",
     "clean_ldap_container",
     "clean_ldap_state",
     "domain_services",
     "event_loop",
-    "factory",
     "flext_container",
     "flext_logger",
     "group_repository",
@@ -645,5 +634,4 @@ __all__ = [
     "test_user_data",
     "user_repository",
     "validations",
-    "workflow_orchestrator",
 ]
