@@ -15,7 +15,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import (
     ConfigDict,
@@ -213,6 +213,7 @@ class FlextLdapModels(FlextModels):
             return ",".join(components)
 
         @classmethod
+        @override
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create DN with validation - compatible with base class signature."""
             try:
@@ -676,7 +677,9 @@ class FlextLdapModels(FlextModels):
                 self.display_name = self.cn
 
             # Validate organizational consistency
-            if self.department and not self.organizational_unit:
+            if (self.department and
+                self.department != FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT and
+                not self.organizational_unit):
                 msg = "Department requires organizational unit"
                 raise exceptions.validation_error(
                     msg, value=str(self.department), field="department"
@@ -1504,12 +1507,14 @@ class FlextLdapModels(FlextModels):
 
         # Core response fields
         result_code: int = Field(0, description="LDAP result code")
-        result_description: str = Field("", description="Result description")
-        matched_dn: str = Field("", description="Matched DN")
+        result_description: str = Field(default="", description="Result description")
+        matched_dn: str = Field(default="", description="Matched DN")
         has_more_pages: bool = Field(default=False, description="More pages available")
-        next_cookie: bytes | None = Field(None, description="Next page cookie")
-        entries_returned: int = Field(0, description="Number of entries returned")
-        time_elapsed: float = Field(0.0, description="Search time in seconds")
+        next_cookie: bytes | None = Field(default=None, description="Next page cookie")
+        entries_returned: int = Field(
+            default=0, description="Number of entries returned"
+        )
+        time_elapsed: float = Field(default=0.0, description="Search time in seconds")
 
         @field_validator("entries_returned", mode="before")
         @classmethod
@@ -1535,13 +1540,17 @@ class FlextLdapModels(FlextModels):
         # Optional user attributes - can be provided as None
         given_name: str | None = Field(default=None, description="Given Name")
         mail: str | None = Field(default=None, description="Email address")
-        user_password: str | SecretStr | None = Field(default=None, description="User password")
+        user_password: str | SecretStr | None = Field(
+            default=None, description="User password"
+        )
         telephone_number: str | None = Field(default=None, description="Phone number")
         description: str | None = Field(default=None, description="User description")
 
         # Optional organizational fields
         department: str | None = Field(default=None, description="Department")
-        organizational_unit: str | None = Field(default=None, description="Organizational Unit")
+        organizational_unit: str | None = Field(
+            default=None, description="Organizational Unit"
+        )
         title: str | None = Field(default=None, description="Job title")
         organization: str | None = Field(default=None, description="Organization")
 
@@ -1961,8 +1970,8 @@ class FlextLdapModels(FlextModels):
             try:
                 if not self.base_dn or not self.base_dn.strip():
                     return FlextResult[None].fail("Base DN cannot be empty")
-                if not self.search_filter or not self.search_filter.strip():
-                    return FlextResult[None].fail("Search filter cannot be empty")
+                if not self.filter_str or not self.filter_str.strip():
+                    return FlextResult[None].fail("Filter string cannot be empty")
                 if not self.attributes:
                     return FlextResult[None].fail("Attributes cannot be empty")
                 return FlextResult[None].ok(None)

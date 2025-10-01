@@ -34,7 +34,7 @@ class TestSharedLDAPIntegration:
         # Test basic search to verify connection
         search_result = await shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             scope="base",
         )
 
@@ -50,9 +50,9 @@ class TestSharedLDAPIntegration:
         # Test schema discovery
         schema_result = await shared_ldap_client.discover_schema()
 
-        assert schema_result.is_success, (
-            f"Schema discovery failed: {schema_result.error}"
-        )
+        assert (
+            schema_result.is_success
+        ), f"Schema discovery failed: {schema_result.error}"
         assert schema_result.value is not None
 
         # Verify we got some schema information
@@ -103,9 +103,9 @@ class TestSharedLDAPIntegration:
         # Verify values are not empty
         for key, value in shared_ldap_config.items():
             if key != "container":  # container can be None
-                assert value is not None and str(value).strip(), (
-                    f"Empty value for {key}: {value}"
-                )
+                assert (
+                    value is not None and str(value).strip()
+                ), f"Empty value for {key}: {value}"
 
         # Verify specific values match shared constants
         assert shared_ldap_config["server_url"] == "ldap://localhost:3390"
@@ -173,24 +173,24 @@ class TestSharedLDAPIntegration:
         if not create_result.is_success:
             # If creation failed, try to search for existing entry
             search_result = await shared_ldap_client.search_universal(
-                base_dn=ou_dn, search_filter="(objectClass=*)", scope="base"
+                base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
             )
-            assert search_result.is_success, (
-                f"Entry should exist or be creatable: {create_result.error}"
-            )
+            assert (
+                search_result.is_success
+            ), f"Entry should exist or be creatable: {create_result.error}"
         else:
-            assert create_result.is_success, (
-                f"Failed to create test OU: {create_result.error}"
-            )
+            assert (
+                create_result.is_success
+            ), f"Failed to create test OU: {create_result.error}"
 
         # Test searching for the entry
         search_result = await shared_ldap_client.search_universal(
-            base_dn=ou_dn, search_filter="(objectClass=*)", scope="base"
+            base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
         )
 
-        assert search_result.is_success, (
-            f"Failed to search test OU: {search_result.error}"
-        )
+        assert (
+            search_result.is_success
+        ), f"Failed to search test OU: {search_result.error}"
         assert search_result.value is not None
         assert len(search_result.value) > 0
 

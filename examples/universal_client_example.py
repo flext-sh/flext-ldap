@@ -206,7 +206,7 @@ async def demonstrate_universal_search(
     logger.info("Performing universal search...")
     search_result = await client.search_universal(
         base_dn=base_dn,
-        search_filter="(objectClass=*)",
+        filter_str="(objectClass=*)",
         attributes=["cn", "sn", "mail", "objectClass"],
         scope="subtree",
         size_limit=10,

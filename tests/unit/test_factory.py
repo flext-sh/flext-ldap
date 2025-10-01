@@ -411,7 +411,7 @@ class TestFlextLdapFactoryCreateUserRequest:
         }
 
         result = FlextLdapFactory.create_user_request(
-            user_data,
+            cast("dict[str, object]", user_data),
             validation_strict=False,
         )
         # Note: Pydantic field validators always run regardless of validation_strict setting

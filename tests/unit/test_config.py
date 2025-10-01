@@ -111,7 +111,7 @@ class TestFlextLdapConfig:
         assert result.is_success
         assert isinstance(result.data, FlextLdapModels.SearchConfig)
         assert result.data.base_dn == "dc=example,dc=com"
-        assert result.data.search_filter == "(objectClass=person)"
+        assert result.data.filter_str == "(objectClass=person)"
         assert result.data.attributes == ["cn", "sn", "mail"]
 
     def test_create_search_config_validation_failure(self) -> None:
@@ -129,7 +129,7 @@ class TestFlextLdapConfig:
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
         assert result.data.base_dn == "None"
-        assert result.data.search_filter == "None"
+        assert result.data.filter_str == "None"
         assert result.data.attributes == []
 
     def test_create_modify_config_success(self) -> None:

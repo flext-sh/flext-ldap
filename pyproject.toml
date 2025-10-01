@@ -222,4 +222,5 @@
         "scripts",
         "src",
         "tests",
+        "../flext-ldif/src",
     ]

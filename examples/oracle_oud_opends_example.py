@@ -209,7 +209,7 @@ async def demonstrate_oracle_operations(
     logger.info("Performing Oracle-specific search...")
     search_result = await client.search_universal(
         base_dn=base_dn,
-        search_filter="(objectClass=*)",
+        filter_str="(objectClass=*)",
         attributes=["cn", "sn", "mail", "uid", "objectClass"],
         scope="subtree",
         size_limit=10,
