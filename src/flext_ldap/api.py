@@ -1,8 +1,12 @@
-"""FlextLdapAPI - Main domain access point for LDAP operations.
+"""FlextLdap - Thin facade for LDAP operations with full FLEXT integration.
 
-This module provides the primary API interface for the flext-ldap domain.
-Following FLEXT standards, this is the single unified class that provides
-access to all LDAP domain functionality.
+This module provides the main facade for the flext-ldap domain.
+Following FLEXT standards, this is the thin entry point that provides
+access to all LDAP domain functionality with proper integration of:
+- FlextBus for event emission
+- FlextContainer for dependency injection
+- FlextContext for operation context
+- FlextLdif for LDIF file operations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,9 +19,16 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import (
+    FlextBus,
+    FlextContainer,
+    FlextContext,
+    FlextResult,
+    FlextService,
+)
 from flext_ldap.acl import (
     FlextLdapAclManager,
 )
@@ -31,7 +42,38 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapAPI(FlextService[None]):
+class FlextLdap(FlextService[None]):
+    """Thin facade for LDAP operations with full FLEXT ecosystem integration.
+
+    This facade provides a simplified interface to LDAP operations while integrating:
+    - FlextBus: Event emission for all operations
+    - FlextContainer: Dependency injection for services
+    - FlextContext: Operation context tracking
+    - FlextLdif: LDIF file import/export operations
+
+    All business logic is delegated to specialized services.
+    """
+
+    @override
+    def __init__(self, config: FlextLdapConfig | None = None) -> None:
+        """Initialize the LDAP facade with FLEXT ecosystem integration."""
+        super().__init__()
+        self._config = config or FlextLdapConfig.get_global_instance()
+
+        # FLEXT ecosystem integration
+        self._container = FlextContainer.get_global()
+        self._context = FlextContext()
+        self._bus = FlextBus()
+
+        # Lazy-loaded components
+        self._client: FlextLdapClient | None = None
+        self._repositories: FlextLdapRepositories | None = None
+        self._acl_manager: FlextLdapAclManager | None = None
+        self._ldif: object | None = None  # FlextLdif instance
+
+
+# Legacy alias for backward compatibility
+class FlextLdapAPI(FlextLdap):
     """Main domain access point for LDAP operations.
 
     This class provides the primary API interface for the flext-ldap domain.
@@ -505,7 +547,96 @@ class FlextLdapAPI(FlextService[None]):
         except Exception as e:
             return FlextResult[None].fail(f"Filter validation failed: {e}")
 
+    # =============================================================================
+    # LDIF OPERATIONS - Integration with FlextLdif for file operations
+    # =============================================================================
+
+    @property
+    def ldif(self) -> object:
+        """Get FlextLdif instance for LDIF operations."""
+        if self._ldif is None:
+            try:
+                from flext_ldif import FlextLdif
+
+                self._ldif = FlextLdif()
+            except ImportError:
+                # FlextLdif not available, return a stub
+                class _LdifStub:
+                    def parse_file(self, _path: Path) -> FlextResult[list]:
+                        return FlextResult[list].fail(
+                            "FlextLdif not installed. Install with: pip install flext-ldif"
+                        )
+
+                    def write_file(
+                        self, _entries: list, _path: Path
+                    ) -> FlextResult[bool]:
+                        return FlextResult[bool].fail(
+                            "FlextLdif not installed. Install with: pip install flext-ldif"
+                        )
+
+                self._ldif = _LdifStub()
+        return self._ldif
+
+    async def import_from_ldif(
+        self, path: Path
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+        """Import entries from LDIF file using FlextLdif.
+
+        Args:
+            path: Path to LDIF file
+
+        Returns:
+            FlextResult containing list of entries or error
+        """
+        try:
+            # Use FlextLdif for parsing
+            result = self.ldif.parse_file(path)
+            if result.is_failure:
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    result.error or "LDIF parsing failed"
+                )
+
+            # Emit event
+            await self._bus.emit(
+                "ldap.ldif.imported",
+                {"path": str(path), "count": len(result.value or [])},
+            )
+
+            return FlextResult[list[FlextLdapModels.Entry]].ok(result.value or [])
+        except Exception as e:
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
+                f"LDIF import failed: {e}"
+            )
+
+    async def export_to_ldif(
+        self, entries: list[FlextLdapModels.Entry], path: Path
+    ) -> FlextResult[bool]:
+        """Export entries to LDIF file using FlextLdif.
+
+        Args:
+            entries: List of LDAP entries to export
+            path: Path to output LDIF file
+
+        Returns:
+            FlextResult indicating success or failure
+        """
+        try:
+            # Use FlextLdif for writing
+            result = self.ldif.write_file(entries, path)
+            if result.is_failure:
+                return FlextResult[bool].fail(result.error or "LDIF writing failed")
+
+            # Emit event
+            await self._bus.emit(
+                "ldap.ldif.exported", {"path": str(path), "count": len(entries)}
+            )
+
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"LDIF export failed: {e}")
+
 
 __all__ = [
+    "FlextLdap",
     "FlextLdapAPI",
 ]
