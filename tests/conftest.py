@@ -46,10 +46,8 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.domain_services import FlextLdapDomainServices
-from flext_ldap.factory import FlextLdapFactory
+# FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
 from flext_ldap.repositories import FlextLdapRepositories
-from flext_ldap.services import FlextLdapAdvancedService
-from flext_ldap.workflows import FlextLdapWorkflowOrchestrator
 
 # Import test data directly to avoid pyrefly import issues
 SAMPLE_ACL_DATA = {
@@ -240,52 +238,13 @@ def domain_services() -> FlextLdapDomainServices:
     )
 
 
-@pytest.fixture
-def advanced_service() -> FlextLdapAdvancedService:
-    """Get advanced service instance."""
-    # Create mock instances for the required parameters
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="test_handler", handler_name="test_handler"
-    )
-    client = FlextLdapClient()
-
-    return FlextLdapAdvancedService(config=config, client=client)
-
-
-@pytest.fixture
-def workflow_orchestrator(
-    ldap_client: FlextLdapClient,
-) -> FlextLdapWorkflowOrchestrator:
-    """Get workflow orchestrator instance."""
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="workflow_orchestrator_001",
-        handler_name="LDAP Workflow Orchestrator",
-        handler_type="command",
-        handler_mode="command",
-    )
-    return FlextLdapWorkflowOrchestrator(config=config, client=ldap_client)
-
-
-@pytest.fixture
-def factory() -> FlextLdapFactory:
-    """Get factory instance."""
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="test-handler", handler_name="test-handler"
-    )
-    return FlextLdapFactory(config=config)
+# Fixtures for removed modules (factory, advanced_service, workflow_orchestrator) deleted
 
 
 # =============================================================================
 # REPOSITORY FIXTURES
 # =============================================================================
 
-
-@pytest.fixture
-def user_repository(
-    ldap_client: FlextLdapClient,
-) -> FlextLdapRepositories.UserRepository:
-    """Get user repository instance."""
-    return FlextLdapRepositories.UserRepository(client=ldap_client)
 
 
 @pytest.fixture
