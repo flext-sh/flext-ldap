@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextHandlers, FlextResult
+
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 

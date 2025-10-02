@@ -127,7 +127,7 @@ class TestFlextLdapClientSearchIntegration:
         """Test search_with_request with BASE scope."""
         search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
+            filter_str="(objectClass=dcObject)",
             scope="base",
             attributes=["objectClass", "dc"],
         )

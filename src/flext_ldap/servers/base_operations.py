@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif import FlextLdifModels
@@ -87,7 +86,7 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def discover_schema(self, connection: Any) -> FlextResult[dict[str, Any]]:
+    def discover_schema(self, connection: object) -> FlextResult[dict[str, object]]:
         """Discover schema from server.
 
         Args:
@@ -99,7 +98,9 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def parse_object_class(self, object_class_def: str) -> FlextResult[dict[str, Any]]:
+    def parse_object_class(
+        self, object_class_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse objectClass definition from schema.
 
         Args:
@@ -111,7 +112,9 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def parse_attribute_type(self, attribute_def: str) -> FlextResult[dict[str, Any]]:
+    def parse_attribute_type(
+        self, attribute_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse attributeType definition from schema.
 
         Args:
@@ -145,7 +148,9 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def get_acls(self, connection: Any, dn: str) -> FlextResult[list[dict[str, Any]]]:
+    def get_acls(
+        self, connection: object, dn: str
+    ) -> FlextResult[list[dict[str, object]]]:
         """Get ACLs for a given DN.
 
         Args:
@@ -159,7 +164,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def set_acls(
-        self, connection: Any, dn: str, acls: list[dict[str, Any]]
+        self, connection: object, dn: str, acls: list[dict[str, object]]
     ) -> FlextResult[bool]:
         """Set ACLs for a given DN.
 
@@ -174,7 +179,7 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, Any]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
         """Parse ACL string to structured format.
 
         Args:
@@ -186,7 +191,7 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def format_acl(self, acl_dict: dict[str, Any]) -> FlextResult[str]:
+    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
         """Format ACL structure to server-specific string.
 
         Args:
@@ -203,7 +208,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def add_entry(
-        self, connection: Any, entry: FlextLdifModels.Entry
+        self, connection: object, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to LDAP server.
 
@@ -218,7 +223,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def modify_entry(
-        self, connection: Any, dn: str, modifications: dict[str, Any]
+        self, connection: object, dn: str, modifications: dict[str, object]
     ) -> FlextResult[bool]:
         """Modify existing entry.
 
@@ -233,7 +238,7 @@ class BaseServerOperations(FlextService[None], ABC):
         pass
 
     @abstractmethod
-    def delete_entry(self, connection: Any, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
         """Delete entry from LDAP server.
 
         Args:
@@ -281,7 +286,7 @@ class BaseServerOperations(FlextService[None], ABC):
     @abstractmethod
     def search_with_paging(
         self,
-        connection: Any,
+        connection: object,
         base_dn: str,
         search_filter: str,
         attributes: list[str] | None = None,

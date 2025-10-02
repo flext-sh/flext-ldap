@@ -13,9 +13,9 @@ from typing import cast
 from uuid import uuid4
 
 import pytest
+from flext_core import FlextResult, FlextTypes
 from pydantic import SecretStr
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapModels,
@@ -607,17 +607,18 @@ class TestLdapValidationRealOperations:
 
     def test_business_rules_validation_real_ldap(
         self,
-        ldap_api: FlextLdapClient,
+        ldap_client: FlextLdapClient,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""
         # Setup connection
-        client = ldap_api
-        client.connect(
+        client = ldap_client
+        result = client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
             str(clean_ldap_container["password"]),
         )
+        assert result.is_success, f"Failed to connect: {result.error}"
 
         # Create OU
         ou_dn = f"ou=validation-test,{clean_ldap_container['base_dn']}"

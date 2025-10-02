@@ -18,6 +18,7 @@ import sys
 from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
+
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConstants,

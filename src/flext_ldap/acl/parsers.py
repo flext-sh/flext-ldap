@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult
+
 from flext_ldap.acl.constants import FlextLdapAclConstants
 from flext_ldap.models import FlextLdapModels
 

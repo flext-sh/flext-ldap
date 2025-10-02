@@ -17,6 +17,7 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, override
 
+from flext_core import FlextConstants, FlextModels, FlextResult
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,7 +29,6 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextConstants, FlextModels, FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.typings import FlextLdapTypes

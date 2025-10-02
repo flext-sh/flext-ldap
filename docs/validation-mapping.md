@@ -21,7 +21,7 @@ This document provides a comprehensive mapping of all inline validation methods 
 
 1. **Client Layer Validation**: Validation methods in `FlextLdapClient` class
 2. **API Layer Validation**: Validation methods in `FlextLdapApi` class
-3. **Inline Validation**: Any validation logic not delegated to config/models
+3. **Inline Validation**: object validation logic not delegated to config/models
 
 ## 📊 **Validation Violations Summary**
 

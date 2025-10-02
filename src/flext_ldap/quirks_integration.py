@@ -10,14 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 
 
-class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
+class FlextLdapQuirksAdapter(FlextService[dict[str, object]]):
     """Adapter for FlextLdif quirks system integration with flext-ldap.
 
     This adapter wraps FlextLdif's quirks management to provide:
@@ -53,16 +51,16 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
         self._detected_server_type: str | None = server_type
-        self._quirks_cache: dict[str, Any] = {}
+        self._quirks_cache: dict[str, object] = {}
 
-    def execute(self) -> FlextResult[dict[str, Any]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService.
 
         Returns:
             FlextResult containing quirks adapter status
 
         """
-        return FlextResult[dict[str, Any]].ok(
+        return FlextResult[dict[str, object]].ok(
             {
                 "service": "FlextLdapQuirksAdapter",
                 "server_type": self._detected_server_type,
@@ -125,7 +123,7 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
 
     def get_server_quirks(
         self, server_type: str | None = None
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get server-specific quirks configuration.
 
         Args:
@@ -140,7 +138,9 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
         try:
             # Check cache first
             if target_type in self._quirks_cache:
-                return FlextResult[dict[str, Any]].ok(self._quirks_cache[target_type])
+                return FlextResult[dict[str, object]].ok(
+                    self._quirks_cache[target_type]
+                )
 
             # Get quirks from FlextLdif manager
             quirks = self._quirks_manager._quirks_registry.get(target_type, {})
@@ -155,14 +155,14 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
             # Cache the quirks
             self._quirks_cache[target_type] = quirks
 
-            return FlextResult[dict[str, Any]].ok(quirks)
+            return FlextResult[dict[str, object]].ok(quirks)
 
         except Exception as e:
             self._logger.error(
                 "Failed to get server quirks",
                 extra={"server_type": target_type, "error": str(e)},
             )
-            return FlextResult[dict[str, Any]].fail(f"Failed to get quirks: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to get quirks: {e}")
 
     def get_acl_attribute_name(
         self, server_type: str | None = None
@@ -319,7 +319,7 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
 
     def get_connection_defaults(
         self, server_type: str | None = None
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get default connection parameters for server type.
 
         Args:
@@ -333,7 +333,7 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
             target_type = server_type or self._detected_server_type or "generic"
 
             # Server-specific connection defaults
-            defaults: dict[str, Any] = {
+            defaults: dict[str, object] = {
                 "openldap": {"port": 389, "use_ssl": False, "supports_starttls": True},
                 "openldap1": {"port": 389, "use_ssl": False, "supports_starttls": True},
                 "openldap2": {"port": 389, "use_ssl": False, "supports_starttls": True},
@@ -344,10 +344,10 @@ class FlextLdapQuirksAdapter(FlextService[dict[str, Any]]):
                 "generic": {"port": 389, "use_ssl": False, "supports_starttls": True},
             }
 
-            config: dict[str, Any] = defaults.get(target_type) or defaults["generic"]
-            return FlextResult[dict[str, Any]].ok(config)
+            config: dict[str, object] = defaults.get(target_type) or defaults["generic"]
+            return FlextResult[dict[str, object]].ok(config)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to get connection defaults: {e}"
             )

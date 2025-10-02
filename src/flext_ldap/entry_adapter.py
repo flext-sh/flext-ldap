@@ -10,13 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
-from ldap3 import Entry as Ldap3Entry
-
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.quirks import FlextLdifQuirksManager, FlextLdifEntryQuirks
+from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
+from ldap3 import Entry as Ldap3Entry
 
 
 class FlextLdapEntryAdapter(FlextService[None]):
@@ -80,7 +77,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry missing DN")
 
             # Extract attributes from ldap3 entry
-            attributes: dict[str, list[Any]] = {}
+            attributes: dict[str, list[object]] = {}
             for attr_name in ldap3_entry.entry_attributes:
                 attr_value = ldap3_entry[attr_name]
 
@@ -158,7 +155,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def ldif_entry_to_ldap3_attributes(
         self, ldif_entry: FlextLdifModels.Entry
-    ) -> FlextResult[dict[str, list[Any]]]:
+    ) -> FlextResult[dict[str, list[str]]]:
         """Convert FlextLdifModels.Entry to ldap3 attributes dict.
 
         Args:
@@ -170,17 +167,17 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """
         try:
             if not ldif_entry:
-                return FlextResult[dict[str, list[Any]]].fail(
+                return FlextResult[dict[str, list[str]]].fail(
                     "FlextLdif entry cannot be None"
                 )
 
             # Extract attributes from FlextLdif entry
-            attributes: dict[str, list[Any]] = {}
+            attributes: dict[str, list[str]] = {}
             for attr_name, attr_values in ldif_entry.attributes.attributes.items():
                 # attr_values is FlextLdifModels.AttributeValues - extract values list
                 attributes[attr_name] = attr_values.values
 
-            return FlextResult[dict[str, list[Any]]].ok(attributes)
+            return FlextResult[dict[str, list[str]]].ok(attributes)
 
         except Exception as e:
             self._logger.error(
@@ -190,13 +187,13 @@ class FlextLdapEntryAdapter(FlextService[None]):
                     "dn": str(ldif_entry.dn) if ldif_entry else None,
                 },
             )
-            return FlextResult[dict[str, list[Any]]].fail(
+            return FlextResult[dict[str, list[object]]].fail(
                 f"FlextLdif to ldap3 conversion failed: {e}"
             )
 
     def normalize_attributes_for_add(
-        self, attributes: dict[str, Any]
-    ) -> FlextResult[dict[str, list[Any]]]:
+        self, attributes: dict[str, object]
+    ) -> FlextResult[dict[str, list[object]]]:
         """Normalize attributes for ldap3 add operation.
 
         Ensures all attribute values are in list format as required by ldap3.
@@ -209,23 +206,23 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         """
         try:
-            normalized: dict[str, list[Any]] = {}
+            normalized: dict[str, list[object]] = {}
             for attr_name, attr_value in attributes.items():
                 if isinstance(attr_value, list):
                     normalized[attr_name] = attr_value
                 else:
                     normalized[attr_name] = [attr_value]
 
-            return FlextResult[dict[str, list[Any]]].ok(normalized)
+            return FlextResult[dict[str, list[object]]].ok(normalized)
 
         except Exception as e:
-            return FlextResult[dict[str, list[Any]]].fail(
+            return FlextResult[dict[str, list[object]]].fail(
                 f"Attribute normalization failed: {e}"
             )
 
     def create_modify_changes(
-        self, modifications: dict[str, Any]
-    ) -> FlextResult[dict[str, list[tuple[str, list[Any]]]]]:
+        self, modifications: dict[str, object]
+    ) -> FlextResult[dict[str, list[tuple[str, list[object]]]]]:
         """Create ldap3 modify changes from simple modifications dict.
 
         Converts a simple dict of attribute modifications into ldap3's
@@ -241,16 +238,16 @@ class FlextLdapEntryAdapter(FlextService[None]):
         try:
             from ldap3 import MODIFY_REPLACE
 
-            changes: dict[str, list[tuple[str, list[Any]]]] = {}
+            changes: dict[str, list[tuple[str, list[object]]]] = {}
             for attr_name, attr_value in modifications.items():
                 # Default to REPLACE operation
                 values = attr_value if isinstance(attr_value, list) else [attr_value]
                 changes[attr_name] = [(MODIFY_REPLACE, values)]
 
-            return FlextResult[dict[str, list[tuple[str, list[Any]]]]].ok(changes)
+            return FlextResult[dict[str, list[tuple[str, list[object]]]]].ok(changes)
 
         except Exception as e:
-            return FlextResult[dict[str, list[tuple[str, list[Any]]]]].fail(
+            return FlextResult[dict[str, list[tuple[str, list[object]]]]].fail(
                 f"Failed to create modify changes: {e}"
             )
 
@@ -605,7 +602,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def get_server_specific_attributes(
         self, server_type: str
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get server-specific attribute information from quirks.
 
         Returns configuration like:
@@ -624,14 +621,14 @@ class FlextLdapEntryAdapter(FlextService[None]):
         try:
             quirks_result = self._quirks_manager.get_server_quirks(server_type)
             if quirks_result.is_failure:
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Failed to get server quirks: {quirks_result.error}"
                 )
 
             quirks = quirks_result.unwrap()
 
             # Extract commonly used attributes
-            server_attrs: dict[str, Any] = {
+            server_attrs: dict[str, object] = {
                 "acl_attribute": quirks.get("acl_attribute", "aci"),
                 "acl_format": quirks.get("acl_format", "generic"),
                 "schema_subentry": quirks.get("schema_subentry", "cn=subschema"),
@@ -641,9 +638,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 "server_type": server_type,
             }
 
-            return FlextResult[dict[str, Any]].ok(server_attrs)
+            return FlextResult[dict[str, object]].ok(server_attrs)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to get server attributes: {e}"
             )

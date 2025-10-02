@@ -12,8 +12,8 @@ import pytest
 from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapAPI
-from flext_ldap.servers.factory import ServerOperationsFactory
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.servers.factory import ServerOperationsFactory
 
 
 @pytest.mark.integration
@@ -181,7 +181,7 @@ class TestUniversalLdapIntegration:
         result = ldap_api.get_detected_server_type()
         # Should fail because client is not initialized
         assert result.is_failure
-        assert "Client not initialized" in result.error
+        assert result.error is not None and "Client not initialized" in result.error
 
     def test_api_entry_detection_works_without_connection(
         self, ldap_api: FlextLdapAPI

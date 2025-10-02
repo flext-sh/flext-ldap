@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from . import fixtures, helpers, shared_ldap_fixtures, test_data
 
-# Import specific items for backward compatibility
 ldap_connection = fixtures.ldap_connection
 real_ldap_server = fixtures.real_ldap_server
 test_group_data = fixtures.test_group_data

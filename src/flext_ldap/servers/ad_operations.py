@@ -8,11 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextResult
-from flext_ldap.servers.base_operations import BaseServerOperations
 from flext_ldif import FlextLdifModels
+
+from flext_ldap.servers.base_operations import BaseServerOperations
 
 
 class ActiveDirectoryOperations(BaseServerOperations):
@@ -69,34 +70,38 @@ class ActiveDirectoryOperations(BaseServerOperations):
         return "cn=schema,cn=configuration"
 
     @override
-    def discover_schema(self, connection: Any) -> FlextResult[dict[str, Any]]:
+    def discover_schema(self, connection: object) -> FlextResult[dict[str, object]]:
         """Discover schema from Active Directory.
 
         TODO: Implement AD schema discovery.
         """
-        return FlextResult[dict[str, Any]].fail(
+        return FlextResult[dict[str, object]].fail(
             "Active Directory schema discovery not yet implemented. "
             "Contributions welcome! See flext-ldap documentation for "
             "implementation guide."
         )
 
     @override
-    def parse_object_class(self, object_class_def: str) -> FlextResult[dict[str, Any]]:
+    def parse_object_class(
+        self, object_class_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse AD objectClass definition.
 
         TODO: Implement AD objectClass parsing.
         """
-        return FlextResult[dict[str, Any]].fail(
+        return FlextResult[dict[str, object]].fail(
             "Active Directory objectClass parsing not yet implemented."
         )
 
     @override
-    def parse_attribute_type(self, attribute_def: str) -> FlextResult[dict[str, Any]]:
+    def parse_attribute_type(
+        self, attribute_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse AD attributeType definition.
 
         TODO: Implement AD attributeType parsing.
         """
-        return FlextResult[dict[str, Any]].fail(
+        return FlextResult[dict[str, object]].fail(
             "Active Directory attributeType parsing not yet implemented."
         )
 
@@ -115,12 +120,14 @@ class ActiveDirectoryOperations(BaseServerOperations):
         return "ad"
 
     @override
-    def get_acls(self, connection: Any, dn: str) -> FlextResult[list[dict[str, Any]]]:
+    def get_acls(
+        self, connection: object, dn: str
+    ) -> FlextResult[list[dict[str, object]]]:
         """Get nTSecurityDescriptor ACLs from Active Directory.
 
         TODO: Implement AD ACL retrieval.
         """
-        return FlextResult[list[dict[str, Any]]].fail(
+        return FlextResult[list[dict[str, object]]].fail(
             "Active Directory ACL operations not yet implemented. "
             "AD uses complex Security Descriptor format that requires "
             "specialized parsing."
@@ -128,7 +135,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
     @override
     def set_acls(
-        self, connection: Any, dn: str, acls: list[dict[str, Any]]
+        self, connection: object, dn: str, acls: list[dict[str, object]]
     ) -> FlextResult[bool]:
         """Set nTSecurityDescriptor ACLs on Active Directory.
 
@@ -139,17 +146,17 @@ class ActiveDirectoryOperations(BaseServerOperations):
         )
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, Any]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
         """Parse nTSecurityDescriptor ACL.
 
         TODO: Implement AD Security Descriptor parsing.
         """
-        return FlextResult[dict[str, Any]].fail(
+        return FlextResult[dict[str, object]].fail(
             "Active Directory Security Descriptor parsing not yet implemented."
         )
 
     @override
-    def format_acl(self, acl_dict: dict[str, Any]) -> FlextResult[str]:
+    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
         """Format ACL dict to nTSecurityDescriptor.
 
         TODO: Implement AD Security Descriptor formatting.
@@ -164,7 +171,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
     @override
     def add_entry(
-        self, connection: Any, entry: FlextLdifModels.Entry
+        self, connection: object, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to Active Directory.
 
@@ -178,7 +185,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
     @override
     def modify_entry(
-        self, connection: Any, dn: str, modifications: dict[str, Any]
+        self, connection: object, dn: str, modifications: dict[str, object]
     ) -> FlextResult[bool]:
         """Modify entry in Active Directory.
 
@@ -189,7 +196,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         )
 
     @override
-    def delete_entry(self, connection: Any, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
         """Delete entry from Active Directory.
 
         TODO: Implement AD-specific entry deletion.
@@ -232,7 +239,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
     @override
     def search_with_paging(
         self,
-        connection: Any,
+        connection: object,
         base_dn: str,
         search_filter: str,
         attributes: list[str] | None = None,
@@ -342,7 +349,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         """
         return True
 
-    def get_functional_level_info(self) -> dict[str, Any]:
+    def get_functional_level_info(self) -> dict[str, object]:
         """Get AD functional level information.
 
         Returns:

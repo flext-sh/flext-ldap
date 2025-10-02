@@ -9,14 +9,14 @@ Note: This file has type checking disabled due to limitations in the official ty
 - Entry attributes and their values have incomplete type information
 """
 
-# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
-
 from typing import Literal, cast
 
+from flext_core import FlextLogger, FlextResult
+
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldap import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 

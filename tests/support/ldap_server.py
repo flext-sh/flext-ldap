@@ -13,14 +13,15 @@ Note: This file has type checking disabled due to limitations in the official ty
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportGeneralTypeIssues=false
-
 import os
-from typing import cast, Protocol, TypedDict
+from typing import Protocol, TypedDict, cast
 
 from flext_core import FlextLogger, FlextResult
+from flext_tests import FlextTestDocker
+
 from flext_ldap import FlextLdapModels, FlextLdapTypes
 from flext_ldap.constants import FlextLdapConstants
-from flext_tests import FlextTestDocker
+
 from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 

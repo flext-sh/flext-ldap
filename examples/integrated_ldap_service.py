@@ -14,6 +14,7 @@ import os
 from urllib.parse import urlparse
 
 from flext_core import FlextLogger, FlextResult
+
 from flext_ldap import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 

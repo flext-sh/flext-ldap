@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
-
 from flext_core import FlextLogger
+
 from flext_ldap import (
     FlextLdapAPI,
     FlextLdapClient,

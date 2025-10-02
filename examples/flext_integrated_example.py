@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 import os
 
 from flext_core import FlextLogger
+
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConstants,

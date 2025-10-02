@@ -15,9 +15,10 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from flext_core import FlextResult, FlextUtilities
+
 from flext_ldap.exceptions import FlextLdapExceptions
 
 
