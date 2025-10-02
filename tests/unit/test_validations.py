@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
 
 
+@pytest.mark.unit
 class TestFlextLdapValidations:
     """Comprehensive test suite for FlextLdapValidations."""
 
@@ -41,7 +44,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "DN contains invalid characters" in result.error
+        assert (
+            result.error
+            and result.error
+            and "DN contains invalid characters" in result.error
+        )
 
     def test_validate_dn_empty(self, validations: FlextLdapValidations) -> None:
         """Test DN validation with empty string."""
@@ -49,7 +56,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be empty" in result.error
+        assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_validate_dn_none(self, validations: FlextLdapValidations) -> None:
         """Test DN validation with None."""
@@ -57,7 +64,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be None" in result.error
+        assert result.error and result.error and "DN cannot be None" in result.error
 
     def test_validate_dn_whitespace_only(
         self, validations: FlextLdapValidations
@@ -67,7 +74,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be empty" in result.error
+        assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_validate_email_success(
         self, validations: FlextLdapValidations, sample_valid_email: str
@@ -87,8 +94,10 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            "email does not match required pattern" in result.error
-            or "Invalid email format" in result.error
+            result.error
+            and "email does not match required pattern" in result.error
+            or result.error
+            and "Invalid email format" in result.error
         )
 
     def test_validate_email_empty(self, validations: FlextLdapValidations) -> None:
@@ -98,9 +107,12 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            "email cannot be empty or whitespace only" in result.error
-            or "email does not match required pattern" in result.error
-            or "Invalid email format" in result.error
+            result.error
+            and "email cannot be empty or whitespace only" in result.error
+            or result.error
+            and "email does not match required pattern" in result.error
+            or result.error
+            and "Invalid email format" in result.error
         )
 
     def test_validate_email_none(self, validations: FlextLdapValidations) -> None:
@@ -109,7 +121,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Email cannot be None" in result.error
+        assert result.error and result.error and "Email cannot be None" in result.error
 
     def test_validate_email_with_flext_models_error(
         self, validations: FlextLdapValidations
@@ -122,8 +134,10 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            "email does not match required pattern" in result.error
-            or "Invalid email format" in result.error
+            result.error
+            and "email does not match required pattern" in result.error
+            or result.error
+            and "Invalid email format" in result.error
         )
 
     def test_validate_filter_success(
@@ -141,7 +155,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Filter must be enclosed in parentheses" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Filter must be enclosed in parentheses" in result.error
+        )
 
     def test_validate_filter_empty(self, validations: FlextLdapValidations) -> None:
         """Test filter validation with empty string."""
@@ -149,7 +167,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Filter cannot be empty" in result.error
+        assert (
+            result.error and result.error and "Filter cannot be empty" in result.error
+        )
 
     def test_validate_filter_none(self, validations: FlextLdapValidations) -> None:
         """Test filter validation with None."""
@@ -157,7 +177,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Filter cannot be None" in result.error
+        assert result.error and result.error and "Filter cannot be None" in result.error
 
     def test_validate_password_success(self, validations: FlextLdapValidations) -> None:
         """Test successful password validation."""
@@ -174,7 +194,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Password must be at least 8 characters" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Password must be at least 8 characters" in result.error
+        )
 
     def test_validate_password_too_long(
         self, validations: FlextLdapValidations
@@ -187,7 +211,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Password must be no more than 128 characters" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Password must be no more than 128 characters" in result.error
+        )
 
     def test_validate_password_empty(self, validations: FlextLdapValidations) -> None:
         """Test password validation with empty string."""
@@ -195,7 +223,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Password must be at least 8 characters" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Password must be at least 8 characters" in result.error
+        )
 
     def test_validate_password_none(self, validations: FlextLdapValidations) -> None:
         """Test password validation with None."""
@@ -203,7 +235,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Password cannot be None" in result.error
+        assert (
+            result.error and result.error and "Password cannot be None" in result.error
+        )
 
     def test_validate_attributes_success(
         self, validations: FlextLdapValidations
@@ -221,7 +255,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Attributes list cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Attributes list cannot be empty" in result.error
+        )
 
     def test_validate_attributes_none(self, validations: FlextLdapValidations) -> None:
         """Test attributes validation with None."""
@@ -229,7 +267,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Attributes list cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Attributes list cannot be empty" in result.error
+        )
 
     def test_validate_attributes_invalid_format(
         self, validations: FlextLdapValidations
@@ -240,7 +282,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid attribute name: " in result.error
+        assert (
+            result.error and result.error and "Invalid attribute name: " in result.error
+        )
 
     def test_validate_attributes_invalid_regex(
         self, validations: FlextLdapValidations
@@ -252,7 +296,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid attribute name: 1invalid" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid attribute name: 1invalid" in result.error
+        )
 
     def test_validate_server_uri_success(
         self, validations: FlextLdapValidations
@@ -280,7 +328,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "URI must start with ldap:// or ldaps://" in result.error
+        assert (
+            result.error
+            and result.error
+            and "URI must start with ldap:// or ldaps://" in result.error
+        )
 
     def test_validate_server_uri_empty(self, validations: FlextLdapValidations) -> None:
         """Test server URI validation with empty string."""
@@ -288,7 +340,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "URI cannot be empty" in result.error
+        assert result.error and result.error and "URI cannot be empty" in result.error
 
     def test_validate_server_uri_none(self, validations: FlextLdapValidations) -> None:
         """Test server URI validation with None."""
@@ -296,7 +348,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "URI cannot be None" in result.error
+        assert result.error and result.error and "URI cannot be None" in result.error
 
     def test_validate_port_success(self, validations: FlextLdapValidations) -> None:
         """Test successful port validation."""
@@ -318,7 +370,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Port must be between 1 and 65535" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Port must be between 1 and 65535" in result.error
+        )
 
     def test_validate_port_negative(self, validations: FlextLdapValidations) -> None:
         """Test port validation with negative port."""
@@ -326,7 +382,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Port must be between 1 and 65535" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Port must be between 1 and 65535" in result.error
+        )
 
     def test_validate_port_none(self, validations: FlextLdapValidations) -> None:
         """Test port validation with None."""
@@ -334,7 +394,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Port cannot be None" in result.error
+        assert result.error and result.error and "Port cannot be None" in result.error
 
     def test_validate_timeout_success(self, validations: FlextLdapValidations) -> None:
         """Test successful timeout validation."""
@@ -356,7 +416,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Timeout must be non-negative" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Timeout must be non-negative" in result.error
+        )
 
     def test_validate_timeout_none(self, validations: FlextLdapValidations) -> None:
         """Test timeout validation with None."""
@@ -364,7 +428,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Timeout cannot be None" in result.error
+        assert (
+            result.error and result.error and "Timeout cannot be None" in result.error
+        )
 
     def test_validate_size_limit_success(
         self, validations: FlextLdapValidations
@@ -390,7 +456,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Size limit must be non-negative" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Size limit must be non-negative" in result.error
+        )
 
     def test_validate_size_limit_none(self, validations: FlextLdapValidations) -> None:
         """Test size limit validation with None."""
@@ -398,7 +468,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Size limit cannot be None" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Size limit cannot be None" in result.error
+        )
 
     def test_validate_scope_success(self, validations: FlextLdapValidations) -> None:
         """Test successful scope validation."""
@@ -420,10 +494,10 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid scope: one" in result.error
-        assert "base" in result.error
-        assert "subtree" in result.error
-        assert "onelevel" in result.error
+        assert result.error and result.error and "Invalid scope: one" in result.error
+        assert result.error and result.error and "base" in result.error
+        assert result.error and result.error and "subtree" in result.error
+        assert result.error and result.error and "onelevel" in result.error
 
     def test_validate_scope_invalid(self, validations: FlextLdapValidations) -> None:
         """Test scope validation with invalid scope."""
@@ -431,7 +505,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid scope" in result.error
+        assert result.error and result.error and "Invalid scope" in result.error
 
     def test_validate_scope_empty(self, validations: FlextLdapValidations) -> None:
         """Test scope validation with empty string."""
@@ -439,10 +513,14 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid scope: . Must be one of" in result.error
-        assert "base" in result.error
-        assert "subtree" in result.error
-        assert "onelevel" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid scope: . Must be one of" in result.error
+        )
+        assert result.error and result.error and "base" in result.error
+        assert result.error and result.error and "subtree" in result.error
+        assert result.error and result.error and "onelevel" in result.error
 
     def test_validate_scope_none(self, validations: FlextLdapValidations) -> None:
         """Test scope validation with None."""
@@ -450,7 +528,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Scope cannot be None" in result.error
+        assert result.error and result.error and "Scope cannot be None" in result.error
 
     def test_validate_modify_operation_success(
         self, validations: FlextLdapValidations
@@ -460,10 +538,14 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid operation: MODIFY_REPLACE. Must be one of" in result.error
-        assert "add" in result.error
-        assert "delete" in result.error
-        assert "replace" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid operation: MODIFY_REPLACE. Must be one of" in result.error
+        )
+        assert result.error and result.error and "add" in result.error
+        assert result.error and result.error and "delete" in result.error
+        assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_add(
         self, validations: FlextLdapValidations
@@ -491,10 +573,14 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid operation: INVALID_OPERATION. Must be one of" in result.error
-        assert "add" in result.error
-        assert "delete" in result.error
-        assert "replace" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid operation: INVALID_OPERATION. Must be one of" in result.error
+        )
+        assert result.error and result.error and "add" in result.error
+        assert result.error and result.error and "delete" in result.error
+        assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_empty(
         self, validations: FlextLdapValidations
@@ -504,10 +590,14 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid operation: . Must be one of" in result.error
-        assert "add" in result.error
-        assert "delete" in result.error
-        assert "replace" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid operation: . Must be one of" in result.error
+        )
+        assert result.error and result.error and "add" in result.error
+        assert result.error and result.error and "delete" in result.error
+        assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_none(
         self, validations: FlextLdapValidations
@@ -517,7 +607,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Operation cannot be None" in result.error
+        assert (
+            result.error and result.error and "Operation cannot be None" in result.error
+        )
 
     def test_validate_object_class_success(
         self, validations: FlextLdapValidations
@@ -557,7 +649,9 @@ class TestFlextLdapValidations:
             assert result.data is True
         else:
             assert result.error is not None
-            assert "Invalid object class" in result.error
+            assert (
+                result.error and result.error and "Invalid object class" in result.error
+            )
 
     def test_validate_object_class_empty(
         self, validations: FlextLdapValidations
@@ -567,7 +661,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Object class cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Object class cannot be empty" in result.error
+        )
 
     def test_validate_object_class_none(
         self, validations: FlextLdapValidations
@@ -577,7 +675,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Object class cannot be None" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Object class cannot be None" in result.error
+        )
 
     def test_validate_connection_config_success(
         self, validations: FlextLdapValidations
@@ -609,7 +711,11 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required field: port" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Missing required field: port" in result.error
+        )
 
     def test_validate_connection_config_invalid_fields(
         self, validations: FlextLdapValidations
@@ -635,7 +741,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Config cannot be None" in result.error
+        assert result.error and result.error and "Config cannot be None" in result.error
 
     def test_validations_integration_complete_workflow(
         self, validations: FlextLdapValidations

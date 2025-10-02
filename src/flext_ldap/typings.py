@@ -15,13 +15,32 @@ from typing import Literal
 
 from ldap3 import Connection, Server
 
-from flext_core import FlextTypes
-
-# =============================================================================
-# LDAP-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDAP operations
-# =============================================================================
-
-# LDAP domain TypeVars
+from flext_core import (
+    E,
+    F,
+    FlextTypes,
+    K,
+    P,
+    R,
+    T,
+    T1,
+    T2,
+    T3,
+    T_co,
+    T_contra,
+    TCommand,
+    TCommand_contra,
+    TEvent,
+    TEvent_contra,
+    TQuery,
+    TQuery_contra,
+    TResult,
+    TState,
+    TState_co,
+    U,
+    V,
+    W,
+)
 
 
 class FlextLdapTypes(FlextTypes):
@@ -222,9 +241,32 @@ class FlextLdapTypes(FlextTypes):
 
 
 # =========================================================================
-# PUBLIC API EXPORTS - Only FlextLdapTypes (no module-level re-exports)
+# PUBLIC API EXPORTS - FlextLdapTypes and flext-core TypeVars
 # =========================================================================
 
 __all__: list[str] = [
+    "E",
+    "F",
     "FlextLdapTypes",
+    "K",
+    "P",
+    "R",
+    "T",
+    "T1",
+    "T2",
+    "T3",
+    "T_co",
+    "T_contra",
+    "TCommand",
+    "TCommand_contra",
+    "TEvent",
+    "TEvent_contra",
+    "TQuery",
+    "TQuery_contra",
+    "TResult",
+    "TState",
+    "TState_co",
+    "U",
+    "V",
+    "W",
 ]

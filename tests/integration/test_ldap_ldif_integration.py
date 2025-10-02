@@ -12,12 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+from collections.abc import Generator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
@@ -28,7 +28,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-async def ldap_client() -> AsyncGenerator[FlextLdapClient]:
+def ldap_client() -> Generator[FlextLdapClient, None, None]:
     """Create LDAP client connected to Docker test server."""
     config = FlextLdapModels.ConnectionConfig(
         server="localhost",
@@ -41,7 +41,7 @@ async def ldap_client() -> AsyncGenerator[FlextLdapClient]:
 
     client = FlextLdapClient(config=config)
 
-    connection_result = await client.connect(
+    connection_result = client.connect(
         server_uri="ldap://localhost:3390",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
         password="REDACTED_LDAP_BIND_PASSWORD123",
@@ -51,22 +51,20 @@ async def ldap_client() -> AsyncGenerator[FlextLdapClient]:
 
     yield client
 
-    await client.close_connection()
+    client.close_connection()
 
 
 @pytest.fixture
-def ldif_api():
+def ldif_api() -> FlextLdif:
     """Create LDIF API instance."""
     try:
-        from flext_ldif import FlextLdif
-
         return FlextLdif()
     except ImportError:
         pytest.skip("flext-ldif not installed")
 
 
 @pytest.fixture
-async def test_entries(ldap_client: FlextLdapClient) -> AsyncGenerator[list[str]]:
+def test_entries(ldap_client: FlextLdapClient) -> Generator[list[str], None, None]:
     """Create test LDAP entries and clean up after."""
     test_dns: list[str] = []
 
@@ -81,7 +79,7 @@ async def test_entries(ldap_client: FlextLdapClient) -> AsyncGenerator[list[str]
         object_classes=["organizationalUnit"],
     )
 
-    add_result = await ldap_client.add_entry_universal(ou_entry.dn, ou_entry.attributes)
+    add_result = ldap_client.add_entry_universal(ou_entry.dn, ou_entry.attributes)
     if add_result.is_success:
         test_dns.append(ou_dn)
 
@@ -100,7 +98,7 @@ async def test_entries(ldap_client: FlextLdapClient) -> AsyncGenerator[list[str]
             object_classes=["person", "organizationalPerson", "inetOrgPerson"],
         )
 
-        add_result = await ldap_client.add_entry_universal(
+        add_result = ldap_client.add_entry_universal(
             user_entry.dn, user_entry.attributes
         )
         if add_result.is_success:
@@ -116,14 +114,14 @@ async def test_entries(ldap_client: FlextLdapClient) -> AsyncGenerator[list[str]
 class TestLdapLdifExport:
     """Test LDAP to LDIF export functionality."""
 
-    async def test_export_ldap_entries_to_ldif_string(
+    def test_export_ldap_entries_to_ldif_string(
         self,
         ldap_client: FlextLdapClient,
-        ldif_api: object,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test exporting LDAP entries to LDIF string format."""
         # Search for test entries
-        search_result = await ldap_client.search(
+        search_result = ldap_client.search(
             base_dn="ou=testusers,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
             attributes=["cn", "sn", "mail"],
@@ -157,17 +155,17 @@ class TestLdapLdifExport:
         assert "sn: User0" in ldif_content
         assert "mail: testuser0@internal.invalid" in ldif_content
 
-    async def test_export_ldap_entries_to_ldif_file(
+    def test_export_ldap_entries_to_ldif_file(
         self,
         ldap_client: FlextLdapClient,
-        ldif_api: object,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test exporting LDAP entries to LDIF file."""
         with TemporaryDirectory() as tmpdir:
             ldif_file = Path(tmpdir) / "export.ldif"
 
             # Search LDAP entries
-            search_result = await ldap_client.search(
+            search_result = ldap_client.search(
                 base_dn="ou=testusers,dc=flext,dc=local",
                 filter_str="(objectClass=person)",
                 attributes=["*"],
@@ -203,9 +201,8 @@ class TestLdapLdifExport:
 class TestLdifLdapImport:
     """Test LDIF to LDAP import functionality."""
 
-    @pytest.mark.asyncio
-    async def test_import_ldif_string_to_ldap(
-        self, ldap_client: FlextLdapClient, ldif_api: object
+    def test_import_ldif_string_to_ldap(
+        self, ldap_client: FlextLdapClient, ldif_api: FlextLdif
     ) -> None:
         """Test importing LDIF string to LDAP server."""
         # Create LDIF content
@@ -245,14 +242,14 @@ sn: ImportedUser
                 attributes=ldap_attributes,
             )
 
-            add_result = await ldap_client.add_entry_universal(
+            add_result = ldap_client.add_entry_universal(
                 ldap_entry.dn, ldap_entry.attributes
             )
             if add_result.is_success:
                 imported_dns.append(ldif_entry.dn)
 
         # Verify entries exist in LDAP
-        search_result = await ldap_client.search(
+        search_result = ldap_client.search(
             base_dn="ou=imported,dc=flext,dc=local",
             filter_str="(objectClass=person)",
         )
@@ -265,9 +262,8 @@ sn: ImportedUser
         for dn in reversed(imported_dns):
             ldap_client.delete(dn)
 
-    @pytest.mark.asyncio
-    async def test_import_ldif_file_to_ldap(
-        self, ldap_client: FlextLdapClient, ldif_api: object
+    def test_import_ldif_file_to_ldap(
+        self, ldap_client: FlextLdapClient, ldif_api: FlextLdif
     ) -> None:
         """Test importing LDIF file to LDAP server."""
         with TemporaryDirectory() as tmpdir:
@@ -309,7 +305,7 @@ sn: FileUser
                     attributes=ldap_attributes,
                 )
 
-                add_result = await ldap_client.add_entry_universal(
+                add_result = ldap_client.add_entry_universal(
                     ldap_entry.dn, ldap_entry.attributes
                 )
                 if add_result.is_success:
@@ -433,14 +429,14 @@ class TestAclIntegration:
 class TestRoundTripConversion:
     """Test round-trip conversion: LDAP → LDIF → LDAP."""
 
-    async def test_ldap_ldif_ldap_roundtrip(
+    def test_ldap_ldif_ldap_roundtrip(
         self,
         ldap_client: FlextLdapClient,
-        ldif_api: object,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test complete round-trip: export from LDAP, reimport to LDAP."""
         # Step 1: Export from LDAP
-        search_result = await ldap_client.search(
+        search_result = ldap_client.search(
             base_dn="ou=testusers,dc=flext,dc=local",
             filter_str="(cn=testuser0)",
             attributes=["*"],

@@ -41,22 +41,31 @@ from flext_ldap.api import FlextLdap, FlextLdapAPI
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
 
+# Entry adapter and quirks integration (NEW - Universal LDAP support)
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+
+# Server-specific operations (NEW - Universal server support)
+from flext_ldap.servers import (
+    BaseServerOperations,
+    ServerOperationsFactory,
+    OpenLDAP1Operations,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+    ActiveDirectoryOperations,
+    GenericServerOperations,
+)
+
 # Constants and models
 from flext_ldap.constants import FlextLdapConstants
 
 # Advanced service components
-from flext_ldap.domain_services import (
-    FlextLdapDomainServices,
-)
 from flext_ldap.exceptions import FlextLdapExceptions
-from flext_ldap.mixins import FlextLdapMixins
 from flext_ldap.models import FlextLdapModels
 
 # Type system and protocols
 from flext_ldap.protocols import FlextLdapProtocols
-
-# Domain utilities
-from flext_ldap.repositories import FlextLdapRepositories
 
 # Generic universal compatibility components
 from flext_ldap.schema import FlextLdapSchema
@@ -78,16 +87,24 @@ __all__ = [
     "FlextLdapClient",
     "FlextLdapConfig",
     "FlextLdapConstants",
-    "FlextLdapDomainServices",
+    "FlextLdapEntryAdapter",  # NEW: Universal entry conversion
     "FlextLdapExceptions",
-    "FlextLdapMixins",
     "FlextLdapModels",
     "FlextLdapProtocols",
-    "FlextLdapRepositories",
+    "FlextLdapQuirksAdapter",  # NEW: Server-specific handling
     "FlextLdapSchema",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
+    # Server-specific operations (NEW)
+    "BaseServerOperations",
+    "ServerOperationsFactory",  # NEW: Factory for server operations
+    "OpenLDAP1Operations",
+    "OpenLDAP2Operations",
+    "OracleOIDOperations",
+    "OracleOUDOperations",
+    "ActiveDirectoryOperations",
+    "GenericServerOperations",
     "__author__",
     "__author_email__",
     "__branch__",

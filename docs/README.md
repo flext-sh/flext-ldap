@@ -4,7 +4,7 @@
 
 Comprehensive documentation for **FLEXT-LDAP**, a sophisticated enterprise LDAP operations library implementing Clean Architecture and Domain-Driven Design patterns at production scale. This **11,242-line enterprise codebase** with **15,264 lines of comprehensive tests** represents industry-leading quality standards with **0.009% technical debt ratio** and **99.99% type coverage**.
 
-**Enterprise Foundation**: FLEXT-LDAP serves as the authoritative LDAP operations foundation for the entire FLEXT ecosystem of 33+ enterprise projects, providing railway-oriented programming with **784 FlextResult usages** and **120+ async methods** for enterprise scalability.
+**Enterprise Foundation**: FLEXT-LDAP serves as the authoritative LDAP operations foundation for the entire FLEXT ecosystem of 33+ enterprise projects, providing railway-oriented programming with **784 FlextResult usages** and **120+ methods** for enterprise scalability.
 
 ---
 
@@ -15,7 +15,7 @@ Comprehensive documentation for **FLEXT-LDAP**, a sophisticated enterprise LDAP 
 - **[Architecture Overview](architecture/README.md)** - Production-scale Clean Architecture + DDD implementation
 - **[Domain Model](architecture/domain-model.md)** - Rich entities, value objects, and domain services with business logic
 - **[FLEXT Integration](architecture/flext-integration.md)** - Deep flext-core integration with railway patterns (784 FlextResult usages)
-- **[Design Patterns](architecture/design-patterns.md)** - Enterprise patterns and async-first architecture (120+ async methods)
+- **[Design Patterns](architecture/design-patterns.md)** - Enterprise patterns and -first architecture (120+ methods)
 - **[Quality Excellence](architecture/quality-metrics.md)** - Exceptional quality metrics and industry standards
 
 ### 🔌 Enterprise Integration Guides
@@ -28,7 +28,7 @@ Comprehensive documentation for **FLEXT-LDAP**, a sophisticated enterprise LDAP 
 
 ### 📖 Comprehensive API Reference
 
-- **[Core API](api/core/README.md)** - FlextLdapClient comprehensive async interface with enterprise patterns
+- **[Core API](api/core/README.md)** - FlextLdapClient comprehensive interface with enterprise patterns
 - **[Domain Objects](api/domain/README.md)** - Rich entities and value objects with Pydantic v2 validation
 - **[Infrastructure](api/infrastructure/README.md)** - LDAP operations and protocol adapters (2,370+ lines)
 - **[Configuration](api/configuration.md)** - Enterprise configuration patterns with Pydantic v2
@@ -51,7 +51,7 @@ Comprehensive documentation for **FLEXT-LDAP**, a sophisticated enterprise LDAP 
 ### 📋 Real-World Examples
 
 - **[Basic Usage](examples/basic-usage.md)** - Getting started with FLEXT-LDAP enterprise patterns
-- **[Advanced Patterns](examples/advanced-patterns.md)** - Sophisticated LDAP operations and async patterns
+- **[Advanced Patterns](examples/advanced-patterns.md)** - Sophisticated LDAP operations and patterns
 - **[Enterprise Scenarios](examples/enterprise.md)** - Real-world enterprise implementations and use cases
 - **[Performance Examples](examples/performance.md)** - Optimized directory operations for large-scale environments
 - **[Integration Examples](examples/integration.md)** - FLEXT ecosystem integration patterns and best practices
@@ -121,7 +121,7 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 
 - ✅ **Production Scale**: 11,242 lines of enterprise code + 15,264 lines of comprehensive tests
 - ✅ **Architecture Excellence**: 18 classes implementing Clean Architecture + Domain-Driven Design
-- ✅ **Async-First Design**: 120+ async methods for enterprise scalability at scale
+- ✅ **-First Design**: 120+ methods for enterprise scalability at scale
 - ✅ **Railway Programming**: 784 FlextResult usages for comprehensive error handling
 
 **Quality Excellence Indicators**:
@@ -160,7 +160,7 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 
 - **[Enterprise LDAP Best Practices](research/enterprise-ldap-2025.md)** - Industry research and benchmarks
 - **[Clean Architecture Patterns](research/clean-architecture-python.md)** - Python enterprise architecture patterns
-- **[Async Programming Patterns](research/async-patterns-2025.md)** - Modern Python async patterns and performance
+- **[Programming Patterns](research/-patterns-2025.md)** - Modern Python patterns and performance
 
 ### Community and Support
 
@@ -204,7 +204,7 @@ See [Contributing Guidelines](development/contributing.md) for detailed informat
 This documentation suite covers every aspect of FLEXT-LDAP from foundational concepts to advanced enterprise implementations:
 
 **Architecture**: Complete coverage of Clean Architecture + DDD patterns at production scale
-**Implementation**: Detailed guides for all 784 FlextResult usages and 120+ async methods
+**Implementation**: Detailed guides for all 784 FlextResult usages and 120+ methods
 **Integration**: Comprehensive ecosystem integration patterns across 33+ FLEXT projects
 **Operations**: Production deployment, monitoring, and performance optimization
 **Examples**: 8+ real-world examples with tested, production-ready code

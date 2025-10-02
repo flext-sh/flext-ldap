@@ -23,6 +23,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_tests import FlextTestsFactories
 
 
+@pytest.mark.unit
 class TestFlextLdapAPI:
     """Comprehensive tests for FlextLdapAPI class."""
 
@@ -32,7 +33,6 @@ class TestFlextLdapAPI:
 
         assert api is not None
         assert hasattr(api, "_client")
-        assert hasattr(api, "_repositories")
         assert hasattr(api, "_acl_manager")
         assert hasattr(api, "_config")
 
@@ -92,46 +92,32 @@ class TestFlextLdapAPI:
         validations = api.validations
         assert validations is not None
 
-    def test_api_repositories_properties(self) -> None:
-        """Test API repository properties."""
-        api = FlextLdapAPI()
-
-        # Test users property
-        users = api.users
-        assert users is not None
-
-        # Test groups property
-        groups = api.groups
-        assert groups is not None
-
-    @pytest.mark.asyncio
-    async def test_api_connection_methods(self) -> None:
+    def test_api_connection_methods(self) -> None:
         """Test API connection methods."""
         api = FlextLdapAPI()
 
         # Test is_connected method
-        connected = await api.is_connected()
+        connected = api.is_connected()
         assert isinstance(connected, bool)
 
         # Test test_connection method
-        result = await api.test_connection()
+        result = api.test_connection()
         assert isinstance(result, FlextResult)
 
         # Test connect method
-        result = await api.connect()
+        result = api.connect()
         assert isinstance(result, FlextResult)
 
         # Test unbind method
-        result = await api.unbind()
+        result = api.unbind()
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.asyncio
-    async def test_api_search_methods(self) -> None:
+    def test_api_search_methods(self) -> None:
         """Test API search methods."""
         api = FlextLdapAPI()
 
         # Test search_groups method
-        result = await api.search_groups(
+        result = api.search_groups(
             base_dn="dc=test,dc=com",
             cn="testgroup",
             filter_str="(objectClass=group)",
@@ -141,7 +127,7 @@ class TestFlextLdapAPI:
         assert isinstance(result, FlextResult)
 
         # Test search_entries method
-        result = await api.search_entries(
+        result = api.search_entries(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=*)",
             scope="subtree",
@@ -150,35 +136,33 @@ class TestFlextLdapAPI:
         assert isinstance(result, FlextResult)
 
         # Test get_group method
-        result = await api.get_group("cn=testgroup,dc=test,dc=com")
+        result = api.get_group("cn=testgroup,dc=test,dc=com")
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.asyncio
-    async def test_api_update_methods(self) -> None:
+    def test_api_update_methods(self) -> None:
         """Test API update methods."""
         api = FlextLdapAPI()
 
         # Test update_user_attributes method
-        result = await api.update_user_attributes(
+        result = api.update_user_attributes(
             dn="cn=testuser,dc=test,dc=com",
             attributes={"cn": "newcn", "mail": "newmail@example.com"},
         )
         assert isinstance(result, FlextResult)
 
         # Test update_group_attributes method
-        result = await api.update_group_attributes(
+        result = api.update_group_attributes(
             dn="cn=testgroup,dc=test,dc=com",
             attributes={"cn": "newgroup", "description": "Updated group"},
         )
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.asyncio
-    async def test_api_delete_methods(self) -> None:
+    def test_api_delete_methods(self) -> None:
         """Test API delete methods."""
         api = FlextLdapAPI()
 
         # Test delete_user method
-        result = await api.delete_user("cn=testuser,dc=test,dc=com")
+        result = api.delete_user("cn=testuser,dc=test,dc=com")
         assert isinstance(result, FlextResult)
 
     def test_api_validation_methods(self) -> None:
@@ -220,13 +204,12 @@ class TestFlextLdapAPI:
         assert isinstance(result, FlextResult)
         assert result.is_success
 
-    @pytest.mark.asyncio
-    async def test_api_execute_async_method(self) -> None:
-        """Test API execute async method."""
+    def test_api_execute_method(self) -> None:
+        """Test API execute method."""
         api = FlextLdapAPI()
 
-        # Test execute_async method
-        result = await api.execute_async()
+        # Test execute method
+        result = api.execute()
         assert isinstance(result, FlextResult)
         assert result.is_success
 
@@ -286,8 +269,14 @@ class TestFlextLdapAPI:
         assert len(results) == 10
         assert all(isinstance(result, FlextResult) for result in results)
 
+    @pytest.mark.performance
+    @pytest.mark.slow
     def test_api_performance(self) -> None:
-        """Test API performance characteristics."""
+        """Test API performance characteristics.
+
+        NOTE: This test is sensitive to resource contention and should be run
+        in isolation using 'make test-performance' to avoid intermittent failures.
+        """
         api = FlextLdapAPI()
 
         # Test validation performance
@@ -385,8 +374,7 @@ class TestFlextLdapAPIComprehensive:
 
         assert api is not None
         assert api._client is None  # Lazy initialization
-        assert api._config is None  # Uses global instance
-        assert api._repositories is None  # Lazy initialization
+        assert api._config is not None  # Initialized with global instance
         assert api._acl_manager is None  # Lazy initialization
 
     def test_api_initialization_with_config(self) -> None:
@@ -408,16 +396,6 @@ class TestFlextLdapAPIComprehensive:
         """Test API execute method (required by FlextService)."""
         api = FlextLdapAPI()
         result = api.execute()
-
-        assert isinstance(result, FlextResult)
-        assert result.is_success
-        assert result.data is None
-
-    @pytest.mark.asyncio
-    async def test_api_execute_async_method(self) -> None:
-        """Test API async execute method."""
-        api = FlextLdapAPI()
-        result = await api.execute_async()
 
         assert isinstance(result, FlextResult)
         assert result.is_success

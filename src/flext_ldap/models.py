@@ -1352,7 +1352,7 @@ class FlextLdapModels(FlextModels):
         )
 
         @computed_field
-        def is_paged_search(self) -> bool:  # type: ignore[truthy-function]
+        def is_paged_search(self) -> bool:
             """Computed field indicating if this is a paged search."""
             return self.page_size is not None and self.page_size > 0
 
@@ -1435,7 +1435,7 @@ class FlextLdapModels(FlextModels):
 
             # Optimize size limit for paged searches
             if (
-                self.is_paged_search  # type: ignore[truthy-function]
+                self.is_paged_search
                 and self.page_size is not None
                 and self.size_limit > self.page_size * max_page_multiplier
             ):

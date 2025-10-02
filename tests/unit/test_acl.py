@@ -285,7 +285,11 @@ class TestFlextLdapAclConverters:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_convert_between_formats_success(
         self,
@@ -588,7 +592,7 @@ class TestFlextLdapAclParsers:
 
             assert result.is_failure
             assert result.error is not None
-            assert "Parsing failed" in result.error
+            assert result.error and result.error and "Parsing failed" in result.error
 
     def test_parse_oracle_aci_success(
         self,
@@ -948,7 +952,11 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.handle("invalid_message")
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACL conversion request" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACL conversion request" in result.error
+        )
 
     def test_handle_missing_acl_content(self) -> None:
         """Test handle method with missing acl_content."""
@@ -959,7 +967,11 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACL conversion request" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACL conversion request" in result.error
+        )
 
     def test_handle_empty_dict(self) -> None:
         """Test handle method with empty dictionary."""
@@ -968,7 +980,11 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.handle({})
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACL conversion request" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACL conversion request" in result.error
+        )
 
     def test_convert_acl_not_implemented(self) -> None:
         """Test convert_acl method returns not implemented error."""
@@ -980,7 +996,11 @@ class TestFlextLdapAclConvertersComprehensive:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_convert_acl_different_formats(self) -> None:
         """Test convert_acl method returns not implemented for all format combinations."""
@@ -999,7 +1019,9 @@ class TestFlextLdapAclConvertersComprehensive:
             assert result.is_failure
             assert result.error is not None
             assert (
-                result.error is not None and "not implemented" in result.error.lower()
+                result.error is not None
+                and result.error
+                and "not implemented" in result.error.lower()
             )
 
     def test_convert_acl_exception_handling(self) -> None:
@@ -1010,12 +1032,20 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.convert_acl(None, None, None)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
         # Test with actual content - still not implemented
         result = converters.convert_acl("valid acl", "source", "target")
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
 
 class TestFlextLdapAclConvertersOpenLdapConverter:
@@ -1029,7 +1059,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -1037,7 +1071,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -1045,7 +1083,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -1053,7 +1095,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -1063,7 +1109,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -1073,7 +1123,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -1081,7 +1135,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -1089,7 +1147,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -1097,7 +1159,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -1107,7 +1173,11 @@ class TestFlextLdapAclConvertersOpenLdapConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
 
 class TestFlextLdapAclConvertersMicrosoftAdConverter:
@@ -1121,7 +1191,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -1129,7 +1203,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -1137,7 +1215,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -1145,7 +1227,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -1155,7 +1241,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_success(self) -> None:
         """Test to_oracle method with successful conversion."""
@@ -1165,7 +1255,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_empty_content(self) -> None:
         """Test to_oracle method with empty content."""
@@ -1173,7 +1267,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_whitespace_only(self) -> None:
         """Test to_oracle method with whitespace only content."""
@@ -1181,7 +1279,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_none_content(self) -> None:
         """Test to_oracle method with None content."""
@@ -1189,7 +1291,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_oracle_complex_acl(self) -> None:
         """Test to_oracle method with complex ACL content."""
@@ -1199,7 +1305,11 @@ class TestFlextLdapAclConvertersMicrosoftAdConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
 
 class TestFlextLdapAclConvertersOracleConverter:
@@ -1213,7 +1323,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_empty_content(self) -> None:
         """Test to_openldap method with empty content."""
@@ -1221,7 +1335,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_whitespace_only(self) -> None:
         """Test to_openldap method with whitespace only content."""
@@ -1229,7 +1347,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_none_content(self) -> None:
         """Test to_openldap method with None content."""
@@ -1237,7 +1359,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_openldap_complex_acl(self) -> None:
         """Test to_openldap method with complex ACL content."""
@@ -1247,7 +1373,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_success(self) -> None:
         """Test to_microsoft_ad method with successful conversion."""
@@ -1257,7 +1387,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_empty_content(self) -> None:
         """Test to_microsoft_ad method with empty content."""
@@ -1265,7 +1399,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_whitespace_only(self) -> None:
         """Test to_microsoft_ad method with whitespace only content."""
@@ -1273,7 +1411,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_none_content(self) -> None:
         """Test to_microsoft_ad method with None content."""
@@ -1281,7 +1423,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_to_microsoft_ad_complex_acl(self) -> None:
         """Test to_microsoft_ad method with complex ACL content."""
@@ -1291,7 +1437,11 @@ class TestFlextLdapAclConvertersOracleConverter:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
 
 class TestFlextLdapAclConvertersIntegration:
@@ -1380,7 +1530,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle("invalid_message")
         assert result.is_failure
         assert result.error is not None
-        assert "Message must be a dictionary" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Message must be a dictionary" in result.error
+        )
 
     def test_handle_missing_operation(self) -> None:
         """Test handle method with missing operation."""
@@ -1388,7 +1542,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle({})
         assert result.is_failure
         assert result.error is not None
-        assert "Operation must be a string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Operation must be a string" in result.error
+        )
 
     def test_handle_invalid_operation_type(self) -> None:
         """Test handle method with invalid operation type."""
@@ -1396,7 +1554,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle({"operation": 123})
         assert result.is_failure
         assert result.error is not None
-        assert "Operation must be a string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Operation must be a string" in result.error
+        )
 
     def test_handle_unknown_operation(self) -> None:
         """Test handle method with unknown operation."""
@@ -1404,7 +1566,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle({"operation": "unknown"})
         assert result.is_failure
         assert result.error is not None
-        assert "Unknown operation: unknown" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Unknown operation: unknown" in result.error
+        )
 
     def test_handle_parse_operation(self) -> None:
         """Test handle method with parse operation."""
@@ -1438,7 +1604,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string must be provided" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string must be provided" in result.error
+        )
 
     def test_handle_parse_invalid_acl_string_type(self) -> None:
         """Test handle method with parse operation invalid acl_string type."""
@@ -1447,7 +1617,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string must be provided" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string must be provided" in result.error
+        )
 
     def test_handle_parse_unsupported_format(self) -> None:
         """Test handle method with parse operation unsupported format."""
@@ -1460,7 +1634,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "Unsupported ACL format: unsupported" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Unsupported ACL format: unsupported" in result.error
+        )
 
     def test_handle_convert_missing_acl_data(self) -> None:
         """Test handle method with convert operation missing acl_data."""
@@ -1469,7 +1647,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL data must be a string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL data must be a string" in result.error
+        )
 
     def test_handle_convert_invalid_acl_data_type(self) -> None:
         """Test handle method with convert operation invalid acl_data type."""
@@ -1482,7 +1664,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL data must be a string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL data must be a string" in result.error
+        )
 
     def test_handle_convert_missing_target_format(self) -> None:
         """Test handle method with convert operation missing target_format."""
@@ -1494,7 +1680,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "Target format must be specified" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Target format must be specified" in result.error
+        )
 
     def test_handle_convert_invalid_target_format_type(self) -> None:
         """Test handle method with convert operation invalid target_format type."""
@@ -1507,7 +1697,11 @@ class TestFlextLdapAclManagerComprehensive:
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
-        assert "Target format must be specified" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Target format must be specified" in result.error
+        )
 
     def test_handle_exception_handling(self) -> None:
         """Test handle method exception handling."""
@@ -1522,7 +1716,11 @@ class TestFlextLdapAclManagerComprehensive:
         )
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string must be provided" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string must be provided" in result.error
+        )
 
 
 class TestFlextLdapAclManagerParseAcl:
@@ -1559,7 +1757,11 @@ class TestFlextLdapAclManagerParseAcl:
         result = manager.parse_acl(acl_string, "unsupported")
         assert result.is_failure
         assert result.error is not None
-        assert "Unsupported ACL format: unsupported" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Unsupported ACL format: unsupported" in result.error
+        )
 
     def test_parse_acl_parsing_failure(self) -> None:
         """Test parse_acl method with invalid ACL string."""
@@ -1568,7 +1770,7 @@ class TestFlextLdapAclManagerParseAcl:
         result = manager.parse_acl(acl_string, "openldap")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL parsing failed:" in result.error
+        assert result.error and result.error and "ACL parsing failed:" in result.error
 
     def test_parse_acl_exception_handling(self) -> None:
         """Test parse_acl method exception handling."""
@@ -1577,7 +1779,7 @@ class TestFlextLdapAclManagerParseAcl:
         result = manager.parse_acl("", "openldap")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL parsing failed:" in result.error
+        assert result.error and result.error and "ACL parsing failed:" in result.error
 
 
 class TestFlextLdapAclManagerConvertAcl:
@@ -1591,7 +1793,11 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_convert_acl_conversion_failure(self) -> None:
         """Test convert_acl method returns not implemented."""
@@ -1601,7 +1807,11 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_convert_acl_exception_handling(self) -> None:
         """Test convert_acl method returns not implemented."""
@@ -1611,7 +1821,11 @@ class TestFlextLdapAclManagerConvertAcl:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
 
 class TestFlextLdapAclManagerBatchConvert:
@@ -1628,7 +1842,11 @@ class TestFlextLdapAclManagerBatchConvert:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_batch_convert_empty_list(self) -> None:
         """Test batch_convert method with empty ACL list."""
@@ -1636,7 +1854,9 @@ class TestFlextLdapAclManagerBatchConvert:
         result = manager.batch_convert([], "openldap", "active_directory")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL list cannot be empty" in result.error
+        assert (
+            result.error and result.error and "ACL list cannot be empty" in result.error
+        )
 
     def test_batch_convert_conversion_failure(self) -> None:
         """Test batch_convert method returns not implemented."""
@@ -1649,7 +1869,11 @@ class TestFlextLdapAclManagerBatchConvert:
 
         # Converters now honestly return not implemented
         assert result.is_failure
-        assert result.error is not None and "not implemented" in result.error.lower()
+        assert (
+            result.error is not None
+            and result.error
+            and "not implemented" in result.error.lower()
+        )
 
     def test_batch_convert_exception_handling(self) -> None:
         """Test batch_convert method exception handling."""
@@ -1658,7 +1882,9 @@ class TestFlextLdapAclManagerBatchConvert:
         result = manager.batch_convert([], "openldap", "active_directory")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL list cannot be empty" in result.error
+        assert (
+            result.error and result.error and "ACL list cannot be empty" in result.error
+        )
 
 
 class TestFlextLdapAclManagerValidateAclSyntax:
@@ -1695,7 +1921,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         result = manager.validate_acl_syntax(acl_string, "openldap")
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACL syntax:" in result.error
+        assert result.error and result.error and "Invalid ACL syntax:" in result.error
 
     def test_validate_acl_syntax_unsupported_format(self) -> None:
         """Test validate_acl_syntax method with unsupported format."""
@@ -1704,7 +1930,11 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         result = manager.validate_acl_syntax(acl_string, "unsupported")
         assert result.is_failure
         assert result.error is not None
-        assert "Unsupported ACL format: unsupported" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Unsupported ACL format: unsupported" in result.error
+        )
 
     def test_validate_acl_syntax_exception_handling(self) -> None:
         """Test validate_acl_syntax method exception handling."""
@@ -1713,7 +1943,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         result = manager.validate_acl_syntax("", "openldap")
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACL syntax:" in result.error
+        assert result.error and result.error and "Invalid ACL syntax:" in result.error
 
     def test_handle_operation_exception_coverage(self) -> None:
         """Test handle operation with exception - covers lines 42-43."""
@@ -1811,14 +2041,22 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse("")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
     def test_parse_whitespace_only_acl(self) -> None:
         """Test parsing whitespace-only ACL string."""
         result = FlextLdapAclParsers.OpenLdapAclParser.parse("   ")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
     def test_parse_invalid_format_missing_access(self) -> None:
         """Test parsing ACL with missing 'access' keyword."""
@@ -1826,7 +2064,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid OpenLDAP ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid OpenLDAP ACL format" in result.error
+        )
 
     def test_parse_invalid_format_missing_to(self) -> None:
         """Test parsing ACL with missing 'to' keyword."""
@@ -1834,7 +2076,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid OpenLDAP ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid OpenLDAP ACL format" in result.error
+        )
 
     def test_parse_invalid_format_missing_by(self) -> None:
         """Test parsing ACL with missing 'by' keyword."""
@@ -1842,7 +2088,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid OpenLDAP ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid OpenLDAP ACL format" in result.error
+        )
 
     def test_parse_invalid_format_too_short(self) -> None:
         """Test parsing ACL with too few parts."""
@@ -1850,7 +2100,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid OpenLDAP ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid OpenLDAP ACL format" in result.error
+        )
 
     def test_parse_invalid_format_empty_subject_permissions(self) -> None:
         """Test parsing ACL with empty subject/permissions after 'by'."""
@@ -1858,7 +2112,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid OpenLDAP ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid OpenLDAP ACL format" in result.error
+        )
 
     def test_parse_attrs_target(self) -> None:
         """Test parsing ACL with attrs= target."""
@@ -1981,7 +2239,11 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(None)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
 
 class TestFlextLdapAclParsersOracleAclParser:
@@ -2000,14 +2262,22 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse("")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
     def test_parse_whitespace_only_acl(self) -> None:
         """Test parsing whitespace-only ACL string."""
         result = FlextLdapAclParsers.OracleAclParser.parse("   ")
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
     def test_parse_invalid_format_too_short(self) -> None:
         """Test parsing ACL with too few parts."""
@@ -2015,7 +2285,11 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid Oracle ACL format" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid Oracle ACL format" in result.error
+        )
 
     def test_parse_invalid_format_missing_access(self) -> None:
         """Test parsing ACL with missing 'access' keyword."""
@@ -2023,7 +2297,11 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Missing required keywords in Oracle ACL" in result.error
+        )
 
     def test_parse_invalid_format_missing_to(self) -> None:
         """Test parsing ACL with missing 'to' keyword."""
@@ -2031,7 +2309,11 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Missing required keywords in Oracle ACL" in result.error
+        )
 
     def test_parse_invalid_format_missing_by(self) -> None:
         """Test parsing ACL with missing 'by' keyword."""
@@ -2039,7 +2321,11 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required keywords in Oracle ACL" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Missing required keywords in Oracle ACL" in result.error
+        )
 
     def test_parse_entry_target(self) -> None:
         """Test parsing ACL with 'entry' target."""
@@ -2179,7 +2465,11 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(None)
         assert result.is_failure
         assert result.error is not None
-        assert "ACL string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACL string cannot be empty" in result.error
+        )
 
 
 class TestFlextLdapAclParsersAciParser:
@@ -2198,14 +2488,22 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse("")
         assert result.is_failure
         assert result.error is not None
-        assert "ACI string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACI string cannot be empty" in result.error
+        )
 
     def test_parse_whitespace_only_aci(self) -> None:
         """Test parsing whitespace-only ACI string."""
         result = FlextLdapAclParsers.AciParser.parse("   ")
         assert result.is_failure
         assert result.error is not None
-        assert "ACI string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACI string cannot be empty" in result.error
+        )
 
     def test_parse_missing_target(self) -> None:
         """Test parsing ACI with missing target."""
@@ -2213,7 +2511,11 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACI format: missing target" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACI format: missing target" in result.error
+        )
 
     def test_parse_missing_acl_name(self) -> None:
         """Test parsing ACI with missing ACL name."""
@@ -2223,7 +2525,11 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACI format: missing ACL name" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACI format: missing ACL name" in result.error
+        )
 
     def test_parse_missing_grant_type(self) -> None:
         """Test parsing ACI with missing grant type."""
@@ -2231,7 +2537,11 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACI format: missing grant type" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACI format: missing grant type" in result.error
+        )
 
     def test_parse_missing_permissions(self) -> None:
         """Test parsing ACI with missing permissions."""
@@ -2239,7 +2549,11 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACI format: missing permissions" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACI format: missing permissions" in result.error
+        )
 
     def test_parse_missing_subject(self) -> None:
         """Test parsing ACI with missing subject."""
@@ -2247,7 +2561,11 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid ACI format: missing subject" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Invalid ACI format: missing subject" in result.error
+        )
 
     def test_parse_allow_grant_type(self) -> None:
         """Test parsing ACI with 'allow' grant type."""
@@ -2341,4 +2659,8 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse("")
         assert result.is_failure
         assert result.error is not None
-        assert "ACI string cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "ACI string cannot be empty" in result.error
+        )

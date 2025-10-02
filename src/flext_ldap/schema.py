@@ -13,9 +13,16 @@ from __future__ import annotations
 from abc import ABC
 from typing import override
 
-from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
+from flext_core import (
+    FlextHandlers,
+    FlextLogger,
+    FlextModels,
+    FlextResult,
+    FlextService,
+)
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 
 
 class FlextLdapSchema(FlextService[FlextResult[object]]):
@@ -68,21 +75,23 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             # For generic detection, return a basic success result
             return FlextResult[object].ok({"detected": True, "type": "generic"})
 
-        def detect_server_type(self, server_info: object) -> str | None:
+        def detect_server_type(
+            self, server_info: object
+        ) -> FlextLdapModels.LdapServerType | None:
             """Detect LDAP server type from server info.
 
             Args:
                 server_info: Server information object
 
             Returns:
-                Detected server type or None if detection fails
+                Detected server type enum or None if detection fails
 
             """
             if not server_info:
                 return None
 
-            # Generic detection - return a default type
-            return "GENERIC"
+            # Generic detection - return a default type enum
+            return FlextLdapModels.LdapServerType.GENERIC
 
         def get_server_quirks(self, server_type: str | None) -> object | None:
             """Get server quirks for the specified server type.
@@ -115,5 +124,61 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
     # SCHEMA DISCOVERY - Automatic LDAP schema discovery and analysis
     # =========================================================================
 
-    class Discovery(FlextHandlers[object, FlextResult[object]]):
-        """Schema discovery operations."""
+    class Discovery(FlextHandlers[object, object]):
+        """Schema discovery operations with quirks-aware server detection.
+
+        This class provides automatic schema discovery that adapts to different
+        LDAP server types using the FlextLdif quirks system.
+        """
+
+        def __init__(
+            self, quirks_adapter: FlextLdapQuirksAdapter | None = None
+        ) -> None:
+            """Initialize schema discovery with optional quirks adapter.
+
+            Args:
+                quirks_adapter: Optional quirks adapter for server-specific handling
+            """
+            # Create handler config
+            config = FlextModels.CqrsConfig.Handler.create_handler_config(
+                handler_type="query",
+                default_name="SchemaDiscovery",
+                default_id="schema-discovery",
+            )
+            super().__init__(config=config)
+            self._logger = FlextLogger(__name__)
+            self._quirks_adapter = quirks_adapter or FlextLdapQuirksAdapter()
+
+        @override
+        def handle(self, message: object) -> FlextResult[object]:
+            """Handle schema discovery message.
+
+            Args:
+                message: Schema discovery request
+
+            Returns:
+                FlextResult containing schema information
+            """
+            if not message:
+                return FlextResult[object].fail(
+                    "Schema discovery message cannot be empty"
+                )
+
+            # Return basic schema discovery result
+            return FlextResult[object].ok({"schema_discovered": True})
+
+        def get_schema_subentry_dn(
+            self, server_type: str | None = None
+        ) -> FlextResult[str]:
+            """Get schema subentry DN based on server type.
+
+            Uses quirks adapter to determine the correct schema endpoint for
+            different server types (cn=subschema, cn=schema, etc.).
+
+            Args:
+                server_type: LDAP server type (detected if not provided)
+
+            Returns:
+                FlextResult containing schema subentry DN
+            """
+            return self._quirks_adapter.get_schema_subentry(server_type)

@@ -22,8 +22,9 @@ class TestFlextLdapConfig:
         """Test configs initialization."""
         configs = FlextLdapConfig()
         assert configs is not None
-        assert hasattr(configs, "_global_instance")
         assert hasattr(configs, "get_global_instance")
+        assert hasattr(configs, "ldap_server_uri")
+        assert hasattr(configs, "ldap_port")
 
     def test_create_connection_config_success(
         self,
@@ -263,6 +264,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "Missing required field: server" in result.error
         )
 
@@ -275,7 +277,11 @@ class TestFlextLdapConfig:
         result = FlextLdapValidations.validate_connection_config(incomplete_data)
 
         assert result.is_failure
-        assert result.error is not None and "Missing required field" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Missing required field" in result.error
+        )
 
     def test_validate_search_data_success(self) -> None:
         """Test successful search data validation."""
@@ -304,6 +310,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "Filter must be enclosed in parentheses" in result.error
         )
 
@@ -312,7 +319,11 @@ class TestFlextLdapConfig:
         # Test empty DN
         result = FlextLdapValidations.validate_dn("")
         assert result.is_failure
-        assert result.error is not None and "DN cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "DN cannot be empty" in result.error
+        )
 
     def test_validate_modify_data_success(self) -> None:
         """Test successful modify data validation."""
@@ -329,6 +340,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "DN contains invalid characters" in result.error
         )
 
@@ -337,7 +349,11 @@ class TestFlextLdapConfig:
         # Test empty DN
         result = FlextLdapValidations.validate_dn("")
         assert result.is_failure
-        assert result.error is not None and "DN cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "DN cannot be empty" in result.error
+        )
 
     def test_validate_add_data_success(self) -> None:
         """Test successful add data validation."""
@@ -358,6 +374,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "DN contains invalid characters" in result.error
         )
 
@@ -368,6 +385,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "Attributes list cannot be empty" in result.error
         )
 
@@ -386,6 +404,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "DN contains invalid characters" in result.error
         )
 
@@ -394,7 +413,11 @@ class TestFlextLdapConfig:
         # Test empty DN
         result = FlextLdapValidations.validate_dn("")
         assert result.is_failure
-        assert result.error is not None and "DN cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "DN cannot be empty" in result.error
+        )
 
     def test_get_default_connection_config(self) -> None:
         """Test getting default connection configuration."""
@@ -472,6 +495,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "DN contains invalid characters" in result.error
         )
 
@@ -480,7 +504,11 @@ class TestFlextLdapConfig:
         result = FlextLdapValidations.validate_dn("")
 
         assert result.is_failure
-        assert result.error is not None and "DN cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "DN cannot be empty" in result.error
+        )
 
     def test_validate_filter_format_valid(self) -> None:
         """Test validating valid filter format."""
@@ -496,6 +524,7 @@ class TestFlextLdapConfig:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error
             and "Filter must be enclosed in parentheses" in result.error
         )
 
@@ -504,7 +533,11 @@ class TestFlextLdapConfig:
         result = FlextLdapValidations.validate_filter("")
 
         assert result.is_failure
-        assert result.error is not None and "Filter cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Filter cannot be empty" in result.error
+        )
 
     def test_config_error_handling_consistency(self) -> None:
         """Test consistent error handling across config methods."""

@@ -21,8 +21,7 @@ pytestmark = pytest.mark.integration
 class TestSharedLDAPIntegration:
     """Test integration with shared LDAP container."""
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_connection(
+    def test_shared_ldap_connection(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
@@ -32,7 +31,7 @@ class TestSharedLDAPIntegration:
         assert shared_ldap_client is not None
 
         # Test basic search to verify connection
-        search_result = await shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
             filter_str="(objectClass=*)",
             scope="base",
@@ -41,18 +40,17 @@ class TestSharedLDAPIntegration:
         assert search_result.is_success, f"Search failed: {search_result.error}"
         assert search_result.value is not None
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_schema_discovery(
+    def test_shared_ldap_schema_discovery(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test schema discovery with shared LDAP container."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
+        schema_result = shared_ldap_client.discover_schema()
 
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
         assert schema_result.value is not None
 
         # Verify we got some schema information
@@ -60,8 +58,7 @@ class TestSharedLDAPIntegration:
         assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
         assert schema_data.server_info is not None
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_container_manager(
+    def test_shared_ldap_container_manager(
         self,
         shared_ldap_container_manager: object,
         shared_ldap_container: object,
@@ -89,8 +86,7 @@ class TestSharedLDAPIntegration:
         assert "dc=flext,dc=local" in ldif_data
         assert "objectClass: dcObject" in ldif_data
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_environment_variables(
+    def test_shared_ldap_environment_variables(
         self,
         shared_ldap_config: dict,
     ) -> None:
@@ -103,9 +99,9 @@ class TestSharedLDAPIntegration:
         # Verify values are not empty
         for key, value in shared_ldap_config.items():
             if key != "container":  # container can be None
-                assert (
-                    value is not None and str(value).strip()
-                ), f"Empty value for {key}: {value}"
+                assert value is not None and str(value).strip(), (
+                    f"Empty value for {key}: {value}"
+                )
 
         # Verify specific values match shared constants
         assert shared_ldap_config["server_url"] == "ldap://localhost:3390"
@@ -113,8 +109,7 @@ class TestSharedLDAPIntegration:
         assert shared_ldap_config["password"] == "REDACTED_LDAP_BIND_PASSWORD123"
         assert shared_ldap_config["base_dn"] == "dc=flext,dc=local"
 
-    @pytest.mark.asyncio
-    async def test_shared_ldif_data_fixture(
+    def test_shared_ldif_data_fixture(
         self,
         shared_ldif_data: str,
     ) -> None:
@@ -131,8 +126,7 @@ class TestSharedLDAPIntegration:
         assert "ou=people," in shared_ldif_data
         assert "uid=john.doe," in shared_ldif_data
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_connection_config(
+    def test_shared_ldap_connection_config(
         self,
         shared_ldap_connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
@@ -149,8 +143,7 @@ class TestSharedLDAPIntegration:
             shared_ldap_connection_config.timeout == FlextLdapConstants.DEFAULT_TIMEOUT
         )
 
-    @pytest.mark.asyncio
-    async def test_shared_ldap_crud_operations(
+    def test_shared_ldap_crud_operations(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
@@ -160,7 +153,7 @@ class TestSharedLDAPIntegration:
 
         # Test creating an organizational unit using universal add
         ou_dn = f"ou=test,{base_dn}"
-        create_result = await shared_ldap_client.add_entry_universal(
+        create_result = shared_ldap_client.add_entry_universal(
             dn=ou_dn,
             attributes={
                 "objectClass": ["organizationalUnit", "top"],
@@ -172,30 +165,30 @@ class TestSharedLDAPIntegration:
         # Note: Creation might fail if entry already exists, which is OK for shared container
         if not create_result.is_success:
             # If creation failed, try to search for existing entry
-            search_result = await shared_ldap_client.search_universal(
+            search_result = shared_ldap_client.search_universal(
                 base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
             )
-            assert (
-                search_result.is_success
-            ), f"Entry should exist or be creatable: {create_result.error}"
+            assert search_result.is_success, (
+                f"Entry should exist or be creatable: {create_result.error}"
+            )
         else:
-            assert (
-                create_result.is_success
-            ), f"Failed to create test OU: {create_result.error}"
+            assert create_result.is_success, (
+                f"Failed to create test OU: {create_result.error}"
+            )
 
         # Test searching for the entry
-        search_result = await shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search_universal(
             base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
         )
 
-        assert (
-            search_result.is_success
-        ), f"Failed to search test OU: {search_result.error}"
+        assert search_result.is_success, (
+            f"Failed to search test OU: {search_result.error}"
+        )
         assert search_result.value is not None
         assert len(search_result.value) > 0
 
         # Clean up - delete the test entry
-        delete_result = await shared_ldap_client.delete_entry_universal(ou_dn)
+        delete_result = shared_ldap_client.delete_entry_universal(ou_dn)
         # Note: Deletion might fail if entry doesn't exist or we don't have permissions
         # This is OK for shared container testing
         if not delete_result.is_success:

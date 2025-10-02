@@ -13,9 +13,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
 import os
 import sys
+from asyncio import run
 from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
@@ -38,7 +38,7 @@ ADMIN_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 ADMIN_PASSWORD: Final[str] = os.getenv("LDAP_ADMIN_PASSWORD") or ""
 
 
-async def create_sample_users(api: FlextLdapClient) -> None:
+def create_sample_users(api: FlextLdapClient) -> None:
     """Create sample users using FlextLdapClient."""
     logger.info("Creating sample users...")
 
@@ -85,7 +85,7 @@ async def create_sample_users(api: FlextLdapClient) -> None:
         )
         create_result: FlextResult[object] = cast(
             "FlextResult[object]",
-            await api.create_user(request),
+            api.create_user(request),
         )
 
         if create_result.is_success:
@@ -96,11 +96,11 @@ async def create_sample_users(api: FlextLdapClient) -> None:
             )
 
 
-async def search_users(api: FlextLdapClient) -> None:
+def search_users(api: FlextLdapClient) -> None:
     """Search for users using FlextLdapClient."""
     logger.info("Searching for users...")
 
-    result: FlextResult[list[FlextLdapModels.Entry]] = await api.search(
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search(
         base_dn=USERS_DN,
         filter_str="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
@@ -147,18 +147,18 @@ async def search_users(api: FlextLdapClient) -> None:
         logger.error(f"❌ Search failed: {result.error}")
 
 
-async def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None:
+def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None:
     """Update user attributes using FlextLdapClient."""
     logger.info(f"Updating user {user_dn}...")
 
     # Connect to LDAP server
-    connect_result = await api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
+    connect_result = api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
     if connect_result.is_success:
         try:
             # Use modify_entry method if available
             modify_method = getattr(api, "modify_entry", None)
             if modify_method:
-                result = await modify_method(user_dn, {"mail": [new_mail]})
+                result = modify_method(user_dn, {"mail": [new_mail]})
                 typed_result: FlextResult[object] = cast("FlextResult[object]", result)
 
                 if typed_result.is_success:
@@ -169,17 +169,17 @@ async def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None
                 logger.error("❌ modify_entry method not available")
         finally:
             # Disconnect
-            await api.unbind()
+            api.unbind()
     else:
         logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
-async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
+def delete_user(api: FlextLdapClient, user_dn: str) -> None:
     """Delete user using FlextLdapClient."""
     logger.info(f"Deleting user {user_dn}...")
 
     # Connect to LDAP server
-    connect_result = await api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
+    connect_result = api.connect(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD)
     if connect_result.is_success:
         try:
             # Use delete_entry method if available
@@ -196,12 +196,12 @@ async def delete_user(api: FlextLdapClient, user_dn: str) -> None:
                 logger.error("❌ delete_entry method not available")
         finally:
             # Disconnect
-            await api.unbind()
+            api.unbind()
     else:
         logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
-async def demonstrate_crud_operations() -> None:
+def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
@@ -210,23 +210,23 @@ async def demonstrate_crud_operations() -> None:
 
     try:
         # CREATE: Add sample users
-        await create_sample_users(api)
+        create_sample_users(api)
 
         # READ: Search for users
-        await search_users(api)
+        search_users(api)
 
         # UPDATE: Modify a user
         john_dn = f"cn=john.doe,{USERS_DN}"
-        await update_user(api, john_dn, "john.doe.updated@example.com")
+        update_user(api, john_dn, "john.doe.updated@example.com")
 
         # READ again to verify update
-        await search_users(api)
+        search_users(api)
 
         # DELETE: Remove a user
-        await delete_user(api, john_dn)
+        delete_user(api, john_dn)
 
         # Final READ to verify deletion
-        await search_users(api)
+        search_users(api)
 
         logger.info("✅ CRUD operations demo completed successfully!")
 
@@ -252,7 +252,7 @@ def main() -> int:
     logger.info("=" * 50)
 
     try:
-        asyncio.run(demonstrate_crud_operations())
+        run(demonstrate_crud_operations())
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user")
     except Exception:

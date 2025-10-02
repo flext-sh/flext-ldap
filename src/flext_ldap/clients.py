@@ -26,10 +26,14 @@ from flext_core import (
     FlextService,
 )
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.servers.base_operations import BaseServerOperations
+from flext_ldap.servers.factory import ServerOperationsFactory
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
@@ -44,7 +48,7 @@ class FlextLdapClient(FlextService[None]):
     connection management, authentication, search, and CRUD operations.
     It uses the ldap3 library internally and provides a FlextResult-based API.
 
-    The client supports both synchronous and asynchronous operations, with
+    The client supports both synchronous and hronous operations, with
     automatic connection management and proper error handling.
 
     Implements FlextLdapProtocols through structural subtyping:
@@ -57,7 +61,7 @@ class FlextLdapClient(FlextService[None]):
 
     @override
     def __init__(self, config: FlextLdapModels.ConnectionConfig | None = None) -> None:
-        """Initialize FlextLdapClient."""
+        """Initialize FlextLdapClient with entry adapter and quirks integration."""
         # Use concrete ldap3.Connection type since it's untyped and Protocol check fails
         self._connection: Connection | None = None
         self._server: Server | None = None
@@ -66,21 +70,28 @@ class FlextLdapClient(FlextService[None]):
         self._container = FlextContainer.get_global()
         self._session_id: str | None = None
 
+        # Entry adapter for ldap3 ↔ FlextLdif conversion
+        self._entry_adapter = FlextLdapEntryAdapter()
+
+        # Quirks adapter for server-specific handling
+        self._quirks_adapter = FlextLdapQuirksAdapter()
+
+        # Server operations factory and instance for universal LDAP support
+        self._server_operations_factory = ServerOperationsFactory()
+        self._server_operations: BaseServerOperations | None = None
+
         # Schema discovery properties
         self._schema_discovery: FlextLdapSchema.Discovery | None = None
         self._discovered_schema: FlextLdapModels.SchemaDiscoveryResult | None = None
         self._is_schema_discovered = False
+        self._detected_server_type: str | None = None
 
     @override
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService - no-op for LDAP client."""
         return FlextResult[None].ok(None)
 
-    async def execute_async(self) -> FlextResult[None]:
-        """Execute method required by FlextService - no-op for LDAP client."""
-        return FlextResult[None].ok(None)
-
-    async def connect(
+    def connect(
         self,
         server_uri: str,
         bind_dn: str,
@@ -188,9 +199,36 @@ class FlextLdapClient(FlextService[None]):
 
             self._logger.info("Successfully connected to LDAP server")
 
+            # Auto-detect server type and create server operations instance
+            detection_result = self._server_operations_factory.create_from_connection(
+                self._connection
+            )
+            if detection_result.is_success:
+                self._server_operations = detection_result.unwrap()
+                self._detected_server_type = (
+                    self._server_operations.server_type
+                    if self._server_operations
+                    else None
+                )
+                self._logger.info(
+                    "Auto-detected LDAP server type: %s", self._detected_server_type
+                )
+            else:
+                self._logger.warning(
+                    "Server type detection failed, using generic operations: %s",
+                    detection_result.error,
+                )
+                # Fallback to generic server operations
+                generic_result = (
+                    self._server_operations_factory.create_from_server_type("generic")
+                )
+                if generic_result.is_success:
+                    self._server_operations = generic_result.unwrap()
+                    self._detected_server_type = "generic"
+
             # Perform schema discovery if requested
             if auto_discover_schema:
-                discovery_result = await self.discover_schema()
+                discovery_result = self.discover_schema()
                 if discovery_result.is_failure:
                     self._logger.warning(
                         "Schema discovery failed: %s", discovery_result.error
@@ -203,7 +241,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Connection failed")
             return FlextResult[bool].fail(f"Connection failed: {e}")
 
-    async def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
+    def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
         """Bind to LDAP server with specified credentials.
 
         Args:
@@ -235,7 +273,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Bind operation failed")
             return FlextResult[bool].fail(f"Bind failed: {e}")
 
-    async def unbind(self) -> FlextResult[None]:
+    def unbind(self) -> FlextResult[None]:
         """Unbind from LDAP server.
 
         Returns:
@@ -291,7 +329,7 @@ class FlextLdapClient(FlextService[None]):
         except Exception as e:
             return FlextResult[bool].fail(f"Connection test failed: {e}")
 
-    async def authenticate_user(
+    def authenticate_user(
         self,
         username: str,
         password: str,
@@ -442,7 +480,7 @@ class FlextLdapClient(FlextService[None]):
 
         return FlextResult[None].ok(None)
 
-    async def search_with_request(
+    def search_with_request(
         self,
         request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
@@ -569,7 +607,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Search failed: {e}",
             )
 
-    async def search_users(
+    def search_users(
         self,
         base_dn: str,
         uid: str | None = None,
@@ -614,7 +652,7 @@ class FlextLdapClient(FlextService[None]):
                 f"User search failed: {e}",
             )
 
-    async def search_groups(
+    def search_groups(
         self,
         base_dn: str,
         cn: str | None = None,
@@ -674,7 +712,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Group search failed: {e}",
             )
 
-    async def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
+    def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
         """Get user by Distinguished Name.
 
         Args:
@@ -728,7 +766,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Get user failed: {e}",
             )
 
-    async def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
+    def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get group by Distinguished Name.
 
         Args:
@@ -781,7 +819,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Get group failed: {e}",
             )
 
-    async def create_user(
+    def create_user(
         self,
         request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
@@ -813,7 +851,7 @@ class FlextLdapClient(FlextService[None]):
                 add_result.error or "User creation failed"
             )
 
-        return await self._retrieve_created_user(request.dn)
+        return self._retrieve_created_user(request.dn)
 
     def _build_user_attributes(
         self, request: FlextLdapModels.CreateUserRequest
@@ -879,12 +917,12 @@ class FlextLdapClient(FlextService[None]):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to add user to LDAP: {e}")
 
-    async def _retrieve_created_user(
+    def retrieve_created_user(
         self, user_dn: str
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Retrieve created user using railway pattern."""
         try:
-            created_user_result = await self.get_user(user_dn)
+            created_user_result = self.get_user(user_dn)
             if created_user_result.is_failure:
                 return FlextResult[FlextLdapModels.LdapUser].fail(
                     "User created but failed to retrieve",
@@ -904,7 +942,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Failed to retrieve created user: {e}"
             )
 
-    async def create_group(
+    def create_group(
         self,
         request: FlextLdapModels.CreateGroupRequest,
     ) -> FlextResult[FlextLdapModels.Group]:
@@ -951,7 +989,7 @@ class FlextLdapClient(FlextService[None]):
                 )
 
             # Retrieve created group
-            created_group_result = await self.get_group(group_dn)
+            created_group_result = self.get_group(group_dn)
             if created_group_result.is_failure:
                 return FlextResult[FlextLdapModels.Group].fail(
                     "Group created but failed to retrieve",
@@ -970,16 +1008,16 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Create group failed")
             return FlextResult[FlextLdapModels.Group].fail(f"Create group failed: {e}")
 
-    async def close_connection(self) -> FlextResult[None]:
+    def close_connection(self) -> FlextResult[None]:
         """Close LDAP connection.
 
         Returns:
             FlextResult indicating success or error.
 
         """
-        return await self.unbind()
+        return self.unbind()
 
-    async def disconnect(self) -> FlextResult[None]:
+    def disconnect(self) -> FlextResult[None]:
         """Disconnect from LDAP server - implements LdapConnectionProtocol.
 
         Alias for close_connection to match protocol interface.
@@ -988,12 +1026,12 @@ class FlextLdapClient(FlextService[None]):
             FlextResult[None]: Disconnect success status
 
         """
-        return await self.close_connection()
+        return self.close_connection()
 
     # =============================================================================
     # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance
 
-    async def search_one(
+    def search_one(
         self,
         search_base: str,
         search_filter: str,
@@ -1011,7 +1049,7 @@ class FlextLdapClient(FlextService[None]):
 
         """
         # Use existing search method and return first result
-        search_result = await self.search(search_base, search_filter, attributes)
+        search_result = self.search(search_base, search_filter, attributes)
         if search_result.is_failure:
             return FlextResult[FlextLdapModels.Entry | None].fail(
                 search_result.error or "Search failed"
@@ -1023,7 +1061,7 @@ class FlextLdapClient(FlextService[None]):
 
         return FlextResult[FlextLdapModels.Entry | None].ok(results[0])
 
-    async def add_entry(
+    def add_entry(
         self, dn: str, attributes: dict[str, str | list[str]]
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
@@ -1037,11 +1075,9 @@ class FlextLdapClient(FlextService[None]):
 
         """
         # Delegate to existing add_entry_universal method
-        return await self.add_entry_universal(dn, attributes)
+        return self.add_entry_universal(dn, attributes)
 
-    async def modify_entry(
-        self, dn: str, changes: dict[str, object]
-    ) -> FlextResult[bool]:
+    def modify_entry(self, dn: str, changes: dict[str, object]) -> FlextResult[bool]:
         """Modify existing LDAP entry - implements LdapModifyProtocol.
 
         Args:
@@ -1053,9 +1089,9 @@ class FlextLdapClient(FlextService[None]):
 
         """
         # Delegate to existing modify_entry_universal method
-        return await self.modify_entry_universal(dn, changes)
+        return self.modify_entry_universal(dn, changes)
 
-    async def delete_entry(self, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, dn: str) -> FlextResult[bool]:
         """Delete LDAP entry - implements LdapModifyProtocol.
 
         Args:
@@ -1066,9 +1102,9 @@ class FlextLdapClient(FlextService[None]):
 
         """
         # Delegate to existing delete_entry_universal method
-        return await self.delete_entry_universal(dn)
+        return self.delete_entry_universal(dn)
 
-    async def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+    def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
         """Validate user credentials against LDAP - implements LdapAuthenticationProtocol.
 
         Args:
@@ -1094,8 +1130,8 @@ class FlextLdapClient(FlextService[None]):
                 bind_password=password,
             )
             test_client = FlextLdapClient(test_config)
-            connection_result = await test_client.bind(dn, password)
-            await test_client.disconnect()
+            connection_result = test_client.bind(dn, password)
+            test_client.disconnect()
             return FlextResult[bool].ok(connection_result.is_success)
         except Exception as e:
             return FlextResult[bool].fail(f"Credential validation failed: {e}")
@@ -1147,7 +1183,7 @@ class FlextLdapClient(FlextService[None]):
 
         return FlextResult[bool].ok(True)
 
-    async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+    def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Remove member from group.
 
         Args:
@@ -1181,7 +1217,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Remove member failed")
             return FlextResult[None].fail(f"Remove member failed: {e}")
 
-    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+    def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get list of group members.
 
         Args:
@@ -1223,7 +1259,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Get members failed")
             return FlextResult[list[str]].fail(f"Get members failed: {e}")
 
-    async def user_exists(self, dn: str) -> FlextResult[bool]:
+    def user_exists(self, dn: str) -> FlextResult[bool]:
         """Check if user exists in LDAP directory.
 
         Args:
@@ -1234,7 +1270,7 @@ class FlextLdapClient(FlextService[None]):
 
         """
         try:
-            result = await self.get_user(dn)
+            result = self.get_user(dn)
             if result.is_success:
                 exists = result.unwrap() is not None
                 return FlextResult[bool].ok(exists)
@@ -1250,7 +1286,7 @@ class FlextLdapClient(FlextService[None]):
         except Exception as e:
             return FlextResult[bool].fail(f"User existence check failed: {e}")
 
-    async def group_exists(self, dn: str) -> FlextResult[bool]:
+    def group_exists(self, dn: str) -> FlextResult[bool]:
         """Check if group exists in LDAP directory.
 
         Args:
@@ -1261,7 +1297,7 @@ class FlextLdapClient(FlextService[None]):
 
         """
         try:
-            result = await self.get_group(dn)
+            result = self.get_group(dn)
             if result.is_success:
                 exists = result.unwrap() is not None
                 return FlextResult[bool].ok(exists)
@@ -1270,7 +1306,7 @@ class FlextLdapClient(FlextService[None]):
         except Exception as e:
             return FlextResult[bool].fail(f"Group existence check failed: {e}")
 
-    async def search(
+    def search(
         self,
         base_dn: str,
         filter_str: str,
@@ -1344,7 +1380,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Search failed")
             return FlextResult[list[FlextLdapModels.Entry]].fail(f"Search failed: {e}")
 
-    async def update_user_attributes(
+    def update_user_attributes(
         self,
         dn: str,
         attributes: dict[str, object],
@@ -1388,7 +1424,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Update user failed")
             return FlextResult[bool].fail(f"Update user failed: {e}")
 
-    async def update_group_attributes(
+    def update_group_attributes(
         self,
         dn: str,
         attributes: dict[str, object],
@@ -1428,7 +1464,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Update group failed")
             return FlextResult[bool].fail(f"Update group failed: {e}")
 
-    async def delete_user(self, dn: str) -> FlextResult[None]:
+    def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete user from LDAP directory.
 
         Args:
@@ -1454,7 +1490,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Delete user failed")
             return FlextResult[None].fail(f"Delete user failed: {e}")
 
-    async def delete_group(self, dn: str) -> FlextResult[None]:
+    def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group from LDAP directory.
 
         Args:
@@ -1480,7 +1516,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Delete group failed")
             return FlextResult[None].fail(f"Delete group failed: {e}")
 
-    async def add(
+    def add(
         self,
         dn: str,
         attributes: dict[str, str | list[str]] | None = None,
@@ -1515,7 +1551,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Add entry failed")
             return FlextResult[None].fail(f"Add entry failed: {e}")
 
-    async def modify(
+    def modify(
         self,
         dn: str,
         changes: dict[str, list[tuple[str, list[str]]]],
@@ -1572,7 +1608,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Delete entry failed")
             return FlextResult[None].fail(f"Delete entry failed: {e}")
 
-    async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+    def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Add member to group.
 
         Args:
@@ -1615,6 +1651,15 @@ class FlextLdapClient(FlextService[None]):
     def session_id(self, value: str | None) -> None:
         """Set session ID."""
         self._session_id = value
+
+    @property
+    def server_operations(self) -> BaseServerOperations | None:
+        """Get current server operations instance.
+
+        Returns:
+            Current server operations instance or None if not connected.
+        """
+        return self._server_operations
 
     def _create_user_from_entry(
         self, entry: FlextLdapProtocols.LdapEntry
@@ -1746,7 +1791,7 @@ class FlextLdapClient(FlextService[None]):
     # UNIVERSAL GENERIC METHODS - Complete LDAP compatibility
     # =========================================================================
 
-    async def search_universal(
+    def search_universal(
         self,
         base_dn: str,
         filter_str: str,
@@ -1806,7 +1851,7 @@ class FlextLdapClient(FlextService[None]):
                     size_limit = self._server_quirks.max_page_size
 
             # Perform search using base client with all parameters
-            search_result = await self.search(
+            search_result = self.search(
                 base_dn=normalized_base_dn,
                 filter_str=normalized_filter,
                 attributes=normalized_attributes,
@@ -1833,7 +1878,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Universal search failed")
             return FlextResult[list[FlextLdapModels.Entry]].fail(f"Search failed: {e}")
 
-    async def add_entry_universal(
+    def add_entry_universal(
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
@@ -1863,14 +1908,14 @@ class FlextLdapClient(FlextService[None]):
             self._logger.debug("Add entry controls: %s", controls)
 
             # Perform add using base client
-            result = await self.add(normalized_dn, normalized_attributes)
+            result = self.add(normalized_dn, normalized_attributes)
             return FlextResult[bool].ok(result.is_success)
 
         except Exception as e:
             self._logger.exception("Universal add entry failed")
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
-    async def modify_entry_universal(
+    def modify_entry_universal(
         self,
         dn: str,
         changes: dict[str, object],
@@ -1900,14 +1945,14 @@ class FlextLdapClient(FlextService[None]):
             self._logger.debug("Modify entry controls: %s", controls)
 
             # Perform modify using base client
-            result = await self.modify(normalized_dn, normalized_changes)
+            result = self.modify(normalized_dn, normalized_changes)
             return FlextResult[bool].ok(result.is_success)
 
         except Exception as e:
             self._logger.exception("Universal modify entry failed")
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
-    async def delete_entry_universal(
+    def delete_entry_universal(
         self,
         dn: str,
         *,
@@ -1941,7 +1986,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Universal delete entry failed")
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
-    async def compare_universal(
+    def compare_universal(
         self,
         dn: str,
         attribute: str,
@@ -1981,7 +2026,7 @@ class FlextLdapClient(FlextService[None]):
             self._logger.exception("Universal compare failed")
             return FlextResult[bool].fail(f"Compare failed: {e}")
 
-    async def extended_operation_universal(
+    def extended_operation_universal(
         self,
         request_name: str,
         request_value: str | bytes | None = None,
@@ -2035,7 +2080,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Extended operation failed: {e}"
             )
 
-    async def search_with_controls_universal(
+    def search_with_controls_universal(
         self,
         base_dn: str,
         filter_str: str,
@@ -2310,7 +2355,7 @@ class FlextLdapClient(FlextService[None]):
         if not self._discovered_schema:
             # Create a minimal discovered schema if needed
             if value is None:
-                # Create default server quirks if none provided
+                # Create def ault server quirks if none provided
                 value = FlextLdapModels.ServerQuirks(
                     server_type=FlextLdapModels.LdapServerType.UNKNOWN
                 )
@@ -2327,7 +2372,7 @@ class FlextLdapClient(FlextService[None]):
         else:
             # Update existing schema by creating a new instance
             if value is None:
-                # Create default server quirks if none provided
+                # Create def ault server quirks if none provided
                 value = FlextLdapModels.ServerQuirks(
                     server_type=FlextLdapModels.LdapServerType.UNKNOWN
                 )
@@ -2346,7 +2391,7 @@ class FlextLdapClient(FlextService[None]):
     # SCHEMA DISCOVERY METHODS - Universal compatibility features
     # =========================================================================
 
-    async def discover_schema(
+    def discover_schema(
         self,
     ) -> FlextResult[FlextLdapModels.SchemaDiscoveryResult]:
         """Discover LDAP server schema and capabilities.
@@ -2362,7 +2407,7 @@ class FlextLdapClient(FlextService[None]):
                 )
 
             # Discover server information
-            server_info = await self._discover_server_info()
+            server_info = self._discover_server_info()
             if server_info.is_failure:
                 return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
                     f"Server info discovery failed: {server_info.error}"
@@ -2372,29 +2417,29 @@ class FlextLdapClient(FlextService[None]):
             server_type = self._detect_server_type(server_info.value)
 
             # Discover naming contexts
-            naming_contexts = await self._discover_naming_contexts()
+            naming_contexts = self._discover_naming_contexts()
             if naming_contexts.is_failure:
                 return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
                     f"Naming contexts discovery failed: {naming_contexts.error}"
                 )
 
             # Discover schema attributes
-            attributes = await self._discover_schema_attributes()
+            attributes = self._discover_schema_attributes()
             if attributes.is_failure:
                 return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
                     f"Schema attributes discovery failed: {attributes.error}"
                 )
 
             # Discover object classes
-            object_classes = await self._discover_object_classes()
+            object_classes = self._discover_object_classes()
             if object_classes.is_failure:
                 return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
                     f"Object classes discovery failed: {object_classes.error}"
                 )
 
             # Discover supported controls and extensions
-            supported_controls = await self._discover_supported_controls()
-            supported_extensions = await self._discover_supported_extensions()
+            supported_controls = self._discover_supported_controls()
+            supported_extensions = self._discover_supported_extensions()
 
             # Create server quirks based on detected server type
             server_quirks = self._create_server_quirks(server_type)
@@ -2417,6 +2462,7 @@ class FlextLdapClient(FlextService[None]):
 
             # Cache the discovered schema
             self._discovered_schema = schema_result
+            self._is_schema_discovered = True
 
             return FlextResult[FlextLdapModels.SchemaDiscoveryResult].ok(schema_result)
 
@@ -2426,7 +2472,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Schema discovery failed: {e}"
             )
 
-    async def _discover_server_info(self) -> FlextResult[dict[str, object]]:
+    def _discover_server_info(self) -> FlextResult[dict[str, object]]:
         """Discover basic server information."""
         try:
             if not self._connection:
@@ -2495,7 +2541,7 @@ class FlextLdapClient(FlextService[None]):
             return FlextLdapModels.LdapServerType.IBM_DIRECTORY
         return FlextLdapModels.LdapServerType.GENERIC
 
-    async def _discover_naming_contexts(self) -> FlextResult[list[str]]:
+    def _discover_naming_contexts(self) -> FlextResult[list[str]]:
         """Discover naming contexts from root DSE."""
         try:
             if not self._connection:
@@ -2526,7 +2572,7 @@ class FlextLdapClient(FlextService[None]):
         except Exception as e:
             return FlextResult[list[str]].fail(f"Naming contexts discovery failed: {e}")
 
-    async def _discover_schema_attributes(
+    def _discover_schema_attributes(
         self,
     ) -> FlextResult[dict[str, FlextLdapModels.SchemaAttribute]]:
         """Discover schema attributes from subschema subentry."""
@@ -2537,7 +2583,7 @@ class FlextLdapClient(FlextService[None]):
                 )
 
             # Find subschema subentry
-            subschema_dn = await self._find_subschema_subentry()
+            subschema_dn = self._find_subschema_subentry()
             if subschema_dn.is_failure:
                 return FlextResult[dict[str, FlextLdapModels.SchemaAttribute]].fail(
                     f"Failed to find subschema subentry: {subschema_dn.error}"
@@ -2575,7 +2621,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Schema attributes discovery failed: {e}"
             )
 
-    async def _discover_object_classes(
+    def _discover_object_classes(
         self,
     ) -> FlextResult[dict[str, FlextLdapModels.SchemaObjectClass]]:
         """Discover object classes from subschema subentry."""
@@ -2586,7 +2632,7 @@ class FlextLdapClient(FlextService[None]):
                 )
 
             # Find subschema subentry
-            subschema_dn = await self._find_subschema_subentry()
+            subschema_dn = self._find_subschema_subentry()
             if subschema_dn.is_failure:
                 return FlextResult[dict[str, FlextLdapModels.SchemaObjectClass]].fail(
                     f"Failed to find subschema subentry: {subschema_dn.error}"
@@ -2626,7 +2672,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Object classes discovery failed: {e}"
             )
 
-    async def _discover_supported_controls(self) -> FlextResult[list[str]]:
+    def _discover_supported_controls(self) -> FlextResult[list[str]]:
         """Discover supported controls from root DSE."""
         try:
             if not self._connection:
@@ -2659,7 +2705,7 @@ class FlextLdapClient(FlextService[None]):
                 f"Supported controls discovery failed: {e}"
             )
 
-    async def _discover_supported_extensions(self) -> FlextResult[list[str]]:
+    def _discover_supported_extensions(self) -> FlextResult[list[str]]:
         """Discover supported extensions from root DSE."""
         try:
             if not self._connection:
@@ -2720,7 +2766,7 @@ class FlextLdapClient(FlextService[None]):
             )
         return FlextLdapModels.ServerQuirks(server_type=server_type)
 
-    async def _find_subschema_subentry(self) -> FlextResult[str]:
+    def _find_subschema_subentry(self) -> FlextResult[str]:
         """Find the subschema subentry DN."""
         try:
             if not self._connection:
@@ -2744,7 +2790,7 @@ class FlextLdapClient(FlextService[None]):
                         return FlextResult[str].ok(str(subschema_dn[0]))
                     return FlextResult[str].ok(str(subschema_dn))
 
-            # Fallback to default subschema DN
+            # Fallback to def ault subschema DN
             return FlextResult[str].ok("cn=subschema")
 
         except Exception as e:
@@ -2753,7 +2799,7 @@ class FlextLdapClient(FlextService[None]):
     def _parse_attribute_definition(
         self, attr_def: str
     ) -> FlextLdapModels.SchemaAttribute | None:
-        """Parse LDAP attribute definition string."""
+        """Parse LDAP attribute def inition string."""
         try:
             # Simple parsing - in a real implementation, this would be more robust
             # For now, create a basic attribute with minimal information
@@ -2778,7 +2824,7 @@ class FlextLdapClient(FlextService[None]):
     def _parse_object_class_definition(
         self, obj_def: str
     ) -> FlextLdapModels.SchemaObjectClass | None:
-        """Parse LDAP object class definition string."""
+        """Parse LDAP object class def inition string."""
         try:
             # Simple parsing - in a real implementation, this would be more robust
             # For now, create a basic object class with minimal information

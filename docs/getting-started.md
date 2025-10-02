@@ -111,29 +111,27 @@ config = FlextLdapConfig(
 ### **Basic Connection Test**
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api
 
-async def test_connection():
+def test_connection():
     """Test basic LDAP connectivity."""
     api = get_flext_ldap_api()
 
-    result = await api.test_connection()
+    result = api.test_connection()
     if result.is_success:
         print("✅ LDAP connection successful")
     else:
         print(f"❌ Connection failed: {result.error}")
 
-asyncio.run(test_connection())
+run(test_connection())
 ```
 
 ### **Simple Directory Search**
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
-async def basic_search():
+def basic_search():
     """Perform a basic directory search."""
     api = get_flext_ldap_api()
 
@@ -144,7 +142,7 @@ async def basic_search():
         attributes=["ou", "description"]
     )
 
-    result = await api.search_entries(search_request)
+    result = api.search_entries(search_request)
     if result.is_success:
         entries = result.unwrap()
         print(f"Found {len(entries)} organizational units:")
@@ -153,30 +151,234 @@ async def basic_search():
     else:
         print(f"Search failed: {result.error}")
 
-asyncio.run(basic_search())
+run(basic_search())
 ```
 
 ### **User Authentication**
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api
 
-async def authenticate_user():
+def authenticate_user():
     """Authenticate a user against LDAP."""
     api = get_flext_ldap_api()
 
     username = "john.doe"
     password = "user-password"
 
-    result = await api.authenticate_user(username, password)
+    result = api.authenticate_user(username, password)
     if result.is_success:
         user = result.unwrap()
         print(f"✅ Authentication successful for {user.uid}")
     else:
         print(f"❌ Authentication failed: {result.error}")
 
-asyncio.run(authenticate_user())
+run(authenticate_user())
+```
+
+---
+
+## Universal LDAP Interface
+
+### **Server-Specific Operations**
+
+FLEXT-LDAP provides server-specific implementations with automatic server detection:
+
+```python
+import ldap3
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.servers import OpenLDAP2Operations, OracleOIDOperations
+
+def server_specific_operations():
+    """Use server-specific operations with automatic detection."""
+
+    # Connect to LDAP server
+    connection = ldap3.Connection(
+        ldap3.Server('ldap://server:389'),
+        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
+        password='password',
+        auto_bind=True
+    )
+
+    # Initialize adapters
+    adapter = FlextLdapEntryAdapter()
+    quirks = FlextLdapQuirksAdapter()
+
+    # Search for entries
+    connection.search('dc=example,dc=com', '(objectClass=*)', attributes=['*'])
+
+    # Convert to FlextLdif
+    entries = []
+    for ldap3_entry in connection.entries:
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+        if result.is_success:
+            entries.append(result.unwrap())
+
+    # Detect server type
+    server_type_result = quirks.detect_server_type_from_entries(entries)
+    if server_type_result.is_success:
+        server_type = server_type_result.unwrap()
+        print(f"Detected server: {server_type}")
+
+        # Select appropriate operations
+        if server_type == "openldap2":
+            ops = OpenLDAP2Operations()
+        elif server_type == "oid":
+            ops = OracleOIDOperations()
+        else:
+            from flext_ldap.servers import GenericServerOperations
+            ops = GenericServerOperations()
+
+        # Discover schema
+        schema_result = ops.discover_schema(connection)
+        if schema_result.is_success:
+            schema = schema_result.unwrap()
+            print(f"Object classes: {len(schema['object_classes'])}")
+
+run(server_specific_operations())
+```
+
+### **Entry Conversion (ldap3 ↔ FlextLdif)**
+
+Convert between ldap3 and FlextLdif entry formats:
+
+```python
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldif import FlextLdifModels
+import ldap3
+
+adapter = FlextLdapEntryAdapter()
+
+# ldap3 → FlextLdif
+connection.search('dc=example,dc=com', '(objectClass=person)')
+for ldap3_entry in connection.entries:
+    ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+    if ldif_result.is_success:
+        ldif_entry = ldif_result.unwrap()
+        print(f"DN: {ldif_entry.dn}")
+
+# FlextLdif → ldap3
+ldif_entry = FlextLdifModels.Entry(
+    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+    attributes=FlextLdifModels.Attributes(attributes={
+        "objectClass": ["person"],
+        "cn": ["test"],
+        "sn": ["Test User"]
+    })
+)
+
+attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
+if attrs_result.is_success:
+    attributes = attrs_result.unwrap()
+    connection.add(str(ldif_entry.dn), attributes=attributes)
+```
+
+### **Schema Discovery**
+
+Discover schema from different LDAP server types:
+
+```python
+from flext_ldap.servers import OpenLDAP2Operations
+import ldap3
+
+def discover_schema():
+    """Discover schema from OpenLDAP 2.x server."""
+    ops = OpenLDAP2Operations()
+
+    connection = ldap3.Connection(
+        ldap3.Server('ldap://server:389'),
+        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
+        password='password',
+        auto_bind=True
+    )
+
+    schema_result = ops.discover_schema(connection)
+    if schema_result.is_success:
+        schema = schema_result.unwrap()
+
+        print(f"Object Classes: {len(schema['object_classes'])}")
+        print(f"Attribute Types: {len(schema['attribute_types'])}")
+        print(f"Syntaxes: {len(schema['syntaxes'])}")
+        print(f"Server Type: {schema['server_type']}")
+
+run(discover_schema())
+```
+
+### **ACL Management**
+
+Manage server-specific ACLs:
+
+```python
+from flext_ldap.servers import OpenLDAP2Operations
+import ldap3
+
+def manage_acls():
+    """Get and set ACLs on OpenLDAP 2.x server."""
+    ops = OpenLDAP2Operations()
+
+    connection = ldap3.Connection(
+        ldap3.Server('ldap://server:389'),
+        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
+        password='password',
+        auto_bind=True
+    )
+
+    # Get ACLs
+    dn = 'olcDatabase={1}mdb,cn=config'
+    acl_result = ops.get_acls(connection, dn)
+
+    if acl_result.is_success:
+        acls = acl_result.unwrap()
+        print(f"Found {len(acls)} ACLs")
+
+        # Set new ACLs
+        new_acls = [
+            {"raw": "{0}to * by dn=\"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\" write"},
+            {"raw": "{1}to * by self write by anonymous auth"}
+        ]
+
+        set_result = ops.set_acls(connection, dn, new_acls)
+        if set_result.is_success:
+            print("ACLs updated successfully")
+
+run(manage_acls())
+```
+
+### **Paged Search**
+
+Execute paged searches with automatic pagination:
+
+```python
+from flext_ldap.servers import OpenLDAP2Operations
+import ldap3
+
+def paged_search():
+    """Execute paged search with automatic pagination."""
+    ops = OpenLDAP2Operations()
+
+    connection = ldap3.Connection(
+        ldap3.Server('ldap://server:389'),
+        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
+        password='password',
+        auto_bind=True
+    )
+
+    result = ops.search_with_paging(
+        connection,
+        base_dn="ou=users,dc=example,dc=com",
+        search_filter="(objectClass=person)",
+        attributes=["uid", "cn", "mail"],
+        page_size=100
+    )
+
+    if result.is_success:
+        entries = result.unwrap()
+        print(f"Found {len(entries)} entries")
+        for entry in entries:
+            print(f"  DN: {entry.dn}")
+
+run(paged_search())
 ```
 
 ---
@@ -230,11 +432,12 @@ make validate   # Complete quality pipeline
 
 Once you have flext-ldap installed and working:
 
-1. **[Architecture Guide](architecture.md)** - Understand Clean Architecture patterns
-2. **[API Reference](api-reference.md)** - Complete API documentation
-3. **[Integration Guide](integration.md)** - FLEXT ecosystem integration
-4. **[Examples](examples/)** - Working code examples
-5. **[Development Guide](development.md)** - Contributing to the project
+1. **[Server Operations Guide](server-operations.md)** - Server-specific LDAP operations
+2. **[Architecture Guide](architecture.md)** - Universal LDAP interface architecture
+3. **[API Reference](api-reference.md)** - Complete API documentation
+4. **[Integration Guide](integration.md)** - FLEXT ecosystem and FlextLdif integration
+5. **[Examples](examples/)** - Working code examples
+6. **[Development Guide](development.md)** - Contributing to the project
 
 ---
 

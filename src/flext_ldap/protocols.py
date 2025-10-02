@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
@@ -30,6 +31,18 @@ class FlextLdapProtocols(FlextProtocols):
     # =========================================================================
     # LOW-LEVEL LDAP3 PROTOCOLS - Direct ldap3 library protocols
     # =========================================================================
+
+    @runtime_checkable
+    class LdifOperationsProtocol(Protocol):
+        """Protocol for LDIF file operations."""
+
+        def parse_file(self, path: Path) -> FlextResult[list]:
+            """Parse LDIF file and return entries."""
+            ...
+
+        def write_file(self, entries: list, path: Path) -> FlextResult[None]:
+            """Write entries to LDIF file."""
+            ...
 
     @runtime_checkable
     class LdapAttribute(Protocol):

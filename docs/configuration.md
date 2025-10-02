@@ -214,20 +214,19 @@ TEST_CONFIG = FlextLdapConfig(
 ### Validating Configuration
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api
 
-async def validate_config():
+def validate_config():
     """Validate LDAP configuration."""
     api = get_flext_ldap_api()
 
-    result = await api.test_connection()
+    result = api.test_connection()
     if result.is_success:
         print("✅ Configuration valid - LDAP connection successful")
     else:
         print(f"❌ Configuration invalid: {result.error}")
 
-asyncio.run(validate_config())
+run(validate_config())
 ```
 
 ### Common Configuration Issues

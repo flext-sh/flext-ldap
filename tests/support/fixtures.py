@@ -4,8 +4,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 
 import pytest
 
@@ -32,9 +31,9 @@ logger = FlextLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-async def real_ldap_server(
+def real_ldap_server(
     shared_ldap_container: object,
-) -> AsyncGenerator[LdapTestServer]:
+) -> Generator[LdapTestServer, None, None]:
     """Start and manage shared LDAP server for testing.
 
     This fixture now uses the shared LDAP container to avoid conflicts
@@ -58,7 +57,7 @@ async def real_ldap_server(
     server._container = shared_ldap_container
 
     # Setup test data on the shared container
-    setup_result = await server.setup_test_data()
+    setup_result = server.setup_test_data()
     if not setup_result.is_success:
         logger.warning("Failed to setup test data: %s", setup_result.error)
 
@@ -115,11 +114,11 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture
-async def clean_ldap_container(
+def clean_ldap_container(
     real_ldap_server: LdapTestServer,
 ) -> dict[str, object]:
     """Get clean LDAP container configuration for testing."""
-    await real_ldap_server.wait_for_ready()
+    real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
     container_info: dict[str, object] = {
         "server_url": config.server,
@@ -133,21 +132,6 @@ async def clean_ldap_container(
 
 
 # Synchronous fixtures for compatibility
-@pytest.fixture(scope="session")
-def custom_event_loop() -> Generator[asyncio.AbstractEventLoop]:
-    """Create event loop for the test session.
-
-    Yields:
-        asyncio.AbstractEventLoop: Event loop for the test session.
-
-    """
-    loop = asyncio.new_event_loop()
-    try:
-        yield loop
-    finally:
-        loop.close()
-
-
 @pytest.fixture
 def clean_ldap_state(
     ldap_connection: FlextLdapModels.ConnectionConfig,
@@ -242,9 +226,9 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture
-async def shared_ldap_client(
+def shared_ldap_client(
     shared_ldap_config: object,
-) -> AsyncGenerator[FlextLdapClient]:
+) -> Generator[FlextLdapClient, None, None]:
     """Get FlextLdapClient connected to shared LDAP container.
 
     This fixture provides a client connected to the shared LDAP container
@@ -261,7 +245,7 @@ async def shared_ldap_client(
     assert "bind_dn" in shared_ldap_config
     assert "password" in shared_ldap_config
 
-    result = await client.connect(
+    result = client.connect(
         server_uri=str(shared_ldap_config["server_url"]),
         bind_dn=str(shared_ldap_config["bind_dn"]),
         password=str(shared_ldap_config["password"]),
@@ -273,7 +257,7 @@ async def shared_ldap_client(
     try:
         yield client
     finally:
-        await client.close_connection()
+        client.close_connection()
 
 
 @pytest.fixture

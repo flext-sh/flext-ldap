@@ -17,8 +17,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
 import os
+from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import (
@@ -28,7 +28,7 @@ from flext_ldap import (
 )
 
 
-async def demonstrate_oracle_oud_opends_support() -> None:
+def demonstrate_oracle_oud_opends_support() -> None:
     """Demonstrate Oracle OUD and Sun OpenDS support."""
     logger = FlextLogger(__name__)
 
@@ -49,7 +49,7 @@ async def demonstrate_oracle_oud_opends_support() -> None:
     try:
         # Connect with automatic schema discovery
         logger.info("Connecting with automatic Oracle OUD/OpenDS detection...")
-        connect_result = await client.connect(
+        connect_result = client.connect(
             server_uri=server_uri,
             bind_dn=bind_dn,
             password=bind_password,
@@ -71,10 +71,10 @@ async def demonstrate_oracle_oud_opends_support() -> None:
         demonstrate_oracle_detection(client, logger)
 
         # Demonstrate Oracle-specific operations
-        await demonstrate_oracle_operations(client, logger)
+        demonstrate_oracle_operations(client, logger)
 
         # Demonstrate Oracle schema handling
-        await demonstrate_oracle_schema(client, logger)
+        demonstrate_oracle_schema(client, logger)
 
         # Demonstrate Oracle-specific quirks
         demonstrate_oracle_quirks(client, logger)
@@ -85,7 +85,7 @@ async def demonstrate_oracle_oud_opends_support() -> None:
     finally:
         # Disconnect
         if client.is_connected():
-            await client.unbind()
+            client.unbind()
             logger.info("Disconnected from LDAP server")
 
 
@@ -185,9 +185,7 @@ def demonstrate_oracle_detection(client: FlextLdapClient, logger: FlextLogger) -
                 logger.info("    ✅ Supports Virtual Attributes")
 
 
-async def demonstrate_oracle_operations(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_oracle_operations(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate Oracle-specific operations."""
     logger.info("\n=== Oracle-Specific Operations ===")
 
@@ -207,7 +205,7 @@ async def demonstrate_oracle_operations(
 
     # Oracle OUD/OpenDS specific search with extended matching rules
     logger.info("Performing Oracle-specific search...")
-    search_result = await client.search_universal(
+    search_result = client.search_universal(
         base_dn=base_dn,
         filter_str="(objectClass=*)",
         attributes=["cn", "sn", "mail", "uid", "objectClass"],
@@ -258,15 +256,13 @@ async def demonstrate_oracle_operations(
         logger.info("  %s → %s", attr, normalized)
 
 
-async def demonstrate_oracle_schema(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_oracle_schema(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate Oracle schema handling."""
     logger.info("\n=== Oracle Schema Handling ===")
 
     # Get discovered schema
     if client.is_schema_discovered():
-        schema_result = await client.discover_schema()
+        schema_result = client.discover_schema()
         if schema_result.is_success:
             schema = schema_result.data
             logger.info("Oracle Schema Information:")
@@ -485,7 +481,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    asyncio.run(demonstrate_oracle_oud_opends_support())
+    run(demonstrate_oracle_oud_opends_support())
 
     # Show server type detection
     demonstrate_oracle_server_types()
