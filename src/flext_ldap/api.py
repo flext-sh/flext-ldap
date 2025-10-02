@@ -38,6 +38,8 @@ from flext_core import (
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels
 
+from flext_ldif import FlextLdif
+
 from flext_ldap.acl import FlextLdapAclManager
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
@@ -548,8 +550,6 @@ class FlextLdapAPI(FlextLdap):
         """Get FlextLdif instance for LDIF operations."""
         if self._ldif is None:
             try:
-                from flext_ldif import FlextLdif
-
                 self._ldif = FlextLdif()
             except (ImportError, AttributeError, TypeError) as exc:
                 # FlextLdif not available or initialization failed, return a stub

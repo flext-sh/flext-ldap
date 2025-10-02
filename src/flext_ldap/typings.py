@@ -1,4 +1,4 @@
-"""Unified LDAP type definitions for flext-ldap domain.
+"""LDAP domain type exports - centralized in FlextTypes.Ldap.
 
 This module consolidates all type aliases, type definitions, and protocol
 definitions used throughout the flext-ldap domain. Following FLEXT standards,

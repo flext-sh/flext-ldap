@@ -17,6 +17,7 @@ from flext_core import FlextProtocols, FlextResult
 
 if TYPE_CHECKING:
     from flext_ldap.models import FlextLdapModels
+    from flext_ldif import FlextLdifModels
 
 
 class FlextLdapProtocols(FlextProtocols):
@@ -36,11 +37,15 @@ class FlextLdapProtocols(FlextProtocols):
     class LdifOperationsProtocol(Protocol):
         """Protocol for LDIF file operations."""
 
-        def parse_file(self, path: Path) -> FlextResult[list]:
+        def parse_ldif_file(
+            self, file_path: Path, server_type: str = "rfc"
+        ) -> FlextResult[list["FlextLdifModels.Entry"]]:
             """Parse LDIF file and return entries."""
             ...
 
-        def write_file(self, entries: list, path: Path) -> FlextResult[None]:
+        def write_file(
+            self, entries: list["FlextLdifModels.Entry"], output_path: Path
+        ) -> FlextResult[str]:
             """Write entries to LDIF file."""
             ...
 

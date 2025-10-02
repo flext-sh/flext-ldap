@@ -469,7 +469,7 @@ Batch convert multiple ldap3 entries to FlextLdif entries.
 
 **Returns:** FlextResult containing list of FlextLdifModels.Entry
 
-#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, list[Any]]]`
+#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, list[object]]]`
 
 Convert FlextLdif entry to ldap3 attributes dictionary.
 
@@ -672,7 +672,7 @@ Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
 Get schema discovery DN for server type.
 
-##### `discover_schema(connection) -> FlextResult[dict[str, Any]]`
+##### `discover_schema(connection) -> FlextResult[dict[str, object]]`
 
 Discover schema from server.
 
@@ -705,11 +705,11 @@ if schema_result.is_success:
     print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
-##### `parse_object_class(object_class_def) -> FlextResult[dict[str, Any]]`
+##### `parse_object_class(object_class_def) -> FlextResult[dict[str, object]]`
 
 Parse objectClass definition string.
 
-##### `parse_attribute_type(attribute_def) -> FlextResult[dict[str, Any]]`
+##### `parse_attribute_type(attribute_def) -> FlextResult[dict[str, object]]`
 
 Parse attributeType definition string.
 
@@ -723,7 +723,7 @@ Get ACL attribute name for server type.
 
 Get ACL format identifier.
 
-##### `get_acls(connection, dn) -> FlextResult[list[dict[str, Any]]]`
+##### `get_acls(connection, dn) -> FlextResult[list[dict[str, object]]]`
 
 Retrieve ACLs from entry.
 
@@ -761,7 +761,7 @@ new_acls = [
 result = ops.set_acls(connection, dn, acls=new_acls)
 ```
 
-##### `parse_acl(acl_string) -> FlextResult[dict[str, Any]]`
+##### `parse_acl(acl_string) -> FlextResult[dict[str, object]]`
 
 Parse server-specific ACL string to dictionary.
 
@@ -978,7 +978,7 @@ def search_entries(
 # Server operations with FlextLdif integration
 def add_entry(
     self,
-    connection: Any,
+    connection: object,
     entry: FlextLdifModels.Entry
 ) -> FlextResult[bool]:
     """Add entry with type safety."""

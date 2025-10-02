@@ -81,7 +81,7 @@ def ldap3_to_ldif_entry(
 
 def ldif_entry_to_ldap3_attributes(
     ldif_entry: FlextLdifModels.Entry
-) -> FlextResult[dict[str, list[Any]]]:
+) -> FlextResult[dict[str, list[object]]]:
     """Convert FlextLdif entry to ldap3 attributes."""
 ```
 
@@ -262,7 +262,7 @@ sequenceDiagram
     Ops->>ldap3: search(schema_dn, ...)
     ldap3-->>Ops: schema entries
     Ops->>Ops: parse_object_class(definition)
-    Ops-->>Client: FlextResult[dict[str, Any]]
+    Ops-->>Client: FlextResult[dict[str, object]]
 ```
 
 ### **ACL Management Flow**
@@ -333,7 +333,7 @@ acls = ops.get_acls(connection, dn)
 class BaseServerOperations(ABC):
     @abstractmethod
     def add_entry(
-        self, connection: Any, entry: FlextLdifModels.Entry
+        self, connection: object, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Template for entry addition."""
 

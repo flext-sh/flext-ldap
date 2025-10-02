@@ -13,8 +13,8 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-
 from flext_core import FlextResult
+
 from flext_ldap.acl import (
     FlextLdapAclConstants,
     FlextLdapAclConverters,

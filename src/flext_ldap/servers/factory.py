@@ -9,9 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core import FlextLogger, FlextResult, FlextService
+from flext_ldif import FlextLdifModels
+from flext_ldif.quirks import FlextLdifQuirksManager
+
 from flext_ldap.servers.ad_operations import ActiveDirectoryOperations
 from flext_ldap.servers.base_operations import BaseServerOperations
 from flext_ldap.servers.generic_operations import GenericServerOperations
@@ -19,8 +20,6 @@ from flext_ldap.servers.oid_operations import OracleOIDOperations
 from flext_ldap.servers.openldap1_operations import OpenLDAP1Operations
 from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 from flext_ldap.servers.oud_operations import OracleOUDOperations
-from flext_ldif import FlextLdifModels
-from flext_ldif.quirks import FlextLdifQuirksManager
 
 
 class ServerOperationsFactory(FlextService[None]):
@@ -155,7 +154,7 @@ class ServerOperationsFactory(FlextService[None]):
                 f"Server operations creation from entries failed: {e}"
             )
 
-    def detect_server_type_from_root_dse(self, connection: Any) -> FlextResult[str]:
+    def detect_server_type_from_root_dse(self, connection: object) -> FlextResult[str]:
         """Detect server type from root DSE (rootDomainServiceEntry).
 
         The root DSE contains server-specific attributes that can be used
@@ -266,7 +265,7 @@ class ServerOperationsFactory(FlextService[None]):
             return FlextResult[str].fail(f"Root DSE detection failed: {e}")
 
     def create_from_connection(
-        self, connection: Any
+        self, connection: object
     ) -> FlextResult[BaseServerOperations]:
         """Create server operations instance by detecting server type from connection.
 
@@ -327,7 +326,7 @@ class ServerOperationsFactory(FlextService[None]):
         """
         return server_type.lower().strip() in self._server_registry
 
-    def get_server_info(self, server_type: str) -> FlextResult[dict[str, Any]]:
+    def get_server_info(self, server_type: str) -> FlextResult[dict[str, object]]:
         """Get information about a server type.
 
         Args:
@@ -338,7 +337,7 @@ class ServerOperationsFactory(FlextService[None]):
         """
         try:
             if not self.is_server_type_supported(server_type):
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Unsupported server type: {server_type}"
                 )
 
@@ -346,7 +345,7 @@ class ServerOperationsFactory(FlextService[None]):
             operations_class = self._server_registry[server_type_lower]
             temp_instance = operations_class()
 
-            info: dict[str, Any] = {
+            info: dict[str, object] = {
                 "server_type": server_type,
                 "class_name": operations_class.__name__,
                 "default_port": temp_instance.get_default_port(use_ssl=False),
@@ -356,7 +355,9 @@ class ServerOperationsFactory(FlextService[None]):
                 "schema_dn": temp_instance.get_schema_dn(),
             }
 
-            return FlextResult[dict[str, Any]].ok(info)
+            return FlextResult[dict[str, object]].ok(info)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(f"Failed to get server info: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to get server info: {e}"
+            )

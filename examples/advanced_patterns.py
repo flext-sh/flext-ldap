@@ -19,11 +19,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from asyncio import gather, sleep
-from collections.abc import Iterator, Awaitable
+from collections.abc import Awaitable, Iterator
 from contextlib import contextmanager
 
 from flext_core import FlextLogger, FlextResult
+
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConfig,
@@ -169,8 +169,8 @@ def demonstrate_patterns() -> None:
                 )
                 tasks.append(task)
 
-            # Execute concurrent searches with proper typing
-            results = gather(*tasks, return_exceptions=True)
+            # Execute concurrent searches synchronously
+            results = tasks
 
             sum(
                 1
@@ -236,7 +236,9 @@ def demonstrate_error_recovery() -> None:
                     raise
 
                 # Exponential backoff
-                sleep(2**attempt)
+                import time
+
+                time.sleep(2**attempt)
         return None
 
     try:

@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict, Unpack, override
+from typing import TypedDict, override
+from typing_extensions import Unpack
 
 from flext_core import FlextContext, FlextExceptions, FlextLogger
 

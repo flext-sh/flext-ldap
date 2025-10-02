@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 
 from flext_core import FlextConstants, FlextResult
+
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConstants,

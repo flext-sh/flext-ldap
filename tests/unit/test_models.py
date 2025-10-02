@@ -14,11 +14,10 @@ import time
 from typing import cast
 
 import pytest
-
 from flext_core import FlextResult
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
 
 # ===================================================================
 # BATCH 3: ACL CONVERSION TESTS (10 tests)

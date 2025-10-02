@@ -16,15 +16,15 @@ from __future__ import annotations
 
 from typing import Literal, override
 
-from ldap3 import Connection, Server
-from pydantic import SecretStr
-
 from flext_core import (
     FlextContainer,
     FlextLogger,
+    FlextProtocols,
     FlextResult,
     FlextService,
 )
+from ldap3 import Connection, Server
+from pydantic import SecretStr
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.exceptions import FlextLdapExceptions
@@ -41,17 +41,21 @@ from flext_ldap.validations import FlextLdapValidations
 # Connection imported directly from ldap3 above
 
 
-class FlextLdapClient(FlextService[None]):
+class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connection):
     """FlextLdapClient - Main LDAP client using ldap3 library.
 
     This class provides a comprehensive interface for LDAP operations including
     connection management, authentication, search, and CRUD operations.
     It uses the ldap3 library internally and provides a FlextResult-based API.
 
-    The client supports both synchronous and hronous operations, with
+    The client supports both synchronous and asynchronous operations, with
     automatic connection management and proper error handling.
 
-    Implements FlextLdapProtocols through structural subtyping:
+    **PROTOCOL IMPLEMENTATION**: This client implements FlextProtocols.Infrastructure.Connection,
+    establishing the foundation pattern for ALL connection-aware clients across the FLEXT ecosystem.
+
+    Implements FlextProtocols through structural subtyping:
+    - Infrastructure.Connection: test_connection, close_connection, get_connection_string, __call__ methods
     - LdapConnectionProtocol: connect, disconnect, is_connected methods
     - LdapSearchProtocol: search, search_one methods
     - LdapModifyProtocol: add_entry, modify_entry, delete_entry methods
@@ -1032,6 +1036,68 @@ class FlextLdapClient(FlextService[None]):
 
         """
         return self.close_connection()
+
+    def get_connection_string(self) -> str:
+        """Get sanitized LDAP connection string for Infrastructure.Connection protocol.
+
+        Returns connection string with credentials removed for security.
+        Part of FlextProtocols.Infrastructure.Connection protocol implementation.
+
+        Returns:
+            str: Sanitized LDAP connection string (e.g., 'ldap://host:port')
+
+        """
+        if self._server and hasattr(self._server, 'host'):
+            # Return sanitized URI without credentials
+            protocol = "ldaps" if getattr(self._server, 'ssl', False) else "ldap"
+            host = self._server.host
+            port = self._server.port
+            return f"{protocol}://{host}:{port}"
+
+        if self._config and hasattr(self._config, 'server_uri'):
+            # Return config URI (should already be sanitized)
+            return str(self._config.server_uri)
+
+        return "ldap://not-connected"
+
+    def __call__(self, *args: object, **kwargs: object) -> FlextResult[bool]:
+        """Callable interface for Infrastructure.Connection protocol.
+
+        Delegates to connect() method when called with connection parameters.
+        Part of FlextProtocols.Infrastructure.Connection protocol implementation.
+
+        Args:
+            *args: Positional arguments (server_uri, bind_dn, password)
+            **kwargs: Keyword arguments passed to connect()
+
+        Returns:
+            FlextResult[bool]: Connection result
+
+        Examples:
+            >>> client = FlextLdapClient()
+            >>> result = client("ldap://localhost:389", "cn=admin,dc=example,dc=com", "password")
+            >>> if result.is_success:
+            ...     print("Connected successfully")
+
+        """
+        if len(args) >= 3:
+            # Extract positional args: server_uri, bind_dn, password
+            server_uri = str(args[0])
+            bind_dn = str(args[1])
+            password = str(args[2])
+
+            # Call connect with extracted parameters
+            return self.connect(
+                server_uri=server_uri,
+                bind_dn=bind_dn,
+                password=password,
+                **kwargs  # type: ignore[arg-type]
+            )
+
+        # Invalid arguments
+        return FlextResult[bool].fail(
+            "Invalid connection arguments. Expected: (server_uri, bind_dn, password)"
+        )
 
     # =============================================================================
     # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance

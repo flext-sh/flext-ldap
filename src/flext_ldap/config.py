@@ -14,10 +14,10 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+from flext_core import FlextConfig, FlextConstants, FlextResult
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextConstants, FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels

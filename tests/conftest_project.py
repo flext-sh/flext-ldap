@@ -10,11 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import pytest
-from ldap3 import Server
-
 from flext_core import (
     FlextContainer,
     FlextLogger,
@@ -23,6 +21,7 @@ from flext_core import (
 
 # Import centralized FLEXT Docker infrastructure from flext-core
 from flext_tests.docker import FlextTestDocker
+from ldap3 import Server
 
 # Import test support fixtures
 
@@ -34,7 +33,6 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapValidations,
 )
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.acl import (
     FlextLdapAclConstants,
     FlextLdapAclConverters,
@@ -42,6 +40,8 @@ from flext_ldap.acl import (
     FlextLdapAclModels,
     FlextLdapAclParsers,
 )
+from flext_ldap.constants import FlextLdapConstants
+
 # FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
 # FlextLdapRepositories removed - mock implementations violating law
 # FlextLdapDomainServices removed - mock CQRS/Event Sourcing violating law
@@ -160,7 +160,7 @@ def ldap_config_invalid() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture
-def ldap_server_config() -> dict[str, Any]:
+def ldap_server_config() -> dict[str, object]:
     """Get LDAP server configuration for testing."""
     return {
         "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
@@ -242,7 +242,7 @@ def acl_models() -> FlextLdapAclModels:
 
 
 @pytest.fixture
-def sample_acl_data() -> dict[str, Any]:
+def sample_acl_data() -> dict[str, str | list[str]]:
     """Get sample ACL data for testing."""
     return SAMPLE_ACL_DATA.copy()
 
@@ -383,9 +383,9 @@ def mock_connection_result() -> FlextResult[bool]:
 
 
 @pytest.fixture
-def mock_search_result() -> FlextResult[list[dict[str, Any]]]:
+def mock_search_result() -> FlextResult[list[dict[str, object]]]:
     """Get mock search result."""
-    return FlextResult[list[dict[str, Any]]].ok(
+    return FlextResult[list[dict[str, object]]].ok(
         [
             {
                 "dn": "uid=testuser,ou=people,dc=example,dc=com",
@@ -525,7 +525,7 @@ def shared_ldap_container() -> Generator[str]:
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_container_manager() -> Generator[dict[str, Any]]:
+def shared_ldap_container_manager() -> Generator[dict[str, str | bool]]:
     """Docker control manager for LDAP containers - simplified implementation."""
     # Provide a simple manager object for compatibility
     manager = {

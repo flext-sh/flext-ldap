@@ -8,11 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextResult
-from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 from flext_ldif import FlextLdifModels
+
+from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 
 
 class OpenLDAP1Operations(OpenLDAP2Operations):
@@ -53,7 +54,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, Any]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
         """Parse access ACL string for OpenLDAP 1.x.
 
         OpenLDAP 1.x ACL format (slapd.conf):
@@ -78,7 +79,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
             }
         """
         try:
-            acl_dict: dict[str, Any] = {
+            acl_dict: dict[str, object] = {
                 "raw": acl_string,
                 "format": "openldap1",
                 "server_type": "openldap1",
@@ -123,15 +124,15 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
                     # Keep legacy "by" field for backward compatibility
                     acl_dict["by"] = by_rules
 
-            return FlextResult[dict[str, Any]].ok(acl_dict)
+            return FlextResult[dict[str, object]].ok(acl_dict)
 
         except Exception as e:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x ACL parse failed: {e}"
             )
 
     @override
-    def format_acl(self, acl_dict: dict[str, Any]) -> FlextResult[str]:
+    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
         """Format ACL dict to access string for OpenLDAP 1.x.
 
         Args:

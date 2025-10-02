@@ -7,10 +7,9 @@ that require Docker containers.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast, Protocol
+from typing import Protocol, cast
 
 import pytest
-
 from flext_core import FlextResult
 from flext_tests import FlextTestDocker
 

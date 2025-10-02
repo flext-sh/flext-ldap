@@ -126,7 +126,11 @@ class TestLdapE2EOperations:
         # Should fail gracefully
         assert not result.is_success
         assert result.error is not None
-        assert "connection" in result.error.lower() or "failed" in result.error.lower()
+        assert (
+            result.error is not None
+            and "connection" in result.error.lower()
+            or "failed" in result.error.lower()
+        )
 
     def test_api_configuration_integration(self) -> None:
         """Test API configuration integration."""
