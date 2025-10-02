@@ -15,8 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import os
+from asyncio import run
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
@@ -39,7 +39,7 @@ def demonstrate_configuration() -> None:
     logger.info("Configuration initialized successfully")
 
 
-async def demonstrate_api_usage() -> FlextLdapClient:
+def demonstrate_api_usage() -> FlextLdapClient:
     """Demonstrate API usage patterns.
 
     Returns:
@@ -51,7 +51,7 @@ async def demonstrate_api_usage() -> FlextLdapClient:
 
     # 2. Connect (using demo server for example)
     try:
-        connection_result: FlextResult[bool] = await api.connect(
+        connection_result: FlextResult[bool] = api.connect(
             server_uri=os.getenv("LDAP_SERVER_URI", "ldap://demo.example.com:389"),
             bind_dn=os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com"),
             password=os.getenv("LDAP_BIND_PASSWORD") or "",
@@ -69,13 +69,13 @@ async def demonstrate_api_usage() -> FlextLdapClient:
     return api
 
 
-async def demonstrate_search_operations(api: FlextLdapClient) -> None:
+def demonstrate_search_operations(api: FlextLdapClient) -> None:
     """Demonstrate search operations."""
     # Session ID for demonstration
 
     try:
         # 1. Basic search using correct API
-        search_result: FlextResult[list[FlextLdapModels.Entry]] = await api.search(
+        search_result: FlextResult[list[FlextLdapModels.Entry]] = api.search(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
@@ -93,7 +93,7 @@ async def demonstrate_search_operations(api: FlextLdapClient) -> None:
         logger.debug(f"Search operation failed in demo: {e}")
 
 
-async def demonstrate_error_handling() -> None:
+def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
     dn_result = FlextLdapModels.DistinguishedName.create("")
@@ -113,7 +113,7 @@ async def demonstrate_error_handling() -> None:
             "LDAP_TEST_PASSWORD",
             "demo_password_not_for_production",
         )
-        connection_result: FlextResult[bool] = await api.connect(
+        connection_result: FlextResult[bool] = api.connect(
             server_uri="ldap://nonexistent.server:389",
             bind_dn="cn=test",
             password=test_password,
@@ -157,20 +157,20 @@ def demonstrate_logging_integration() -> None:
         logger.exception("Settings validation failed")
 
 
-async def main() -> None:
+def main() -> None:
     """Run the main demonstration function."""
     try:
         # 1. Configuration management
         demonstrate_configuration()
 
         # 2. API usage
-        api = await demonstrate_api_usage()
+        api = demonstrate_api_usage()
 
         # 3. Search operations
-        await demonstrate_search_operations(api)
+        demonstrate_search_operations(api)
 
         # 4. Error handling
-        await demonstrate_error_handling()
+        demonstrate_error_handling()
 
         # 5. Logging integration
         demonstrate_logging_integration()
@@ -181,4 +181,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run(main())

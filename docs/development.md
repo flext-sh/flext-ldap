@@ -188,7 +188,7 @@ class FlextLdapUserService:
         self._client = get_ldap_client()
         self._logger = FlextLogger(__name__)
 
-    async def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
@@ -197,18 +197,18 @@ class FlextLdapUserService:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-async def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
     if not request.is_valid():
         return FlextResult[FlextLdapUser].fail("Invalid user data")
 
-    result = await self._client.create_entry(request.to_ldap_entry())
+    result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
         return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
     return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
 
 # ❌ WRONG - Try/catch fallbacks
-async def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
+def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
     try:
         # Implementation...
         return user
@@ -229,11 +229,11 @@ class SearchRequest:
     size_limit: int = 100
     time_limit: int = 30
 
-async def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
     # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
-async def search_entries(self, base_dn: str, filter_str: str, scope: str,
+def search_entries(self, base_dn: str, filter_str: str, scope: str,
                         attributes: List[str], size_limit: int, time_limit: int):
     # FORBIDDEN - use parameter objects
 ```
@@ -263,7 +263,7 @@ class DistinguishedName:
 
 ```python
 # All public APIs must have complete type annotations
-async def authenticate_user(
+def authenticate_user(
     self,
     username: str,
     password: str
@@ -281,7 +281,6 @@ class FlextLdapService(Generic[T]):
 
 ```python
 # Standard library imports
-import asyncio
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -354,15 +353,14 @@ class TestFlextLdapUser:
 
 ```python
 import pytest
-import asyncio
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 @pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.io
 class TestLdapOperations:
     """Integration tests with real LDAP server."""
 
-    async def test_user_authentication_success(self, ldap_server):
+    def test_user_authentication_success(self, ldap_server):
         """Test successful user authentication."""
         api = get_flext_ldap_api()
 
@@ -375,18 +373,18 @@ class TestLdapOperations:
             password="test123"
         )
 
-        create_result = await api.create_user(create_request)
+        create_result = api.create_user(create_request)
         assert create_result.is_success
 
         # Test authentication
-        auth_result = await api.authenticate_user("test.user", "test123")
+        auth_result = api.authenticate_user("test.user", "test123")
         assert auth_result.is_success
 
         user = auth_result.unwrap()
         assert user.uid == "test.user"
         assert user.cn == "Test User"
 
-    async def test_user_search(self, ldap_server):
+    def test_user_search(self, ldap_server):
         """Test user search functionality."""
         api = get_flext_ldap_api()
 
@@ -397,7 +395,7 @@ class TestLdapOperations:
             attributes=["uid", "cn", "mail"]
         )
 
-        result = await api.search_entries(search_request)
+        result = api.search_entries(search_request)
         assert result.is_success
 
         entries = result.unwrap()
@@ -409,7 +407,6 @@ class TestLdapOperations:
 ```python
 # tests/conftest.py
 import pytest
-import asyncio
 from flext_tests import FlextTestDocker
 from flext_core import FlextResult
 from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
@@ -464,7 +461,7 @@ def ldap_server():
     docker_manager.stop_container("flext-ldap-test-server", remove=True)
 
 @pytest.fixture
-async def authenticated_user():
+def authenticated_user():
     """Fixture for authenticated user tests."""
     api = get_flext_ldap_api()
 
@@ -477,13 +474,13 @@ async def authenticated_user():
         password="auth123"
     )
 
-    create_result = await api.create_user(create_request)
+    create_result = api.create_user(create_request)
     assert create_result.is_success
 
     yield create_result.unwrap()
 
     # Cleanup user
-    await api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")
+    api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")
 ```
 
 ---
@@ -502,18 +499,18 @@ class FlextLdapClient:
     Examples:
         Basic usage:
         >>> api = get_flext_ldap_api()
-        >>> result = await api.test_connection()
+        >>> result = api.test_connection()
         >>> if result.is_success:
         ...     print("Connected to LDAP server")
 
         User authentication:
-        >>> auth_result = await api.authenticate_user("john.doe", "password")
+        >>> auth_result = api.authenticate_user("john.doe", "password")
         >>> if auth_result.is_success:
         ...     user = auth_result.unwrap()
         ...     print(f"Welcome, {user.cn}")
     """
 
-    async def authenticate_user(
+    def authenticate_user(
         self,
         username: str,
         password: str
@@ -532,7 +529,7 @@ class FlextLdapClient:
             No exceptions raised - all errors returned via FlextResult.
 
         Examples:
-            >>> result = await api.authenticate_user("john.doe", "secret123")
+            >>> result = api.authenticate_user("john.doe", "secret123")
             >>> if result.is_success:
             ...     user = result.unwrap()
             ...     print(f"Authenticated: {user.cn}")
@@ -584,17 +581,17 @@ search_request = FlextLdapEntities.SearchRequest(
 )
 ```
 
-### Async Best Practices
+### Best Practices
 
 ```python
-# Use async context managers for resource management
-async with get_ldap_client() as client:
-    result = await client.search(search_request)
+# Use context managers for resource management
+with get_ldap_client() as client:
+    result = client.search(search_request)
     # Client automatically closed
 
 # Batch operations for efficiency
 users_to_create = [user1, user2, user3]
-results = await asyncio.gather(*[
+results = gather(*[
     api.create_user(user) for user in users_to_create
 ])
 ```

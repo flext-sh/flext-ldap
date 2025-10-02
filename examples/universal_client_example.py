@@ -15,7 +15,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
 import os
 
 from flext_core import FlextLogger
@@ -25,7 +24,7 @@ from flext_ldap import (
 )
 
 
-async def demonstrate_universal_client() -> None:
+def demonstrate_universal_client() -> None:
     """Demonstrate complete universal LDAP client capabilities."""
     logger = FlextLogger(__name__)
 
@@ -44,7 +43,7 @@ async def demonstrate_universal_client() -> None:
     try:
         # Connect with automatic schema discovery
         logger.info("Connecting with automatic schema discovery...")
-        connect_result = await client.connect(
+        connect_result = client.connect(
             server_uri=server_uri,
             bind_dn=bind_dn,
             password=bind_password,
@@ -66,16 +65,16 @@ async def demonstrate_universal_client() -> None:
         demonstrate_server_capabilities(client, logger)
 
         # Demonstrate universal search operations
-        await demonstrate_universal_search(client, logger)
+        demonstrate_universal_search(client, logger)
 
         # Demonstrate universal CRUD operations
-        await demonstrate_universal_crud(client, logger)
+        demonstrate_universal_crud(client, logger)
 
         # Demonstrate universal compare operations
-        await demonstrate_universal_compare(client, logger)
+        demonstrate_universal_compare(client, logger)
 
         # Demonstrate universal extended operations
-        await demonstrate_universal_extended(client, logger)
+        demonstrate_universal_extended(client, logger)
 
         # Demonstrate server-specific adaptations
         demonstrate_server_adaptations(client, logger)
@@ -86,7 +85,7 @@ async def demonstrate_universal_client() -> None:
     finally:
         # Disconnect
         if client.is_connected():
-            await client.unbind()
+            client.unbind()
             logger.info("Disconnected from LDAP server")
 
 
@@ -183,9 +182,7 @@ def demonstrate_server_capabilities(
         )
 
 
-async def demonstrate_universal_search(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_universal_search(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate universal search operations."""
     logger.info("\n=== Universal Search Operations ===")
 
@@ -204,7 +201,7 @@ async def demonstrate_universal_search(
 
     # Universal search with all parameters
     logger.info("Performing universal search...")
-    search_result = await client.search_universal(
+    search_result = client.search_universal(
         base_dn=base_dn,
         filter_str="(objectClass=*)",
         attributes=["cn", "sn", "mail", "objectClass"],
@@ -231,7 +228,7 @@ async def demonstrate_universal_search(
 
     # Search with controls (if supported)
     logger.info("Performing search with controls...")
-    controls_result = await client.search_with_controls_universal(
+    controls_result = client.search_with_controls_universal(
         base_dn=base_dn,
         filter_str="(objectClass=person)",
         attributes=["cn", "sn"],
@@ -248,9 +245,7 @@ async def demonstrate_universal_search(
         logger.error("Search with controls failed: %s", controls_result.error)
 
 
-async def demonstrate_universal_crud(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_universal_crud(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate universal CRUD operations."""
     logger.info("\n=== Universal CRUD Operations ===")
 
@@ -279,7 +274,7 @@ async def demonstrate_universal_crud(
         "description": "Test user for universal operations",
     }
 
-    add_result = await client.add_entry_universal(
+    add_result = client.add_entry_universal(
         dn=test_dn, attributes=add_attributes, controls=None
     )
 
@@ -293,7 +288,7 @@ async def demonstrate_universal_crud(
             "mail": "modified@example.com",
         }
 
-        modify_result = await client.modify_entry_universal(
+        modify_result = client.modify_entry_universal(
             dn=test_dn, changes=modify_changes, controls=None
         )
 
@@ -304,7 +299,7 @@ async def demonstrate_universal_crud(
 
         # Universal Delete Entry
         logger.info("Testing universal delete entry...")
-        delete_result = await client.delete_entry_universal(dn=test_dn, controls=None)
+        delete_result = client.delete_entry_universal(dn=test_dn, controls=None)
 
         if delete_result.is_success:
             logger.info("Universal delete entry successful")
@@ -315,9 +310,7 @@ async def demonstrate_universal_crud(
         logger.error("Universal add entry failed: %s", add_result.error)
 
 
-async def demonstrate_universal_compare(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_universal_compare(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate universal compare operations."""
     logger.info("\n=== Universal Compare Operations ===")
 
@@ -337,7 +330,7 @@ async def demonstrate_universal_compare(
     logger.info("Testing universal compare with DN: %s", test_dn)
 
     # Universal Compare
-    compare_result = await client.compare_universal(
+    compare_result = client.compare_universal(
         dn=test_dn, attribute="objectClass", value="person"
     )
 
@@ -347,7 +340,7 @@ async def demonstrate_universal_compare(
         logger.error("Universal compare failed: %s", compare_result.error)
 
 
-async def demonstrate_universal_extended(
+def demonstrate_universal_extended(
     client: FlextLdapClient, logger: FlextLogger
 ) -> None:
     """Demonstrate universal extended operations."""
@@ -355,7 +348,7 @@ async def demonstrate_universal_extended(
 
     # Test Who Am I extended operation
     logger.info("Testing Who Am I extended operation...")
-    whoami_result = await client.extended_operation_universal(
+    whoami_result = client.extended_operation_universal(
         request_name="1.3.6.1.4.1.4203.1.11.3",  # Who Am I OID
         request_value=None,
         controls=None,
@@ -517,7 +510,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    asyncio.run(demonstrate_universal_client())
+    demonstrate_universal_client()
 
     # Show server type detection
     demonstrate_server_type_detection()

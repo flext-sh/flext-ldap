@@ -1985,7 +1985,7 @@ class TestFlextLdapModels:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "DN is required" in result.error
+        assert result.error and result.error and "DN is required" in result.error
 
     def test_group_to_ldap_attributes(self) -> None:
         """Test Group.to_ldap_attributes() conversion method."""
@@ -2403,7 +2403,7 @@ class TestFlextLdapModels:
         result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "DN is required" in result.error
+        assert result.error and result.error and "DN is required" in result.error
 
     def test_search_request_search_complexity_simple(self) -> None:
         """Test SearchRequest.search_complexity computed field - simple."""
@@ -2711,7 +2711,7 @@ class TestFlextLdapModels:
         assert user.organizational_path == "ACME Corp > Engineering > IT"
 
     def test_ldap_user_organizational_path_empty(self) -> None:
-        """Test LdapUser.organizational_path with no organization."""
+        """Test LdapUser.organizational_path with defaults from constants."""
         user = FlextLdapModels.LdapUser(
             dn="uid=noorg,ou=users,dc=example,dc=com",
             cn="No Org User",
@@ -2720,7 +2720,8 @@ class TestFlextLdapModels:
             mail="noorg@example.com",
         )
 
-        assert user.organizational_path == "No organization"
+        # Model applies defaults from FlextLdapConstants.Defaults
+        assert user.organizational_path == "Company > IT"
 
     def test_ldap_user_rdn_extraction(self) -> None:
         """Test LdapUser.rdn computed field."""
@@ -2986,7 +2987,9 @@ class TestFlextLdapModels:
         # Factory should catch exception and return failure result
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "creation failed" in result.error.lower()
+        assert (
+            result.error and result.error and "creation failed" in result.error.lower()
+        )
 
     def test_connection_config_validate_empty_server(self) -> None:
         """Test ConnectionConfig.validate() with empty server."""
@@ -2998,7 +3001,9 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "Server cannot be empty" in result.error
+        assert (
+            result.error and result.error and "Server cannot be empty" in result.error
+        )
 
     def test_connection_config_validate_invalid_port_zero(self) -> None:
         """Test ConnectionConfig.validate() with port 0."""
@@ -3010,7 +3015,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "Invalid port number" in result.error
+        assert result.error and result.error and "Invalid port number" in result.error
 
     def test_connection_config_validate_invalid_port_too_high(self) -> None:
         """Test ConnectionConfig.validate() with port > 65535."""
@@ -3022,7 +3027,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "Invalid port number" in result.error
+        assert result.error and result.error and "Invalid port number" in result.error
 
     def test_connection_config_validate_success(self) -> None:
         """Test ConnectionConfig.validate() with valid data."""
@@ -3046,7 +3051,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be empty" in result.error
+        assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_modify_config_validate_empty_changes(self) -> None:
         """Test ModifyConfig.validate() with empty changes."""
@@ -3060,7 +3065,9 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert result.error and "Changes cannot be empty" in result.error
+        assert (
+            result.error and result.error and "Changes cannot be empty" in result.error
+        )
 
     def test_modify_config_validate_success(self) -> None:
         """Test ModifyConfig.validate() with valid data."""
@@ -3086,7 +3093,7 @@ class TestFlextLdapModels:
         result = config.validate()
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be empty" in result.error
+        assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_add_config_validate_success(self) -> None:
         """Test AddConfig.validate() with valid data."""

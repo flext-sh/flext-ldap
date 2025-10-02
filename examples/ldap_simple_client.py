@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import os
+from asyncio import run
 
 from flext_core import FlextConstants, FlextResult
 from flext_ldap import (
@@ -23,7 +23,7 @@ from flext_ldap import (
 )
 
 
-async def main() -> None:
+def main() -> None:
     """Demonstrate LDAP client usage."""
     # Create client instance
     client = FlextLdapClient()
@@ -36,7 +36,7 @@ async def main() -> None:
     bind_dn = "cn=admin,dc=example,dc=com"
     bind_password = os.getenv("LDAP_TEST_PASSWORD", "")
 
-    result: FlextResult[bool] = await client.connect(
+    result: FlextResult[bool] = client.connect(
         server_uri=server_uri,
         bind_dn=bind_dn,
         password=bind_password,
@@ -53,7 +53,7 @@ async def main() -> None:
             page_size=0,
             paged_cookie=None,
         )
-        search_result = await client.search_with_request(search_request)
+        search_result = client.search_with_request(search_request)
 
         if search_result.is_success:
             # Use proper type for FlextResult unwrapping
@@ -75,14 +75,14 @@ async def main() -> None:
         # Note: No disconnect method - connection managed automatically
 
     # Example 2: LDAP operations
-    op_result: FlextResult[bool] = await client.connect(
+    op_result: FlextResult[bool] = client.connect(
         server_uri=server_uri,
         bind_dn=bind_dn,
         password=bind_password,
     )
     if op_result.is_success:
         # Add entry
-        add_result: FlextResult[None] = await client.add(
+        add_result: FlextResult[None] = client.add(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "objectClass": ["top", "person", "organizationalPerson"],
@@ -94,7 +94,7 @@ async def main() -> None:
 
         if add_result.is_success:
             # Modify entry
-            modify_result: FlextResult[None] = await client.modify(
+            modify_result: FlextResult[None] = client.modify(
                 dn="cn=testuser,dc=example,dc=com",
                 changes={
                     "mail": [(FlextLdapTypes.MODIFY_REPLACE, ["updated@example.com"])]
@@ -112,4 +112,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run(main())

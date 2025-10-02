@@ -9,26 +9,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 from typing import Any, TYPE_CHECKING
 
 import pytest
 from ldap3 import Server
 
 from flext_core import (
-    FlextBus,
     FlextContainer,
-    FlextDispatcher,
     FlextLogger,
-    FlextModels,
-    FlextProcessors,
-    FlextRegistry,
     FlextResult,
 )
 
+# Import centralized FLEXT Docker infrastructure from flext-core
+from flext_tests.docker import FlextTestDocker
+
 # Import test support fixtures
-from tests.support.fixtures import clean_ldap_container, real_ldap_server  # noqa: F401
 
 if TYPE_CHECKING:
     pass
@@ -46,10 +42,9 @@ from flext_ldap.acl import (
     FlextLdapAclModels,
     FlextLdapAclParsers,
 )
-from flext_ldap.domain_services import FlextLdapDomainServices
-
 # FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
-from flext_ldap.repositories import FlextLdapRepositories
+# FlextLdapRepositories removed - mock implementations violating law
+# FlextLdapDomainServices removed - mock CQRS/Event Sourcing violating law
 
 # Import test data directly to avoid pyrefly import issues
 SAMPLE_ACL_DATA = {
@@ -133,15 +128,6 @@ def flext_logger() -> FlextLogger:
     return FlextLogger(__name__)
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop]:
-    """Create event loop for async tests."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
-
-
 # =============================================================================
 # LDAP CONFIGURATION FIXTURES
 # =============================================================================
@@ -214,54 +200,10 @@ def ldap_api() -> FlextLdapAPI:
 # DOMAIN SERVICES FIXTURES
 # =============================================================================
 
-
-@pytest.fixture
-def domain_services() -> FlextLdapDomainServices:
-    """Get domain services instance."""
-    # Create mock instances for the required parameters
-    config = FlextModels.CqrsConfig.Handler(
-        handler_id="test_handler", handler_name="test_handler"
-    )
-    client = FlextLdapClient()
-    container = FlextContainer()
-    dispatcher = FlextDispatcher()
-    bus = FlextBus()
-    processors = FlextProcessors()
-    registry = FlextRegistry(dispatcher=dispatcher)
-
-    return FlextLdapDomainServices(
-        config=config,
-        client=client,
-        container=container,
-        bus=bus,
-        dispatcher=dispatcher,
-        processors=processors,
-        registry=registry,
-    )
+# FlextLdapDomainServices fixture removed - class was deleted during cleanup
 
 
 # Fixtures for removed modules (factory, advanced_service, workflow_orchestrator) deleted
-
-
-# =============================================================================
-# REPOSITORY FIXTURES
-# =============================================================================
-
-
-@pytest.fixture
-def group_repository(
-    ldap_client: FlextLdapClient,
-) -> FlextLdapRepositories.GroupRepository:
-    """Get group repository instance."""
-    return FlextLdapRepositories.GroupRepository(client=ldap_client)
-
-
-@pytest.fixture
-def user_repository(
-    ldap_client: FlextLdapClient,
-) -> FlextLdapRepositories.UserRepository:
-    """Get user repository instance."""
-    return FlextLdapRepositories.UserRepository(client=ldap_client)
 
 
 # =============================================================================
@@ -465,6 +407,56 @@ def mock_error_result() -> FlextResult[None]:
 
 
 # =============================================================================
+# DOCKER INFRASTRUCTURE FIXTURES (FlextTestDocker from flext-core)
+# =============================================================================
+
+
+@pytest.fixture(scope="session")
+def docker_control() -> FlextTestDocker:
+    """Centralized Docker control using FlextTestDocker from flext-core."""
+    return FlextTestDocker()
+
+
+@pytest.fixture(scope="session")
+def clean_ldap_container(
+    docker_control: FlextTestDocker,
+) -> Generator[dict[str, object], None, None]:
+    """Session-scoped LDAP container using centralized FlextTestDocker.
+
+    Uses ~/flext/docker/docker-compose.openldap.yml configuration.
+    Container name: flext-openldap-test (port 3390).
+    """
+    container_name = "flext-openldap-test"
+
+    # Start the container using FlextTestDocker
+    # The container is managed by docker-compose.openldap.yml
+    status = docker_control.get_container_status(container_name)
+
+    if status.is_failure or status.value.status.value != "running":
+        # Container not running - start it via docker-compose
+        compose_file = "/home/marlonsc/flext/docker/docker-compose.openldap.yml"
+        start_result = docker_control.compose_up(compose_file, "openldap")
+
+        if start_result.is_failure:
+            pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+
+    # Provide connection info
+    container_info: dict[str, object] = {
+        "server_url": "ldap://localhost:3390",
+        "bind_dn": "cn=admin,dc=flext,dc=local",
+        "password": "admin123",
+        "base_dn": "dc=flext,dc=local",
+        "port": 3390,
+        "use_ssl": False,
+    }
+
+    yield container_info
+
+    # Cleanup handled by FlextTestDocker dirty state tracking
+    # Container stays running for next test
+
+
+# =============================================================================
 # INTEGRATION TEST FIXTURES
 # =============================================================================
 
@@ -494,9 +486,9 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture(scope="session")
-async def shared_ldap_client(
+def shared_ldap_client(
     shared_ldap_config: dict[str, str], shared_ldap_container: str
-) -> AsyncGenerator[FlextLdapClient, None]:
+) -> Generator[FlextLdapClient, None, None]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container
     _ = shared_ldap_container  # Container dependency ensures it's started
@@ -504,7 +496,7 @@ async def shared_ldap_client(
     client = FlextLdapClient()
 
     # Connect to the LDAP server with proper parameters
-    connect_result = await client.connect(
+    connect_result = client.connect(
         server_uri=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
         password=shared_ldap_config["password"],
@@ -517,7 +509,7 @@ async def shared_ldap_client(
 
     # Disconnect when done
     try:
-        await client.disconnect()
+        client.disconnect()
     except Exception:
         pass  # Best effort cleanup
 
@@ -594,13 +586,11 @@ __all__ = [
     "acl_manager",
     "acl_models",
     "acl_parsers",
-    "clean_ldap_container",
+    "clean_ldap_container",  # FlextTestDocker session-scoped fixture
     "clean_ldap_state",
-    "domain_services",
-    "event_loop",
+    "docker_control",  # FlextTestDocker instance
     "flext_container",
     "flext_logger",
-    "group_repository",
     "ldap_api",
     "ldap_client",
     "ldap_client_no_config",
@@ -623,6 +613,7 @@ __all__ = [
     "sample_valid_dn",
     "sample_valid_email",
     "sample_valid_filter",
+    # Legacy fixtures (for backward compatibility)
     "shared_ldap_client",
     "shared_ldap_config",
     "shared_ldap_connection_config",
@@ -632,6 +623,5 @@ __all__ = [
     "skip_if_no_docker",
     "test_group_data",
     "test_user_data",
-    "user_repository",
     "validations",
 ]

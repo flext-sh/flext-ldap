@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.schema import FlextLdapSchema
 
 
@@ -35,7 +36,9 @@ class TestFlextLdapSchema:
         assert isinstance(result, FlextResult)
         assert not result.is_success
         assert result.error is not None
-        assert "Message cannot be empty" in result.error
+        assert (
+            result.error and result.error and "Message cannot be empty" in result.error
+        )
 
     def test_quirks_detector_handle_valid_message(self) -> None:
         """Test quirks detector with valid message."""
@@ -53,10 +56,10 @@ class TestFlextLdapSchema:
         assert result is None
 
     def test_detect_server_type_valid(self) -> None:
-        """Test server type detection with valid input."""
+        """Test server type detection with valid input - returns enum."""
         detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.detect_server_type({"server": "test"})
-        assert result == "GENERIC"
+        assert result == FlextLdapModels.LdapServerType.GENERIC
 
     def test_get_server_quirks_none(self) -> None:
         """Test getting server quirks with None server type."""

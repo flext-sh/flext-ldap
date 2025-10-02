@@ -14,8 +14,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
 import os
+from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import (
@@ -27,7 +27,7 @@ from flext_ldap import (
 )
 
 
-async def demonstrate_flext_integrated_ldap() -> None:
+def demonstrate_flext_integrated_ldap() -> None:
     """Demonstrate FLEXT-integrated LDAP client with universal compatibility."""
     logger = FlextLogger(__name__)
 
@@ -46,7 +46,7 @@ async def demonstrate_flext_integrated_ldap() -> None:
     try:
         # Connect using FLEXT patterns
         logger.info("Connecting to LDAP server...")
-        connect_result = await client.connect(server_uri, bind_dn, bind_password)
+        connect_result = client.connect(server_uri, bind_dn, bind_password)
 
         if connect_result.is_failure:
             logger.error("Failed to connect: %s", connect_result.error)
@@ -55,10 +55,10 @@ async def demonstrate_flext_integrated_ldap() -> None:
         logger.info("Successfully connected to LDAP server")
 
         # Demonstrate schema discovery using FLEXT patterns
-        await demonstrate_schema_discovery(client, logger)
+        demonstrate_schema_discovery(client, logger)
 
         # Demonstrate universal operations
-        await demonstrate_universal_operations(client, logger)
+        demonstrate_universal_operations(client, logger)
 
         # Demonstrate FLEXT model usage
         demonstrate_flext_models(client, logger)
@@ -69,18 +69,16 @@ async def demonstrate_flext_integrated_ldap() -> None:
     finally:
         # Disconnect using FLEXT patterns
         if client.is_connected():
-            await client.unbind()
+            client.unbind()
             logger.info("Disconnected from LDAP server")
 
 
-async def demonstrate_schema_discovery(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_schema_discovery(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate schema discovery using FLEXT patterns."""
     logger.info("\n=== FLEXT Schema Discovery ===")
 
     # Use FLEXT schema discovery
-    discovery_result = await client.discover_schema()
+    discovery_result = client.discover_schema()
 
     if discovery_result.is_success:
         schema_data = discovery_result.data
@@ -118,7 +116,7 @@ async def demonstrate_schema_discovery(
         logger.error("Schema discovery failed: %s", discovery_result.error)
 
 
-async def demonstrate_universal_operations(
+def demonstrate_universal_operations(
     client: FlextLdapClient, logger: FlextLogger
 ) -> None:
     """Demonstrate universal LDAP operations using FLEXT patterns."""
@@ -146,7 +144,7 @@ async def demonstrate_universal_operations(
     logger.info("Search Scope: %s", search_scope.value)
 
     # Perform search using FLEXT patterns
-    search_result = await client.search(
+    search_result = client.search(
         base_dn=base_dn,
         filter_str=search_filter.expression,
         attributes=["cn", "sn", "mail", "objectClass"],
@@ -284,7 +282,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    asyncio.run(demonstrate_flext_integrated_ldap())
+    run(demonstrate_flext_integrated_ldap())
 
     # Show server type adaptations
     demonstrate_server_type_adaptations()

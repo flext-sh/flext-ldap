@@ -101,23 +101,22 @@ FlextLdapAuthenticationError: Authentication failed: Invalid credentials
 **Diagnosis:**
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api
 
-async def diagnose_auth():
+def diagnose_auth():
     api = get_flext_ldap_api()
 
     # Test connection without authentication
-    connection_result = await api.test_connection()
+    connection_result = api.test_connection()
     print(f"Connection: {connection_result.is_success}")
 
     # Test with known admin credentials
-    auth_result = await api.authenticate_user("admin", "admin-password")
+    auth_result = api.authenticate_user("admin", "admin-password")
     print(f"Auth result: {auth_result.is_success}")
     if auth_result.is_failure:
         print(f"Error: {auth_result.error}")
 
-asyncio.run(diagnose_auth())
+run(diagnose_auth())
 ```
 
 **Solutions:**
@@ -249,10 +248,9 @@ FlextLdapSearchError: No such object: ou=users,dc=example,dc=com
 **Diagnosis:**
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
-async def diagnose_base_dn():
+def diagnose_base_dn():
     api = get_flext_ldap_api()
 
     # Search from root to find available bases
@@ -263,7 +261,7 @@ async def diagnose_base_dn():
         attributes=["dn", "objectClass"]
     )
 
-    result = await api.search_entries(search_request)
+    result = api.search_entries(search_request)
     if result.is_success:
         entries = result.unwrap()
         print("Available organizational units:")
@@ -272,7 +270,7 @@ async def diagnose_base_dn():
     else:
         print(f"Root search failed: {result.error}")
 
-asyncio.run(diagnose_base_dn())
+run(diagnose_base_dn())
 ```
 
 ---
@@ -289,11 +287,10 @@ asyncio.run(diagnose_base_dn())
 **Diagnosis:**
 
 ```python
-import asyncio
 import time
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
-async def diagnose_performance():
+def diagnose_performance():
     api = get_flext_ldap_api()
 
     # Test different search scopes and filters
@@ -329,7 +326,7 @@ async def diagnose_performance():
             size_limit=100
         )
 
-        result = await api.search_entries(search_request)
+        result = api.search_entries(search_request)
         duration = time.time() - start_time
 
         if result.is_success:
@@ -338,7 +335,7 @@ async def diagnose_performance():
         else:
             print(f"{test_case['name']}: Failed - {result.error}")
 
-asyncio.run(diagnose_performance())
+run(diagnose_performance())
 ```
 
 **Optimization Solutions:**
@@ -426,11 +423,11 @@ class LDAPService:
     def __init__(self):
         self._api = get_flext_ldap_api()  # Reuse single instance
 
-    async def multiple_operations(self, users: list):
+    def multiple_operations(self, users: list):
         """Perform multiple operations with same connection."""
         results = []
         for user in users:
-            result = await self._api.authenticate_user(user.username, user.password)
+            result = self._api.authenticate_user(user.username, user.password)
             results.append(result)
         return results
 ```
@@ -594,15 +591,14 @@ make ldap-test-server
 ### FlextResult Error Handling
 
 ```python
-import asyncio
 from flext_ldap import get_flext_ldap_api
 
-async def handle_errors_properly():
+def handle_errors_properly():
     """Demonstrate proper error handling with FlextResult."""
     api = get_flext_ldap_api()
 
     # Always check result status
-    result = await api.authenticate_user("test", "wrong-password")
+    result = api.authenticate_user("test", "wrong-password")
 
     if result.is_success:
         user = result.unwrap()
@@ -620,7 +616,7 @@ async def handle_errors_properly():
         elif "No such object" in error_msg:
             print("Suggestion: Verify user exists in directory")
 
-asyncio.run(handle_errors_properly())
+run(handle_errors_properly())
 ```
 
 ---
@@ -657,12 +653,11 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=admin,dc=example,dc=com" -w passwor
 ### Performance Profiling
 
 ```python
-import asyncio
 import cProfile
 import pstats
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
-async def profile_ldap_operations():
+def profile_ldap_operations():
     """Profile LDAP operations for performance analysis."""
     api = get_flext_ldap_api()
 
@@ -677,7 +672,7 @@ async def profile_ldap_operations():
 
     # Perform multiple operations
     for _ in range(10):
-        result = await api.search_entries(search_request)
+        result = api.search_entries(search_request)
         if result.is_failure:
             print(f"Search failed: {result.error}")
 
@@ -685,7 +680,7 @@ def run_profiling():
     profiler = cProfile.Profile()
     profiler.enable()
 
-    asyncio.run(profile_ldap_operations())
+    run(profile_ldap_operations())
 
     profiler.disable()
     stats = pstats.Stats(profiler)

@@ -25,7 +25,11 @@ class TestFlextLdapUtilities:
         result = FlextLdapUtilities.normalize_dn("")
         assert result.is_failure
         assert result.error is not None
-        assert "DN must be a non-empty string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "DN must be a non-empty string" in result.error
+        )
 
     def test_normalize_filter_valid(self) -> None:
         """Test filter normalization with valid filter."""
@@ -39,7 +43,11 @@ class TestFlextLdapUtilities:
         result = FlextLdapUtilities.normalize_filter("")
         assert result.is_failure
         assert result.error is not None
-        assert "Filter must be a non-empty string" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Filter must be a non-empty string" in result.error
+        )
 
     def test_normalize_attributes_valid(self) -> None:
         """Test attributes normalization with valid list."""
@@ -53,7 +61,11 @@ class TestFlextLdapUtilities:
         result = FlextLdapUtilities.normalize_attributes([])
         assert result.is_failure
         assert result.error is not None
-        assert "Attributes list cannot be empty" in result.error
+        assert (
+            result.error
+            and result.error
+            and "Attributes list cannot be empty" in result.error
+        )
 
     def test_is_ldap_dn_valid(self) -> None:
         """Test LDAP DN validation with valid DN."""
@@ -169,7 +181,7 @@ class TestFlextLdapUtilities:
         result = FlextLdapUtilities.ensure_ldap_dn("")
         assert result.is_failure
         assert result.error is not None
-        assert "DN cannot be empty" in result.error
+        assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_ensure_string_list_valid(self) -> None:
         """Test string list validation and conversion."""
@@ -559,7 +571,7 @@ class TestFlextLdapUtilitiesLdapProcessing:
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_failure
         assert result.error is not None
-        assert "length mismatch" in result.error
+        assert result.error and result.error and "length mismatch" in result.error
 
     def test_normalize_attribute_name_success(self) -> None:
         """Test attribute name normalization success case."""

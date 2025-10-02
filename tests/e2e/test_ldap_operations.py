@@ -20,8 +20,7 @@ from flext_ldap import FlextLdapClient, FlextLdapModels
 class TestLdapE2EOperations:
     """End-to-end tests for LDAP operations."""
 
-    @pytest.mark.asyncio
-    async def test_complete_user_lifecycle(self) -> None:
+    def test_complete_user_lifecycle(self) -> None:
         """Test complete user management lifecycle.
 
         This test would require a real LDAP server to be fully functional.
@@ -37,7 +36,7 @@ class TestLdapE2EOperations:
         )
 
         # Test connection creation (will fail without real server)
-        connection_result = await api.connect(
+        connection_result = api.connect(
             server_uri="ldap://localhost:3389",
             bind_dn="cn=admin,dc=flext,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
@@ -75,8 +74,7 @@ class TestLdapE2EOperations:
         assert user_entity.sn == "User"
         assert user_entity.mail == "testuser@example.com"
 
-    @pytest.mark.asyncio
-    async def test_search_operations_flow(self) -> None:
+    def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""
         api = FlextLdapClient()
 
@@ -93,14 +91,13 @@ class TestLdapE2EOperations:
             page_size=None,
             paged_cookie=None,
         )
-        search_result = await api.search_with_request(search_request)
+        search_result = api.search_with_request(search_request)
 
         # Should handle missing session gracefully
         assert search_result is not None
         assert hasattr(search_result, "is_success")
 
-    @pytest.mark.asyncio
-    async def test_group_management_flow(self) -> None:
+    def test_group_management_flow(self) -> None:
         """Test group management workflow."""
         api = FlextLdapClient()
 
@@ -115,13 +112,12 @@ class TestLdapE2EOperations:
         # Verify API is properly initialized
         assert api is not None
 
-    @pytest.mark.asyncio
-    async def test_connection_error_handling(self) -> None:
+    def test_connection_error_handling(self) -> None:
         """Test connection error handling in E2E scenarios."""
         api = FlextLdapClient()
 
         # Test connection to non-existent server
-        result = await api.connect(
+        result = api.connect(
             server_uri="ldap://127.0.0.1:9999",
             bind_dn="cn=admin,dc=test,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
@@ -148,8 +144,7 @@ class TestLdapE2EOperations:
         # Should handle configuration properly
         assert api is not None
 
-    @pytest.mark.asyncio
-    async def test_error_propagation_e2e(self) -> None:
+    def test_error_propagation_e2e(self) -> None:
         """Test error propagation through the entire stack."""
         api = FlextLdapClient()
 
@@ -161,7 +156,7 @@ class TestLdapE2EOperations:
         ]
 
         for uri, _expected_error_type in scenarios:
-            result = await api.connect(
+            result = api.connect(
                 server_uri=uri,
                 bind_dn="cn=test",
                 password=os.getenv("LDAP_TEST_PASSWORD", "test"),
@@ -182,8 +177,7 @@ class TestLdapE2EWithDockerServer:
     They demonstrate the full testing approach for real LDAP operations.
     """
 
-    @pytest.mark.asyncio
-    async def test_real_ldap_user_operations(self) -> None:
+    def test_real_ldap_user_operations(self) -> None:
         """Test real LDAP user operations with Docker server.
 
         This test would require the Docker LDAP server to be running.
@@ -217,8 +211,7 @@ class TestLdapE2EWithDockerServer:
 
         assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"
 
-    @pytest.mark.asyncio
-    async def test_real_ldap_search_operations(self) -> None:
+    def test_real_ldap_search_operations(self) -> None:
         """Test real LDAP search operations with Docker server."""
         # Placeholder for real search operations
         # Would test:
@@ -230,8 +223,7 @@ class TestLdapE2EWithDockerServer:
         api = FlextLdapClient()
         assert api is not None
 
-    @pytest.mark.asyncio
-    async def test_real_ldap_group_operations(self) -> None:
+    def test_real_ldap_group_operations(self) -> None:
         """Test real LDAP group operations with Docker server."""
         # Placeholder for real group operations
         # Would test:

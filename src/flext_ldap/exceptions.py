@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypedDict, Unpack, override
 
-from flext_core import FlextExceptions
+from flext_core import FlextContext, FlextExceptions, FlextLogger
 
 
 class FlextLdapExceptions(FlextExceptions):
@@ -24,14 +24,16 @@ class FlextLdapExceptions(FlextExceptions):
 
     All LDAP exceptions inherit from FlextExceptions.BaseError and include
     proper error codes, context, and correlation tracking.
+
+    Enhanced with FlextContext integration for automatic context tracking.
     """
 
     @override
     def __init__(self) -> None:
-        """Initialize LDAP exceptions with container and logger."""
+        """Initialize LDAP exceptions with context and logger integration."""
         super().__init__()
-        self._container = None
-        self._logger = None
+        self._context = FlextContext()
+        self._logger = FlextLogger(__name__)
 
     def connection_error(
         self,

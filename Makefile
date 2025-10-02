@@ -99,12 +99,16 @@ test: ## Run tests with 75% coverage minimum (MANDATORY)
 	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -q --maxfail=10000 --cov=$(COV_DIR) --cov-report=term-missing:skip-covered --cov-fail-under=$(MIN_COVERAGE)
 
 .PHONY: test-unit
-test-unit: ## Run unit tests
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m "not integration" -v
+test-unit: ## Run unit tests only (fast, no Docker)
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m "unit and not slow" -v
 
 .PHONY: test-integration
 test-integration: ## Run integration tests with Docker
 	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m integration -v
+
+.PHONY: test-docker
+test-docker: ## Run Docker-dependent tests
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m docker -v
 
 .PHONY: test-ldap
 test-ldap: ## Run LDAP specific tests
@@ -115,8 +119,12 @@ test-e2e: ## Run end-to-end tests
 	$(POETRY) run pytest $(TESTS_DIR) -m e2e -v
 
 .PHONY: test-fast
-test-fast: ## Run tests without coverage
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -v
+test-fast: ## Run fast tests only (exclude slow, integration, docker)
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m "not slow and not integration and not docker" -v
+
+.PHONY: test-performance
+test-performance: ## Run performance tests (isolated, avoid resource contention)
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run pytest -m performance -v --maxfail=1
 
 .PHONY: coverage-html
 coverage-html: ## Generate HTML coverage report

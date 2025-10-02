@@ -21,14 +21,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import asyncio
 import os
+from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import FlextLdapClient, FlextLdapModels
 
 
-async def demonstrate_generic_ldap_client() -> None:
+def demonstrate_generic_ldap_client() -> None:
     """Demonstrate generic LDAP client with universal compatibility."""
     logger = FlextLogger(__name__)
 
@@ -47,7 +47,7 @@ async def demonstrate_generic_ldap_client() -> None:
     try:
         # Connect with automatic schema discovery
         logger.info("Connecting to LDAP server with schema discovery...")
-        connect_result = await client.connect(
+        connect_result = client.connect(
             server_uri=server_uri,
             bind_dn=bind_dn,
             password=bind_password,
@@ -94,10 +94,10 @@ async def demonstrate_generic_ldap_client() -> None:
             )
 
         # Demonstrate universal search operations
-        await demonstrate_universal_search(client, logger)
+        demonstrate_universal_search(client, logger)
 
         # Demonstrate universal CRUD operations
-        await demonstrate_universal_crud(client, logger)
+        demonstrate_universal_crud(client, logger)
 
         # Demonstrate server-specific adaptations
         demonstrate_server_adaptations(client, logger)
@@ -108,13 +108,11 @@ async def demonstrate_generic_ldap_client() -> None:
     finally:
         # Disconnect
         if client.is_connected():
-            await client.unbind()
+            client.unbind()
             logger.info("Disconnected from LDAP server")
 
 
-async def demonstrate_universal_search(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_universal_search(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate universal search operations."""
     logger.info("\n=== Universal Search Operations ===")
 
@@ -135,7 +133,7 @@ async def demonstrate_universal_search(
 
     # Search for all entries (universal filter)
     logger.info("Searching for all entries...")
-    search_result = await client.search(
+    search_result = client.search(
         base_dn=base_dn,
         filter_str="(objectClass=*)",
         attributes=["objectClass", "cn", "sn", "mail"],
@@ -155,7 +153,7 @@ async def demonstrate_universal_search(
 
     # Search for person entries (common across LDAP implementations)
     logger.info("\nSearching for person entries...")
-    person_search = await client.search(
+    person_search = client.search(
         base_dn=base_dn,
         filter_str="(|(objectClass=person)(objectClass=inetOrgPerson)(objectClass=user))",
         attributes=["cn", "sn", "givenName", "mail", "objectClass"],
@@ -175,9 +173,7 @@ async def demonstrate_universal_search(
         logger.error("Person search failed: %s", person_search.error)
 
 
-async def demonstrate_universal_crud(
-    client: FlextLdapClient, logger: FlextLogger
-) -> None:
+def demonstrate_universal_crud(client: FlextLdapClient, logger: FlextLogger) -> None:
     """Demonstrate universal CRUD operations."""
     logger.info("\n=== Universal CRUD Operations ===")
 
@@ -204,7 +200,7 @@ async def demonstrate_universal_crud(
     }
 
     logger.info("Creating test entry: %s", test_dn)
-    create_result = await client.add_entry_universal(test_dn, test_attributes)
+    create_result = client.add_entry_universal(test_dn, test_attributes)
 
     if create_result.is_success:
         logger.info("Successfully created test entry")
@@ -212,7 +208,7 @@ async def demonstrate_universal_crud(
         # Modify the entry
         logger.info("Modifying test entry...")
         modify_changes: dict[str, object] = {"description": "Modified test user"}
-        modify_result = await client.modify_entry_universal(test_dn, modify_changes)
+        modify_result = client.modify_entry_universal(test_dn, modify_changes)
 
         if modify_result.is_success:
             logger.info("Successfully modified test entry")
@@ -221,7 +217,7 @@ async def demonstrate_universal_crud(
 
         # Delete the test entry
         logger.info("Deleting test entry...")
-        delete_result = await client.delete_entry_universal(test_dn)
+        delete_result = client.delete_entry_universal(test_dn)
 
         if delete_result.is_success:
             logger.info("Successfully deleted test entry")
@@ -395,7 +391,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    asyncio.run(demonstrate_generic_ldap_client())
+    run(demonstrate_generic_ldap_client())
 
     # Show server type adaptations
     demonstrate_different_server_types()

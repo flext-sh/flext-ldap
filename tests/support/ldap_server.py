@@ -14,7 +14,6 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportGeneralTypeIssues=false
 
-import asyncio
 import os
 from typing import cast, Protocol, TypedDict
 
@@ -78,7 +77,7 @@ class LdapTestServer:
         )
         self._container: object | None = None  # For backward compatibility
 
-    async def start(self) -> FlextResult[bool]:
+    def start(self) -> FlextResult[bool]:
         """Start LDAP server container using FlextTestDocker."""
         try:
             logger.info(
@@ -93,7 +92,7 @@ class LdapTestServer:
                 )
 
             # Wait for server to be ready
-            if await self.wait_for_ready():
+            if self.wait_for_ready():
                 logger.info("LDAP test server started successfully via FlextTestDocker")
                 return FlextResult[bool].ok(data=True)
             return FlextResult[bool].fail("LDAP server failed to start within timeout")
@@ -102,7 +101,7 @@ class LdapTestServer:
             logger.exception("Failed to start LDAP server")
             return FlextResult[bool].fail(f"Failed to start LDAP server: {e}")
 
-    async def stop(self) -> FlextResult[bool]:
+    def stop(self) -> FlextResult[bool]:
         """Stop LDAP server container using FlextTestDocker."""
         try:
             logger.info("Stopping LDAP container: %s", self.container_name)
@@ -122,49 +121,46 @@ class LdapTestServer:
             logger.exception("Failed to stop LDAP server")
             return FlextResult[bool].fail(f"Failed to stop LDAP server: {e}")
 
-    async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
+    def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
-        try:
-            async with asyncio.timeout(timeout_seconds):
-                while True:
-                    try:
-                        # Try to connect to LDAP server
-                        server = FlextLdapTypes.Server(
-                            host="localhost",
-                            port=self.port,
-                            use_ssl=False,
-                            connect_timeout=5,
-                        )
+        import time
 
-                        conn = FlextLdapTypes.Connection(
-                            server=server,
-                            user="cn=admin,dc=flext,dc=local",
-                            password=self.admin_password,
-                            auto_bind=True,
-                            authentication=FlextLdapTypes.SIMPLE,
-                        )
+        start_time = time.time()
+        while time.time() - start_time < timeout_seconds:
+            try:
+                # Try to connect to LDAP server
+                server = FlextLdapTypes.Server(
+                    host="localhost",
+                    port=self.port,
+                    use_ssl=False,
+                    connect_timeout=5,
+                )
 
-                        conn.search(
-                            search_base="dc=flext,dc=local",
-                            search_filter="(objectClass=*)",
-                            search_scope=FlextLdapTypes.BASE,
-                        )
+                conn = FlextLdapTypes.Connection(
+                    server=server,
+                    user="cn=admin,dc=flext,dc=local",
+                    password=self.admin_password,
+                    auto_bind=True,
+                    authentication=FlextLdapTypes.SIMPLE,
+                )
 
-                        conn.unbind()
-                        logger.info("LDAP server is ready")
-                    except Exception as e:
-                        logger.debug("LDAP server not ready yet: %s", e)
-                        await asyncio.sleep(
-                            FlextLdapConstants.LdapRetry.SERVER_READY_RETRY_DELAY
-                        )
-                    else:
-                        return True
+                conn.search(
+                    search_base="dc=flext,dc=local",
+                    search_filter="(objectClass=*)",
+                    search_scope=FlextLdapTypes.BASE,
+                )
 
-        except TimeoutError:
-            logger.exception("LDAP server failed to become ready within timeout")
-            return False
+                conn.unbind()
+                logger.info("LDAP server is ready")
+                return True
+            except Exception as e:
+                logger.debug("LDAP server not ready yet: %s", e)
+                time.sleep(FlextLdapConstants.LdapRetry.SERVER_READY_RETRY_DELAY)
 
-    async def setup_test_data(self) -> FlextResult[bool]:
+        logger.exception("LDAP server failed to become ready within timeout")
+        return False
+
+    def setup_test_data(self) -> FlextResult[bool]:
         """Set up initial test data in LDAP server."""
         try:
             # Connect to LDAP server
@@ -273,43 +269,42 @@ def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:
     )
 
 
-async def wait_for_ldap_server(
+def wait_for_ldap_server(
     host: str = "localhost",
     port: int = 3390,
     timeout_seconds: int = 60,
 ) -> bool:
     """Wait for LDAP server to be available."""
-    try:
-        async with asyncio.timeout(timeout_seconds):
-            while True:
-                try:
-                    server = FlextLdapTypes.Server(
-                        host=host,
-                        port=port,
-                        use_ssl=False,
-                        connect_timeout=5,
-                    )
+    import time
 
-                    conn_raw = FlextLdapTypes.Connection(
-                        server=server,
-                        user="cn=admin,dc=flext,dc=local",
-                        password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
-                        auto_bind=True,
-                        authentication=FlextLdapTypes.SIMPLE,
-                    )
-                    conn = conn_raw
+    start_time = time.time()
+    while time.time() - start_time < timeout_seconds:
+        try:
+            server = FlextLdapTypes.Server(
+                host=host,
+                port=port,
+                use_ssl=False,
+                connect_timeout=5,
+            )
 
-                    conn.search(
-                        search_base="dc=flext,dc=local",
-                        search_filter="(objectClass=*)",
-                        search_scope=FlextLdapTypes.BASE,
-                    )
+            conn_raw = FlextLdapTypes.Connection(
+                server=server,
+                user="cn=admin,dc=flext,dc=local",
+                password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
+                auto_bind=True,
+                authentication=FlextLdapTypes.SIMPLE,
+            )
+            conn = conn_raw
 
-                    conn.unbind()
-                except Exception:
-                    await asyncio.sleep(2)
-                else:
-                    return True
+            conn.search(
+                search_base="dc=flext,dc=local",
+                search_filter="(objectClass=*)",
+                search_scope=FlextLdapTypes.BASE,
+            )
 
-    except TimeoutError:
-        return False
+            conn.unbind()
+            return True
+        except Exception:
+            time.sleep(2)
+
+    return False

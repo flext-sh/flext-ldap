@@ -3,7 +3,7 @@
 
 This example demonstrates advanced usage patterns:
 - Complex configurations
-- Async/await patterns
+- /patterns
 - Context managers
 - Enterprise error handling
 - Performance optimizations
@@ -19,9 +19,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncIterator, Awaitable
-from contextlib import asynccontextmanager
+from asyncio import gather, run, sleep
+from collections.abc import Iterator, Awaitable
+from contextlib import contextmanager
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
@@ -33,12 +33,12 @@ from flext_ldap import (
 logger = FlextLogger(__name__)
 
 
-@asynccontextmanager
-async def ldap_session(
+@contextmanager
+def ldap_session(
     server_url: str,
     bind_dn: str,
     password: str,
-) -> AsyncIterator[tuple[FlextLdapClient, str]]:
+) -> Iterator[tuple[FlextLdapClient, str]]:
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
@@ -64,7 +64,7 @@ async def ldap_session(
 
     try:
         # Attempt connection
-        connection_result: FlextResult[bool] = await api.connect(
+        connection_result: FlextResult[bool] = api.connect(
             server_uri=server_url,
             bind_dn=bind_dn,
             password=password,
@@ -86,7 +86,7 @@ async def ldap_session(
     finally:
         # Cleanup
         try:
-            await api.unbind()
+            api.unbind()
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
             logger.warning(
@@ -144,11 +144,11 @@ def demonstrate_comprehensive_configuration() -> None:
         logger.exception("Configuration demonstration failed")
 
 
-async def demonstrate_async_patterns() -> None:
-    """Demonstrate async/await patterns."""
+def demonstrate_patterns() -> None:
+    """Demonstrate /patterns."""
     try:
         # 1. Context manager usage
-        async with ldap_session(
+        with ldap_session(
             "ldap://demo.example.com:389",
             "cn=admin,dc=example,dc=com",
             "password",
@@ -170,7 +170,7 @@ async def demonstrate_async_patterns() -> None:
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            results = gather(*tasks, return_exceptions=True)
 
             sum(
                 1
@@ -181,15 +181,15 @@ async def demonstrate_async_patterns() -> None:
             )
 
     except Exception:
-        logger.exception("Async patterns demonstration failed")
+        logger.exception("patterns demonstration failed")
 
 
-async def demonstrate_error_recovery() -> None:
+def demonstrate_error_recovery() -> None:
     """Demonstrate error recovery patterns."""
     # Constants for retry logic
     failure_attempts = 2
 
-    async def attempt_operation_with_retry(
+    def attempt_operation_with_retry(
         operation_name: str,
         max_retries: int = 3,
     ) -> str | None:
@@ -236,15 +236,15 @@ async def demonstrate_error_recovery() -> None:
                     raise
 
                 # Exponential backoff
-                await asyncio.sleep(2**attempt)
+                sleep(2**attempt)
         return None
 
     try:
         # 1. Connection retry
-        await attempt_operation_with_retry("LDAP Connection")
+        attempt_operation_with_retry("LDAP Connection")
 
         # 2. Search retry
-        await attempt_operation_with_retry("LDAP Search")
+        attempt_operation_with_retry("LDAP Search")
 
     except Exception:
         logger.exception("Error handling patterns demonstration failed")
@@ -277,7 +277,7 @@ def demonstrate_performance_patterns() -> None:
         logger.exception("Performance demonstration failed")
 
 
-async def main() -> None:
+def main() -> None:
     """Run the main demonstration function."""
     try:
         # 1. Value objects
@@ -286,11 +286,11 @@ async def main() -> None:
         # 2. Comprehensive configuration
         demonstrate_comprehensive_configuration()
 
-        # 3. Async patterns
-        await demonstrate_async_patterns()
+        # 3. patterns
+        demonstrate_patterns()
 
         # 4. Error recovery
-        await demonstrate_error_recovery()
+        demonstrate_error_recovery()
 
         # 5. Performance patterns
         demonstrate_performance_patterns()
@@ -306,4 +306,4 @@ if __name__ == "__main__":
 
     os.environ["FLEXT_LOG_LEVEL"] = "INFO"
 
-    asyncio.run(main())
+    run(main())

@@ -84,10 +84,10 @@ class FlextLdapAPI:
     def groups(self) -> FlextLdapRepositories.GroupRepository
 
     # Core Operations
-    async def authenticate_user() -> FlextResult[LdapUser]
-    async def connect() -> FlextResult[bool]
-    async def search_users() -> FlextResult[list[LdapUser]]
-    async def create_user() -> FlextResult[LdapUser]
+    def authenticate_user() -> FlextResult[LdapUser]
+    def connect() -> FlextResult[bool]
+    def search_users() -> FlextResult[list[LdapUser]]
+    def create_user() -> FlextResult[LdapUser]
 ```
 
 **Method Connections Analysis**:
@@ -118,24 +118,24 @@ class FlextLdapAPI:
 ```python
 class FlextLdapClient:
     # Connection Management
-    async def connect() -> FlextResult[bool]
-    async def bind() -> FlextResult[bool]
-    async def unbind() -> FlextResult[None]
+    def connect() -> FlextResult[bool]
+    def bind() -> FlextResult[bool]
+    def unbind() -> FlextResult[None]
 
     # Authentication
-    async def authenticate_user() -> FlextResult[LdapUser]
+    def authenticate_user() -> FlextResult[LdapUser]
 
     # Search Operations
-    async def search_with_request() -> FlextResult[SearchResponse]
-    async def search_users() -> FlextResult[list[LdapUser]]
-    async def search_groups() -> FlextResult[list[Group]]
+    def search_with_request() -> FlextResult[SearchResponse]
+    def search_users() -> FlextResult[list[LdapUser]]
+    def search_groups() -> FlextResult[list[Group]]
 
     # CRUD Operations
-    async def create_user() -> FlextResult[LdapUser]
-    async def create_group() -> FlextResult[Group]
-    async def get_user() -> FlextResult[LdapUser | None]
-    async def update_user_attributes() -> FlextResult[bool]
-    async def delete_user() -> FlextResult[None]
+    def create_user() -> FlextResult[LdapUser]
+    def create_group() -> FlextResult[Group]
+    def get_user() -> FlextResult[LdapUser | None]
+    def update_user_attributes() -> FlextResult[bool]
+    def delete_user() -> FlextResult[None]
 ```
 
 **Method Connections Analysis**:
@@ -275,27 +275,27 @@ class FlextLdapModels(FlextModels):
 class FlextLdapProtocols:
     class Repository(ABC):
         @abstractmethod
-        async def search() -> FlextResult[list[dict]]
+        def search() -> FlextResult[list[dict]]
         @abstractmethod
-        async def get() -> FlextResult[dict | None]
+        def get() -> FlextResult[dict | None]
         @abstractmethod
-        async def create() -> FlextResult[bool]
+        def create() -> FlextResult[bool]
 
     class Connection(ABC):
         @abstractmethod
-        async def connect() -> FlextResult[bool]
+        def connect() -> FlextResult[bool]
         @abstractmethod
-        async def bind() -> FlextResult[bool]
+        def bind() -> FlextResult[bool]
 
     class Authentication(ABC):
         @abstractmethod
-        async def authenticate_user() -> FlextResult[bool]
+        def authenticate_user() -> FlextResult[bool]
 
     class Search(ABC):
         @abstractmethod
-        async def search_users() -> FlextResult[list[dict]]
+        def search_users() -> FlextResult[list[dict]]
         @abstractmethod
-        async def search_groups() -> FlextResult[list[dict]]
+        def search_groups() -> FlextResult[list[dict]]
 ```
 
 **Method Connections Analysis**:
@@ -321,23 +321,23 @@ class FlextLdapRepositories:
     class Repository(ABC, Generic[T]):
         def __init__(self, client: object) -> None
         @abstractmethod
-        async def find_by_dn() -> FlextResult[T]
+        def find_by_dn() -> FlextResult[T]
         @abstractmethod
-        async def search() -> FlextResult[list[dict]]
+        def search() -> FlextResult[list[dict]]
         @abstractmethod
-        async def save() -> FlextResult[T]
+        def save() -> FlextResult[T]
         @abstractmethod
-        async def delete() -> FlextResult[bool]
+        def delete() -> FlextResult[bool]
 
     class UserRepository(Repository[FlextLdapModels.LdapUser]):
-        async def find_by_dn() -> FlextResult[LdapUser]
-        async def find_user_by_uid() -> FlextResult[LdapUser]
-        async def find_users_by_filter() -> FlextResult[list[LdapUser]]
+        def find_by_dn() -> FlextResult[LdapUser]
+        def find_user_by_uid() -> FlextResult[LdapUser]
+        def find_users_by_filter() -> FlextResult[list[LdapUser]]
 
     class GroupRepository(Repository[FlextLdapModels.Group]):
-        async def find_by_dn() -> FlextResult[Group]
-        async def find_group_by_cn() -> FlextResult[Group]
-        async def get_group_members() -> FlextResult[list[str]]
+        def find_by_dn() -> FlextResult[Group]
+        def find_group_by_cn() -> FlextResult[Group]
+        def get_group_members() -> FlextResult[list[str]]
 ```
 
 **Method Connections Analysis**:
@@ -847,7 +847,7 @@ def validate_dn(self, dn: str) -> FlextResult[str]:
 
 ```python
 # ❌ MOCK - Not functional for production
-async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser]:
+def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser]:
     try:
         # Mock implementation - would use actual LDAP client
         user = FlextLdapModels.LdapUser(
@@ -873,23 +873,23 @@ async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser]:
 
 ```python
 # ❌ REDUNDANT - Just calls other methods
-async def close_connection(self) -> FlextResult[None]:
-    return await self.unbind()
+def close_connection(self) -> FlextResult[None]:
+    return self.unbind()
 
-async def update_group(self, dn: str, attributes: dict[str, object]) -> FlextResult[bool]:
-    return await self.update_group_attributes(dn, attributes)
+def update_group(self, dn: str, attributes: dict[str, object]) -> FlextResult[bool]:
+    return self.update_group_attributes(dn, attributes)
 
-async def add_member_to_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
-    return await self.add_member(group_dn, member_dn)
+def add_member_to_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+    return self.add_member(group_dn, member_dn)
 
-async def remove_member_from_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
-    return await self.remove_member(group_dn, member_dn)
+def remove_member_from_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+    return self.remove_member(group_dn, member_dn)
 
-async def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
-    return await self.get_members(group_dn)
+def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
+    return self.get_members(group_dn)
 
-async def disconnect(self) -> FlextResult[None]:
-    return await self.unbind()
+def disconnect(self) -> FlextResult[None]:
+    return self.unbind()
 ```
 
 **Impact**: ~30 lines of unnecessary code, API bloat, confusion about which method to use.

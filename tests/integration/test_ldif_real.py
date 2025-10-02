@@ -18,17 +18,14 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestRealLdifExport:
     """Test LDIF export from real LDAP server."""
 
-    async def test_export_base_dn_to_ldif(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_export_base_dn_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test exporting base DN to LDIF format."""
         client = shared_ldap_client
 
-        result = await client.search(
+        result = client.search(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
             attributes=["*"],
@@ -42,19 +39,17 @@ class TestRealLdifExport:
             assert "dn" in entry
             assert "objectClass" in entry
 
-    async def test_export_users_to_ldif(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_export_users_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test exporting user entries to LDIF format."""
         client = shared_ldap_client
 
         # Create test OU and users
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=ldif_users,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "ldif_users"},
         )
 
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="cn=ldif_user1,ou=ldif_users,dc=flext,dc=local",
             attributes={
                 "objectClass": ["inetOrgPerson"],
@@ -66,7 +61,7 @@ class TestRealLdifExport:
         )
 
         # Export to LDIF-compatible format
-        result = await client.search(
+        result = client.search(
             base_dn="ou=ldif_users,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
             attributes=["*"],
@@ -83,24 +78,22 @@ class TestRealLdifExport:
         assert "objectClass" in ldif_entry
 
         # Cleanup
-        await client.delete_entry_universal(
+        client.delete_entry_universal(
             dn="cn=ldif_user1,ou=ldif_users,dc=flext,dc=local"
         )
-        await client.delete_entry_universal(dn="ou=ldif_users,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=ldif_users,dc=flext,dc=local")
 
-    async def test_export_groups_to_ldif(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_export_groups_to_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test exporting group entries to LDIF format."""
         client = shared_ldap_client
 
         # Create test OU and group
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=ldif_groups,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "ldif_groups"},
         )
 
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="cn=ldif_group1,ou=ldif_groups,dc=flext,dc=local",
             attributes={
                 "objectClass": ["groupOfNames"],
@@ -110,7 +103,7 @@ class TestRealLdifExport:
         )
 
         # Export to LDIF-compatible format
-        result = await client.search(
+        result = client.search(
             base_dn="ou=ldif_groups,dc=flext,dc=local",
             filter_str="(objectClass=groupOfNames)",
             attributes=["*"],
@@ -127,18 +120,17 @@ class TestRealLdifExport:
         assert "objectClass" in ldif_entry
 
         # Cleanup
-        await client.delete_entry_universal(
+        client.delete_entry_universal(
             dn="cn=ldif_group1,ou=ldif_groups,dc=flext,dc=local"
         )
-        await client.delete_entry_universal(dn="ou=ldif_groups,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=ldif_groups,dc=flext,dc=local")
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestRealLdifImport:
     """Test LDIF import to real LDAP server."""
 
-    async def test_import_organizational_unit_from_ldif(
+    def test_import_organizational_unit_from_ldif(
         self, shared_ldap_client: FlextLdapClient
     ) -> None:
         """Test importing organizational unit from LDIF-like data."""
@@ -155,7 +147,7 @@ class TestRealLdifImport:
         dn_value = ldif_entry["dn"]
         if isinstance(dn_value, list):
             dn_value = dn_value[0] if dn_value else ""
-        result = await client.add_entry_universal(
+        result = client.add_entry_universal(
             dn=str(dn_value),
             attributes={k: v for k, v in ldif_entry.items() if k != "dn"},
         )
@@ -163,7 +155,7 @@ class TestRealLdifImport:
         assert result.is_success
 
         # Verify import
-        search_result = await client.search(
+        search_result = client.search(
             base_dn="ou=imported,dc=flext,dc=local",
             filter_str="(objectClass=organizationalUnit)",
         )
@@ -172,16 +164,14 @@ class TestRealLdifImport:
         assert len(search_result.value) > 0
 
         # Cleanup
-        await client.delete_entry_universal(dn="ou=imported,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=imported,dc=flext,dc=local")
 
-    async def test_import_user_from_ldif(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_import_user_from_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test importing user from LDIF-like data."""
         client = shared_ldap_client
 
         # Create parent OU
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=import_test,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "import_test"},
         )
@@ -200,7 +190,7 @@ class TestRealLdifImport:
         dn_value = ldif_user["dn"]
         if isinstance(dn_value, list):
             dn_value = dn_value[0] if dn_value else ""
-        result = await client.add_entry_universal(
+        result = client.add_entry_universal(
             dn=str(dn_value),
             attributes={k: v for k, v in ldif_user.items() if k != "dn"},
         )
@@ -208,7 +198,7 @@ class TestRealLdifImport:
         assert result.is_success
 
         # Verify import
-        search_result = await client.search(
+        search_result = client.search(
             base_dn="cn=imported_user,ou=import_test,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
             attributes=["*"],  # Request all attributes
@@ -220,19 +210,17 @@ class TestRealLdifImport:
         assert "imported_user" in str(imported_entry.get("cn", ""))
 
         # Cleanup
-        await client.delete_entry_universal(
+        client.delete_entry_universal(
             dn="cn=imported_user,ou=import_test,dc=flext,dc=local"
         )
-        await client.delete_entry_universal(dn="ou=import_test,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=import_test,dc=flext,dc=local")
 
-    async def test_import_group_from_ldif(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_import_group_from_ldif(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test importing group from LDIF-like data."""
         client = shared_ldap_client
 
         # Create parent OU
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=import_groups,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "import_groups"},
         )
@@ -249,7 +237,7 @@ class TestRealLdifImport:
         dn_value = ldif_group["dn"]
         if isinstance(dn_value, list):
             dn_value = dn_value[0] if dn_value else ""
-        result = await client.add_entry_universal(
+        result = client.add_entry_universal(
             dn=str(dn_value),
             attributes={k: v for k, v in ldif_group.items() if k != "dn"},
         )
@@ -257,7 +245,7 @@ class TestRealLdifImport:
         assert result.is_success
 
         # Verify import
-        search_result = await client.search(
+        search_result = client.search(
             base_dn="cn=imported_group,ou=import_groups,dc=flext,dc=local",
             filter_str="(objectClass=groupOfNames)",
         )
@@ -266,25 +254,24 @@ class TestRealLdifImport:
         assert len(search_result.value) > 0
 
         # Cleanup
-        await client.delete_entry_universal(
+        client.delete_entry_universal(
             dn="cn=imported_group,ou=import_groups,dc=flext,dc=local"
         )
-        await client.delete_entry_universal(dn="ou=import_groups,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=import_groups,dc=flext,dc=local")
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestRealLdifRoundTrip:
     """Test LDIF export/import round-trip operations."""
 
-    async def test_ldif_roundtrip_user_data(
+    def test_ldif_roundtrip_user_data(
         self, shared_ldap_client: FlextLdapClient
     ) -> None:
         """Test complete round-trip: export to LDIF, re-import."""
         client = shared_ldap_client
 
         # Create original user
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=roundtrip,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "roundtrip"},
         )
@@ -301,13 +288,13 @@ class TestRealLdifRoundTrip:
         dn_value = original_user["dn"]
         if isinstance(dn_value, list):
             dn_value = dn_value[0] if dn_value else ""
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn=str(dn_value),
             attributes={k: v for k, v in original_user.items() if k != "dn"},
         )
 
         # Export to LDIF format (search)
-        export_result = await client.search(
+        export_result = client.search(
             base_dn="cn=original,ou=roundtrip,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
             attributes=["*"],
@@ -340,7 +327,7 @@ class TestRealLdifRoundTrip:
                 else:
                     attributes[k] = [str(v)]
 
-        import_result = await client.add_entry_universal(
+        import_result = client.add_entry_universal(
             dn=str(dn_value),
             attributes=attributes,
         )
@@ -348,7 +335,7 @@ class TestRealLdifRoundTrip:
         assert import_result.is_success
 
         # Verify round-trip
-        verify_result = await client.search(
+        verify_result = client.search(
             base_dn="cn=reimported,ou=roundtrip,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
         )
@@ -357,29 +344,23 @@ class TestRealLdifRoundTrip:
         assert len(verify_result.value) > 0
 
         # Cleanup
-        await client.delete_entry_universal(
-            dn="cn=original,ou=roundtrip,dc=flext,dc=local"
-        )
-        await client.delete_entry_universal(
-            dn="cn=reimported,ou=roundtrip,dc=flext,dc=local"
-        )
-        await client.delete_entry_universal(dn="ou=roundtrip,dc=flext,dc=local")
+        client.delete_entry_universal(dn="cn=original,ou=roundtrip,dc=flext,dc=local")
+        client.delete_entry_universal(dn="cn=reimported,ou=roundtrip,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=roundtrip,dc=flext,dc=local")
 
-    async def test_ldif_bulk_export_import(
-        self, shared_ldap_client: FlextLdapClient
-    ) -> None:
+    def test_ldif_bulk_export_import(self, shared_ldap_client: FlextLdapClient) -> None:
         """Test bulk LDIF export and import operations."""
         client = shared_ldap_client
 
         # Create bulk test data
-        await client.add_entry_universal(
+        client.add_entry_universal(
             dn="ou=bulk_test,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "bulk_test"},
         )
 
         # Create multiple users
         for i in range(1, 4):
-            await client.add_entry_universal(
+            client.add_entry_universal(
                 dn=f"cn=bulk_user{i},ou=bulk_test,dc=flext,dc=local",
                 attributes={
                     "objectClass": ["inetOrgPerson"],
@@ -391,7 +372,7 @@ class TestRealLdifRoundTrip:
             )
 
         # Bulk export
-        export_result = await client.search(
+        export_result = client.search(
             base_dn="ou=bulk_test,dc=flext,dc=local",
             filter_str="(objectClass=inetOrgPerson)",
             attributes=["*"],
@@ -408,7 +389,7 @@ class TestRealLdifRoundTrip:
 
         # Cleanup
         for i in range(1, 4):
-            await client.delete_entry_universal(
+            client.delete_entry_universal(
                 dn=f"cn=bulk_user{i},ou=bulk_test,dc=flext,dc=local"
             )
-        await client.delete_entry_universal(dn="ou=bulk_test,dc=flext,dc=local")
+        client.delete_entry_universal(dn="ou=bulk_test,dc=flext,dc=local")

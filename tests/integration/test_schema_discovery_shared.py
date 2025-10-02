@@ -21,21 +21,20 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestSharedSchemaDiscovery:
     """Test schema discovery operations using shared LDAP container."""
 
-    async def test_discover_schema_from_shared_server(
+    def test_discover_schema_from_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test discovering schema from shared LDAP server."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
+        schema_result = shared_ldap_client.discover_schema()
 
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
         assert schema_result.value is not None
 
         # Verify schema data structure
@@ -45,16 +44,16 @@ class TestSharedSchemaDiscovery:
         assert schema_data.server_type is not None
         assert schema_data.server_quirks is not None
 
-    async def test_detect_server_type_with_shared_server(
+    def test_detect_server_type_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test server type detection with shared LDAP server."""
         # Get server info first
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data.server_type is not None
@@ -65,16 +64,16 @@ class TestSharedSchemaDiscovery:
             FlextLdapModels.LdapServerType.GENERIC,
         }, f"Unexpected server type: {schema_data.server_type}"
 
-    async def test_discover_server_capabilities_with_shared_server(
+    def test_discover_server_capabilities_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test server capabilities discovery with shared LDAP server."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data.server_info is not None
@@ -89,16 +88,16 @@ class TestSharedSchemaDiscovery:
             if attr in server_info:
                 assert server_info[attr] is not None
 
-    async def test_get_server_quirks_with_shared_server(
+    def test_get_server_quirks_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test server quirks detection with shared LDAP server."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data.server_quirks is not None
@@ -111,16 +110,16 @@ class TestSharedSchemaDiscovery:
         assert quirks is not None
         assert quirks.server_type is not None
 
-    async def test_quirks_detector_with_shared_server_info(
+    def test_quirks_detector_with_shared_server_info(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test quirks detector with shared server information."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data.server_info is not None
@@ -134,31 +133,31 @@ class TestSharedSchemaDiscovery:
         assert quirks is not None
         assert isinstance(quirks, FlextLdapModels.ServerQuirks)
 
-    async def test_schema_discovery_performance_with_shared_server(
+    def test_schema_discovery_performance_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test schema discovery performance with shared server."""
         # Measure schema discovery time
         start_time = time.time()
-        schema_result = await shared_ldap_client.discover_schema()
+        schema_result = shared_ldap_client.discover_schema()
         end_time = time.time()
 
         discovery_time = end_time - start_time
 
         # Verify discovery succeeded
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         # Verify reasonable performance (should complete within 10 seconds)
-        assert (
-            discovery_time < 10.0
-        ), f"Schema discovery took too long: {discovery_time:.2f}s"
+        assert discovery_time < 10.0, (
+            f"Schema discovery took too long: {discovery_time:.2f}s"
+        )
 
         # Log performance for monitoring
 
-    async def test_schema_discovery_with_shared_config(
+    def test_schema_discovery_with_shared_config(
         self,
         shared_ldap_connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
@@ -168,7 +167,7 @@ class TestSharedSchemaDiscovery:
         # Connect using shared config
         assert shared_ldap_connection_config.bind_dn is not None
         assert shared_ldap_connection_config.bind_password is not None
-        connect_result = await client.connect(
+        connect_result = client.connect(
             server_uri=shared_ldap_connection_config.server,
             bind_dn=shared_ldap_connection_config.bind_dn,
             password=shared_ldap_connection_config.bind_password,
@@ -178,28 +177,28 @@ class TestSharedSchemaDiscovery:
 
         try:
             # Test schema discovery
-            schema_result = await client.discover_schema()
-            assert (
-                schema_result.is_success
-            ), f"Schema discovery failed: {schema_result.error}"
+            schema_result = client.discover_schema()
+            assert schema_result.is_success, (
+                f"Schema discovery failed: {schema_result.error}"
+            )
 
             schema_data = schema_result.value
             assert schema_data is not None
             assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
 
         finally:
-            await client.close_connection()
+            client.close_connection()
 
-    async def test_shared_ldap_schema_components(
+    def test_shared_ldap_schema_components(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test schema components discovery with shared LDAP server."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data is not None
@@ -216,16 +215,16 @@ class TestSharedSchemaDiscovery:
         assert isinstance(schema_data.naming_contexts, list)
         assert isinstance(schema_data.supported_controls, list)
 
-    async def test_shared_ldap_schema_normalization(
+    def test_shared_ldap_schema_normalization(
         self,
         shared_ldap_client: FlextLdapClient,
     ) -> None:
         """Test schema normalization with shared LDAP server."""
         # Test schema discovery
-        schema_result = await shared_ldap_client.discover_schema()
-        assert (
-            schema_result.is_success
-        ), f"Schema discovery failed: {schema_result.error}"
+        schema_result = shared_ldap_client.discover_schema()
+        assert schema_result.is_success, (
+            f"Schema discovery failed: {schema_result.error}"
+        )
 
         schema_data = schema_result.value
         assert schema_data is not None
@@ -235,30 +234,29 @@ class TestSharedSchemaDiscovery:
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestSharedUniversalOperations:
     """Test universal operations using shared LDAP container."""
 
-    async def test_universal_search_with_shared_server(
+    def test_universal_search_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
     ) -> None:
         """Test universal search with shared LDAP server."""
         # Test base search
-        search_result = await shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
             filter_str="(objectClass=*)",
             scope="base",
         )
 
-        assert (
-            search_result.is_success
-        ), f"Universal search failed: {search_result.error}"
+        assert search_result.is_success, (
+            f"Universal search failed: {search_result.error}"
+        )
         assert search_result.value is not None
         assert len(search_result.value) > 0
 
-    async def test_universal_modify_with_shared_server(
+    def test_universal_modify_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
@@ -267,7 +265,7 @@ class TestSharedUniversalOperations:
         base_dn = shared_ldap_config["base_dn"]
 
         # Test modifying the base DN description
-        modify_result = await shared_ldap_client.modify_entry_universal(
+        modify_result = shared_ldap_client.modify_entry_universal(
             dn=base_dn,
             changes={
                 "description": ["FLEXT Shared Test Organization - Modified by Test"]
@@ -280,11 +278,11 @@ class TestSharedUniversalOperations:
             # Just verify the operation was attempted
             assert modify_result.error is not None
         else:
-            assert (
-                modify_result.is_success
-            ), f"Universal modify failed: {modify_result.error}"
+            assert modify_result.is_success, (
+                f"Universal modify failed: {modify_result.error}"
+            )
 
-    async def test_universal_add_with_shared_server(
+    def test_universal_add_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
@@ -294,7 +292,7 @@ class TestSharedUniversalOperations:
         test_dn = f"ou=test-universal,{base_dn}"
 
         # Test adding a test organizational unit
-        add_result = await shared_ldap_client.add_entry_universal(
+        add_result = shared_ldap_client.add_entry_universal(
             dn=test_dn,
             attributes={
                 "objectClass": ["organizationalUnit", "top"],
@@ -306,7 +304,7 @@ class TestSharedUniversalOperations:
         # Note: Addition might fail if entry already exists
         if not add_result.is_success:
             # Verify the entry exists by searching
-            search_result = await shared_ldap_client.search_universal(
+            search_result = shared_ldap_client.search_universal(
                 base_dn=test_dn, filter_str="(objectClass=*)", scope="base"
             )
             # If search succeeds, entry exists (which is OK)
@@ -321,11 +319,11 @@ class TestSharedUniversalOperations:
             assert add_result.is_success, f"Universal add failed: {add_result.error}"
 
             # Clean up - delete the test entry
-            delete_result = await shared_ldap_client.delete_entry_universal(test_dn)
+            delete_result = shared_ldap_client.delete_entry_universal(test_dn)
             if not delete_result.is_success:
                 pass
 
-    async def test_universal_delete_with_shared_server(
+    def test_universal_delete_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClient,
         shared_ldap_config: dict,
@@ -335,7 +333,7 @@ class TestSharedUniversalOperations:
         test_dn = f"ou=test-delete,{base_dn}"
 
         # First try to add an entry to delete
-        add_result = await shared_ldap_client.add_entry_universal(
+        add_result = shared_ldap_client.add_entry_universal(
             dn=test_dn,
             attributes={
                 "objectClass": ["organizationalUnit", "top"],
@@ -346,13 +344,13 @@ class TestSharedUniversalOperations:
 
         # If add succeeded, try to delete it
         if add_result.is_success:
-            delete_result = await shared_ldap_client.delete_entry_universal(test_dn)
-            assert (
-                delete_result.is_success
-            ), f"Universal delete failed: {delete_result.error}"
+            delete_result = shared_ldap_client.delete_entry_universal(test_dn)
+            assert delete_result.is_success, (
+                f"Universal delete failed: {delete_result.error}"
+            )
         else:
             # If add failed, entry might already exist, try to delete it anyway
-            delete_result = await shared_ldap_client.delete_entry_universal(test_dn)
+            delete_result = shared_ldap_client.delete_entry_universal(test_dn)
             # Delete might fail due to permissions or non-existence
             if not delete_result.is_success:
                 pass
