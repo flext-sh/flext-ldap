@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from asyncio import run
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldap import (
@@ -181,4 +180,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    run(main())
+    main()

@@ -851,7 +851,7 @@ class FlextLdapClient(FlextService[None]):
                 add_result.error or "User creation failed"
             )
 
-        return self._retrieve_created_user(request.dn)
+        return self.retrieve_created_user(request.dn)
 
     def _build_user_attributes(
         self, request: FlextLdapModels.CreateUserRequest
@@ -878,6 +878,8 @@ class FlextLdapClient(FlextService[None]):
                 ldap3_attributes["title"] = [request.title]
             if request.organization:
                 ldap3_attributes["o"] = [request.organization]
+            if request.organizational_unit:
+                ldap3_attributes["ou"] = [request.organizational_unit]
             if request.user_password:
                 password_value = (
                     request.user_password.get_secret_value()
@@ -924,8 +926,11 @@ class FlextLdapClient(FlextService[None]):
         try:
             created_user_result = self.get_user(user_dn)
             if created_user_result.is_failure:
+                self._logger.error(
+                    "User retrieval failed: %s", created_user_result.error
+                )
                 return FlextResult[FlextLdapModels.LdapUser].fail(
-                    "User created but failed to retrieve",
+                    f"User created but failed to retrieve: {created_user_result.error}",
                 )
 
             # We know the user exists since we just created it
@@ -1402,16 +1407,20 @@ class FlextLdapClient(FlextService[None]):
             # Convert attributes to LDAP modification format
             ldap3_changes: FlextLdapTypes.LdapDomain.ModifyChanges = {}
             for attr_name, attr_value in attributes.items():
+                # Ensure attr_value is a list for LDAP modification
+                if isinstance(attr_value, list):
+                    ldap_values = [str(v) for v in attr_value]
+                else:
+                    ldap_values = [str(attr_value)]
                 ldap3_changes[attr_name] = [
-                    (FlextLdapTypes.MODIFY_REPLACE, [str(attr_value)])
+                    (FlextLdapTypes.MODIFY_REPLACE, ldap_values)
                 ]
 
-                # Perform modification
-                success = self._connection.modify(
-                    dn,
-                    ldap3_changes,
-                )
-            success = False
+            # Perform modification
+            success = self._connection.modify(
+                dn,
+                ldap3_changes,
+            )
 
             if not success:
                 return FlextResult[bool].fail(

@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from asyncio import run
 from urllib.parse import urlparse
 
 from flext_core import FlextLogger, FlextResult
@@ -348,4 +347,4 @@ def _demo_error_handling(_: FlextLdapClient) -> None:
 
 
 if __name__ == "__main__":
-    run(main())
+    main()

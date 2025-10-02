@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 """
 
 import os
-from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import (
@@ -481,7 +480,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    run(demonstrate_oracle_oud_opends_support())
+    demonstrate_oracle_oud_opends_support()
 
     # Show server type detection
     demonstrate_oracle_server_types()

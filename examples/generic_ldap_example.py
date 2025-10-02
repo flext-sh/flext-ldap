@@ -22,7 +22,6 @@ SPDX-License-Identifier: MIT
 """
 
 import os
-from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import FlextLdapClient, FlextLdapModels
@@ -391,7 +390,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    run(demonstrate_generic_ldap_client())
+    demonstrate_generic_ldap_client()
 
     # Show server type adaptations
     demonstrate_different_server_types()

@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from asyncio import gather, run, sleep
+from asyncio import gather, sleep
 from collections.abc import Iterator, Awaitable
 from contextlib import contextmanager
 
@@ -306,4 +306,4 @@ if __name__ == "__main__":
 
     os.environ["FLEXT_LOG_LEVEL"] = "INFO"
 
-    run(main())
+    main()
