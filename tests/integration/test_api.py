@@ -238,17 +238,18 @@ class TestLdapServiceRealOperations:
 
     def test_service_user_lifecycle_real_operations(
         self,
-        ldap_api: FlextLdapClient,
+        ldap_client: FlextLdapClient,
         clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
         # Setup: Create OU for users
-        client = ldap_api
-        client.connect(
+        client = ldap_client
+        result = client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
             str(clean_ldap_container["password"]),
         )
+        assert result.is_success, f"Failed to connect: {result.error}"
 
         # Create users OU
         ou_dn = f"ou=users,{clean_ldap_container['base_dn']}"

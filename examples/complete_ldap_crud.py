@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 
 import os
 import sys
-from asyncio import run
 from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
@@ -252,7 +251,7 @@ def main() -> int:
     logger.info("=" * 50)
 
     try:
-        run(demonstrate_crud_operations())
+        demonstrate_crud_operations()
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user")
     except Exception:

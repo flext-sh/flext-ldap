@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 """
 
 import os
-from asyncio import run
 
 from flext_core import FlextLogger
 from flext_ldap import (
@@ -282,7 +281,7 @@ if __name__ == "__main__":
     print()
 
     # Run the demonstration
-    run(demonstrate_flext_integrated_ldap())
+    demonstrate_flext_integrated_ldap()
 
     # Show server type adaptations
     demonstrate_server_type_adaptations()
