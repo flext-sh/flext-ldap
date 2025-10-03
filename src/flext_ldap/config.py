@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any
 from flext_core import (
     FlextConfig,
     FlextConstants,
-    FlextProtocols,
     FlextResult,
     FlextTypes,
 )
@@ -479,7 +478,7 @@ class FlextLdapConfig(FlextConfig):
         return {
             "pool_size": self.ldap_pool_size,
             "pool_timeout": self.ldap_pool_timeout,
-            "pool_utilization": f"{self.ldap_pool_size}/{FlextLdapConstants.Protocol.MAX_POOL_SIZE}",
+            "pool_utilization": f"{self.ldap_pool_size}/50",
         }
 
     @computed_field
@@ -1012,7 +1011,10 @@ class FlextLdapConfig(FlextConfig):
         """
         try:
             attributes_data = data.get("attributes", [])
-            str_attributes = [str(attr) for attr in attributes_data if attr is not None]
+            if isinstance(attributes_data, list):
+                str_attributes = [str(attr) for attr in attributes_data if attr is not None]
+            else:
+                str_attributes = []
             config = FlextLdapModels.SearchConfig(
                 base_dn=str(data.get("base_dn", "")),
                 filter_str=str(
@@ -1041,11 +1043,15 @@ class FlextLdapConfig(FlextConfig):
         """
         try:
             values = data.get("values", [])
+            if isinstance(values, list):
+                str_values = [str(v) for v in values if v is not None]
+            else:
+                str_values = []
             config: dict[str, str | FlextTypes.StringList] = {
                 "dn": str(data.get("dn", "")),
                 "operation": str(data.get("operation", "replace")),
                 "attribute": str(data.get("attribute", "")),
-                "values": [str(v) for v in values if v is not None],
+                "values": str_values,
             }
             return FlextResult[dict[str, str | FlextTypes.StringList]].ok(config)
         except Exception as e:
