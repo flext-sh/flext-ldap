@@ -19,15 +19,19 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.api import FlextLdap, FlextLdapAPI
+from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.connection import FlextLdapConnection
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.operations import FlextLdapOperations
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers import (
     ActiveDirectoryOperations,
     BaseServerOperations,
@@ -49,6 +53,10 @@ __version__: str = VERSION.version
 __version_info__: tuple[int | str, ...] = VERSION.version_info
 
 __all__ = [
+    "PROJECT_VERSION",
+    "VERSION",
+    "ActiveDirectoryOperations",
+    "BaseServerOperations",
     "FlextLdap",
     "FlextLdapAPI",
     "FlextLdapAclConstants",
@@ -56,29 +64,29 @@ __all__ = [
     "FlextLdapAclManager",
     "FlextLdapAclModels",
     "FlextLdapAclParsers",
+    "FlextLdapAuthentication",
     "FlextLdapClient",
     "FlextLdapConfig",
+    "FlextLdapConnection",
     "FlextLdapConstants",
     "FlextLdapEntryAdapter",
     "FlextLdapExceptions",
     "FlextLdapModels",
+    "FlextLdapOperations",
     "FlextLdapProtocols",
     "FlextLdapQuirksAdapter",
     "FlextLdapSchema",
+    "FlextLdapSearch",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
-    "BaseServerOperations",
-    "ServerOperationsFactory",
+    "FlextLdapVersion",
+    "GenericServerOperations",
     "OpenLDAP1Operations",
     "OpenLDAP2Operations",
     "OracleOIDOperations",
     "OracleOUDOperations",
-    "ActiveDirectoryOperations",
-    "GenericServerOperations",
+    "ServerOperationsFactory",
     "__version__",
     "__version_info__",
-    "FlextLdapVersion",
-    "VERSION",
-    "PROJECT_VERSION",
 ]

@@ -14,10 +14,10 @@ import time
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
-
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+
+from flext_core import FlextResult
 
 # ===================================================================
 # BATCH 3: ACL CONVERSION TESTS (10 tests)
@@ -1085,7 +1085,7 @@ class TestFlextLdapModels:
         )
 
         assert dn_result.is_success
-        dn = cast(FlextLdapModels.DistinguishedName, dn_result.unwrap())
+        dn = cast("FlextLdapModels.DistinguishedName", dn_result.unwrap())
         assert "uid=testuser" in dn.value
 
     def test_filter_helper_methods(self) -> None:
@@ -2805,7 +2805,6 @@ class TestFlextLdapModels:
 
     def test_ldap_user_serialize_password_secret_str(self) -> None:
         """Test password serialization with SecretStr."""
-
         user = FlextLdapModels.LdapUser(
             dn="uid=test,ou=users,dc=example,dc=com",
             cn="Test User",

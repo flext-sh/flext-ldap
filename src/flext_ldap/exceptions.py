@@ -52,6 +52,7 @@ class FlextLdapExceptions:
                 server_uri: LDAP server URI that failed
                 ldap_code: LDAP result code
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.server_uri = server_uri
             self.ldap_code = ldap_code
@@ -111,6 +112,7 @@ class FlextLdapExceptions:
                 message: Error message
                 bind_dn: DN used for authentication
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.bind_dn = bind_dn
 
@@ -166,6 +168,7 @@ class FlextLdapExceptions:
                 filter_str: LDAP search filter
                 search_context: Additional context information
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.base_dn = base_dn
             self.filter_str = filter_str
@@ -230,6 +233,7 @@ class FlextLdapExceptions:
                 dn: Entry DN being modified
                 modifications: List of modifications attempted
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.dn = dn
             self.modifications = modifications
@@ -285,6 +289,7 @@ class FlextLdapExceptions:
                 dn: Entry DN being added
                 object_classes: Object classes for the entry
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.dn = dn
             self.object_classes = object_classes
@@ -330,6 +335,7 @@ class FlextLdapExceptions:
                 message: Error message
                 dn: Entry DN being deleted
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.dn = dn
 
@@ -373,6 +379,7 @@ class FlextLdapExceptions:
                 message: Error message
                 ldap_field: LDAP field/attribute that failed validation
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.ldap_field = ldap_field
 
@@ -426,6 +433,7 @@ class FlextLdapExceptions:
                 ldap_config_key: LDAP configuration key that is invalid
                 section: Configuration section name
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.ldap_config_key = ldap_config_key
             self.section = section
@@ -486,6 +494,7 @@ class FlextLdapExceptions:
                 operation: LDAP operation that timed out
                 timeout_seconds: Timeout duration in seconds
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.operation = operation
 
@@ -531,6 +540,7 @@ class FlextLdapExceptions:
                 dn: DN of the entry that was not found
                 operation: Operation that was attempted
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.dn = dn
             self.operation = operation
@@ -590,6 +600,7 @@ class FlextLdapExceptions:
                 message: Error message
                 dn: DN of the entry that already exists
                 **kwargs: Additional context (context, correlation_id, error_code)
+
             """
             self.dn = dn
 
@@ -785,15 +796,15 @@ LdapEntryAlreadyExistsError = FlextLdapExceptions.LdapEntryAlreadyExistsError
 
 __all__ = [
     "FlextLdapExceptions",
-    "LdapConnectionError",
-    "LdapAuthenticationError",
-    "LdapSearchError",
-    "LdapModifyError",
     "LdapAddError",
-    "LdapDeleteError",
-    "LdapValidationError",
+    "LdapAuthenticationError",
     "LdapConfigurationError",
-    "LdapTimeoutError",
-    "LdapEntryNotFoundError",
+    "LdapConnectionError",
+    "LdapDeleteError",
     "LdapEntryAlreadyExistsError",
+    "LdapEntryNotFoundError",
+    "LdapModifyError",
+    "LdapSearchError",
+    "LdapTimeoutError",
+    "LdapValidationError",
 ]

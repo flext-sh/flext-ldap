@@ -10,10 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+import pathlib
+
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from ldap3 import Entry as Ldap3Entry
+
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
 class FlextLdapEntryAdapter(FlextService[None]):
@@ -41,6 +44,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         Args:
             server_type: Optional explicit server type (auto-detected if not provided)
+
         """
         super().__init__()
         self._logger = FlextLogger(__name__)
@@ -265,7 +269,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """
         try:
             # Use FlextLdif to parse the file
-            with open(ldif_file_path, "r", encoding="utf-8") as f:
+            with pathlib.Path(ldif_file_path).open(encoding="utf-8") as f:
                 ldif_content = f.read()
 
             # Parse using FlextLdif (which handles RFC compliance)
@@ -311,7 +315,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             ldif_content = write_result.unwrap()
 
             # Write to file
-            with open(output_path, "w", encoding="utf-8") as f:
+            with pathlib.Path(output_path).open("w", encoding="utf-8") as f:
                 f.write(ldif_content)
 
             return FlextResult[str].ok(output_path)
@@ -348,6 +352,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             - "oud" for Oracle OUD entries (ds-cfg-* attributes)
             - "ad" for Active Directory entries
             - "generic" when server type cannot be determined
+
         """
         try:
             if not entry:
@@ -403,6 +408,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             - DN format normalization
             - Removal of unsupported attributes
             - Addition of required attributes
+
         """
         try:
             if not entry:
@@ -466,6 +472,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         Returns:
             FlextResult[bool] indicating if entry is valid for server
+
         """
         try:
             if not entry:
@@ -544,6 +551,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 - orclaci → olcAccess
                 - orclUserV2 → inetOrgPerson
                 - Oracle-specific attrs → OpenLDAP equivalents
+
         """
         try:
             if not entry:
@@ -617,6 +625,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         Returns:
             FlextResult containing server-specific attribute information
+
         """
         try:
             quirks_result = self._quirks_manager.get_server_quirks(server_type)

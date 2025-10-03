@@ -20,11 +20,12 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
-
 from flext_ldap.protocols import FlextLdapProtocols
 
 
-class FlextLdapOperations(FlextService[None], FlextLdapProtocols.LdapModifyProtocol):
+class FlextLdapOperations(
+    FlextService[None], FlextLdapProtocols.Ldap.LdapModifyProtocol
+):
     """Unified LDAP CRUD operations class.
 
     This class provides comprehensive LDAP create, read, update, delete operations
@@ -57,6 +58,7 @@ class FlextLdapOperations(FlextService[None], FlextLdapProtocols.LdapModifyProto
 
         Args:
             connection: LDAP connection object
+
         """
         self._connection = connection
 

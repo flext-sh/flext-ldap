@@ -16,8 +16,6 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger, FlextTypes
-
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConstants,
@@ -25,6 +23,8 @@ from flext_ldap import (
     FlextLdapSchema,
     FlextLdapTypes,
 )
+
+from flext_core import FlextLogger, FlextTypes
 
 
 def demonstrate_flext_integrated_ldap() -> None:

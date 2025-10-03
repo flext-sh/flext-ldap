@@ -13,14 +13,14 @@ from typing import cast
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextResult, FlextTypes
-from pydantic import SecretStr
-
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapModels,
 )
 from flext_ldap.constants import FlextLdapConstants
+from pydantic import SecretStr
+
+from flext_core import FlextResult, FlextTypes
 
 # Skip all integration tests when LDAP server is not available
 pytestmark = pytest.mark.integration
@@ -198,7 +198,7 @@ class TestLdapClientRealOperations:
         assert search_data.entries, "User entry should exist"
 
         entry_data: FlextTypes.Dict = cast(
-            FlextTypes.Dict, search_data.entries[0].attributes
+            "FlextTypes.Dict", search_data.entries[0].attributes
         )
         mail_value: object = entry_data.get("mail", "")
         assert "updated@example.com" in str(mail_value), "Email should be updated"

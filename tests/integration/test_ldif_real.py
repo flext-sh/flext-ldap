@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap import FlextLdapClient
+
 from flext_core import FlextTypes
 
 # Skip all integration tests when LDAP server is not available

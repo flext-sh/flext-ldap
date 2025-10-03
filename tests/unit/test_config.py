@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
+
 from flext_core import FlextTypes
 
 

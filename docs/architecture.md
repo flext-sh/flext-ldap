@@ -43,18 +43,22 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 ### **1. Application Layer**
 
 #### FlextLdapAPI
+
 **Purpose**: Public facade for LDAP operations
 **Location**: `src/flext_ldap/api.py`
 **Responsibilities**:
+
 - Unified API for all LDAP operations
 - Connection lifecycle management
 - High-level operation orchestration
 - Error handling and result wrapping
 
 #### FlextLdapClient
+
 **Purpose**: LDAP connection and operation client
 **Location**: `src/flext_ldap/clients.py`
 **Responsibilities**:
+
 - ldap3 connection management
 - Operation execution coordination
 - Server capability detection
@@ -63,16 +67,19 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 ### **2. Domain Layer**
 
 #### FlextLdapEntryAdapter
+
 **Purpose**: Bidirectional ldap3 ↔ FlextLdif entry conversion
 **Location**: `src/flext_ldap/entry_adapter.py`
 **Lines**: 308 lines
 **Responsibilities**:
+
 - Convert ldap3.Entry to FlextLdifModels.Entry
 - Convert FlextLdifModels.Entry to ldap3 attributes dict
 - Handle attribute encoding/decoding
 - Preserve entry structure and metadata
 
 **Key Methods**:
+
 ```python
 def ldap3_to_ldif_entry(
     ldap3_entry: Ldap3Entry
@@ -86,16 +93,19 @@ def ldif_entry_to_ldap3_attributes(
 ```
 
 #### FlextLdapQuirksAdapter
+
 **Purpose**: Wrap FlextLdif quirks system for server detection
 **Location**: `src/flext_ldap/quirks_integration.py`
 **Lines**: 320 lines
 **Responsibilities**:
+
 - Detect LDAP server type from entries
 - Provide server-specific quirks information
 - Map server types to ACL attributes
 - Provide schema discovery endpoints
 
 **Key Methods**:
+
 ```python
 def detect_server_type_from_entries(
     entries: list[FlextLdifModels.Entry]
@@ -116,12 +126,14 @@ def get_schema_subentry(
 ### **3. Infrastructure Layer**
 
 #### BaseServerOperations (Abstract)
+
 **Purpose**: Define complete server operations interface
 **Location**: `src/flext_ldap/servers/base_operations.py`
 **Lines**: 305 lines
 **Pattern**: Abstract base class with comprehensive API contract
 
 **Operation Categories**:
+
 1. **Connection Operations**: ports, SSL, START_TLS, bind mechanisms
 2. **Schema Operations**: discovery, parsing, validation
 3. **ACL Operations**: get/set ACLs, format conversion
@@ -131,17 +143,20 @@ def get_schema_subentry(
 #### Server-Specific Implementations
 
 ##### OpenLDAP2Operations
+
 **Location**: `src/flext_ldap/servers/openldap2_operations.py`
 **Lines**: 525 lines (largest implementation)
 **Status**: 🟢 Complete
 
 **Features**:
+
 - **ACL Format**: `olcAccess` (cn=config format)
 - **Schema DN**: `cn=subschema`
 - **Features**: Paged results, VLV, matching rules
-- **Special Handling**: olc* attributes, cn=config entries
+- **Special Handling**: olc\* attributes, cn=config entries
 
 **Key Characteristics**:
+
 ```python
 def get_acl_attribute_name(self) -> str:
     return "olcAccess"
@@ -157,55 +172,65 @@ def supports_vlv(self) -> bool:
 ```
 
 ##### OpenLDAP1Operations
+
 **Location**: `src/flext_ldap/servers/openldap1_operations.py`
 **Lines**: 102 lines
 **Status**: 🟢 Complete
 **Pattern**: Extends OpenLDAP2Operations, overrides ACL syntax
 
 **Features**:
+
 - **ACL Format**: `access` (slapd.conf format)
 - **Inherits**: Most operations from OpenLDAP2Operations
 - **Difference**: ACL attribute and parsing only
 
 ##### OracleOIDOperations
+
 **Location**: `src/flext_ldap/servers/oid_operations.py`
 **Lines**: 361 lines
 **Status**: 🟢 Complete
 
 **Features**:
+
 - **ACL Format**: `orclaci`
 - **Schema DN**: `cn=subschemasubentry`
 - **Object Classes**: orclUserV2, orclContainer
 - **Features**: VLV support, Oracle-specific extensions
 
 ##### OracleOUDOperations
+
 **Location**: `src/flext_ldap/servers/oud_operations.py`
 **Lines**: 373 lines
 **Status**: 🟢 Complete
 
 **Features**:
+
 - **ACL Format**: `ds-privilege-name`
 - **Schema DN**: `cn=schema`
 - **Base**: 389 Directory Server with Oracle extensions
 - **SASL**: SIMPLE, EXTERNAL, DIGEST-MD5, GSSAPI, PLAIN
 
 ##### ActiveDirectoryOperations
+
 **Location**: `src/flext_ldap/servers/ad_operations.py`
 **Lines**: 250 lines
 **Status**: 🟡 Stub (NotImplementedError)
 
 **Planned Features**:
+
 - **ACL Format**: `nTSecurityDescriptor`
 - **Schema DN**: `cn=schema,cn=configuration`
 - **Features**: GUID-based DNs, Global Catalog
 - **Auth**: SASL/GSSAPI, SASL/DIGEST-MD5
 
 ##### GenericServerOperations
+
 **Location**: `src/flext_ldap/servers/generic_operations.py`
 **Lines**: 310 lines
 **Status**: 🟢 Complete (fallback)
 
 **Features**:
+
 - **ACL Format**: `aci` (generic)
 - **Schema DN**: `cn=subschema` (RFC 4512)
 - **Purpose**: RFC-compliant fallback for unknown servers
@@ -214,11 +239,13 @@ def supports_vlv(self) -> bool:
 ### **4. Protocol Layer**
 
 #### ldap3
+
 **Purpose**: Low-level LDAP protocol operations
 **Status**: External dependency (wrapped by flext-ldap)
 **Operations**: Connection, bind, search, add, modify, delete, compare
 
 #### FlextLdif
+
 **Purpose**: LDIF entry models and quirks detection
 **Status**: External flext library (flext-ldif)
 **Models**: Entry, DistinguishedName, Attributes, Quirks
@@ -370,13 +397,13 @@ return FlextResult[bool].ok(True)
 
 Each server operation handles its specific ACL format:
 
-| Server | ACL Attribute | Format | Security Model |
-|--------|---------------|--------|----------------|
-| OpenLDAP 2.x | olcAccess | OpenLDAP ACL syntax | RBAC |
-| OpenLDAP 1.x | access | Legacy ACL syntax | RBAC |
-| Oracle OID | orclaci | Oracle ACI format | ABAC |
-| Oracle OUD | ds-privilege-name | Privilege-based | RBAC |
-| Active Directory | nTSecurityDescriptor | Security Descriptor | ACL |
+| Server           | ACL Attribute        | Format              | Security Model |
+| ---------------- | -------------------- | ------------------- | -------------- |
+| OpenLDAP 2.x     | olcAccess            | OpenLDAP ACL syntax | RBAC           |
+| OpenLDAP 1.x     | access               | Legacy ACL syntax   | RBAC           |
+| Oracle OID       | orclaci              | Oracle ACI format   | ABAC           |
+| Oracle OUD       | ds-privilege-name    | Privilege-based     | RBAC           |
+| Active Directory | nTSecurityDescriptor | Security Descriptor | ACL            |
 
 ### **Connection Security**
 
@@ -396,40 +423,42 @@ Each server operation handles its specific ACL format:
 
 ### **Code Distribution**
 
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| Entry Adapter | 308 | ldap3 ↔ FlextLdif conversion |
-| Quirks Integration | 320 | Server detection and quirks |
-| Base Operations | 305 | Abstract interface |
-| OpenLDAP2Operations | 525 | Complete implementation |
-| OpenLDAP1Operations | 102 | Legacy implementation |
-| OracleOIDOperations | 361 | Oracle OID implementation |
-| OracleOUDOperations | 373 | Oracle OUD implementation |
-| ActiveDirectoryOperations | 250 | Stub for future |
-| GenericServerOperations | 310 | RFC-compliant fallback |
-| **Total** | **2,854** | **Universal LDAP interface** |
+| Component                 | Lines     | Purpose                       |
+| ------------------------- | --------- | ----------------------------- |
+| Entry Adapter             | 308       | ldap3 ↔ FlextLdif conversion |
+| Quirks Integration        | 320       | Server detection and quirks   |
+| Base Operations           | 305       | Abstract interface            |
+| OpenLDAP2Operations       | 525       | Complete implementation       |
+| OpenLDAP1Operations       | 102       | Legacy implementation         |
+| OracleOIDOperations       | 361       | Oracle OID implementation     |
+| OracleOUDOperations       | 373       | Oracle OUD implementation     |
+| ActiveDirectoryOperations | 250       | Stub for future               |
+| GenericServerOperations   | 310       | RFC-compliant fallback        |
+| **Total**                 | **2,854** | **Universal LDAP interface**  |
 
 ### **Operation Coverage**
 
-| Operation | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD | Generic |
-|-----------|--------------|--------------|------------|------------|----|---------|
-| Connection | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
-| Schema Discovery | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
-| ACL Management | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Stub | ⚠️ Limited |
-| Entry Operations | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
-| Paged Search | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
+| Operation        | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID  | Oracle OUD  | AD      | Generic     |
+| ---------------- | ------------ | ------------ | ----------- | ----------- | ------- | ----------- |
+| Connection       | ✅ Complete  | ✅ Complete  | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
+| Schema Discovery | ✅ Complete  | ✅ Complete  | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
+| ACL Management   | ✅ Complete  | ✅ Complete  | ✅ Complete | ✅ Complete | 🟡 Stub | ⚠️ Limited  |
+| Entry Operations | ✅ Complete  | ✅ Complete  | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
+| Paged Search     | ✅ Complete  | ✅ Complete  | ✅ Complete | ✅ Complete | 🟡 Stub | ✅ Complete |
 
 ---
 
 ## 🔮 Future Enhancements
 
 ### **Short Term (1.0.0)**
+
 - Complete Active Directory implementation
 - Enhanced error messages with server context
 - Connection pooling and retry mechanisms
 - Performance optimization for large directories
 
 ### **Long Term (2.0.0+)**
+
 - Additional server support (DS389, eDirectory)
 - Advanced schema validation
 - Replication monitoring

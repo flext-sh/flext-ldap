@@ -17,11 +17,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
+from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
 
-from flext_ldap import FlextLdapClient, FlextLdapModels
-from flext_ldap.constants import FlextLdapConstants
 from flext_core import FlextTypes
 
 # Integration tests - require flext-ldif and Docker LDAP server
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def ldap_client() -> Generator[FlextLdapClient, None, None]:
+def ldap_client() -> Generator[FlextLdapClient]:
     """Create LDAP client connected to Docker test server."""
     config = FlextLdapModels.ConnectionConfig(
         server="localhost",
@@ -67,7 +67,7 @@ def ldif_api() -> FlextLdif:
 @pytest.fixture
 def test_entries(
     ldap_client: FlextLdapClient,
-) -> Generator[FlextTypes.StringList, None, None]:
+) -> Generator[FlextTypes.StringList]:
     """Create test LDAP entries and clean up after."""
     test_dns: FlextTypes.StringList = []
 

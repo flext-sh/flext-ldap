@@ -16,8 +16,9 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from flext_core import FlextProtocols, FlextResult, FlextTypes
 
 if TYPE_CHECKING:
-    from flext_ldap.models import FlextLdapModels
     from flext_ldif import FlextLdifModels
+
+    from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapProtocols:
@@ -57,12 +58,12 @@ class FlextLdapProtocols:
 
             def parse_ldif_file(
                 self, file_path: Path, server_type: str = "rfc"
-            ) -> FlextResult[list["FlextLdifModels.Entry"]]:
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Parse LDIF file and return entries."""
                 ...
 
             def write_file(
-                self, entries: list["FlextLdifModels.Entry"], output_path: Path
+                self, entries: list[FlextLdifModels.Entry], output_path: Path
             ) -> FlextResult[str]:
                 """Write entries to LDIF file."""
                 ...
@@ -80,7 +81,7 @@ class FlextLdapProtocols:
             dn: str
             attributes: dict[str, FlextTypes.StringList]
 
-            def __getitem__(self, key: str) -> "FlextLdapProtocols.Ldap.LdapAttribute":
+            def __getitem__(self, key: str) -> FlextLdapProtocols.Ldap.LdapAttribute:
                 """Get attribute by key."""
                 ...
 
@@ -93,7 +94,7 @@ class FlextLdapProtocols:
 
             bound: bool
             last_error: str
-            entries: list["FlextLdapProtocols.Ldap.LdapEntry"]
+            entries: list[FlextLdapProtocols.Ldap.LdapEntry]
 
             def bind(self) -> bool:
                 """Bind to LDAP server."""

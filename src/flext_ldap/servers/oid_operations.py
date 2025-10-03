@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
 
 
@@ -67,6 +67,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             FlextResult containing schema information
+
         """
         try:
             if not connection or not connection.bound:
@@ -237,6 +238,7 @@ class OracleOIDOperations(BaseServerOperations):
                 "subject": access subject,
                 "permissions": list of permissions
             }
+
         """
         try:
             acl_dict: FlextTypes.Dict = {
@@ -310,6 +312,7 @@ class OracleOIDOperations(BaseServerOperations):
         Examples:
             - access to entry by * : browse
             - access to attr:userPassword by self : write
+
         """
         try:
             # Use raw if available
@@ -446,6 +449,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             FlextResult containing normalized entry
+
         """
         try:
             # Access entry attributes
@@ -578,6 +582,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             Oracle OID version (e.g., "11g", "12c")
+
         """
         return "12c"  # Default to latest
 
@@ -586,6 +591,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             True - Oracle OID supports proprietary extensions
+
         """
         return True
 
@@ -594,6 +600,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             List of Oracle object classes
+
         """
         return [
             "orclUserV2",
@@ -608,6 +615,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             List of Oracle attributes
+
         """
         return [
             "orclPassword",
@@ -626,6 +634,7 @@ class OracleOIDOperations(BaseServerOperations):
 
         Returns:
             True if entry has Oracle user object class
+
         """
         if "objectClass" in entry.attributes.attributes:
             object_classes = entry.attributes.attributes["objectClass"].values

@@ -16,6 +16,9 @@ from typing import Literal
 from ldap3 import Connection, Server
 
 from flext_core import (
+    T1,
+    T2,
+    T3,
     E,
     F,
     FlextTypes,
@@ -23,9 +26,6 @@ from flext_core import (
     P,
     R,
     T,
-    T1,
-    T2,
-    T3,
     T_co,
     T_contra,
     TCommand,
@@ -249,6 +249,9 @@ class FlextLdapTypes(FlextTypes):
 # =========================================================================
 
 __all__: FlextTypes.StringList = [
+    "T1",
+    "T2",
+    "T3",
     "E",
     "F",
     "FlextLdapTypes",
@@ -256,11 +259,6 @@ __all__: FlextTypes.StringList = [
     "P",
     "R",
     "T",
-    "T1",
-    "T2",
-    "T3",
-    "T_co",
-    "T_contra",
     "TCommand",
     "TCommand_contra",
     "TEvent",
@@ -270,6 +268,8 @@ __all__: FlextTypes.StringList = [
     "TResult",
     "TState",
     "TState_co",
+    "T_co",
+    "T_contra",
     "U",
     "V",
     "W",

@@ -13,8 +13,6 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from flext_core import FlextResult, FlextTypes
-
 from flext_ldap.acl import (
     FlextLdapAclConstants,
     FlextLdapAclConverters,
@@ -23,6 +21,8 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.models import FlextLdapModels
+
+from flext_core import FlextResult, FlextTypes
 
 
 class TestFlextLdapAclConstants:
@@ -568,7 +568,7 @@ class TestFlextLdapAclParsers:
         """Test successful OpenLDAP ACI parsing."""
         with patch.object(acl_parsers, "handle") as mock_handle:
             mock_handle.return_value = FlextResult[FlextTypes.Dict].ok(
-                cast(FlextTypes.Dict, sample_acl_data["unified_acl"])
+                cast("FlextTypes.Dict", sample_acl_data["unified_acl"])
             )
 
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])

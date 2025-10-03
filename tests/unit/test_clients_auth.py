@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap import FlextLdapClient
+
 from flext_core import FlextTypes
 
 
@@ -26,11 +26,8 @@ class TestFlextLdapClientAuthenticationUnit:
         result = client.authenticate_user(username="testuser", password="password123")
 
         assert result.is_failure
-        assert (
-            result.error
-            and "not established" in result.error.lower()
-            or result.error
-            and "connection" in result.error.lower()
+        assert (result.error and "not established" in result.error.lower()) or (
+            result.error and "connection" in result.error.lower()
         )
 
     def test_authenticate_user_empty_username(self) -> None:
@@ -91,11 +88,8 @@ class TestFlextLdapClientAuthenticationIntegration:
         )
 
         assert result.is_failure
-        assert (
-            result.error
-            and "not found" in result.error.lower()
-            or result.error
-            and "search failed" in result.error.lower()
+        assert (result.error and "not found" in result.error.lower()) or (
+            result.error and "search failed" in result.error.lower()
         )
 
     def test_authenticate_disconnected_during_auth(
@@ -110,11 +104,8 @@ class TestFlextLdapClientAuthenticationIntegration:
         )
 
         assert result.is_failure
-        assert (
-            result.error
-            and "not established" in result.error.lower()
-            or result.error
-            and "connection" in result.error.lower()
+        assert (result.error and "not established" in result.error.lower()) or (
+            result.error and "connection" in result.error.lower()
         )
 
 
@@ -153,11 +144,8 @@ class TestFlextLdapClientAuthenticationEdgeCases:
 
         # Should handle gracefully (will fail as user doesn't exist)
         assert result.is_failure
-        assert (
-            result.error
-            and "not found" in result.error.lower()
-            or result.error
-            and "search failed" in result.error.lower()
+        assert (result.error and "not found" in result.error.lower()) or (
+            result.error and "search failed" in result.error.lower()
         )
 
     def test_authenticate_ldap_injection_attempt(

@@ -12,8 +12,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-from flext_ldif import FlextLdifModels
-
 from flext_ldap.servers.ad_operations import ActiveDirectoryOperations
 from flext_ldap.servers.factory import ServerOperationsFactory
 from flext_ldap.servers.generic_operations import GenericServerOperations
@@ -21,6 +19,7 @@ from flext_ldap.servers.oid_operations import OracleOIDOperations
 from flext_ldap.servers.openldap1_operations import OpenLDAP1Operations
 from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 from flext_ldap.servers.oud_operations import OracleOUDOperations
+from flext_ldif import FlextLdifModels
 
 
 class TestServerOperationsFactory:

@@ -10,9 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
+
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
 class FlextLdapQuirksAdapter(FlextService[FlextTypes.Dict]):

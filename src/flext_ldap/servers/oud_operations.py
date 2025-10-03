@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
 
 
@@ -241,6 +241,7 @@ class OracleOUDOperations(BaseServerOperations):
                 "server_type": "oud",
                 "privilege": privilege name
             }
+
         """
         try:
             acl_dict: FlextTypes.Dict = {
@@ -290,6 +291,7 @@ class OracleOUDOperations(BaseServerOperations):
             - config-read
             - password-reset
             - bypass-acl
+
         """
         try:
             # Use raw if available
@@ -472,6 +474,7 @@ class OracleOUDOperations(BaseServerOperations):
 
         Returns:
             Oracle OUD version (e.g., "12c")
+
         """
         return "12c"  # Default to latest
 
@@ -480,6 +483,7 @@ class OracleOUDOperations(BaseServerOperations):
 
         Returns:
             True - OUD is based on 389 DS
+
         """
         return True
 
@@ -488,6 +492,7 @@ class OracleOUDOperations(BaseServerOperations):
 
         Returns:
             List of standard OUD privileges
+
         """
         return [
             "config-read",
@@ -512,27 +517,28 @@ class OracleOUDOperations(BaseServerOperations):
 
         Returns:
             Category name
+
         """
         if privilege in ("config-read", "config-write"):
             return "configuration"
-        elif privilege in ("password-reset", "password-modify"):
+        if privilege in ("password-reset", "password-modify"):
             return "password"
-        elif privilege in ("proxied-auth", "bypass-acl"):
+        if privilege in ("proxied-auth", "bypass-acl"):
             return "REDACTED_LDAP_BIND_PASSWORDistrative"
-        elif privilege in ("privilege-change", "update-schema"):
+        if privilege in ("privilege-change", "update-schema"):
             return "management"
-        elif privilege in ("ldif-import", "ldif-export"):
+        if privilege in ("ldif-import", "ldif-export"):
             return "data-management"
-        elif privilege in ("backend-backup", "backend-restore"):
+        if privilege in ("backend-backup", "backend-restore"):
             return "maintenance"
-        else:
-            return "custom"
+        return "custom"
 
     def supports_replication(self) -> bool:
         """Check if OUD supports replication.
 
         Returns:
             True - OUD supports multi-master replication
+
         """
         return True
 
@@ -541,5 +547,6 @@ class OracleOUDOperations(BaseServerOperations):
 
         Returns:
             "multi-master" - OUD uses multi-master replication
+
         """
         return "multi-master"

@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
 from flext_ldap.typings import FlextLdapTypes
 
