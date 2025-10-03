@@ -13,6 +13,7 @@ import pytest
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
+from flext_core import FlextTypes
 
 # Disable strict pyright checks for this comprehensive test module. These tests
 # intentionally exercise protected helpers and use lightweight mocks which
@@ -718,7 +719,7 @@ class TestFlextLdapClientComprehensive:
         """Test modify_entry_universal when not connected."""
         client = FlextLdapClient()
 
-        changes: dict[str, object] = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        changes: FlextTypes.Dict = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
         result = client.modify_entry_universal("cn=testuser,dc=test,dc=com", changes)
         assert result.is_failure
         assert result.error is not None
@@ -823,7 +824,7 @@ class TestFlextLdapClientComprehensive:
         client = FlextLdapClient()
 
         # Mock entry attributes
-        attributes: dict[str, str | list[str]] = {
+        attributes: dict[str, str | FlextTypes.StringList] = {
             "cn": ["  Test User  "],
             "sn": ["User"],
             "mail": ["test@example.com"],
@@ -840,7 +841,7 @@ class TestFlextLdapClientComprehensive:
         """Test _normalize_modify_changes method."""
         client = FlextLdapClient()
 
-        changes: dict[str, object] = {
+        changes: FlextTypes.Dict = {
             "cn": [("MODIFY_REPLACE", ["  Test User  "])],
             "sn": [("MODIFY_REPLACE", ["User"])],
         }

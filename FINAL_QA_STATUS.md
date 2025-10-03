@@ -107,7 +107,7 @@ class LdapAttribute(Protocol):
 class LdapEntry(Protocol):
     """Protocol for ldap3 Entry objects."""
     entry_dn: str
-    entry_attributes: dict[str, list[str]]
+    entry_attributes: dict[str, FlextTypes.StringList]
 
     def __getitem__(self, key: str) -> LdapAttribute:
         """Get entry attribute by name."""

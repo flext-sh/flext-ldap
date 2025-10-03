@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import (
     FlextLdapClient,
@@ -284,7 +284,7 @@ def demonstrate_universal_crud(client: FlextLdapClient, logger: FlextLogger) -> 
 
         # Universal Modify Entry
         logger.info("Testing universal modify entry...")
-        modify_changes: dict[str, object] = {
+        modify_changes: FlextTypes.Dict = {
             "description": "Modified test user description",
             "mail": "modified@example.com",
         }
@@ -453,7 +453,7 @@ def demonstrate_server_type_detection() -> None:
 
     for server_info in test_servers:
         server_type = detector.detect_server_type(server_info)
-        quirks = detector.get_server_quirks(server_type)
+        quirks = detector.get_server_quirks(server_type.value if server_type else None)
 
         logger.info("Server: %s", server_info["vendorName"])
         if server_type and hasattr(server_type, "value"):

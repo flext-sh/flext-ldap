@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClient
+from flext_core import FlextTypes
 
 # Skip all integration tests when LDAP server is not available
 pytestmark = pytest.mark.integration
@@ -317,7 +318,7 @@ class TestRealLdifRoundTrip:
         if isinstance(dn_value, list):
             dn_value = dn_value[0] if dn_value else ""
         # Convert attributes to proper format
-        attributes: dict[str, list[str] | str] = {}
+        attributes: dict[str, FlextTypes.StringList | str] = {}
         for k, v in reimported_user.items():
             if k != "dn":
                 if isinstance(v, list):

@@ -5,7 +5,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, list[str]]\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, list[str]]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"list[str]\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 130,
@@ -69,7 +69,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, list[str]]\" cannot be assigned to parameter \"updates\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"dict[str, list[str]]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"list[str]\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"updates\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 254,
@@ -133,7 +133,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, list[str]]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"dict[str, list[str]]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"list[str]\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 383,
@@ -197,7 +197,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
-      "message": "Operator \"in\" not supported for types \"Literal['uid']\" and \"list[str] | None\"\n  Operator \"in\" not supported for types \"Literal['uid']\" and \"None\"",
+      "message": "Operator \"in\" not supported for types \"Literal['uid']\" and \"FlextTypes.StringList | None\"\n  Operator \"in\" not supported for types \"Literal['uid']\" and \"None\"",
       "range": {
         "start": {
           "line": 185,
@@ -485,7 +485,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"dict[str, str]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 250,
@@ -613,7 +613,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"dict[str, str]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 340,
@@ -789,7 +789,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"dict[str, str]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 602,
@@ -837,7 +837,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_cli_coverage.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"data\" of type \"dict[str, object]\" in function \"_format_data\"\n  \"dict[str, str]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"data\" of type \"FlextTypes.Dict\" in function \"_format_data\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 90,
@@ -933,7 +933,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
-      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 181,
@@ -1045,7 +1045,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
-      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 272,
@@ -1141,7 +1141,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
-      "message": "Argument of type \"list[dict[str, str]]\" cannot be assigned to parameter \"entries\" of type \"list[Dict]\" in function \"__init__\"\n  \"list[dict[str, str]]\" is not assignable to \"list[Dict]\"\n    Type parameter \"_T@list\" is invariant, but \"dict[str, str]\" is not the same as \"Dict\"\n    Consider switching from \"list\" to \"Sequence\" which is covariant",
+      "message": "Argument of type \"list[FlextTypes.StringDict]\" cannot be assigned to parameter \"entries\" of type \"list[Dict]\" in function \"__init__\"\n  \"list[FlextTypes.StringDict]\" is not assignable to \"list[Dict]\"\n    Type parameter \"_T@list\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"Dict\"\n    Consider switching from \"list\" to \"Sequence\" which is covariant",
       "range": {
         "start": {
           "line": 343,
@@ -1397,7 +1397,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
-      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 619,
@@ -1621,7 +1621,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"dict[str, str]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 330,
@@ -1637,7 +1637,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"dict[str, str]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 357,
@@ -1653,7 +1653,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"group_data\" of type \"Dict\" in function \"validate_group_creation\"\n  \"dict[str, str]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"group_data\" of type \"Dict\" in function \"validate_group_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 372,
@@ -1701,7 +1701,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
-      "message": "Argument of type \"dict[str, str]\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"dict[str, str]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 505,
@@ -1957,7 +1957,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
-      "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, dict[str, str]]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, dict[str, str]]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"dict[str, str]\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, FlextTypes.StringDict]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, FlextTypes.StringDict]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 1713,
@@ -2101,7 +2101,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
-      "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, dict[str, str]]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, dict[str, str]]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"dict[str, str]\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, FlextTypes.StringDict]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, FlextTypes.StringDict]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 1960,

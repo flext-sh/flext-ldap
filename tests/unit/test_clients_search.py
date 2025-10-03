@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_core import FlextTypes
 
 
 @pytest.mark.unit
@@ -103,7 +104,7 @@ class TestFlextLdapClientSearchIntegration:
 
     @pytest.fixture
     def authenticated_client(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> FlextLdapClient:
         """Create and connect LDAP client for search tests."""
         client = FlextLdapClient()
@@ -122,7 +123,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_with_request_base_search(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request with BASE scope."""
         search_request = FlextLdapModels.SearchRequest(
@@ -143,7 +144,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_with_request_subtree_search(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request with SUBTREE scope."""
         search_request = FlextLdapModels.SearchRequest(
@@ -163,7 +164,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_with_request_returns_response(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request returns SearchResponse object."""
         search_request = FlextLdapModels.SearchRequest(
@@ -187,7 +188,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_users_all_users(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_users retrieves all users."""
         result = authenticated_client.search_users(
@@ -202,7 +203,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_users_with_uid_filter(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_users with UID filter."""
         result = authenticated_client.search_users(
@@ -218,7 +219,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_groups_all_groups(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups retrieves all groups."""
         result = authenticated_client.search_groups(
@@ -233,7 +234,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_groups_with_cn_filter(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups with CN filter."""
         result = authenticated_client.search_groups(
@@ -249,7 +250,7 @@ class TestFlextLdapClientSearchIntegration:
     def test_search_disconnected_during_search(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search handles disconnection gracefully."""
         # Disconnect the client
@@ -280,7 +281,7 @@ class TestFlextLdapClientSearchEdgeCases:
 
     @pytest.fixture
     def authenticated_client(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> FlextLdapClient:
         """Create and connect LDAP client for edge case tests."""
         client = FlextLdapClient()
@@ -299,7 +300,7 @@ class TestFlextLdapClientSearchEdgeCases:
     def test_search_with_complex_filter(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with complex LDAP filter."""
         search_request = FlextLdapModels.SearchRequest(
@@ -316,7 +317,7 @@ class TestFlextLdapClientSearchEdgeCases:
     def test_search_with_invalid_attribute_list(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with non-existent attribute in list."""
         search_request = FlextLdapModels.SearchRequest(
@@ -334,7 +335,7 @@ class TestFlextLdapClientSearchEdgeCases:
     def test_search_with_wildcard_filter(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with wildcard in filter."""
         search_request = FlextLdapModels.SearchRequest(
@@ -353,7 +354,7 @@ class TestFlextLdapClientSearchEdgeCases:
     def test_search_with_case_insensitive_scope(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search handles case-insensitive scope values."""
         # Test uppercase scope
@@ -383,7 +384,7 @@ class TestFlextLdapClientSearchEdgeCases:
     def test_search_groups_special_characters_in_cn(
         self,
         authenticated_client: FlextLdapClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups with special characters in CN."""
         result = authenticated_client.search_groups(

@@ -81,7 +81,7 @@ def ldap3_to_ldif_entry(
 
 def ldif_entry_to_ldap3_attributes(
     ldif_entry: FlextLdifModels.Entry
-) -> FlextResult[dict[str, list[object]]]:
+) -> FlextResult[dict[str, FlextTypes.List]]:
     """Convert FlextLdif entry to ldap3 attributes."""
 ```
 
@@ -262,7 +262,7 @@ sequenceDiagram
     Ops->>ldap3: search(schema_dn, ...)
     ldap3-->>Ops: schema entries
     Ops->>Ops: parse_object_class(definition)
-    Ops-->>Client: FlextResult[dict[str, object]]
+    Ops-->>Client: FlextResult[FlextTypes.Dict]
 ```
 
 ### **ACL Management Flow**

@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
+from flext_core import FlextTypes
 
 
 @pytest.mark.unit
@@ -100,7 +101,7 @@ class TestFlextLdapClientConnection:
 class TestFlextLdapClientConnectionIntegration:
     """Integration tests for FlextLdapClient connection with real LDAP server."""
 
-    def test_connect_success(self, clean_ldap_container: dict[str, object]) -> None:
+    def test_connect_success(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test successful connection to LDAP server."""
         client = FlextLdapClient()
 
@@ -119,7 +120,7 @@ class TestFlextLdapClientConnectionIntegration:
         client.disconnect()
 
     def test_connect_invalid_credentials(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test connection fails with invalid credentials."""
         client = FlextLdapClient()
@@ -141,7 +142,7 @@ class TestFlextLdapClientConnectionIntegration:
         assert not client.is_connected()
 
     def test_connect_invalid_bind_dn(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test connection fails with invalid bind DN."""
         client = FlextLdapClient()
@@ -157,7 +158,7 @@ class TestFlextLdapClientConnectionIntegration:
         assert not client.is_connected()
 
     def test_disconnect_after_connect(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test disconnect after successful connection."""
         client = FlextLdapClient()
@@ -177,7 +178,7 @@ class TestFlextLdapClientConnectionIntegration:
         assert not client.is_connected()
 
     def test_reconnect_after_disconnect(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test can reconnect after disconnect."""
         client = FlextLdapClient()
@@ -209,7 +210,7 @@ class TestFlextLdapClientConnectionIntegration:
         client.disconnect()
 
     def test_test_connection_success(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test test_connection method validates connectivity."""
         client = FlextLdapClient()
@@ -237,7 +238,7 @@ class TestFlextLdapClientConnectionIntegration:
         assert result.is_failure
         assert result.error and result.error and "not connected" in result.error.lower()
 
-    def test_bind_after_connect(self, clean_ldap_container: dict[str, object]) -> None:
+    def test_bind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test bind operation after connection."""
         client = FlextLdapClient()
 
@@ -258,9 +259,7 @@ class TestFlextLdapClientConnectionIntegration:
         # Cleanup
         client.disconnect()
 
-    def test_unbind_after_connect(
-        self, clean_ldap_container: dict[str, object]
-    ) -> None:
+    def test_unbind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test unbind operation after connection."""
         client = FlextLdapClient()
 
@@ -278,7 +277,7 @@ class TestFlextLdapClientConnectionIntegration:
         assert not client.is_connected()
 
     def test_session_id_persistence(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test session ID persists across connection lifecycle."""
         client = FlextLdapClient()
@@ -312,7 +311,7 @@ class TestFlextLdapClientConnectionEdgeCases:
     """Edge case tests for FlextLdapClient connection management."""
 
     def test_multiple_disconnect_calls_idempotent(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test multiple disconnect calls are idempotent."""
         client = FlextLdapClient()
@@ -335,7 +334,7 @@ class TestFlextLdapClientConnectionEdgeCases:
         assert result3.is_success
 
     def test_connect_overrides_config(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test connect parameters override config object."""
         # Create config with wrong credentials

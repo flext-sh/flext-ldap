@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 
@@ -307,7 +307,7 @@ class ServerOperationsFactory(FlextService[None]):
                 f"Server operations creation from connection failed: {e}"
             )
 
-    def get_supported_server_types(self) -> list[str]:
+    def get_supported_server_types(self) -> FlextTypes.StringList:
         """Get list of supported server types.
 
         Returns:
@@ -326,7 +326,7 @@ class ServerOperationsFactory(FlextService[None]):
         """
         return server_type.lower().strip() in self._server_registry
 
-    def get_server_info(self, server_type: str) -> FlextResult[dict[str, object]]:
+    def get_server_info(self, server_type: str) -> FlextResult[FlextTypes.Dict]:
         """Get information about a server type.
 
         Args:
@@ -337,7 +337,7 @@ class ServerOperationsFactory(FlextService[None]):
         """
         try:
             if not self.is_server_type_supported(server_type):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"Unsupported server type: {server_type}"
                 )
 
@@ -345,7 +345,7 @@ class ServerOperationsFactory(FlextService[None]):
             operations_class = self._server_registry[server_type_lower]
             temp_instance = operations_class()
 
-            info: dict[str, object] = {
+            info: FlextTypes.Dict = {
                 "server_type": server_type,
                 "class_name": operations_class.__name__,
                 "default_port": temp_instance.get_default_port(use_ssl=False),
@@ -355,9 +355,7 @@ class ServerOperationsFactory(FlextService[None]):
                 "schema_dn": temp_instance.get_schema_dn(),
             }
 
-            return FlextResult[dict[str, object]].ok(info)
+            return FlextResult[FlextTypes.Dict].ok(info)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Failed to get server info: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to get server info: {e}")

@@ -337,7 +337,7 @@ class FlextLdapRepositories:
     class GroupRepository(Repository[FlextLdapModels.Group]):
         def find_by_dn() -> FlextResult[Group]
         def find_group_by_cn() -> FlextResult[Group]
-        def get_group_members() -> FlextResult[list[str]]
+        def get_group_members() -> FlextResult[FlextTypes.StringList]
 ```
 
 **Method Connections Analysis**:
@@ -456,19 +456,19 @@ class FlextLdapConstants:
 ```python
 class FlextLdapTypes:
     class Entry:
-        AttributeValue = str | list[str] | bytes | list[bytes]
+        AttributeValue = str | FlextTypes.StringList | bytes | list[bytes]
         AttributeDict = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
         Data = dict[str, "FlextLdapTypes.Entry.AttributeValue"]
         DN = str
-        ObjectClasses = list[str]
+        ObjectClasses = FlextTypes.StringList
 
     class Search:
-        ResultEntry = dict[str, object]
+        ResultEntry = FlextTypes.Dict
         Result = list["FlextLdapTypes.Search.ResultEntry"]
         Filter = str
         Scope = str
         BaseDN = str
-        Attributes = list[str] | None
+        Attributes = FlextTypes.StringList | None
 
     class Connection:
         ServerURI = str
@@ -500,7 +500,7 @@ class FlextLdapTypes:
 ```python
 class FlextLdapTypeGuards:
     @staticmethod
-    def ensure_string_list(value: object) -> list[str]
+    def ensure_string_list(value: object) -> FlextTypes.StringList
     @staticmethod
     def ensure_ldap_dn(value: object) -> str
     @staticmethod
@@ -812,10 +812,10 @@ def validate_dn(self, dn: str) -> FlextResult[bool]:
 def validate_filter(self, filter_str: str) -> FlextResult[bool]:
     # ~25 lines of validation logic duplicated
 
-def validate_attributes(self, attributes: list[str]) -> FlextResult[bool]:
+def validate_attributes(self, attributes: FlextTypes.StringList) -> FlextResult[bool]:
     # ~15 lines of validation logic duplicated
 
-def validate_object_classes(self, object_classes: list[str]) -> FlextResult[bool]:
+def validate_object_classes(self, object_classes: FlextTypes.StringList) -> FlextResult[bool]:
     # ~15 lines of validation logic duplicated
 ```
 
@@ -876,7 +876,7 @@ def find_by_dn(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser]:
 def close_connection(self) -> FlextResult[None]:
     return self.unbind()
 
-def update_group(self, dn: str, attributes: dict[str, object]) -> FlextResult[bool]:
+def update_group(self, dn: str, attributes: FlextTypes.Dict) -> FlextResult[bool]:
     return self.update_group_attributes(dn, attributes)
 
 def add_member_to_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
@@ -885,7 +885,7 @@ def add_member_to_group(self, group_dn: str, member_dn: str) -> FlextResult[None
 def remove_member_from_group(self, group_dn: str, member_dn: str) -> FlextResult[None]:
     return self.remove_member(group_dn, member_dn)
 
-def get_group_members_list(self, group_dn: str) -> FlextResult[list[str]]:
+def get_group_members_list(self, group_dn: str) -> FlextResult[FlextTypes.StringList]:
     return self.get_members(group_dn)
 
 def disconnect(self) -> FlextResult[None]:
@@ -1754,7 +1754,3 @@ Each validation method now includes:
 - **📍 LOCATION**: Exact line number and module
 - **🔧 REFACTOR**: Specific refactoring guidance
 - **📋 IMPACT**: Lines of code affected and complexity
-
----
-
-_This comprehensive documentation includes both markdown analysis and inline source code comments. The AST analysis provides quantitative metrics for architectural impact assessment, while inline comments provide ongoing guidance for developers working with the code. All critical violations have been identified, documented, and provided with actionable recommendations for achieving full FLEXT compliance. The unified implementation plan provides a complete roadmap for resolving all identified issues._

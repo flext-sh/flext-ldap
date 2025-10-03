@@ -52,7 +52,7 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLdapConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Validation` has type `type[FlextLdapConstants.Validation]`, which is not assignable to `type[FlextConstants.Validation]`, the type of `FlextConstants.Validation`",
+      "description": "Class member `FlextLdapConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Validation` has type `type[FlextLdapConstants.Validation]`, which is not assignable to `type[FlextConstants["Validation]`, the type of `FlextConstants.Validation`""],
       "concise_description": "Class member `FlextLdapConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
@@ -63,7 +63,7 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLdapConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Messages` has type `type[FlextLdapConstants.Messages]`, which is not assignable to `type[FlextConstants.Messages]`, the type of `FlextConstants.Messages`",
+      "description": "Class member `FlextLdapConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Messages` has type `type[FlextLdapConstants.Messages]`, which is not assignable to `type[FlextConstants["Messages]`, the type of `FlextConstants.Messages`""],
       "concise_description": "Class member `FlextLdapConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
@@ -74,7 +74,7 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLdapConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Errors` has type `type[FlextLdapConstants.Errors]`, which is not assignable to `type[FlextConstants.Errors]`, the type of `FlextConstants.Errors`",
+      "description": "Class member `FlextLdapConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Errors` has type `type[FlextLdapConstants.Errors]`, which is not assignable to `type[FlextConstants["Errors]`, the type of `FlextConstants.Errors`""],
       "concise_description": "Class member `FlextLdapConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
@@ -85,7 +85,7 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLdapConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Defaults` has type `type[FlextLdapConstants.Defaults]`, which is not assignable to `type[FlextConstants.Defaults]`, the type of `FlextConstants.Defaults`",
+      "description": "Class member `FlextLdapConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Defaults` has type `type[FlextLdapConstants.Defaults]`, which is not assignable to `type[FlextConstants["Defaults]`, the type of `FlextConstants.Defaults`""],
       "concise_description": "Class member `FlextLdapConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {

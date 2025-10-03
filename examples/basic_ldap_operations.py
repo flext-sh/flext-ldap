@@ -149,7 +149,7 @@ def demonstrate_logging_integration() -> None:
     try:
         # Configuration validation happens automatically during instantiation
         # Test by accessing configuration properties
-        connection_config = settings.get_connection_config()
+        connection_config = settings.connection_info
         logger.info(
             "Settings validation passed - connection config: %s", connection_config
         )

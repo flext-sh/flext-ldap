@@ -20,30 +20,27 @@ from flext_ldap import FlextLdapConfig, FlextLdapModels
 
 
 def demonstrate_singleton_pattern() -> None:
-    """Demonstrate the singleton pattern functionality.
+    """Demonstrate configuration instance creation.
 
     Raises:
-        RuntimeError: If singleton pattern validation fails.
+        RuntimeError: If instance creation fails.
 
     """
-    print("FlextLdapConfig Singleton Pattern Demo")
+    print("FlextLdapConfig Instance Creation Demo")
 
-    # Clear any existing instance
-    FlextLdapConfig.reset_global_instance()
-
-    # Get first instance
-    config1 = FlextLdapConfig.get_global_instance()
+    # Create instances directly (no singleton pattern)
+    config1 = FlextLdapConfig()
     print(f"First instance ID: {id(config1)}")
 
-    # Get second instance - should be the same
-    config2 = FlextLdapConfig.get_global_instance()
+    # Create second instance
+    config2 = FlextLdapConfig()
     print(f"Second instance ID: {id(config2)}")
 
-    # Verify they are the same instance
-    if config1 is not config2:
-        error_msg = "Instances should be identical"
+    # Verify they are different instances
+    if config1 is config2:
+        error_msg = "Instances should be different"
         raise RuntimeError(error_msg)
-    print("✅ Singleton pattern working correctly")
+    print("✅ Direct instantiation working correctly")
 
 
 def demonstrate_environment_loading() -> None:
@@ -53,18 +50,17 @@ def demonstrate_environment_loading() -> None:
     # Set environment variables
     os.environ.update(
         {
-            "FLEXT_LDAP_BIND_DN": "cn=env-user,dc=example,dc=com",
-            "FLEXT_LDAP_BIND_PASSWORD": "env-password-123",
-            "FLEXT_LDAP_USE_SSL": "true",
-            "FLEXT_LDAP_SIZE_LIMIT": "5000",
-            "FLEXT_LDAP_ENABLE_CACHING": "true",
-            "FLEXT_LDAP_CACHE_TTL": "900",
+            "FLEXT_LDAP_LDAP_BIND_DN": "cn=env-user,dc=example,dc=com",
+            "FLEXT_LDAP_LDAP_BIND_PASSWORD": "env-password-123",
+            "FLEXT_LDAP_LDAP_USE_SSL": "true",
+            "FLEXT_LDAP_LDAP_SIZE_LIMIT": "5000",
+            "FLEXT_LDAP_LDAP_ENABLE_CACHING": "true",
+            "FLEXT_LDAP_LDAP_CACHE_TTL": "900",
         },
     )
 
-    # Clear and reload to pick up environment variables
-    FlextLdapConfig.reset_global_instance()
-    config = FlextLdapConfig.get_global_instance()
+    # Create new instance to pick up environment variables
+    config = FlextLdapConfig()
 
     print(f"Bind DN from environment: {config.ldap_bind_dn}")
     print(f"Use SSL from environment: {config.ldap_use_ssl}")
@@ -75,12 +71,13 @@ def demonstrate_environment_loading() -> None:
 
 
 def demonstrate_factory_methods() -> None:
-    """Demonstrate factory methods for different environments."""
-    print("=== Factory Methods Demo ===")
+    """Demonstrate configuration for different environments."""
+    print("=== Environment Configuration Demo ===")
 
     # Development configuration
-    dev_config = FlextLdapConfig.create_for_environment("development")
+    dev_config = FlextLdapConfig(environment="development", ldap_enable_debug=True)
     print("Development Configuration:")
+    print(f"  Environment: {dev_config.environment}")
     print(f"  Debug mode: {dev_config.ldap_enable_debug}")
     print(f"  Bind DN: {dev_config.ldap_bind_dn}")
     print(f"  SSL enabled: {dev_config.ldap_use_ssl}")
@@ -88,20 +85,22 @@ def demonstrate_factory_methods() -> None:
     print()
 
     # Test configuration
-    test_config = FlextLdapConfig.create_for_environment("test")
+    test_config = FlextLdapConfig(environment="test", ldap_enable_debug=True)
     print("Test Configuration:")
+    print(f"  Environment: {test_config.environment}")
     print(f"  Debug mode: {test_config.ldap_enable_debug}")
     print(f"  Bind DN: {test_config.ldap_bind_dn}")
     print(f"  SSL enabled: {test_config.ldap_use_ssl}")
     print()
 
     # Production configuration
-    prod_config = FlextLdapConfig.create_for_environment("production")
+    prod_config = FlextLdapConfig(environment="production", ldap_use_ssl=True)
     print("Production Configuration:")
+    print(f"  Environment: {prod_config.environment}")
     print(f"  Debug mode: {prod_config.ldap_enable_debug}")
     print(f"  SSL enabled: {prod_config.ldap_use_ssl}")
     print(f"  Pool size: {prod_config.ldap_pool_size}")
-    print("✅ Factory methods working correctly\n")
+    print("✅ Environment configurations working correctly\n")
 
 
 def demonstrate_parameter_overrides() -> None:

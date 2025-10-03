@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_core import FlextTypes
+
 # Sample LDAP entries for testing
 SAMPLE_USER_ENTRY: dict = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
@@ -129,7 +131,7 @@ INVALID_ENTRIES: list[dict] = [
 ]
 
 # Search filter test data
-TEST_FILTERS: dict[str, str] = {
+TEST_FILTERS: FlextTypes.StringDict = {
     "all_users": "(objectClass=person)",
     "all_groups": "(objectClass=groupOfNames)",
     "specific_user": "(uid=testuser)",
@@ -140,7 +142,7 @@ TEST_FILTERS: dict[str, str] = {
 }
 
 # Expected search results
-EXPECTED_SEARCH_RESULTS: dict[str, list[str]] = {
+EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.StringList] = {
     "all_users": [
         "cn=alice,ou=people,dc=flext,dc=local",
         "cn=bob,ou=people,dc=flext,dc=local",

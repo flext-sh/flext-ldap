@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 
 from flext_core import FlextLogger, FlextResult
@@ -154,7 +154,7 @@ def demonstrate_patterns() -> None:
             "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[FlextLdapModels.Entry]]]] = []
+            tasks: list[FlextResult[list[FlextLdapModels.Entry]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",

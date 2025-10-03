@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextTypes
 
 
 class FlextLdapConstants(FlextConstants):
@@ -87,7 +87,7 @@ class FlextLdapConstants(FlextConstants):
         OWNER: Final[str] = "owner"
 
         @classmethod
-        def get_person_attributes(cls) -> list[str]:
+        def get_person_attributes(cls) -> FlextTypes.StringList:
             """Get standard person-related attributes."""
             return [
                 cls.OBJECT_CLASS,
@@ -101,7 +101,7 @@ class FlextLdapConstants(FlextConstants):
             ]
 
         @classmethod
-        def get_group_attributes(cls) -> list[str]:
+        def get_group_attributes(cls) -> FlextTypes.StringList:
             """Get standard group-related attributes."""
             return [
                 cls.OBJECT_CLASS,

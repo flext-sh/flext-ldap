@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
@@ -54,7 +54,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse access ACL string for OpenLDAP 1.x.
 
         OpenLDAP 1.x ACL format (slapd.conf):
@@ -79,7 +79,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
             }
         """
         try:
-            acl_dict: dict[str, object] = {
+            acl_dict: FlextTypes.Dict = {
                 "raw": acl_string,
                 "format": "openldap1",
                 "server_type": "openldap1",
@@ -96,7 +96,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
                 if len(by_split) > 1:
                     # Parse multiple "by <who> <access>" rules
                     by_rules = by_split[1]
-                    rules: list[dict[str, str]] = []
+                    rules: list[FlextTypes.StringDict] = []
 
                     # Split by " by " to get individual rules
                     for rule in by_rules.split(" by "):
@@ -124,15 +124,15 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
                     # Keep legacy "by" field for backward compatibility
                     acl_dict["by"] = by_rules
 
-            return FlextResult[dict[str, object]].ok(acl_dict)
+            return FlextResult[FlextTypes.Dict].ok(acl_dict)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"OpenLDAP 1.x ACL parse failed: {e}"
             )
 
     @override
-    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
+    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
         """Format ACL dict to access string for OpenLDAP 1.x.
 
         Args:

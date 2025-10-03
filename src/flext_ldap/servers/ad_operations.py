@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.servers.base_operations import BaseServerOperations
@@ -56,7 +56,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         return False
 
     @override
-    def get_bind_mechanisms(self) -> list[str]:
+    def get_bind_mechanisms(self) -> FlextTypes.StringList:
         """Get supported BIND mechanisms for AD."""
         return ["SIMPLE", "SASL/GSSAPI", "SASL/DIGEST-MD5"]
 
@@ -70,38 +70,34 @@ class ActiveDirectoryOperations(BaseServerOperations):
         return "cn=schema,cn=configuration"
 
     @override
-    def discover_schema(self, connection: object) -> FlextResult[dict[str, object]]:
+    def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from Active Directory.
 
         TODO: Implement AD schema discovery.
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory schema discovery not yet implemented. "
             "Contributions welcome! See flext-ldap documentation for "
             "implementation guide."
         )
 
     @override
-    def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextResult[dict[str, object]]:
+    def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse AD objectClass definition.
 
         TODO: Implement AD objectClass parsing.
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory objectClass parsing not yet implemented."
         )
 
     @override
-    def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextResult[dict[str, object]]:
+    def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse AD attributeType definition.
 
         TODO: Implement AD attributeType parsing.
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory attributeType parsing not yet implemented."
         )
 
@@ -122,12 +118,12 @@ class ActiveDirectoryOperations(BaseServerOperations):
     @override
     def get_acls(
         self, connection: object, dn: str
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get nTSecurityDescriptor ACLs from Active Directory.
 
         TODO: Implement AD ACL retrieval.
         """
-        return FlextResult[list[dict[str, object]]].fail(
+        return FlextResult[list[FlextTypes.Dict]].fail(
             "Active Directory ACL operations not yet implemented. "
             "AD uses complex Security Descriptor format that requires "
             "specialized parsing."
@@ -135,7 +131,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
     @override
     def set_acls(
-        self, connection: object, dn: str, acls: list[dict[str, object]]
+        self, connection: object, dn: str, acls: list[FlextTypes.Dict]
     ) -> FlextResult[bool]:
         """Set nTSecurityDescriptor ACLs on Active Directory.
 
@@ -146,17 +142,17 @@ class ActiveDirectoryOperations(BaseServerOperations):
         )
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse nTSecurityDescriptor ACL.
 
         TODO: Implement AD Security Descriptor parsing.
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory Security Descriptor parsing not yet implemented."
         )
 
     @override
-    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
+    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
         """Format ACL dict to nTSecurityDescriptor.
 
         TODO: Implement AD Security Descriptor formatting.
@@ -185,7 +181,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
     @override
     def modify_entry(
-        self, connection: object, dn: str, modifications: dict[str, object]
+        self, connection: object, dn: str, modifications: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Modify entry in Active Directory.
 
@@ -242,7 +238,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         connection: object,
         base_dn: str,
         search_filter: str,
-        attributes: list[str] | None = None,
+        attributes: FlextTypes.StringList | None = None,
         page_size: int = 100,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute paged search on Active Directory.
@@ -286,7 +282,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         """
         return True
 
-    def get_ad_object_classes(self) -> list[str]:
+    def get_ad_object_classes(self) -> FlextTypes.StringList:
         """Get Active Directory-specific object classes.
 
         Returns:
@@ -305,7 +301,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             "groupPolicyContainer",
         ]
 
-    def get_ad_attributes(self) -> list[str]:
+    def get_ad_attributes(self) -> FlextTypes.StringList:
         """Get Active Directory-specific attributes.
 
         Returns:
@@ -327,7 +323,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             "whenChanged",
         ]
 
-    def get_well_known_guids(self) -> dict[str, str]:
+    def get_well_known_guids(self) -> FlextTypes.StringDict:
         """Get well-known AD GUIDs.
 
         Returns:
@@ -349,7 +345,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
         """
         return True
 
-    def get_functional_level_info(self) -> dict[str, object]:
+    def get_functional_level_info(self) -> FlextTypes.Dict:
         """Get AD functional level information.
 
         Returns:
@@ -363,7 +359,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             "note": "Detection not yet implemented",
         }
 
-    def get_implementation_notes(self) -> dict[str, str]:
+    def get_implementation_notes(self) -> FlextTypes.StringDict:
         """Get implementation notes for AD support.
 
         Returns:

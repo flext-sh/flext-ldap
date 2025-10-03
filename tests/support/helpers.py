@@ -11,7 +11,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from typing import Literal, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 from ldap3.core.connection import Connection
@@ -26,7 +26,7 @@ logger = FlextLogger(__name__)
 def create_test_user(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, list[str]],
+    attributes: dict[str, FlextTypes.StringList],
 ) -> FlextResult[bool]:
     """Create a test user in LDAP server."""
     try:
@@ -44,7 +44,7 @@ def create_test_user(
             authentication=FlextLdapTypes.SIMPLE,
         )
 
-        success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
+        success: bool = conn.add(dn, attributes=cast("FlextTypes.Dict", attributes))
         conn.unbind()
 
         if success:
@@ -60,7 +60,7 @@ def create_test_user(
 def create_test_group(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, list[str]],
+    attributes: dict[str, FlextTypes.StringList],
 ) -> FlextResult[bool]:
     """Create a test group in LDAP server."""
     try:
@@ -78,7 +78,7 @@ def create_test_group(
             authentication=FlextLdapTypes.SIMPLE,
         )
 
-        success: bool = conn.add(dn, attributes=cast("dict[str, object]", attributes))
+        success: bool = conn.add(dn, attributes=cast("FlextTypes.Dict", attributes))
         conn.unbind()
 
         if success:
@@ -93,7 +93,7 @@ def create_test_group(
 
 def cleanup_test_entries(
     config: FlextLdapModels.ConnectionConfig,
-    dns: list[str],
+    dns: FlextTypes.StringList,
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
     try:
@@ -195,7 +195,7 @@ def get_entry_attributes(
 
         if success and len(conn.entries) > 0:
             entry = conn.entries[0]
-            attributes: dict[str, object] = {
+            attributes: FlextTypes.Dict = {
                 attr: entry[attr].value for attr in entry.entry_attributes
             }
             conn.unbind()
@@ -244,10 +244,10 @@ def search_entries(
             search_scope=ldap_scope,
         )
 
-        results: list[dict[str, object]] = []
+        results: list[FlextTypes.Dict] = []
         if success:
             for entry in conn.entries:
-                entry_data: dict[str, object] = {
+                entry_data: FlextTypes.Dict = {
                     "dn": entry.entry_dn,
                     "attributes": {
                         attr: entry[attr].value for attr in entry.entry_attributes
@@ -287,7 +287,7 @@ def modify_entry(
         )
 
         # Convert changes to ldap3 format
-        ldap3_changes: dict[str, list[tuple[object, list[object]]]] = {}
+        ldap3_changes: dict[str, list[tuple[object, FlextTypes.List]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
                 ldap3_changes[attr] = [(FlextLdapTypes.MODIFY_REPLACE, values)]

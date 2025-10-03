@@ -17,7 +17,7 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, override
 
-from flext_core import FlextConstants, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from pydantic import (
     ConfigDict,
     Field,
@@ -202,7 +202,7 @@ class FlextLdapModels(FlextModels):
         def serialize_dn(self, value: str) -> str:
             """Custom serializer for DN normalization."""
             # Normalize DN format for consistent serialization
-            components: list[str] = []
+            components: FlextTypes.StringList = []
             for comp in value.split(","):
                 component = comp.strip()
                 if "=" in component:
@@ -226,7 +226,7 @@ class FlextLdapModels(FlextModels):
                 if "value" in kwargs:
                     kwargs["value"] = str(kwargs["value"])
                 # Convert all kwargs to proper types for Pydantic validation
-                typed_kwargs: dict[str, str] = {}
+                typed_kwargs: FlextTypes.StringDict = {}
                 for k, v in kwargs.items():
                     typed_kwargs[k] = str(v)
                 dn_obj = cls(**typed_kwargs)
@@ -361,11 +361,15 @@ class FlextLdapModels(FlextModels):
 
         name: str = Field(..., description="Object class name")
         oid: str = Field(..., description="Object identifier")
-        superior: list[str] = Field(
+        superior: FlextTypes.StringList = Field(
             default_factory=list, description="Superior classes"
         )
-        must: list[str] = Field(default_factory=list, description="Required attributes")
-        may: list[str] = Field(default_factory=list, description="Optional attributes")
+        must: FlextTypes.StringList = Field(
+            default_factory=list, description="Required attributes"
+        )
+        may: FlextTypes.StringList = Field(
+            default_factory=list, description="Optional attributes"
+        )
         kind: str = Field(default="STRUCTURAL", description="Object class kind")
         is_obsolete: bool = Field(default=False, description="Obsolete flag")
 
@@ -383,25 +387,25 @@ class FlextLdapModels(FlextModels):
         default_timeout: int = 30
         supports_start_tls: bool = True
         requires_explicit_bind: bool = False
-        attribute_name_mappings: dict[str, str] = field(default_factory=dict)
-        object_class_mappings: dict[str, str] = field(default_factory=dict)
-        dn_format_preferences: list[str] = field(default_factory=list)
+        attribute_name_mappings: FlextTypes.StringDict = field(default_factory=dict)
+        object_class_mappings: FlextTypes.StringDict = field(default_factory=dict)
+        dn_format_preferences: FlextTypes.StringList = field(default_factory=list)
         search_scope_limitations: set[str] = field(default_factory=set)
-        filter_syntax_quirks: list[str] = field(default_factory=list)
-        modify_operation_quirks: list[str] = field(default_factory=list)
+        filter_syntax_quirks: FlextTypes.StringList = field(default_factory=list)
+        modify_operation_quirks: FlextTypes.StringList = field(default_factory=list)
 
     @dataclass(frozen=True)
     class SchemaDiscoveryResult:
         """Result of LDAP schema discovery operation."""
 
-        server_info: dict[str, object]
+        server_info: FlextTypes.Dict
         server_type: FlextLdapModels.LdapServerType
         server_quirks: FlextLdapModels.ServerQuirks
         attributes: dict[str, FlextLdapModels.SchemaAttribute]
         object_classes: dict[str, FlextLdapModels.SchemaObjectClass]
-        naming_contexts: list[str]
-        supported_controls: list[str]
-        supported_extensions: list[str]
+        naming_contexts: FlextTypes.StringList
+        supported_controls: FlextTypes.StringList
+        supported_extensions: FlextTypes.StringList
 
     # =========================================================================
     # BASE CLASSES - Common functionality for LDAP entities
@@ -548,7 +552,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # LDAP metadata
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.StringList = Field(
             default_factory=lambda: ["person", "organizationalPerson", "inetOrgPerson"],
             description="LDAP object classes",
         )
@@ -575,7 +579,9 @@ class FlextLdapModels(FlextModels):
 
         @field_validator("department", "title", "organization", "status", mode="before")
         @classmethod
-        def set_defaults_from_constants(cls, v, info):
+        def set_defaults_from_constants(
+            cls, v: str | None, info: ValidationInfo
+        ) -> str:
             """Set defaults from constants if None is provided."""
             if v is None:
                 field_name = info.field_name
@@ -587,7 +593,7 @@ class FlextLdapModels(FlextModels):
                     return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
                 elif field_name == "status":
                     return FlextLdapConstants.Defaults.DEFAULT_STATUS
-            return v
+            return v or ""
 
         @computed_field
         def full_name(self) -> str:
@@ -647,7 +653,9 @@ class FlextLdapModels(FlextModels):
 
         @field_validator("object_classes")
         @classmethod
-        def validate_object_classes(cls, v: list[str]) -> list[str]:
+        def validate_object_classes(
+            cls, v: FlextTypes.StringList
+        ) -> FlextTypes.StringList:
             """Validate object classes."""
             if not v:
                 msg = "At least one object class is required"
@@ -721,9 +729,9 @@ class FlextLdapModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Business rule validation failed: {e}")
 
-        def to_ldap_attributes(self) -> dict[str, list[str]]:
+        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
             """Convert user to LDAP attributes format."""
-            attributes: dict[str, list[str]] = {}
+            attributes: dict[str, FlextTypes.StringList] = {}
 
             # Core attributes
             if self.dn:
@@ -764,7 +772,7 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def from_ldap_attributes(
-            cls, ldap_attributes: dict[str, list[str]]
+            cls, ldap_attributes: dict[str, FlextTypes.StringList]
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create user from LDAP attributes."""
             try:
@@ -987,11 +995,11 @@ class FlextLdapModels(FlextModels):
         gid_number: int | None = Field(default=None, description="Group ID Number")
 
         # Group membership
-        member_dns: list[str] = Field(
+        member_dns: FlextTypes.StringList = Field(
             default_factory=list,
             description="Member Distinguished Names",
         )
-        unique_member_dns: list[str] = Field(
+        unique_member_dns: FlextTypes.StringList = Field(
             default_factory=list,
             description="Unique Member Distinguished Names",
         )
@@ -1011,7 +1019,7 @@ class FlextLdapModels(FlextModels):
 
         # Metadata
         description: str | None = Field(default=None, description="Group description")
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.StringList = Field(
             default_factory=lambda: ["groupOfNames", "top"],
             description="LDAP object classes",
         )
@@ -1035,9 +1043,9 @@ class FlextLdapModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Business rule validation failed: {e}")
 
-        def to_ldap_attributes(self) -> dict[str, list[str]]:
+        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
             """Convert group to LDAP attributes format."""
-            attributes: dict[str, list[str]] = {}
+            attributes: dict[str, FlextTypes.StringList] = {}
 
             # Core attributes
             if self.dn:
@@ -1066,7 +1074,7 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def from_ldap_attributes(
-            cls, ldap_attributes: dict[str, list[str]]
+            cls, ldap_attributes: dict[str, FlextTypes.StringList]
         ) -> FlextResult[FlextLdapModels.Group]:
             """Create group from LDAP attributes."""
             try:
@@ -1193,7 +1201,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # LDAP metadata
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.StringList = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -1233,7 +1241,7 @@ class FlextLdapModels(FlextModels):
                 # Convert different types to string list for consistent access
                 if isinstance(attribute_value, str):
                     return [attribute_value]
-                # attribute_value is list[str] at this point due to type narrowing
+                # attribute_value is FlextTypes.StringList at this point due to type narrowing
                 if attribute_value:  # Check if list is not empty
                     # Convert all items to strings
                     return [
@@ -1280,15 +1288,15 @@ class FlextLdapModels(FlextModels):
                 return True
             return self.has_attribute(key)
 
-        def __getitem__(self, key: str) -> str | list[str] | None:
+        def __getitem__(self, key: str) -> str | FlextTypes.StringList | None:
             """Support entry['key'] syntax for backward compatibility."""
             if key == "dn":
                 return self.dn
             return self.get_attribute(key)
 
         def get(
-            self, key: str, default: str | list[str] | None = None
-        ) -> str | list[str] | None:
+            self, key: str, default: str | FlextTypes.StringList | None = None
+        ) -> str | FlextTypes.StringList | None:
             """Support entry.get('key', default) syntax for backward compatibility."""
             if key == "dn":
                 return self.dn
@@ -1312,7 +1320,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # Attribute selection
-        attributes: list[str] | None = Field(
+        attributes: FlextTypes.StringList | None = Field(
             default=None,
             description="Attributes to return (None = all)",
         )
@@ -1411,7 +1419,9 @@ class FlextLdapModels(FlextModels):
 
         @field_validator("attributes")
         @classmethod
-        def validate_attributes(cls, v: list[str] | None) -> list[str] | None:
+        def validate_attributes(
+            cls, v: FlextTypes.StringList | None
+        ) -> FlextTypes.StringList | None:
             """Validate attribute list."""
             if v is not None:
                 # Remove duplicates and empty strings using set comprehension
@@ -1479,7 +1489,7 @@ class FlextLdapModels(FlextModels):
             cls,
             uid: str,
             base_dn: str = "ou=users,dc=example,dc=com",
-            attributes: list[str] | None = None,
+            attributes: FlextTypes.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request for user."""
             return cls.model_validate(
@@ -1497,7 +1507,7 @@ class FlextLdapModels(FlextModels):
             cls,
             cn: str,
             base_dn: str = "ou=groups,dc=example,dc=com",
-            attributes: list[str] | None = None,
+            attributes: FlextTypes.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request for group."""
             return cls.model_validate(
@@ -1573,7 +1583,7 @@ class FlextLdapModels(FlextModels):
         organization: str | None = Field(default=None, description="Organization")
 
         # LDAP metadata
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.StringList = Field(
             default_factory=lambda: [
                 FlextLdapConstants.ObjectClasses.TOP,
                 FlextLdapConstants.ObjectClasses.PERSON,
@@ -1679,10 +1689,10 @@ class FlextLdapModels(FlextModels):
 
         # Required group attributes
         description: str = Field(..., description="Group description")
-        members: list[str] = Field(..., description="Initial group members")
+        members: FlextTypes.StringList = Field(..., description="Initial group members")
 
         # LDAP metadata
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.StringList = Field(
             default_factory=lambda: ["groupOfNames", "top"],
             description="LDAP object classes",
         )
@@ -1701,7 +1711,7 @@ class FlextLdapModels(FlextModels):
 
         @field_validator("members")
         @classmethod
-        def validate_members(cls, v: list[str]) -> list[str]:
+        def validate_members(cls, v: FlextTypes.StringList) -> FlextTypes.StringList:
             """Validate members list."""
             if not v:
                 error_msg = "Members list cannot be empty"
@@ -1796,7 +1806,7 @@ class FlextLdapModels(FlextModels):
         target_dn: str = Field(default="", description="Target DN")
 
         # Additional details
-        server_info: dict[str, object] = Field(
+        server_info: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Server information",
         )
@@ -1836,7 +1846,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # Additional data
-        data: dict[str, object] = Field(
+        data: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Additional result data",
         )
@@ -1852,7 +1862,7 @@ class FlextLdapModels(FlextModels):
             cls,
             operation_type: str,
             target_dn: str = "",
-            data: dict[str, object] | None = None,
+            data: FlextTypes.Dict | None = None,
             duration_ms: float = 0.0,
         ) -> FlextLdapModels.OperationResult:
             """Create success result."""
@@ -1929,7 +1939,7 @@ class FlextLdapModels(FlextModels):
         """LDAP modify operation configuration value object."""
 
         dn: str
-        changes: dict[str, list[tuple[str, list[str]]]]
+        changes: dict[str, list[tuple[str, FlextTypes.StringList]]]
 
         def validate(self) -> FlextResult[None]:
             """Validate modify configuration."""
@@ -1947,7 +1957,7 @@ class FlextLdapModels(FlextModels):
         """LDAP add operation configuration value object."""
 
         dn: str
-        attributes: dict[str, list[str]]
+        attributes: dict[str, FlextTypes.StringList]
 
         def validate(self) -> FlextResult[None]:
             """Validate add configuration."""
@@ -1981,7 +1991,7 @@ class FlextLdapModels(FlextModels):
 
         base_dn: str
         filter_str: str
-        attributes: list[str]
+        attributes: FlextTypes.StringList
 
         def validate(self) -> FlextResult[None]:
             """Validate search configuration."""
@@ -2007,7 +2017,7 @@ class FlextLdapModels(FlextModels):
             ..., description="Type of target (dn, attributes, entry)"
         )
         dn_pattern: str = Field(default="*", description="DN pattern for the target")
-        attributes: list[str] = Field(
+        attributes: FlextTypes.StringList = Field(
             default_factory=list, description="Specific attributes targeted"
         )
         filter_expression: str = Field(
@@ -2020,7 +2030,7 @@ class FlextLdapModels(FlextModels):
             cls,
             target_type: str,
             dn_pattern: str = "*",
-            attributes: list[str] | None = None,
+            attributes: FlextTypes.StringList | None = None,
             filter_expression: str = "",
             scope: str = "subtree",
         ) -> FlextResult[FlextLdapModels.AclTarget]:
@@ -2075,10 +2085,10 @@ class FlextLdapModels(FlextModels):
     class AclPermissions(FlextLdapBaseModel):
         """ACL permissions specification."""
 
-        permissions: list[str] = Field(
+        permissions: FlextTypes.StringList = Field(
             default_factory=list, description="List of granted permissions"
         )
-        denied_permissions: list[str] = Field(
+        denied_permissions: FlextTypes.StringList = Field(
             default_factory=list, description="List of explicitly denied permissions"
         )
         grant_type: str = Field(
@@ -2088,8 +2098,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def create(
             cls,
-            permissions: list[str] | None = None,
-            denied_permissions: list[str] | None = None,
+            permissions: FlextTypes.StringList | None = None,
+            denied_permissions: FlextTypes.StringList | None = None,
             grant_type: str = "allow",
         ) -> FlextResult[FlextLdapModels.AclPermissions]:
             """Create ACL permissions with validation."""
@@ -2115,10 +2125,10 @@ class FlextLdapModels(FlextModels):
             ..., description="ACL permissions"
         )
         priority: int = Field(default=0, description="ACL evaluation priority")
-        conditions: dict[str, object] = Field(
+        conditions: FlextTypes.Dict = Field(
             default_factory=dict, description="Additional conditions (time, IP, etc.)"
         )
-        metadata: dict[str, object] = Field(
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Format-specific metadata"
         )
 
@@ -2130,8 +2140,8 @@ class FlextLdapModels(FlextModels):
             permissions: FlextLdapModels.AclPermissions,
             name: str = "",
             priority: int = 0,
-            conditions: dict[str, object] | None = None,
-            metadata: dict[str, object] | None = None,
+            conditions: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
         ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Create unified ACL with validation."""
             try:
@@ -2155,7 +2165,7 @@ class FlextLdapModels(FlextModels):
 
         access_line: str = Field(..., description="Complete OpenLDAP access line")
         target_spec: str = Field(default="*", description="Target specification")
-        by_clauses: list[dict[str, str]] = Field(
+        by_clauses: list[FlextTypes.StringDict] = Field(
             default_factory=list, description="List of by clauses"
         )
 
@@ -2164,7 +2174,7 @@ class FlextLdapModels(FlextModels):
             cls,
             access_line: str,
             target_spec: str = "*",
-            by_clauses: list[dict[str, str]] | None = None,
+            by_clauses: list[FlextTypes.StringDict] | None = None,
         ) -> FlextResult[FlextLdapModels.OpenLdapAcl]:
             """Create OpenLDAP ACL representation."""
             try:
@@ -2186,11 +2196,11 @@ class FlextLdapModels(FlextModels):
         target_type: str = Field(
             default="entry", description="Target type (entry, attr)"
         )
-        attributes: list[str] = Field(
+        attributes: FlextTypes.StringList = Field(
             default_factory=list, description="Targeted attributes"
         )
         subject_spec: str = Field(default="", description="Subject specification")
-        permissions: list[str] = Field(
+        permissions: FlextTypes.StringList = Field(
             default_factory=list, description="Permissions list"
         )
 
@@ -2199,9 +2209,9 @@ class FlextLdapModels(FlextModels):
             cls,
             orclaci_value: str,
             target_type: str = "entry",
-            attributes: list[str] | None = None,
+            attributes: FlextTypes.StringList | None = None,
             subject_spec: str = "",
-            permissions: list[str] | None = None,
+            permissions: FlextTypes.StringList | None = None,
         ) -> FlextResult[FlextLdapModels.OracleAcl]:
             """Create Oracle ACL representation."""
             try:
@@ -2223,13 +2233,15 @@ class FlextLdapModels(FlextModels):
 
         aci_value: str = Field(..., description="Complete ACI string")
         target_dn: str = Field(default="", description="Target DN")
-        target_attrs: list[str] = Field(
+        target_attrs: FlextTypes.StringList = Field(
             default_factory=list, description="Target attributes"
         )
         acl_name: str = Field(default="", description="ACL name")
         grant_type: str = Field(default="allow", description="allow or deny")
-        permissions: list[str] = Field(default_factory=list, description="Permissions")
-        bind_rules: dict[str, str] = Field(
+        permissions: FlextTypes.StringList = Field(
+            default_factory=list, description="Permissions"
+        )
+        bind_rules: FlextTypes.StringDict = Field(
             default_factory=dict, description="Bind rule specifications"
         )
 
@@ -2238,11 +2250,11 @@ class FlextLdapModels(FlextModels):
             cls,
             aci_value: str,
             target_dn: str = "",
-            target_attrs: list[str] | None = None,
+            target_attrs: FlextTypes.StringList | None = None,
             acl_name: str = "",
             grant_type: str = "allow",
-            permissions: list[str] | None = None,
-            bind_rules: dict[str, str] | None = None,
+            permissions: FlextTypes.StringList | None = None,
+            bind_rules: FlextTypes.StringDict | None = None,
         ) -> FlextResult[FlextLdapModels.AciFormat]:
             """Create ACI format representation."""
             try:
@@ -2267,10 +2279,10 @@ class FlextLdapModels(FlextModels):
         converted_acl: str = Field(..., description="Converted ACL string")
         source_format: str = Field(..., description="Source ACL format")
         target_format: str = Field(..., description="Target ACL format")
-        warnings: list[str] = Field(
+        warnings: FlextTypes.StringList = Field(
             default_factory=list, description="Conversion warnings"
         )
-        metadata: dict[str, object] = Field(
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Conversion metadata"
         )
 
@@ -2280,8 +2292,8 @@ class FlextLdapModels(FlextModels):
             converted_acl: str,
             source_format: str,
             target_format: str,
-            warnings: list[str] | None = None,
-            metadata: dict[str, object] | None = None,
+            warnings: FlextTypes.StringList | None = None,
+            metadata: FlextTypes.Dict | None = None,
         ) -> FlextResult[FlextLdapModels.ConversionResult]:
             """Create conversion result."""
             try:
@@ -2307,10 +2319,10 @@ class FlextLdapModels(FlextModels):
 
         command_type: str = Field(default="", description="Command type identifier")
         command_id: str = Field(default="", description="Unique command identifier")
-        payload: dict[str, object] = Field(
+        payload: FlextTypes.Dict = Field(
             default_factory=dict, description="Command payload data"
         )
-        metadata: dict[str, object] = Field(
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Command metadata"
         )
         timestamp: int | None = Field(default=None, description="Command timestamp")
@@ -2320,8 +2332,8 @@ class FlextLdapModels(FlextModels):
             cls,
             command_type: str,
             command_id: str,
-            payload: dict[str, object] | None = None,
-            metadata: dict[str, object] | None = None,
+            payload: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
             timestamp: int | None = None,
         ) -> FlextResult[FlextLdapModels.CqrsCommand]:
             """Create CQRS command message."""
@@ -2344,10 +2356,10 @@ class FlextLdapModels(FlextModels):
 
         query_type: str = Field(default="", description="Query type identifier")
         query_id: str = Field(default="", description="Unique query identifier")
-        parameters: dict[str, object] = Field(
+        parameters: FlextTypes.Dict = Field(
             default_factory=dict, description="Query parameters"
         )
-        metadata: dict[str, object] = Field(
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Query metadata"
         )
         timestamp: int | None = Field(default=None, description="Query timestamp")
@@ -2357,8 +2369,8 @@ class FlextLdapModels(FlextModels):
             cls,
             query_type: str,
             query_id: str,
-            parameters: dict[str, object] | None = None,
-            metadata: dict[str, object] | None = None,
+            parameters: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
             timestamp: int | None = None,
         ) -> FlextResult[FlextLdapModels.CqrsQuery]:
             """Create CQRS query message."""
@@ -2382,10 +2394,10 @@ class FlextLdapModels(FlextModels):
         event_type: str = Field(default="", description="Event type identifier")
         event_id: str = Field(default="", description="Unique event identifier")
         aggregate_id: str = Field(default="", description="Aggregate root identifier")
-        payload: dict[str, object] = Field(
+        payload: FlextTypes.Dict = Field(
             default_factory=dict, description="Event payload data"
         )
-        metadata: dict[str, object] = Field(
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Event metadata"
         )
         timestamp: int = Field(default=0, description="Event timestamp")
@@ -2398,8 +2410,8 @@ class FlextLdapModels(FlextModels):
             event_id: str,
             aggregate_id: str,
             timestamp: int,
-            payload: dict[str, object] | None = None,
-            metadata: dict[str, object] | None = None,
+            payload: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
             version: int = 1,
         ) -> FlextResult[FlextLdapModels.CqrsEvent]:
             """Create CQRS event message."""
@@ -2424,10 +2436,8 @@ class FlextLdapModels(FlextModels):
 
         message_type: str = Field(..., description="Message type identifier")
         message_id: str = Field(..., description="Unique message identifier")
-        data: dict[str, object] = Field(
-            default_factory=dict, description="Message data"
-        )
-        metadata: dict[str, object] = Field(
+        data: FlextTypes.Dict = Field(default_factory=dict, description="Message data")
+        metadata: FlextTypes.Dict = Field(
             default_factory=dict, description="Message metadata"
         )
         timestamp: int | None = Field(None, description="Message timestamp")
@@ -2438,8 +2448,8 @@ class FlextLdapModels(FlextModels):
             cls,
             message_type: str,
             message_id: str,
-            data: dict[str, object] | None = None,
-            metadata: dict[str, object] | None = None,
+            data: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
             timestamp: int | None = None,
             processed: bool = False,
         ) -> FlextResult[FlextLdapModels.DomainMessage]:

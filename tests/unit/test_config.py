@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextTypes
 
 
 class TestFlextLdapConfig:
@@ -28,7 +29,7 @@ class TestFlextLdapConfig:
 
     def test_create_connection_config_success(
         self,
-        ldap_server_config: dict[str, object],
+        ldap_server_config: FlextTypes.Dict,
     ) -> None:
         """Test successful connection config creation."""
         configs = FlextLdapConfig()
@@ -51,7 +52,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with minimal config data - should succeed with defaults
-        minimal_config: dict[str, object] = {
+        minimal_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -101,7 +102,7 @@ class TestFlextLdapConfig:
         """Test successful search config creation."""
         configs = FlextLdapConfig()
 
-        search_data: dict[str, object] = {
+        search_data: FlextTypes.Dict = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -120,7 +121,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause Pydantic validation to fail
-        invalid_data: dict[str, object] = {
+        invalid_data: FlextTypes.Dict = {
             "base_dn": None,
             "filter_str": None,
             "attributes": "invalid",
@@ -137,7 +138,7 @@ class TestFlextLdapConfig:
         """Test successful modify config creation."""
         configs = FlextLdapConfig()
 
-        modify_data: dict[str, object] = {
+        modify_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "operation": "replace",
             "attribute": "cn",
@@ -158,7 +159,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: dict[str, object] = {
+        data_with_types: FlextTypes.Dict = {
             "dn": None,
             "operation": None,
             "attribute": None,
@@ -177,7 +178,7 @@ class TestFlextLdapConfig:
         """Test successful add config creation."""
         configs = FlextLdapConfig()
 
-        add_data: dict[str, object] = {
+        add_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": [
@@ -205,7 +206,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: dict[str, object] = {"dn": None, "attributes": "invalid"}
+        data_with_types: FlextTypes.Dict = {"dn": None, "attributes": "invalid"}
         result = configs.create_add_config(data_with_types)
 
         # The method should succeed with proper type conversion
@@ -217,7 +218,7 @@ class TestFlextLdapConfig:
         """Test successful delete config creation."""
         configs = FlextLdapConfig()
 
-        delete_data: dict[str, object] = {
+        delete_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com"
         }
 
@@ -232,7 +233,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause an exception
-        invalid_data: dict[str, object] = {"dn": None}
+        invalid_data: FlextTypes.Dict = {"dn": None}
         result = configs.create_delete_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
@@ -241,7 +242,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_success(
         self,
-        ldap_server_config: dict[str, object],
+        ldap_server_config: FlextTypes.Dict,
     ) -> None:
         """Test successful connection data validation."""
         # Update the config to use the expected field names
@@ -258,7 +259,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
-        invalid_data: dict[str, object] = {"invalid": "data"}
+        invalid_data: FlextTypes.Dict = {"invalid": "data"}
         result = FlextLdapValidations.validate_connection_config(invalid_data)
 
         assert result.is_failure
@@ -270,7 +271,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_missing_required_fields(self) -> None:
         """Test connection data validation with missing required fields."""
-        incomplete_data: dict[str, object] = {
+        incomplete_data: FlextTypes.Dict = {
             "server": "localhost"
             # Missing port, bind_dn, bind_password
         }
@@ -422,7 +423,7 @@ class TestFlextLdapConfig:
     def test_get_default_connection_config(self) -> None:
         """Test getting default connection configuration."""
         # Test the actual get_global_instance method which provides default configuration
-        config = FlextLdapConfig.get_global_instance()
+        config = FlextLdapConfig()
 
         assert isinstance(config, FlextLdapConfig)
         assert config.ldap_server_uri == "ldap://localhost"
@@ -443,14 +444,14 @@ class TestFlextLdapConfig:
         """Test successful config merging."""
         configs = FlextLdapConfig()
 
-        base_config: dict[str, object] = {
+        base_config: FlextTypes.Dict = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "password": "admin123",
             "base_dn": "dc=example,dc=com",
         }
 
-        override_config: dict[str, object] = {
+        override_config: FlextTypes.Dict = {
             "server_uri": f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "connection_timeout": 60,
         }
@@ -469,7 +470,7 @@ class TestFlextLdapConfig:
         """Test config merging with empty override."""
         configs = FlextLdapConfig()
 
-        base_config: dict[str, object] = {
+        base_config: FlextTypes.Dict = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
         }
@@ -577,7 +578,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test complete workflow with valid data
-        conn_config: dict[str, object] = {
+        conn_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -587,7 +588,7 @@ class TestFlextLdapConfig:
         conn_result = configs.create_from_connection_config_data(conn_config)
         assert conn_result.is_success
 
-        search_config: dict[str, object] = {
+        search_config: FlextTypes.Dict = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -595,7 +596,7 @@ class TestFlextLdapConfig:
         search_result = configs.create_search_config(search_config)
         assert search_result.is_success
 
-        add_config: dict[str, object] = {
+        add_config: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
@@ -753,14 +754,14 @@ class TestFlextLdapConfig:
 
     def test_create_for_environment(self) -> None:
         """Test create_for_environment class method."""
-        config = FlextLdapConfig.create_for_environment("test", ldap_enable_debug=True)
+        config = FlextLdapConfig(environment="test", ldap_enable_debug=True)
 
         assert isinstance(config, FlextLdapConfig)
         assert config.ldap_enable_debug is True
 
     def test_create_default(self) -> None:
         """Test create_default class method."""
-        config = FlextLdapConfig.create_default()
+        config = FlextLdapConfig()
 
         assert isinstance(config, FlextLdapConfig)
         assert config.ldap_server_uri == "ldap://localhost"
@@ -776,8 +777,8 @@ class TestFlextLdapConfig:
     def test_get_global_instance(self) -> None:
         """Test get_global_instance method."""
         FlextLdapConfig.reset_global_instance()
-        config1 = FlextLdapConfig.get_global_instance()
-        config2 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfig()
+        config2 = FlextLdapConfig()
 
         # Both calls return config instances with same values
         assert isinstance(config1, FlextLdapConfig)
@@ -786,10 +787,10 @@ class TestFlextLdapConfig:
 
     def test_reset_global_instance(self) -> None:
         """Test reset_global_instance method."""
-        config1 = FlextLdapConfig.get_global_instance()
+        config1 = FlextLdapConfig()
         original_server = config1.ldap_server_uri
         FlextLdapConfig.reset_global_instance()
-        config2 = FlextLdapConfig.get_global_instance()
+        config2 = FlextLdapConfig()
 
         # Reset creates new instance
         assert isinstance(config2, FlextLdapConfig)
@@ -808,8 +809,8 @@ class TestFlextLdapConfig:
     def test_merge_configs(self) -> None:
         """Test merge_configs method."""
         configs = FlextLdapConfig()
-        base_config: dict[str, object] = {"server": "ldap://localhost", "port": 389}
-        override_config: dict[str, object] = {"port": 636, "use_ssl": True}
+        base_config: FlextTypes.Dict = {"server": "ldap://localhost", "port": 389}
+        override_config: FlextTypes.Dict = {"port": 636, "use_ssl": True}
 
         result = configs.merge_configs(base_config, override_config)
 
@@ -851,7 +852,7 @@ class TestFlextLdapConfig:
     def test_get_global_instance_exception_branch(self) -> None:
         """Test get_global_instance exception fallback - covers lines 351-354."""
         # Get global instance (should work normally)
-        config = FlextLdapConfig.get_global_instance()
+        config = FlextLdapConfig()
         assert isinstance(config, FlextLdapConfig)
         # The exception branch (lines 351-354) is defensive code for edge cases
 

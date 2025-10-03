@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flext_ldap.utilities import FlextLdapUtilities
+from flext_core import FlextTypes
 
 
 class TestFlextLdapUtilities:
@@ -135,7 +136,7 @@ class TestFlextLdapUtilities:
 
     def test_dict_to_attributes_valid(self) -> None:
         """Test dict to LDAP attributes conversion."""
-        data: dict[str, object] = {"cn": "John Doe", "mail": "john@example.com"}
+        data: FlextTypes.Dict = {"cn": "John Doe", "mail": "john@example.com"}
         result = FlextLdapUtilities.dict_to_attributes(data)
         assert result.is_success
         assert isinstance(result.data, tuple)
@@ -155,8 +156,8 @@ class TestFlextLdapUtilities:
 
     def test_attributes_to_dict_valid(self) -> None:
         """Test LDAP attributes to dict conversion."""
-        names: list[str] = ["cn", "mail"]
-        values: list[object] = ["John Doe", "john@example.com"]
+        names: FlextTypes.StringList = ["cn", "mail"]
+        values: FlextTypes.List = ["John Doe", "john@example.com"]
         result = FlextLdapUtilities.attributes_to_dict(names, values)
         assert result.is_success
         assert isinstance(result.data, dict)
@@ -557,8 +558,8 @@ class TestFlextLdapUtilitiesLdapProcessing:
 
     def test_attributes_to_dict_success(self) -> None:
         """Test attributes to dict conversion success case."""
-        names: list[str] = ["cn", "mail"]
-        values: list[object] = ["John", "john@example.com"]
+        names: FlextTypes.StringList = ["cn", "mail"]
+        values: FlextTypes.List = ["John", "john@example.com"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_success
         assert result.data["cn"] == "John"
@@ -566,8 +567,8 @@ class TestFlextLdapUtilitiesLdapProcessing:
 
     def test_attributes_to_dict_mismatch(self) -> None:
         """Test attributes to dict conversion with mismatched lengths."""
-        names: list[str] = ["cn", "mail"]
-        values: list[object] = ["John"]  # Missing one value
+        names: FlextTypes.StringList = ["cn", "mail"]
+        values: FlextTypes.List = ["John"]  # Missing one value
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_failure
         assert result.error is not None
@@ -609,7 +610,7 @@ class TestFlextLdapUtilitiesConversion:
 
     def test_dict_to_attributes_success(self) -> None:
         """Test dict to attributes conversion success case."""
-        data: dict[str, object] = {"cn": "John Doe", "mail": "john@example.com"}
+        data: FlextTypes.Dict = {"cn": "John Doe", "mail": "john@example.com"}
         result = FlextLdapUtilities.Conversion.dict_to_attributes(data)
         assert result.is_success
         assert isinstance(result.data, tuple)
@@ -629,7 +630,7 @@ class TestFlextLdapUtilitiesConversion:
 
     def test_dict_to_attributes_list_values(self) -> None:
         """Test dict to attributes conversion with list values."""
-        data: dict[str, object] = {
+        data: FlextTypes.Dict = {
             "cn": ["John Doe", "J. Doe"],
             "mail": ["john@example.com"],
         }
@@ -648,16 +649,16 @@ class TestFlextLdapUtilitiesConversion:
 
     def test_attributes_to_dict_single_value(self) -> None:
         """Test attributes to dict conversion with single values."""
-        names: list[str] = ["cn"]
-        values: list[object] = ["John Doe"]
+        names: FlextTypes.StringList = ["cn"]
+        values: FlextTypes.List = ["John Doe"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_success
         assert result.data == {"cn": "John Doe"}
 
     def test_attributes_to_dict_multiple_values(self) -> None:
         """Test attributes to dict conversion with multiple values."""
-        names: list[str] = ["cn", "mail", "sn"]
-        values: list[object] = ["John Doe", "john@example.com", "Doe"]
+        names: FlextTypes.StringList = ["cn", "mail", "sn"]
+        values: FlextTypes.List = ["John Doe", "john@example.com", "Doe"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
         assert result.is_success
         assert len(result.data) == 3

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextHandlers, FlextResult
+from flext_core import FlextHandlers, FlextResult, FlextTypes
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
@@ -45,7 +45,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         except Exception as e:
             return FlextResult[object].fail(f"ACL operation failed: {e}")
 
-    def _handle_parse(self, message: dict[str, object]) -> FlextResult[object]:
+    def _handle_parse(self, message: FlextTypes.Dict) -> FlextResult[object]:
         """Handle ACL parsing operations."""
         try:
             acl_string = message.get("acl_string")
@@ -73,7 +73,7 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         except Exception as e:
             return FlextResult[object].fail(f"ACL parsing failed: {e}")
 
-    def _handle_convert(self, message: dict[str, object]) -> FlextResult[object]:
+    def _handle_convert(self, message: FlextTypes.Dict) -> FlextResult[object]:
         """Handle ACL conversion operations."""
         try:
             acl_data = message.get("acl_data")
@@ -128,26 +128,28 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
             return FlextResult[object].fail(f"ACL conversion failed: {e}")
 
     def batch_convert(
-        self, acls: list[str], source_format: str, target_format: str
-    ) -> FlextResult[list[object]]:
+        self, acls: FlextTypes.StringList, source_format: str, target_format: str
+    ) -> FlextResult[FlextTypes.List]:
         """Convert multiple ACLs from one format to another."""
         try:
             # Validate input is not empty
             if not acls:
-                return FlextResult[list[object]].fail("ACL list cannot be empty")
+                return FlextResult[FlextTypes.List].fail("ACL list cannot be empty")
 
             results = []
             for acl in acls:
                 result = self.converters.convert_acl(acl, source_format, target_format)
                 if result.is_failure:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         f"Batch conversion failed for ACL '{acl}': {result.error}"
                     )
                 # Unwrap the FlextResult to get the ConversionResult object
                 results.append(result.unwrap())
-            return FlextResult[list[object]].ok(results)
+            return FlextResult[FlextTypes.List].ok(results)
         except Exception as e:
-            return FlextResult[list[object]].fail(f"Batch ACL conversion failed: {e}")
+            return FlextResult[FlextTypes.List].fail(
+                f"Batch ACL conversion failed: {e}"
+            )
 
     def validate_acl_syntax(
         self, acl_string: str, format_type: str
