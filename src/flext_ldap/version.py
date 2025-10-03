@@ -1,35 +1,36 @@
-"""Project metadata for flext ldap."""
+"""Version and package metadata for flext-ldap using importlib.metadata."""
 
 from __future__ import annotations
 
-from typing import Final, cast
+from importlib.metadata import metadata
 
-from flext_core.metadata import (
-    FlextProjectMetadata,
-    FlextProjectVersion,
-    build_metadata_exports,
+_metadata = metadata("flext-ldap")
+
+__version__ = _metadata["Version"]
+__version_info__ = tuple(
+    int(part) if part.isdigit() else part for part in __version__.split(".")
 )
 
-_metadata = build_metadata_exports(__file__)
-globals().update(_metadata)
-_metadata_obj = cast(FlextProjectMetadata, _metadata["__flext_metadata__"])
 
+class FlextLdapVersion:
+    """Simple version class for flext-ldap with metadata access."""
 
-class FlextLdapVersion(FlextProjectVersion):
-    """Structured metadata for the flext ldap distribution."""
+    def __init__(self, version: str, version_info: tuple[int | str, ...]) -> None:
+        self.version = version
+        self.version_info = version_info
+        # Extract metadata attributes
+        self.project = _metadata.get("Name", "flext-ldap")
+        self.author = _metadata.get("Author", "")
+        self.maintainer = _metadata.get("Maintainer", "")
+        self.urls = dict(_metadata.items()) if hasattr(_metadata, "items") else {}
+        self.requires_python = _metadata.get("Requires-Python", "")
 
     @classmethod
     def current(cls) -> "FlextLdapVersion":
-        """Return canonical metadata loaded from pyproject.toml."""
-        return cls.from_metadata(_metadata_obj)
+        """Return current version."""
+        return cls(__version__, __version_info__)
 
 
-VERSION: Final[FlextLdapVersion] = FlextLdapVersion.current()
-__version__: Final[str] = VERSION.version
-__version_info__: Final[tuple[int | str, ...]] = VERSION.version_info
-
-for _name in tuple(_metadata):
-    if _name not in {"__version__", "__version_info__"}:
-        globals().pop(_name, None)
+VERSION = FlextLdapVersion.current()
 
 __all__ = ["VERSION", "FlextLdapVersion", "__version__", "__version_info__"]

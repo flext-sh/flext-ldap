@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextConstants, FlextResult, FlextUtilities
+from flext_core import FlextConstants, FlextResult, FlextTypes, FlextUtilities
 
 
 class FlextLdapValidations:
@@ -50,7 +50,9 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_attributes(attributes: list[str] | None) -> FlextResult[bool]:
+    def validate_attributes(
+        attributes: FlextTypes.StringList | None,
+    ) -> FlextResult[bool]:
         """Centralized LDAP attributes validation - ELIMINATE ALL DUPLICATION."""
         if attributes is None:
             return FlextResult[bool].fail("Attributes list cannot be empty")
@@ -189,7 +191,7 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_connection_config(
-        config: dict[str, object] | None,
+        config: FlextTypes.Dict | None,
     ) -> FlextResult[bool]:
         """Centralized connection config validation - ELIMINATE ALL DUPLICATION."""
         if config is None:

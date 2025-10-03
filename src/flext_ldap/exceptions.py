@@ -1,7 +1,8 @@
 """LDAP-specific exceptions for flext-ldap library.
 
 This module provides LDAP domain-specific exception classes extending
-flext-core exception patterns.
+flext-core exception patterns with full correlation ID support and
+standardized helper methods for context management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,163 +10,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypedDict, override
-from typing_extensions import Unpack
+from typing import override
 
-from flext_core import FlextContext, FlextExceptions, FlextLogger
+from flext_core import FlextExceptions, FlextTypes
 
 
-class FlextLdapExceptions(FlextExceptions):
+class FlextLdapExceptions:
     """LDAP-specific exceptions extending FlextExceptions.
 
     Provides LDAP domain-specific exception classes for all LDAP operation
     error scenarios while maintaining compatibility with flext-core
     exception hierarchy.
 
-    All LDAP exceptions inherit from FlextExceptions.BaseError and include
-    proper error codes, context, and correlation tracking.
+    All LDAP exceptions inherit from FlextExceptions specialized base classes
+    and include proper error codes, context, correlation tracking, and
+    standardized helper methods for context management.
 
-    Enhanced with FlextContext integration for automatic context tracking.
+    Factory methods for direct access - use these methods instead of direct instantiation
+    for proper error tracking and correlation ID generation.
     """
-
-    @override
-    def __init__(self) -> None:
-        """Initialize LDAP exceptions with context and logger integration."""
-        super().__init__()
-        self._context = FlextContext()
-        self._logger = FlextLogger(__name__)
-
-    def connection_error(
-        self,
-        message: str,
-        server_uri: str,
-        ldap_code: int | None = None,
-    ) -> Exception:
-        """Create connection error."""
-        return self.LdapConnectionError(
-            message, server_uri=server_uri, ldap_code=ldap_code
-        )
-
-    def authentication_error(self, message: str, bind_dn: str) -> Exception:
-        """Create authentication error."""
-        return self.LdapAuthenticationError(message, bind_dn=bind_dn)
-
-    def search_error(
-        self,
-        message: str,
-        filter_str: str,
-        base_dn: str,
-        context: str | None = None,
-    ) -> Exception:
-        """Create search error."""
-        return self.LdapSearchError(
-            message, base_dn=base_dn, filter_str=filter_str, search_context=context
-        )
-
-    def operation_error(
-        self, message: str, dn: str, target: str | None = None
-    ) -> Exception:
-        """Create operation error."""
-        full_message = f"{message} (target: {target})" if target else message
-        return self.LdapModifyError(full_message, dn=dn)
-
-    def validation_error(
-        self,
-        message: str,
-        value: str,
-        field: str | None = None,
-    ) -> Exception:
-        """Create validation error."""
-        full_message = f"{message} (value: {value})"
-        if field:
-            full_message += f" (field: {field})"
-        return self.LdapValidationError(full_message, ldap_field=field)
-
-    def configuration_error(
-        self,
-        message: str,
-        config_key: str,
-        section: str | None = None,
-    ) -> Exception:
-        """Create configuration error."""
-        return self.LdapConfigurationError(
-            message, ldap_config_key=config_key, section=section
-        )
-
-    def type_error(
-        self,
-        message: str,
-        value: str,
-        expected_type: str,
-        actual_type: str | None = None,
-    ) -> Exception:
-        """Create type error."""
-        # Include type information in the error message
-        type_info = f"Expected {expected_type}"
-        if actual_type:
-            type_info += f", got {actual_type}"
-        full_message = f"{message} ({type_info})"
-        return self.LdapValidationError(full_message, ldap_field=value)
-
-    def ldap_error(
-        self,
-        message: str,
-        operation: str,
-        ldap_code: int | None = None,
-    ) -> Exception:
-        """Create LDAP error."""
-        # Include operation and LDAP code in the error message
-        full_message = f"{message} (Operation: {operation}"
-        if ldap_code is not None:
-            full_message += f", LDAP Code: {ldap_code}"
-        full_message += ")"
-        return self.LdapModifyError(full_message, dn=None)
-
-    def user_error(
-        self,
-        message: str,
-        username: str,
-        operation: str | None = None,
-        reason: str | None = None,
-    ) -> Exception:
-        """Create user error."""
-        # Include operation and reason in the error message
-        full_message = f"{message} (User: {username}"
-        if operation:
-            full_message += f", Operation: {operation}"
-        if reason:
-            full_message += f", Reason: {reason}"
-        full_message += ")"
-        return self.LdapEntryNotFoundError(full_message, dn=username)
-
-    def group_error(
-        self,
-        message: str,
-        groupname: str,
-        operation: str | None = None,
-    ) -> Exception:
-        """Create group error."""
-        return self.LdapEntryNotFoundError(message, dn=groupname, operation=operation)
-
-    def connection_failed(
-        self,
-        message: str,
-        server_uri: str | None = None,
-        ldap_code: int | None = None,
-    ) -> Exception:
-        """Create connection failed error."""
-        return self.LdapConnectionError(
-            message, server_uri=server_uri, ldap_code=ldap_code
-        )
-
-    class _LdapExceptionKwargs(TypedDict, total=False):
-        """Type-safe kwargs for LDAP exceptions."""
-
-        code: str | None
-        context: Mapping[str, object] | None
-        correlation_id: str | None
-        config_file: str | None
 
     class LdapConnectionError(FlextExceptions._ConnectionError):
         """LDAP connection failure.
@@ -180,7 +43,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             server_uri: str | None = None,
             ldap_code: int | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP connection error.
 
@@ -188,17 +51,32 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 server_uri: LDAP server URI that failed
                 ldap_code: LDAP result code
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.server_uri = server_uri
+            self.ldap_code = ldap_code
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                server_uri=server_uri,
+                ldap_code=ldap_code,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 service="LDAP",
                 endpoint=server_uri,
-                **kwargs,
+                code=error_code or "LDAP_CONNECTION_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.server_uri = server_uri
-            self.ldap_code = ldap_code
 
         @override
         def __str__(self) -> str:
@@ -225,22 +103,36 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             bind_dn: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP authentication error.
 
             Args:
                 message: Error message
                 bind_dn: DN used for authentication
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.bind_dn = bind_dn
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                bind_dn=bind_dn,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 auth_method="LDAP_BIND",
-                **kwargs,
+                code=error_code or "LDAP_AUTHENTICATION_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.bind_dn = bind_dn
 
         @override
         def __str__(self) -> str:
@@ -264,7 +156,7 @@ class FlextLdapExceptions(FlextExceptions):
             base_dn: str | None = None,
             filter_str: str | None = None,
             search_context: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP search error.
 
@@ -273,17 +165,33 @@ class FlextLdapExceptions(FlextExceptions):
                 base_dn: Search base DN
                 filter_str: LDAP search filter
                 search_context: Additional context information
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
-            super().__init__(
-                message,
-                operation="LDAP_SEARCH",
-                **kwargs,
-            )
             self.base_dn = base_dn
             self.filter_str = filter_str
             self.search_context = search_context
+
+            # Extract common parameters using helper
+            base_context_dict, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context_dict,
+                base_dn=base_dn,
+                filter_str=filter_str,
+                search_context=search_context,
+            )
+
+            # Call parent with complete error information
+            super().__init__(
+                message,
+                operation="LDAP_SEARCH",
+                code=error_code or "LDAP_SEARCH_ERROR",
+                context=context,
+                correlation_id=correlation_id,
+            )
 
         @override
         def __str__(self) -> str:
@@ -313,7 +221,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             dn: str | None = None,
             modifications: list[tuple[str, str, object]] | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP modify error.
 
@@ -321,16 +229,31 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 dn: Entry DN being modified
                 modifications: List of modifications attempted
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.dn = dn
+            self.modifications = modifications
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                dn=dn,
+                modifications=modifications,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 operation="LDAP_MODIFY",
-                **kwargs,
+                code=error_code or "LDAP_MODIFY_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.dn = dn
-            self.modifications = modifications
 
         @override
         def __str__(self) -> str:
@@ -352,8 +275,8 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            object_classes: list[str] | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            object_classes: FlextTypes.StringList | None = None,
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP add error.
 
@@ -361,16 +284,31 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 dn: Entry DN being added
                 object_classes: Object classes for the entry
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.dn = dn
+            self.object_classes = object_classes
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                dn=dn,
+                object_classes=object_classes,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 operation="LDAP_ADD",
-                **kwargs,
+                code=error_code or "LDAP_ADD_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.dn = dn
-            self.object_classes = object_classes
 
     class LdapDeleteError(FlextExceptions._OperationError):
         """LDAP delete operation failure.
@@ -384,22 +322,36 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP delete error.
 
             Args:
                 message: Error message
                 dn: Entry DN being deleted
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.dn = dn
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                dn=dn,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 operation="LDAP_DELETE",
-                **kwargs,
+                code=error_code or "LDAP_DELETE_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.dn = dn
 
     class LdapValidationError(FlextExceptions._ValidationError):
         """LDAP data validation failure.
@@ -413,22 +365,36 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             ldap_field: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP validation error.
 
             Args:
                 message: Error message
                 ldap_field: LDAP field/attribute that failed validation
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.ldap_field = ldap_field
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                ldap_field=ldap_field,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 field=ldap_field,
-                **kwargs,
+                code=error_code or "LDAP_VALIDATION_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.ldap_field = ldap_field
 
         @override
         def __str__(self) -> str:
@@ -451,7 +417,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             ldap_config_key: str | None = None,
             section: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP configuration error.
 
@@ -459,16 +425,31 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 ldap_config_key: LDAP configuration key that is invalid
                 section: Configuration section name
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.ldap_config_key = ldap_config_key
+            self.section = section
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                ldap_config_key=ldap_config_key,
+                section=section,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 config_key=ldap_config_key,
-                **kwargs,
+                code=error_code or "LDAP_CONFIGURATION_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.ldap_config_key = ldap_config_key
-            self.section = section
 
         @override
         def __str__(self) -> str:
@@ -496,7 +477,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             operation: str | None = None,
             timeout_seconds: float | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP timeout error.
 
@@ -504,15 +485,29 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 operation: LDAP operation that timed out
                 timeout_seconds: Timeout duration in seconds
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.operation = operation
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                operation=operation,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 timeout_seconds=timeout_seconds,
-                **kwargs,
+                code=error_code or "LDAP_TIMEOUT_ERROR",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.operation = operation
 
     class LdapEntryNotFoundError(FlextExceptions._NotFoundError):
         """LDAP entry not found.
@@ -527,7 +522,7 @@ class FlextLdapExceptions(FlextExceptions):
             *,
             dn: str | None = None,
             operation: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP entry not found error.
 
@@ -535,17 +530,32 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 dn: DN of the entry that was not found
                 operation: Operation that was attempted
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.dn = dn
+            self.operation = operation
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                dn=dn,
+                operation=operation,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 resource_id=dn,
                 resource_type="LDAP_ENTRY",
-                **kwargs,
+                code=error_code or "LDAP_ENTRY_NOT_FOUND",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.dn = dn
-            self.operation = operation
 
         @override
         def __str__(self) -> str:
@@ -572,23 +582,192 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            **kwargs: Unpack[FlextLdapExceptions._LdapExceptionKwargs],
+            **kwargs: object,
         ) -> None:
             """Initialize LDAP entry already exists error.
 
             Args:
                 message: Error message
                 dn: DN of the entry that already exists
-                **kwargs: Additional context
-
+                **kwargs: Additional context (context, correlation_id, error_code)
             """
+            self.dn = dn
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
+            )
+
+            # Build context with LDAP-specific fields
+            context = self._build_context(
+                base_context,
+                dn=dn,
+            )
+
+            # Call parent with complete error information
             super().__init__(
                 message,
                 resource_id=dn,
                 resource_type="LDAP_ENTRY",
-                **kwargs,
+                code=error_code or "LDAP_ENTRY_ALREADY_EXISTS",
+                context=context,
+                correlation_id=correlation_id,
             )
-            self.dn = dn
+
+    # Factory methods for direct access
+    @staticmethod
+    def connection_error(
+        message: str,
+        server_uri: str | None = None,
+        ldap_code: int | None = None,
+        **kwargs: object,
+    ) -> LdapConnectionError:
+        """Create a connection error."""
+        return FlextLdapExceptions.LdapConnectionError(
+            message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
+        )
+
+    @staticmethod
+    def connection_failed(
+        message: str,
+        server_uri: str | None = None,
+        ldap_code: int | None = None,
+        **kwargs: object,
+    ) -> LdapConnectionError:
+        """Create a connection failed error."""
+        return FlextLdapExceptions.LdapConnectionError(
+            message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
+        )
+
+    @staticmethod
+    def authentication_error(
+        message: str, bind_dn: str | None = None, **kwargs: object
+    ) -> LdapAuthenticationError:
+        """Create an authentication error."""
+        return FlextLdapExceptions.LdapAuthenticationError(
+            message, bind_dn=bind_dn, **kwargs
+        )
+
+    @staticmethod
+    def search_error(
+        message: str,
+        base_dn: str | None = None,
+        filter_str: str | None = None,
+        search_context: str | None = None,
+        **kwargs: object,
+    ) -> LdapSearchError:
+        """Create a search error."""
+        return FlextLdapExceptions.LdapSearchError(
+            message,
+            base_dn=base_dn,
+            filter_str=filter_str,
+            search_context=search_context,
+            **kwargs,
+        )
+
+    @staticmethod
+    def modify_error(
+        message: str,
+        dn: str | None = None,
+        modifications: list[tuple[str, str, object]] | None = None,
+        **kwargs: object,
+    ) -> LdapModifyError:
+        """Create a modify error."""
+        return FlextLdapExceptions.LdapModifyError(
+            message, dn=dn, modifications=modifications, **kwargs
+        )
+
+    @staticmethod
+    def add_error(
+        message: str,
+        dn: str | None = None,
+        object_classes: FlextTypes.StringList | None = None,
+        **kwargs: object,
+    ) -> LdapAddError:
+        """Create an add error."""
+        return FlextLdapExceptions.LdapAddError(
+            message, dn=dn, object_classes=object_classes, **kwargs
+        )
+
+    @staticmethod
+    def delete_error(
+        message: str, dn: str | None = None, **kwargs: object
+    ) -> LdapDeleteError:
+        """Create a delete error."""
+        return FlextLdapExceptions.LdapDeleteError(message, dn=dn, **kwargs)
+
+    @staticmethod
+    def validation_error(
+        message: str,
+        value: object | None = None,
+        field: str | None = None,
+        **kwargs: object,
+    ) -> LdapValidationError:
+        """Create a validation error."""
+        return FlextLdapExceptions.LdapValidationError(
+            message, ldap_field=field, **kwargs
+        )
+
+    @staticmethod
+    def configuration_error(
+        message: str, config_key: str | None = None, **kwargs: object
+    ) -> LdapConfigurationError:
+        """Create a configuration error."""
+        return FlextLdapExceptions.LdapConfigurationError(
+            message, ldap_config_key=config_key, section=None
+        )
+
+    @staticmethod
+    def type_error(
+        message: str,
+        field: str | None = None,
+        expected_type: str | None = None,
+        actual_type: str | None = None,
+        **kwargs: object,
+    ) -> LdapValidationError:
+        """Create a type error."""
+        return FlextLdapExceptions.LdapValidationError(
+            message, ldap_field=field, **kwargs
+        )
+
+    @staticmethod
+    def user_error(
+        message: str, username: str | None = None, **kwargs: object
+    ) -> LdapEntryNotFoundError:
+        """Create a user error."""
+        return FlextLdapExceptions.LdapEntryNotFoundError(
+            message, dn=username, operation="user_lookup", **kwargs
+        )
+
+    @staticmethod
+    def group_error(
+        message: str, groupname: str | None = None, **kwargs: object
+    ) -> LdapEntryNotFoundError:
+        """Create a group error."""
+        return FlextLdapExceptions.LdapEntryNotFoundError(
+            message, dn=groupname, operation="group_lookup", **kwargs
+        )
+
+    @staticmethod
+    def ldap_error(
+        message: str,
+        operation: str | None = None,
+        ldap_code: int | None = None,
+        **kwargs: object,
+    ) -> LdapSearchError:
+        """Create an LDAP error."""
+        return FlextLdapExceptions.LdapSearchError(
+            message, base_dn=None, filter_str=None, search_context=operation, **kwargs
+        )
+
+    @staticmethod
+    def operation_error(
+        message: str, operation: str | None = None, **kwargs: object
+    ) -> LdapModifyError:
+        """Create an operation error."""
+        return FlextLdapExceptions.LdapModifyError(
+            message, dn=None, modifications=None, **kwargs
+        )
 
 
 # Export nested exception classes for easier importing

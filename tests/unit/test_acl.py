@@ -13,7 +13,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldap.acl import (
     FlextLdapAclConstants,
@@ -173,7 +173,7 @@ class TestFlextLdapAclConverters:
     def test_convert_unified_to_openldap_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful unified to OpenLDAP conversion."""
         # Test the actual convert_acl method
@@ -204,7 +204,7 @@ class TestFlextLdapAclConverters:
     def test_convert_unified_to_oracle_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful unified to Oracle conversion."""
         # Test the actual convert_acl method
@@ -235,7 +235,7 @@ class TestFlextLdapAclConverters:
     def test_convert_openldap_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful OpenLDAP to unified conversion."""
         # Test the actual convert_acl method
@@ -266,7 +266,7 @@ class TestFlextLdapAclConverters:
     def test_convert_oracle_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful Oracle to unified conversion."""
         result = acl_converters.convert_acl(
@@ -309,7 +309,7 @@ class TestFlextLdapAclConverters:
     def test_convert_between_formats_unsupported(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test conversion between unsupported formats."""
         result = acl_converters.convert_acl(
@@ -362,7 +362,7 @@ class TestFlextLdapAclManager:
     def test_create_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful ACL creation."""
         # Test the actual parse_acl method with valid data
@@ -391,7 +391,7 @@ class TestFlextLdapAclManager:
     def test_create_acl_storage_failure(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test ACL creation with storage failure."""
         with (
@@ -399,7 +399,7 @@ class TestFlextLdapAclManager:
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
             mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[dict[str, object]].ok({"valid": True})
+            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -412,7 +412,7 @@ class TestFlextLdapAclManager:
     def test_update_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful ACL update."""
         with (
@@ -420,7 +420,7 @@ class TestFlextLdapAclManager:
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
             mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[dict[str, object]].ok({"valid": True})
+            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -433,7 +433,7 @@ class TestFlextLdapAclManager:
     def test_update_acl_not_found(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test ACL update when ACL not found."""
         # Test the actual parse_acl method with valid data
@@ -526,7 +526,7 @@ class TestFlextLdapAclManager:
     def test_validate_acl_data_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful ACL data validation."""
         # Test the actual parse_acl method with valid data
@@ -563,12 +563,12 @@ class TestFlextLdapAclParsers:
     def test_parse_openldap_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful OpenLDAP ACI parsing."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[dict[str, object]].ok(
-                cast(dict[str, object], sample_acl_data["unified_acl"])
+            mock_handle.return_value = FlextResult[FlextTypes.Dict].ok(
+                cast(FlextTypes.Dict, sample_acl_data["unified_acl"])
             )
 
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])
@@ -584,7 +584,7 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test OpenLDAP ACI parsing failure."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[dict[str, object]].fail(
+            mock_handle.return_value = FlextResult[FlextTypes.Dict].fail(
                 "Parsing failed"
             )
 
@@ -597,7 +597,7 @@ class TestFlextLdapAclParsers:
     def test_parse_oracle_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test successful Oracle ACI parsing."""
         # Test the actual OracleAclParser.parse method
@@ -866,7 +866,7 @@ class TestAclIntegration:
     def test_acl_management_complete_lifecycle(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: dict[str, object],
+        sample_acl_data: FlextTypes.Dict,
     ) -> None:
         """Test complete ACL management lifecycle."""
         # Test ACL parsing (may fail if parser not fully implemented)

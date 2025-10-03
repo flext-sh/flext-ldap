@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClient
+from flext_core import FlextTypes
 
 
 @pytest.mark.unit
@@ -65,7 +66,7 @@ class TestFlextLdapClientAuthenticationIntegration:
 
     @pytest.fixture
     def authenticated_client(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> FlextLdapClient:
         """Create and connect LDAP client for authentication tests."""
         client = FlextLdapClient()
@@ -125,7 +126,7 @@ class TestFlextLdapClientAuthenticationEdgeCases:
 
     @pytest.fixture
     def authenticated_client(
-        self, clean_ldap_container: dict[str, object]
+        self, clean_ldap_container: FlextTypes.Dict
     ) -> FlextLdapClient:
         """Create and connect LDAP client for edge case tests."""
         client = FlextLdapClient()

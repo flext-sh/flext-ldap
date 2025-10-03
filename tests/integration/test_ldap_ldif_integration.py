@@ -22,6 +22,7 @@ from flext_ldif.acl import FlextLdifAclParser
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextTypes
 
 # Integration tests - require flext-ldif and Docker LDAP server
 pytestmark = pytest.mark.integration
@@ -64,9 +65,11 @@ def ldif_api() -> FlextLdif:
 
 
 @pytest.fixture
-def test_entries(ldap_client: FlextLdapClient) -> Generator[list[str], None, None]:
+def test_entries(
+    ldap_client: FlextLdapClient,
+) -> Generator[FlextTypes.StringList, None, None]:
     """Create test LDAP entries and clean up after."""
-    test_dns: list[str] = []
+    test_dns: FlextTypes.StringList = []
 
     # Create test organizational unit
     ou_dn = "ou=testusers,dc=flext,dc=local"
@@ -370,9 +373,9 @@ class TestEntryConversion:
         assert ldif_entry_result.is_success
         ldif_entry = ldif_entry_result.unwrap()
 
-        # Convert LdifAttributes to dict[str, str | list[str]]
-        ldap_attributes: dict[str, str | list[str]] = {}
-        object_classes_value: list[str] = []
+        # Convert LdifAttributes to dict[str, str | FlextTypes.StringList]
+        ldap_attributes: dict[str, str | FlextTypes.StringList] = {}
+        object_classes_value: FlextTypes.StringList = []
         for attr_name, attr_values in ldif_entry.attributes.data.items():
             if len(attr_values.values) == 1:
                 ldap_attributes[attr_name] = attr_values.values[0]

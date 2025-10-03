@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import (
     FlextLdapClient,
@@ -123,7 +123,7 @@ def demonstrate_universal_operations(
     logger.info("\n=== Universal LDAP Operations ===")
 
     # Get server information using FLEXT patterns
-    server_info: dict[str, object] = client.get_server_info()
+    server_info: FlextTypes.Dict = client.get_server_info()
     if not server_info or not server_info.get("namingContexts"):
         logger.warning("No naming contexts available for operations")
         return
@@ -237,7 +237,7 @@ def demonstrate_server_type_adaptations() -> None:
 
     for server_info in test_servers:
         server_type = detector.detect_server_type(server_info)
-        quirks = detector.get_server_quirks(server_type)
+        quirks = detector.get_server_quirks(server_type.value if server_type else None)
 
         logger.info("  %s:", server_info["vendorName"])
         logger.info("    Detected Type: %s", server_type or "unknown")

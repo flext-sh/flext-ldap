@@ -12,6 +12,7 @@
 **Created**: `docs/universal-ldap-guide.md`
 
 **Contents**:
+
 - Complete overview of universal LDAP system architecture
 - Server operations documentation for all 6 server types
 - 9 universal API methods with detailed examples
@@ -30,6 +31,7 @@
 **Created**: `tests/unit/test_server_operations_factory.py`
 
 **Test Coverage**:
+
 - ✅ **28 test cases** covering all factory pattern operations
 - ✅ Explicit server type creation (openldap1, openldap2, oid, oud, ad, generic)
 - ✅ Server type aliases (openldap → openldap2)
@@ -40,6 +42,7 @@
 - ✅ Error handling and fallback patterns
 
 **Key Test Scenarios**:
+
 ```python
 # Factory pattern for explicit server types
 test_create_from_server_type_openldap1()
@@ -70,6 +73,7 @@ test_create_from_connection_ad_root_dse()
 **Created**: `tests/unit/test_entry_adapter_universal.py`
 
 **Test Coverage**:
+
 - ✅ **20 test cases** for all 5 universal methods
 - ✅ Server type detection from entries (all server types)
 - ✅ Entry normalization for target servers
@@ -78,6 +82,7 @@ test_create_from_connection_ad_root_dse()
 - ✅ Server-specific attributes retrieval
 
 **Key Test Scenarios**:
+
 ```python
 # Server type detection
 test_detect_entry_server_type_openldap2_olcaccess()
@@ -116,6 +121,7 @@ test_get_server_specific_attributes_oud()
 **Already Complete**: README.md contains comprehensive universal LDAP documentation
 
 **Contents**:
+
 - Universal LDAP Architecture section with Mermaid diagram
 - Complete server implementations matrix (6 server types)
 - FlextLdif integration documentation
@@ -163,12 +169,13 @@ entry = FlextLdifModels.Entry(
 ```
 
 **Entry Model Hierarchy**:
+
 ```
 FlextLdifModels.Entry
 ├── dn: FlextLdifModels.DistinguishedName
 └── attributes: FlextLdifModels.LdifAttributes
     └── attributes: dict[str, FlextLdifModels.AttributeValues]
-        └── values: list[str]
+        └── values: FlextTypes.StringList
 ```
 
 ---
@@ -176,12 +183,14 @@ FlextLdifModels.Entry
 ## 📈 Test Coverage Progress
 
 ### Before Phase 10
+
 - **Test Coverage**: 33%
 - **Universal Methods**: Not tested
 - **Factory Pattern**: Not tested
 - **Server Operations**: Not tested
 
 ### After Phase 10
+
 - **Test Coverage**: ~45% (estimated, pending full test run)
 - **Universal Methods**: 20 tests created ✅
 - **Factory Pattern**: 28 tests created ✅
@@ -245,6 +254,7 @@ FlextLdifModels.Entry
 ### Immediate Actions
 
 1. **Run Full Test Suite**:
+
    ```bash
    PYTHONPATH=src pytest tests/unit/test_server_operations_factory.py tests/unit/test_entry_adapter_universal.py --cov=src/flext_ldap --cov-report=term
    ```
@@ -255,6 +265,7 @@ FlextLdifModels.Entry
    - Document expected vs. actual behavior
 
 3. **Integration Testing**:
+
    ```bash
    make test-integration  # Test against real LDAP server
    ```
@@ -290,6 +301,7 @@ FlextLdifModels.Entry
 ## 📊 Final Statistics
 
 **Phase 10 Metrics**:
+
 - **Documentation Lines**: 509 lines
 - **Test Cases Created**: 48 test cases
 - **Test Code Lines**: 1,121 lines

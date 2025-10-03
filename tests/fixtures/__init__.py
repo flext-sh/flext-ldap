@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 logger = FlextLogger(__name__)
 
@@ -23,12 +23,12 @@ class TestFixtures:
     """Centralized test fixtures loader following FLEXT patterns."""
 
     @staticmethod
-    def load_json(filename: str) -> FlextResult[list[dict[str, object]]]:
+    def load_json(filename: str) -> FlextResult[list[FlextTypes.Dict]]:
         """Load JSON test data from fixtures directory."""
         try:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[FlextTypes.Dict]].fail(
                     f"Fixture file not found: {filename}"
                 )
 
@@ -36,13 +36,13 @@ class TestFixtures:
                 data = json.load(f)
 
             if not isinstance(data, list):
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[FlextTypes.Dict]].fail(
                     f"Expected list in {filename}, got {type(data)}"
                 )
 
-            return FlextResult[list[dict[str, object]]].ok(data)
+            return FlextResult[list[FlextTypes.Dict]].ok(data)
         except Exception as e:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[FlextTypes.Dict]].fail(
                 f"Failed to load JSON fixture {filename}: {e}"
             )
 
@@ -62,32 +62,30 @@ class TestFixtures:
             return FlextResult[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> FlextResult[dict[str, object]]:
+    def load_docker_config() -> FlextResult[FlextTypes.Dict]:
         """Load Docker configuration for test container."""
         try:
             filepath = FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return FlextResult[dict[str, object]].fail(
-                    "Docker config file not found"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Docker config file not found")
 
             with open(filepath) as f:
                 config = json.load(f)
 
-            return FlextResult[dict[str, object]].ok(config)
+            return FlextResult[FlextTypes.Dict].ok(config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Failed to load Docker config: {e}"
             )
 
     @classmethod
-    def get_test_users(cls) -> list[dict[str, object]]:
+    def get_test_users(cls) -> list[FlextTypes.Dict]:
         """Get test users list (convenience method)."""
         result = cls.load_json("test_users.json")
         return result.value if result.is_success else []
 
     @classmethod
-    def get_test_groups(cls) -> list[dict[str, object]]:
+    def get_test_groups(cls) -> list[FlextTypes.Dict]:
         """Get test groups list (convenience method)."""
         result = cls.load_json("test_groups.json")
         return result.value if result.is_success else []
@@ -99,7 +97,7 @@ class TestFixtures:
         return result.value if result.is_success else ""
 
     @classmethod
-    def get_docker_config(cls) -> dict[str, object]:
+    def get_docker_config(cls) -> FlextTypes.Dict:
         """Get Docker configuration (convenience method)."""
         result = cls.load_docker_config()
         return result.value if result.is_success else {}

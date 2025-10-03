@@ -5,7 +5,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
       "severity": "error",
-      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"dict[str, object]\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
+      "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
         "start": {
           "line": 132,

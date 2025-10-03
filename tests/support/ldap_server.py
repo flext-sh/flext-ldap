@@ -16,7 +16,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 import os
 from typing import Protocol, TypedDict, cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_tests import FlextTestDocker
 
 from flext_ldap import FlextLdapModels, FlextLdapTypes
@@ -184,7 +184,7 @@ class LdapTestServer:
                 try:
                     conn.add(
                         cast("str", ou_data["dn"]),
-                        attributes=cast("dict[str, object]", ou_data["attributes"]),
+                        attributes=cast("FlextTypes.Dict", ou_data["attributes"]),
                     )
                     logger.debug("Created OU: %s", ou_data["dn"])
                 except Exception as e:
@@ -195,7 +195,7 @@ class LdapTestServer:
                 try:
                     conn.add(
                         cast("str", user_data["dn"]),
-                        attributes=cast("dict[str, object]", user_data["attributes"]),
+                        attributes=cast("FlextTypes.Dict", user_data["attributes"]),
                     )
                     logger.debug("Created user: %s", user_data["dn"])
                 except Exception as e:
@@ -206,7 +206,7 @@ class LdapTestServer:
                 try:
                     conn.add(
                         cast("str", group_data["dn"]),
-                        attributes=cast("dict[str, object]", group_data["attributes"]),
+                        attributes=cast("FlextTypes.Dict", group_data["attributes"]),
                     )
                     logger.debug("Created group: %s", group_data["dn"])
                 except Exception as e:
@@ -240,15 +240,15 @@ class LdapTestServer:
             self.container_name, command
         )
 
-    def get_container_status(self) -> FlextResult[dict[str, str]]:
+    def get_container_status(self) -> FlextResult[FlextTypes.StringDict]:
         """Get container status using FlextTestDocker."""
         status_result = self.docker_manager.get_container_status(self.container_name)
         if status_result.is_failure:
             error_msg = status_result.error or "Unknown error"
-            return FlextResult[dict[str, str]].fail(error_msg)
+            return FlextResult[FlextTypes.StringDict].fail(error_msg)
 
         container_info: ContainerInfo = status_result.value
-        return FlextResult[dict[str, str]].ok(
+        return FlextResult[FlextTypes.StringDict].ok(
             {
                 "name": container_info["name"],
                 "status": str(container_info["status"]),  # Convert status to string

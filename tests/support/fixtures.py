@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import (
     FlextLdapAPI,
@@ -116,11 +116,11 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 def clean_ldap_container(
     real_ldap_server: LdapTestServer,
-) -> dict[str, object]:
+) -> FlextTypes.Dict:
     """Get clean LDAP container configuration for testing."""
     real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
-    container_info: dict[str, object] = {
+    container_info: FlextTypes.Dict = {
         "server_url": config.server,
         "bind_dn": config.bind_dn,
         "password": config.bind_password,
@@ -147,7 +147,9 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup: list[str] = [str(entry["dn"]) for entry in search_result.value]
+        dns_to_cleanup: FlextTypes.StringList = [
+            str(entry["dn"]) for entry in search_result.value
+        ]
         if dns_to_cleanup:
             cleanup_test_entries(ldap_connection, dns_to_cleanup)
 
@@ -161,7 +163,7 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup_after: list[str] = [
+        dns_to_cleanup_after: FlextTypes.StringList = [
             str(entry["dn"]) for entry in search_result.value
         ]
         if dns_to_cleanup_after:

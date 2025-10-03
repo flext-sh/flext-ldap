@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldap.acl.constants import FlextLdapAclConstants
 from flext_ldap.models import FlextLdapModels
@@ -289,7 +289,7 @@ class FlextLdapAclParsers:
 
         @staticmethod
         def parse_oracle_subject_permissions(
-            subject_perms: list[str],
+            subject_perms: FlextTypes.StringList,
         ) -> tuple[FlextLdapModels.AclSubject, FlextLdapModels.AclPermissions]:
             """Parse Oracle ACL subject and permissions."""
             if not subject_perms:

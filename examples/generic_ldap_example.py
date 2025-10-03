@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import FlextLdapClient, FlextLdapModels
 
@@ -207,7 +207,7 @@ def demonstrate_universal_crud(client: FlextLdapClient, logger: FlextLogger) -> 
 
         # Modify the entry
         logger.info("Modifying test entry...")
-        modify_changes: dict[str, object] = {"description": "Modified test user"}
+        modify_changes: FlextTypes.Dict = {"description": "Modified test user"}
         modify_result = client.modify_entry_universal(test_dn, modify_changes)
 
         if modify_result.is_success:

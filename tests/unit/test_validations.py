@@ -13,6 +13,7 @@ import pytest
 
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextTypes
 
 
 @pytest.mark.unit
@@ -685,7 +686,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test successful connection config validation."""
-        config: dict[str, object] = {
+        config: FlextTypes.Dict = {
             "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
@@ -702,7 +703,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with missing fields."""
-        config: dict[str, object] = {
+        config: FlextTypes.Dict = {
             "server": "ldap://localhost:389"
             # Missing bind_dn, password, base_dn
         }
@@ -721,7 +722,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with invalid fields."""
-        config: dict[str, object] = {
+        config: FlextTypes.Dict = {
             "server": "invalid-uri",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",

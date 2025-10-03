@@ -196,7 +196,7 @@ docker run -d \
 from Flext_ldap import FlextLdapConfig
 
 TEST_CONFIG = FlextLdapConfig(
-    host=FlextConstants.Platform.DEFAULT_HOST,
+    host=FlextConstants["Platform.DEFAULT_HOST"],
     port=FlextLdapConstants.Protocol.DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=flext,dc=local",
