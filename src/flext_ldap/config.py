@@ -186,7 +186,7 @@ class FlextLdapConfig(FlextConfig):
         def resolve_ldap_operation_mode(
             operation_mode: str | None = None,
             operation_config: object = None,
-        ) -> str:
+        ) -> str | None:
             """Resolve LDAP operation mode from various sources.
 
             Args:
@@ -205,8 +205,8 @@ class FlextLdapConfig(FlextConfig):
             # Try to extract from config object
             if operation_config is not None:
                 # Try attribute access
-                if isinstance(operation_config, FlextProtocols.Foundation.HasOperationType):
-                    config_mode: str | None = operation_config.operation_type
+                if hasattr(operation_config, "operation_type"):
+                    config_mode: str | None = getattr(operation_config, "operation_type")
                     if config_mode in valid_modes:
                         return str(config_mode)
 
