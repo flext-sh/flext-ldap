@@ -254,9 +254,8 @@ class FlextLdapConfig(FlextConfig):
 
             # Generate default handler_id if not provided or empty
             if not handler_id:
-                unique_suffix = FlextConfig.HandlerConfiguration.create_handler_config(
-                    handler_mode="command", handler_name="temp"
-                )["handler_id"].split("_")[-1]
+                import uuid
+                unique_suffix = uuid.uuid4().hex[:8]
                 handler_id = f"ldap_{resolved_mode}_handler_{unique_suffix}"
 
             # Generate default handler_name if not provided or empty
