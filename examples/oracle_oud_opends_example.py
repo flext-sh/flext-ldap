@@ -386,7 +386,9 @@ def demonstrate_oracle_server_types() -> None:
 
     for server_info in oracle_servers:
         server_type = detector.detect_server_type(server_info)
-        quirks = detector.get_server_quirks(server_type)
+        # Convert to string if it's an enum
+        server_type_str = server_type.value if hasattr(server_type, "value") else str(server_type)
+        quirks = detector.get_server_quirks(server_type_str)
 
         logger.info("Oracle Server: %s", server_info["description"])
         if hasattr(server_type, "value"):

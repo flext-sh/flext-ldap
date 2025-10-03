@@ -104,20 +104,20 @@ def demonstrate_factory_methods() -> None:
 
 
 def demonstrate_parameter_overrides() -> None:
-    """Demonstrate parameter overrides with the singleton."""
+    """Demonstrate parameter overrides with direct instantiation."""
     print("=== Parameter Override Demo ===")
 
-    # Get singleton instance
-    config = FlextLdapConfig.get_global_instance()
-    print(f"Original bind DN: {config.ldap_bind_dn}")
-    print(f"Original SSL setting: {config.ldap_use_ssl}")
+    # Create base instance
+    config = FlextLdapConfig()
+    print(f"Default bind DN: {config.ldap_bind_dn}")
+    print(f"Default SSL setting: {config.ldap_use_ssl}")
 
     # Create new instance with overrides using constructor parameters
     override_config = FlextLdapConfig(
-        bind_dn="cn=override-user,dc=test,dc=com",
-        bind_password=SecretStr("override-password"),
-        use_ssl=True,
-        pool_size=10,
+        ldap_bind_dn="cn=override-user,dc=test,dc=com",
+        ldap_bind_password=SecretStr("override-password"),
+        ldap_use_ssl=True,
+        ldap_pool_size=10,
     )
 
     print(f"Override bind DN: {override_config.ldap_bind_dn}")
@@ -133,13 +133,9 @@ def demonstrate_validation_features() -> None:
     try:
         # Test validation with valid configuration
         valid_config = FlextLdapConfig(
-            ldap_connection=FlextLdapModels.ConnectionConfig(
-                server="localhost",
-                port=389,
-            ),
-            bind_dn="cn=valid-user,dc=example,dc=com",
-            bind_password=SecretStr("valid-password"),
-            use_ssl=True,
+            ldap_bind_dn="cn=valid-user,dc=example,dc=com",
+            ldap_bind_password=SecretStr("valid-password"),
+            ldap_use_ssl=True,
         )
 
         # Validation happens automatically during instantiation
@@ -156,7 +152,7 @@ def demonstrate_validation_features() -> None:
 
 def main() -> None:
     """Run all configuration demonstrations."""
-    print("FLEXT-LDAP Configuration Singleton Demo")
+    print("FLEXT-LDAP Configuration Demo")
     print("=" * 50)
 
     try:
@@ -168,9 +164,9 @@ def main() -> None:
 
         print("=" * 50)
         print("✅ All demonstrations completed successfully!")
-        print("✅ FlextLdapConfig singleton working correctly")
+        print("✅ FlextLdapConfig direct instantiation working correctly")
         print("✅ Environment variable loading functional")
-        print("✅ Factory methods providing correct configurations")
+        print("✅ Environment configurations providing correct settings")
         print("✅ Parameter overrides working as expected")
         print("✅ Configuration validation features operational")
 
@@ -183,17 +179,14 @@ def main() -> None:
     finally:
         # Clean up environment variables
         for key in [
-            "FLEXT_LDAP_BIND_DN",
-            "FLEXT_LDAP_BIND_PASSWORD",
-            "FLEXT_LDAP_USE_SSL",
-            "FLEXT_LDAP_SIZE_LIMIT",
-            "FLEXT_LDAP_ENABLE_CACHING",
-            "FLEXT_LDAP_CACHE_TTL",
+            "FLEXT_LDAP_LDAP_BIND_DN",
+            "FLEXT_LDAP_LDAP_BIND_PASSWORD",
+            "FLEXT_LDAP_LDAP_USE_SSL",
+            "FLEXT_LDAP_LDAP_SIZE_LIMIT",
+            "FLEXT_LDAP_LDAP_ENABLE_CACHING",
+            "FLEXT_LDAP_LDAP_CACHE_TTL",
         ]:
             os.environ.pop(key, None)
-
-        # Reset singleton for clean state
-        FlextLdapConfig.reset_global_instance()
 
 
 if __name__ == "__main__":
