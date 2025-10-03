@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from flext_ldap import FlextLdapClient, FlextLdapModels
 
 
@@ -127,10 +126,8 @@ class TestLdapE2EOperations:
         assert not result.is_success
         assert result.error is not None
         assert (
-            result.error is not None
-            and "connection" in result.error.lower()
-            or "failed" in result.error.lower()
-        )
+            result.error is not None and "connection" in result.error.lower()
+        ) or "failed" in result.error.lower()
 
     def test_api_configuration_integration(self) -> None:
         """Test API configuration integration."""

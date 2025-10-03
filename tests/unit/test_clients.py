@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
+
 from flext_core import FlextTypes
 
 # Disable strict pyright checks for this comprehensive test module. These tests

@@ -13,18 +13,18 @@ Strategic plan to improve test coverage from **28% to 75%** through **focused, e
 
 ### Coverage Improvement Potential by Module
 
-| Module | Lines | Current | Target | Gain | Priority | Complexity |
-|--------|-------|---------|--------|------|----------|------------|
-| **clients.py** | 1,095 | 7% | 75% | **+18.5%** | 🔴 CRITICAL | HIGH (needs Docker LDAP) |
-| **models.py** | 1,106 | 38% | 90% | **+13.0%** | 🔴 HIGH | MEDIUM (Pydantic models) |
-| **api.py** | 330 | 27% | 85% | **+5.5%** | 🟠 HIGH | MEDIUM (facade methods) |
-| **acl/parsers.py** | 283 | 15% | 80% | **+4.2%** | 🟠 HIGH | HIGH (complex parsing) |
-| **utilities.py** | 237 | 26% | 90% | **+3.5%** | 🟡 MEDIUM | LOW (pure functions) |
-| **validations.py** | 121 | 16% | 95% | **+2.2%** | 🟡 MEDIUM | LOW (validation logic) |
-| **exceptions.py** | 193 | 36% | 85% | **+2.1%** | 🟡 MEDIUM | LOW (exception classes) |
-| **entry_adapter.py** | 190 | 35% | 85% | **+2.2%** | 🟡 MEDIUM | MEDIUM (ldap3 ↔ FlextLdif) |
-| **quirks_integration.py** | 109 | 18% | 85% | **+1.7%** | 🟡 MEDIUM | MEDIUM (FlextLdif integration) |
-| **config.py** | 176 | 46% | 85% | **+1.6%** | 🟢 LOW | LOW (configuration) |
+| Module                    | Lines | Current | Target | Gain       | Priority    | Complexity                     |
+| ------------------------- | ----- | ------- | ------ | ---------- | ----------- | ------------------------------ |
+| **clients.py**            | 1,095 | 7%      | 75%    | **+18.5%** | 🔴 CRITICAL | HIGH (needs Docker LDAP)       |
+| **models.py**             | 1,106 | 38%     | 90%    | **+13.0%** | 🔴 HIGH     | MEDIUM (Pydantic models)       |
+| **api.py**                | 330   | 27%     | 85%    | **+5.5%**  | 🟠 HIGH     | MEDIUM (facade methods)        |
+| **acl/parsers.py**        | 283   | 15%     | 80%    | **+4.2%**  | 🟠 HIGH     | HIGH (complex parsing)         |
+| **utilities.py**          | 237   | 26%     | 90%    | **+3.5%**  | 🟡 MEDIUM   | LOW (pure functions)           |
+| **validations.py**        | 121   | 16%     | 95%    | **+2.2%**  | 🟡 MEDIUM   | LOW (validation logic)         |
+| **exceptions.py**         | 193   | 36%     | 85%    | **+2.1%**  | 🟡 MEDIUM   | LOW (exception classes)        |
+| **entry_adapter.py**      | 190   | 35%     | 85%    | **+2.2%**  | 🟡 MEDIUM   | MEDIUM (ldap3 ↔ FlextLdif)    |
+| **quirks_integration.py** | 109   | 18%     | 85%    | **+1.7%**  | 🟡 MEDIUM   | MEDIUM (FlextLdif integration) |
+| **config.py**             | 176   | 46%     | 85%    | **+1.6%**  | 🟢 LOW      | LOW (configuration)            |
 
 **Total Potential**: ~54% gain available from these 10 modules
 **To Reach 75%**: Need ~47% gain (achievable)
@@ -36,15 +36,18 @@ Strategic plan to improve test coverage from **28% to 75%** through **focused, e
 **Focus**: Modules with LOW complexity, NO external dependencies
 
 ### 1.1 Validations.py (121 lines, 16% → 95%) - **+2.2%**
+
 **Effort**: LOW | **Complexity**: LOW | **Time**: 2-3 hours
 
 **What to Test**:
+
 - All 13 validation methods (pure validation logic)
 - FlextResult success and failure cases
 - Edge cases (empty strings, None values, invalid formats)
 - LDAP-specific validation rules
 
 **Test Strategy**:
+
 ```python
 # Example test structure
 def test_validate_dn_success():
@@ -58,18 +61,22 @@ def test_validate_dn_empty():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_validations.py` (enhance existing)
 
 ### 1.2 Exceptions.py (193 lines, 36% → 85%) - **+2.1%**
+
 **Effort**: LOW | **Complexity**: LOW | **Time**: 2-3 hours
 
 **What to Test**:
+
 - All exception classes instantiation
 - Message formatting
 - Error codes
 - Inheritance from FlextExceptions
 
 **Test Strategy**:
+
 ```python
 def test_ldap_connection_error_creation():
     error = FlextLdapConnectionError("Connection failed", server="ldap://test")
@@ -78,18 +85,22 @@ def test_ldap_connection_error_creation():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_exceptions.py` (enhance existing)
 
 ### 1.3 Config.py (176 lines, 46% → 85%) - **+1.6%**
+
 **Effort**: LOW | **Complexity**: LOW | **Time**: 2 hours
 
 **What to Test**:
+
 - Configuration loading
 - Default values
 - Validation
 - Environment variable overrides
 
 **Test Strategy**:
+
 ```python
 def test_config_defaults():
     config = FlextLdapConfig()
@@ -98,6 +109,7 @@ def test_config_defaults():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_config.py` (enhance existing)
 
 **Phase 1 Total**: ~6% coverage gain, ~7-8 hours effort
@@ -109,9 +121,11 @@ def test_config_defaults():
 **Focus**: Modules with MEDIUM complexity, SOME mocking required
 
 ### 2.1 Models.py (1,106 lines, 38% → 90%) - **+13.0%**
+
 **Effort**: MEDIUM | **Complexity**: MEDIUM | **Time**: 8-10 hours
 
 **What to Test**:
+
 - All Pydantic model instantiation
 - Validation rules
 - Serialization/deserialization
@@ -119,6 +133,7 @@ def test_config_defaults():
 - Edge cases
 
 **Test Strategy**:
+
 ```python
 def test_user_model_creation():
     user = FlextLdapModels.User(
@@ -135,12 +150,15 @@ def test_user_model_validation_failure():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_models.py` (comprehensive rewrite)
 
 ### 2.2 API.py (330 lines, 27% → 85%) - **+5.5%**
+
 **Effort**: MEDIUM | **Complexity**: MEDIUM | **Time**: 6-8 hours
 
 **What to Test**:
+
 - All facade methods
 - Delegation to client
 - FlextResult wrapping
@@ -148,6 +166,7 @@ def test_user_model_validation_failure():
 - Integration patterns
 
 **Test Strategy**:
+
 ```python
 @pytest.fixture
 def mock_client():
@@ -163,12 +182,15 @@ def test_api_search_users(mock_client):
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_api.py` (significant enhancement)
 
 ### 2.3 Utilities.py (237 lines, 26% → 90%) - **+3.5%**
+
 **Effort**: MEDIUM | **Complexity**: LOW | **Time**: 4-5 hours
 
 **What to Test**:
+
 - All utility functions
 - Type guards (TypeGuards class)
 - Processing functions
@@ -176,6 +198,7 @@ def test_api_search_users(mock_client):
 - Edge cases
 
 **Test Strategy**:
+
 ```python
 def test_normalize_dn():
     result = FlextLdapUtilities.normalize_dn("CN=Test,DC=Example")
@@ -187,6 +210,7 @@ def test_is_ldap_dn_valid():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_utilities.py` (enhance existing - already has 764 lines)
 
 **Phase 2 Total**: ~22% coverage gain, ~18-23 hours effort
@@ -198,9 +222,11 @@ def test_is_ldap_dn_valid():
 **Focus**: Modules requiring Docker LDAP server or complex mocking
 
 ### 3.1 Clients.py (1,095 lines, 7% → 75%) - **+18.5%**
+
 **Effort**: HIGH | **Complexity**: HIGH | **Time**: 20-25 hours
 
 **Challenges**:
+
 - Requires Docker LDAP server
 - 83 methods to test
 - Integration with ldap3
@@ -208,6 +234,7 @@ def test_is_ldap_dn_valid():
 - Connection management
 
 **Test Strategy**:
+
 ```python
 @pytest.fixture
 def ldap_server():
@@ -228,18 +255,22 @@ def test_authenticate_user(ldap_server):
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_clients.py` (already 765 lines - enhance significantly)
 - `tests/integration/test_clients_integration.py` (new - Docker tests)
 
 ### 3.2 ACL/Parsers.py (283 lines, 15% → 80%) - **+4.2%**
+
 **Effort**: HIGH | **Complexity**: HIGH | **Time**: 8-10 hours
 
 **Challenges**:
+
 - Complex ACL parsing logic
 - Multiple ACL formats (OpenLDAP, OID, OUD, AD)
 - Edge cases and malformed input
 
 **Test Strategy**:
+
 ```python
 def test_parse_openldap_acl():
     acl = "to * by self write by anonymous auth"
@@ -254,18 +285,22 @@ def test_parse_malformed_acl():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_acl_parsers.py` (new)
 
 ### 3.3 Entry Adapter (190 lines, 35% → 85%) - **+2.2%**
+
 **Effort**: MEDIUM | **Complexity**: MEDIUM | **Time**: 4-5 hours
 
 **What to Test**:
+
 - ldap3 → FlextLdif conversion
 - FlextLdif → ldap3 conversion
 - Entry attribute handling
 - Edge cases
 
 **Test Strategy**:
+
 ```python
 def test_ldap3_to_ldif_conversion():
     ldap3_entry = {"dn": "cn=test", "attributes": {"cn": ["test"]}}
@@ -275,6 +310,7 @@ def test_ldap3_to_ldif_conversion():
 ```
 
 **Files to Create/Enhance**:
+
 - `tests/unit/test_entry_adapter_universal.py` (enhance existing - already 20 tests)
 
 **Phase 3 Total**: ~25% coverage gain, ~32-40 hours effort
@@ -284,7 +320,9 @@ def test_ldap3_to_ldif_conversion():
 ## Implementation Priorities
 
 ### Priority 1: Immediate (Next 2-3 days)
+
 **Target**: +6% coverage (28% → 34%)
+
 - validations.py
 - exceptions.py
 - config.py
@@ -292,7 +330,9 @@ def test_ldap3_to_ldif_conversion():
 **Rationale**: Quick wins, low complexity, no external dependencies
 
 ### Priority 2: Short-term (Next 1-2 weeks)
+
 **Target**: +22% coverage (34% → 56%)
+
 - models.py (MASSIVE impact: +13%)
 - api.py (+5.5%)
 - utilities.py (+3.5%)
@@ -300,7 +340,9 @@ def test_ldap3_to_ldif_conversion():
 **Rationale**: Medium complexity, significant impact, mostly unit tests
 
 ### Priority 3: Medium-term (Next 2-4 weeks)
+
 **Target**: +19% coverage (56% → 75%)
+
 - clients.py (CRITICAL: +18.5%)
 - acl/parsers.py (+4.2%)
 - Others to fill gap
@@ -315,12 +357,15 @@ def test_ldap3_to_ldif_conversion():
 
 1. **Use pytest fixtures** from `tests/conftest.py`
 2. **Use FlextResult assertions**:
+
    ```python
    assert result.is_success
    assert result.is_failure
    assert result.unwrap() == expected_value
    ```
+
 3. **Use parametrize for multiple cases**:
+
    ```python
    @pytest.mark.parametrize("input,expected", [
        ("valid", True),
@@ -330,8 +375,10 @@ def test_ldap3_to_ldif_conversion():
        result = validate(input)
        assert result == expected
    ```
+
 4. **Mock external dependencies** (ldap3, FlextLdif when needed)
 5. **Test FlextResult error cases**:
+
    ```python
    result = function_that_fails()
    assert result.is_failure
@@ -400,14 +447,15 @@ poetry run python -m pytest tests/ \
 
 ## Expected Timeline
 
-| Phase | Target | Effort | Timeline |
-|-------|--------|--------|----------|
-| Phase 1 (Quick Wins) | +6% (→34%) | 7-8 hours | 2-3 days |
-| Phase 2 (Medium Impact) | +22% (→56%) | 18-23 hours | 1-2 weeks |
-| Phase 3 (High Impact) | +19% (→75%) | 32-40 hours | 2-4 weeks |
-| **Total** | **+47%** | **57-71 hours** | **3-6 weeks** |
+| Phase                   | Target      | Effort          | Timeline      |
+| ----------------------- | ----------- | --------------- | ------------- |
+| Phase 1 (Quick Wins)    | +6% (→34%)  | 7-8 hours       | 2-3 days      |
+| Phase 2 (Medium Impact) | +22% (→56%) | 18-23 hours     | 1-2 weeks     |
+| Phase 3 (High Impact)   | +19% (→75%) | 32-40 hours     | 2-4 weeks     |
+| **Total**               | **+47%**    | **57-71 hours** | **3-6 weeks** |
 
 **Note**: Timeline assumes focused, dedicated test development work. Actual time may vary based on:
+
 - Docker LDAP server setup issues
 - Complexity of clients.py integration tests
 - Unexpected edge cases requiring additional test cases
@@ -417,16 +465,19 @@ poetry run python -m pytest tests/ \
 ## Risk Assessment
 
 ### HIGH RISK
+
 - **clients.py timeout issues**: Tests take >60s due to Docker LDAP server
   - **Mitigation**: Separate unit tests (mocked) from integration tests (Docker)
   - **Mitigation**: Optimize Docker container management in conftest.py
 
 ### MEDIUM RISK
+
 - **models.py Pydantic complexity**: 1,106 lines of complex domain models
   - **Mitigation**: Break into smaller test classes by model type
   - **Mitigation**: Focus on critical models first (User, Group, SearchRequest)
 
 ### LOW RISK
+
 - **Validation/Config/Exceptions**: Low complexity, straightforward tests
   - **Mitigation**: None needed - quick wins expected
 
@@ -435,16 +486,19 @@ poetry run python -m pytest tests/ \
 ## Success Criteria
 
 **Minimum (75% coverage)**:
+
 - ✅ Phase 1 complete: validations, exceptions, config
 - ✅ Phase 2 complete: models, api, utilities
 - ✅ Phase 3 partial: clients.py at least 50% (from 7%)
 
 **Ideal (85% coverage)**:
+
 - ✅ All phases complete
 - ✅ clients.py at 75%+
 - ✅ All server operations modules improved
 
 **Excellence (90%+ coverage)**:
+
 - ✅ clients.py at 85%+
 - ✅ ACL parsers fully tested
 - ✅ All edge cases covered

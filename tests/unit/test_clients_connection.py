@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap import FlextLdapClient, FlextLdapModels
+
 from flext_core import FlextTypes
 
 
@@ -52,12 +52,8 @@ class TestFlextLdapClientConnection:
             password="admin123",
         )
         assert result.is_failure
-        assert (
-            result.error
-            and result.error
-            and "server" in result.error.lower()
-            or result.error
-            and "uri" in result.error.lower()
+        assert (result.error and result.error and "server" in result.error.lower()) or (
+            result.error and "uri" in result.error.lower()
         )
 
     def test_connect_missing_bind_dn(self) -> None:
@@ -69,12 +65,8 @@ class TestFlextLdapClientConnection:
             password="admin123",
         )
         assert result.is_failure
-        assert (
-            result.error
-            and result.error
-            and "dn" in result.error.lower()
-            or result.error
-            and "bind" in result.error.lower()
+        assert (result.error and result.error and "dn" in result.error.lower()) or (
+            result.error and "bind" in result.error.lower()
         )
 
     def test_connect_missing_password(self) -> None:
@@ -133,11 +125,8 @@ class TestFlextLdapClientConnectionIntegration:
         )
 
         assert result.is_failure
-        assert (
-            result.error
-            and "invalid credentials" in result.error.lower()
-            or result.error
-            and "bind" in result.error.lower()
+        assert (result.error and "invalid credentials" in result.error.lower()) or (
+            result.error and "bind" in result.error.lower()
         )
         assert not client.is_connected()
 

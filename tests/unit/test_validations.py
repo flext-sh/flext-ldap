@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
+
 from flext_core import FlextTypes
 
 
@@ -95,11 +95,8 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            result.error
-            and "email does not match required pattern" in result.error
-            or result.error
-            and "Invalid email format" in result.error
-        )
+            result.error and "email does not match required pattern" in result.error
+        ) or (result.error and "Invalid email format" in result.error)
 
     def test_validate_email_empty(self, validations: FlextLdapValidations) -> None:
         """Test email validation with empty string."""
@@ -108,12 +105,14 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            result.error
-            and "email cannot be empty or whitespace only" in result.error
-            or result.error
-            and "email does not match required pattern" in result.error
-            or result.error
-            and "Invalid email format" in result.error
+            (
+                result.error
+                and "email cannot be empty or whitespace only" in result.error
+            )
+            or (
+                result.error and "email does not match required pattern" in result.error
+            )
+            or (result.error and "Invalid email format" in result.error)
         )
 
     def test_validate_email_none(self, validations: FlextLdapValidations) -> None:
@@ -135,11 +134,8 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            result.error
-            and "email does not match required pattern" in result.error
-            or result.error
-            and "Invalid email format" in result.error
-        )
+            result.error and "email does not match required pattern" in result.error
+        ) or (result.error and "Invalid email format" in result.error)
 
     def test_validate_filter_success(
         self, validations: FlextLdapValidations, sample_valid_filter: str

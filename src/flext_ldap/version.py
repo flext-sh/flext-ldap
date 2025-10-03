@@ -26,7 +26,7 @@ class FlextLdapVersion:
         self.requires_python = _metadata.get("Requires-Python", "")
 
     @classmethod
-    def current(cls) -> "FlextLdapVersion":
+    def current(cls) -> FlextLdapVersion:
         """Return current version."""
         return cls(__version__, __version_info__)
 

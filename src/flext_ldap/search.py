@@ -20,7 +20,6 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
-
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
@@ -28,7 +27,7 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol):
+class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProtocol):
     """Unified LDAP search operations class.
 
     This class provides comprehensive LDAP search functionality
@@ -60,6 +59,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
 
         Args:
             connection: LDAP connection object
+
         """
         self._connection = connection
 
@@ -142,9 +142,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
                 entry_attributes_dict: FlextTypes.Dict = {}
 
                 # Handle case where entry.attributes might be a list instead of dict
-                entry_attrs = (
-                    entry.attributes if hasattr(entry, "attributes") else {}
-                )
+                entry_attrs = entry.attributes if hasattr(entry, "attributes") else {}
 
                 if isinstance(entry_attrs, dict):
                     for attr_name in entry_attrs:
@@ -172,9 +170,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
                         object_classes = [object_classes]
                     elif not isinstance(object_classes, list):
                         object_classes = []
-                elif hasattr(entry, "attributes") and hasattr(
-                    entry.attributes, "get"
-                ):
+                elif hasattr(entry, "attributes") and hasattr(entry.attributes, "get"):
                     # Fallback for dict-like objects
                     try:
                         object_classes = entry.attributes.get("objectClass", [])
@@ -197,9 +193,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
 
         except Exception as e:
             self._logger.exception("Search failed")
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
-                f"Search failed: {e}"
-            )
+            return FlextResult[list[FlextLdapModels.Entry]].fail(f"Search failed: {e}")
 
     def user_exists(self, dn: str) -> FlextResult[bool]:
         """Check if user exists in LDAP directory.
@@ -284,9 +278,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
                     self._logger.debug("Entry not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
-                self._logger.warning(
-                    "LDAP search failed for DN %s: %s", dn, error_msg
-                )
+                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
@@ -295,9 +287,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
                 self._logger.debug("No entries found for DN: %s", dn)
                 return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
-            user = self._create_user_from_entry(
-                self._connection.entries[0]
-            )
+            user = self._create_user_from_entry(self._connection.entries[0])
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
@@ -342,9 +332,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
                     self._logger.debug("Group not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.Group | None].ok(None)
 
-                self._logger.warning(
-                    "LDAP search failed for DN %s: %s", dn, error_msg
-                )
+                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
                 return FlextResult[FlextLdapModels.Group | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
@@ -352,9 +340,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
             if not self._connection.entries:
                 return FlextResult[FlextLdapModels.Group | None].ok(None)
 
-            group = self._create_group_from_entry(
-                self._connection.entries[0]
-            )
+            group = self._create_group_from_entry(self._connection.entries[0])
             return FlextResult[FlextLdapModels.Group | None].ok(group)
 
         except Exception as e:
@@ -367,21 +353,23 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.LdapSearchProtocol)
         """Create user from LDAP entry."""
         # Simplified user creation - in real implementation this would be more complex
         return FlextLdapModels.LdapUser(
-            dn=str(getattr(entry, 'dn', '')),
-            uid=getattr(entry, 'uid', [''])[0] if hasattr(entry, 'uid') else "",
-            cn=getattr(entry, 'cn', [''])[0] if hasattr(entry, 'cn') else "",
-            sn=getattr(entry, 'sn', [''])[0] if hasattr(entry, 'sn') else "",
-            mail=getattr(entry, 'mail', [''])[0] if hasattr(entry, 'mail') else "",
+            dn=str(getattr(entry, "dn", "")),
+            uid=getattr(entry, "uid", [""])[0] if hasattr(entry, "uid") else "",
+            cn=getattr(entry, "cn", [""])[0] if hasattr(entry, "cn") else "",
+            sn=getattr(entry, "sn", [""])[0] if hasattr(entry, "sn") else "",
+            mail=getattr(entry, "mail", [""])[0] if hasattr(entry, "mail") else "",
         )
 
     def _create_group_from_entry(self, entry: object) -> FlextLdapModels.Group:
         """Create group from LDAP entry."""
         # Simplified group creation - in real implementation this would be more complex
         return FlextLdapModels.Group(
-            dn=str(getattr(entry, 'dn', '')),
-            cn=getattr(entry, 'cn', [''])[0] if hasattr(entry, 'cn') else "",
-            description=getattr(entry, 'description', [''])[0] if hasattr(entry, 'description') else "",
-            members=getattr(entry, 'member', []) if hasattr(entry, 'member') else [],
+            dn=str(getattr(entry, "dn", "")),
+            cn=getattr(entry, "cn", [""])[0] if hasattr(entry, "cn") else "",
+            description=getattr(entry, "description", [""])[0]
+            if hasattr(entry, "description")
+            else "",
+            members=getattr(entry, "member", []) if hasattr(entry, "member") else [],
         )
 
 

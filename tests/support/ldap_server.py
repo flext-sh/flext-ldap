@@ -16,11 +16,11 @@ Note: This file has type checking disabled due to limitations in the official ty
 import os
 from typing import Protocol, TypedDict, cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_tests import FlextTestDocker
-
 from flext_ldap import FlextLdapModels, FlextLdapTypes
 from flext_ldap.constants import FlextLdapConstants
+from flext_tests import FlextTestDocker
+
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
@@ -74,7 +74,7 @@ class LdapTestServer:
         )
         # Use unified FlextTestDocker instead of direct docker client
         self.docker_manager: DockerManagerProtocol = cast(
-            DockerManagerProtocol, FlextTestDocker()
+            "DockerManagerProtocol", FlextTestDocker()
         )
         self._container: object | None = None  # For backward compatibility
 

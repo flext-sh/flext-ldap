@@ -18,13 +18,15 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 
 FLEXT-LDAP provides **complete server-specific implementations** with automatic quirks detection and LDIF processing:
 
-#### **Complete Implementations (Production-Ready)**:
+#### **Complete Implementations (Production-Ready)**
+
 - **OpenLDAP 2.x** - cn=config, olcAccess ACLs, complete feature support
 - **OpenLDAP 1.x** - slapd.conf, access ACLs, legacy support
 - **Oracle OID** - orclaci ACLs, Oracle-specific object classes, VLV support
 - **Oracle OUD** - ds-privilege-name ACLs, 389-based with Oracle extensions
 
-#### **Stub Implementations (Future Development)**:
+#### **Stub Implementations (Future Development)**
+
 - **Active Directory** - nTSecurityDescriptor ACLs (stub ready for implementation)
 - **Generic LDAP** - RFC-compliant fallback for unknown servers
 
@@ -86,17 +88,17 @@ graph TB
 
 ### **Core Components**
 
-| Component | Purpose | Status |
-|-----------|---------|--------|
-| **FlextLdapEntryAdapter** | ldap3 ↔ FlextLdif conversion | 🟢 Complete |
-| **FlextLdapQuirksAdapter** | Server quirks detection | 🟢 Complete |
-| **BaseServerOperations** | Abstract server interface | 🟢 Complete |
-| **OpenLDAP2Operations** | OpenLDAP 2.x implementation | 🟢 Complete |
-| **OpenLDAP1Operations** | OpenLDAP 1.x implementation | 🟢 Complete |
-| **OracleOIDOperations** | Oracle OID implementation | 🟢 Complete |
-| **OracleOUDOperations** | Oracle OUD implementation | 🟢 Complete |
-| **ActiveDirectoryOperations** | AD stub | 🟡 Stub |
-| **GenericServerOperations** | Generic fallback | 🟢 Complete |
+| Component                     | Purpose                       | Status      |
+| ----------------------------- | ----------------------------- | ----------- |
+| **FlextLdapEntryAdapter**     | ldap3 ↔ FlextLdif conversion | 🟢 Complete |
+| **FlextLdapQuirksAdapter**    | Server quirks detection       | 🟢 Complete |
+| **BaseServerOperations**      | Abstract server interface     | 🟢 Complete |
+| **OpenLDAP2Operations**       | OpenLDAP 2.x implementation   | 🟢 Complete |
+| **OpenLDAP1Operations**       | OpenLDAP 1.x implementation   | 🟢 Complete |
+| **OracleOIDOperations**       | Oracle OID implementation     | 🟢 Complete |
+| **OracleOUDOperations**       | Oracle OUD implementation     | 🟢 Complete |
+| **ActiveDirectoryOperations** | AD stub                       | 🟡 Stub     |
+| **GenericServerOperations**   | Generic fallback              | 🟢 Complete |
 
 ---
 
@@ -138,13 +140,13 @@ oid_ops = OracleOIDOperations()
 
 ### **Server-Specific Features**
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD |
-|---------|--------------|--------------|------------|------------|
-| **ACL Attribute** | olcAccess | access | orclaci | ds-privilege-name |
-| **Schema DN** | cn=subschema | cn=subschema | cn=subschemasubentry | cn=schema |
-| **Paged Results** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **VLV Support** | ✅ Yes | ⚠️ Limited | ✅ Yes | ✅ Yes |
-| **START_TLS** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| Feature           | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID           | Oracle OUD        |
+| ----------------- | ------------ | ------------ | -------------------- | ----------------- |
+| **ACL Attribute** | olcAccess    | access       | orclaci              | ds-privilege-name |
+| **Schema DN**     | cn=subschema | cn=subschema | cn=subschemasubentry | cn=schema         |
+| **Paged Results** | ✅ Yes       | ✅ Yes       | ✅ Yes               | ✅ Yes            |
+| **VLV Support**   | ✅ Yes       | ⚠️ Limited   | ✅ Yes               | ✅ Yes            |
+| **START_TLS**     | ✅ Yes       | ✅ Yes       | ✅ Yes               | ✅ Yes            |
 
 ### **FlextLdif Integration**
 
@@ -312,6 +314,7 @@ make ldap-test-server-stop   # Stop test container
 ### **Current Version (0.9.9) - Universal LDAP Interface**
 
 ✅ **Complete**:
+
 - Universal LDAP interface with server-specific operations
 - FlextLdif integration for entry handling and quirks
 - Entry adapter pattern (ldap3 ↔ FlextLdif conversion)
@@ -323,6 +326,7 @@ make ldap-test-server-stop   # Stop test container
 ### **Next Version (1.0.0) - Production Hardening**
 
 🎯 **Planned**:
+
 - Complete Active Directory implementation (currently stub)
 - Enhanced error handling and validation
 - Performance optimization for large directories

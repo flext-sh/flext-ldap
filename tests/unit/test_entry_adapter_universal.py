@@ -10,9 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifModels
-
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldif import FlextLdifModels
 
 
 class TestEntryAdapterUniversal:
@@ -562,11 +561,8 @@ class TestEntryAdapterUniversal:
             assert "server_type" in attrs
         else:
             # Expected when quirks not registered for server type
-            assert (
-                result.error
-                and "Unknown server type" in result.error
-                or result.error
-                and "quirks" in result.error.lower()
+            assert (result.error and "Unknown server type" in result.error) or (
+                result.error and "quirks" in result.error.lower()
             )
 
     def test_get_server_specific_attributes_oud(
@@ -586,11 +582,8 @@ class TestEntryAdapterUniversal:
             assert "server_type" in attrs
         else:
             # Expected when quirks not registered for server type
-            assert (
-                result.error
-                and "Unknown server type" in result.error
-                or result.error
-                and "quirks" in result.error.lower()
+            assert (result.error and "Unknown server type" in result.error) or (
+                result.error and "quirks" in result.error.lower()
             )
 
     def test_get_server_specific_attributes_generic(

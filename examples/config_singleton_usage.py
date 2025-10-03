@@ -14,9 +14,8 @@ from __future__ import annotations
 import os
 import traceback
 
+from flext_ldap import FlextLdapConfig
 from pydantic import SecretStr
-
-from flext_ldap import FlextLdapConfig, FlextLdapModels
 
 
 def demonstrate_singleton_pattern() -> None:

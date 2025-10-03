@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
 
 
@@ -260,6 +260,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             AD version (e.g., "2019", "2022")
 
         TODO: Implement version detection from server info
+
         """
         return "2019"  # Default placeholder
 
@@ -271,6 +272,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
         Returns:
             Global Catalog port number
+
         """
         return 3269 if use_ssl else 3268
 
@@ -279,6 +281,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
         Returns:
             True - AD supports Global Catalog
+
         """
         return True
 
@@ -289,6 +292,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             List of AD object classes
 
         TODO: Complete list based on AD schema
+
         """
         return [
             "user",
@@ -308,6 +312,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             List of AD attributes
 
         TODO: Complete list based on AD schema
+
         """
         return [
             "objectGUID",
@@ -330,6 +335,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             Dictionary mapping GUID names to values
 
         TODO: Add complete well-known GUID mappings
+
         """
         return {
             "users": "a9d1ca15-768a-11d1-aded-00c04fd8d5cd",
@@ -342,6 +348,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
         Returns:
             True - AD supports extended DN with GUID/SID
+
         """
         return True
 
@@ -352,6 +359,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
             Functional level metadata
 
         TODO: Implement functional level detection
+
         """
         return {
             "domain_functional_level": "Windows Server 2016",
@@ -364,6 +372,7 @@ class ActiveDirectoryOperations(BaseServerOperations):
 
         Returns:
             Dictionary with implementation guidance
+
         """
         return {
             "status": "STUB - Not Implemented",

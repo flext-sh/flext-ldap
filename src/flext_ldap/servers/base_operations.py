@@ -11,8 +11,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
+
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
 class BaseServerOperations(FlextService[None], ABC):
@@ -32,6 +33,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Args:
             server_type: LDAP server type identifier (optional, child classes may hardcode)
+
         """
         super().__init__()
         self._logger = FlextLogger(__name__)
@@ -59,18 +61,16 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             Default port number
+
         """
-        pass
 
     @abstractmethod
     def supports_start_tls(self) -> bool:
         """Check if server supports START_TLS."""
-        pass
 
     @abstractmethod
     def get_bind_mechanisms(self) -> FlextTypes.StringList:
         """Get supported BIND mechanisms (SIMPLE, SASL, etc.)."""
-        pass
 
     # =========================================================================
     # SCHEMA OPERATIONS
@@ -82,8 +82,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             Schema DN (e.g., 'cn=subschema', 'cn=schema')
+
         """
-        pass
 
     @abstractmethod
     def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
@@ -94,8 +94,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing schema information
+
         """
-        pass
 
     @abstractmethod
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
@@ -106,8 +106,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing parsed objectClass information
+
         """
-        pass
 
     @abstractmethod
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
@@ -118,8 +118,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing parsed attribute information
+
         """
-        pass
 
     # =========================================================================
     # ACL OPERATIONS
@@ -131,8 +131,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             ACL attribute name (e.g., 'olcAccess', 'aci', 'orclaci')
+
         """
-        pass
 
     @abstractmethod
     def get_acl_format(self) -> str:
@@ -140,8 +140,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             ACL format (e.g., 'openldap2', 'oracle', '389ds')
+
         """
-        pass
 
     @abstractmethod
     def get_acls(
@@ -155,8 +155,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing list of ACL entries
+
         """
-        pass
 
     @abstractmethod
     def set_acls(
@@ -171,8 +171,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult indicating success
+
         """
-        pass
 
     @abstractmethod
     def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
@@ -183,8 +183,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing parsed ACL structure
+
         """
-        pass
 
     @abstractmethod
     def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
@@ -195,8 +195,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing formatted ACL string
+
         """
-        pass
 
     # =========================================================================
     # ENTRY OPERATIONS
@@ -214,8 +214,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult indicating success
+
         """
-        pass
 
     @abstractmethod
     def modify_entry(
@@ -230,8 +230,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult indicating success
+
         """
-        pass
 
     @abstractmethod
     def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
@@ -243,8 +243,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult indicating success
+
         """
-        pass
 
     @abstractmethod
     def normalize_entry(
@@ -257,8 +257,8 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing normalized entry
+
         """
-        pass
 
     # =========================================================================
     # SEARCH OPERATIONS
@@ -267,17 +267,14 @@ class BaseServerOperations(FlextService[None], ABC):
     @abstractmethod
     def get_max_page_size(self) -> int:
         """Get maximum page size for paged searches."""
-        pass
 
     @abstractmethod
     def supports_paged_results(self) -> bool:
         """Check if server supports paged result control."""
-        pass
 
     @abstractmethod
     def supports_vlv(self) -> bool:
         """Check if server supports Virtual List View control."""
-        pass
 
     @abstractmethod
     def search_with_paging(
@@ -299,5 +296,5 @@ class BaseServerOperations(FlextService[None], ABC):
 
         Returns:
             FlextResult containing list of entries
+
         """
-        pass

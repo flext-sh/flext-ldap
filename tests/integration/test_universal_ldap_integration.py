@@ -9,11 +9,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifModels
-
 from flext_ldap import FlextLdapAPI
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.factory import ServerOperationsFactory
+from flext_ldif import FlextLdifModels
 
 
 @pytest.mark.integration

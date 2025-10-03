@@ -13,7 +13,6 @@ from __future__ import annotations
 import time
 
 import pytest
-
 from flext_ldap import FlextLdapClient, FlextLdapModels, FlextLdapSchema
 
 # Skip all integration tests when LDAP server is not available

@@ -19,13 +19,14 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthenticationProtocol):
+class FlextLdapAuthentication(
+    FlextService[None], FlextLdapProtocols.Ldap.LdapAuthenticationProtocol
+):
     """Unified LDAP authentication operations class.
 
     This class provides comprehensive LDAP authentication functionality
@@ -66,6 +67,7 @@ class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthent
             connection: LDAP connection object
             server: LDAP server object
             config: LDAP configuration object
+
         """
         self._connection = connection
         self._server = server
@@ -99,9 +101,7 @@ class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthent
                 search_result.error or "Search failed"
             )
 
-        auth_result = self._authenticate_user_credentials(
-            search_result.value, password
-        )
+        auth_result = self._authenticate_user_credentials(search_result.value, password)
         if auth_result.is_failure:
             return FlextResult[FlextLdapModels.LdapUser].fail(
                 auth_result.error or "Authentication failed"
@@ -160,9 +160,7 @@ class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthent
             )
 
             if not self._connection.entries:
-                return FlextResult[FlextLdapProtocols.LdapEntry].fail(
-                    "User not found"
-                )
+                return FlextResult[FlextLdapProtocols.LdapEntry].fail("User not found")
 
             return FlextResult[FlextLdapProtocols.LdapEntry].ok(
                 self._connection.entries[0]
@@ -184,6 +182,7 @@ class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthent
                 )
 
             from ldap3 import Connection
+
             user_dn = str(user_entry.dn)
             # Use concrete ldap3.Connection type
             test_connection: Connection = Connection(
@@ -215,10 +214,18 @@ class FlextLdapAuthentication(FlextService[None], FlextLdapProtocols.LdapAuthent
             # Create user from entry - simplified for now
             user = FlextLdapModels.LdapUser(
                 dn=str(user_entry.dn),
-                uid=getattr(user_entry, "uid", [""])[0] if hasattr(user_entry, "uid") else "",
-                cn=getattr(user_entry, "cn", [""])[0] if hasattr(user_entry, "cn") else "",
-                sn=getattr(user_entry, "sn", [""])[0] if hasattr(user_entry, "sn") else "",
-                mail=getattr(user_entry, "mail", [""])[0] if hasattr(user_entry, "mail") else "",
+                uid=getattr(user_entry, "uid", [""])[0]
+                if hasattr(user_entry, "uid")
+                else "",
+                cn=getattr(user_entry, "cn", [""])[0]
+                if hasattr(user_entry, "cn")
+                else "",
+                sn=getattr(user_entry, "sn", [""])[0]
+                if hasattr(user_entry, "sn")
+                else "",
+                mail=getattr(user_entry, "mail", [""])[0]
+                if hasattr(user_entry, "mail")
+                else "",
             )
             return FlextResult[FlextLdapModels.LdapUser].ok(user)
         except Exception as e:

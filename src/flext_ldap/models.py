@@ -17,7 +17,6 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, override
 
-from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from pydantic import (
     ConfigDict,
     Field,
@@ -29,6 +28,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.typings import FlextLdapTypes
@@ -587,11 +587,11 @@ class FlextLdapModels(FlextModels):
                 field_name = info.field_name
                 if field_name == "department":
                     return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
-                elif field_name == "title":
+                if field_name == "title":
                     return FlextLdapConstants.Defaults.DEFAULT_TITLE
-                elif field_name == "organization":
+                if field_name == "organization":
                     return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
-                elif field_name == "status":
+                if field_name == "status":
                     return FlextLdapConstants.Defaults.DEFAULT_STATUS
             return v or ""
 
@@ -1524,7 +1524,7 @@ class FlextLdapModels(FlextModels):
         """LDAP Search Response entity."""
 
         # Results - using Entry models for type-safe entries
-        entries: list["FlextLdapModels.Entry"] = Field(
+        entries: list[FlextLdapModels.Entry] = Field(
             default_factory=list,
             description="Search result entries",
         )

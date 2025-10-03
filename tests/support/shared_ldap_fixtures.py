@@ -10,8 +10,9 @@ from collections.abc import Callable
 from typing import Protocol, cast
 
 import pytest
-from flext_core import FlextResult
 from flext_tests import FlextTestDocker
+
+from flext_core import FlextResult
 
 
 class DockerManagerProtocol(Protocol):
@@ -24,7 +25,7 @@ def check_docker_available() -> bool:
     """Check if Docker is available and running using FlextTestDocker."""
     try:
         docker_manager: DockerManagerProtocol = cast(
-            DockerManagerProtocol, FlextTestDocker()
+            "DockerManagerProtocol", FlextTestDocker()
         )
 
         # Use FlextTestDocker to check Docker availability

@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap import FlextLdapClient, FlextLdapModels
+
 from flext_core import FlextTypes
 
 
@@ -32,11 +32,8 @@ class TestFlextLdapClientSearchUnit:
         result = client.search_with_request(search_request)
 
         assert result.is_failure
-        assert (
-            result.error
-            and "not established" in result.error.lower()
-            or result.error
-            and "connection" in result.error.lower()
+        assert (result.error and "not established" in result.error.lower()) or (
+            result.error and "connection" in result.error.lower()
         )
 
     def test_search_with_request_invalid_dn(self) -> None:
@@ -265,11 +262,8 @@ class TestFlextLdapClientSearchIntegration:
         result = authenticated_client.search_with_request(search_request)
 
         assert result.is_failure
-        assert (
-            result.error
-            and "not established" in result.error.lower()
-            or result.error
-            and "connection" in result.error.lower()
+        assert (result.error and "not established" in result.error.lower()) or (
+            result.error and "connection" in result.error.lower()
         )
 
 

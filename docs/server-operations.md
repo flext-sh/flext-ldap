@@ -12,14 +12,14 @@ FLEXT-LDAP provides complete, server-specific implementations for major LDAP ser
 
 ### **Available Implementations**
 
-| Server | Status | ACL Attribute | Schema DN | Lines | Version Support |
-|--------|--------|---------------|-----------|-------|----------------|
-| **OpenLDAP 2.x** | 🟢 Complete | olcAccess | cn=subschema | 525 | 2.4+ |
-| **OpenLDAP 1.x** | 🟢 Complete | access | cn=subschema | 102 | 1.x (legacy) |
-| **Oracle OID** | 🟢 Complete | orclaci | cn=subschemasubentry | 361 | 11g+ |
-| **Oracle OUD** | 🟢 Complete | ds-privilege-name | cn=schema | 373 | 11g+ |
-| **Active Directory** | 🟡 Stub | nTSecurityDescriptor | cn=schema,cn=configuration | 250 | Future |
-| **Generic** | 🟢 Complete | aci | cn=subschema | 310 | RFC 4510 |
+| Server               | Status      | ACL Attribute        | Schema DN                  | Lines | Version Support |
+| -------------------- | ----------- | -------------------- | -------------------------- | ----- | --------------- |
+| **OpenLDAP 2.x**     | 🟢 Complete | olcAccess            | cn=subschema               | 525   | 2.4+            |
+| **OpenLDAP 1.x**     | 🟢 Complete | access               | cn=subschema               | 102   | 1.x (legacy)    |
+| **Oracle OID**       | 🟢 Complete | orclaci              | cn=subschemasubentry       | 361   | 11g+            |
+| **Oracle OUD**       | 🟢 Complete | ds-privilege-name    | cn=schema                  | 373   | 11g+            |
+| **Active Directory** | 🟡 Stub     | nTSecurityDescriptor | cn=schema,cn=configuration | 250   | Future          |
+| **Generic**          | 🟢 Complete | aci                  | cn=subschema               | 310   | RFC 4510        |
 
 ---
 
@@ -48,6 +48,7 @@ from flext_ldif import FlextLdifModels
 ## 🔧 OpenLDAP 2.x Operations
 
 ### **Features**
+
 - **cn=config** dynamic configuration
 - **olcAccess** ACL syntax
 - Paged results and VLV support
@@ -169,6 +170,7 @@ if search_result.is_success:
 ## 🔧 OpenLDAP 1.x Operations
 
 ### **Features**
+
 - **slapd.conf** static configuration
 - **access** ACL syntax (legacy)
 - Inherits most functionality from OpenLDAP 2.x
@@ -198,6 +200,7 @@ legacy_acl = {
 ## 🔧 Oracle OID Operations
 
 ### **Features**
+
 - **orclaci** ACL syntax
 - **cn=subschemasubentry** schema location
 - Oracle-specific object classes (orclUserV2, orclContainer)
@@ -266,6 +269,7 @@ mechanisms = ops.get_bind_mechanisms()
 ## 🔧 Oracle OUD Operations
 
 ### **Features**
+
 - **ds-privilege-name** ACL attribute
 - **cn=schema** schema location
 - Based on 389 Directory Server
@@ -333,9 +337,11 @@ supports_paging = ops.supports_paged_results()  # True
 ## 🔧 Active Directory Operations (Stub)
 
 ### **Status**
+
 Currently implemented as a stub with `NotImplementedError` for most operations. Provides the interface for future implementation.
 
 ### **Planned Features**
+
 - **nTSecurityDescriptor** ACLs (Windows Security Descriptor format)
 - **cn=schema,cn=configuration** schema location
 - GUID-based DNs
@@ -365,6 +371,7 @@ schema_dn = ops.get_schema_dn()  # "cn=schema,cn=configuration"
 ### **Contributing AD Implementation**
 
 If you want to contribute Active Directory support:
+
 1. Implement schema discovery with AD schema format
 2. Implement nTSecurityDescriptor parsing and formatting
 3. Handle GUID-based DNs
@@ -378,9 +385,11 @@ See `src/flext_ldap/servers/ad_operations.py` for stub methods.
 ## 🔧 Generic Server Operations
 
 ### **Purpose**
+
 RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic operations that should work with any RFC 4510-compliant server.
 
 ### **Features**
+
 - **aci** attribute (generic format)
 - **cn=subschema** schema location (RFC 4512)
 - Basic LDAP operations
@@ -422,6 +431,7 @@ search_result = ops.search_with_paging(
 ```
 
 ### **Limitations**
+
 - ACL operations return minimal support
 - Schema discovery provides basic info only
 - No server-specific optimizations
@@ -506,41 +516,41 @@ else:
 
 ### **Connection Features**
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD | Generic |
-|---------|--------------|--------------|------------|------------|----|---------|
-| Default Port | 389/636 | 389/636 | 389/636 | 389/636 | 389/636 | 389/636 |
-| START_TLS | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
-| SIMPLE Auth | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| SASL/EXTERNAL | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No |
-| SASL/GSSAPI | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No |
+| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD      | Generic |
+| ------------- | ------------ | ------------ | ---------- | ---------- | ------- | ------- |
+| Default Port  | 389/636      | 389/636      | 389/636    | 389/636    | 389/636 | 389/636 |
+| START_TLS     | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ❌ No   | ✅ Yes  |
+| SIMPLE Auth   | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ✅ Yes  | ✅ Yes  |
+| SASL/EXTERNAL | ✅ Yes       | ❌ No        | ✅ Yes     | ✅ Yes     | ❌ No   | ❌ No   |
+| SASL/GSSAPI   | ❌ No        | ❌ No        | ❌ No      | ✅ Yes     | ✅ Yes  | ❌ No   |
 
 ### **Schema Operations**
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD | Generic |
-|---------|--------------|--------------|------------|------------|----|---------|
-| Schema DN | cn=subschema | cn=subschema | cn=subschemasubentry | cn=schema | cn=schema,cn=config | cn=subschema |
-| Object Classes | ✅ Full | ✅ Full | ✅ Full | ✅ Full | 🟡 Stub | ⚠️ Basic |
-| Attribute Types | ✅ Full | ✅ Full | ✅ Full | ✅ Full | 🟡 Stub | ⚠️ Basic |
-| Syntaxes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | 🟡 Stub | ❌ No |
-| Matching Rules | ✅ Yes | ❌ No | ❌ No | ❌ No | 🟡 Stub | ❌ No |
+| Feature         | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID           | Oracle OUD | AD                  | Generic      |
+| --------------- | ------------ | ------------ | -------------------- | ---------- | ------------------- | ------------ |
+| Schema DN       | cn=subschema | cn=subschema | cn=subschemasubentry | cn=schema  | cn=schema,cn=config | cn=subschema |
+| Object Classes  | ✅ Full      | ✅ Full      | ✅ Full              | ✅ Full    | 🟡 Stub             | ⚠️ Basic     |
+| Attribute Types | ✅ Full      | ✅ Full      | ✅ Full              | ✅ Full    | 🟡 Stub             | ⚠️ Basic     |
+| Syntaxes        | ✅ Yes       | ✅ Yes       | ❌ No                | ✅ Yes     | 🟡 Stub             | ❌ No        |
+| Matching Rules  | ✅ Yes       | ❌ No        | ❌ No                | ❌ No      | 🟡 Stub             | ❌ No        |
 
 ### **ACL Features**
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD | Generic |
-|---------|--------------|--------------|------------|------------|----|---------|
-| ACL Attribute | olcAccess | access | orclaci | ds-privilege-name | nTSecurityDescriptor | aci |
-| Get ACLs | ✅ Full | ✅ Full | ✅ Full | ✅ Full | 🟡 Stub | ⚠️ Limited |
-| Set ACLs | ✅ Full | ✅ Full | ✅ Full | ✅ Full | 🟡 Stub | ❌ No |
-| Parse ACL | ✅ Full | ✅ Full | ⚠️ Basic | ⚠️ Basic | 🟡 Stub | ⚠️ Basic |
-| Format ACL | ✅ Full | ✅ Full | ⚠️ Basic | ⚠️ Basic | 🟡 Stub | ⚠️ Basic |
+| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD        | AD                   | Generic    |
+| ------------- | ------------ | ------------ | ---------- | ----------------- | -------------------- | ---------- |
+| ACL Attribute | olcAccess    | access       | orclaci    | ds-privilege-name | nTSecurityDescriptor | aci        |
+| Get ACLs      | ✅ Full      | ✅ Full      | ✅ Full    | ✅ Full           | 🟡 Stub              | ⚠️ Limited |
+| Set ACLs      | ✅ Full      | ✅ Full      | ✅ Full    | ✅ Full           | 🟡 Stub              | ❌ No      |
+| Parse ACL     | ✅ Full      | ✅ Full      | ⚠️ Basic   | ⚠️ Basic          | 🟡 Stub              | ⚠️ Basic   |
+| Format ACL    | ✅ Full      | ✅ Full      | ⚠️ Basic   | ⚠️ Basic          | 🟡 Stub              | ⚠️ Basic   |
 
 ### **Search Features**
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD | Generic |
-|---------|--------------|--------------|------------|------------|----|---------|
-| Paged Results | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| VLV | ✅ Yes | ⚠️ Limited | ✅ Yes | ✅ Yes | ❌ No | ❌ No |
-| Max Page Size | 1000 | 1000 | 5000 | 1000 | 1000 | 1000 |
+| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD     | Generic |
+| ------------- | ------------ | ------------ | ---------- | ---------- | ------ | ------- |
+| Paged Results | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ✅ Yes | ✅ Yes  |
+| VLV           | ✅ Yes       | ⚠️ Limited   | ✅ Yes     | ✅ Yes     | ❌ No  | ❌ No   |
+| Max Page Size | 1000         | 1000         | 5000       | 1000       | 1000   | 1000    |
 
 ---
 
@@ -621,6 +631,7 @@ finally:
 ### **Common Issues**
 
 **Schema Discovery Fails**:
+
 ```python
 # Check if server is properly connected
 if not connection.bound:
@@ -632,6 +643,7 @@ print(f"Trying schema DN: {schema_dn}")
 ```
 
 **ACL Operations Not Working**:
+
 ```python
 # Verify ACL attribute for server
 acl_attr = ops.get_acl_attribute_name()
@@ -642,6 +654,7 @@ print(f"Using ACL attribute: {acl_attr}")
 ```
 
 **Paged Search Timing Out**:
+
 ```python
 # Reduce page size
 result = ops.search_with_paging(
@@ -653,6 +666,7 @@ result = ops.search_with_paging(
 ```
 
 **Entry Addition Fails**:
+
 ```python
 # Check entry normalization
 norm_result = ops.normalize_entry(entry)

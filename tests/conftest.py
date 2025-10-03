@@ -10,24 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import TYPE_CHECKING
 
 import pytest
-from flext_core import (
-    FlextTypes,
-    FlextContainer,
-    FlextLogger,
-    FlextResult,
-)
-
-# Import centralized FLEXT Docker infrastructure from flext-core
-from flext_tests.docker import FlextTestDocker
-from ldap3 import Server
 
 # Import test support fixtures
-
-if TYPE_CHECKING:
-    pass
 from flext_ldap import (
     FlextLdapAPI,
     FlextLdapClient,
@@ -42,6 +28,17 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.constants import FlextLdapConstants
+
+# Import centralized FLEXT Docker infrastructure from flext-core
+from flext_tests.docker import FlextTestDocker
+from ldap3 import Server
+
+from flext_core import (
+    FlextContainer,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
 
 # FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
 # FlextLdapRepositories removed - mock implementations violating law
@@ -421,7 +418,7 @@ def docker_control() -> FlextTestDocker:
 @pytest.fixture(scope="session")
 def clean_ldap_container(
     docker_control: FlextTestDocker,
-) -> Generator[FlextTypes.Dict, None, None]:
+) -> Generator[FlextTypes.Dict]:
     """Session-scoped LDAP container using centralized FlextTestDocker.
 
     Uses ~/flext/docker/docker-compose.openldap.yml configuration.
@@ -451,7 +448,7 @@ def clean_ldap_container(
         "use_ssl": False,
     }
 
-    yield container_info
+    return container_info
 
     # Cleanup handled by FlextTestDocker dirty state tracking
     # Container stays running for next test
@@ -489,7 +486,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture(scope="session")
 def shared_ldap_client(
     shared_ldap_config: FlextTypes.StringDict, shared_ldap_container: str
-) -> Generator[FlextLdapClient, None, None]:
+) -> Generator[FlextLdapClient]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container
     _ = shared_ldap_container  # Container dependency ensures it's started
@@ -521,7 +518,7 @@ def shared_ldap_container() -> Generator[str]:
     # Simply provide the container name - actual container management
     # is handled externally via docker-compose or manual setup
     container_name = "flext-openldap-test"
-    yield container_name
+    return container_name
     # Cleanup handled externally
 
 
@@ -533,7 +530,7 @@ def shared_ldap_container_manager() -> Generator[dict[str, str | bool]]:
         "container_name": "flext-openldap-test",
         "is_running": True,
     }
-    yield manager
+    return manager
 
 
 @pytest.fixture
@@ -573,7 +570,7 @@ def skip_if_no_docker() -> None:
 def clean_ldap_state():
     """Clean LDAP state between tests."""
     # Pre-test cleanup
-    yield
+    return
     # Post-test cleanup
 
 

@@ -20,12 +20,12 @@ from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 from flext_ldap.servers.oud_operations import OracleOUDOperations
 
 __all__ = [
+    "ActiveDirectoryOperations",
     "BaseServerOperations",
-    "ServerOperationsFactory",
+    "GenericServerOperations",
     "OpenLDAP1Operations",
     "OpenLDAP2Operations",
     "OracleOIDOperations",
     "OracleOUDOperations",
-    "ActiveDirectoryOperations",
-    "GenericServerOperations",
+    "ServerOperationsFactory",
 ]

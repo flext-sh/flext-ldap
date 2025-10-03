@@ -551,12 +551,11 @@ class FlextLdap(FlextService[None]):
                             )
                             if hasattr(result, "is_success") and result.is_success:
                                 return FlextResult[str].ok("")
-                            elif hasattr(result, "error"):
+                            if hasattr(result, "error"):
                                 return FlextResult[str].fail(
                                     result.error or "Write failed"
                                 )
-                            else:
-                                return FlextResult[str].ok("")
+                            return FlextResult[str].ok("")
                         except AttributeError:
                             # Fallback: if method doesn't exist, return error
                             return FlextResult[str].fail(
@@ -601,6 +600,7 @@ class FlextLdap(FlextService[None]):
 
         Returns:
             FlextResult containing list of entries or error
+
         """
         try:
             # Use FlextLdif for parsing
@@ -645,6 +645,7 @@ class FlextLdap(FlextService[None]):
 
         Returns:
             FlextResult indicating success or failure
+
         """
         try:
             # Convert FlextLdap entries to FlextLdif entries
@@ -695,6 +696,7 @@ class FlextLdap(FlextService[None]):
             >>> server_type_result = api.get_detected_server_type()
             >>> if server_type_result.is_success:
             ...     print(f"Connected to: {server_type_result.unwrap()}")
+
         """
         try:
             if not self._client:
@@ -722,6 +724,7 @@ class FlextLdap(FlextService[None]):
             >>> if ops_result.is_success:
             ...     ops = ops_result.unwrap()
             ...     print(f"ACL format: {ops.get_acl_format()}")
+
         """
         try:
             if not self._client:
@@ -750,6 +753,7 @@ class FlextLdap(FlextService[None]):
             ...     caps = caps_result.unwrap()
             ...     print(f"Supports TLS: {caps['supports_start_tls']}")
             ...     print(f"ACL format: {caps['acl_format']}")
+
         """
         try:
             if not self._client:
@@ -814,6 +818,7 @@ class FlextLdap(FlextService[None]):
             ...     filter_str="(objectClass=person)",
             ...     attributes=["uid", "cn", "mail"]
             ... )
+
         """
         try:
             if not self._client:
@@ -876,6 +881,7 @@ class FlextLdap(FlextService[None]):
             >>> result = api.normalize_entry_for_server(entry, "openldap2")
             >>> if result.is_success:
             ...     normalized = result.unwrap()
+
         """
         try:
             from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -932,6 +938,7 @@ class FlextLdap(FlextService[None]):
             ...     source_server_type="openldap1",
             ...     target_server_type="openldap2"
             ... )
+
         """
         try:
             from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -970,6 +977,7 @@ class FlextLdap(FlextService[None]):
             >>> result = api.detect_entry_server_type(entry)
             >>> if result.is_success:
             ...     print(f"Entry from: {result.unwrap()}")
+
         """
         try:
             from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -1004,6 +1012,7 @@ class FlextLdap(FlextService[None]):
             >>> result = api.validate_entry_for_server(entry, "oud")
             >>> if result.is_success and result.unwrap():
             ...     print("Entry is compatible with Oracle OUD")
+
         """
         try:
             from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -1050,6 +1059,7 @@ class FlextLdap(FlextService[None]):
             >>> if result.is_success:
             ...     attrs = result.unwrap()
             ...     print(f"Required: {attrs.get('required_attributes', [])}")
+
         """
         try:
             from flext_ldap.entry_adapter import FlextLdapEntryAdapter

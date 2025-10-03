@@ -23,9 +23,9 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger, FlextTypes
-
 from flext_ldap import FlextLdapClient, FlextLdapModels
+
+from flext_core import FlextLogger, FlextTypes
 
 
 def demonstrate_generic_ldap_client() -> None:

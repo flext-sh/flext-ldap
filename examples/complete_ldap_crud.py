@@ -17,13 +17,13 @@ import os
 import sys
 from typing import Final, cast
 
-from flext_core import FlextConstants, FlextLogger, FlextResult
-
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConstants,
     FlextLdapModels,
 )
+
+from flext_core import FlextConstants, FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 

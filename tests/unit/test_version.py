@@ -10,7 +10,6 @@ from flext_ldap.version import VERSION, FlextLdapVersion
 
 def test_module_exports_are_minimal() -> None:
     """Only the standardized dunder exports should be present."""
-
     module = importlib.import_module("flext_ldap.__version__")
 
     assert module.__version__ == VERSION.version
@@ -28,7 +27,6 @@ def test_module_exports_are_minimal() -> None:
 
 def test_version_singleton_matches_metadata() -> None:
     """The exported VERSION instance should mirror current metadata."""
-
     assert isinstance(VERSION, FlextLdapVersion)
 
     current = FlextLdapVersion.current()
@@ -39,7 +37,6 @@ def test_version_singleton_matches_metadata() -> None:
 
 def test_metadata_accessors() -> None:
     """Primary metadata attributes remain reachable from the wrapper."""
-
     assert VERSION.author
     assert VERSION.maintainer
     assert isinstance(VERSION.urls, Mapping)

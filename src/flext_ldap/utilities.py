@@ -18,7 +18,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from flext_core import FlextResult, FlextTypes, FlextUtilities
-
 from flext_ldap.exceptions import FlextLdapExceptions
 
 

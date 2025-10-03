@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 """
 
 import pytest
-
 from flext_ldap import FlextLdapClient, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
 

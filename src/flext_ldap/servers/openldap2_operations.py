@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
 
 
@@ -70,6 +70,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing schema information
+
         """
         try:
             if not connection or not connection.bound:
@@ -128,6 +129,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing parsed objectClass
+
         """
         # Basic parsing - would need full RFC 4512 parser for production
         try:
@@ -148,6 +150,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing parsed attribute
+
         """
         try:
             parsed: FlextTypes.Dict = {
@@ -184,6 +187,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing list of ACLs
+
         """
         try:
             if not connection or not connection.bound:
@@ -227,6 +231,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult indicating success
+
         """
         try:
             if not connection or not connection.bound:
@@ -273,6 +278,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing parsed ACL
+
         """
         try:
             # Basic parsing - production would need full parser
@@ -310,6 +316,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing formatted ACL string
+
         """
         try:
             # If raw is present, use it
@@ -349,6 +356,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult indicating success
+
         """
         try:
             if not connection or not connection.bound:
@@ -394,6 +402,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult indicating success
+
         """
         try:
             if not connection or not connection.bound:
@@ -427,6 +436,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult indicating success
+
         """
         try:
             if not connection or not connection.bound:
@@ -455,6 +465,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing normalized entry
+
         """
         # OpenLDAP 2.x generally uses standard LDAP conventions
         # No special normalization needed for most cases
@@ -499,6 +510,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
         Returns:
             FlextResult containing list of entries
+
         """
         try:
             if not connection or not connection.bound:

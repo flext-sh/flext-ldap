@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
-from flext_core import FlextLogger, FlextTypes
-
 from flext_ldap import (
     FlextLdapAPI,
     FlextLdapClient,
@@ -16,6 +14,8 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapValidations,
 )
+
+from flext_core import FlextLogger, FlextTypes
 
 # Import shared LDAP fixtures from docker directory
 from .helpers import cleanup_test_entries, search_entries
@@ -33,7 +33,7 @@ logger = FlextLogger(__name__)
 @pytest.fixture(scope="session")
 def real_ldap_server(
     shared_ldap_container: object,
-) -> Generator[LdapTestServer, None, None]:
+) -> Generator[LdapTestServer]:
     """Start and manage shared LDAP server for testing.
 
     This fixture now uses the shared LDAP container to avoid conflicts
@@ -230,7 +230,7 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 def shared_ldap_client(
     shared_ldap_config: object,
-) -> Generator[FlextLdapClient, None, None]:
+) -> Generator[FlextLdapClient]:
     """Get FlextLdapClient connected to shared LDAP container.
 
     This fixture provides a client connected to the shared LDAP container

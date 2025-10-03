@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import Literal
 
+from ldap3 import Connection, Server
+
 from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
 )
-from ldap3 import Connection, Server
-
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
@@ -33,7 +33,9 @@ from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapConnection(FlextService[None], FlextLdapProtocols.LdapConnectionProtocol):
+class FlextLdapConnection(
+    FlextService[None], FlextLdapProtocols.Ldap.LdapConnectionProtocol
+):
     """Unified LDAP connection management class.
 
     This class provides comprehensive LDAP connection lifecycle management
@@ -97,9 +99,7 @@ class FlextLdapConnection(FlextService[None], FlextLdapProtocols.LdapConnectionP
                 )
 
             # Use centralized DN validation for bind_dn
-            bind_dn_validation = FlextLdapValidations.validate_dn(
-                bind_dn, "Bind DN"
-            )
+            bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn, "Bind DN")
             if bind_dn_validation.is_failure:
                 return FlextResult[bool].fail(
                     bind_dn_validation.error or "Bind DN validation failed"
@@ -118,14 +118,10 @@ class FlextLdapConnection(FlextService[None], FlextLdapProtocols.LdapConnectionP
             if connection_options:
                 # Extract and validate server options with proper type validation
                 port_value = connection_options.get("port")
-                port: int | None = (
-                    port_value if isinstance(port_value, int) else None
-                )
+                port: int | None = port_value if isinstance(port_value, int) else None
 
                 use_ssl_value = connection_options.get("use_ssl")
-                use_ssl = (
-                    use_ssl_value if isinstance(use_ssl_value, bool) else False
-                )
+                use_ssl = use_ssl_value if isinstance(use_ssl_value, bool) else False
 
                 get_info_value = connection_options.get("get_info")
                 # Valid get_info values for ldap3 - use proper type narrowing
@@ -181,10 +177,8 @@ class FlextLdapConnection(FlextService[None], FlextLdapProtocols.LdapConnectionP
             self._logger.info("Successfully connected to LDAP server")
 
             # Auto-detect server type and create server operations instance
-            detection_result = (
-                self._server_operations_factory.create_from_connection(
-                    self._connection
-                )
+            detection_result = self._server_operations_factory.create_from_connection(
+                self._connection
             )
             if detection_result.is_success:
                 self._server_operations = detection_result.unwrap()
@@ -204,9 +198,7 @@ class FlextLdapConnection(FlextService[None], FlextLdapProtocols.LdapConnectionP
                 )
                 # Fallback to generic server operations
                 generic_result = (
-                    self._server_operations_factory.create_from_server_type(
-                        "generic"
-                    )
+                    self._server_operations_factory.create_from_server_type("generic")
                 )
                 if generic_result.is_success:
                     self._server_operations = generic_result.unwrap()

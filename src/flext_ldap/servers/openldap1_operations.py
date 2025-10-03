@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
 
 
@@ -77,6 +77,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
                 "to": what clause,
                 "rules": [{"who": subject, "access": level}, ...]
             }
+
         """
         try:
             acl_dict: FlextTypes.Dict = {
@@ -149,6 +150,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
         Examples:
             - access to * by self write by * read
             - access to attrs=userPassword by self write
+
         """
         try:
             # Use raw if available
@@ -197,6 +199,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
 
         Returns:
             FlextResult containing normalized entry
+
         """
         try:
             # Access entry attributes
@@ -218,7 +221,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
                     if oc == "olcDatabaseConfig":
                         # 1.x doesn't use olc* objectClasses
                         continue
-                    elif oc.startswith("olc"):
+                    if oc.startswith("olc"):
                         # Remove olc prefix for 1.x compatibility
                         mapped_classes.append(oc[3:] if len(oc) > 3 else oc)
                     else:
@@ -250,6 +253,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
 
         Returns:
             "slapd.conf" - static file configuration
+
         """
         return "slapd.conf"
 
@@ -258,6 +262,7 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
 
         Returns:
             "slurpd" - legacy replication daemon
+
         """
         return "slurpd"
 
@@ -268,5 +273,6 @@ class OpenLDAP1Operations(OpenLDAP2Operations):
 
         Returns:
             False - requires restart for config changes
+
         """
         return False

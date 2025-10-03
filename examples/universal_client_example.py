@@ -17,12 +17,12 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_core import FlextLogger, FlextTypes
-
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapSchema,
 )
+
+from flext_core import FlextLogger, FlextTypes
 
 
 def demonstrate_universal_client() -> None:

@@ -12,12 +12,12 @@
 
 All Phase 1 "quick wins" modules already exceed the 75% minimum target:
 
-| Module | Lines | Coverage | Status | Notes |
-|--------|-------|----------|--------|-------|
-| **validations.py** | 121 | **100%** | ✅ EXCELLENT | 68 comprehensive tests, zero missed lines |
-| **exceptions.py** | 193 | **91%** | ✅ EXCELLENT | 13 missed lines in nested exception classes |
-| **config.py** | 176 | **92%** | ✅ EXCELLENT | 17 missed lines |
-| **constants.py** | 99 | **98%** | ✅ EXCELLENT | 2 missed lines |
+| Module             | Lines | Coverage | Status       | Notes                                       |
+| ------------------ | ----- | -------- | ------------ | ------------------------------------------- |
+| **validations.py** | 121   | **100%** | ✅ EXCELLENT | 68 comprehensive tests, zero missed lines   |
+| **exceptions.py**  | 193   | **91%**  | ✅ EXCELLENT | 13 missed lines in nested exception classes |
+| **config.py**      | 176   | **92%**  | ✅ EXCELLENT | 17 missed lines                             |
+| **constants.py**   | 99    | **98%**  | ✅ EXCELLENT | 2 missed lines                              |
 
 **Phase 1 Result**: NO ADDITIONAL WORK NEEDED - already exceeds targets
 
@@ -28,11 +28,13 @@ All Phase 1 "quick wins" modules already exceed the 75% minimum target:
 ### Expected vs Actual Phase 1 Status
 
 **TEST_COVERAGE_STRATEGY.md Predictions:**
+
 - validations.py: 16% → 95% target (+2.2% total coverage gain, 2-3 hours effort)
 - exceptions.py: 36% → 85% target (+2.1% total coverage gain, 2-3 hours effort)
 - config.py: 46% → 85% target (+1.6% total coverage gain, 2 hours effort)
 
 **ACTUAL Reality:**
+
 - ✅ validations.py: **ALREADY 100%** - complete test suite exists (68 tests)
 - ✅ exceptions.py: **ALREADY 91%** - comprehensive exception testing exists
 - ✅ config.py: **ALREADY 92%** - configuration testing comprehensive
@@ -48,25 +50,27 @@ Based on TEST_COVERAGE_STRATEGY.md priorities, the real gaps are in large module
 
 ### Critical High-Impact Modules (Still Need Work)
 
-| Module | Lines | Current Coverage | Priority | Complexity |
-|--------|-------|------------------|----------|------------|
-| **clients.py** | 1,095 | ~7% | 🔴 CRITICAL | HIGH (Docker LDAP required) |
-| **models.py** | 1,106 | ~38% | 🔴 HIGH | MEDIUM (Pydantic models) |
-| **api.py** | 330 | ~27% | 🟠 HIGH | MEDIUM (facade methods) |
-| **acl/parsers.py** | 283 | ~15% | 🟠 HIGH | HIGH (complex parsing) |
-| **utilities.py** | 237 | ~26% | 🟡 MEDIUM | LOW (pure functions) |
-| **entry_adapter.py** | 190 | ~9% | 🟡 MEDIUM | MEDIUM (ldap3 ↔ FlextLdif) |
+| Module               | Lines | Current Coverage | Priority    | Complexity                  |
+| -------------------- | ----- | ---------------- | ----------- | --------------------------- |
+| **clients.py**       | 1,095 | ~7%              | 🔴 CRITICAL | HIGH (Docker LDAP required) |
+| **models.py**        | 1,106 | ~38%             | 🔴 HIGH     | MEDIUM (Pydantic models)    |
+| **api.py**           | 330   | ~27%             | 🟠 HIGH     | MEDIUM (facade methods)     |
+| **acl/parsers.py**   | 283   | ~15%             | 🟠 HIGH     | HIGH (complex parsing)      |
+| **utilities.py**     | 237   | ~26%             | 🟡 MEDIUM   | LOW (pure functions)        |
+| **entry_adapter.py** | 190   | ~9%              | 🟡 MEDIUM   | MEDIUM (ldap3 ↔ FlextLdif) |
 
 ---
 
 ## Revised Coverage Improvement Strategy
 
 ### Phase 1 Quick Wins: ✅ ALREADY COMPLETE
+
 - **Effort**: 0 hours (already done!)
 - **Gain**: Already at 100%, 91%, 92%, 98%
 - **Status**: NO WORK NEEDED
 
 ### Phase 2: High-Impact Medium Complexity
+
 **Target**: +22% coverage gain (current 28% → 50%)
 **Focus**: models.py, api.py, utilities.py
 
@@ -94,6 +98,7 @@ Based on TEST_COVERAGE_STRATEGY.md priorities, the real gaps are in large module
 **Phase 2 Total**: 18-23 hours, +22% coverage (28% → 50%)
 
 ### Phase 3: High-Impact High Complexity
+
 **Target**: +25% coverage gain (50% → 75% MINIMUM)
 **Focus**: clients.py, acl/parsers.py, entry_adapter.py
 
@@ -125,12 +130,12 @@ Based on TEST_COVERAGE_STRATEGY.md priorities, the real gaps are in large module
 
 ## Revised Timeline to 75% Coverage
 
-| Phase | Target | Effort | Timeline | Status |
-|-------|--------|--------|----------|--------|
-| **Phase 1 (Quick Wins)** | 28% → 28% | 0 hours | ✅ COMPLETE | Already excellent |
-| **Phase 2 (Medium Impact)** | 28% → 50% | 18-23 hours | 1-2 weeks | READY TO START |
-| **Phase 3 (High Impact)** | 50% → 75% | 32-40 hours | 2-4 weeks | Requires Docker LDAP |
-| **TOTAL TO 75%** | **28% → 75%** | **50-63 hours** | **3-6 weeks** | Revised estimate |
+| Phase                       | Target        | Effort          | Timeline      | Status               |
+| --------------------------- | ------------- | --------------- | ------------- | -------------------- |
+| **Phase 1 (Quick Wins)**    | 28% → 28%     | 0 hours         | ✅ COMPLETE   | Already excellent    |
+| **Phase 2 (Medium Impact)** | 28% → 50%     | 18-23 hours     | 1-2 weeks     | READY TO START       |
+| **Phase 3 (High Impact)**   | 50% → 75%     | 32-40 hours     | 2-4 weeks     | Requires Docker LDAP |
+| **TOTAL TO 75%**            | **28% → 75%** | **50-63 hours** | **3-6 weeks** | Revised estimate     |
 
 **Key Change**: Phase 1 is already complete, reducing total effort from 57-71 hours to 50-63 hours.
 
@@ -139,12 +144,14 @@ Based on TEST_COVERAGE_STRATEGY.md priorities, the real gaps are in large module
 ## Test Execution Issues Discovered
 
 ### Intermittent Test Failures
+
 - **test_universal_ldap_integration.py**: Intermittent failures when running full suite
 - **test_api.py::test_api_performance**: Intermittent failures under load
 - **Root Cause**: Tests pass individually but fail in full suite runs (likely resource contention)
 - **Impact**: Complicates coverage measurement, suggests test isolation issues
 
 ### Timeout Issues
+
 - **Full unit test suite**: Times out after 180s when running with coverage
 - **Root Cause**: Likely Docker LDAP container overhead + test_clients.py
 - **Workaround**: Run coverage on subsets of tests
@@ -155,21 +162,27 @@ Based on TEST_COVERAGE_STRATEGY.md priorities, the real gaps are in large module
 ## Immediate Next Actions
 
 ### Option 1: Start Phase 2 (Medium Impact)
+
 Begin with models.py comprehensive testing:
+
 - 1,106 lines at 38% coverage
 - Pydantic model validation
 - +13% coverage gain potential
 - 8-10 hours estimated effort
 
 ### Option 2: Fix Test Infrastructure
+
 Address test execution issues:
+
 - Separate unit from integration tests
 - Optimize Docker LDAP fixtures
 - Fix intermittent test failures
 - Improve test isolation
 
 ### Option 3: Measure Actual Total Coverage
+
 Get accurate baseline measurement:
+
 - Run full test suite with coverage (avoiding timeouts)
 - Identify exact coverage gaps
 - Validate strategic plan assumptions

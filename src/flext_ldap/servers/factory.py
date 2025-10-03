@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldap.servers.ad_operations import ActiveDirectoryOperations
 from flext_ldap.servers.base_operations import BaseServerOperations
 from flext_ldap.servers.generic_operations import GenericServerOperations
@@ -70,6 +70,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             FlextResult containing server operations instance
+
         """
         try:
             if not server_type or not server_type.strip():
@@ -121,6 +122,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             FlextResult containing server operations instance
+
         """
         try:
             if not entries:
@@ -177,6 +179,7 @@ class ServerOperationsFactory(FlextService[None]):
             - Oracle OID: vendorName="Oracle Corporation"
             - Oracle OUD: supportedExtension contains OUD-specific OIDs
             - AD: rootDomainNamingContext present
+
         """
         try:
             if not connection or not connection.bound:
@@ -253,7 +256,7 @@ class ServerOperationsFactory(FlextService[None]):
             # Generic fallback
             self._logger.info(
                 "Generic LDAP server detected",
-                extra={"vendor": vendor_name if vendor_name else "unknown"},
+                extra={"vendor": vendor_name or "unknown"},
             )
             return FlextResult[str].ok("generic")
 
@@ -277,6 +280,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             FlextResult containing server operations instance
+
         """
         try:
             if not connection:
@@ -312,6 +316,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             List of server type identifiers
+
         """
         return list(self._server_registry.keys())
 
@@ -323,6 +328,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             True if server type is supported
+
         """
         return server_type.lower().strip() in self._server_registry
 
@@ -334,6 +340,7 @@ class ServerOperationsFactory(FlextService[None]):
 
         Returns:
             FlextResult containing server information dict
+
         """
         try:
             if not self.is_server_type_supported(server_type):

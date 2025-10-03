@@ -13,14 +13,14 @@ import threading
 import time
 
 import pytest
-from flext_core import FlextResult
-from flext_tests import FlextTestsFactories
-from pydantic import SecretStr
-
 from flext_ldap.api import FlextLdapAPI
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_tests import FlextTestsFactories
+from pydantic import SecretStr
+
+from flext_core import FlextResult
 
 
 @pytest.mark.unit

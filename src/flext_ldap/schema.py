@@ -20,7 +20,6 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
@@ -139,6 +138,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             Args:
                 quirks_adapter: Optional quirks adapter for server-specific handling
+
             """
             # Create handler config
             config = FlextModels.CqrsConfig.Handler.create_handler_config(
@@ -159,6 +159,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             Returns:
                 FlextResult containing schema information
+
             """
             if not message:
                 return FlextResult[object].fail(
@@ -181,5 +182,6 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             Returns:
                 FlextResult containing schema subentry DN
+
             """
             return self._quirks_adapter.get_schema_subentry(server_type)

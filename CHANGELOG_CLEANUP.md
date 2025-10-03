@@ -5,16 +5,19 @@
 ### Summary
 
 Removed **1,650+ lines** of unused/mock code that violated the law:
+
 - Components declared in `__init__.py` but not actually used
-- Mock implementations without real functionality  
+- Mock implementations without real functionality
 - Over-engineered CQRS/Event Sourcing patterns without real LDAP logic
 
 ### Removed Components
 
 #### 1. FlextLdapDomainServices (901 lines) ❌
+
 **Reason**: Mock CQRS/Event Sourcing implementation with no real LDAP operations
 **Impact**: Zero - not used by FlextLdapAPI or FlextLdapClient  
 **Files Removed**:
+
 - `src/flext_ldap/domain_services.py`
 - `tests/unit/test_domain_services.py`
 
@@ -22,9 +25,11 @@ Removed **1,650+ lines** of unused/mock code that violated the law:
 **What it actually did**: Pass dictionaries through railway steps adding flags
 
 #### 2. FlextLdapMixins (122 lines) ❌
+
 **Reason**: Generic validation mixins not LDAP-specific, completely unused
 **Impact**: Zero - no imports in any component
 **Files Removed**:
+
 - `src/flext_ldap/mixins.py`
 - `tests/unit/test_mixins.py`
 
@@ -32,9 +37,11 @@ Removed **1,650+ lines** of unused/mock code that violated the law:
 **What it actually did**: Generic FlextResult wrappers never imported
 
 #### 3. FlextLdapRepositories (523 lines) ❌
+
 **Reason**: Half mock implementations, UserRepository just wraps FlextLdapClient, GroupRepository entirely mocked
 **Impact**: Minimal - only used in test fixtures, real operations use FlextLdapClient directly  
 **Files Removed**:
+
 - `src/flext_ldap/repositories.py`
 - `tests/unit/test_repositories.py`
 - `tests/integration/test_repositories_real.py`
@@ -45,35 +52,37 @@ Removed **1,650+ lines** of unused/mock code that violated the law:
 
 ### Remaining Components (All Actually Used) ✅
 
-| Component | Lines | Purpose | Status |
-|-----------|-------|---------|--------|
-| **FlextLdapAPI** | ~900 | Universal LDAP API with 47 methods | ✅ Production |
-| **FlextLdapClient** | ~1800 | LDAP client with 78 methods | ✅ Production |
-| **FlextLdapEntryAdapter** | ~400 | ldap3 ↔ FlextLdif conversion | ✅ Production |
-| **FlextLdapQuirksAdapter** | ~360 | Server quirks detection | ✅ Production |
-| **ServerOperationsFactory** | ~300 | Factory for 6 server types | ✅ Production |
-| **OpenLDAP2Operations** | ~600 | Complete OpenLDAP 2.x | ✅ Production |
-| **OpenLDAP1Operations** | ~600 | Complete OpenLDAP 1.x | ✅ Production |
-| **OracleOIDOperations** | ~600 | Complete Oracle OID | ✅ Production |
-| **OracleOUDOperations** | ~600 | Complete Oracle OUD | ✅ Production |
-| **ActiveDirectoryOperations** | ~200 | AD stub (future) | 🟡 Stub |
-| **GenericServerOperations** | ~200 | Generic fallback | ✅ Production |
-| **FlextLdapValidations** | ~207 | Centralized validations | ✅ Used |
-| **FlextLdapUtilities** | ~422 | LDAP utilities | ✅ Used |
-| **FlextLdapModels** | ~2000 | Domain models | ✅ Used |
-| **FlextLdapAcl*** | ~1500 | ACL subsystem | ✅ Used |
+| Component                     | Lines | Purpose                            | Status        |
+| ----------------------------- | ----- | ---------------------------------- | ------------- |
+| **FlextLdapAPI**              | ~900  | Universal LDAP API with 47 methods | ✅ Production |
+| **FlextLdapClient**           | ~1800 | LDAP client with 78 methods        | ✅ Production |
+| **FlextLdapEntryAdapter**     | ~400  | ldap3 ↔ FlextLdif conversion      | ✅ Production |
+| **FlextLdapQuirksAdapter**    | ~360  | Server quirks detection            | ✅ Production |
+| **ServerOperationsFactory**   | ~300  | Factory for 6 server types         | ✅ Production |
+| **OpenLDAP2Operations**       | ~600  | Complete OpenLDAP 2.x              | ✅ Production |
+| **OpenLDAP1Operations**       | ~600  | Complete OpenLDAP 1.x              | ✅ Production |
+| **OracleOIDOperations**       | ~600  | Complete Oracle OID                | ✅ Production |
+| **OracleOUDOperations**       | ~600  | Complete Oracle OUD                | ✅ Production |
+| **ActiveDirectoryOperations** | ~200  | AD stub (future)                   | 🟡 Stub       |
+| **GenericServerOperations**   | ~200  | Generic fallback                   | ✅ Production |
+| **FlextLdapValidations**      | ~207  | Centralized validations            | ✅ Used       |
+| **FlextLdapUtilities**        | ~422  | LDAP utilities                     | ✅ Used       |
+| **FlextLdapModels**           | ~2000 | Domain models                      | ✅ Used       |
+| **FlextLdapAcl\***            | ~1500 | ACL subsystem                      | ✅ Used       |
 
 ### Architecture Improvements
 
 #### Before Cleanup
+
 ```
 __all__ = [33+ components]
 - Including: FlextLdapDomainServices ❌
-- Including: FlextLdapMixins ❌  
+- Including: FlextLdapMixins ❌
 - Including: FlextLdapRepositories ❌
 ```
 
 #### After Cleanup
+
 ```
 __all__ = [30 components]
 - ONLY components actually used in production code ✅
@@ -93,23 +102,26 @@ __all__ = [30 components]
 ### ldap3 Abstraction Verification ✅
 
 **Acceptable ldap3 imports** (infrastructure layer only):
+
 - `src/flext_ldap/clients.py` - Core LDAP client
-- `src/flext_ldap/servers/*.py` - Server operations  
+- `src/flext_ldap/servers/*.py` - Server operations
 - `src/flext_ldap/entry_adapter.py` - Entry conversion (needs ldap3.Entry type)
 - `src/flext_ldap/typings.py` - Type hints only
 
 **NO direct ldap3 in**:
+
 - API layer ✅
-- Domain layer ✅  
+- Domain layer ✅
 - Models ✅
 - Utilities ✅
 
 ### FlextLdif Integration Status ✅
 
 **Complete**: ALL entry operations use `FlextLdifModels.Entry`
+
 - Entry creation: FlextLdif
 - Entry manipulation: FlextLdif
-- LDIF file operations: FlextLdif  
+- LDIF file operations: FlextLdif
 - Server quirks detection: FlextLdif quirks manager
 - Entry conversion: ldap3 ↔ FlextLdif via FlextLdapEntryAdapter
 

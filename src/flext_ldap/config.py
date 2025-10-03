@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
     FlextConfig,
@@ -24,12 +27,6 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
-from pydantic_settings import SettingsConfigDict
-
-if TYPE_CHECKING:
-    pass
-
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
@@ -205,14 +202,19 @@ class FlextLdapConfig(FlextConfig):
             if operation_config is not None:
                 # Try attribute access
                 if hasattr(operation_config, "operation_type"):
-                    config_mode: str | None = getattr(operation_config, "operation_type")
+                    config_mode: str | None = getattr(
+                        operation_config, "operation_type"
+                    )
                     if config_mode in valid_modes:
                         return str(config_mode)
 
                 # Try dict access
                 if isinstance(operation_config, dict):
                     config_mode_dict = operation_config.get("operation_type")
-                    if isinstance(config_mode_dict, str) and config_mode_dict in valid_modes:
+                    if (
+                        isinstance(config_mode_dict, str)
+                        and config_mode_dict in valid_modes
+                    ):
                         return config_mode_dict
 
             # Default to search
@@ -246,14 +248,17 @@ class FlextLdapConfig(FlextConfig):
 
             """
             # Resolve operation mode
-            resolved_mode = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
-                operation_mode=operation_mode,
-                operation_config=ldap_config,
+            resolved_mode = (
+                FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+                    operation_mode=operation_mode,
+                    operation_config=ldap_config,
+                )
             )
 
             # Generate default handler_id if not provided or empty
             if not handler_id:
                 import uuid
+
                 unique_suffix = uuid.uuid4().hex[:8]
                 handler_id = f"ldap_{resolved_mode}_handler_{unique_suffix}"
 
@@ -524,7 +529,9 @@ class FlextLdapConfig(FlextConfig):
             "trace_enabled": self.ldap_enable_trace,
             "query_logging": self.ldap_log_queries,
             "password_masking": self.ldap_mask_passwords,
-            "effective_log_level": "DEBUG" if self.ldap_enable_trace else ("INFO" if self.ldap_enable_debug else self.log_level),
+            "effective_log_level": "DEBUG"
+            if self.ldap_enable_trace
+            else ("INFO" if self.ldap_enable_debug else self.log_level),
         }
 
     @computed_field
@@ -539,9 +546,9 @@ class FlextLdapConfig(FlextConfig):
             "has_authentication": self.ldap_bind_dn is not None,
             "has_pooling": self.ldap_pool_size > 1,
             "is_production_ready": (
-                self.ldap_use_ssl and
-                self.ldap_bind_dn is not None and
-                self.environment.lower() == "production"
+                self.ldap_use_ssl
+                and self.ldap_bind_dn is not None
+                and self.environment.lower() == "production"
             ),
         }
 
@@ -627,7 +634,9 @@ class FlextLdapConfig(FlextConfig):
                 raise exceptions.configuration_error(msg, config_key="ldap_use_ssl")
             if not self.ldap_verify_certificates:
                 msg = "Certificate verification must be enabled in production"
-                raise exceptions.configuration_error(msg, config_key="ldap_verify_certificates")
+                raise exceptions.configuration_error(
+                    msg, config_key="ldap_verify_certificates"
+                )
 
         return self
 
@@ -667,13 +676,13 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[11:]  # Remove "connection."
                 if prop == "server":
                     return self.ldap_server_uri
-                elif prop == "port":
+                if prop == "port":
                     return self.ldap_port
-                elif prop == "ssl":
+                if prop == "ssl":
                     return self.ldap_use_ssl
-                elif prop == "timeout":
+                if prop == "timeout":
                     return self.ldap_connection_timeout
-                elif prop == "uri":
+                if prop == "uri":
                     return f"{self.ldap_server_uri}:{self.ldap_port}"
 
             # Authentication properties
@@ -681,9 +690,9 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[5:]  # Remove "auth."
                 if prop == "bind_dn":
                     return self.ldap_bind_dn
-                elif prop == "bind_password":
+                if prop == "bind_password":
                     return self.get_effective_bind_password()
-                elif prop == "base_dn":
+                if prop == "base_dn":
                     return self.ldap_base_dn
 
             # Pooling properties
@@ -691,7 +700,7 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[5:]  # Remove "pool."
                 if prop == "size":
                     return self.ldap_pool_size
-                elif prop == "timeout":
+                if prop == "timeout":
                     return self.ldap_pool_timeout
 
             # Operation properties
@@ -699,9 +708,9 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[10:]  # Remove "operation."
                 if prop == "timeout":
                     return self.ldap_operation_timeout
-                elif prop == "size_limit":
+                if prop == "size_limit":
                     return self.ldap_size_limit
-                elif prop == "time_limit":
+                if prop == "time_limit":
                     return self.ldap_time_limit
 
             # Caching properties
@@ -709,7 +718,7 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[6:]  # Remove "cache."
                 if prop == "enabled":
                     return self.ldap_enable_caching
-                elif prop == "ttl":
+                if prop == "ttl":
                     return self.ldap_cache_ttl
 
             # Retry properties
@@ -717,7 +726,7 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[6:]  # Remove "retry."
                 if prop == "attempts":
                     return self.ldap_retry_attempts
-                elif prop == "delay":
+                if prop == "delay":
                     return self.ldap_retry_delay
 
             # Logging properties
@@ -725,11 +734,11 @@ class FlextLdapConfig(FlextConfig):
                 prop = ldap_key[8:]  # Remove "logging."
                 if prop == "debug":
                     return self.ldap_enable_debug
-                elif prop == "trace":
+                if prop == "trace":
                     return self.ldap_enable_trace
-                elif prop == "queries":
+                if prop == "queries":
                     return self.ldap_log_queries
-                elif prop == "mask_passwords":
+                if prop == "mask_passwords":
                     return self.ldap_mask_passwords
 
         # Fall back to standard FlextConfig access
@@ -855,7 +864,9 @@ class FlextLdapConfig(FlextConfig):
                 sort_keys = bool(kwargs.get("sort_keys", self.json_sort_keys))
 
                 with path.open("w", encoding="utf-8") as f:
-                    json.dump(config_data, f, indent=indent, sort_keys=sort_keys, default=str)
+                    json.dump(
+                        config_data, f, indent=indent, sort_keys=sort_keys, default=str
+                    )
 
                 return FlextResult[None].ok(None)
 
@@ -951,11 +962,11 @@ class FlextLdapConfig(FlextConfig):
 
         """
         return (
-            self.ldap_use_ssl and
-            self.ldap_verify_certificates and
-            self.ldap_bind_dn is not None and
-            self.ldap_bind_password is not None and
-            self.is_production()
+            self.ldap_use_ssl
+            and self.ldap_verify_certificates
+            and self.ldap_bind_dn is not None
+            and self.ldap_bind_password is not None
+            and self.is_production()
         )
 
     def get_effective_bind_password(self) -> str | None:
@@ -980,6 +991,7 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[FlextLdapConfig]: Created configuration or error
+
         """
         try:
             bind_password_value = data.get("bind_password")
@@ -988,8 +1000,12 @@ class FlextLdapConfig(FlextConfig):
                     data.get("server_uri", data.get("server", "ldap://localhost"))
                 ),
                 ldap_port=int(str(data.get("port", 389))),
-                ldap_bind_dn=str(data.get("bind_dn", "")) if data.get("bind_dn") else None,
-                ldap_bind_password=SecretStr(str(bind_password_value)) if bind_password_value else None,
+                ldap_bind_dn=str(data.get("bind_dn", ""))
+                if data.get("bind_dn")
+                else None,
+                ldap_bind_password=SecretStr(str(bind_password_value))
+                if bind_password_value
+                else None,
                 ldap_base_dn=str(data.get("base_dn", "")),
             )
             return FlextResult[FlextLdapConfig].ok(config)
@@ -1008,17 +1024,22 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[FlextLdapModels.SearchConfig]: Created search config or error
+
         """
         try:
             attributes_data = data.get("attributes", [])
             if isinstance(attributes_data, list):
-                str_attributes = [str(attr) for attr in attributes_data if attr is not None]
+                str_attributes = [
+                    str(attr) for attr in attributes_data if attr is not None
+                ]
             else:
                 str_attributes = []
             config = FlextLdapModels.SearchConfig(
                 base_dn=str(data.get("base_dn", "")),
                 filter_str=str(
-                    data.get("filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER)
+                    data.get(
+                        "filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER
+                    )
                 ),
                 attributes=str_attributes,
             )
@@ -1040,6 +1061,7 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[dict]: Created modify config or error
+
         """
         try:
             values = data.get("values", [])
@@ -1071,17 +1093,22 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[dict]: Created add config or error
+
         """
         try:
             attributes = data.get("attributes", {})
             config: dict[str, str | dict[str, FlextTypes.StringList]] = {
                 "dn": str(data.get("dn", "")),
                 "attributes": {
-                    str(k): [str(v) for v in (vals if isinstance(vals, list) else [vals])]
+                    str(k): [
+                        str(v) for v in (vals if isinstance(vals, list) else [vals])
+                    ]
                     for k, vals in attributes.items()
                 },
             }
-            return FlextResult[dict[str, str | dict[str, FlextTypes.StringList]]].ok(config)
+            return FlextResult[dict[str, str | dict[str, FlextTypes.StringList]]].ok(
+                config
+            )
         except Exception as e:
             return FlextResult[dict[str, str | dict[str, FlextTypes.StringList]]].fail(
                 f"Add config creation failed: {e}"
@@ -1099,21 +1126,25 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[dict]: Created delete config or error
+
         """
         try:
             config: FlextTypes.StringDict = {"dn": str(data.get("dn", ""))}
             return FlextResult[FlextTypes.StringDict].ok(config)
         except Exception as e:
-            return FlextResult[FlextTypes.StringDict].fail(f"Delete config creation failed: {e}")
+            return FlextResult[FlextTypes.StringDict].fail(
+                f"Delete config creation failed: {e}"
+            )
 
     @classmethod
-    def get_default_search_config(cls) -> FlextResult[
-        dict[str, str | int | FlextTypes.StringList]
-    ]:
+    def get_default_search_config(
+        cls,
+    ) -> FlextResult[dict[str, str | int | FlextTypes.StringList]]:
         """Get default search configuration.
 
         Returns:
             FlextResult[dict]: Default search configuration
+
         """
         config = {
             "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
@@ -1131,9 +1162,7 @@ class FlextLdapConfig(FlextConfig):
 
     @classmethod
     def merge_configs(
-        cls,
-        base_config: FlextTypes.Dict,
-        override_config: FlextTypes.Dict
+        cls, base_config: FlextTypes.Dict, override_config: FlextTypes.Dict
     ) -> FlextResult[FlextTypes.Dict]:
         """Merge two configuration dictionaries.
 
@@ -1143,6 +1172,7 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[dict]: Merged configuration or error
+
         """
         try:
             merged = base_config.copy()
@@ -1164,6 +1194,7 @@ class FlextLdapConfig(FlextConfig):
 
         Returns:
             FlextResult[FlextLdapConfig]: Loaded configuration or error
+
         """
         try:
             path = Path(file_path)

@@ -22,13 +22,13 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from flext_core import FlextLogger, FlextResult
-
 from flext_ldap import (
     FlextLdapClient,
     FlextLdapConfig,
     FlextLdapModels,
 )
+
+from flext_core import FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 
