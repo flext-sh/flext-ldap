@@ -91,7 +91,7 @@ class FlextLdap(FlextService[None]):
         self._logger = FlextLogger(__name__)
 
         # Lazy-loaded LDAP components
-        self._ldif: FlextLdapProtocols.LdifOperationsProtocol | None = None
+        self._ldif: FlextLdif | None = None
 
     @classmethod
     def create(cls) -> FlextLdap:
@@ -102,6 +102,23 @@ class FlextLdap(FlextService[None]):
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""
         return FlextResult[None].ok(None)
+
+    def _handle_operation_error(
+        self, operation: str, error: Exception, prefix: str = ""
+    ) -> FlextResult[object]:
+        """Centralize error handling for operations.
+
+        Args:
+            operation: Name of the operation that failed
+            error: The exception that occurred
+            prefix: Optional prefix for error message
+
+        Returns:
+            FlextResult with failure containing formatted error message
+        """
+        error_msg = f"{prefix}{operation} failed: {error}".strip()
+        self._logger.error(error_msg, error=str(error), error_type=type(error).__name__)
+        return FlextResult[object].fail(error_msg)
 
     # =============================================================================
     # PROPERTY ACCESSORS - Direct access to domain components
@@ -422,9 +439,7 @@ class FlextLdap(FlextService[None]):
             )
             return self.client.search_with_request(request)
         except Exception as e:
-            return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Search failed: {e}"
-            )
+            return self._handle_operation_error("Search", e)
 
     def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get a specific LDAP group by DN with enhanced validation."""
@@ -438,9 +453,7 @@ class FlextLdap(FlextService[None]):
 
             return self.client.get_group(dn)
         except Exception as e:
-            return FlextResult[FlextLdapModels.Group | None].fail(
-                f"Get group failed: {e}"
-            )
+            return self._handle_operation_error("Get group", e)
 
     # =============================================================================
     # UPDATE METHODS - Enhanced with proper error handling and validation
@@ -458,7 +471,7 @@ class FlextLdap(FlextService[None]):
 
             return self.client.update_user_attributes(dn, attributes)
         except Exception as e:
-            return FlextResult[bool].fail(f"Update user attributes failed: {e}")
+            return self._handle_operation_error("Update user attributes", e)
 
     def update_group_attributes(
         self, dn: str, attributes: FlextTypes.Dict
@@ -472,7 +485,7 @@ class FlextLdap(FlextService[None]):
 
             return self.client.update_group_attributes(dn, attributes)
         except Exception as e:
-            return FlextResult[bool].fail(f"Update group attributes failed: {e}")
+            return self._handle_operation_error("Update group attributes", e)
 
     # =============================================================================
     # DELETE METHODS - Enhanced with proper error handling and validation
@@ -488,7 +501,7 @@ class FlextLdap(FlextService[None]):
 
             return self.client.delete_user(dn)
         except Exception as e:
-            return FlextResult[None].fail(f"Delete user failed: {e}")
+            return self._handle_operation_error("Delete user", e)
 
     # =============================================================================
     # VALIDATION METHODS - Enhanced with proper error handling
@@ -504,93 +517,34 @@ class FlextLdap(FlextService[None]):
                 )
             return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(f"Configuration validation failed: {e}")
+            return self._handle_operation_error("Configuration validation", e)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP filter format with enhanced error handling."""
         try:
             return self.validations.validate_filter(filter_str).map(lambda _: None)
         except Exception as e:
-            return FlextResult[None].fail(f"Filter validation failed: {e}")
+            return self._handle_operation_error("Filter validation", e)
 
     # =============================================================================
     # LDIF OPERATIONS - Integration with FlextLdif for file operations
     # =============================================================================
 
     @property
-    def ldif(self) -> FlextLdapProtocols.LdifOperationsProtocol:
+    def ldif(self) -> FlextLdif:
         """Get FlextLdif instance for LDIF operations."""
         if self._ldif is None:
             try:
-                flext_ldif = FlextLdif()
-
-                class _LdifAdapter:
-                    """Adapter to make FlextLdif compatible with LdifOperationsProtocol."""
-
-                    def parse_ldif_file(
-                        self, file_path: Path, server_type: str = "rfc"
-                    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-                        """Parse LDIF file using FlextLdif API."""
-                        try:
-                            # Try the expected method name from tests
-                            return getattr(flext_ldif, "parse_ldif_file")(file_path)
-                        except AttributeError:
-                            # Fallback: if method doesn't exist, return error
-                            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                                "FlextLdif API incompatible - parse_ldif_file method not found"
-                            )
-
-                    def write_file(
-                        self, entries: list[FlextLdifModels.Entry], output_path: Path
-                    ) -> FlextResult[str]:
-                        """Write entries to LDIF file using FlextLdif API."""
-                        try:
-                            # Try the expected method name from tests
-                            result = getattr(flext_ldif, "write_file")(
-                                entries, output_path
-                            )
-                            if hasattr(result, "is_success") and result.is_success:
-                                return FlextResult[str].ok("")
-                            if hasattr(result, "error"):
-                                return FlextResult[str].fail(
-                                    result.error or "Write failed"
-                                )
-                            return FlextResult[str].ok("")
-                        except AttributeError:
-                            # Fallback: if method doesn't exist, return error
-                            return FlextResult[str].fail(
-                                "FlextLdif API incompatible - write_file method not found"
-                            )
-
-                self._ldif = _LdifAdapter()
-
+                self._ldif = FlextLdif()
             except (ImportError, AttributeError, TypeError) as exc:
-                # FlextLdif not available or initialization failed, return a stub
+                # FlextLdif not available - this will be handled by calling methods
                 self._logger.warning(
-                    "FlextLdif initialization failed, using stub",
+                    "FlextLdif initialization failed",
                     error=str(exc),
                     error_type=type(exc).__name__,
                 )
-                error_msg = str(exc)
-
-                class _LdifStub:
-                    def parse_ldif_file(
-                        self, file_path: Path, server_type: str = "rfc"
-                    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"FlextLdif not available: {error_msg}. Install with: pip install flext-ldif"
-                        )
-
-                    def write_file(
-                        self, entries: list[FlextLdifModels.Entry], output_path: Path
-                    ) -> FlextResult[str]:
-                        return FlextResult[str].fail(
-                            f"FlextLdif not available: {error_msg}. Install with: pip install flext-ldif"
-                        )
-
-                self._ldif = _LdifStub()
-        assert self._ldif is not None
-        return self._ldif
+                self._ldif = None  # type: ignore
+        return self._ldif  # type: ignore
 
     def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Import entries from LDIF file using FlextLdif.
@@ -603,8 +557,14 @@ class FlextLdap(FlextService[None]):
 
         """
         try:
+            ldif_instance = self.ldif
+            if ldif_instance is None:
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    "FlextLdif not available. Install with: pip install flext-ldif"
+                )
+
             # Use FlextLdif for parsing
-            result = self.ldif.parse_ldif_file(path)
+            result = ldif_instance.parse_ldif_file(path)
             if result.is_failure:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
                     result.error or "LDIF parsing failed"
@@ -630,9 +590,7 @@ class FlextLdap(FlextService[None]):
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
         except Exception as e:
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
-                f"LDIF import failed: {e}"
-            )
+            return self._handle_operation_error("LDIF import", e)
 
     def export_to_ldif(
         self, entries: list[FlextLdapModels.Entry], path: Path
@@ -648,6 +606,12 @@ class FlextLdap(FlextService[None]):
 
         """
         try:
+            ldif_instance = self.ldif
+            if ldif_instance is None:
+                return FlextResult[bool].fail(
+                    "FlextLdif not available. Install with: pip install flext-ldif"
+                )
+
             # Convert FlextLdap entries to FlextLdif entries
             ldif_entries = []
             for ldap_entry in entries:
@@ -664,7 +628,7 @@ class FlextLdap(FlextService[None]):
                 ldif_entries.append(ldif_entry_result.unwrap())
 
             # Use FlextLdif for writing
-            result = self.ldif.write_file(ldif_entries, path)
+            result = ldif_instance.write_file(ldif_entries, path)
             if result.is_failure:
                 return FlextResult[bool].fail(result.error or "LDIF writing failed")
 
