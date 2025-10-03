@@ -11,6 +11,15 @@ from __future__ import annotations
 
 from typing import Final
 
+# Clean Architecture modules (new unified structure)
+from flext_ldap.api import FlextLdap, FlextLdapAPI
+from flext_ldap.entities import FlextLdapEntities
+from flext_ldap.value_objects import FlextLdapValueObjects
+from flext_ldap.domain import FlextLdapDomain
+from flext_ldap.services import FlextLdapServices
+from flext_ldap.adapters import FlextLdapAdapters
+
+# Legacy modules (being consolidated - maintain for compatibility)
 from flext_ldap.acl import (
     FlextLdapAclConstants,
     FlextLdapAclConverters,
@@ -18,7 +27,6 @@ from flext_ldap.acl import (
     FlextLdapAclModels,
     FlextLdapAclParsers,
 )
-from flext_ldap.api import FlextLdap, FlextLdapAPI
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
@@ -53,12 +61,20 @@ __version__: str = VERSION.version
 __version_info__: tuple[int | str, ...] = VERSION.version_info
 
 __all__ = [
+    # Clean Architecture modules
+    "FlextLdap",
+    "FlextLdapAPI",
+    "FlextLdapEntities",
+    "FlextLdapValueObjects",
+    "FlextLdapDomain",
+    "FlextLdapServices",
+    "FlextLdapAdapters",
+
+    # Version info
     "PROJECT_VERSION",
     "VERSION",
     "ActiveDirectoryOperations",
     "BaseServerOperations",
-    "FlextLdap",
-    "FlextLdapAPI",
     "FlextLdapAclConstants",
     "FlextLdapAclConverters",
     "FlextLdapAclManager",
