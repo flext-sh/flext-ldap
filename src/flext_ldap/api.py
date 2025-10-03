@@ -564,7 +564,7 @@ class FlextLdap(FlextService[None]):
                 )
 
             # Use FlextLdif for parsing
-            result = ldif_instance.parse_ldif_file(path)
+            result = ldif_instance.parse(path)
             if result.is_failure:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
                     result.error or "LDIF parsing failed"
@@ -628,7 +628,7 @@ class FlextLdap(FlextService[None]):
                 ldif_entries.append(ldif_entry_result.unwrap())
 
             # Use FlextLdif for writing
-            result = ldif_instance.write_file(ldif_entries, path)
+            result = ldif_instance.write(ldif_entries, path)
             if result.is_failure:
                 return FlextResult[bool].fail(result.error or "LDIF writing failed")
 
