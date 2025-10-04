@@ -864,7 +864,7 @@ class FlextLdapModels(FlextModels):
             """Get attribute value by name with enhanced error handling."""
             try:
                 return self.additional_attributes.get(name)
-            except Exception:
+            except (KeyError, TypeError, AttributeError):
                 return None
 
         def set_attribute(
@@ -886,7 +886,7 @@ class FlextLdapModels(FlextModels):
             """Extract Relative Distinguished Name (first component) with enhanced error handling."""
             try:
                 return self.dn.split(",")[0] if "," in self.dn else self.dn
-            except Exception:
+            except (AttributeError, TypeError):
                 return self.dn
 
         def get_parent_dn(self) -> str | None:
@@ -894,7 +894,7 @@ class FlextLdapModels(FlextModels):
             try:
                 parts = self.dn.split(",", 1)
                 return parts[1] if len(parts) > 1 else None
-            except Exception:
+            except (AttributeError, TypeError):
                 return None
 
         @classmethod
@@ -1128,7 +1128,7 @@ class FlextLdapModels(FlextModels):
                 return (
                     member_dn in self.member_dns or member_dn in self.unique_member_dns
                 )
-            except Exception:
+            except (AttributeError, TypeError):
                 return False
 
         def add_member(self, member_dn: str) -> FlextResult[None]:
@@ -1250,7 +1250,7 @@ class FlextLdapModels(FlextModels):
                     ]
                 # Empty list case
                 return []
-            except Exception:
+            except (TypeError, AttributeError, UnicodeDecodeError):
                 return None
 
         def set_attribute(
@@ -1272,14 +1272,14 @@ class FlextLdapModels(FlextModels):
             """Check if attribute exists with enhanced error handling."""
             try:
                 return name in self.attributes
-            except Exception:
+            except (AttributeError, TypeError):
                 return False
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name with enhanced error handling."""
             try:
                 return self.dn.split(",")[0] if "," in self.dn else self.dn
-            except Exception:
+            except (AttributeError, TypeError):
                 return self.dn
 
         def __contains__(self, key: str) -> bool:

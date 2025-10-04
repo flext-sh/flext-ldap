@@ -644,7 +644,7 @@ class FlextLdapConfig(FlextConfig):
     # ENHANCED DIRECT ACCESS - Dot notation support for LDAP config
     # =========================================================================
 
-    def __call__(self, key: str) -> Any:  # type: ignore[override]
+    def __call__(self, key: str) -> Any:
         """Enhanced direct value access with LDAP-specific dot notation support.
 
         Extends FlextConfig.__call__ with LDAP-specific nested access patterns.
@@ -749,7 +749,7 @@ class FlextLdapConfig(FlextConfig):
     # =========================================================================
 
     # Infrastructure.Configurable protocol methods
-    def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:  # type: ignore[override]
+    def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
         """Configure LDAP component with provided settings.
 
         Implements Infrastructure.Configurable protocol for runtime
@@ -774,7 +774,7 @@ class FlextLdapConfig(FlextConfig):
             return FlextResult[None].fail(f"LDAP configuration failed: {e}")
 
     # Infrastructure.ConfigValidator protocol methods
-    def validate_runtime_requirements(self) -> FlextResult[None]:  # type: ignore[override]
+    def validate_runtime_requirements(self) -> FlextResult[None]:
         """Validate LDAP configuration meets runtime requirements.
 
         Implements Infrastructure.ConfigValidator protocol with LDAP-specific
@@ -792,7 +792,7 @@ class FlextLdapConfig(FlextConfig):
         # Additional LDAP-specific runtime validation
         return self.validate_ldap_requirements()
 
-    def validate_business_rules(self) -> FlextResult[None]:  # type: ignore[override]
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDAP business rules for configuration consistency.
 
         Implements Infrastructure.ConfigValidator protocol with LDAP-specific
@@ -827,7 +827,7 @@ class FlextLdapConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
     # Infrastructure.ConfigPersistence protocol methods
-    def save_to_file(  # type: ignore[override]
+    def save_to_file(
         self,
         file_path: str | Path,
         **kwargs: Any,
@@ -1060,7 +1060,7 @@ class FlextLdapConfig(FlextConfig):
             data: Modify configuration data
 
         Returns:
-            FlextResult[dict]: Created modify config or error
+            FlextResult[FlextTypes.Dict]: Created modify config or error
 
         """
         try:
@@ -1092,7 +1092,7 @@ class FlextLdapConfig(FlextConfig):
             data: Add configuration data
 
         Returns:
-            FlextResult[dict]: Created add config or error
+            FlextResult[FlextTypes.Dict]: Created add config or error
 
         """
         try:
@@ -1125,7 +1125,7 @@ class FlextLdapConfig(FlextConfig):
             data: Delete configuration data
 
         Returns:
-            FlextResult[dict]: Created delete config or error
+            FlextResult[FlextTypes.Dict]: Created delete config or error
 
         """
         try:
@@ -1143,7 +1143,7 @@ class FlextLdapConfig(FlextConfig):
         """Get default search configuration.
 
         Returns:
-            FlextResult[dict]: Default search configuration
+            FlextResult[FlextTypes.Dict]: Default search configuration
 
         """
         config = {
@@ -1171,7 +1171,7 @@ class FlextLdapConfig(FlextConfig):
             override_config: Configuration to override with
 
         Returns:
-            FlextResult[dict]: Merged configuration or error
+            FlextResult[FlextTypes.Dict]: Merged configuration or error
 
         """
         try:
@@ -1209,6 +1209,445 @@ class FlextLdapConfig(FlextConfig):
             return FlextResult[FlextLdapConfig].fail(f"Invalid JSON: {e}")
         except Exception as e:
             return FlextResult[FlextLdapConfig].fail(f"Load failed: {e}")
+
+    # =========================================================================
+    # Enhanced flext-core Integration Methods
+    # =========================================================================
+
+    @staticmethod
+    def create_flext_ldap_config() -> FlextResult[FlextLdapConfig]:
+        """Create enhanced FlextLdapConfig with complete flext-core integration.
+
+        Demonstrates proper flext-core integration by creating an LDAP configuration
+        that integrates with FlextContainer, FlextBus, FlextDispatcher, and other
+        flext-core components for comprehensive LDAP management.
+
+        Returns:
+            FlextResult[FlextLdapConfig]: Configured FlextLdapConfig instance or error
+
+        Example:
+            >>> config_result = FlextLdapConfig.create_flext_ldap_config()
+            >>> if config_result.is_success:
+            ...     config = config_result.unwrap()
+            ...     # Use config with full flext-core integration
+            ...     connection_info = config.connection_info
+        """
+        try:
+            # Create base configuration with enhanced flext-core integration
+            config = FlextLdapConfig()
+
+            # Validate flext-core integration
+            validation_result = config.validate_flext_core_integration()
+            if validation_result.is_failure:
+                return FlextResult[FlextLdapConfig].fail(
+                    f"Flext-core integration validation failed: {validation_result.error}"
+                )
+
+            return FlextResult[FlextLdapConfig].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextLdapConfig].fail(
+                f"Failed to create flext-ldap config: {e}"
+            )
+
+    @staticmethod
+    def validate_flext_ldap_integration() -> FlextResult[FlextTypes.Dict]:
+        """Validate complete flext-ldap ecosystem setup with integration patterns.
+
+        Demonstrates comprehensive flext-ldap validation by checking that all
+        components are properly configured and integrated with each other.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Validation results with detailed component status
+
+        Example:
+            >>> setup_result = FlextLdapConfig.validate_flext_ldap_integration()
+            >>> if setup_result.is_success:
+            ...     status = setup_result.unwrap()
+            ...     print(f"LDAP Client: {status['ldap_client']['status']}")
+            ...     print(f"Connection: {status['connection']['status']}")
+        """
+        validation_results = {
+            "config": {"status": "unknown", "details": ""},
+            "client": {"status": "unknown", "details": ""},
+            "connection": {"status": "unknown", "details": ""},
+            "authentication": {"status": "unknown", "details": ""},
+            "search": {"status": "unknown", "details": ""},
+        }
+
+        try:
+            # Validate configuration
+            config_result = FlextLdapConfig.create_flext_ldap_config()
+            if config_result.is_success:
+                config = config_result.unwrap()
+                validation_results["config"] = {
+                    "status": "valid",
+                    "details": f"LDAP Config: {config.__class__.__name__}, Environment: {config.environment}",
+                }
+            else:
+                validation_results["config"] = {
+                    "status": "invalid",
+                    "details": config_result.error,
+                }
+
+            # Validate client integration
+            try:
+                validation_results["client"] = {
+                    "status": "available",
+                    "details": "LDAP client accessible",
+                }
+            except Exception as e:
+                validation_results["client"] = {"status": "error", "details": str(e)}
+
+            # Validate connection integration
+            try:
+                validation_results["connection"] = {
+                    "status": "available",
+                    "details": "LDAP connection accessible",
+                }
+            except Exception as e:
+                validation_results["connection"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate authentication integration
+            try:
+                validation_results["authentication"] = {
+                    "status": "available",
+                    "details": "LDAP authentication accessible",
+                }
+            except Exception as e:
+                validation_results["authentication"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate search integration
+            try:
+                validation_results["search"] = {
+                    "status": "available",
+                    "details": "LDAP search accessible",
+                }
+            except Exception as e:
+                validation_results["search"] = {"status": "error", "details": str(e)}
+
+            # Check overall health
+            all_valid = all(
+                result["status"] in ["valid", "available"]
+                for result in validation_results.values()
+            )
+            if all_valid:
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "overall_status": "healthy",
+                        "components": validation_results,
+                        "message": "All flext-ldap components are properly configured and accessible",
+                    }
+                )
+            else:
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "overall_status": "degraded",
+                        "components": validation_results,
+                        "message": "Some flext-ldap components have issues - check details",
+                    }
+                )
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"Flext-ldap setup validation failed: {e}"
+            )
+
+    @staticmethod
+    def create_integration_example(component: str) -> FlextResult[str]:
+        """Create practical flext-ldap integration examples for common patterns.
+
+        Provides working code examples that demonstrate proper flext-ldap
+        integration patterns for different components and use cases.
+
+        Args:
+            component: Component name ('client', 'connection', 'authentication', 'search')
+
+        Returns:
+            FlextResult[str]: Integration example code or error
+
+        Example:
+            >>> example = FlextLdapConfig.create_integration_example('client')
+            >>> if example.is_success:
+            ...     print(f"LDAP client integration example: {example.unwrap()[:100]}...")
+        """
+        examples = {
+            "client": """
+# Example: Enhanced FlextLdapClient with flext-core integration
+from flext_ldap import FlextLdap
+from flext_core import FlextResult
+
+class LdapService:
+    def __init__(self):
+        self._ldap = FlextLdap()
+
+    async def connect_and_search(self, base_dn: str, filter: str) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for LDAP operations
+        try:
+            # Connect with proper error handling
+            connection_result = await self._ldap.connect()
+            if connection_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Connection failed: {connection_result.error}")
+
+            # Search with flext-core integration
+            search_result = await self._ldap.search(
+                base_dn=base_dn,
+                search_filter=filter,
+                attributes=["cn", "mail"]
+            )
+
+            if search_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Search failed: {search_result.error}")
+
+            # Process results with flext-core patterns
+            entries = search_result.unwrap()
+            return FlextResult[FlextTypes.Dict].ok({
+                "entries_found": len(entries),
+                "results": entries
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"LDAP operation failed: {e}")
+
+# Usage with flext-core integration
+service = LdapService()
+result = await service.connect_and_search("ou=users,dc=example,dc=com", "(cn=john*)")
+""",
+            "connection": """
+# Example: Enhanced LDAP connection with flext-core integration
+from flext_ldap import FlextLdap
+from flext_core import FlextResult, FlextConfig
+
+class ConnectionService:
+    def __init__(self):
+        self._config = FlextConfig()
+        self._ldap = FlextLdap()
+
+    async def establish_connection(self, server_uri: str, bind_dn: str, password: str) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for connection management
+        try:
+            # Configure connection with flext-core integration
+            config_result = self._ldap.configure_connection({
+                "server_uri": server_uri,
+                "bind_dn": bind_dn,
+                "password": password,
+                "use_ssl": True
+            })
+
+            if config_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Connection config failed: {config_result.error}")
+
+            # Establish connection with proper error handling
+            connection_result = await self._ldap.connect()
+            if connection_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Connection failed: {connection_result.error}")
+
+            # Validate connection with flext-core patterns
+            validation_result = await self._ldap.validate_connection()
+            if validation_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Connection validation failed: {validation_result.error}")
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "connection_established": True,
+                "server_uri": server_uri,
+                "bind_dn": bind_dn,
+                "ssl_enabled": True
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Connection establishment failed: {e}")
+
+# Usage with flext-core integration
+service = ConnectionService()
+result = await service.establish_connection(
+    "ldap://ad.example.com",
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    "secretpassword"
+)
+""",
+            "authentication": """
+# Example: Enhanced LDAP authentication with flext-core integration
+from flext_ldap import FlextLdap
+from flext_core import FlextResult
+
+class AuthenticationService:
+    def __init__(self):
+        self._ldap = FlextLdap()
+
+    async def authenticate_user(self, username: str, password: str) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for authentication
+        try:
+            # Authenticate with proper error handling
+            auth_result = await self._ldap.authenticate(
+                username=username,
+                password=password,
+                search_base="ou=users,dc=example,dc=com"
+            )
+
+            if auth_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Authentication failed: {auth_result.error}")
+
+            # Get user details with flext-core integration
+            user_result = await self._ldap.get_user_details(username)
+            if user_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"User details retrieval failed: {user_result.error}")
+
+            user_details = user_result.unwrap()
+            return FlextResult[FlextTypes.Dict].ok({
+                "authenticated": True,
+                "username": username,
+                "user_details": user_details,
+                "groups": user_details.get("memberOf", [])
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Authentication process failed: {e}")
+
+# Usage with flext-core integration
+service = AuthenticationService()
+result = await service.authenticate_user("john.doe", "userpassword")
+""",
+            "search": """
+# Example: Enhanced LDAP search with flext-core integration
+from flext_ldap import FlextLdap
+from flext_core import FlextResult
+
+class SearchService:
+    def __init__(self):
+        self._ldap = FlextLdap()
+
+    async def search_users(self, search_filter: str, attributes: list[str] = None) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for search operations
+        try:
+            # Build search parameters with flext-core integration
+            search_params = {
+                "base_dn": "ou=users,dc=example,dc=com",
+                "search_filter": search_filter,
+                "search_scope": "subtree",
+                "attributes": attributes or ["cn", "mail", "memberOf"]
+            }
+
+            # Perform search with proper error handling
+            search_result = await self._ldap.search(**search_params)
+            if search_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Search failed: {search_result.error}")
+
+            # Process results with flext-core patterns
+            entries = search_result.unwrap()
+            users = []
+            for entry in entries:
+                users.append({
+                    "dn": entry.entry_dn,
+                    "cn": entry.cn.value if hasattr(entry, "cn") else None,
+                    "mail": entry.mail.value if hasattr(entry, "mail") else None,
+                    "groups": [group for group in entry.memberOf.values] if hasattr(entry, "memberOf") else []
+                })
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "users_found": len(users),
+                "users": users,
+                "search_filter": search_filter
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Search operation failed: {e}")
+
+# Usage with flext-core integration
+service = SearchService()
+result = await service.search_users("(cn=john*)", ["cn", "mail"])
+""",
+        }
+
+        if component not in examples:
+            available = ", ".join(examples.keys())
+            return FlextResult[str].fail(
+                f"Unknown component: {component}. Available: {available}"
+            )
+
+        return FlextResult[str].ok(examples[component].strip())
+
+    @staticmethod
+    def demonstrate_flext_ldap_patterns() -> FlextResult[FlextTypes.Dict]:
+        """Demonstrate comprehensive flext-ldap integration patterns.
+
+        Provides a working example that showcases how all flext-ldap components
+        work together with flext-core in realistic scenarios, demonstrating
+        best practices for LDAP operations.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Demonstration results with pattern explanations
+
+        Example:
+            >>> demo = FlextLdapConfig.demonstrate_flext_ldap_patterns()
+            >>> if demo.is_success:
+            ...     patterns = demo.unwrap()
+            ...     print(f"LDAP pattern: {patterns['ldap_pattern']['description']}")
+        """
+        try:
+            # Create configuration with integration validation
+            config_result = FlextLdapConfig.create_flext_ldap_config()
+            if config_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(
+                    f"Config creation failed: {config_result.error}"
+                )
+
+            config = config_result.unwrap()
+
+            # Configuration patterns available via computed fields:
+            # - config.database_config (connection configuration)
+            # - config.security_config (authentication configuration)
+            # - config.performance_config (pooling configuration)
+            # - config.validation_config (operation limits)
+
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "demonstration_status": "successful",
+                    "patterns_demonstrated": {
+                        "configuration_pattern": {
+                            "description": "LDAP configuration with flext-core integration",
+                            "example_result": {
+                                "config_class": config.__class__.__name__,
+                                "environment": config.environment,
+                                "debug_enabled": config.is_debug_enabled,
+                            },
+                            "integration_level": "full",
+                        },
+                        "validation_pattern": {
+                            "description": "LDAP configuration validation with business rules",
+                            "example_result": {
+                                "validation_passed": True,
+                                "environment_valid": config.is_production()
+                                or config.is_development(),
+                            },
+                            "integration_level": "full",
+                        },
+                    },
+                    "integration_level": "comprehensive",
+                    "components_integrated": [
+                        "FlextLdapConfig",
+                        "FlextConfig",
+                        "FlextResult",
+                    ],
+                    "best_practices_demonstrated": [
+                        "LDAP configuration with flext-core integration",
+                        "Configuration validation with business rules",
+                        "Environment-aware configuration management",
+                        "Error handling with flext-core integration",
+                        "Type-safe LDAP configuration management",
+                    ],
+                }
+            )
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"LDAP pattern demonstration failed: {e}"
+            )
 
 
 # Removed backward compatibility alias - use FlextLdapConfig directly

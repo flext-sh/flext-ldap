@@ -31,7 +31,7 @@ SAMPLE_GROUP_ENTRY: dict = {
 }
 
 # Multiple test users for comprehensive testing
-TEST_USERS: list[dict] = [
+TEST_USERS: list[FlextTypes.Dict] = [
     {
         "dn": "cn=alice,ou=people,dc=flext,dc=local",
         "attributes": {
@@ -70,7 +70,7 @@ TEST_USERS: list[dict] = [
     },
 ]
 
-TEST_GROUPS: list[dict] = [
+TEST_GROUPS: list[FlextTypes.Dict] = [
     {
         "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
         "attributes": {
@@ -95,7 +95,7 @@ TEST_GROUPS: list[dict] = [
 ]
 
 # Test organizational units
-TEST_OUS: list[dict] = [
+TEST_OUS: list[FlextTypes.Dict] = [
     {
         "dn": "ou=people,dc=flext,dc=local",
         "attributes": {
@@ -115,7 +115,7 @@ TEST_OUS: list[dict] = [
 ]
 
 # Invalid test data for error handling tests
-INVALID_ENTRIES: list[dict] = [
+INVALID_ENTRIES: list[FlextTypes.Dict] = [
     {
         "dn": "",  # Empty DN
         "attributes": {"cn": ["invalid"]},
@@ -180,7 +180,7 @@ SAMPLE_ACL_DATA: dict = {
 }
 
 # ACL test cases for comprehensive testing
-ACL_TEST_CASES: list[dict] = [
+ACL_TEST_CASES: list[FlextTypes.Dict] = [
     {
         "name": "user_read_access",
         "unified": {
@@ -232,7 +232,7 @@ ACL_TEST_CASES: list[dict] = [
 ]
 
 # Invalid ACL test cases
-INVALID_ACL_CASES: list[dict] = [
+INVALID_ACL_CASES: list[FlextTypes.Dict] = [
     {
         "name": "missing_target",
         "unified": {

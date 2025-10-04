@@ -119,7 +119,7 @@ class FlextLdapTypes(FlextTypes):
     # LDAP CORE TYPES - Domain-specific core types extending FlextTypes
     # =========================================================================
 
-    class Core(FlextTypes):
+    class Core:
         """Core LDAP types extending FlextTypes."""
 
         # LDAP-specific core types for configuration and operations

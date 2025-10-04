@@ -1,97 +1,51 @@
-"""LDAP authentication operations for flext-ldap.
-
-This module provides unified authentication functionality for LDAP operations
-with Clean Architecture patterns and flext-core integration.
+"""LDAP Authenticator - Handles LDAP authentication operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
-- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
-- Properties like conn.entries and entry.entry_dn are not fully typed
-- Entry attributes and their values have incomplete type information
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextService,
-)
+from ldap3 import Connection
+
+from flext_core import FlextResult
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldap.typings import FlextLdapTypes
 
 if TYPE_CHECKING:
-    # Import ldap3 types for static type checking only
-    # This prevents runtime circular imports while enabling proper type hints
-    from ldap3 import Connection, Server
+    from flext_ldap.clients import FlextLdapClient
 
 
-class FlextLdapAuthentication(
-    FlextService[None], FlextLdapProtocols.Ldap.LdapAuthenticationProtocol
-):
-    """Unified LDAP authentication operations class.
+class FlextLdapAuthenticator:
+    """LDAP Authenticator - Handles LDAP authentication operations.
 
-    This class provides comprehensive LDAP authentication functionality
-    with Clean Architecture patterns and flext-core integration.
+    **UNIFIED CLASS PATTERN**: Single class per module with nested helpers only.
 
-    **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
-    **CLEAN ARCHITECTURE**: Application layer authentication services.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    This class manages LDAP authentication including:
+    - User credential validation
+    - Username-to-DN resolution
+    - Bind/unbind operations for authentication
+    - Railway pattern error handling
 
-    Implements FlextLdapProtocols.LdapAuthenticationProtocol:
-    - authenticate_user: Authenticate user with username/password
-    - validate_credentials: Validate DN/password credentials
+    **PROTOCOL COMPLIANCE**: Implements LdapAuthenticationProtocol methods.
     """
 
-    def __init__(self) -> None:
-        """Initialize LDAP authentication service."""
-        super().__init__()
-        # Type annotation: FlextLogger is not Optional (override from FlextService)
-        self._logger: FlextLogger  # type: ignore[misc]
-        self._logger = FlextLogger(__name__)
-        # These will be set by the client that uses this service
-        # Type hints enable static type checking without runtime overhead
-        self._connection: Connection | None = None
-        self._server: Server | None = None
-        self._ldap_config: object | None = None
-
-    @classmethod
-    def create(cls) -> FlextLdapAuthentication:
-        """Create a new FlextLdapAuthentication instance (factory method)."""
-        return cls()
-
-    def set_connection_context(
-        self,
-        connection: Connection,
-        server: Server,
-        config: object,
-    ) -> None:
-        """Set the connection context for authentication operations.
+    def __init__(self, parent: FlextLdapClient) -> None:
+        """Initialize authenticator with parent client reference.
 
         Args:
-            connection: LDAP connection object (ldap3.Connection)
-            server: LDAP server object (ldap3.Server)
-            config: LDAP configuration object
-
+            parent: Parent FlextLdapClient instance for shared state access.
         """
-        self._connection = connection
-        self._server = server
-        self._ldap_config = config
+        self._parent = parent
 
-    def authenticate_user(  # type: ignore[override]
+    def authenticate_user(
         self,
         username: str,
         password: str,
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Authenticate user credentials using FlextResults railways pattern.
-
-        Note: Protocol specifies FlextResult[bool], but this implementation returns
-        FlextResult[FlextLdapModels.LdapUser] for richer authentication context.
 
         Args:
             username: Username to authenticate.
@@ -135,20 +89,35 @@ class FlextLdapAuthentication(
         """
         # Use existing authenticate_user logic adapted for DN-based validation
         try:
-            # Create a test connection with the provided credentials
-            # Import here to avoid circular imports
-            from flext_ldap.connection import FlextLdapConnection
+            # Validate by attempting a bind with the provided credentials
+            # Use parent connection manager's server if available
+            if not self._parent._connection_manager._server:
+                return FlextResult[bool].fail("No LDAP server connection available")
 
-            test_connection = FlextLdapConnection()
-            connection_result = test_connection.bind(dn, password)
-            test_connection.disconnect()
-            return FlextResult[bool].ok(connection_result.is_success)
+            # Create a test connection with the user's credentials
+            # Type ignore: ldap3.Connection attributes not fully typed in stubs
+            test_conn = Connection(
+                self._parent._connection_manager._server,
+                dn,
+                password,
+                auto_bind=False,
+            )
+
+            # Attempt to bind
+            if not test_conn.bind():
+                test_conn.unbind()
+                return FlextResult[bool].fail("Invalid credentials")
+
+            # Successful bind - credentials are valid
+            test_conn.unbind()
+            return FlextResult[bool].ok(True)
+
         except Exception as e:
             return FlextResult[bool].fail(f"Credential validation failed: {e}")
 
     def _validate_connection(self) -> FlextResult[None]:
         """Validate connection is established."""
-        if not self._connection:
+        if not self._parent._connection:
             return FlextResult[None].fail("LDAP connection not established")
         return FlextResult[None].ok(None)
 
@@ -157,7 +126,7 @@ class FlextLdapAuthentication(
     ) -> FlextResult[FlextLdapProtocols.LdapEntry]:
         """Search for user by username using railway pattern."""
         try:
-            if not self._connection:
+            if not self._parent._connection:
                 return FlextResult[FlextLdapProtocols.LdapEntry].fail(
                     "LDAP connection not established"
                 )
@@ -165,18 +134,18 @@ class FlextLdapAuthentication(
             search_filter = f"(|(uid={username})(cn={username}))"
             search_base = "ou=users,dc=example,dc=com"  # Default base
 
-            self._connection.search(
+            self._parent._connection.search(
                 search_base,
                 search_filter,
-                FlextLdapTypes.SUBTREE,
+                self._parent._search_scope,
                 attributes=["*"],
             )
 
-            if not self._connection.entries:
+            if not self._parent._connection.entries:
                 return FlextResult[FlextLdapProtocols.LdapEntry].fail("User not found")
 
             return FlextResult[FlextLdapProtocols.LdapEntry].ok(
-                self._connection.entries[0]
+                self._parent._connection.entries[0]
             )
 
         except Exception as e:
@@ -189,15 +158,15 @@ class FlextLdapAuthentication(
     ) -> FlextResult[FlextLdapProtocols.LdapEntry]:
         """Authenticate user credentials using railway pattern."""
         try:
-            if not self._server:
+            if not self._parent._server:
                 return FlextResult[FlextLdapProtocols.LdapEntry].fail(
                     "No server connection established"
                 )
 
             user_dn = str(user_entry.dn)
-            # Use FlextLdapTypes.Connection for proper typing
-            test_connection: FlextLdapTypes.Connection = FlextLdapTypes.Connection(
-                self._server,
+            # Use concrete ldap3.Connection type
+            test_connection: Connection = Connection(
+                self._parent._server,
                 user_dn,
                 password,
                 auto_bind=False,
@@ -222,33 +191,9 @@ class FlextLdapAuthentication(
     ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Create user from LDAP entry using railway pattern."""
         try:
-            # Create user from entry - simplified for now
-            user = FlextLdapModels.LdapUser(
-                dn=str(user_entry.dn),
-                uid=getattr(user_entry, "uid", [""])[0]
-                if hasattr(user_entry, "uid")
-                else "",
-                cn=getattr(user_entry, "cn", [""])[0]
-                if hasattr(user_entry, "cn")
-                else "",
-                sn=getattr(user_entry, "sn", [""])[0]
-                if hasattr(user_entry, "sn")
-                else "",
-                mail=getattr(user_entry, "mail", [""])[0]
-                if hasattr(user_entry, "mail")
-                else "",
-            )
+            user = self._parent._create_user_from_entry(user_entry)
             return FlextResult[FlextLdapModels.LdapUser].ok(user)
         except Exception as e:
             return FlextResult[FlextLdapModels.LdapUser].fail(
                 f"User creation failed: {e}"
             )
-
-    def execute(self) -> FlextResult[None]:
-        """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[None].ok(None)
-
-
-__all__ = [
-    "FlextLdapAuthentication",
-]

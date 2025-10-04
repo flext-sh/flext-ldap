@@ -1,72 +1,49 @@
-"""LDAP connection management for flext-ldap.
-
-This module provides unified connection management for LDAP operations
-with Clean Architecture patterns and flext-core integration.
+"""LDAP Connection Manager - Handles LDAP connection lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
-- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
-- Properties like conn.entries and entry.entry_dn are not fully typed
-- Entry attributes and their values have incomplete type information
 """
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from ldap3 import Connection, Server
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldap.servers import BaseServerOperations, ServerOperationsFactory
 from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
 
+if TYPE_CHECKING:
+    from flext_ldap.clients import FlextLdapClient
 
-class FlextLdapConnection(
-    FlextService[None], FlextLdapProtocols.Ldap.LdapConnectionProtocol
-):
-    """Unified LDAP connection management class.
 
-    This class provides comprehensive LDAP connection lifecycle management
-    with Clean Architecture patterns and flext-core integration.
+class FlextLdapConnectionManager:
+    """LDAP Connection Manager - Handles LDAP connection lifecycle management.
 
-    **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
-    **CLEAN ARCHITECTURE**: Infrastructure layer connection management.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **UNIFIED CLASS PATTERN**: Single class per module with nested helpers only.
 
-    Implements FlextLdapProtocols.LdapConnectionProtocol:
-    - connect: Establish LDAP connection
-    - disconnect: Close LDAP connection
-    - is_connected: Check connection status
-    - test_connection: Test connection health
-    - get_connection_string: Get sanitized connection string
+    This class manages the complete LDAP connection lifecycle including:
+    - Server connection establishment
+    - Credential binding/unbinding
+    - Connection state management
+    - Server type auto-detection
+    - Schema discovery
+    - Connection testing and validation
+
+    **PROTOCOL COMPLIANCE**: Implements Infrastructure.Connection protocol methods.
     """
 
-    def __init__(self) -> None:
-        """Initialize LDAP connection manager."""
-        super().__init__()
-        self._logger = FlextLogger(__name__)
+    def __init__(self, parent: FlextLdapClient) -> None:
+        """Initialize connection manager with parent client reference.
+
+        Args:
+            parent: Parent FlextLdapClient instance for shared state access.
+        """
+        self._parent = parent
         self._connection: Connection | None = None
         self._server: Server | None = None
-        self._server_operations_factory = ServerOperationsFactory()
-        self._server_operations: BaseServerOperations | None = None
-        self._detected_server_type: str | None = None
-
-    @classmethod
-    def create(cls) -> FlextLdapConnection:
-        """Create a new FlextLdapConnection instance (factory method)."""
-        return cls()
 
     def connect(
         self,
@@ -112,7 +89,7 @@ class FlextLdapConnection(
                     password_validation.error or "Password validation failed"
                 )
 
-            self._logger.info("Connecting to LDAP server: %s", server_uri)
+            self._parent._logger.info("Connecting to LDAP server: %s", server_uri)
 
             # Apply connection options if provided with proper type checking
             if connection_options:
@@ -174,41 +151,45 @@ class FlextLdapConnection(
             if not self._connection.bound:
                 return FlextResult[bool].fail("Failed to bind to LDAP server")
 
-            self._logger.info("Successfully connected to LDAP server")
+            self._parent._logger.info("Successfully connected to LDAP server")
 
             # Auto-detect server type and create server operations instance
-            detection_result = self._server_operations_factory.create_from_connection(
-                self._connection
+            detection_result = (
+                self._parent._server_operations_factory.create_from_connection(
+                    self._connection
+                )
             )
             if detection_result.is_success:
-                self._server_operations = detection_result.unwrap()
-                self._detected_server_type = (
-                    self._server_operations.server_type
-                    if self._server_operations
+                self._parent._server_operations = detection_result.unwrap()
+                self._parent._detected_server_type = (
+                    self._parent._server_operations.server_type
+                    if self._parent._server_operations
                     else None
                 )
-                self._logger.info(
+                self._parent._logger.info(
                     "Auto-detected LDAP server type: %s",
-                    self._detected_server_type,
+                    self._parent._detected_server_type,
                 )
             else:
-                self._logger.warning(
+                self._parent._logger.warning(
                     "Server type detection failed, using generic operations: %s",
                     detection_result.error,
                 )
                 # Fallback to generic server operations
                 generic_result = (
-                    self._server_operations_factory.create_from_server_type("generic")
+                    self._parent._server_operations_factory.create_from_server_type(
+                        "generic"
+                    )
                 )
                 if generic_result.is_success:
-                    self._server_operations = generic_result.unwrap()
-                    self._detected_server_type = "generic"
+                    self._parent._server_operations = generic_result.unwrap()
+                    self._parent._detected_server_type = "generic"
 
             # Perform schema discovery if requested
             if auto_discover_schema:
-                discovery_result = self._discover_schema()
+                discovery_result = self._parent.discover_schema()
                 if discovery_result.is_failure:
-                    self._logger.warning(
+                    self._parent._logger.warning(
                         "Schema discovery failed: %s", discovery_result.error
                     )
                     # Continue without schema discovery
@@ -216,7 +197,7 @@ class FlextLdapConnection(
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.exception("Connection failed")
+            self._parent._logger.exception("Connection failed")
             return FlextResult[bool].fail(f"Connection failed: {e}")
 
     def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
@@ -248,7 +229,7 @@ class FlextLdapConnection(
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.exception("Bind operation failed")
+            self._parent._logger.exception("Bind operation failed")
             return FlextResult[bool].fail(f"Bind failed: {e}")
 
     def unbind(self) -> FlextResult[None]:
@@ -265,14 +246,14 @@ class FlextLdapConnection(
 
             if self._connection.bound:
                 self._connection.unbind()
-                self._logger.info("Unbound from LDAP server")
+                self._parent._logger.info("Unbound from LDAP server")
 
             self._connection = None
             self._server = None
             return FlextResult[None].ok(None)
 
         except Exception as e:
-            self._logger.exception("Unbind failed")
+            self._parent._logger.exception("Unbind failed")
             return FlextResult[None].fail(f"Unbind failed: {e}")
 
     def is_connected(self) -> bool:
@@ -344,13 +325,16 @@ class FlextLdapConnection(
             port = self._server.port
             return f"{protocol}://{host}:{port}"
 
+        if self._parent._config and hasattr(self._parent._config, "server_uri"):
+            # Return config URI (should already be sanitized)
+            return str(self._parent._config.server_uri)
+
         return "ldap://not-connected"
 
     def __call__(self, *args: object, **kwargs: object) -> FlextResult[bool]:
         """Callable interface for Infrastructure.Connection protocol.
 
         Delegates to connect() method when called with connection parameters.
-        Part of FlextProtocols.Infrastructure.Connection protocol implementation.
 
         Args:
             *args: Positional arguments (server_uri, bind_dn, password)
@@ -359,20 +343,9 @@ class FlextLdapConnection(
         Returns:
             FlextResult[bool]: Connection result
 
-        Examples:
-            >>> client = FlextLdapConnection()
-            >>> result = client("ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password")
-            >>> if result.is_success:
-            ...     print("Connected successfully")
-
         """
         if len(args) >= 3:
-            # Extract positional args: server_uri, bind_dn, password
-            server_uri = str(args[0])
-            bind_dn = str(args[1])
-            password = str(args[2])
-
-            # Call connect with extracted parameters
+            server_uri, bind_dn, password = str(args[0]), str(args[1]), str(args[2])
             return self.connect(
                 server_uri=server_uri,
                 bind_dn=bind_dn,
@@ -380,51 +353,6 @@ class FlextLdapConnection(
                 **kwargs,
             )
 
-        # Invalid arguments
         return FlextResult[bool].fail(
             "Invalid connection arguments. Expected: (server_uri, bind_dn, password)"
         )
-
-    # Private helper methods
-    def _discover_schema(self) -> FlextResult[FlextLdapModels.DiscoveredSchema]:
-        """Discover LDAP schema from connected server.
-
-        Returns:
-            FlextResult[FlextLdapModels.DiscoveredSchema]: Schema discovery result
-
-        """
-        try:
-            if not self._connection:
-                return FlextResult[FlextLdapModels.DiscoveredSchema].fail(
-                    "No connection available for schema discovery"
-                )
-
-            # Get server info
-            server_info = FlextLdapUtilities.get_server_info(self._connection)
-
-            # Get schema info if available
-            schema_info = None
-            if hasattr(self._connection, "server") and self._connection.server.schema:
-                schema_info = FlextLdapUtilities.get_schema_info(self._connection)
-
-            # Create discovered schema
-            discovered_schema = FlextLdapModels.DiscoveredSchema(
-                server_info=server_info,
-                schema_info=schema_info,
-            )
-
-            return FlextResult[FlextLdapModels.DiscoveredSchema].ok(discovered_schema)
-
-        except Exception as e:
-            return FlextResult[FlextLdapModels.DiscoveredSchema].fail(
-                f"Schema discovery failed: {e}"
-            )
-
-    def execute(self) -> FlextResult[None]:
-        """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[None].ok(None)
-
-
-__all__ = [
-    "FlextLdapConnection",
-]

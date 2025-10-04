@@ -63,14 +63,14 @@ class FlextLdap(FlextService[None]):
     - No wrappers, aliases, or fallbacks
     - Direct use of flext-core centralized services
 
-    **PYTHON 3.13+ COMPATIBILITY**: Uses modern /patterns and latest type features.
+    **PROTOCOL COMPLIANCE**: Implements LDAP domain protocols through structural subtyping:
+    - LdapConnectionProtocol: connect, disconnect, is_connected methods (delegates to client)
+    - LdapSearchProtocol: search, search_one, search_entries methods
+    - LdapModifyProtocol: add_entry, modify_entry, delete_entry methods
+    - LdapAuthenticationProtocol: authenticate_user, validate_credentials methods
+    - LdapValidationProtocol: validate_dn, validate_entry methods
 
-    Implements FlextLdapProtocols through structural subtyping:
-    - LdapConnectionProtocol: connect, is_connected methods (delegates to client)
-    - LdapSearchProtocol: search, search_entries methods
-    - LdapModifyProtocol: via client delegation
-    - LdapAuthenticationProtocol: via client delegation
-    - LdapValidationProtocol: via client delegation
+    **PYTHON 3.13+ COMPATIBILITY**: Uses modern /patterns and latest type features.
     """
 
     @override
@@ -382,30 +382,27 @@ class FlextLdap(FlextService[None]):
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for LDAP groups with enhanced validation."""
-        try:
-            # Validate input parameters
-            validation_result = self.validations.validate_dn(base_dn)
-            if validation_result.is_failure:
+        # Validate inputs
+        dn_validation = self.validations.validate_dn(base_dn)
+        if dn_validation.is_failure:
+            return FlextResult[list[FlextLdapModels.Group]].fail(
+                f"Invalid base DN: {dn_validation.error}"
+            )
+
+        if filter_str:
+            filter_validation = self.validations.validate_filter(filter_str)
+            if filter_validation.is_failure:
                 return FlextResult[list[FlextLdapModels.Group]].fail(
-                    f"Invalid base DN: {validation_result.error}"
+                    f"Invalid filter: {filter_validation.error}"
                 )
 
-            if filter_str:
-                filter_validation = self.validations.validate_filter(filter_str)
-                if filter_validation.is_failure:
-                    return FlextResult[list[FlextLdapModels.Group]].fail(
-                        f"Invalid filter: {filter_validation.error}"
-                    )
-
-            return self.client.search_groups(
-                base_dn=base_dn,
-                cn=cn,
-                filter_str=filter_str,
-                scope=scope,
-                attributes=attributes,
-            )
-        except Exception as e:
-            return FlextResult[list[FlextLdapModels.Group]].fail(f"Search failed: {e}")
+        return self.client.search_groups(
+            base_dn=base_dn,
+            cn=cn,
+            filter_str=filter_str,
+            scope=scope,
+            attributes=attributes,
+        )
 
     def search_entries(
         self,
@@ -415,45 +412,39 @@ class FlextLdap(FlextService[None]):
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for LDAP entries using search_with_request with enhanced validation."""
-        try:
-            # Validate input parameters
-            validation_result = self.validations.validate_dn(base_dn)
-            if validation_result.is_failure:
-                return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    f"Invalid base DN: {validation_result.error}"
-                )
-
-            filter_validation = self.validations.validate_filter(filter_str)
-            if filter_validation.is_failure:
-                return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    f"Invalid filter: {filter_validation.error}"
-                )
-
-            request = self.models.SearchRequest(
-                base_dn=base_dn,
-                filter_str=filter_str,
-                scope=scope,
-                attributes=attributes or [],
-                page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
-                paged_cookie=b"",
+        # Validate inputs
+        dn_validation = self.validations.validate_dn(base_dn)
+        if dn_validation.is_failure:
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
+                f"Invalid base DN: {dn_validation.error}"
             )
-            return self.client.search_with_request(request)
-        except Exception as e:
-            return self._handle_operation_error("Search", e)
+
+        filter_validation = self.validations.validate_filter(filter_str)
+        if filter_validation.is_failure:
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
+                f"Invalid filter: {filter_validation.error}"
+            )
+
+        request = self.models.SearchRequest(
+            base_dn=base_dn,
+            filter_str=filter_str,
+            scope=scope,
+            attributes=attributes or [],
+            page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+            paged_cookie=b"",
+        )
+        return self.client.search_with_request(request)
 
     def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get a specific LDAP group by DN with enhanced validation."""
-        try:
-            # Validate DN
-            validation_result = self.validations.validate_dn(dn)
-            if validation_result.is_failure:
-                return FlextResult[FlextLdapModels.Group | None].fail(
-                    f"Invalid DN: {validation_result.error}"
-                )
+        # Validate DN
+        validation_result = self.validations.validate_dn(dn)
+        if validation_result.is_failure:
+            return FlextResult[FlextLdapModels.Group | None].fail(
+                f"Invalid DN: {validation_result.error}"
+            )
 
-            return self.client.get_group(dn)
-        except Exception as e:
-            return self._handle_operation_error("Get group", e)
+        return self.client.get_group(dn)
 
     # =============================================================================
     # UPDATE METHODS - Enhanced with proper error handling and validation
@@ -463,29 +454,23 @@ class FlextLdap(FlextService[None]):
         self, dn: str, attributes: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Update user attributes with enhanced validation."""
-        try:
-            # Validate DN
-            validation_result = self.validations.validate_dn(dn)
-            if validation_result.is_failure:
-                return FlextResult[bool].fail(f"Invalid DN: {validation_result.error}")
+        # Validate DN
+        validation_result = self.validations.validate_dn(dn)
+        if validation_result.is_failure:
+            return FlextResult[bool].fail(f"Invalid DN: {validation_result.error}")
 
-            return self.client.update_user_attributes(dn, attributes)
-        except Exception as e:
-            return self._handle_operation_error("Update user attributes", e)
+        return self.client.update_user_attributes(dn, attributes)
 
     def update_group_attributes(
         self, dn: str, attributes: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Update group attributes with enhanced validation."""
-        try:
-            # Validate DN
-            validation_result = self.validations.validate_dn(dn)
-            if validation_result.is_failure:
-                return FlextResult[bool].fail(f"Invalid DN: {validation_result.error}")
+        # Validate DN
+        validation_result = self.validations.validate_dn(dn)
+        if validation_result.is_failure:
+            return FlextResult[bool].fail(f"Invalid DN: {validation_result.error}")
 
-            return self.client.update_group_attributes(dn, attributes)
-        except Exception as e:
-            return self._handle_operation_error("Update group attributes", e)
+        return self.client.update_group_attributes(dn, attributes)
 
     # =============================================================================
     # DELETE METHODS - Enhanced with proper error handling and validation
@@ -493,46 +478,49 @@ class FlextLdap(FlextService[None]):
 
     def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete a user with enhanced validation."""
-        try:
-            # Validate DN
-            validation_result = self.validations.validate_dn(dn)
-            if validation_result.is_failure:
-                return FlextResult[None].fail(f"Invalid DN: {validation_result.error}")
+        # Validate DN
+        validation_result = self.validations.validate_dn(dn)
+        if validation_result.is_failure:
+            return FlextResult[None].fail(f"Invalid DN: {validation_result.error}")
 
-            return self.client.delete_user(dn)
-        except Exception as e:
-            return self._handle_operation_error("Delete user", e)
+        return self.client.delete_user(dn)
 
     # =============================================================================
     # VALIDATION METHODS - Enhanced with proper error handling
     # =============================================================================
 
     def validate_configuration_consistency(self) -> FlextResult[bool]:
-        """Validate configuration consistency with enhanced error handling."""
-        try:
-            config = self.config
-            if config.ldap_bind_dn and not config.ldap_bind_password:
-                return FlextResult[bool].fail(
-                    "Bind password required when bind DN is provided"
-                )
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return self._handle_operation_error("Configuration validation", e)
+        """Validate configuration consistency.
+
+        Checks that bind password is provided when bind DN is configured.
+        """
+        config = self.config
+        if config.ldap_bind_dn and not config.ldap_bind_password:
+            return FlextResult[bool].fail(
+                "Bind password required when bind DN is provided"
+            )
+        return FlextResult[bool].ok(True)
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
-        """Validate LDAP filter format with enhanced error handling."""
-        try:
-            return self.validations.validate_filter(filter_str).map(lambda _: None)
-        except Exception as e:
-            return self._handle_operation_error("Filter validation", e)
+        """Validate LDAP filter format."""
+        validation_result = self.validations.validate_filter(filter_str)
+        if validation_result.is_failure:
+            return FlextResult[None].fail(
+                f"Filter validation failed: {validation_result.error}"
+            )
+        return FlextResult[None].ok(None)
 
     # =============================================================================
     # LDIF OPERATIONS - Integration with FlextLdif for file operations
     # =============================================================================
 
     @property
-    def ldif(self) -> FlextLdif:
-        """Get FlextLdif instance for LDIF operations."""
+    def ldif(self) -> FlextLdif | None:
+        """Get FlextLdif instance for LDIF operations.
+
+        Returns:
+            FlextLdif instance if available, None if initialization failed.
+        """
         if self._ldif is None:
             try:
                 self._ldif = FlextLdif()
@@ -543,8 +531,8 @@ class FlextLdap(FlextService[None]):
                     error=str(exc),
                     error_type=type(exc).__name__,
                 )
-                self._ldif = None  # type: ignore
-        return self._ldif  # type: ignore
+                self._ldif = None
+        return self._ldif
 
     def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Import entries from LDIF file using FlextLdif.
@@ -556,41 +544,37 @@ class FlextLdap(FlextService[None]):
             FlextResult containing list of entries or error
 
         """
-        try:
-            ldif_instance = self.ldif
-            if ldif_instance is None:
-                return FlextResult[list[FlextLdapModels.Entry]].fail(
-                    "FlextLdif not available. Install with: pip install flext-ldif"
-                )
-
-            # Use FlextLdif for parsing
-            result = ldif_instance.parse(path)
-            if result.is_failure:
-                return FlextResult[list[FlextLdapModels.Entry]].fail(
-                    result.error or "LDIF parsing failed"
-                )
-
-            # Convert FlextLdif entries to FlextLdap entries
-            ldif_entries = result.value or []
-            ldap_entries = []
-            for ldif_entry in ldif_entries:
-                # Convert LDIF entry to LDAP entry format
-                ldap_entry = FlextLdapModels.Entry(
-                    dn=ldif_entry.dn,
-                    attributes=ldif_entry.attributes,
-                )
-                ldap_entries.append(ldap_entry)
-
-            # Log import event
-            self._logger.info(
-                "LDIF import successful",
-                path=str(path),
-                entry_count=len(ldap_entries),
+        ldif_instance = self.ldif
+        if ldif_instance is None:
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
+                "FlextLdif not available. Install with: pip install flext-ldif"
             )
 
-            return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
-        except Exception as e:
-            return self._handle_operation_error("LDIF import", e)
+        # Parse LDIF file
+        result = ldif_instance.parse(path)
+        if result.is_failure:
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
+                f"LDIF parsing failed: {result.error}"
+            )
+
+        # Convert FlextLdif entries to FlextLdap entries
+        ldif_entries = result.unwrap() or []
+        ldap_entries = []
+        for ldif_entry in ldif_entries:
+            ldap_entry = FlextLdapModels.Entry(
+                dn=ldif_entry.dn,
+                attributes=ldif_entry.attributes,
+            )
+            ldap_entries.append(ldap_entry)
+
+        # Log import event
+        self._logger.info(
+            "LDIF import successful",
+            path=str(path),
+            entry_count=len(ldap_entries),
+        )
+
+        return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
 
     def export_to_ldif(
         self, entries: list[FlextLdapModels.Entry], path: Path
@@ -605,41 +589,38 @@ class FlextLdap(FlextService[None]):
             FlextResult indicating success or failure
 
         """
-        try:
-            ldif_instance = self.ldif
-            if ldif_instance is None:
-                return FlextResult[bool].fail(
-                    "FlextLdif not available. Install with: pip install flext-ldif"
-                )
-
-            # Convert FlextLdap entries to FlextLdif entries
-            ldif_entries = []
-            for ldap_entry in entries:
-                ldif_entry_result = FlextLdifModels.Entry.create(
-                    data={
-                        "dn": ldap_entry.dn,
-                        "attributes": ldap_entry.attributes,
-                    }
-                )
-                if ldif_entry_result.is_failure:
-                    return FlextResult[bool].fail(
-                        f"Entry conversion failed: {ldif_entry_result.error}"
-                    )
-                ldif_entries.append(ldif_entry_result.unwrap())
-
-            # Use FlextLdif for writing
-            result = ldif_instance.write(ldif_entries, path)
-            if result.is_failure:
-                return FlextResult[bool].fail(result.error or "LDIF writing failed")
-
-            # Log export event
-            self._logger.info(
-                "LDIF export successful", path=str(path), entry_count=len(entries)
+        ldif_instance = self.ldif
+        if ldif_instance is None:
+            return FlextResult[bool].fail(
+                "FlextLdif not available. Install with: pip install flext-ldif"
             )
 
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"LDIF export failed: {e}")
+        # Convert FlextLdap entries to FlextLdif entries
+        ldif_entries = []
+        for ldap_entry in entries:
+            ldif_entry_result = FlextLdifModels.Entry.create(
+                data={
+                    "dn": ldap_entry.dn,
+                    "attributes": ldap_entry.attributes,
+                }
+            )
+            if ldif_entry_result.is_failure:
+                return FlextResult[bool].fail(
+                    f"Entry conversion failed: {ldif_entry_result.error}"
+                )
+            ldif_entries.append(ldif_entry_result.unwrap())
+
+        # Use FlextLdif for writing
+        result = ldif_instance.write(ldif_entries, path)
+        if result.is_failure:
+            return FlextResult[bool].fail(f"LDIF writing failed: {result.error}")
+
+        # Log export event
+        self._logger.info(
+            "LDIF export successful", path=str(path), entry_count=len(entries)
+        )
+
+        return FlextResult[bool].ok(True)
 
     # =========================================================================
     # UNIVERSAL LDAP OPERATIONS (SERVER-AGNOSTIC)
@@ -662,15 +643,10 @@ class FlextLdap(FlextService[None]):
             ...     print(f"Connected to: {server_type_result.unwrap()}")
 
         """
-        try:
-            if not self._client:
-                return FlextResult[str | None].fail("Client not initialized")
-            server_type = self._client._detected_server_type
-            return FlextResult[str | None].ok(server_type)
-        except Exception as e:
-            return FlextResult[str | None].fail(
-                f"Failed to get detected server type: {e}"
-            )
+        if not self._client:
+            return FlextResult[str | None].fail("Client not initialized")
+        server_type = self._client._detected_server_type
+        return FlextResult[str | None].ok(server_type)
 
     def get_server_operations(self) -> FlextResult[object | None]:
         """Get current server operations instance for advanced usage.
@@ -690,15 +666,10 @@ class FlextLdap(FlextService[None]):
             ...     print(f"ACL format: {ops.get_acl_format()}")
 
         """
-        try:
-            if not self._client:
-                return FlextResult[object | None].fail("Client not initialized")
-            server_ops = self._client.server_operations
-            return FlextResult[object | None].ok(server_ops)
-        except Exception as e:
-            return FlextResult[object | None].fail(
-                f"Failed to get server operations: {e}"
-            )
+        if not self._client:
+            return FlextResult[object | None].fail("Client not initialized")
+        server_ops = self._client.server_operations
+        return FlextResult[object | None].ok(server_ops)
 
     def get_server_capabilities(self) -> FlextResult[FlextTypes.Dict]:
         """Get comprehensive server capabilities information.
