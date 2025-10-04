@@ -96,13 +96,13 @@ def test_group_data() -> dict:
 
 
 @pytest.fixture
-def multiple_test_users() -> list[dict]:
+def multiple_test_users() -> list[FlextTypes.Dict]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[dict]:
+def multiple_test_groups() -> list[FlextTypes.Dict]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 

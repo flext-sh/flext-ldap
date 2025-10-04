@@ -335,6 +335,10 @@ class FlextLdapOperations(
         # Simplified normalization - in real implementation would be more complex
         return changes
 
+    def execute(self) -> FlextResult[None]:
+        """Execute the main domain operation (required by FlextService)."""
+        return FlextResult[None].ok(None)
+
 
 __all__ = [
     "FlextLdapOperations",

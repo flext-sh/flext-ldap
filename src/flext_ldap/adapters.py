@@ -11,11 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Callable
 
-from flext_core import FlextLogger, FlextResult
-from flext_ldap.entities import FlextLdapEntities
-from flext_ldap.value_objects import FlextLdapValueObjects
+from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_ldap.models import FlextLdapModels
 
 _logger = FlextLogger(__name__)
 
@@ -32,7 +31,7 @@ class FlextLdapAdapters:
         """Adapter for converting between ldap3 entries and domain entities."""
 
         @staticmethod
-        def entry_to_domain(entry: Any) -> FlextResult[FlextLdapEntities.Entry]:
+        def entry_to_domain(entry: Any) -> FlextResult[FlextLdapModels.Entry]:
             """Convert ldap3 Entry to domain Entry entity.
 
             Args:
@@ -56,22 +55,22 @@ class FlextLdapAdapters:
                     raw_attributes = dict(entry.entry_raw_attributes)
 
                 # Create domain entity
-                domain_entry = FlextLdapEntities.Entry(
+                domain_entry = FlextLdapModels.Entry(
                     dn=dn, attributes=attributes, raw_attributes=raw_attributes
                 )
 
-                return FlextResult[FlextLdapEntities.Entry].ok(domain_entry)
+                return FlextResult[FlextLdapModels.Entry].ok(domain_entry)
 
             except Exception as e:
                 _logger.error("Failed to convert ldap3 entry to domain", error=str(e))
-                return FlextResult[FlextLdapEntities.Entry].fail(
+                return FlextResult[FlextLdapModels.Entry].fail(
                     f"Entry conversion failed: {e}"
                 )
 
         @staticmethod
         def entries_to_domain(
             entries: list[Any],
-        ) -> FlextResult[list[FlextLdapEntities.Entry]]:
+        ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Convert list of ldap3 entries to domain entries.
 
             Args:
@@ -95,16 +94,16 @@ class FlextLdapAdapters:
                         continue
                     domain_entries.append(conversion_result.unwrap())
 
-                return FlextResult[list[FlextLdapEntities.Entry]].ok(domain_entries)
+                return FlextResult[list[FlextLdapModels.Entry]].ok(domain_entries)
 
             except Exception as e:
                 _logger.error("Failed to convert ldap3 entries to domain", error=str(e))
-                return FlextResult[list[FlextLdapEntities.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     f"Entries conversion failed: {e}"
                 )
 
         @staticmethod
-        def domain_to_ldap3_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+        def domain_to_ldap3_attributes(attributes: FlextTypes.Dict) -> FlextTypes.Dict:
             """Convert domain attributes to ldap3 format.
 
             Args:
@@ -123,8 +122,8 @@ class FlextLdapAdapters:
 
         @staticmethod
         def domain_request_to_ldap3(
-            request: FlextLdapEntities.SearchRequest,
-        ) -> dict[str, Any]:
+            request: FlextLdapModels.SearchRequest,
+        ) -> FlextTypes.Dict:
             """Convert domain SearchRequest to ldap3 search parameters.
 
             Args:
@@ -155,7 +154,7 @@ class FlextLdapAdapters:
         @staticmethod
         def ldap3_response_to_domain(
             entries: list[Any], search_time: float = 0.0
-        ) -> FlextResult[FlextLdapEntities.SearchResponse]:
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Convert ldap3 search response to domain SearchResponse.
 
             Args:
@@ -172,27 +171,27 @@ class FlextLdapAdapters:
                     entries
                 )
                 if entries_result.is_failure:
-                    return FlextResult[FlextLdapEntities.SearchResponse].fail(
+                    return FlextResult[FlextLdapModels.SearchResponse].fail(
                         entries_result.error or "Entry conversion failed"
                     )
 
                 domain_entries = entries_result.unwrap()
 
                 # Create response
-                response = FlextLdapEntities.SearchResponse(
+                response = FlextLdapModels.SearchResponse(
                     entries=domain_entries,
                     total_count=len(domain_entries),
                     search_time=search_time,
                     is_complete=True,  # Assume complete for now
                 )
 
-                return FlextResult[FlextLdapEntities.SearchResponse].ok(response)
+                return FlextResult[FlextLdapModels.SearchResponse].ok(response)
 
             except Exception as e:
                 _logger.error(
                     "Failed to convert ldap3 response to domain", error=str(e)
                 )
-                return FlextResult[FlextLdapEntities.SearchResponse].fail(
+                return FlextResult[FlextLdapModels.SearchResponse].fail(
                     f"Response conversion failed: {e}"
                 )
 
@@ -206,7 +205,7 @@ class FlextLdapAdapters:
             use_ssl: bool = False,
             user: str | None = None,
             password: str | None = None,
-        ) -> FlextResult[dict[str, Any]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Validate and prepare connection parameters for ldap3.
 
             Args:
@@ -223,11 +222,11 @@ class FlextLdapAdapters:
             try:
                 # Validate server
                 if not server or not server.strip():
-                    return FlextResult[dict[str, Any]].fail("Server cannot be empty")
+                    return FlextResult[FlextTypes.Dict].fail("Server cannot be empty")
 
                 # Validate port
                 if not isinstance(port, int) or not (1 <= port <= 65535):
-                    return FlextResult[dict[str, Any]].fail("Invalid port number")
+                    return FlextResult[FlextTypes.Dict].fail("Invalid port number")
 
                 # Prepare connection parameters
                 params = {
@@ -242,15 +241,15 @@ class FlextLdapAdapters:
                     params["password"] = password
                     params["authentication"] = "SIMPLE"
                 elif user or password:
-                    return FlextResult[dict[str, Any]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Both user and password must be provided for authentication"
                     )
 
-                return FlextResult[dict[str, Any]].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(params)
 
             except Exception as e:
                 _logger.error("Connection parameter validation failed", error=str(e))
-                return FlextResult[dict[str, Any]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"Parameter validation failed: {e}"
                 )
 
@@ -261,7 +260,7 @@ class FlextLdapAdapters:
             base_dn: str,
             use_ssl: bool = False,
             timeout: int = 30,
-        ) -> FlextResult[dict[str, Any]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Create complete ldap3 connection configuration.
 
             Args:
@@ -277,9 +276,9 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate base DN
-                dn_result = FlextLdapValueObjects.DistinguishedName.create(base_dn)
+                dn_result = FlextLdapModels.DistinguishedName.create(base_dn)
                 if dn_result.is_failure:
-                    return FlextResult[dict[str, Any]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid base DN: {dn_result.error}"
                     )
 
@@ -296,19 +295,19 @@ class FlextLdapAdapters:
                     "pool_lifetime": 3600,  # 1 hour
                 }
 
-                return FlextResult[dict[str, Any]].ok(config)
+                return FlextResult[FlextTypes.Dict].ok(config)
 
             except Exception as e:
                 _logger.error("Connection config creation failed", error=str(e))
-                return FlextResult[dict[str, Any]].fail(f"Config creation failed: {e}")
+                return FlextResult[FlextTypes.Dict].fail(f"Config creation failed: {e}")
 
     class Ldap3ModifyAdapter:
         """Adapter for LDAP modify operations with ldap3."""
 
         @staticmethod
         def prepare_add_operation(
-            dn: str, attributes: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            dn: str, attributes: FlextTypes.Dict
+        ) -> FlextResult[FlextTypes.Dict]:
             """Prepare add operation parameters for ldap3.
 
             Args:
@@ -321,9 +320,9 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapValueObjects.DistinguishedName.create(dn)
+                dn_result = FlextLdapModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
-                    return FlextResult[dict[str, Any]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
                     )
 
@@ -339,16 +338,16 @@ class FlextLdapAdapters:
                     "attributes": ldap3_attrs,
                 }
 
-                return FlextResult[dict[str, Any]].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(params)
 
             except Exception as e:
                 _logger.error("Add operation preparation failed", error=str(e))
-                return FlextResult[dict[str, Any]].fail(f"Preparation failed: {e}")
+                return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
         @staticmethod
         def prepare_modify_operation(
-            dn: str, changes: dict[str, Any]
-        ) -> FlextResult[dict[str, Any]]:
+            dn: str, changes: FlextTypes.Dict
+        ) -> FlextResult[FlextTypes.Dict]:
             """Prepare modify operation parameters for ldap3.
 
             Args:
@@ -361,9 +360,9 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapValueObjects.DistinguishedName.create(dn)
+                dn_result = FlextLdapModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
-                    return FlextResult[dict[str, Any]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
                     )
 
@@ -394,14 +393,14 @@ class FlextLdapAdapters:
                     "changes": ldap3_changes,
                 }
 
-                return FlextResult[dict[str, Any]].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(params)
 
             except Exception as e:
                 _logger.error("Modify operation preparation failed", error=str(e))
-                return FlextResult[dict[str, Any]].fail(f"Preparation failed: {e}")
+                return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
         @staticmethod
-        def prepare_delete_operation(dn: str) -> FlextResult[dict[str, Any]]:
+        def prepare_delete_operation(dn: str) -> FlextResult[FlextTypes.Dict]:
             """Prepare delete operation parameters for ldap3.
 
             Args:
@@ -413,19 +412,19 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapValueObjects.DistinguishedName.create(dn)
+                dn_result = FlextLdapModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
-                    return FlextResult[dict[str, Any]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
                     )
 
                 params = {"dn": dn}
 
-                return FlextResult[dict[str, Any]].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(params)
 
             except Exception as e:
                 _logger.error("Delete operation preparation failed", error=str(e))
-                return FlextResult[dict[str, Any]].fail(f"Preparation failed: {e}")
+                return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
     class Ldap3ErrorAdapter:
         """Adapter for converting ldap3 errors to domain-friendly formats."""
@@ -531,7 +530,7 @@ class FlextLdapAdapters:
         """Adapter for monitoring ldap3 operation performance."""
 
         @staticmethod
-        def measure_operation_time(operation_func: callable, *args, **kwargs) -> tuple:
+        def measure_operation_time(operation_func: Callable, *args, **kwargs) -> tuple:
             """Measure execution time of an ldap3 operation.
 
             Args:

@@ -13,8 +13,13 @@ from typing import Final
 
 # Clean Architecture modules (new unified structure)
 from flext_ldap.api import FlextLdap, FlextLdapAPI
+
+# New separated modules
 from flext_ldap.entities import FlextLdapEntities
 from flext_ldap.value_objects import FlextLdapValueObjects
+
+# Legacy models module (being phased out)
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.services import FlextLdapServices
 from flext_ldap.adapters import FlextLdapAdapters
@@ -28,18 +33,37 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 from flext_ldap.authentication import FlextLdapAuthentication
+from flext_ldap.authenticator import FlextLdapAuthenticator
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.connection import FlextLdapConnection
+from flext_ldap.connection_manager import FlextLdapConnectionManager
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.exceptions import FlextLdapExceptions
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.operations import FlextLdapOperations
 from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.repositories import (
+    EntryRepository,
+    GroupRepository,
+    LdapRepository,
+    UserRepository,
+)
+from flext_ldap.handlers import (
+    CreateUserCommandHandler,
+    DeleteUserCommandHandler,
+    GetGroupQueryHandler,
+    GetUserQueryHandler,
+    LdapCommandHandler,
+    LdapHandlerRegistry,
+    LdapQueryHandler,
+    ListUsersQueryHandler,
+    UpdateUserCommandHandler,
+)
 from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldap.schema import FlextLdapSchema
 from flext_ldap.search import FlextLdapSearch
+from flext_ldap.searcher import FlextLdapSearcher
 from flext_ldap.servers import (
     ActiveDirectoryOperations,
     BaseServerOperations,
@@ -66,10 +90,10 @@ __all__ = [
     "FlextLdapAPI",
     "FlextLdapEntities",
     "FlextLdapValueObjects",
+    "FlextLdapModels",
     "FlextLdapDomain",
     "FlextLdapServices",
     "FlextLdapAdapters",
-
     # Version info
     "PROJECT_VERSION",
     "VERSION",
@@ -81,9 +105,11 @@ __all__ = [
     "FlextLdapAclModels",
     "FlextLdapAclParsers",
     "FlextLdapAuthentication",
+    "FlextLdapAuthenticator",
     "FlextLdapClient",
     "FlextLdapConfig",
     "FlextLdapConnection",
+    "FlextLdapConnectionManager",
     "FlextLdapConstants",
     "FlextLdapEntryAdapter",
     "FlextLdapExceptions",
@@ -91,8 +117,22 @@ __all__ = [
     "FlextLdapOperations",
     "FlextLdapProtocols",
     "FlextLdapQuirksAdapter",
+    "EntryRepository",
+    "GroupRepository",
+    "LdapRepository",
+    "UserRepository",
+    "CreateUserCommandHandler",
+    "DeleteUserCommandHandler",
+    "GetGroupQueryHandler",
+    "GetUserQueryHandler",
+    "LdapCommandHandler",
+    "LdapHandlerRegistry",
+    "LdapQueryHandler",
+    "ListUsersQueryHandler",
+    "UpdateUserCommandHandler",
     "FlextLdapSchema",
     "FlextLdapSearch",
+    "FlextLdapSearcher",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
@@ -105,4 +145,13 @@ __all__ = [
     "ServerOperationsFactory",
     "__version__",
     "__version_info__",
+    "CreateUserCommandHandler",
+    "DeleteUserCommandHandler",
+    "GetGroupQueryHandler",
+    "GetUserQueryHandler",
+    "LdapCommandHandler",
+    "LdapHandlerRegistry",
+    "LdapQueryHandler",
+    "ListUsersQueryHandler",
+    "UpdateUserCommandHandler",
 ]

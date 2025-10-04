@@ -170,7 +170,7 @@ def verify_entry_exists(
 def get_entry_attributes(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-) -> FlextResult[dict]:
+) -> FlextResult[FlextTypes.Dict]:
     """Get attributes of an LDAP entry."""
     try:
         server: Server = FlextLdapTypes.Server(
@@ -199,13 +199,13 @@ def get_entry_attributes(
                 attr: entry[attr].value for attr in entry.entry_attributes
             }
             conn.unbind()
-            return FlextResult[dict].ok(attributes)
+            return FlextResult[FlextTypes.Dict].ok(attributes)
         conn.unbind()
-        return FlextResult[dict].fail(f"Entry not found: {dn}")
+        return FlextResult[FlextTypes.Dict].fail(f"Entry not found: {dn}")
 
     except Exception as e:
         logger.exception("Error getting attributes for %s", dn)
-        return FlextResult[dict].fail(f"Error getting attributes: {e}")
+        return FlextResult[FlextTypes.Dict].fail(f"Error getting attributes: {e}")
 
 
 def search_entries(
@@ -213,7 +213,7 @@ def search_entries(
     base_dn: str,
     search_filter: str,
     scope: Literal["base", "onelevel", "subtree"] = "subtree",
-) -> FlextResult[list[dict]]:
+) -> FlextResult[list[FlextTypes.Dict]]:
     """Search for entries in LDAP server."""
     try:
         server: Server = FlextLdapTypes.Server(
@@ -256,11 +256,11 @@ def search_entries(
                 results.append(entry_data)
 
         conn.unbind()
-        return FlextResult[list[dict]].ok(results)
+        return FlextResult[list[FlextTypes.Dict]].ok(results)
 
     except Exception as e:
         logger.exception("Error searching entries")
-        return FlextResult[list[dict]].fail(
+        return FlextResult[list[FlextTypes.Dict]].fail(
             f"Error searching entries: {e}",
         )
 

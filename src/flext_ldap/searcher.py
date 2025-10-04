@@ -1,67 +1,45 @@
-"""LDAP search operations for flext-ldap.
-
-This module provides unified search functionality for LDAP operations
-with Clean Architecture patterns and flext-core integration.
+"""LDAP Searcher - Handles LDAP search operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: This file has type checking disabled due to limitations in the official types-ldap3 package:
-- Method return types (add, delete, search, modify, unbind) are not specified in the stubs
-- Properties like conn.entries and entry.entry_dn are not fully typed
-- Entry attributes and their values have incomplete type information
 """
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from typing import TYPE_CHECKING
+
+from flext_core import FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
+if TYPE_CHECKING:
+    from flext_ldap.clients import FlextLdapClient
 
-class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProtocol):
-    """Unified LDAP search operations class.
 
-    This class provides comprehensive LDAP search functionality
-    with Clean Architecture patterns and flext-core integration.
+class FlextLdapSearcher:
+    """LDAP Searcher - Handles LDAP search operations.
 
-    **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
-    **CLEAN ARCHITECTURE**: Application layer search services.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **UNIFIED CLASS PATTERN**: Single class per module with nested helpers only.
 
-    Implements FlextLdapProtocols.LdapSearchProtocol:
-    - search: Perform LDAP search operations
-    - search_one: Search for single entry
+    This class manages LDAP search operations including:
+    - Basic and advanced search queries
+    - Paged search support
+    - Entry conversion to domain models
+    - User and group existence checks
+    - Railway pattern error handling
+
+    **PROTOCOL COMPLIANCE**: Implements LdapSearchProtocol methods.
     """
 
-    def __init__(self) -> None:
-        """Initialize LDAP search service."""
-        super().__init__()
-        self._logger = FlextLogger(__name__)
-        # These will be set by the client that uses this service
-        self._connection = None
-
-    @classmethod
-    def create(cls) -> FlextLdapSearch:
-        """Create a new FlextLdapSearch instance (factory method)."""
-        return cls()
-
-    def set_connection_context(self, connection: object) -> None:
-        """Set the connection context for search operations.
+    def __init__(self, parent: FlextLdapClient) -> None:
+        """Initialize searcher with parent client reference.
 
         Args:
-            connection: LDAP connection object
-
+            parent: Parent FlextLdapClient instance for shared state access.
         """
-        self._connection = connection
+        self._parent = parent
 
     def search_one(
         self,
@@ -115,13 +93,13 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
 
         """
         try:
-            if not self._connection:
+            if not self._parent._connection:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "LDAP connection not established",
                 )
 
             # Perform search
-            success = self._connection.search(
+            success = self._parent._connection.search(
                 base_dn,
                 filter_str,
                 FlextLdapTypes.SUBTREE,
@@ -132,12 +110,12 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
 
             if not success:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
-                    f"Search failed: {self._connection.last_error}",
+                    f"Search failed: {self._parent._connection.last_error}",
                 )
 
             # Convert entries to Entry models
             entries: list[FlextLdapModels.Entry] = []
-            for entry in self._connection.entries:
+            for entry in self._parent._connection.entries:
                 # Build attributes dict from ldap3 entry
                 entry_attributes_dict: FlextTypes.Dict = {}
 
@@ -154,11 +132,11 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
                 elif isinstance(entry_attrs, list):
                     # Handle case where attributes is a list
                     # This might happen in error conditions or with certain LDAP servers
-                    self._logger.warning(
+                    self._parent._logger.warning(
                         f"entry.attributes is a list instead of dict for DN {entry.dn}"
                     )
                 else:
-                    self._logger.warning(
+                    self._parent._logger.warning(
                         f"Unexpected type for entry.attributes: {type(entry_attrs)}"
                     )
 
@@ -192,7 +170,7 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
             return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
-            self._logger.exception("Search failed")
+            self._parent._logger.exception("Search failed")
             return FlextResult[list[FlextLdapModels.Entry]].fail(f"Search failed: {e}")
 
     def user_exists(self, dn: str) -> FlextResult[bool]:
@@ -260,12 +238,12 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
                     dn_validation.error or "DN validation failed"
                 )
 
-            if not self._connection:
+            if not self._parent._connection:
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
                     "LDAP connection not established",
                 )
 
-            success = self._connection.search(
+            success = self._parent._connection.search(
                 dn,
                 FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
                 FlextLdapTypes.BASE,
@@ -273,27 +251,31 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
             )
 
             if not success:
-                error_msg = self._connection.last_error or "Unknown error"
+                error_msg = self._parent._connection.last_error or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
-                    self._logger.debug("Entry not found for DN: %s", dn)
+                    self._parent._logger.debug("Entry not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
-                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                self._parent._logger.warning(
+                    "LDAP search failed for DN %s: %s", dn, error_msg
+                )
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
 
-            if not self._connection.entries:
-                self._logger.debug("No entries found for DN: %s", dn)
+            if not self._parent._connection.entries:
+                self._parent._logger.debug("No entries found for DN: %s", dn)
                 return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
-            user = self._create_user_from_entry(self._connection.entries[0])
+            # Create user from first entry
+            entry = self._parent._connection.entries[0]
+            user = self._parent._create_user_from_entry(entry)
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
-            self._logger.exception("Get user failed for DN %s", dn)
+            self._parent._logger.exception("Get user failed")
             return FlextResult[FlextLdapModels.LdapUser | None].fail(
-                f"Get user failed: {e}",
+                f"Get user failed: {e}"
             )
 
     def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
@@ -314,12 +296,12 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
                     dn_validation.error or "DN validation failed"
                 )
 
-            if not self._connection:
+            if not self._parent._connection:
                 return FlextResult[FlextLdapModels.Group | None].fail(
                     "LDAP connection not established",
                 )
 
-            success = self._connection.search(
+            success = self._parent._connection.search(
                 dn,
                 FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
                 FlextLdapTypes.BASE,
@@ -327,56 +309,29 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
             )
 
             if not success:
-                error_msg = self._connection.last_error or "Unknown error"
+                error_msg = self._parent._connection.last_error or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
-                    self._logger.debug("Group not found for DN: %s", dn)
+                    self._parent._logger.debug("Entry not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.Group | None].ok(None)
 
-                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                self._parent._logger.warning(
+                    "LDAP search failed for DN %s: %s", dn, error_msg
+                )
                 return FlextResult[FlextLdapModels.Group | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
 
-            if not self._connection.entries:
+            if not self._parent._connection.entries:
+                self._parent._logger.debug("No entries found for DN: %s", dn)
                 return FlextResult[FlextLdapModels.Group | None].ok(None)
 
-            group = self._create_group_from_entry(self._connection.entries[0])
+            # Create group from first entry
+            entry = self._parent._connection.entries[0]
+            group = self._parent._create_group_from_entry(entry)
             return FlextResult[FlextLdapModels.Group | None].ok(group)
 
         except Exception as e:
-            self._logger.exception("Get group failed")
+            self._parent._logger.exception("Get group failed")
             return FlextResult[FlextLdapModels.Group | None].fail(
-                f"Get group failed: {e}",
+                f"Get group failed: {e}"
             )
-
-    def _create_user_from_entry(self, entry: object) -> FlextLdapModels.LdapUser:
-        """Create user from LDAP entry."""
-        # Simplified user creation - in real implementation this would be more complex
-        return FlextLdapModels.LdapUser(
-            dn=str(getattr(entry, "dn", "")),
-            uid=getattr(entry, "uid", [""])[0] if hasattr(entry, "uid") else "",
-            cn=getattr(entry, "cn", [""])[0] if hasattr(entry, "cn") else "",
-            sn=getattr(entry, "sn", [""])[0] if hasattr(entry, "sn") else "",
-            mail=getattr(entry, "mail", [""])[0] if hasattr(entry, "mail") else "",
-        )
-
-    def _create_group_from_entry(self, entry: object) -> FlextLdapModels.Group:
-        """Create group from LDAP entry."""
-        # Simplified group creation - in real implementation this would be more complex
-        return FlextLdapModels.Group(
-            dn=str(getattr(entry, "dn", "")),
-            cn=getattr(entry, "cn", [""])[0] if hasattr(entry, "cn") else "",
-            description=getattr(entry, "description", [""])[0]
-            if hasattr(entry, "description")
-            else "",
-            members=getattr(entry, "member", []) if hasattr(entry, "member") else [],
-        )
-
-    def execute(self) -> FlextResult[None]:
-        """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[None].ok(None)
-
-
-__all__ = [
-    "FlextLdapSearch",
-]

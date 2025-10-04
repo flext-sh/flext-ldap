@@ -185,3 +185,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             """
             return self._quirks_adapter.get_schema_subentry(server_type)
+
+    def execute(self) -> FlextResult[object]:
+        """Execute the main domain operation (required by FlextService)."""
+        return FlextResult[object].ok(None)

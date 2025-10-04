@@ -422,6 +422,549 @@ class FlextLdapUtilities(FlextUtilities):
                 f"String list conversion failed: {e}"
             )
 
+    # =========================================================================
+    # Enhanced flext-core Integration Methods
+    # =========================================================================
+
+    @staticmethod
+    def create_flext_ldap_utilities() -> FlextResult[FlextLdapUtilities]:
+        """Create enhanced FlextLdapUtilities with complete flext-core integration.
+
+        Demonstrates proper flext-core integration by creating LDAP utilities
+        that integrate with FlextContainer, FlextBus, FlextDispatcher, and other
+        flext-core components for comprehensive LDAP utility management.
+
+        Returns:
+            FlextResult[FlextLdapUtilities]: Configured FlextLdapUtilities instance or error
+
+        Example:
+            >>> utilities_result = FlextLdapUtilities.create_flext_ldap_utilities()
+            >>> if utilities_result.is_success:
+            ...     utilities = utilities_result.unwrap()
+            ...     # Use utilities with full flext-core integration
+            ...     normalized_dn = utilities.normalize_dn("cn=john,dc=example,dc=com")
+        """
+        try:
+            # Create base utilities with enhanced flext-core integration
+            utilities = FlextLdapUtilities()
+
+            # Validate utilities can access flext-core components
+            try:
+                from flext_core.config import FlextConfig
+                from flext_core.loggings import FlextLogger
+                from flext_core.container import FlextContainer
+
+                # Test integration with core components
+                FlextConfig()
+                FlextLogger(__name__)
+                FlextContainer.get_global()
+
+                return FlextResult[FlextLdapUtilities].ok(utilities)
+
+            except Exception as e:
+                return FlextResult[FlextLdapUtilities].fail(
+                    f"Flext-core integration check failed: {e}"
+                )
+
+        except Exception as e:
+            return FlextResult[FlextLdapUtilities].fail(
+                f"Failed to create flext-ldap utilities: {e}"
+            )
+
+    @staticmethod
+    def validate_flext_ldap_utilities() -> FlextResult[FlextTypes.Dict]:
+        """Validate complete flext-ldap utilities setup with integration patterns.
+
+        Demonstrates comprehensive flext-ldap validation by checking that all
+        utilities are properly configured and integrated with each other.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Validation results with detailed component status
+
+        Example:
+            >>> setup_result = FlextLdapUtilities.validate_flext_ldap_utilities()
+            >>> if setup_result.is_success:
+            ...     status = setup_result.unwrap()
+            ...     print(f"Normalization: {status['normalization']['status']}")
+            ...     print(f"Type Guards: {status['type_guards']['status']}")
+        """
+        validation_results = {
+            "utilities": {"status": "unknown", "details": ""},
+            "normalization": {"status": "unknown", "details": ""},
+            "type_guards": {"status": "unknown", "details": ""},
+            "processing": {"status": "unknown", "details": ""},
+            "validation": {"status": "unknown", "details": ""},
+        }
+
+        try:
+            # Validate utilities itself
+            utilities_result = FlextLdapUtilities.create_flext_ldap_utilities()
+            if utilities_result.is_success:
+                validation_results["utilities"] = {
+                    "status": "valid",
+                    "details": "FlextLdapUtilities properly initialized",
+                }
+            else:
+                validation_results["utilities"] = {
+                    "status": "invalid",
+                    "details": utilities_result.error,
+                }
+
+            # Validate normalization utilities
+            try:
+                dn_result = FlextLdapUtilities.normalize_dn("cn=john,dc=example,dc=com")
+                validation_results["normalization"] = {
+                    "status": "available",
+                    "details": f"Normalization utilities accessible, DN normalized: {dn_result.is_success}",
+                }
+            except Exception as e:
+                validation_results["normalization"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate type guards utilities
+            try:
+                dn_check = FlextLdapUtilities.is_ldap_dn("cn=john,dc=example,dc=com")
+                validation_results["type_guards"] = {
+                    "status": "available",
+                    "details": f"Type guards accessible, DN check: {dn_check}",
+                }
+            except Exception as e:
+                validation_results["type_guards"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate processing utilities
+            try:
+                filter_result = FlextLdapUtilities.normalize_filter("(cn=john*)")
+                validation_results["processing"] = {
+                    "status": "available",
+                    "details": f"Processing utilities accessible, filter normalized: {filter_result.is_success}",
+                }
+            except Exception as e:
+                validation_results["processing"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate validation utilities
+            try:
+                attrs_result = FlextLdapUtilities.normalize_attributes(
+                    ["cn", "mail", ""]
+                )
+                validation_results["validation"] = {
+                    "status": "available",
+                    "details": f"Validation utilities accessible, attributes normalized: {attrs_result.is_success}",
+                }
+            except Exception as e:
+                validation_results["validation"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Check overall health
+            all_valid = all(
+                result["status"] in ["valid", "available"]
+                for result in validation_results.values()
+            )
+            if all_valid:
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "overall_status": "healthy",
+                        "components": validation_results,
+                        "message": "All flext-ldap utilities are properly configured and accessible",
+                    }
+                )
+            else:
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "overall_status": "degraded",
+                        "components": validation_results,
+                        "message": "Some flext-ldap utilities have issues - check details",
+                    }
+                )
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"Flext-ldap utilities validation failed: {e}"
+            )
+
+    @staticmethod
+    def create_integration_example(component: str) -> FlextResult[str]:
+        """Create practical flext-ldap utilities integration examples.
+
+        Provides working code examples that demonstrate proper flext-ldap
+        utilities integration patterns for different components and use cases.
+
+        Args:
+            component: Component name ('normalization', 'validation', 'processing', 'type_guards')
+
+        Returns:
+            FlextResult[str]: Integration example code or error
+
+        Example:
+            >>> example = FlextLdapUtilities.create_integration_example('normalization')
+            >>> if example.is_success:
+            ...     print(f"Normalization integration example: {example.unwrap()[:100]}...")
+        """
+        examples = {
+            "normalization": """
+# Example: Enhanced LDAP normalization with flext-core integration
+from flext_ldap import FlextLdapUtilities
+from flext_core import FlextResult
+
+class LdapNormalizationService:
+    def __init__(self):
+        self._utilities = FlextLdapUtilities()
+
+    def normalize_user_data(self, user_data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for normalization
+        try:
+            # Normalize DN
+            dn_result = self._utilities.normalize_dn(user_data.get("dn", ""))
+            if dn_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"DN normalization failed: {dn_result.error}")
+
+            # Normalize attributes
+            attrs_result = self._utilities.normalize_attributes(user_data.get("attributes", []))
+            if attrs_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Attributes normalization failed: {attrs_result.error}")
+
+            # Normalize filter if present
+            filter_result = None
+            if user_data.get("filter"):
+                filter_result = self._utilities.normalize_filter(user_data["filter"])
+                if filter_result.is_failure:
+                    return FlextResult[FlextTypes.Dict].fail(f"Filter normalization failed: {filter_result.error}")
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "normalized_dn": dn_result.unwrap(),
+                "normalized_attributes": attrs_result.unwrap(),
+                "normalized_filter": filter_result.unwrap() if filter_result else None,
+                "original_data": user_data
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Normalization process failed: {e}")
+
+# Usage with flext-core integration
+service = LdapNormalizationService()
+result = service.normalize_user_data({
+    "dn": "cn=john doe ,dc=example,dc=com",
+    "attributes": ["cn", "mail", "", "memberOf"],
+    "filter": "(cn=john*)"
+})
+""",
+            "validation": """
+# Example: Enhanced LDAP validation with flext-core integration
+from flext_ldap import FlextLdapUtilities
+from flext_core import FlextResult
+
+class LdapValidationService:
+    def __init__(self):
+        self._utilities = FlextLdapUtilities()
+
+    def validate_ldap_entry(self, entry_data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for validation
+        try:
+            # Validate DN
+            dn = entry_data.get("dn", "")
+            if not self._utilities.is_ldap_dn(dn):
+                return FlextResult[FlextTypes.Dict].fail("Invalid DN format")
+
+            # Validate attributes
+            attributes = entry_data.get("attributes", {})
+            if not self._utilities.is_ldap_attributes_dict(attributes):
+                return FlextResult[FlextTypes.Dict].fail("Invalid attributes format")
+
+            # Validate object classes
+            object_classes = entry_data.get("objectClass", [])
+            if not self._utilities.is_string_list(object_classes):
+                return FlextResult[FlextTypes.Dict].fail("Invalid objectClass format")
+
+            # Validate entry data structure
+            if not self._utilities.is_ldap_entry_data(entry_data):
+                return FlextResult[FlextTypes.Dict].fail("Invalid entry data structure")
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "valid": True,
+                "dn_valid": True,
+                "attributes_valid": True,
+                "object_classes_valid": True,
+                "entry_data_valid": True,
+                "validated_entry": entry_data
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Validation process failed: {e}")
+
+# Usage with flext-core integration
+service = LdapValidationService()
+result = service.validate_ldap_entry({
+    "dn": "cn=john.doe,ou=users,dc=example,dc=com",
+    "attributes": {"cn": ["John Doe"], "mail": ["john.doe@example.com"]},
+    "objectClass": ["top", "person", "organizationalPerson"]
+})
+""",
+            "processing": """
+# Example: Enhanced LDAP processing with flext-core integration
+from flext_ldap import FlextLdapUtilities
+from flext_core import FlextResult
+
+class LdapProcessingService:
+    def __init__(self):
+        self._utilities = FlextLdapUtilities()
+
+    def process_search_results(self, search_results: list) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for processing
+        try:
+            if not isinstance(search_results, list):
+                return FlextResult[FlextTypes.Dict].fail("Search results must be a list")
+
+            processed_entries = []
+            for entry in search_results:
+                # Normalize each entry
+                normalized_entry = {}
+                for attr_name, attr_values in entry.items():
+                    normalized_name = self._utilities.normalize_attribute_name(attr_name)
+                    normalized_values = []
+                    for value in attr_values:
+                        if isinstance(value, str):
+                            normalized_values.append(value.strip())
+                        else:
+                            normalized_values.append(value)
+                    normalized_entry[normalized_name] = normalized_values
+                processed_entries.append(normalized_entry)
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "processed_entries": processed_entries,
+                "total_entries": len(processed_entries),
+                "processing_applied": True
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Processing failed: {e}")
+
+    def batch_normalize_entries(self, entries: list) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for batch processing
+        try:
+            normalized_entries = []
+            for entry in entries:
+                # Normalize DN
+                dn_result = self._utilities.normalize_dn(entry.get("dn", ""))
+                if dn_result.is_failure:
+                    return FlextResult[FlextTypes.Dict].fail(f"DN normalization failed for entry: {dn_result.error}")
+
+                # Normalize attributes
+                attrs_result = self._utilities.normalize_attributes(entry.get("attributes", []))
+                if attrs_result.is_failure:
+                    return FlextResult[FlextTypes.Dict].fail(f"Attributes normalization failed for entry: {attrs_result.error}")
+
+                normalized_entries.append({
+                    "normalized_dn": dn_result.unwrap(),
+                    "normalized_attributes": attrs_result.unwrap(),
+                    "original_entry": entry
+                })
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "normalized_entries": normalized_entries,
+                "total_processed": len(normalized_entries),
+                "batch_processing": True
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Batch processing failed: {e}")
+
+# Usage with flext-core integration
+service = LdapProcessingService()
+search_result = service.process_search_results([
+    {"cn": [" John Doe "], "mail": ["john.doe@example.com"]},
+    {"cn": [" Jane Smith"], "mail": ["jane.smith@example.com"]}
+])
+batch_result = service.batch_normalize_entries([
+    {"dn": "cn=john ,dc=example,dc=com", "attributes": ["cn", "mail", ""]},
+    {"dn": "cn=jane,dc=example,dc=com", "attributes": ["cn", "mail"]}
+])
+""",
+            "type_guards": """
+# Example: Enhanced type guards with flext-core integration
+from flext_ldap import FlextLdapUtilities
+from flext_core import FlextResult
+
+class LdapTypeGuardService:
+    def __init__(self):
+        self._utilities = FlextLdapUtilities()
+
+    def validate_entry_types(self, entry_data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for type validation
+        try:
+            type_checks = {
+                "dn_valid": self._utilities.is_ldap_dn(entry_data.get("dn")),
+                "filter_valid": self._utilities.is_ldap_filter(entry_data.get("filter")),
+                "attributes_valid": self._utilities.is_ldap_attributes_dict(entry_data.get("attributes")),
+                "entry_valid": self._utilities.is_ldap_entry_data(entry_data)
+            }
+
+            # All type checks must pass
+            all_valid = all(type_checks.values())
+            if not all_valid:
+                invalid_types = [k for k, v in type_checks.items() if not v]
+                return FlextResult[FlextTypes.Dict].fail(f"Invalid types: {invalid_types}")
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "all_types_valid": True,
+                "type_checks": type_checks,
+                "validated_entry": entry_data
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Type validation failed: {e}")
+
+    def ensure_valid_entry_types(self, entry_data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use flext-core patterns for type enforcement
+        try:
+            # Ensure DN is valid
+            dn_result = self._utilities.ensure_ldap_dn(entry_data.get("dn", ""))
+            if dn_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"DN validation failed: {dn_result.error}")
+
+            # Ensure attributes are valid
+            attrs = entry_data.get("attributes", {})
+            attrs_result = self._utilities.ensure_string_list(attrs)
+            if attrs_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(f"Attributes validation failed: {attrs_result.error}")
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "types_validated": True,
+                "validated_dn": dn_result.unwrap(),
+                "validated_attributes": attrs_result.unwrap(),
+                "original_entry": entry_data
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Type enforcement failed: {e}")
+
+# Usage with flext-core integration
+service = LdapTypeGuardService()
+type_result = service.validate_entry_types({
+    "dn": "cn=john.doe,dc=example,dc=com",
+    "filter": "(cn=john*)",
+    "attributes": {"cn": ["John Doe"], "mail": ["john.doe@example.com"]}
+})
+enforce_result = service.ensure_valid_entry_types({
+    "dn": "cn=john ,dc=example,dc=com",
+    "attributes": ["cn", "mail"]
+})
+""",
+        }
+
+        if component not in examples:
+            available = ", ".join(examples.keys())
+            return FlextResult[str].fail(
+                f"Unknown component: {component}. Available: {available}"
+            )
+
+        return FlextResult[str].ok(examples[component].strip())
+
+    @staticmethod
+    def demonstrate_flext_ldap_utilities_patterns() -> FlextResult[FlextTypes.Dict]:
+        """Demonstrate comprehensive flext-ldap utilities integration patterns.
+
+        Provides a working example that showcases how all flext-ldap utilities
+        work together with flext-core in realistic scenarios, demonstrating
+        best practices for LDAP utility operations.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Demonstration results with pattern explanations
+
+        Example:
+            >>> demo = FlextLdapUtilities.demonstrate_flext_ldap_utilities_patterns()
+            >>> if demo.is_success:
+            ...     patterns = demo.unwrap()
+            ...     print(f"LDAP utilities pattern: {patterns['utilities_pattern']['description']}")
+        """
+        try:
+            # Create utilities with integration validation
+            utilities_result = FlextLdapUtilities.create_flext_ldap_utilities()
+            if utilities_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(
+                    f"Utilities creation failed: {utilities_result.error}"
+                )
+
+            utilities = utilities_result.unwrap()
+
+            # Demonstrate normalization pattern
+            dn_normalization = utilities.normalize_dn("cn=john doe ,dc=example,dc=com")
+            filter_normalization = utilities.normalize_filter("(cn=john*)")
+            attr_normalization = utilities.normalize_attributes(
+                ["cn", "mail", "", "memberOf"]
+            )
+
+            # Demonstrate validation pattern
+            dn_validation = utilities.is_ldap_dn("cn=john.doe,dc=example,dc=com")
+            filter_validation = utilities.is_ldap_filter("(cn=john*)")
+            entry_validation = utilities.is_ldap_entry_data(
+                {"dn": "cn=john,dc=example,dc=com", "attributes": {"cn": ["John"]}}
+            )
+
+            # Demonstrate type guards pattern
+            string_list_check = utilities.is_string_list(["cn", "mail"])
+            bytes_list_check = utilities.is_bytes_list([b"data1", b"data2"])
+
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "demonstration_status": "successful",
+                    "patterns_demonstrated": {
+                        "normalization_pattern": {
+                            "description": "LDAP data normalization with flext-core integration",
+                            "example_result": {
+                                "dn_normalized": dn_normalization.is_success,
+                                "filter_normalized": filter_normalization.is_success,
+                                "attributes_normalized": attr_normalization.is_success,
+                            },
+                            "integration_level": "full",
+                        },
+                        "validation_pattern": {
+                            "description": "LDAP type validation with comprehensive checking",
+                            "example_result": {
+                                "dn_valid": dn_validation,
+                                "filter_valid": filter_validation,
+                                "entry_valid": entry_validation,
+                            },
+                            "integration_level": "full",
+                        },
+                        "type_guards_pattern": {
+                            "description": "Runtime type checking for LDAP data structures",
+                            "example_result": {
+                                "string_list_valid": string_list_check,
+                                "bytes_list_valid": bytes_list_check,
+                            },
+                            "integration_level": "full",
+                        },
+                    },
+                    "integration_level": "comprehensive",
+                    "components_integrated": [
+                        "FlextLdapUtilities",
+                        "FlextLdapTypes",
+                        "FlextLdapModels",
+                    ],
+                    "best_practices_demonstrated": [
+                        "LDAP data normalization with flext-core patterns",
+                        "Type validation with comprehensive checking",
+                        "Runtime type guards for data structure validation",
+                        "Error handling with flext-core integration",
+                        "Type-safe LDAP utility operations",
+                    ],
+                }
+            )
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"LDAP utilities pattern demonstration failed: {e}"
+            )
+
 
 # Export the main utilities class
 __all__ = [

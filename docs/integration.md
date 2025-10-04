@@ -25,19 +25,19 @@ class UserService:
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 
-    def process_user_authentication(self, username: str, password: str) -> FlextResult[dict]:
+    def process_user_authentication(self, username: str, password: str) -> FlextResult[FlextTypes.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self._logger.info("Processing user authentication", extra={"username": username})
 
         auth_result = self._ldap_api.authenticate_user(username, password)
         if auth_result.is_failure:
             self._logger.error("Authentication failed", extra={"error": auth_result.error})
-            return FlextResult[dict].fail(f"Authentication failed: {auth_result.error}")
+            return FlextResult[FlextTypes.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self._logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return FlextResult[dict].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,
