@@ -6,16 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ldap3 import Connection
 
 from flext_core import FlextResult
+from flext_ldap.clients import FlextLdapClient
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-
-if TYPE_CHECKING:
-    from flext_ldap.clients import FlextLdapClient
 
 
 class FlextLdapAuthenticator:

@@ -23,520 +23,577 @@ _logger = FlextLogger(__name__)
 T = TypeVar("T", bound=FlextLdapModels.Entity)
 
 
-class LdapRepository(Generic[T], ABC):
-    """Abstract base class for LDAP repositories implementing Domain.Repository protocol.
+class FlextLdapRepositories:
+    """Unified namespace class for LDAP repositories.
 
-    This class provides the foundation for LDAP-specific repository implementations,
-    implementing the flext-core Domain.Repository protocol through structural subtyping.
-
-    Generic type T is bound to FlextLdapModels.Entity to ensure all repository
-    operations work with domain entities.
+    Consolidates all LDAP repository implementations into a single namespace class
+    following FLEXT single-class-per-module pattern while maintaining domain-driven design.
     """
 
-    def __init__(self, client: FlextLdapClient | None = None) -> None:
-        """Initialize repository with LDAP client.
+    class LdapRepository(Generic[T], ABC):
+        """Abstract base class for LDAP repositories implementing Domain.Repository protocol.
 
-        Args:
-            client: LDAP client instance. If None, creates a new instance.
+        This class provides the foundation for LDAP-specific repository implementations,
+        implementing the flext-core Domain.Repository protocol through structural subtyping.
+
+        Generic type T is bound to FlextLdapModels.Entity to ensure all repository
+        operations work with domain entities.
         """
-        self._client = client or FlextLdapClient()
-        self._logger = FlextLogger(__name__)
 
-    # =========================================================================
-    # DOMAIN.REPOSITORY PROTOCOL IMPLEMENTATION
-    # =========================================================================
+        def __init__(self, client: FlextLdapClient | None = None) -> None:
+            """Initialize repository with LDAP client.
 
-    @abstractmethod
-    def get_by_id(self, id: str) -> FlextResult[T | None]:
-        """Get entity by ID - implements Domain.Repository protocol.
+            Args:
+                client: LDAP client instance. If None, creates a new instance.
+            """
+            self._client = client or FlextLdapClient()
+            self._logger = FlextLogger(__name__)
 
-        Args:
-            id: Entity identifier
+        # =========================================================================
+        # DOMAIN.REPOSITORY PROTOCOL IMPLEMENTATION
+        # =========================================================================
 
-        Returns:
-            FlextResult with entity or None if not found
-        """
-        ...
+        @abstractmethod
+        def get_by_id(self, id: str) -> FlextResult[T | None]:
+            """Get entity by ID - implements Domain.Repository protocol.
 
-    def get_all(self) -> FlextResult[list[T]]:
-        """Get all entities - implements Domain.Repository protocol.
+            Args:
+                id: Entity identifier
 
-        Returns:
-            FlextResult with list of all entities
-        """
-        # Default implementation - subclasses should override for efficiency
-        return FlextResult[list[T]].fail("get_all not implemented - use subclass")
+            Returns:
+                FlextResult with entity or None if not found
+            """
+            ...
 
-    @abstractmethod
-    def add(self, entity: T) -> FlextResult[T]:
-        """Add new entity - implements Domain.Repository protocol.
+        def get_all(self) -> FlextResult[list[T]]:
+            """Get all entities - implements Domain.Repository protocol.
 
-        Args:
-            entity: Entity to add
+            Returns:
+                FlextResult with list of all entities
+            """
+            # Default implementation - subclasses should override for efficiency
+            return FlextResult[list[T]].fail("get_all not implemented - use subclass")
 
-        Returns:
-            FlextResult with added entity
-        """
-        ...
+        @abstractmethod
+        def add(self, entity: T) -> FlextResult[T]:
+            """Add new entity - implements Domain.Repository protocol.
 
-    @abstractmethod
-    def update(self, entity: T) -> FlextResult[T]:
-        """Update existing entity - implements Domain.Repository protocol.
+            Args:
+                entity: Entity to add
 
-        Args:
-            entity: Entity to update
+            Returns:
+                FlextResult with added entity
+            """
+            ...
 
-        Returns:
-            FlextResult with updated entity
-        """
-        ...
+        @abstractmethod
+        def update(self, entity: T) -> FlextResult[T]:
+            """Update existing entity - implements Domain.Repository protocol.
 
-    @abstractmethod
-    def delete(self, id: str) -> FlextResult[bool]:
-        """Delete entity by ID - implements Domain.Repository protocol.
+            Args:
+                entity: Entity to update
 
-        Args:
-            id: Entity identifier
+            Returns:
+                FlextResult with updated entity
+            """
+            ...
 
-        Returns:
-            FlextResult with True if deleted, False if not found
-        """
-        ...
+        @abstractmethod
+        def delete(self, id: str) -> FlextResult[bool]:
+            """Delete entity by ID - implements Domain.Repository protocol.
 
-    def exists(self, id: str) -> FlextResult[bool]:
-        """Check if entity exists - implements Domain.Repository protocol.
+            Args:
+                id: Entity identifier
 
-        Args:
-            id: Entity identifier
+            Returns:
+                FlextResult with True if deleted, False if not found
+            """
+            ...
 
-        Returns:
-            FlextResult with True if exists, False otherwise
-        """
-        # Default implementation using get_by_id
-        result = self.get_by_id(id)
-        if result.is_failure:
-            return FlextResult[bool].fail(result.error or "Failed to check existence")
-        return FlextResult[bool].ok(result.unwrap() is not None)
+        def exists(self, id: str) -> FlextResult[bool]:
+            """Check if entity exists - implements Domain.Repository protocol.
 
+            Args:
+                id: Entity identifier
 
-class UserRepository(LdapRepository[FlextLdapModels.User]):
-    """Repository for LDAP User entities implementing Domain.Repository protocol."""
-
-    def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.User | None]:
-        """Get user by ID (DN or UID).
-
-        Args:
-            id: User DN or UID
-
-        Returns:
-            FlextResult with User entity or None
-        """
-        try:
-            # Try as DN first
-            if id.startswith(("cn=", "uid=", "ou=")):
-                result = self._client.get_user(id)
-            else:
-                # Try as UID with search
-                search_result = self._client.search_users(
-                    base_dn=self._client.config.ldap_user_base_dn, uid=id
-                )
-                if search_result.is_failure:
-                    return FlextResult[FlextLdapModels.User | None].fail(
-                        search_result.error or "User search failed"
-                    )
-
-                users = search_result.unwrap()
-                if not users:
-                    return FlextResult[FlextLdapModels.User | None].ok(None)
-
-                # Return first match
-                result = FlextResult[FlextLdapModels.User].ok(users[0])
-
+            Returns:
+                FlextResult with True if exists, False otherwise
+            """
+            # Default implementation using get_by_id
+            result = self.get_by_id(id)
             if result.is_failure:
-                # If DN lookup failed, try UID search
+                return FlextResult[bool].fail(
+                    result.error or "Failed to check existence"
+                )
+            return FlextResult[bool].ok(result.unwrap() is not None)
+
+    class UserRepository(LdapRepository[FlextLdapModels.User]):
+        """Repository for LDAP User entities implementing Domain.Repository protocol."""
+
+        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.User | None]:
+            """Get user by ID (DN or UID).
+
+            Args:
+                id: User DN or UID
+
+            Returns:
+                FlextResult with User entity or None
+            """
+            try:
+                # Try as DN first
                 if id.startswith(("cn=", "uid=", "ou=")):
+                    result = self._client.get_user(id)
+                else:
+                    # Try as UID with search
                     search_result = self._client.search_users(
-                        base_dn=self._client.config.ldap_user_base_dn,
-                        uid=id.split(",")[0].split("=")[1],  # Extract UID from DN
+                        base_dn=self._client.config.ldap_user_base_dn, uid=id
                     )
-                    if search_result.is_success:
-                        users = search_result.unwrap()
-                        if users:
-                            return FlextResult[FlextLdapModels.User | None].ok(users[0])
+                    if search_result.is_failure:
+                        return FlextResult[FlextLdapModels.User | None].fail(
+                            search_result.error or "User search failed"
+                        )
 
+                    users = search_result.unwrap()
+                    if not users:
+                        return FlextResult[FlextLdapModels.User | None].ok(None)
+
+                    # Return first match
+                    result = FlextResult[FlextLdapModels.User].ok(users[0])
+
+                if result.is_failure:
+                    # If DN lookup failed, try UID search
+                    if id.startswith(("cn=", "uid=", "ou=")):
+                        search_result = self._client.search_users(
+                            base_dn=self._client.config.ldap_user_base_dn,
+                            uid=id.split(",")[0].split("=")[1],  # Extract UID from DN
+                        )
+                        if search_result.is_success:
+                            users = search_result.unwrap()
+                            if users:
+                                return FlextResult[FlextLdapModels.User | None].ok(
+                                    users[0]
+                                )
+
+                    return FlextResult[FlextLdapModels.User | None].fail(
+                        result.error or "User not found"
+                    )
+
+                return FlextResult[FlextLdapModels.User | None].ok(result.unwrap())
+
+            except Exception as e:
+                self._logger.error("Failed to get user by ID", error=str(e), user_id=id)
                 return FlextResult[FlextLdapModels.User | None].fail(
-                    result.error or "User not found"
+                    f"User lookup failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.User | None].ok(result.unwrap())
+        def get_all(self) -> FlextResult[list[FlextLdapModels.User]]:
+            """Get all users.
 
-        except Exception as e:
-            self._logger.error("Failed to get user by ID", error=str(e), user_id=id)
-            return FlextResult[FlextLdapModels.User | None].fail(
-                f"User lookup failed: {e}"
-            )
-
-    def get_all(self) -> FlextResult[list[FlextLdapModels.User]]:
-        """Get all users.
-
-        Returns:
-            FlextResult with list of all users
-        """
-        try:
-            result = self._client.search_users(
-                base_dn=self._client.config.ldap_user_base_dn
-            )
-            if result.is_failure:
+            Returns:
+                FlextResult with list of all users
+            """
+            try:
+                result = self._client.search_users(
+                    base_dn=self._client.config.ldap_user_base_dn
+                )
+                if result.is_failure:
+                    return FlextResult[list[FlextLdapModels.User]].fail(
+                        result.error or "User search failed"
+                    )
+                return FlextResult[list[FlextLdapModels.User]].ok(result.unwrap())
+            except Exception as e:
+                self._logger.error("Failed to get all users", error=str(e))
                 return FlextResult[list[FlextLdapModels.User]].fail(
-                    result.error or "User search failed"
+                    f"User retrieval failed: {e}"
                 )
-            return FlextResult[list[FlextLdapModels.User]].ok(result.unwrap())
-        except Exception as e:
-            self._logger.error("Failed to get all users", error=str(e))
-            return FlextResult[list[FlextLdapModels.User]].fail(
-                f"User retrieval failed: {e}"
-            )
 
-    def add(self, entity: FlextLdapModels.User) -> FlextResult[FlextLdapModels.User]:
-        """Add new user.
+        def add(
+            self, entity: FlextLdapModels.User
+        ) -> FlextResult[FlextLdapModels.User]:
+            """Add new user.
 
-        Args:
-            entity: User entity to add
+            Args:
+                entity: User entity to add
 
-        Returns:
-            FlextResult with added user entity
-        """
-        try:
-            # Convert entity to create request
-            create_request = FlextLdapModels.CreateUserRequest(
-                dn=entity.dn,
-                uid=entity.uid,
-                cn=entity.cn,
-                sn=entity.sn,
-                mail=getattr(entity, "mail", None),
-                object_classes=getattr(
-                    entity, "object_classes", ["person", "organizationalPerson"]
-                ),
-            )
+            Returns:
+                FlextResult with added user entity
+            """
+            try:
+                # Convert entity to create request
+                create_request = FlextLdapModels.CreateUserRequest(
+                    dn=entity.dn,
+                    uid=entity.uid,
+                    cn=entity.cn,
+                    sn=entity.sn,
+                    mail=getattr(entity, "mail", None),
+                    object_classes=getattr(
+                        entity, "object_classes", ["person", "organizationalPerson"]
+                    ),
+                )
 
-            result = self._client.create_user(create_request)
-            if result.is_failure:
+                result = self._client.create_user(create_request)
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.User].fail(
+                        result.error or "User creation failed"
+                    )
+
+                return FlextResult[FlextLdapModels.User].ok(result.unwrap())
+
+            except Exception as e:
+                self._logger.error(
+                    "Failed to add user", error=str(e), user_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.User].fail(
-                    result.error or "User creation failed"
+                    f"User creation failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.User].ok(result.unwrap())
+        def update(
+            self, entity: FlextLdapModels.User
+        ) -> FlextResult[FlextLdapModels.User]:
+            """Update existing user.
 
-        except Exception as e:
-            self._logger.error("Failed to add user", error=str(e), user_dn=entity.dn)
-            return FlextResult[FlextLdapModels.User].fail(f"User creation failed: {e}")
+            Args:
+                entity: User entity to update
 
-    def update(self, entity: FlextLdapModels.User) -> FlextResult[FlextLdapModels.User]:
-        """Update existing user.
+            Returns:
+                FlextResult with updated user entity
+            """
+            try:
+                # For now, use attribute update - could be enhanced with change tracking
+                attributes = {
+                    "cn": entity.cn,
+                    "sn": entity.sn,
+                }
+                if hasattr(entity, "mail") and entity.mail:
+                    attributes["mail"] = entity.mail
 
-        Args:
-            entity: User entity to update
+                result = self._client.update_user_attributes(entity.dn, attributes)
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.User].fail(
+                        result.error or "User update failed"
+                    )
 
-        Returns:
-            FlextResult with updated user entity
-        """
-        try:
-            # For now, use attribute update - could be enhanced with change tracking
-            attributes = {
-                "cn": entity.cn,
-                "sn": entity.sn,
-            }
-            if hasattr(entity, "mail") and entity.mail:
-                attributes["mail"] = entity.mail
+                # Return updated entity (could refetch for consistency)
+                return FlextResult[FlextLdapModels.User].ok(entity)
 
-            result = self._client.update_user_attributes(entity.dn, attributes)
-            if result.is_failure:
+            except Exception as e:
+                self._logger.error(
+                    "Failed to update user", error=str(e), user_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.User].fail(
-                    result.error or "User update failed"
+                    f"User update failed: {e}"
                 )
 
-            # Return updated entity (could refetch for consistency)
-            return FlextResult[FlextLdapModels.User].ok(entity)
+        def delete(self, id: str) -> FlextResult[bool]:
+            """Delete user by ID.
 
-        except Exception as e:
-            self._logger.error("Failed to update user", error=str(e), user_dn=entity.dn)
-            return FlextResult[FlextLdapModels.User].fail(f"User update failed: {e}")
+            Args:
+                id: User DN or UID
 
-    def delete(self, id: str) -> FlextResult[bool]:
-        """Delete user by ID.
+            Returns:
+                FlextResult with True if deleted
+            """
+            try:
+                # Get user first to ensure it exists
+                get_result = self.get_by_id(id)
+                if get_result.is_failure:
+                    return FlextResult[bool].fail(
+                        get_result.error or "User lookup failed"
+                    )
 
-        Args:
-            id: User DN or UID
+                user = get_result.unwrap()
+                if user is None:
+                    return FlextResult[bool].ok(False)  # Not found
 
-        Returns:
-            FlextResult with True if deleted
-        """
-        try:
-            # Get user first to ensure it exists
-            get_result = self.get_by_id(id)
-            if get_result.is_failure:
-                return FlextResult[bool].fail(get_result.error or "User lookup failed")
+                result = self._client.delete_user(user.dn)
+                if result.is_failure:
+                    return FlextResult[bool].fail(
+                        result.error or "User deletion failed"
+                    )
 
-            user = get_result.unwrap()
-            if user is None:
-                return FlextResult[bool].ok(False)  # Not found
+                return FlextResult[bool].ok(True)
 
-            result = self._client.delete_user(user.dn)
-            if result.is_failure:
-                return FlextResult[bool].fail(result.error or "User deletion failed")
+            except Exception as e:
+                self._logger.error("Failed to delete user", error=str(e), user_id=id)
+                return FlextResult[bool].fail(f"User deletion failed: {e}")
 
-            return FlextResult[bool].ok(True)
+    class GroupRepository(LdapRepository[FlextLdapModels.Group]):
+        """Repository for LDAP Group entities implementing Domain.Repository protocol."""
 
-        except Exception as e:
-            self._logger.error("Failed to delete user", error=str(e), user_id=id)
-            return FlextResult[bool].fail(f"User deletion failed: {e}")
+        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Group | None]:
+            """Get group by ID (DN or CN).
 
+            Args:
+                id: Group DN or CN
 
-class GroupRepository(LdapRepository[FlextLdapModels.Group]):
-    """Repository for LDAP Group entities implementing Domain.Repository protocol."""
-
-    def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Group | None]:
-        """Get group by ID (DN or CN).
-
-        Args:
-            id: Group DN or CN
-
-        Returns:
-            FlextResult with Group entity or None
-        """
-        try:
-            result = self._client.get_group(id)
-            if result.is_failure:
+            Returns:
+                FlextResult with Group entity or None
+            """
+            try:
+                result = self._client.get_group(id)
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Group | None].fail(
+                        result.error or "Group lookup failed"
+                    )
+                return FlextResult[FlextLdapModels.Group | None].ok(result.unwrap())
+            except Exception as e:
+                self._logger.error(
+                    "Failed to get group by ID", error=str(e), group_id=id
+                )
                 return FlextResult[FlextLdapModels.Group | None].fail(
-                    result.error or "Group lookup failed"
+                    f"Group lookup failed: {e}"
                 )
-            return FlextResult[FlextLdapModels.Group | None].ok(result.unwrap())
-        except Exception as e:
-            self._logger.error("Failed to get group by ID", error=str(e), group_id=id)
-            return FlextResult[FlextLdapModels.Group | None].fail(
-                f"Group lookup failed: {e}"
-            )
 
-    def get_all(self) -> FlextResult[list[FlextLdapModels.Group]]:
-        """Get all groups.
+        def get_all(self) -> FlextResult[list[FlextLdapModels.Group]]:
+            """Get all groups.
 
-        Returns:
-            FlextResult with list of all groups
-        """
-        try:
-            result = self._client.search_groups(
-                base_dn=self._client.config.ldap_group_base_dn
-            )
-            if result.is_failure:
+            Returns:
+                FlextResult with list of all groups
+            """
+            try:
+                result = self._client.search_groups(
+                    base_dn=self._client.config.ldap_group_base_dn
+                )
+                if result.is_failure:
+                    return FlextResult[list[FlextLdapModels.Group]].fail(
+                        result.error or "Group search failed"
+                    )
+                return FlextResult[list[FlextLdapModels.Group]].ok(result.unwrap())
+            except Exception as e:
+                self._logger.error("Failed to get all groups", error=str(e))
                 return FlextResult[list[FlextLdapModels.Group]].fail(
-                    result.error or "Group search failed"
+                    f"Group retrieval failed: {e}"
                 )
-            return FlextResult[list[FlextLdapModels.Group]].ok(result.unwrap())
-        except Exception as e:
-            self._logger.error("Failed to get all groups", error=str(e))
-            return FlextResult[list[FlextLdapModels.Group]].fail(
-                f"Group retrieval failed: {e}"
-            )
 
-    def add(self, entity: FlextLdapModels.Group) -> FlextResult[FlextLdapModels.Group]:
-        """Add new group.
+        def add(
+            self, entity: FlextLdapModels.Group
+        ) -> FlextResult[FlextLdapModels.Group]:
+            """Add new group.
 
-        Args:
-            entity: Group entity to add
+            Args:
+                entity: Group entity to add
 
-        Returns:
-            FlextResult with added group entity
-        """
-        try:
-            # Convert entity to create request
-            create_request = FlextLdapModels.CreateGroupRequest(
-                dn=entity.dn,
-                cn=entity.cn,
-                description=getattr(entity, "description", None),
-                object_classes=getattr(
-                    entity, "object_classes", ["groupOfNames", "top"]
-                ),
-            )
+            Returns:
+                FlextResult with added group entity
+            """
+            try:
+                # Convert entity to create request
+                create_request = FlextLdapModels.CreateGroupRequest(
+                    dn=entity.dn,
+                    cn=entity.cn,
+                    description=getattr(entity, "description", None),
+                    object_classes=getattr(
+                        entity, "object_classes", ["groupOfNames", "top"]
+                    ),
+                )
 
-            result = self._client.create_group(create_request)
-            if result.is_failure:
+                result = self._client.create_group(create_request)
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Group].fail(
+                        result.error or "Group creation failed"
+                    )
+
+                return FlextResult[FlextLdapModels.Group].ok(result.unwrap())
+
+            except Exception as e:
+                self._logger.error(
+                    "Failed to add group", error=str(e), group_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.Group].fail(
-                    result.error or "Group creation failed"
+                    f"Group creation failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.Group].ok(result.unwrap())
+        def update(
+            self, entity: FlextLdapModels.Group
+        ) -> FlextResult[FlextLdapModels.Group]:
+            """Update existing group.
 
-        except Exception as e:
-            self._logger.error("Failed to add group", error=str(e), group_dn=entity.dn)
-            return FlextResult[FlextLdapModels.Group].fail(
-                f"Group creation failed: {e}"
-            )
+            Args:
+                entity: Group entity to update
 
-    def update(
-        self, entity: FlextLdapModels.Group
-    ) -> FlextResult[FlextLdapModels.Group]:
-        """Update existing group.
+            Returns:
+                FlextResult with updated group entity
+            """
+            try:
+                # For now, use attribute update
+                attributes = {
+                    "cn": entity.cn,
+                }
+                if hasattr(entity, "description") and entity.description:
+                    attributes["description"] = entity.description
 
-        Args:
-            entity: Group entity to update
+                result = self._client.update_group_attributes(entity.dn, attributes)
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Group].fail(
+                        result.error or "Group update failed"
+                    )
 
-        Returns:
-            FlextResult with updated group entity
-        """
-        try:
-            # For now, use attribute update
-            attributes = {
-                "cn": entity.cn,
-            }
-            if hasattr(entity, "description") and entity.description:
-                attributes["description"] = entity.description
+                return FlextResult[FlextLdapModels.Group].ok(entity)
 
-            result = self._client.update_group_attributes(entity.dn, attributes)
-            if result.is_failure:
+            except Exception as e:
+                self._logger.error(
+                    "Failed to update group", error=str(e), group_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.Group].fail(
-                    result.error or "Group update failed"
+                    f"Group update failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.Group].ok(entity)
+        def delete(self, id: str) -> FlextResult[bool]:
+            """Delete group by ID.
 
-        except Exception as e:
-            self._logger.error(
-                "Failed to update group", error=str(e), group_dn=entity.dn
-            )
-            return FlextResult[FlextLdapModels.Group].fail(f"Group update failed: {e}")
+            Args:
+                id: Group DN or CN
 
-    def delete(self, id: str) -> FlextResult[bool]:
-        """Delete group by ID.
+            Returns:
+                FlextResult with True if deleted
+            """
+            try:
+                # Get group first to ensure it exists
+                get_result = self.get_by_id(id)
+                if get_result.is_failure:
+                    return FlextResult[bool].fail(
+                        get_result.error or "Group lookup failed"
+                    )
 
-        Args:
-            id: Group DN or CN
+                group = get_result.unwrap()
+                if group is None:
+                    return FlextResult[bool].ok(False)  # Not found
 
-        Returns:
-            FlextResult with True if deleted
-        """
-        try:
-            # Get group first to ensure it exists
-            get_result = self.get_by_id(id)
-            if get_result.is_failure:
-                return FlextResult[bool].fail(get_result.error or "Group lookup failed")
+                result = self._client.delete_group(group.dn)
+                if result.is_failure:
+                    return FlextResult[bool].fail(
+                        result.error or "Group deletion failed"
+                    )
 
-            group = get_result.unwrap()
-            if group is None:
-                return FlextResult[bool].ok(False)  # Not found
+                return FlextResult[bool].ok(True)
 
-            result = self._client.delete_group(group.dn)
-            if result.is_failure:
-                return FlextResult[bool].fail(result.error or "Group deletion failed")
+            except Exception as e:
+                self._logger.error("Failed to delete group", error=str(e), group_id=id)
+                return FlextResult[bool].fail(f"Group deletion failed: {e}")
 
-            return FlextResult[bool].ok(True)
+    class EntryRepository(LdapRepository[FlextLdapModels.Entry]):
+        """Repository for LDAP Entry entities implementing Domain.Repository protocol."""
 
-        except Exception as e:
-            self._logger.error("Failed to delete group", error=str(e), group_id=id)
-            return FlextResult[bool].fail(f"Group deletion failed: {e}")
+        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Entry | None]:
+            """Get entry by DN.
 
+            Args:
+                id: Entry DN
 
-class EntryRepository(LdapRepository[FlextLdapModels.Entry]):
-    """Repository for LDAP Entry entities implementing Domain.Repository protocol."""
+            Returns:
+                FlextResult with Entry entity or None
+            """
+            try:
+                # Use search with base scope to get specific entry
+                result = self._client.search_entries(
+                    base_dn=id, filter_str="(objectClass=*)", scope="base"
+                )
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Entry | None].fail(
+                        result.error or "Entry lookup failed"
+                    )
 
-    def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Get entry by DN.
+                response = result.unwrap()
+                if not response.entries:
+                    return FlextResult[FlextLdapModels.Entry | None].ok(None)
 
-        Args:
-            id: Entry DN
+                return FlextResult[FlextLdapModels.Entry | None].ok(response.entries[0])
 
-        Returns:
-            FlextResult with Entry entity or None
-        """
-        try:
-            # Use search with base scope to get specific entry
-            result = self._client.search_entries(
-                base_dn=id, filter_str="(objectClass=*)", scope="base"
-            )
-            if result.is_failure:
+            except Exception as e:
+                self._logger.error(
+                    "Failed to get entry by ID", error=str(e), entry_dn=id
+                )
                 return FlextResult[FlextLdapModels.Entry | None].fail(
-                    result.error or "Entry lookup failed"
+                    f"Entry lookup failed: {e}"
                 )
 
-            response = result.unwrap()
-            if not response.entries:
-                return FlextResult[FlextLdapModels.Entry | None].ok(None)
+        def add(
+            self, entity: FlextLdapModels.Entry
+        ) -> FlextResult[FlextLdapModels.Entry]:
+            """Add new entry.
 
-            return FlextResult[FlextLdapModels.Entry | None].ok(response.entries[0])
+            Args:
+                entity: Entry entity to add
 
-        except Exception as e:
-            self._logger.error("Failed to get entry by ID", error=str(e), entry_dn=id)
-            return FlextResult[FlextLdapModels.Entry | None].fail(
-                f"Entry lookup failed: {e}"
-            )
+            Returns:
+                FlextResult with added entry entity
+            """
+            try:
+                result = self._client.add_entry(
+                    dn=entity.dn, attributes=entity.attributes
+                )
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Entry].fail(
+                        result.error or "Entry creation failed"
+                    )
 
-    def add(self, entity: FlextLdapModels.Entry) -> FlextResult[FlextLdapModels.Entry]:
-        """Add new entry.
+                return FlextResult[FlextLdapModels.Entry].ok(entity)
 
-        Args:
-            entity: Entry entity to add
-
-        Returns:
-            FlextResult with added entry entity
-        """
-        try:
-            result = self._client.add_entry(dn=entity.dn, attributes=entity.attributes)
-            if result.is_failure:
+            except Exception as e:
+                self._logger.error(
+                    "Failed to add entry", error=str(e), entry_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.Entry].fail(
-                    result.error or "Entry creation failed"
+                    f"Entry creation failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.Entry].ok(entity)
+        def update(
+            self, entity: FlextLdapModels.Entry
+        ) -> FlextResult[FlextLdapModels.Entry]:
+            """Update existing entry.
 
-        except Exception as e:
-            self._logger.error("Failed to add entry", error=str(e), entry_dn=entity.dn)
-            return FlextResult[FlextLdapModels.Entry].fail(
-                f"Entry creation failed: {e}"
-            )
+            Args:
+                entity: Entry entity to update
 
-    def update(
-        self, entity: FlextLdapModels.Entry
-    ) -> FlextResult[FlextLdapModels.Entry]:
-        """Update existing entry.
+            Returns:
+                FlextResult with updated entry entity
+            """
+            try:
+                # This is a generic update - subclasses should override for specific logic
+                # For now, assume all attributes should be updated
+                result = self._client.modify_entry(
+                    dn=entity.dn, changes=entity.attributes
+                )
+                if result.is_failure:
+                    return FlextResult[FlextLdapModels.Entry].fail(
+                        result.error or "Entry update failed"
+                    )
 
-        Args:
-            entity: Entry entity to update
+                return FlextResult[FlextLdapModels.Entry].ok(entity)
 
-        Returns:
-            FlextResult with updated entry entity
-        """
-        try:
-            # This is a generic update - subclasses should override for specific logic
-            # For now, assume all attributes should be updated
-            result = self._client.modify_entry(dn=entity.dn, changes=entity.attributes)
-            if result.is_failure:
+            except Exception as e:
+                self._logger.error(
+                    "Failed to update entry", error=str(e), entry_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.Entry].fail(
-                    result.error or "Entry update failed"
+                    f"Entry update failed: {e}"
                 )
 
-            return FlextResult[FlextLdapModels.Entry].ok(entity)
+        def delete(self, id: str) -> FlextResult[bool]:
+            """Delete entry by DN.
 
-        except Exception as e:
-            self._logger.error(
-                "Failed to update entry", error=str(e), entry_dn=entity.dn
-            )
-            return FlextResult[FlextLdapModels.Entry].fail(f"Entry update failed: {e}")
+            Args:
+                id: Entry DN
 
-    def delete(self, id: str) -> FlextResult[bool]:
-        """Delete entry by DN.
+            Returns:
+                FlextResult with True if deleted
+            """
+            try:
+                result = self._client.delete_entry(id)
+                if result.is_failure:
+                    return FlextResult[bool].fail(
+                        result.error or "Entry deletion failed"
+                    )
 
-        Args:
-            id: Entry DN
+                return FlextResult[bool].ok(True)
 
-        Returns:
-            FlextResult with True if deleted
-        """
-        try:
-            result = self._client.delete_entry(id)
-            if result.is_failure:
-                return FlextResult[bool].fail(result.error or "Entry deletion failed")
+            except Exception as e:
+                self._logger.error("Failed to delete entry", error=str(e), entry_dn=id)
+                return FlextResult[bool].fail(f"Entry deletion failed: {e}")
 
-            return FlextResult[bool].ok(True)
 
-        except Exception as e:
-            self._logger.error("Failed to delete entry", error=str(e), entry_dn=id)
-            return FlextResult[bool].fail(f"Entry deletion failed: {e}")
+# Backward compatibility aliases
+LdapRepository = FlextLdapRepositories.LdapRepository
+UserRepository = FlextLdapRepositories.UserRepository
+GroupRepository = FlextLdapRepositories.GroupRepository
+EntryRepository = FlextLdapRepositories.EntryRepository

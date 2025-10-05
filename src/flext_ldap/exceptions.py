@@ -30,7 +30,7 @@ class FlextLdapExceptions:
     for proper error tracking and correlation ID generation.
     """
 
-    class LdapConnectionError(FlextExceptions._ConnectionError):
+    class LdapConnectionError(FlextExceptions.ConnectionError):
         """LDAP connection failure.
 
         Raised when LDAP server connection fails or is lost.
@@ -92,7 +92,7 @@ class FlextLdapExceptions:
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapAuthenticationError(FlextExceptions._AuthenticationError):
+    class LdapAuthenticationError(FlextExceptions.AuthenticationError):
         """LDAP authentication failure.
 
         Raised when LDAP bind or authentication fails.
@@ -144,7 +144,7 @@ class FlextLdapExceptions:
                 return f"{base_str} (bind_dn: {self.bind_dn})"
             return base_str
 
-    class LdapSearchError(FlextExceptions._OperationError):
+    class LdapSearchError(FlextExceptions.OperationError):
         """LDAP search operation failure.
 
         Raised when LDAP search operation fails.
@@ -211,7 +211,7 @@ class FlextLdapExceptions:
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapModifyError(FlextExceptions._OperationError):
+    class LdapModifyError(FlextExceptions.OperationError):
         """LDAP modify operation failure.
 
         Raised when LDAP modify operation fails.
@@ -267,7 +267,7 @@ class FlextLdapExceptions:
                 return f"{base_str} (dn: {self.dn})"
             return base_str
 
-    class LdapAddError(FlextExceptions._OperationError):
+    class LdapAddError(FlextExceptions.OperationError):
         """LDAP add operation failure.
 
         Raised when LDAP add operation fails.
@@ -315,7 +315,7 @@ class FlextLdapExceptions:
                 correlation_id=correlation_id,
             )
 
-    class LdapDeleteError(FlextExceptions._OperationError):
+    class LdapDeleteError(FlextExceptions.OperationError):
         """LDAP delete operation failure.
 
         Raised when LDAP delete operation fails.
@@ -359,7 +359,7 @@ class FlextLdapExceptions:
                 correlation_id=correlation_id,
             )
 
-    class LdapValidationError(FlextExceptions._ValidationError):
+    class LdapValidationError(FlextExceptions.ValidationError):
         """LDAP data validation failure.
 
         Raised when LDAP data validation fails.
@@ -411,7 +411,7 @@ class FlextLdapExceptions:
                 return f"{base_str} (field: {self.ldap_field})"
             return base_str
 
-    class LdapConfigurationError(FlextExceptions._ConfigurationError):
+    class LdapConfigurationError(FlextExceptions.ConfigurationError):
         """LDAP configuration error.
 
         Raised when LDAP configuration is invalid or missing.
@@ -472,7 +472,7 @@ class FlextLdapExceptions:
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapTimeoutError(FlextExceptions._TimeoutError):
+    class LdapTimeoutError(FlextExceptions.TimeoutError):
         """LDAP operation timeout.
 
         Raised when LDAP operation exceeds timeout limit.
@@ -518,7 +518,7 @@ class FlextLdapExceptions:
                 correlation_id=correlation_id,
             )
 
-    class LdapEntryNotFoundError(FlextExceptions._NotFoundError):
+    class LdapEntryNotFoundError(FlextExceptions.NotFoundError):
         """LDAP entry not found.
 
         Raised when requested LDAP entry does not exist.
@@ -580,7 +580,7 @@ class FlextLdapExceptions:
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapEntryAlreadyExistsError(FlextExceptions._AlreadyExistsError):
+    class LdapEntryAlreadyExistsError(FlextExceptions.ConflictError):
         """LDAP entry already exists.
 
         Raised when attempting to create an entry that already exists.

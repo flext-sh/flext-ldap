@@ -26,16 +26,13 @@ from flext_core import (
 )
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.servers import BaseServerOperations, ServerOperationsFactory
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapConnection(
-    FlextService[None], FlextLdapProtocols.Ldap.LdapConnectionProtocol
-):
+class FlextLdapConnection(FlextService[None]):
     """Unified LDAP connection management class.
 
     This class provides comprehensive LDAP connection lifecycle management
@@ -43,9 +40,9 @@ class FlextLdapConnection(
 
     **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
     **CLEAN ARCHITECTURE**: Infrastructure layer connection management.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **FLEXT INTEGRATION**: Full flext-core service integration.
 
-    Implements FlextLdapProtocols.LdapConnectionProtocol:
+    Provides LDAP connection management methods:
     - connect: Establish LDAP connection
     - disconnect: Close LDAP connection
     - is_connected: Check connection status
