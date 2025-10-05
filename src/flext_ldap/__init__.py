@@ -33,17 +33,50 @@ from flext_ldap.services import FlextLdapServices
 
 # BACKWARD COMPATIBILITY ALIASES - Maintain existing API
 # These imports maintain backward compatibility while encouraging use of consolidated classes
-from flext_ldap.repositories import LdapRepository, UserRepository, GroupRepository, EntryRepository
+from flext_ldap.repositories import (
+    LdapRepository,
+    UserRepository,
+    GroupRepository,
+    EntryRepository,
+)
 from flext_ldap.handlers import (
-    LdapCommandHandler, LdapQueryHandler, CreateUserCommandHandler, UpdateUserCommandHandler,
-    DeleteUserCommandHandler, GetUserQueryHandler, ListUsersQueryHandler, GetGroupQueryHandler,
-    LdapHandlerRegistry
+    LdapCommandHandler,
+    LdapQueryHandler,
+    CreateUserCommandHandler,
+    UpdateUserCommandHandler,
+    DeleteUserCommandHandler,
+    GetUserQueryHandler,
+    ListUsersQueryHandler,
+    GetGroupQueryHandler,
+    LdapHandlerRegistry,
 )
 from flext_ldap.servers import (
-    ActiveDirectoryOperations, BaseServerOperations, GenericServerOperations,
-    OpenLDAP1Operations, OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations,
-    ServerOperationsFactory
+    ActiveDirectoryOperations,
+    BaseServerOperations,
+    GenericServerOperations,
+    OpenLDAP1Operations,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+    ServerOperationsFactory,
 )
+
+# Additional backward compatibility imports
+from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.search import FlextLdapSearch
+from flext_ldap.searcher import FlextLdapSearcher
+from flext_ldap.connection import FlextLdapConnection
+from flext_ldap.connection_manager import FlextLdapConnectionManager
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.operations import FlextLdapOperations
+from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.authenticator import FlextLdapAuthenticator
+from flext_ldap.authentication import FlextLdapAuthentication
+from flext_ldap.entities import FlextLdapEntities
+from flext_ldap.value_objects import FlextLdapValueObjects
+from flext_ldap.domain import FlextLdapDomain
+from flext_ldap.adapters import FlextLdapAdapters
 
 # Version information
 from flext_ldap.version import VERSION, FlextLdapVersion
@@ -57,7 +90,6 @@ __all__ = [
     # Core facade - PRIMARY API
     "FlextLdap",
     "FlextLdapAPI",
-
     # Core supporting classes
     "FlextLdapClient",
     "FlextLdapConfig",
@@ -67,12 +99,10 @@ __all__ = [
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapValidations",
-
     # Consolidated namespace classes
     "FlextLdapHandlers",
     "FlextLdapRepositories",
     "FlextLdapServices",
-
     # BACKWARD COMPATIBILITY - Legacy individual classes
     "LdapRepository",
     "UserRepository",
@@ -95,11 +125,25 @@ __all__ = [
     "OracleOIDOperations",
     "OracleOUDOperations",
     "ServerOperationsFactory",
-
     # Version information
     "PROJECT_VERSION",
     "VERSION",
     "FlextLdapVersion",
     "__version__",
     "__version_info__",
+    "FlextLdapSchema",
+    "FlextLdapSearch",
+    "FlextLdapSearcher",
+    "FlextLdapConnection",
+    "FlextLdapConnectionManager",
+    "FlextLdapEntryAdapter",
+    "FlextLdapOperations",
+    "FlextLdapProtocols",
+    "FlextLdapQuirksAdapter",
+    "FlextLdapAuthenticator",
+    "FlextLdapAuthentication",
+    "FlextLdapEntities",
+    "FlextLdapValueObjects",
+    "FlextLdapDomain",
+    "FlextLdapAdapters",
 ]
