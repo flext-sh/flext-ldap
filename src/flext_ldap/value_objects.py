@@ -77,7 +77,8 @@ class FlextLdapValueObjects(FlextModels):
             """Get the parent DN if it exists."""
             parts = self.value.split(",", 1)
             if len(parts) > 1:
-                return self.create(parts[1]).unwrap_or(None)
+                parent_result = self.create(parts[1])
+                return parent_result.value if parent_result.is_success else None
             return None
 
         def is_child_of(self, parent_dn: DistinguishedName) -> bool:

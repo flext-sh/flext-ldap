@@ -22,12 +22,11 @@ from flext_core import (
 )
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProtocol):
+class FlextLdapSearch(FlextService[None]):
     """Unified LDAP search operations class.
 
     This class provides comprehensive LDAP search functionality
@@ -35,9 +34,9 @@ class FlextLdapSearch(FlextService[None], FlextLdapProtocols.Ldap.LdapSearchProt
 
     **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
     **CLEAN ARCHITECTURE**: Application layer search services.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **FLEXT INTEGRATION**: Full flext-core service integration.
 
-    Implements FlextLdapProtocols.LdapSearchProtocol:
+    Provides LDAP search operations:
     - search: Perform LDAP search operations
     - search_one: Search for single entry
     """

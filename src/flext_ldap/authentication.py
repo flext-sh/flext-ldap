@@ -14,7 +14,6 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextLogger,
@@ -25,15 +24,10 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
 
-if TYPE_CHECKING:
-    # Import ldap3 types for static type checking only
-    # This prevents runtime circular imports while enabling proper type hints
-    from ldap3 import Connection, Server
+from ldap3 import Connection, Server
 
 
-class FlextLdapAuthentication(
-    FlextService[None], FlextLdapProtocols.Ldap.LdapAuthenticationProtocol
-):
+class FlextLdapAuthentication(FlextService[None]):
     """Unified LDAP authentication operations class.
 
     This class provides comprehensive LDAP authentication functionality
@@ -41,9 +35,9 @@ class FlextLdapAuthentication(
 
     **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
     **CLEAN ARCHITECTURE**: Application layer authentication services.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **FLEXT INTEGRATION**: Full flext-core service integration.
 
-    Implements FlextLdapProtocols.LdapAuthenticationProtocol:
+    Provides LDAP authentication methods:
     - authenticate_user: Authenticate user with username/password
     - validate_credentials: Validate DN/password credentials
     """
@@ -52,7 +46,7 @@ class FlextLdapAuthentication(
         """Initialize LDAP authentication service."""
         super().__init__()
         # Type annotation: FlextLogger is not Optional (override from FlextService)
-        self._logger: FlextLogger  # type: ignore[misc]
+        self._logger: FlextLogger
         self._logger = FlextLogger(__name__)
         # These will be set by the client that uses this service
         # Type hints enable static type checking without runtime overhead
@@ -83,7 +77,7 @@ class FlextLdapAuthentication(
         self._server = server
         self._ldap_config = config
 
-    def authenticate_user(  # type: ignore[override]
+    def authenticate_user(
         self,
         username: str,
         password: str,

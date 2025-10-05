@@ -20,7 +20,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import (
     FlextBus,
@@ -35,8 +35,7 @@ from flext_core import (
     FlextTypes,
 )
 
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 from flext_ldif import FlextLdif
 

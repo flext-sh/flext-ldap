@@ -20,12 +20,9 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
-from flext_ldap.protocols import FlextLdapProtocols
 
 
-class FlextLdapOperations(
-    FlextService[None], FlextLdapProtocols.Ldap.LdapModifyProtocol
-):
+class FlextLdapOperations(FlextService[None]):
     """Unified LDAP CRUD operations class.
 
     This class provides comprehensive LDAP create, read, update, delete operations
@@ -33,9 +30,9 @@ class FlextLdapOperations(
 
     **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
     **CLEAN ARCHITECTURE**: Infrastructure layer CRUD operations.
-    **FLEXT INTEGRATION**: Full flext-core service integration with protocols.
+    **FLEXT INTEGRATION**: Full flext-core service integration.
 
-    Implements FlextLdapProtocols.LdapModifyProtocol:
+    Provides LDAP CRUD operations:
     - add_entry: Create new LDAP entries
     - modify_entry: Update existing LDAP entries
     - delete_entry: Delete LDAP entries

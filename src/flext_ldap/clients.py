@@ -11,35 +11,28 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ldap3 import Connection, Server
 
 from flext_core import (
     FlextLogger,
-    FlextProtocols,
     FlextResult,
     FlextService,
     FlextTypes,
 )
 from flext_ldap.authentication import FlextLdapAuthentication
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.connection_manager import FlextLdapConnectionManager
 from flext_ldap.searcher import FlextLdapSearcher
 
-if TYPE_CHECKING:
-    from flext_ldap.config import FlextLdapConfig
-
-# Import all the required modules for composition
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
-# Server operations imports
 from flext_ldap.servers.base_operations import BaseServerOperations
 from flext_ldap.servers.factory import ServerOperationsFactory
 
 
-class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connection):
+class FlextLdapClient(FlextService[None]):
     """FlextLdapClient - Main LDAP client using composition-based architecture.
 
     **UNIFIED CLASS PATTERN**: Single class per module with composition of specialized components.
@@ -47,6 +40,8 @@ class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connecti
     **COMPOSITION ARCHITECTURE**: Uses dedicated components for different responsibilities:
     - FlextLdapConnectionManager: Connection lifecycle management
     - FlextLdapAuthentication: Authentication operations
+
+    **FLEXT INTEGRATION**: Full flext-core service integration
     - FlextLdapSearcher: Search operations
 
     This class provides a comprehensive interface for LDAP operations including
@@ -75,7 +70,7 @@ class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connecti
         # Core configuration and logging
         self._config = config
         # Type annotation: FlextLogger is not Optional (override from FlextService)
-        self._logger: FlextLogger  # type: ignore[misc]
+        self._logger: FlextLogger
         self._logger = FlextLogger(__name__)
 
         # Server operations for advanced features
@@ -108,7 +103,7 @@ class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connecti
     ) -> FlextResult[bool]:
         """Connect to LDAP server - delegates to connection manager."""
         # Type ignore: **kwargs delegation pattern - runtime types are correct
-        return self._connection_manager.connect(server_uri, bind_dn, password, **kwargs)  # type: ignore[arg-type]
+        return self._connection_manager.connect(server_uri, bind_dn, password, **kwargs)
 
     def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
         """Bind to LDAP server - delegates to connection manager."""
@@ -326,8 +321,8 @@ class FlextLdapClient(FlextService[None], FlextProtocols.Infrastructure.Connecti
             # Refresh schema
             # Note: refresh_schema() and schema are valid ldap3.Connection attributes
             # but not in types-ldap3 stubs (type: ignore needed for incomplete stubs)
-            self._connection.refresh_schema()  # type: ignore[attr-defined]
-            schema = self._connection.schema  # type: ignore[attr-defined]
+            self._connection.refresh_schema()
+            schema = self._connection.schema
 
             if not schema:
                 return FlextResult[FlextTypes.Dict].fail("No schema available")
