@@ -13,7 +13,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Generic, TypeVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextProtocols, FlextResult
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
@@ -31,11 +31,11 @@ class FlextLdapHandlers:
     FLEXT single-class-per-module pattern while maintaining CQRS architecture.
     """
 
-    class LdapCommandHandler(Generic[TCommand]):
+    class LdapCommandHandler(Generic[TCommand], FlextProtocols.Application.Handler):
         """Base class for LDAP command handlers implementing Application.Handler protocol.
 
         This class provides the foundation for LDAP command handlers, implementing
-        the flext-core Application.Handler protocol through structural subtyping.
+        the flext-core Application.Handler protocol through explicit inheritance.
         """
 
         def __init__(self) -> None:
@@ -125,11 +125,11 @@ class FlextLdapHandlers:
             """
             ...
 
-    class LdapQueryHandler(Generic[TQuery]):
+    class LdapQueryHandler(Generic[TQuery], FlextProtocols.Application.Handler):
         """Base class for LDAP query handlers implementing Application.Handler protocol.
 
         This class provides the foundation for LDAP query handlers, implementing
-        the flext-core Application.Handler protocol through structural subtyping.
+        the flext-core Application.Handler protocol through explicit inheritance.
         """
 
         def __init__(self) -> None:
