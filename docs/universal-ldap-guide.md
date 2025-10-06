@@ -92,9 +92,9 @@ print(f"Replication: {oud.get_replication_mechanism()}")
 ### 1. Get Detected Server Type
 
 ```python
-from flext_ldap import FlextLdapAPI
+from flext_ldap import FlextLDAP
 
-api = FlextLdapAPI()
+api = FlextLDAP()
 api.connect()
 
 # Get detected server type
@@ -226,7 +226,7 @@ if attrs_result.is_success:
 ### OpenLDAP 1.x → OpenLDAP 2.x Migration
 
 ```python
-from flext_ldap import FlextLdapAPI
+from flext_ldap import FlextLDAP
 from flext_ldif import FlextLdif
 
 def migrate_openldap1_to_openldap2():
@@ -241,7 +241,7 @@ def migrate_openldap1_to_openldap2():
     openldap1_entries = parse_result.unwrap()
 
     # Convert each entry to OpenLDAP 2.x format
-    api = FlextLdapAPI()
+    api = FlextLDAP()
     openldap2_entries = []
 
     for entry in openldap1_entries:
@@ -266,7 +266,7 @@ def migrate_openldap1_to_openldap2():
 
 ```python
 def migrate_oid_to_oud():
-    api = FlextLdapAPI()
+    api = FlextLDAP()
     ldif = FlextLdif()
 
     # Load OID entries
@@ -301,17 +301,17 @@ def migrate_oid_to_oud():
 ### Scenario 1: Multi-Server Environment
 
 ```python
-from flext_ldap import FlextLdapAPI, ServerOperationsFactory
+from flext_ldap import FlextLDAP, ServerOperationsFactory
 
 def sync_across_servers():
     """Sync entries across different LDAP server types."""
 
     # Source: OpenLDAP 2.x
-    source_api = FlextLdapAPI()
+    source_api = FlextLDAP()
     source_api.connect()  # Connects to OpenLDAP 2.x
 
     # Target: Oracle OUD
-    target_api = FlextLdapAPI()
+    target_api = FlextLDAP()
     target_api.connect()  # Connects to Oracle OUD
 
     # Search source
@@ -353,7 +353,7 @@ def sync_across_servers():
 def progressive_migration():
     """Gradually migrate from old to new LDAP server."""
 
-    api = FlextLdapAPI()
+    api = FlextLDAP()
 
     # Phase 1: Analyze source entries
     source_entries = []  # Load from source
@@ -445,9 +445,9 @@ if caps_result.is_success:
 
 ```python
 # Good: Use quirks system for server-specific behavior
-from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLDAPEntryAdapter
 
-adapter = FlextLdapEntryAdapter(server_type="oud")
+adapter = FlextLDAPEntryAdapter(server_type="oud")
 
 # Adapter handles Oracle OUD quirks automatically
 normalized = adapter.normalize_entry_for_server(entry, "oud")

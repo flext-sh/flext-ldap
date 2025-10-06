@@ -11,13 +11,13 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import FlextLdifModels
-from ldap3 import MODIFY_REPLACE
+from ldap3 import Connection, MODIFY_REPLACE
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.base_operations import BaseServerOperations
+from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
 
 
-class OpenLDAP2Operations(BaseServerOperations):
+class FlextLDAPServersOpenLDAP2Operations(FlextLDAPServersBaseOperations):
     """Complete OpenLDAP 2.x operations implementation.
 
     OpenLDAP 2.x Features:
@@ -62,7 +62,7 @@ class OpenLDAP2Operations(BaseServerOperations):
         return "cn=subschema"
 
     @override
-    def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from OpenLDAP 2.x server.
 
         Args:
@@ -177,7 +177,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
     @override
     def get_acls(
-        self, connection: object, dn: str
+        self, connection: Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get olcAccess ACLs from OpenLDAP 2.x.
 
@@ -220,7 +220,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
     @override
     def set_acls(
-        self, connection: object, dn: str, acls: list[FlextTypes.Dict]
+        self, connection: Connection, dn: str, acls: list[FlextTypes.Dict]
     ) -> FlextResult[bool]:
         """Set olcAccess ACLs on OpenLDAP 2.x.
 
@@ -346,7 +346,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
     @override
     def add_entry(
-        self, connection: object, entry: FlextLdifModels.Entry
+        self, connection: Connection, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to OpenLDAP 2.x server.
 
@@ -391,7 +391,7 @@ class OpenLDAP2Operations(BaseServerOperations):
 
     @override
     def modify_entry(
-        self, connection: object, dn: str, modifications: FlextTypes.Dict
+        self, connection: Connection, dn: str, modifications: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Modify entry in OpenLDAP 2.x.
 
@@ -427,7 +427,7 @@ class OpenLDAP2Operations(BaseServerOperations):
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
-    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from OpenLDAP 2.x.
 
         Args:
@@ -493,7 +493,7 @@ class OpenLDAP2Operations(BaseServerOperations):
     @override
     def search_with_paging(
         self,
-        connection: object,
+        connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
@@ -531,9 +531,9 @@ class OpenLDAP2Operations(BaseServerOperations):
             )
 
             # Convert results to FlextLdif entries
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 
-            adapter = FlextLdapEntryAdapter()
+            adapter = FlextLDAPEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:

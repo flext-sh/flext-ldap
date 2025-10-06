@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import Mapping
 
-from flext_ldap.version import VERSION, FlextLdapVersion
+from flext_ldap.version import VERSION, FlextLDAPVersion
 
 
 def test_module_exports_are_minimal() -> None:
@@ -27,9 +27,9 @@ def test_module_exports_are_minimal() -> None:
 
 def test_version_singleton_matches_metadata() -> None:
     """The exported VERSION instance should mirror current metadata."""
-    assert isinstance(VERSION, FlextLdapVersion)
+    assert isinstance(VERSION, FlextLDAPVersion)
 
-    current = FlextLdapVersion.current()
+    current = FlextLDAPVersion.current()
     assert current.version == VERSION.version
     assert current.project == VERSION.project
     assert current.version_info == VERSION.version_info

@@ -14,8 +14,8 @@ import time
 from typing import cast
 
 import pytest
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.models import FlextLDAPModels
 
 from flext_core import FlextResult
 
@@ -25,22 +25,22 @@ from flext_core import FlextResult
 # ===================================================================
 
 
-class TestFlextLdapModels:
-    """Comprehensive tests for FlextLdapModels class."""
+class TestFlextLDAPModels:
+    """Comprehensive tests for FlextLDAPModels class."""
 
     def test_models_initialization(self) -> None:
         """Test models class initialization."""
-        models = FlextLdapModels()
+        models = FlextLDAPModels()
 
         assert models is not None
-        # FlextLdapModels is a namespace class, not a service class
-        assert isinstance(models, FlextLdapModels)
+        # FlextLDAPModels is a namespace class, not a service class
+        assert isinstance(models, FlextLDAPModels)
 
     def test_distinguished_name_creation(self) -> None:
         """Test DistinguishedName model creation."""
         dn_data = {"value": "cn=testuser,dc=test,dc=com"}
 
-        dn = FlextLdapModels.DistinguishedName(**dn_data)
+        dn = FlextLDAPModels.DistinguishedName(**dn_data)
 
         assert dn.value == "cn=testuser,dc=test,dc=com"
         assert dn.rdn == "cn=testuser"
@@ -48,26 +48,26 @@ class TestFlextLdapModels:
     def test_distinguished_name_validation(self) -> None:
         """Test DistinguishedName validation."""
         # Test valid DN
-        valid_dn = FlextLdapModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
+        valid_dn = FlextLDAPModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
         assert valid_dn.value == "cn=testuser,dc=test,dc=com"
 
         # Test invalid DN
         with pytest.raises(ValueError):
-            FlextLdapModels.DistinguishedName(value="")
+            FlextLDAPModels.DistinguishedName(value="")
 
     def test_distinguished_name_create_method(self) -> None:
         """Test DistinguishedName create method."""
         # Test valid DN creation
-        result = FlextLdapModels.DistinguishedName.create("cn=testuser,dc=test,dc=com")
+        result = FlextLDAPModels.DistinguishedName.create("cn=testuser,dc=test,dc=com")
         assert isinstance(result, FlextResult)
         assert result.is_success
         # Use unwrap() to get the actual DistinguishedName object
         dn_obj = result.unwrap()
-        assert isinstance(dn_obj, FlextLdapModels.DistinguishedName)
+        assert isinstance(dn_obj, FlextLDAPModels.DistinguishedName)
         assert dn_obj.value == "cn=testuser,dc=test,dc=com"
 
         # Test invalid DN creation
-        result = FlextLdapModels.DistinguishedName.create("")
+        result = FlextLDAPModels.DistinguishedName.create("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -75,65 +75,65 @@ class TestFlextLdapModels:
         """Test Filter model creation."""
         filter_data = {"expression": "(objectClass=*)"}
 
-        filter_obj = FlextLdapModels.Filter(**filter_data)
+        filter_obj = FlextLDAPModels.Filter(**filter_data)
 
         assert filter_obj.expression == "(objectClass=*)"
 
     def test_filter_validation(self) -> None:
         """Test Filter validation."""
         # Test valid filter
-        valid_filter = FlextLdapModels.Filter(expression="(objectClass=*)")
+        valid_filter = FlextLDAPModels.Filter(expression="(objectClass=*)")
         assert valid_filter.expression == "(objectClass=*)"
 
         # Test invalid filter
         with pytest.raises(ValueError):
-            FlextLdapModels.Filter(expression="")
+            FlextLDAPModels.Filter(expression="")
 
     def test_filter_factory_methods(self) -> None:
         """Test Filter factory methods."""
         # Test equals filter
-        equals_filter = FlextLdapModels.Filter.equals("cn", "testuser")
+        equals_filter = FlextLDAPModels.Filter.equals("cn", "testuser")
         assert equals_filter.expression == "(cn=testuser)"
 
         # Test starts_with filter
-        starts_with_filter = FlextLdapModels.Filter.starts_with("cn", "test")
+        starts_with_filter = FlextLDAPModels.Filter.starts_with("cn", "test")
         assert starts_with_filter.expression == "(cn=test*)"
 
         # Test object_class filter
-        object_class_filter = FlextLdapModels.Filter.object_class("person")
+        object_class_filter = FlextLDAPModels.Filter.object_class("person")
         assert object_class_filter.expression == "(objectClass=person)"
 
     def test_scope_creation(self) -> None:
         """Test Scope model creation."""
         scope_data = {"value": "subtree"}
 
-        scope = FlextLdapModels.Scope(**scope_data)
+        scope = FlextLDAPModels.Scope(**scope_data)
 
         assert scope.value == "subtree"
 
     def test_scope_validation(self) -> None:
         """Test Scope validation."""
         # Test valid scope
-        valid_scope = FlextLdapModels.Scope(value="subtree")
+        valid_scope = FlextLDAPModels.Scope(value="subtree")
         assert valid_scope.value == "subtree"
 
         # Test invalid scope
         with pytest.raises(ValueError):
-            FlextLdapModels.Scope(value="INVALID")
+            FlextLDAPModels.Scope(value="INVALID")
 
     def test_ldap_server_type_enum(self) -> None:
         """Test LdapServerType enum."""
         # Test enum values
-        assert FlextLdapModels.LdapServerType.OPENLDAP.value == "openldap"
+        assert FlextLDAPModels.LdapServerType.OPENLDAP.value == "openldap"
         assert (
-            FlextLdapModels.LdapServerType.ACTIVE_DIRECTORY.value == "active_directory"
+            FlextLDAPModels.LdapServerType.ACTIVE_DIRECTORY.value == "active_directory"
         )
-        assert FlextLdapModels.LdapServerType.ORACLE_OUD.value == "oracle_oud"
+        assert FlextLDAPModels.LdapServerType.ORACLE_OUD.value == "oracle_oud"
 
     def test_schema_attribute_creation(self) -> None:
         """Test SchemaAttribute model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        attr = FlextLdapModels.SchemaAttribute(
+        attr = FlextLDAPModels.SchemaAttribute(
             name="cn",
             oid="2.5.4.3",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -150,7 +150,7 @@ class TestFlextLdapModels:
     def test_schema_object_class_creation(self) -> None:
         """Test SchemaObjectClass model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        oc = FlextLdapModels.SchemaObjectClass(
+        oc = FlextLDAPModels.SchemaObjectClass(
             name="person",
             oid="2.5.6.6",
             must=["cn", "sn"],
@@ -167,31 +167,31 @@ class TestFlextLdapModels:
     def test_server_quirks_creation(self) -> None:
         """Test ServerQuirks model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        quirks = FlextLdapModels.ServerQuirks(
-            server_type=FlextLdapModels.LdapServerType.OPENLDAP,
+        quirks = FlextLDAPModels.ServerQuirks(
+            server_type=FlextLDAPModels.LdapServerType.OPENLDAP,
             supports_paged_results=True,
             supports_sync=True,
-            max_page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+            max_page_size=FlextLDAPConstants.Connection.DEFAULT_PAGE_SIZE,
             object_class_mappings={"person": "inetOrgPerson"},
         )
 
-        assert quirks.server_type == FlextLdapModels.LdapServerType.OPENLDAP
+        assert quirks.server_type == FlextLDAPModels.LdapServerType.OPENLDAP
         assert quirks.supports_paged_results is True
         assert quirks.supports_sync is True
-        assert quirks.max_page_size == FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
+        assert quirks.max_page_size == FlextLDAPConstants.Connection.DEFAULT_PAGE_SIZE
         assert quirks.object_class_mappings == {"person": "inetOrgPerson"}
 
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        result = FlextLdapModels.SchemaDiscoveryResult(
+        result = FlextLDAPModels.SchemaDiscoveryResult(
             server_info={"vendor": "OpenLDAP", "version": "2.4"},
-            server_type=FlextLdapModels.LdapServerType.OPENLDAP,
-            server_quirks=FlextLdapModels.ServerQuirks(
-                server_type=FlextLdapModels.LdapServerType.OPENLDAP
+            server_type=FlextLDAPModels.LdapServerType.OPENLDAP,
+            server_quirks=FlextLDAPModels.ServerQuirks(
+                server_type=FlextLDAPModels.LdapServerType.OPENLDAP
             ),
             attributes={
-                "cn": FlextLdapModels.SchemaAttribute(
+                "cn": FlextLDAPModels.SchemaAttribute(
                     name="cn",
                     oid="2.5.4.3",
                     syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -199,7 +199,7 @@ class TestFlextLdapModels:
                 )
             },
             object_classes={
-                "person": FlextLdapModels.SchemaObjectClass(
+                "person": FlextLDAPModels.SchemaObjectClass(
                     name="person", oid="2.5.6.6", kind="STRUCTURAL"
                 )
             },
@@ -208,14 +208,14 @@ class TestFlextLdapModels:
             supported_extensions=["1.3.6.1.4.1.4203.1.11.1"],
         )
 
-        assert result.server_type == FlextLdapModels.LdapServerType.OPENLDAP
+        assert result.server_type == FlextLDAPModels.LdapServerType.OPENLDAP
         assert "cn" in result.attributes
         assert "person" in result.object_classes
 
     def test_ldap_user_creation(self) -> None:
         """Test LdapUser model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="cn=testuser,dc=test,dc=com",
             cn="testuser",
             uid="testuser",
@@ -241,7 +241,7 @@ class TestFlextLdapModels:
     def test_ldap_user_validation(self) -> None:
         """Test LdapUser validation."""
         # Test valid user
-        valid_user = FlextLdapModels.LdapUser(
+        valid_user = FlextLDAPModels.LdapUser(
             dn="cn=testuser,dc=test,dc=com",
             cn="testuser",
             uid="testuser",
@@ -263,7 +263,7 @@ class TestFlextLdapModels:
 
         # Test invalid user - validation happens at field level
         with pytest.raises(Exception):
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="",  # Invalid empty DN
                 cn="",  # Invalid empty CN
                 uid="",  # Invalid empty UID
@@ -282,7 +282,7 @@ class TestFlextLdapModels:
     def test_ldap_group_creation(self) -> None:
         """Test LdapGroup model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        group = FlextLdapModels.Group(
+        group = FlextLDAPModels.Group(
             dn="cn=testgroup,dc=test,dc=com",
             cn="testgroup",
             description="Test group",
@@ -303,7 +303,7 @@ class TestFlextLdapModels:
     def test_ldap_group_validation(self) -> None:
         """Test LdapGroup validation."""
         # Test valid group
-        valid_group = FlextLdapModels.Group(
+        valid_group = FlextLDAPModels.Group(
             dn="cn=testgroup,dc=test,dc=com",
             cn="testgroup",
             description="Test group",
@@ -316,7 +316,7 @@ class TestFlextLdapModels:
 
         # Test invalid group - validation happens at field level
         with pytest.raises(Exception):
-            FlextLdapModels.Group(
+            FlextLDAPModels.Group(
                 dn="",  # Invalid empty DN
                 cn="",  # Invalid empty CN
                 description="",
@@ -326,42 +326,42 @@ class TestFlextLdapModels:
     def test_connection_config_creation(self) -> None:
         """Test ConnectionConfig model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
             use_ssl=False,
             bind_dn="cn=admin,dc=test,dc=com",
             bind_password="testpass",
-            timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
+            timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
         )
 
         assert config.server == "localhost"
-        assert config.port == FlextLdapConstants.Protocol.DEFAULT_PORT
+        assert config.port == FlextLDAPConstants.Protocol.DEFAULT_PORT
         assert config.use_ssl is False
         assert config.bind_dn == "cn=admin,dc=test,dc=com"
         assert config.bind_password == "testpass"
-        assert config.timeout == FlextLdapConstants.DEFAULT_TIMEOUT
+        assert config.timeout == FlextLDAPConstants.DEFAULT_TIMEOUT
 
     def test_connection_config_properties(self) -> None:
         """Test ConnectionConfig properties."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
             use_ssl=False,
         )
 
         # Test server_uri property
         assert (
             config.server_uri
-            == f"ldap://localhost:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"ldap://localhost:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
         )
 
         # Test password property
         assert config.password is None
 
-        config_with_password = FlextLdapModels.ConnectionConfig(
+        config_with_password = FlextLDAPModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
             use_ssl=False,
             bind_password="testpass",
         )
@@ -370,7 +370,7 @@ class TestFlextLdapModels:
     def test_modify_config_creation(self) -> None:
         """Test ModifyConfig model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        config = FlextLdapModels.ModifyConfig(
+        config = FlextLDAPModels.ModifyConfig(
             dn="cn=testuser,dc=test,dc=com",
             changes={
                 "cn": [("MODIFY_REPLACE", ["newcn"])],
@@ -385,7 +385,7 @@ class TestFlextLdapModels:
     def test_add_config_creation(self) -> None:
         """Test AddConfig model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        config = FlextLdapModels.AddConfig(
+        config = FlextLDAPModels.AddConfig(
             dn="cn=testuser,dc=test,dc=com",
             attributes={
                 "cn": ["testuser"],
@@ -405,14 +405,14 @@ class TestFlextLdapModels:
         """Test DeleteConfig model creation."""
         delete_data = {"dn": "cn=testuser,dc=test,dc=com"}
 
-        config = FlextLdapModels.DeleteConfig(**delete_data)
+        config = FlextLDAPModels.DeleteConfig(**delete_data)
 
         assert config.dn == "cn=testuser,dc=test,dc=com"
 
     def test_search_config_creation(self) -> None:
         """Test SearchConfig model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        config = FlextLdapModels.SearchConfig(
+        config = FlextLDAPModels.SearchConfig(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=*)",
             attributes=["cn", "mail"],
@@ -425,7 +425,7 @@ class TestFlextLdapModels:
     def test_search_response_creation(self) -> None:
         """Test SearchResponse model creation."""
         # Pass arguments explicitly to avoid mixed type issues
-        response = FlextLdapModels.SearchResponse(
+        response = FlextLDAPModels.SearchResponse(
             entries=[
                 {
                     "dn": "cn=testuser,dc=test,dc=com",
@@ -450,7 +450,7 @@ class TestFlextLdapModels:
     def test_search_response_validation(self) -> None:
         """Test SearchResponse validation."""
         # Test valid search response
-        valid_response = FlextLdapModels.SearchResponse(
+        valid_response = FlextLDAPModels.SearchResponse(
             entries=[],
             total_count=0,
             next_cookie=b"",
@@ -463,11 +463,11 @@ class TestFlextLdapModels:
         )
 
         # SearchResponse is a data model, no validation needed
-        assert isinstance(valid_response, FlextLdapModels.SearchResponse)
+        assert isinstance(valid_response, FlextLDAPModels.SearchResponse)
         assert len(valid_response.entries) == 0
 
         # Test invalid search response
-        invalid_response = FlextLdapModels.SearchResponse(
+        invalid_response = FlextLDAPModels.SearchResponse(
             entries=[],  # Valid empty entries
             total_count=-1,  # Invalid negative count
             next_cookie=b"",
@@ -480,27 +480,27 @@ class TestFlextLdapModels:
         )
 
         # SearchResponse is a data model, validation happens at field level
-        assert isinstance(invalid_response, FlextLdapModels.SearchResponse)
+        assert isinstance(invalid_response, FlextLDAPModels.SearchResponse)
         assert invalid_response.total_count == -1
 
     def test_models_error_handling(self) -> None:
         """Test models error handling mechanisms."""
         # Test with None input - this will fail at the type level
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(
+            FlextLDAPModels.DistinguishedName(
                 value=""
             )  # Empty string should fail validation
 
         # Test with invalid input type
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(value="invalid_string")
+            FlextLDAPModels.DistinguishedName(value="invalid_string")
 
     def test_models_thread_safety(self) -> None:
         """Test models thread safety."""
         results = []
 
         def create_dn() -> None:
-            dn = FlextLdapModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
+            dn = FlextLDAPModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
             results.append(dn)
 
         threads = []
@@ -521,7 +521,7 @@ class TestFlextLdapModels:
         """Test models memory usage patterns."""
         dns = []
         for i in range(10):
-            dn = FlextLdapModels.DistinguishedName(
+            dn = FlextLDAPModels.DistinguishedName(
                 value=f"cn=testuser{i},dc=test,dc=com"
             )
             dns.append(dn)
@@ -535,7 +535,7 @@ class TestFlextLdapModels:
         # Test DN creation performance
         start_time = time.time()
         for i in range(100):
-            dn = FlextLdapModels.DistinguishedName(
+            dn = FlextLDAPModels.DistinguishedName(
                 value=f"cn=testuser{i},dc=test,dc=com"
             )
             assert dn.value == f"cn=testuser{i},dc=test,dc=com"
@@ -549,16 +549,16 @@ class TestFlextLdapModels:
         """Test models extensibility features."""
         # Test that models can be extended with custom fields
         # Use a non-frozen model for extensibility testing
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
             bind_dn="cn=admin,dc=test,dc=com",
             bind_password="testpass",
         )
 
         # Verify configuration is properly set
         assert config.server == "localhost"
-        assert config.port == FlextLdapConstants.Protocol.DEFAULT_PORT
+        assert config.port == FlextLDAPConstants.Protocol.DEFAULT_PORT
         assert config.bind_dn == "cn=admin,dc=test,dc=com"
         assert config.bind_password == "testpass"
 
@@ -566,16 +566,16 @@ class TestFlextLdapModels:
         """Test complete models workflow integration."""
         # Test complete workflow
         # 1. Create DN
-        dn = FlextLdapModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
+        dn = FlextLDAPModels.DistinguishedName(value="cn=testuser,dc=test,dc=com")
 
         # 2. Create filter
-        filter_obj = FlextLdapModels.Filter(expression="(objectClass=*)")
+        filter_obj = FlextLDAPModels.Filter(expression="(objectClass=*)")
 
         # 3. Create scope
-        scope = FlextLdapModels.Scope(value="subtree")
+        scope = FlextLDAPModels.Scope(value="subtree")
 
         # 4. Create user
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="cn=testuser,dc=test,dc=com",
             cn="testuser",
             uid="testuser",
@@ -592,9 +592,9 @@ class TestFlextLdapModels:
         )
 
         # 5. Create connection config
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
             bind_dn="cn=admin,dc=test,dc=com",
             bind_password="testpass",
         )
@@ -608,7 +608,7 @@ class TestFlextLdapModels:
 
     def test_entry_model_creation(self) -> None:
         """Test Entry model creation with real LDAP entry data."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,ou=people,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "organizationalPerson"],
@@ -627,14 +627,14 @@ class TestFlextLdapModels:
         """Test Entry model validation rules."""
         # Test missing DN
         with pytest.raises(Exception):
-            FlextLdapModels.Entry(
+            FlextLDAPModels.Entry(
                 dn="",
                 attributes={"cn": ["test"]},
             )
 
     def test_search_request_advanced_options(self) -> None:
         """Test SearchRequest with advanced pagination and options."""
-        request = FlextLdapModels.SearchRequest(
+        request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(&(objectClass=person)(uid=test*))",
             scope="subtree",
@@ -654,7 +654,7 @@ class TestFlextLdapModels:
 
     def test_create_user_request_validation(self) -> None:
         """Test CreateUserRequest with field validation."""
-        request = FlextLdapModels.CreateUserRequest(
+        request = FlextLDAPModels.CreateUserRequest(
             dn="uid=newuser,ou=people,dc=example,dc=com",
             uid="newuser",
             cn="New User",
@@ -676,7 +676,7 @@ class TestFlextLdapModels:
 
     def test_create_group_request_validation(self) -> None:
         """Test CreateGroupRequest with members."""
-        request = FlextLdapModels.CreateGroupRequest(
+        request = FlextLDAPModels.CreateGroupRequest(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             description="Test Group",
@@ -693,7 +693,7 @@ class TestFlextLdapModels:
 
     def test_connection_info_model(self) -> None:
         """Test ConnectionInfo model with server information."""
-        info = FlextLdapModels.ConnectionInfo(
+        info = FlextLDAPModels.ConnectionInfo(
             server="ldap.example.com",
             port=389,
             use_ssl=False,
@@ -713,7 +713,7 @@ class TestFlextLdapModels:
 
     def test_ldap_error_model(self) -> None:
         """Test LdapError model for error tracking."""
-        error = FlextLdapModels.LdapError(
+        error = FlextLDAPModels.LdapError(
             error_code=49,
             error_message="Invalid credentials - 80090308: LdapErr: DSID-0C090447",
             operation="bind",
@@ -727,7 +727,7 @@ class TestFlextLdapModels:
 
     def test_operation_result_model(self) -> None:
         """Test OperationResult model for LDAP operations."""
-        result = FlextLdapModels.OperationResult(
+        result = FlextLDAPModels.OperationResult(
             success=True,
             operation_type="add",
             target_dn="cn=newuser,ou=people,dc=example,dc=com",
@@ -742,7 +742,7 @@ class TestFlextLdapModels:
         assert result.duration_ms == 15.5
 
         # Test factory methods
-        success_result = FlextLdapModels.OperationResult.success_result(
+        success_result = FlextLDAPModels.OperationResult.success_result(
             operation_type="modify",
             target_dn="cn=user,dc=example,dc=com",
             duration_ms=10.0,
@@ -750,7 +750,7 @@ class TestFlextLdapModels:
         assert success_result.success is True
         assert success_result.result_code == 0
 
-        error_result = FlextLdapModels.OperationResult.error_result(
+        error_result = FlextLDAPModels.OperationResult.error_result(
             operation_type="delete",
             error_code=32,
             error_message="No such object",
@@ -761,7 +761,7 @@ class TestFlextLdapModels:
 
     def test_acl_target_model(self) -> None:
         """Test AclTarget model for ACL definitions."""
-        target = FlextLdapModels.AclTarget.create(
+        target = FlextLDAPModels.AclTarget.create(
             target_type="dn",
             dn_pattern="ou=people,dc=example,dc=com",
         )
@@ -773,7 +773,7 @@ class TestFlextLdapModels:
 
     def test_acl_subject_model(self) -> None:
         """Test AclSubject model for ACL principals."""
-        subject = FlextLdapModels.AclSubject.create(
+        subject = FlextLDAPModels.AclSubject.create(
             subject_type="user",
             identifier="uid=admin,ou=people,dc=example,dc=com",
             authentication_level="simple",
@@ -787,7 +787,7 @@ class TestFlextLdapModels:
 
     def test_acl_permissions_model(self) -> None:
         """Test AclPermissions model for permission sets."""
-        perms = FlextLdapModels.AclPermissions.create(
+        perms = FlextLDAPModels.AclPermissions.create(
             permissions=["read", "write", "search"],
             denied_permissions=["delete"],
             grant_type="allow",
@@ -803,7 +803,7 @@ class TestFlextLdapModels:
 
     def test_cqrs_command_model(self) -> None:
         """Test CqrsCommand model for command pattern."""
-        command = FlextLdapModels.CqrsCommand(
+        command = FlextLDAPModels.CqrsCommand(
             command_type="CreateUser",
             command_id="cmd-001",
             payload={"uid": "testuser", "cn": "Test User"},
@@ -814,7 +814,7 @@ class TestFlextLdapModels:
         assert command.payload["uid"] == "testuser"
 
         # Test factory method
-        command_result = FlextLdapModels.CqrsCommand.create(
+        command_result = FlextLDAPModels.CqrsCommand.create(
             command_type="UpdateUser",
             command_id="cmd-002",
             payload={"uid": "testuser", "mail": "new@example.com"},
@@ -825,7 +825,7 @@ class TestFlextLdapModels:
 
     def test_cqrs_query_model(self) -> None:
         """Test CqrsQuery model for query pattern."""
-        query = FlextLdapModels.CqrsQuery(
+        query = FlextLDAPModels.CqrsQuery(
             query_type="FindUser",
             query_id="qry-001",
             parameters={"uid": "testuser"},
@@ -836,7 +836,7 @@ class TestFlextLdapModels:
         assert query.parameters["uid"] == "testuser"
 
         # Test factory method
-        query_result = FlextLdapModels.CqrsQuery.create(
+        query_result = FlextLDAPModels.CqrsQuery.create(
             query_type="SearchUsers",
             query_id="qry-002",
             parameters={"filter": "(objectClass=person)"},
@@ -850,7 +850,7 @@ class TestFlextLdapModels:
         import time
 
         timestamp = int(time.time())
-        event = FlextLdapModels.CqrsEvent(
+        event = FlextLDAPModels.CqrsEvent(
             event_type="UserCreated",
             event_id="evt-001",
             aggregate_id="user-123",
@@ -865,7 +865,7 @@ class TestFlextLdapModels:
         assert event.payload["uid"] == "testuser"
 
         # Test factory method
-        event_result = FlextLdapModels.CqrsEvent.create(
+        event_result = FlextLDAPModels.CqrsEvent.create(
             event_type="UserUpdated",
             event_id="evt-002",
             aggregate_id="user-123",
@@ -878,7 +878,7 @@ class TestFlextLdapModels:
 
     def test_domain_message_model(self) -> None:
         """Test DomainMessage model for message passing."""
-        message = FlextLdapModels.DomainMessage(
+        message = FlextLDAPModels.DomainMessage(
             message_id="msg-001",
             message_type="UserCommand",
             data={"action": "create", "uid": "testuser"},
@@ -895,16 +895,16 @@ class TestFlextLdapModels:
 
     def test_search_response_model(self) -> None:
         """Test SearchResponse model for search results."""
-        entry1 = FlextLdapModels.Entry(
+        entry1 = FlextLDAPModels.Entry(
             dn="cn=user1,dc=example,dc=com",
             attributes={"cn": ["user1"], "objectClass": ["person"]},
         )
-        entry2 = FlextLdapModels.Entry(
+        entry2 = FlextLDAPModels.Entry(
             dn="cn=user2,dc=example,dc=com",
             attributes={"cn": ["user2"], "objectClass": ["person"]},
         )
 
-        response = FlextLdapModels.SearchResponse(
+        response = FlextLDAPModels.SearchResponse(
             entries=[entry1, entry2],
             total_count=2,
             has_more=False,
@@ -924,7 +924,7 @@ class TestFlextLdapModels:
 
     def test_connection_config_model(self) -> None:
         """Test ConnectionConfig model for LDAP connections."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=389,
             use_ssl=False,
@@ -938,15 +938,15 @@ class TestFlextLdapModels:
 
     def test_unified_acl_model(self) -> None:
         """Test UnifiedAcl model for ACL representation."""
-        target_result = FlextLdapModels.AclTarget.create(
+        target_result = FlextLDAPModels.AclTarget.create(
             target_type="dn",
             dn_pattern="ou=people,dc=example,dc=com",
         )
-        subject_result = FlextLdapModels.AclSubject.create(
+        subject_result = FlextLDAPModels.AclSubject.create(
             subject_type="user",
             identifier="uid=admin,dc=example,dc=com",
         )
-        perms_result = FlextLdapModels.AclPermissions.create(
+        perms_result = FlextLDAPModels.AclPermissions.create(
             permissions=["read", "write"],
         )
 
@@ -954,7 +954,7 @@ class TestFlextLdapModels:
         assert subject_result.is_success
         assert perms_result.is_success
 
-        acl_result = FlextLdapModels.UnifiedAcl.create(
+        acl_result = FlextLDAPModels.UnifiedAcl.create(
             target=target_result.unwrap(),
             subject=subject_result.unwrap(),
             permissions=perms_result.unwrap(),
@@ -969,7 +969,7 @@ class TestFlextLdapModels:
 
     def test_openldap_acl_model(self) -> None:
         """Test OpenLdapAcl model for OpenLDAP ACLs."""
-        acl_result = FlextLdapModels.OpenLdapAcl.create(
+        acl_result = FlextLDAPModels.OpenLdapAcl.create(
             access_line="access to * by * read",
             target_spec="*",
         )
@@ -981,7 +981,7 @@ class TestFlextLdapModels:
 
     def test_oracle_acl_model(self) -> None:
         """Test OracleAcl model for Oracle LDAP ACLs."""
-        acl_result = FlextLdapModels.OracleAcl.create(
+        acl_result = FlextLDAPModels.OracleAcl.create(
             orclaci_value='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
             target_type="entry",
             permissions=["read"],
@@ -994,7 +994,7 @@ class TestFlextLdapModels:
 
     def test_aci_format_model(self) -> None:
         """Test AciFormat model for ACI representations."""
-        aci_result = FlextLdapModels.AciFormat.create(
+        aci_result = FlextLDAPModels.AciFormat.create(
             aci_value='(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
             target_attrs=["cn", "mail"],
             acl_name="test-aci",
@@ -1010,7 +1010,7 @@ class TestFlextLdapModels:
 
     def test_conversion_result_model(self) -> None:
         """Test ConversionResult model for ACL conversions."""
-        result = FlextLdapModels.ConversionResult.create(
+        result = FlextLDAPModels.ConversionResult.create(
             converted_acl="converted ACL string",
             source_format="openldap",
             target_format="oracle",
@@ -1026,7 +1026,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_validation_methods(self) -> None:
         """Test LdapUser validation methods."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=testuser,ou=people,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -1041,7 +1041,7 @@ class TestFlextLdapModels:
 
     def test_group_validation_methods(self) -> None:
         """Test Group validation methods."""
-        group = FlextLdapModels.Group(
+        group = FlextLDAPModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             member_dns=["uid=user1,ou=people,dc=example,dc=com"],
@@ -1053,7 +1053,7 @@ class TestFlextLdapModels:
 
     def test_entry_attribute_methods(self) -> None:
         """Test Entry model attribute manipulation methods."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
@@ -1067,7 +1067,7 @@ class TestFlextLdapModels:
 
     def test_search_request_pagination(self) -> None:
         """Test SearchRequest pagination features."""
-        request = FlextLdapModels.SearchRequest(
+        request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1080,36 +1080,36 @@ class TestFlextLdapModels:
 
     def test_distinguished_name_methods(self) -> None:
         """Test DistinguishedName helper methods."""
-        dn_result = FlextLdapModels.DistinguishedName.create(
+        dn_result = FlextLDAPModels.DistinguishedName.create(
             "uid=testuser,ou=people,dc=example,dc=com"
         )
 
         assert dn_result.is_success
-        dn = cast("FlextLdapModels.DistinguishedName", dn_result.unwrap())
+        dn = cast("FlextLDAPModels.DistinguishedName", dn_result.unwrap())
         assert "uid=testuser" in dn.value
 
     def test_filter_helper_methods(self) -> None:
         """Test Filter helper methods."""
-        filter_obj = FlextLdapModels.Filter(expression="(objectClass=person)")
+        filter_obj = FlextLDAPModels.Filter(expression="(objectClass=person)")
 
         assert filter_obj.expression == "(objectClass=person)"
         assert "objectClass" in filter_obj.expression
 
         # Test factory methods
-        equals_filter = FlextLdapModels.Filter.equals("cn", "admin")
+        equals_filter = FlextLDAPModels.Filter.equals("cn", "admin")
         assert "cn=admin" in equals_filter.expression
 
-        starts_filter = FlextLdapModels.Filter.starts_with("uid", "test")
+        starts_filter = FlextLDAPModels.Filter.starts_with("uid", "test")
         assert "uid=test*" in starts_filter.expression
 
-        class_filter = FlextLdapModels.Filter.object_class("person")
+        class_filter = FlextLDAPModels.Filter.object_class("person")
         assert "objectClass=person" in class_filter.expression
 
     def test_scope_enum_values(self) -> None:
         """Test Scope enum values."""
-        base_scope = FlextLdapModels.Scope(value="base")
-        onelevel_scope = FlextLdapModels.Scope(value="onelevel")
-        subtree_scope = FlextLdapModels.Scope(value="subtree")
+        base_scope = FlextLDAPModels.Scope(value="base")
+        onelevel_scope = FlextLDAPModels.Scope(value="onelevel")
+        subtree_scope = FlextLDAPModels.Scope(value="subtree")
 
         assert base_scope.value == "base"
         assert onelevel_scope.value == "onelevel"
@@ -1123,61 +1123,61 @@ class TestFlextLdapModels:
         """Test DistinguishedName with various invalid formats."""
         # Test empty DN
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(value="")
+            FlextLDAPModels.DistinguishedName(value="")
 
         # Test DN without dc component (should be valid - not required)
-        dn = FlextLdapModels.DistinguishedName(value="cn=test")
+        dn = FlextLDAPModels.DistinguishedName(value="cn=test")
         assert dn.value == "cn=test"
 
         # Test malformed DN (missing equals)
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(value="cntest,dc=example,dc=com")
+            FlextLDAPModels.DistinguishedName(value="cntest,dc=example,dc=com")
 
         # Test DN with empty component
         with pytest.raises(Exception):
-            FlextLdapModels.DistinguishedName(value="cn=,dc=example,dc=com")
+            FlextLDAPModels.DistinguishedName(value="cn=,dc=example,dc=com")
 
     def test_filter_invalid_syntax(self) -> None:
         """Test Filter with invalid syntax."""
         # Test empty filter
         with pytest.raises(Exception):
-            FlextLdapModels.Filter(expression="")
+            FlextLDAPModels.Filter(expression="")
 
         # Test filter without parentheses
         with pytest.raises(Exception):
-            FlextLdapModels.Filter(expression="objectClass=person")
+            FlextLDAPModels.Filter(expression="objectClass=person")
 
         # Test filter with unbalanced parentheses
         with pytest.raises(Exception):
-            FlextLdapModels.Filter(expression="(objectClass=person")
+            FlextLDAPModels.Filter(expression="(objectClass=person")
 
         # Test filter with wrong closing (should be valid - only checks start/end)
-        filter_obj = FlextLdapModels.Filter(expression="(objectClass==person)")
+        filter_obj = FlextLDAPModels.Filter(expression="(objectClass==person)")
         assert filter_obj.expression == "(objectClass==person)"
 
     def test_scope_invalid_values(self) -> None:
         """Test Scope with invalid values."""
         # Test uppercase (should fail - must be lowercase)
         with pytest.raises(ValueError):
-            FlextLdapModels.Scope(value="SUBTREE")
+            FlextLDAPModels.Scope(value="SUBTREE")
 
         # Test completely invalid value
         with pytest.raises(ValueError):
-            FlextLdapModels.Scope(value="invalid_scope")
+            FlextLDAPModels.Scope(value="invalid_scope")
 
         # Test empty scope
         with pytest.raises(ValueError):
-            FlextLdapModels.Scope(value="")
+            FlextLDAPModels.Scope(value="")
 
         # Test numeric value
         with pytest.raises(ValueError):
-            FlextLdapModels.Scope(value="123")
+            FlextLDAPModels.Scope(value="123")
 
     def test_ldap_user_field_validators(self) -> None:
         """Test LdapUser field validators."""
         # Test invalid email format
         with pytest.raises(Exception):
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="uid=test,dc=example,dc=com",
                 uid="test",
                 cn="Test",
@@ -1187,7 +1187,7 @@ class TestFlextLdapModels:
 
         # Test empty required fields
         with pytest.raises(Exception):
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="",  # Empty DN
                 uid="test",
                 cn="Test",
@@ -1196,7 +1196,7 @@ class TestFlextLdapModels:
 
         # Test whitespace-only DN
         with pytest.raises(Exception):
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="   ",
                 uid="test",
                 cn="Test",
@@ -1206,7 +1206,7 @@ class TestFlextLdapModels:
     def test_group_field_validators(self) -> None:
         """Test Group field validators."""
         # Test valid group with various members (member DN format not strictly validated)
-        group = FlextLdapModels.Group(
+        group = FlextLDAPModels.Group(
             dn="cn=testgroup,dc=example,dc=com",
             cn="testgroup",
             member_dns=["uid=user1,ou=people,dc=example,dc=com"],
@@ -1214,7 +1214,7 @@ class TestFlextLdapModels:
         assert group.cn == "testgroup"
 
         # Test group with optional gid_number (can be negative in some LDAP schemas)
-        group_with_gid = FlextLdapModels.Group(
+        group_with_gid = FlextLDAPModels.Group(
             dn="cn=testgroup,dc=example,dc=com",
             cn="testgroup",
             gid_number=1000,
@@ -1222,7 +1222,7 @@ class TestFlextLdapModels:
         assert group_with_gid.gid_number == 1000
 
         # Test group validation business rules
-        group_for_validation = FlextLdapModels.Group(
+        group_for_validation = FlextLDAPModels.Group(
             dn="cn=testgroup,dc=example,dc=com",
             cn="testgroup",
         )
@@ -1232,7 +1232,7 @@ class TestFlextLdapModels:
     def test_connection_config_validation(self) -> None:
         """Test ConnectionConfig validation."""
         # Test valid connection config with standard port
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="localhost",
             port=389,
         )
@@ -1240,7 +1240,7 @@ class TestFlextLdapModels:
         assert config.port == 389
 
         # Test valid SSL port
-        ssl_config = FlextLdapModels.ConnectionConfig(
+        ssl_config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=636,
             use_ssl=True,
@@ -1248,14 +1248,14 @@ class TestFlextLdapModels:
         assert ssl_config.use_ssl is True
 
         # Test server with whitespace (should be stripped or fail)
-        config_ws = FlextLdapModels.ConnectionConfig(
+        config_ws = FlextLDAPModels.ConnectionConfig(
             server="  localhost  ",
             port=389,
         )
         assert config_ws.server == "  localhost  " or config_ws.server == "localhost"
 
         # Test timeout validation
-        config_with_timeout = FlextLdapModels.ConnectionConfig(
+        config_with_timeout = FlextLDAPModels.ConnectionConfig(
             server="localhost",
             port=389,
             timeout=30,
@@ -1265,7 +1265,7 @@ class TestFlextLdapModels:
     def test_search_request_limits(self) -> None:
         """Test SearchRequest limit boundary conditions."""
         # Test valid search request with limits
-        request = FlextLdapModels.SearchRequest(
+        request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1279,7 +1279,7 @@ class TestFlextLdapModels:
         assert request.is_paged_search is True
 
         # Test search without limits (defaults)
-        request_no_limits = FlextLdapModels.SearchRequest(
+        request_no_limits = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1287,7 +1287,7 @@ class TestFlextLdapModels:
         assert request_no_limits.base_dn == "dc=example,dc=com"
 
         # Test search without page_size parameter (no paging)
-        request_no_paging = FlextLdapModels.SearchRequest(
+        request_no_paging = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1299,20 +1299,20 @@ class TestFlextLdapModels:
         """Test Entry attribute validation."""
         # Test empty DN
         with pytest.raises(Exception):
-            FlextLdapModels.Entry(
+            FlextLDAPModels.Entry(
                 dn="",  # Empty DN
                 attributes={"cn": ["test"]},
             )
 
         # Test None attributes
         with pytest.raises(Exception):
-            FlextLdapModels.Entry(
+            FlextLDAPModels.Entry(
                 dn="cn=test,dc=example,dc=com",
                 attributes=None,  # None attributes
             )
 
         # Test empty attributes dict (should be valid)
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=test,dc=example,dc=com",
             attributes={},  # Empty but valid
         )
@@ -1323,7 +1323,7 @@ class TestFlextLdapModels:
         """Test CreateUserRequest with invalid data."""
         # Test invalid email format
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLDAPModels.CreateUserRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="test",
                 cn="Test",
@@ -1340,7 +1340,7 @@ class TestFlextLdapModels:
 
         # Test empty uid
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLDAPModels.CreateUserRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="",  # Empty uid
                 cn="Test",
@@ -1356,7 +1356,7 @@ class TestFlextLdapModels:
 
         # Test whitespace-only password
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLDAPModels.CreateUserRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="test",
                 cn="Test",
@@ -1374,7 +1374,7 @@ class TestFlextLdapModels:
     def test_create_group_request_invalid(self) -> None:
         """Test CreateGroupRequest with invalid data."""
         # Test valid group request with members
-        request = FlextLdapModels.CreateGroupRequest(
+        request = FlextLDAPModels.CreateGroupRequest(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             description="Test Group",
@@ -1385,7 +1385,7 @@ class TestFlextLdapModels:
 
         # Test empty cn (should fail)
         with pytest.raises(Exception):
-            FlextLdapModels.CreateGroupRequest(
+            FlextLDAPModels.CreateGroupRequest(
                 dn="cn=testgroup,ou=groups,dc=example,dc=com",
                 cn="",  # Empty cn
                 description="Test",
@@ -1394,7 +1394,7 @@ class TestFlextLdapModels:
 
         # Test empty description (should fail)
         with pytest.raises(Exception):
-            FlextLdapModels.CreateGroupRequest(
+            FlextLDAPModels.CreateGroupRequest(
                 dn="cn=testgroup,ou=groups,dc=example,dc=com",
                 cn="testgroup",
                 description="",  # Empty description
@@ -1407,7 +1407,7 @@ class TestFlextLdapModels:
 
     def test_distinguished_name_computed_properties(self) -> None:
         """Test DistinguishedName computed properties."""
-        dn = FlextLdapModels.DistinguishedName(
+        dn = FlextLDAPModels.DistinguishedName(
             value="uid=testuser,ou=people,dc=example,dc=com"
         )
 
@@ -1429,7 +1429,7 @@ class TestFlextLdapModels:
 
     def test_distinguished_name_serialization(self) -> None:
         """Test DistinguishedName serialization and normalization."""
-        dn = FlextLdapModels.DistinguishedName(
+        dn = FlextLDAPModels.DistinguishedName(
             value="CN=Test User,OU=People,DC=Example,DC=Com"
         )
 
@@ -1438,7 +1438,7 @@ class TestFlextLdapModels:
         assert "value" in serialized
 
         # Test DN with multi-valued RDN
-        multi_rdn = FlextLdapModels.DistinguishedName(
+        multi_rdn = FlextLDAPModels.DistinguishedName(
             value="cn=test+uid=user,dc=example,dc=com"
         )
         assert multi_rdn.rdn == "cn=test+uid=user"
@@ -1447,7 +1447,7 @@ class TestFlextLdapModels:
     def test_ldap_user_business_rules_validation(self) -> None:
         """Test LdapUser business rules validation."""
         # Full user with all attributes
-        full_user = FlextLdapModels.LdapUser(
+        full_user = FlextLDAPModels.LdapUser(
             dn="uid=john,ou=people,dc=example,dc=com",
             uid="john",
             cn="John Doe",
@@ -1467,7 +1467,7 @@ class TestFlextLdapModels:
         assert full_user.organizational_unit == "Engineering"
 
         # Minimal user (required fields: dn, cn, uid, sn, mail)
-        minimal_user = FlextLdapModels.LdapUser(
+        minimal_user = FlextLDAPModels.LdapUser(
             dn="uid=jane,ou=people,dc=example,dc=com",
             uid="jane",
             cn="Jane Smith",
@@ -1481,7 +1481,7 @@ class TestFlextLdapModels:
 
     def test_group_member_management(self) -> None:
         """Test Group member management operations."""
-        group = FlextLdapModels.Group(
+        group = FlextLDAPModels.Group(
             dn="cn=developers,ou=groups,dc=example,dc=com",
             cn="developers",
             member_dns=[
@@ -1502,7 +1502,7 @@ class TestFlextLdapModels:
 
     def test_entry_attribute_access(self) -> None:
         """Test Entry attribute access patterns."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="uid=testuser,ou=people,dc=example,dc=com",
             attributes={
                 "uid": ["testuser"],
@@ -1529,7 +1529,7 @@ class TestFlextLdapModels:
     def test_search_request_pagination_logic(self) -> None:
         """Test SearchRequest pagination logic and computed properties."""
         # Test paged search
-        paged_request = FlextLdapModels.SearchRequest(
+        paged_request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1538,7 +1538,7 @@ class TestFlextLdapModels:
         assert paged_request.is_paged_search is True
 
         # Test non-paged search
-        non_paged = FlextLdapModels.SearchRequest(
+        non_paged = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1546,7 +1546,7 @@ class TestFlextLdapModels:
         assert non_paged.is_paged_search is False
 
         # Test with attributes specification
-        with_attrs = FlextLdapModels.SearchRequest(
+        with_attrs = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(uid=test*)",
             scope="onelevel",
@@ -1560,7 +1560,7 @@ class TestFlextLdapModels:
     def test_connection_config_uri_generation(self) -> None:
         """Test ConnectionConfig URI generation."""
         # Test LDAP URI
-        ldap_config = FlextLdapModels.ConnectionConfig(
+        ldap_config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=389,
             use_ssl=False,
@@ -1568,7 +1568,7 @@ class TestFlextLdapModels:
         assert ldap_config.server_uri == "ldap://ldap.example.com:389"
 
         # Test LDAPS URI
-        ldaps_config = FlextLdapModels.ConnectionConfig(
+        ldaps_config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=636,
             use_ssl=True,
@@ -1576,7 +1576,7 @@ class TestFlextLdapModels:
         assert ldaps_config.server_uri == "ldaps://ldap.example.com:636"
 
         # Test password property
-        config_with_password = FlextLdapModels.ConnectionConfig(
+        config_with_password = FlextLDAPModels.ConnectionConfig(
             server="localhost",
             port=389,
             bind_password="secret123",
@@ -1586,7 +1586,7 @@ class TestFlextLdapModels:
     def test_operation_result_factory_methods(self) -> None:
         """Test OperationResult factory method patterns."""
         # Success result factory
-        success = FlextLdapModels.OperationResult(
+        success = FlextLDAPModels.OperationResult(
             success=True,
             result_message="User created successfully",
             target_dn="uid=john,ou=people,dc=example,dc=com",
@@ -1597,7 +1597,7 @@ class TestFlextLdapModels:
         assert success.target_dn == "uid=john,ou=people,dc=example,dc=com"
 
         # Error result factory (OperationResult has result_code and result_message, not error_code/error_message)
-        error = FlextLdapModels.OperationResult(
+        error = FlextLDAPModels.OperationResult(
             success=False,
             result_code=32,
             result_message="No such object",
@@ -1612,19 +1612,19 @@ class TestFlextLdapModels:
     def test_filter_combination_patterns(self) -> None:
         """Test Filter combination and factory patterns."""
         # Test equals filter
-        equals_filter = FlextLdapModels.Filter.equals("uid", "testuser")
+        equals_filter = FlextLDAPModels.Filter.equals("uid", "testuser")
         assert equals_filter.expression == "(uid=testuser)"
 
         # Test starts_with filter
-        starts_filter = FlextLdapModels.Filter.starts_with("cn", "Test")
+        starts_filter = FlextLDAPModels.Filter.starts_with("cn", "Test")
         assert starts_filter.expression == "(cn=Test*)"
 
         # Test object_class filter
-        oc_filter = FlextLdapModels.Filter.object_class("inetOrgPerson")
+        oc_filter = FlextLDAPModels.Filter.object_class("inetOrgPerson")
         assert oc_filter.expression == "(objectClass=inetOrgPerson)"
 
         # Test complex filter
-        complex_filter = FlextLdapModels.Filter(
+        complex_filter = FlextLDAPModels.Filter(
             expression="(&(objectClass=person)(uid=test*))"
         )
         assert "objectClass=person" in complex_filter.expression
@@ -1632,7 +1632,7 @@ class TestFlextLdapModels:
 
     def test_ldap_error_model_details(self) -> None:
         """Test LdapError model with detailed error information."""
-        error = FlextLdapModels.LdapError(
+        error = FlextLDAPModels.LdapError(
             error_code=49,
             error_message="Invalid credentials - 80090308: LdapErr: DSID-0C090447, comment: AcceptSecurityContext error",
             operation="bind",
@@ -1645,7 +1645,7 @@ class TestFlextLdapModels:
         assert error.target_dn == "uid=admin,dc=example,dc=com"
 
         # Test search error
-        search_error = FlextLdapModels.LdapError(
+        search_error = FlextLDAPModels.LdapError(
             error_code=32,
             error_message="No such object",
             operation="search",
@@ -1662,7 +1662,7 @@ class TestFlextLdapModels:
     def test_acl_target_creation(self) -> None:
         """Test AclTarget model creation and validation."""
         # DN-based target
-        dn_target = FlextLdapModels.AclTarget(
+        dn_target = FlextLDAPModels.AclTarget(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
             scope="subtree",
@@ -1672,7 +1672,7 @@ class TestFlextLdapModels:
         assert dn_target.scope == "subtree"
 
         # Attribute-based target
-        attr_target = FlextLdapModels.AclTarget(
+        attr_target = FlextLDAPModels.AclTarget(
             target_type="attrs",
             attributes=["userPassword", "authPassword"],
         )
@@ -1683,7 +1683,7 @@ class TestFlextLdapModels:
     def test_acl_subject_creation(self) -> None:
         """Test AclSubject model creation with different subject types."""
         # User subject
-        user_subject = FlextLdapModels.AclSubject(
+        user_subject = FlextLDAPModels.AclSubject(
             subject_type="user",
             identifier="uid=admin,ou=people,dc=example,dc=com",
         )
@@ -1691,7 +1691,7 @@ class TestFlextLdapModels:
         assert user_subject.identifier == "uid=admin,ou=people,dc=example,dc=com"
 
         # Group subject
-        group_subject = FlextLdapModels.AclSubject(
+        group_subject = FlextLDAPModels.AclSubject(
             subject_type="group",
             identifier="cn=admins,ou=groups,dc=example,dc=com",
         )
@@ -1699,7 +1699,7 @@ class TestFlextLdapModels:
         assert group_subject.identifier == "cn=admins,ou=groups,dc=example,dc=com"
 
         # Self subject (uses default identifier)
-        self_subject = FlextLdapModels.AclSubject(
+        self_subject = FlextLDAPModels.AclSubject(
             subject_type="self",
         )
         assert self_subject.subject_type == "self"
@@ -1708,7 +1708,7 @@ class TestFlextLdapModels:
     def test_acl_permissions_direct_creation(self) -> None:
         """Test AclPermissions model direct creation with various permission sets."""
         # Read-only permissions
-        read_perms = FlextLdapModels.AclPermissions(
+        read_perms = FlextLDAPModels.AclPermissions(
             permissions=["read", "search", "compare"],
             grant_type="allow",
         )
@@ -1718,7 +1718,7 @@ class TestFlextLdapModels:
         assert read_perms.grant_type == "allow"
 
         # Full permissions
-        full_perms = FlextLdapModels.AclPermissions(
+        full_perms = FlextLDAPModels.AclPermissions(
             permissions=["read", "write", "add", "delete", "search", "compare"],
             grant_type="allow",
         )
@@ -1730,16 +1730,16 @@ class TestFlextLdapModels:
 
     def test_unified_acl_direct_creation(self) -> None:
         """Test UnifiedAcl model direct creation with complete ACL definition."""
-        target = FlextLdapModels.AclTarget(
+        target = FlextLDAPModels.AclTarget(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
             scope="subtree",
         )
-        subject = FlextLdapModels.AclSubject(
+        subject = FlextLDAPModels.AclSubject(
             subject_type="group",
             dn="cn=admins,ou=groups,dc=example,dc=com",
         )
-        permissions = FlextLdapModels.AclPermissions(
+        permissions = FlextLDAPModels.AclPermissions(
             read=True,
             write=True,
             add=True,
@@ -1747,7 +1747,7 @@ class TestFlextLdapModels:
             search=True,
         )
 
-        unified_acl = FlextLdapModels.UnifiedAcl(
+        unified_acl = FlextLDAPModels.UnifiedAcl(
             name="admin_users_acl",
             target=target,
             subject=subject,
@@ -1763,7 +1763,7 @@ class TestFlextLdapModels:
 
     def test_openldap_acl_format(self) -> None:
         """Test OpenLdapAcl model with OpenLDAP-specific syntax."""
-        openldap_acl = FlextLdapModels.OpenLdapAcl(
+        openldap_acl = FlextLDAPModels.OpenLdapAcl(
             access_line="access to attrs=userPassword by self write by anonymous auth",
             target_spec="attrs=userPassword",
         )
@@ -1772,7 +1772,7 @@ class TestFlextLdapModels:
 
     def test_oracle_acl_format(self) -> None:
         """Test OracleAcl model with Oracle-specific ACI format."""
-        oracle_acl = FlextLdapModels.OracleAcl(
+        oracle_acl = FlextLDAPModels.OracleAcl(
             orclaci_value='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "user-read"; allow (read,search) userdn="ldap:///anyone";)',
             target_type="entry",
             attributes=["*"],
@@ -1784,7 +1784,7 @@ class TestFlextLdapModels:
 
     def test_aci_format_parsing(self) -> None:
         """Test AciFormat model for Oracle ACI string parsing."""
-        aci = FlextLdapModels.AciFormat(
+        aci = FlextLDAPModels.AciFormat(
             aci_value='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "user-modify"; allow (read,write,search) userdn="ldap:///uid=admin,ou=people,dc=example,dc=com";)',
             target_dn="ou=users,dc=example,dc=com",
             target_attrs=["*"],
@@ -1802,7 +1802,7 @@ class TestFlextLdapModels:
     def test_acl_conversion_result(self) -> None:
         """Test ConversionResult model for ACL conversion tracking."""
         # Successful conversion
-        success_result = FlextLdapModels.ConversionResult(
+        success_result = FlextLDAPModels.ConversionResult(
             converted_acl='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
             source_format="openldap",
             target_format="oracle",
@@ -1814,7 +1814,7 @@ class TestFlextLdapModels:
         assert len(success_result.warnings) == 0
 
         # Conversion with warnings
-        warning_result = FlextLdapModels.ConversionResult(
+        warning_result = FlextLDAPModels.ConversionResult(
             converted_acl="access to * by self write",
             source_format="oracle",
             target_format="openldap",
@@ -1827,18 +1827,18 @@ class TestFlextLdapModels:
     def test_openldap_to_unified_acl_conversion(self) -> None:
         """Test conversion from OpenLDAP ACL to UnifiedAcl model."""
         # Create target and subject for OpenLDAP ACL
-        target = FlextLdapModels.AclTarget(
+        target = FlextLDAPModels.AclTarget(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
             scope="subtree",
         )
-        subject = FlextLdapModels.AclSubject(
+        subject = FlextLDAPModels.AclSubject(
             subject_type="group",
             dn="cn=admins,ou=groups,dc=example,dc=com",
         )
 
         # Create OpenLDAP ACL with proper field names
-        openldap_acl = FlextLdapModels.OpenLdapAcl(
+        openldap_acl = FlextLDAPModels.OpenLdapAcl(
             access_line='access to dn.subtree="ou=users,dc=example,dc=com" by group.exact="cn=admins,ou=groups,dc=example,dc=com" write',
             target_spec='dn.subtree="ou=users,dc=example,dc=com"',
         )
@@ -1855,13 +1855,13 @@ class TestFlextLdapModels:
     def test_oracle_to_unified_acl_conversion(self) -> None:
         """Test conversion from Oracle ACI to UnifiedAcl model."""
         # Create permissions model
-        permissions = FlextLdapModels.AclPermissions(
+        permissions = FlextLDAPModels.AclPermissions(
             permissions=["read", "search", "compare"],
             grant_type="allow",
         )
 
         # Create Oracle ACI with proper field names
-        oracle_acl = FlextLdapModels.OracleAcl(
+        oracle_acl = FlextLDAPModels.OracleAcl(
             orclaci_value='(target="ldap:///ou=people,dc=example,dc=com")(targetattr="*")(version 3.0; acl "people-read"; allow (read,search,compare) userdn="ldap:///all";)',
             target_type="entry",
             attributes=["*"],
@@ -1883,7 +1883,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_to_ldap_attributes(self) -> None:
         """Test LdapUser.to_ldap_attributes() conversion method."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=jdoe,ou=users,dc=example,dc=com",
             cn="John Doe",
             uid="jdoe",
@@ -1938,7 +1938,7 @@ class TestFlextLdapModels:
             "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
         }
 
-        result = FlextLdapModels.LdapUser.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.LdapUser.from_ldap_attributes(ldap_attrs)
 
         assert result.is_success
         user = result.unwrap()
@@ -1965,7 +1965,7 @@ class TestFlextLdapModels:
             "mail": ["minuser@example.com"],
         }
 
-        result = FlextLdapModels.LdapUser.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.LdapUser.from_ldap_attributes(ldap_attrs)
 
         assert result.is_success
         user = result.unwrap()
@@ -1980,7 +1980,7 @@ class TestFlextLdapModels:
             "sn": ["User"],
         }
 
-        result = FlextLdapModels.LdapUser.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.LdapUser.from_ldap_attributes(ldap_attrs)
 
         assert result.is_failure
         assert result.error is not None
@@ -1988,7 +1988,7 @@ class TestFlextLdapModels:
 
     def test_group_to_ldap_attributes(self) -> None:
         """Test Group.to_ldap_attributes() conversion method."""
-        group = FlextLdapModels.Group(
+        group = FlextLDAPModels.Group(
             dn="cn=admins,ou=groups,dc=example,dc=com",
             cn="admins",
             member_dns=[
@@ -2025,7 +2025,7 @@ class TestFlextLdapModels:
             "objectClass": ["groupOfNames", "posixGroup"],
         }
 
-        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.Group.from_ldap_attributes(ldap_attrs)
 
         assert result.is_success
         group = result.unwrap()
@@ -2042,7 +2042,7 @@ class TestFlextLdapModels:
 
         timestamp = int(time.time() * 1000)
 
-        command = FlextLdapModels.CqrsCommand(
+        command = FlextLDAPModels.CqrsCommand(
             command_type="CreateUser",
             command_id="cmd-123",
             payload={"username": "newuser", "email": "new@example.com"},
@@ -2062,7 +2062,7 @@ class TestFlextLdapModels:
 
         timestamp = int(time.time() * 1000)
 
-        query = FlextLdapModels.CqrsQuery(
+        query = FlextLDAPModels.CqrsQuery(
             query_type="FindUser",
             query_id="qry-456",
             parameters={"uid": "testuser"},
@@ -2082,7 +2082,7 @@ class TestFlextLdapModels:
 
         timestamp = int(time.time() * 1000)
 
-        event = FlextLdapModels.CqrsEvent(
+        event = FlextLDAPModels.CqrsEvent(
             event_type="UserCreated",
             event_id="evt-123",
             aggregate_id="user-456",
@@ -2105,7 +2105,7 @@ class TestFlextLdapModels:
 
         timestamp = int(time.time() * 1000)
 
-        message = FlextLdapModels.DomainMessage(
+        message = FlextLDAPModels.DomainMessage(
             message_type="command",
             message_id="msg-789",
             data={"action": "create_user", "payload": {"username": "testuser"}},
@@ -2127,7 +2127,7 @@ class TestFlextLdapModels:
 
     def test_entry_get_attribute_string(self) -> None:
         """Test Entry.get_attribute() with string attribute."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2149,7 +2149,7 @@ class TestFlextLdapModels:
 
     def test_entry_get_attribute_list(self) -> None:
         """Test Entry.get_attribute() with list attribute."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
@@ -2170,7 +2170,7 @@ class TestFlextLdapModels:
 
     def test_entry_get_attribute_bytes(self) -> None:
         """Test Entry.get_attribute() with empty list edge case."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2186,7 +2186,7 @@ class TestFlextLdapModels:
 
     def test_entry_get_attribute_missing(self) -> None:
         """Test Entry.get_attribute() returns None for missing attribute."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={"cn": ["Test User"]},
         )
@@ -2201,7 +2201,7 @@ class TestFlextLdapModels:
 
     def test_entry_set_attribute(self) -> None:
         """Test Entry.set_attribute() attribute modification."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={"cn": ["Test User"], "sn": ["User"]},
         )
@@ -2216,7 +2216,7 @@ class TestFlextLdapModels:
 
     def test_entry_has_attribute(self) -> None:
         """Test Entry.has_attribute() existence check."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2237,26 +2237,26 @@ class TestFlextLdapModels:
     def test_entry_get_rdn(self) -> None:
         """Test Entry.get_rdn() RDN extraction."""
         # Test simple DN
-        entry1 = FlextLdapModels.Entry(
+        entry1 = FlextLDAPModels.Entry(
             dn="cn=testuser,ou=users,dc=example,dc=com",
             attributes={"cn": ["Test User"]},
         )
         assert entry1.get_rdn() == "cn=testuser"
 
         # Test DN with multiple components
-        entry2 = FlextLdapModels.Entry(
+        entry2 = FlextLDAPModels.Entry(
             dn="uid=jdoe,ou=people,ou=users,dc=company,dc=com",
             attributes={"uid": ["jdoe"]},
         )
         assert entry2.get_rdn() == "uid=jdoe"
 
         # Test single component DN (no commas)
-        entry3 = FlextLdapModels.Entry(dn="dc=com", attributes={"dc": ["com"]})
+        entry3 = FlextLDAPModels.Entry(dn="dc=com", attributes={"dc": ["com"]})
         assert entry3.get_rdn() == "dc=com"
 
     def test_entry_contains_operator(self) -> None:
         """Test Entry.__contains__() 'in' operator support."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2279,7 +2279,7 @@ class TestFlextLdapModels:
 
     def test_entry_getitem_operator(self) -> None:
         """Test Entry.__getitem__() bracket notation support."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2302,7 +2302,7 @@ class TestFlextLdapModels:
 
     def test_entry_get_with_default(self) -> None:
         """Test Entry.get() dict-like method with default."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLDAPModels.Entry(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "cn": ["Test User"],
@@ -2348,7 +2348,7 @@ class TestFlextLdapModels:
             ],
         }
 
-        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
         assert group.dn == "cn=testgroup,ou=groups,dc=example,dc=com"
@@ -2366,7 +2366,7 @@ class TestFlextLdapModels:
             "member": ["cn=admin,dc=example,dc=com"],
         }
 
-        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
         assert group.dn == "cn=simplegroup,ou=groups,dc=example,dc=com"
@@ -2386,7 +2386,7 @@ class TestFlextLdapModels:
             ],
         }
 
-        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_success
         group = result.unwrap()
         assert len(group.unique_member_dns) == 2
@@ -2399,14 +2399,14 @@ class TestFlextLdapModels:
             "member": ["cn=admin,dc=example,dc=com"],
         }
 
-        result = FlextLdapModels.Group.from_ldap_attributes(ldap_attrs)
+        result = FlextLDAPModels.Group.from_ldap_attributes(ldap_attrs)
         assert result.is_failure
         assert result.error is not None
         assert result.error and result.error and "DN is required" in result.error
 
     def test_search_request_search_complexity_simple(self) -> None:
         """Test SearchRequest.search_complexity computed field - simple."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=organization)",  # Non-wildcard for base scope
             scope="base",
@@ -2416,7 +2416,7 @@ class TestFlextLdapModels:
 
     def test_search_request_search_complexity_moderate(self) -> None:
         """Test SearchRequest.search_complexity computed field - moderate."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="ou=users,dc=example,dc=com",
             filter_str="(uid=testuser)",
             scope="onelevel",
@@ -2427,7 +2427,7 @@ class TestFlextLdapModels:
     def test_search_request_search_complexity_complex(self) -> None:
         """Test SearchRequest.search_complexity computed field - complex."""
         # Test with wildcard
-        search1 = FlextLdapModels.SearchRequest(
+        search1 = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(cn=*test*)",
             scope="subtree",
@@ -2435,7 +2435,7 @@ class TestFlextLdapModels:
         assert search1.search_complexity == "complex"
 
         # Test with multiple AND conditions
-        search2 = FlextLdapModels.SearchRequest(
+        search2 = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(&(&(objectClass=person)(uid=test))(&(cn=user)(mail=*)))",
             scope="subtree",
@@ -2444,7 +2444,7 @@ class TestFlextLdapModels:
 
     def test_search_request_normalized_scope(self) -> None:
         """Test SearchRequest.normalized_scope computed field."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=*)",
             scope="SUBTREE",  # Uppercase
@@ -2454,7 +2454,7 @@ class TestFlextLdapModels:
 
     def test_search_request_estimated_result_count_base(self) -> None:
         """Test SearchRequest.estimated_result_count - base scope."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="cn=admin,dc=example,dc=com",
             filter_str="(objectClass=person)",  # Non-wildcard for base scope
             scope="base",
@@ -2464,7 +2464,7 @@ class TestFlextLdapModels:
 
     def test_search_request_estimated_result_count_onelevel(self) -> None:
         """Test SearchRequest.estimated_result_count - onelevel scope."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="ou=users,dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="onelevel",
@@ -2476,7 +2476,7 @@ class TestFlextLdapModels:
 
     def test_search_request_estimated_result_count_subtree_specific(self) -> None:
         """Test SearchRequest.estimated_result_count - subtree with specific filter."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(uid=testuser)",
             scope="subtree",
@@ -2488,7 +2488,7 @@ class TestFlextLdapModels:
 
     def test_search_request_estimated_result_count_subtree_broad(self) -> None:
         """Test SearchRequest.estimated_result_count - subtree with broad filter."""
-        search = FlextLdapModels.SearchRequest(
+        search = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -2500,7 +2500,7 @@ class TestFlextLdapModels:
 
     def test_create_user_request_validate_business_rules_success(self) -> None:
         """Test CreateUserRequest.validate_business_rules() succeeds with valid data."""
-        request = FlextLdapModels.CreateUserRequest(
+        request = FlextLDAPModels.CreateUserRequest(
             dn="uid=test,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -2521,7 +2521,7 @@ class TestFlextLdapModels:
 
     def test_create_user_request_to_user_entity(self) -> None:
         """Test CreateUserRequest.to_user_entity() conversion."""
-        request = FlextLdapModels.CreateUserRequest(
+        request = FlextLDAPModels.CreateUserRequest(
             dn="uid=test,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -2539,7 +2539,7 @@ class TestFlextLdapModels:
 
         # Test conversion to user entity
         user = request.to_user_entity()
-        assert isinstance(user, FlextLdapModels.LdapUser)
+        assert isinstance(user, FlextLDAPModels.LdapUser)
         assert user.dn == "uid=test,ou=users,dc=example,dc=com"
         assert user.uid == "testuser"
         assert user.cn == "Test User"
@@ -2552,7 +2552,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_display_name_with_given_name_and_sn(self) -> None:
         """Test LdapUser.display_name with given_name and sn."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=jdoe,ou=users,dc=example,dc=com",
             cn="John Doe",
             uid="jdoe",
@@ -2565,7 +2565,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_display_name_with_given_name_only(self) -> None:
         """Test LdapUser.display_name with only given_name."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=john,ou=users,dc=example,dc=com",
             cn="John",
             uid="john",
@@ -2578,7 +2578,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_display_name_with_sn_only(self) -> None:
         """Test LdapUser.display_name with only sn."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=doe,ou=users,dc=example,dc=com",
             cn="Doe",
             uid="doe",
@@ -2590,7 +2590,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_display_name_fallback_to_cn(self) -> None:
         """Test LdapUser.display_name fallback to cn."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             uid="testuser",
@@ -2602,7 +2602,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_is_active_status_enabled(self) -> None:
         """Test LdapUser.is_active with active status."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=active,ou=users,dc=example,dc=com",
             cn="Active User",
             uid="active",
@@ -2615,7 +2615,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_is_active_status_disabled(self) -> None:
         """Test LdapUser.is_active with disabled status."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=disabled,ou=users,dc=example,dc=com",
             cn="Disabled User",
             uid="disabled",
@@ -2628,7 +2628,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_is_active_no_status(self) -> None:
         """Test LdapUser.is_active with no status (defaults to True)."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=nostatus,ou=users,dc=example,dc=com",
             cn="No Status User",
             uid="nostatus",
@@ -2640,7 +2640,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_has_contact_info_complete(self) -> None:
         """Test LdapUser.has_contact_info with complete info."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=complete,ou=users,dc=example,dc=com",
             cn="Complete User",
             uid="complete",
@@ -2654,7 +2654,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_has_contact_info_mail_and_phone(self) -> None:
         """Test LdapUser.has_contact_info with mail and telephone."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=phone,ou=users,dc=example,dc=com",
             cn="Phone User",
             uid="phone",
@@ -2667,7 +2667,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_has_contact_info_incomplete(self) -> None:
         """Test LdapUser.has_contact_info with incomplete info."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=incomplete,ou=users,dc=example,dc=com",
             cn="Incomplete User",
             uid="incomplete",
@@ -2679,7 +2679,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_organizational_path_complete(self) -> None:
         """Test LdapUser.organizational_path with complete hierarchy."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=org,ou=users,dc=example,dc=com",
             cn="Org User",
             uid="org",
@@ -2696,7 +2696,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_organizational_path_partial(self) -> None:
         """Test LdapUser.organizational_path with partial hierarchy."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=partial,ou=users,dc=example,dc=com",
             cn="Partial User",
             uid="partial",
@@ -2711,7 +2711,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_organizational_path_empty(self) -> None:
         """Test LdapUser.organizational_path with defaults from constants."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=noorg,ou=users,dc=example,dc=com",
             cn="No Org User",
             uid="noorg",
@@ -2719,12 +2719,12 @@ class TestFlextLdapModels:
             mail="noorg@example.com",
         )
 
-        # Model applies defaults from FlextLdapConstants.Defaults
+        # Model applies defaults from FlextLDAPConstants.Defaults
         assert user.organizational_path == "Company > IT"
 
     def test_ldap_user_rdn_extraction(self) -> None:
         """Test LdapUser.rdn computed field."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=testuser,ou=people,ou=users,dc=example,dc=com",
             cn="Test User",
             uid="testuser",
@@ -2736,7 +2736,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_rdn_single_component(self) -> None:
         """Test LdapUser.rdn with single component DN."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="dc=com",
             cn="Root",
             uid="root",
@@ -2760,7 +2760,7 @@ class TestFlextLdapModels:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="uid=test,ou=users,dc=example,dc=com",
                 cn="Test User",
                 uid="test",
@@ -2777,7 +2777,7 @@ class TestFlextLdapModels:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdapModels.LdapUser(
+            FlextLDAPModels.LdapUser(
                 dn="uid=test,ou=users,dc=example,dc=com",
                 cn="Test User",
                 uid="test",
@@ -2791,7 +2791,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_serialize_password_none(self) -> None:
         """Test password serialization with None value."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=test,ou=users,dc=example,dc=com",
             cn="Test User",
             uid="test",
@@ -2805,7 +2805,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_serialize_password_secret_str(self) -> None:
         """Test password serialization with SecretStr."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=test,ou=users,dc=example,dc=com",
             cn="Test User",
             uid="test",
@@ -2819,7 +2819,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_to_ldap_attributes_minimal(self) -> None:
         """Test to_ldap_attributes() with minimal user data."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=minimal,ou=users,dc=example,dc=com",
             cn="Minimal User",
             uid="minimal",
@@ -2838,7 +2838,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_to_ldap_attributes_complete(self) -> None:
         """Test to_ldap_attributes() with all optional fields populated."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=complete,ou=users,dc=example,dc=com",
             cn="Complete User",
             uid="complete",
@@ -2876,7 +2876,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_to_ldap_attributes_with_additional_attributes(self) -> None:
         """Test to_ldap_attributes() with additional_attributes."""
-        user = FlextLdapModels.LdapUser(
+        user = FlextLDAPModels.LdapUser(
             dn="uid=extra,ou=users,dc=example,dc=com",
             cn="Extra User",
             uid="extra",
@@ -2897,7 +2897,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_create_minimal_factory(self) -> None:
         """Test create_minimal() factory with minimal parameters."""
-        result = FlextLdapModels.LdapUser.create_minimal(
+        result = FlextLDAPModels.LdapUser.create_minimal(
             dn="uid=factory,ou=users,dc=example,dc=com",
             cn="Factory User",
             mail="factory@example.com",  # Required for email validation
@@ -2918,7 +2918,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_create_minimal_with_uid(self) -> None:
         """Test create_minimal() factory with uid parameter."""
-        result = FlextLdapModels.LdapUser.create_minimal(
+        result = FlextLDAPModels.LdapUser.create_minimal(
             dn="uid=factory2,ou=users,dc=example,dc=com",
             cn="Factory User 2",
             uid="factory2",
@@ -2931,7 +2931,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_create_minimal_with_all_optionals(self) -> None:
         """Test create_minimal() factory with all optional parameters."""
-        result = FlextLdapModels.LdapUser.create_minimal(
+        result = FlextLDAPModels.LdapUser.create_minimal(
             dn="uid=full,ou=users,dc=example,dc=com",
             cn="Full Factory User",
             uid="full",
@@ -2962,7 +2962,7 @@ class TestFlextLdapModels:
 
     def test_ldap_user_create_minimal_with_none_password(self) -> None:
         """Test create_minimal() factory with explicit None password."""
-        result = FlextLdapModels.LdapUser.create_minimal(
+        result = FlextLDAPModels.LdapUser.create_minimal(
             dn="uid=nopass,ou=users,dc=example,dc=com",
             cn="No Password User",
             mail="nopass@example.com",
@@ -2976,7 +2976,7 @@ class TestFlextLdapModels:
     def test_ldap_user_create_minimal_error_handling(self) -> None:
         """Test create_minimal() factory error handling with invalid data."""
         # Try to create user with empty mail which triggers email validation error
-        result = FlextLdapModels.LdapUser.create_minimal(
+        result = FlextLDAPModels.LdapUser.create_minimal(
             dn="uid=invalid,ou=users,dc=example,dc=com",
             cn="Invalid User",
             mail="",  # Empty mail triggers validation error
@@ -2991,7 +2991,7 @@ class TestFlextLdapModels:
 
     def test_connection_config_validate_empty_server(self) -> None:
         """Test ConnectionConfig.validate() with empty server."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="",  # Empty server
             port=389,
         )
@@ -3005,7 +3005,7 @@ class TestFlextLdapModels:
 
     def test_connection_config_validate_invalid_port_zero(self) -> None:
         """Test ConnectionConfig.validate() with port 0."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=0,  # Invalid port
         )
@@ -3017,7 +3017,7 @@ class TestFlextLdapModels:
 
     def test_connection_config_validate_invalid_port_too_high(self) -> None:
         """Test ConnectionConfig.validate() with port > 65535."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=70000,  # Too high
         )
@@ -3029,7 +3029,7 @@ class TestFlextLdapModels:
 
     def test_connection_config_validate_success(self) -> None:
         """Test ConnectionConfig.validate() with valid data."""
-        config = FlextLdapModels.ConnectionConfig(
+        config = FlextLDAPModels.ConnectionConfig(
             server="ldap.example.com",
             port=389,
         )
@@ -3039,9 +3039,9 @@ class TestFlextLdapModels:
 
     def test_modify_config_validate_empty_dn(self) -> None:
         """Test ModifyConfig.validate() with empty DN."""
-        from flext_ldap.models import FlextLdapModels
+        from flext_ldap.models import FlextLDAPModels
 
-        config = FlextLdapModels.ModifyConfig(
+        config = FlextLDAPModels.ModifyConfig(
             dn="",  # Empty DN
             changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
         )
@@ -3053,9 +3053,9 @@ class TestFlextLdapModels:
 
     def test_modify_config_validate_empty_changes(self) -> None:
         """Test ModifyConfig.validate() with empty changes."""
-        from flext_ldap.models import FlextLdapModels
+        from flext_ldap.models import FlextLDAPModels
 
-        config = FlextLdapModels.ModifyConfig(
+        config = FlextLDAPModels.ModifyConfig(
             dn="cn=test,dc=example,dc=com",
             changes={},  # Empty changes
         )
@@ -3069,9 +3069,9 @@ class TestFlextLdapModels:
 
     def test_modify_config_validate_success(self) -> None:
         """Test ModifyConfig.validate() with valid data."""
-        from flext_ldap.models import FlextLdapModels
+        from flext_ldap.models import FlextLDAPModels
 
-        config = FlextLdapModels.ModifyConfig(
+        config = FlextLDAPModels.ModifyConfig(
             dn="cn=test,dc=example,dc=com",
             changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
         )
@@ -3081,9 +3081,9 @@ class TestFlextLdapModels:
 
     def test_add_config_validate_empty_dn(self) -> None:
         """Test AddConfig.validate() with empty DN."""
-        from flext_ldap.models import FlextLdapModels
+        from flext_ldap.models import FlextLDAPModels
 
-        config = FlextLdapModels.AddConfig(
+        config = FlextLDAPModels.AddConfig(
             dn="",  # Empty DN
             attributes={"objectClass": ["person"], "cn": ["Test"]},
         )
@@ -3095,9 +3095,9 @@ class TestFlextLdapModels:
 
     def test_add_config_validate_success(self) -> None:
         """Test AddConfig.validate() with valid data."""
-        from flext_ldap.models import FlextLdapModels
+        from flext_ldap.models import FlextLDAPModels
 
-        config = FlextLdapModels.AddConfig(
+        config = FlextLDAPModels.AddConfig(
             dn="cn=test,dc=example,dc=com",
             attributes={"objectClass": ["person"], "cn": ["Test"]},
         )

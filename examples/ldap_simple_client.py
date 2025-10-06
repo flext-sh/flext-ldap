@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example usage of FlextLdapClient.
+"""Example usage of FlextLDAPClient.
 
 This example demonstrates how to use the minimal LDAP infrastructure client
 following Clean Architecture principles.
@@ -14,10 +14,10 @@ from __future__ import annotations
 import os
 
 from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapConstants,
-    FlextLdapModels,
-    FlextLdapTypes,
+    FlextLDAPClient,
+    FlextLDAPConstants,
+    FlextLDAPModels,
+    FlextLDAPTypes,
 )
 
 from flext_core import FlextConstants, FlextResult
@@ -26,12 +26,12 @@ from flext_core import FlextConstants, FlextResult
 def main() -> None:
     """Demonstrate LDAP client usage."""
     # Create client instance
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     # Example 1: Single server connection
     server_uri = os.getenv(
         "LDAP_TEST_SERVER",
-        f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
     )
     bind_dn = "cn=admin,dc=example,dc=com"
     bind_password = os.getenv("LDAP_TEST_PASSWORD", "")
@@ -42,8 +42,8 @@ def main() -> None:
         password=bind_password,
     )
     if result.is_success:
-        # Example search using FlextLdapModels.SearchRequest
-        search_request = FlextLdapModels.SearchRequest(
+        # Example search using FlextLDAPModels.SearchRequest
+        search_request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail"],
@@ -57,7 +57,7 @@ def main() -> None:
 
         if search_result.is_success:
             # Use proper type for FlextResult unwrapping
-            empty_response = FlextLdapModels.SearchResponse(
+            empty_response = FlextLDAPModels.SearchResponse(
                 entries=[],
                 total_count=0,
                 result_code=0,
@@ -97,7 +97,7 @@ def main() -> None:
             modify_result: FlextResult[None] = client.modify(
                 dn="cn=testuser,dc=example,dc=com",
                 changes={
-                    "mail": [(FlextLdapTypes.MODIFY_REPLACE, ["updated@example.com"])]
+                    "mail": [(FlextLDAPTypes.MODIFY_REPLACE, ["updated@example.com"])]
                 },
             )
 

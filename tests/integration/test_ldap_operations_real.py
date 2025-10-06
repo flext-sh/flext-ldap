@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap import FlextLdapClient
+from flext_ldap import FlextLDAPClient
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration
@@ -21,7 +21,7 @@ class TestRealLdapConnection:
     """Test real LDAP connection operations."""
 
     def test_connect_to_real_ldap_server(
-        self, shared_ldap_client: FlextLdapClient
+        self, shared_ldap_client: FlextLDAPClient
     ) -> None:
         """Test connecting to shared LDAP server."""
         client = shared_ldap_client
@@ -33,7 +33,7 @@ class TestRealLdapConnection:
         self,
     ) -> None:
         """Test binding with correct admin credentials."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         connect_result = client.connect(
             server_uri="ldap://localhost:3390",
@@ -48,7 +48,7 @@ class TestRealLdapConnection:
         self,
     ) -> None:
         """Test binding with incorrect credentials fails properly."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         result = client.connect(
             server_uri="ldap://localhost:3390",
@@ -62,7 +62,7 @@ class TestRealLdapConnection:
         )
 
     def test_disconnect_from_ldap_server(
-        self, shared_ldap_client: FlextLdapClient
+        self, shared_ldap_client: FlextLDAPClient
     ) -> None:
         """Test disconnecting from LDAP server."""
         client = shared_ldap_client
@@ -76,7 +76,7 @@ class TestRealLdapConnection:
 class TestRealLdapSearch:
     """Test real LDAP search operations."""
 
-    def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_self(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test searching for base DN entry."""
         client = shared_ldap_client
 
@@ -92,7 +92,7 @@ class TestRealLdapSearch:
             "dc=flext,dc=local" in str(entry.get("dn", "")) for entry in result.value
         )
 
-    def test_search_with_filter(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_search_with_filter(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test searching with specific filter."""
         client = shared_ldap_client
 
@@ -106,7 +106,7 @@ class TestRealLdapSearch:
         # Base DN should exist
         assert len(result.value) > 0
 
-    def test_search_users(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_search_users(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test searching for users."""
         client = shared_ldap_client
 
@@ -114,7 +114,7 @@ class TestRealLdapSearch:
 
         assert result.is_success, f"User search failed: {result.error}"
 
-    def test_search_groups(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_search_groups(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test searching for groups."""
         client = shared_ldap_client
 
@@ -127,7 +127,7 @@ class TestRealLdapSearch:
 class TestRealLdapCRUD:
     """Test real LDAP CRUD operations."""
 
-    def test_self(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_self(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test adding and deleting organizational unit."""
         client = shared_ldap_client
 
@@ -151,7 +151,7 @@ class TestRealLdapCRUD:
         delete_result = client.delete_entry_universal(dn="ou=testou,dc=flext,dc=local")
         assert delete_result.is_success, f"Delete OU failed: {delete_result.error}"
 
-    def test_add_and_modify_user(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_add_and_modify_user(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test adding and modifying a user entry."""
         client = shared_ldap_client
 
@@ -200,7 +200,7 @@ class TestRealLdapCRUD:
         client.delete_entry_universal(dn="cn=testuser,ou=users,dc=flext,dc=local")
         client.delete_entry_universal(dn="ou=users,dc=flext,dc=local")
 
-    def test_add_and_delete_group(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_add_and_delete_group(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test adding and deleting a group entry."""
         client = shared_ldap_client
 
@@ -240,7 +240,7 @@ class TestRealLdapCRUD:
 class TestRealLdapAuthentication:
     """Test real LDAP authentication operations."""
 
-    def test_authenticate_admin_user(self, shared_ldap_client: FlextLdapClient) -> None:
+    def test_authenticate_admin_user(self, shared_ldap_client: FlextLDAPClient) -> None:
         """Test authenticating as admin user."""
         client = shared_ldap_client
 
@@ -248,7 +248,7 @@ class TestRealLdapAuthentication:
         assert client.is_connected()
 
     def test_user_password_authentication(
-        self, shared_ldap_client: FlextLdapClient
+        self, shared_ldap_client: FlextLDAPClient
     ) -> None:
         """Test user password authentication workflow."""
         client = shared_ldap_client

@@ -14,10 +14,10 @@ from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import BaseServerOperations
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.typings import FlextLDAPTypes
 
 
-class GenericServerOperations(BaseServerOperations):
+class FlextLDAPServersGenericOperations(BaseServerOperations):
     """Generic LDAP server operations stub.
 
     This provides basic LDAP operations for unknown/generic servers.
@@ -61,7 +61,7 @@ class GenericServerOperations(BaseServerOperations):
 
     @override
     def discover_schema(
-        self, connection: FlextLdapTypes.Connection
+        self, connection: FlextLDAPTypes.Connection
     ) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from generic LDAP server."""
         try:
@@ -149,7 +149,7 @@ class GenericServerOperations(BaseServerOperations):
 
     @override
     def get_acls(
-        self, connection: FlextLdapTypes.Connection, dn: str
+        self, connection: FlextLDAPTypes.Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs from generic LDAP server."""
         self._logger.warning("Generic ACL retrieval - may not work on all servers")
@@ -158,7 +158,7 @@ class GenericServerOperations(BaseServerOperations):
     @override
     def set_acls(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: FlextLDAPTypes.Connection,
         dn: str,
         acls: list[FlextTypes.Dict],
     ) -> FlextResult[bool]:
@@ -192,7 +192,7 @@ class GenericServerOperations(BaseServerOperations):
 
     @override
     def add_entry(
-        self, connection: FlextLdapTypes.Connection, entry: FlextLdifModels.Entry
+        self, connection: FlextLDAPTypes.Connection, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to generic LDAP server."""
         try:
@@ -217,7 +217,7 @@ class GenericServerOperations(BaseServerOperations):
     @override
     def modify_entry(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: FlextLDAPTypes.Connection,
         dn: str,
         modifications: FlextTypes.Dict,
     ) -> FlextResult[bool]:
@@ -247,7 +247,7 @@ class GenericServerOperations(BaseServerOperations):
 
     @override
     def delete_entry(
-        self, connection: FlextLdapTypes.Connection, dn: str
+        self, connection: FlextLDAPTypes.Connection, dn: str
     ) -> FlextResult[bool]:
         """Delete entry from generic LDAP server."""
         try:
@@ -295,7 +295,7 @@ class GenericServerOperations(BaseServerOperations):
     @override
     def search_with_paging(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: FlextLDAPTypes.Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
@@ -319,9 +319,9 @@ class GenericServerOperations(BaseServerOperations):
                 generator=True,
             )
 
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 
-            adapter = FlextLdapEntryAdapter()
+            adapter = FlextLDAPEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:

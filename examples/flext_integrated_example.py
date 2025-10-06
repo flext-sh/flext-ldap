@@ -4,10 +4,10 @@
 This example demonstrates the proper integration of universal LDAP compatibility
 following FLEXT architectural patterns:
 
-1. Single schema class (FlextLdapSchema) with subclasses
-2. Models declared in FlextLdapModels class
-3. Types used from FlextLdapTypes class
-4. Constants from FlextLdapConstants class
+1. Single schema class (FlextLDAPSchema) with subclasses
+2. Models declared in FlextLDAPModels class
+3. Types used from FlextLDAPTypes class
+4. Constants from FlextLDAPConstants class
 5. Clean Architecture with proper domain separation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,13 +16,11 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapConstants,
-    FlextLdapModels,
-    FlextLdapSchema,
-    FlextLdapTypes,
-)
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.models import FlextLDAPModels
+from flext_ldap.schema import FlextLDAPSchema
+from flext_ldap.typings import FlextLDAPTypes
 
 from flext_core import FlextLogger, FlextTypes
 
@@ -41,7 +39,7 @@ def demonstrate_flext_integrated_ldap() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create FLEXT LDAP client (using actual client.py)
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     try:
         # Connect using FLEXT patterns
@@ -73,7 +71,7 @@ def demonstrate_flext_integrated_ldap() -> None:
             logger.info("Disconnected from LDAP server")
 
 
-def demonstrate_schema_discovery(client: FlextLdapClient, logger: FlextLogger) -> None:
+def demonstrate_schema_discovery(client: FlextLDAPClient, logger: FlextLogger) -> None:
     """Demonstrate schema discovery using FLEXT patterns."""
     logger.info("\n=== FLEXT Schema Discovery ===")
 
@@ -117,7 +115,7 @@ def demonstrate_schema_discovery(client: FlextLdapClient, logger: FlextLogger) -
 
 
 def demonstrate_universal_operations(
-    client: FlextLdapClient, logger: FlextLogger
+    client: FlextLDAPClient, logger: FlextLogger
 ) -> None:
     """Demonstrate universal LDAP operations using FLEXT patterns."""
     logger.info("\n=== Universal LDAP Operations ===")
@@ -137,8 +135,8 @@ def demonstrate_universal_operations(
     logger.info("Using search base: %s", base_dn)
 
     # Create FLEXT models for search
-    search_filter = FlextLdapModels.Filter.equals("objectClass", "person")
-    search_scope = FlextLdapModels.Scope.subtree()
+    search_filter = FlextLDAPModels.Filter.equals("objectClass", "person")
+    search_scope = FlextLDAPModels.Scope.subtree()
 
     logger.info("Search Filter: %s", search_filter.expression)
     logger.info("Search Scope: %s", search_scope.value)
@@ -165,7 +163,7 @@ def demonstrate_universal_operations(
 
 
 def demonstrate_flext_models(
-    client: FlextLdapClient,
+    client: FlextLDAPClient,
     logger: FlextLogger,
 ) -> None:
     """Demonstrate FLEXT models functionality."""
@@ -177,37 +175,37 @@ def demonstrate_flext_models(
     logger.info("FLEXT Value Objects:")
 
     # Distinguished Name
-    dn_result = FlextLdapModels.DistinguishedName.create(
+    dn_result = FlextLDAPModels.DistinguishedName.create(
         "cn=testuser,dc=example,dc=com"
     )
     if dn_result.is_success:
         dn_obj = dn_result.data
-        if isinstance(dn_obj, FlextLdapModels.DistinguishedName):
+        if isinstance(dn_obj, FlextLDAPModels.DistinguishedName):
             logger.info("  DN: %s", dn_obj.value)
             logger.info("  RDN: %s", dn_obj.rdn)
 
     # LDAP Filter
-    filter_obj = FlextLdapModels.Filter.equals("cn", "testuser")
+    filter_obj = FlextLDAPModels.Filter.equals("cn", "testuser")
     logger.info("  Filter: %s", filter_obj.expression)
 
     # Search Scope
-    scope_obj = FlextLdapModels.Scope.subtree()
+    scope_obj = FlextLDAPModels.Scope.subtree()
     logger.info("  Scope: %s", scope_obj.value)
 
     # Demonstrate FLEXT constants
     logger.info("FLEXT Constants:")
-    logger.info("  Default LDAP Port: %s", FlextLdapConstants.Protocol.DEFAULT_PORT)
-    logger.info("  Default SSL Port: %s", FlextLdapConstants.Protocol.DEFAULT_SSL_PORT)
-    logger.info("  LDAP Protocol: %s", FlextLdapConstants.Protocol.LDAP)
-    logger.info("  LDAPS Protocol: %s", FlextLdapConstants.Protocol.LDAPS)
-    logger.info("  Valid Scopes: %s", FlextLdapConstants.Scopes.VALID_SCOPES)
+    logger.info("  Default LDAP Port: %s", FlextLDAPConstants.Protocol.DEFAULT_PORT)
+    logger.info("  Default SSL Port: %s", FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT)
+    logger.info("  LDAP Protocol: %s", FlextLDAPConstants.Protocol.LDAP)
+    logger.info("  LDAPS Protocol: %s", FlextLDAPConstants.Protocol.LDAPS)
+    logger.info("  Valid Scopes: %s", FlextLDAPConstants.Scopes.VALID_SCOPES)
 
     # Demonstrate FLEXT types
     logger.info("FLEXT Types:")
-    logger.info("  Entry Attribute Value: %s", FlextLdapTypes.EntryAttributeValue)
-    logger.info("  Entry Attribute Dict: %s", FlextLdapTypes.EntryAttributeDict)
-    logger.info("  Search Result: %s", FlextLdapTypes.LdapDomain.SearchResult)
-    logger.info("  Connection Server URI: %s", FlextLdapTypes.LdapDomain.ServerURI)
+    logger.info("  Entry Attribute Value: %s", FlextLDAPTypes.EntryAttributeValue)
+    logger.info("  Entry Attribute Dict: %s", FlextLDAPTypes.EntryAttributeDict)
+    logger.info("  Search Result: %s", FlextLDAPTypes.LdapDomain.SearchResult)
+    logger.info("  Connection Server URI: %s", FlextLDAPTypes.LdapDomain.ServerURI)
 
 
 def demonstrate_server_type_adaptations() -> None:
@@ -218,14 +216,14 @@ def demonstrate_server_type_adaptations() -> None:
 
     # Demonstrate FLEXT server type enum
     logger.info("FLEXT Server Types:")
-    for server_type in FlextLdapModels.LdapServerType:
+    for server_type in FlextLDAPModels.LdapServerType:
         logger.info("  %s: %s", server_type.name, server_type.value)
 
     # Demonstrate FLEXT quirks detection
     logger.info("\nFLEXT Quirks Detection:")
 
     # Create FLEXT quirks detector
-    detector = FlextLdapSchema.GenericQuirksDetector()
+    detector = FlextLDAPSchema.GenericQuirksDetector()
 
     # Test server detection
     test_servers = [
@@ -269,10 +267,10 @@ if __name__ == "__main__":
     print("=" * 70)
     print()
     print("This example demonstrates proper FLEXT integration:")
-    print("1. Single schema class (FlextLdapSchema) with subclasses")
-    print("2. Models declared in FlextLdapModels class")
-    print("3. Types used from FlextLdapTypes class")
-    print("4. Constants from FlextLdapConstants class")
+    print("1. Single schema class (FlextLDAPSchema) with subclasses")
+    print("2. Models declared in FlextLDAPModels class")
+    print("3. Types used from FlextLDAPTypes class")
+    print("4. Constants from FlextLDAPConstants class")
     print("5. Clean Architecture with proper domain separation")
     print()
     print("Environment Variables:")

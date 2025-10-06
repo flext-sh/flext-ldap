@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, Literal
 
 from flext_core import FlextConstants, FlextTypes
 
 
-class FlextLdapConstants(FlextConstants):
+class FlextLDAPConstants(FlextConstants):
     """LDAP domain-specific constants - essential constants only."""
 
     # Import universal constants from flext-core (single source of truth)
@@ -206,7 +206,161 @@ class FlextLdapConstants(FlextConstants):
         CONNECTION_RETRY_DELAY: Final[float] = 1.0  # seconds
         CONNECTION_MAX_RETRIES: Final[int] = 3
 
+    class AclFormat:
+        """Supported ACL format identifiers."""
+
+        OPENLDAP: Final[str] = "openldap"
+        ORACLE: Final[str] = "oracle"
+        ACI: Final[str] = "aci"  # 389 DS / Apache DS
+        ACTIVE_DIRECTORY: Final[str] = "active_directory"
+        UNIFIED: Final[str] = "unified"
+
+    class Permission:
+        """Standard ACL permissions mapped across formats."""
+
+        READ: Final[str] = "read"
+        WRITE: Final[str] = "write"
+        ADD: Final[str] = "add"
+        DELETE: Final[str] = "delete"
+        SEARCH: Final[str] = "search"
+        COMPARE: Final[str] = "compare"
+        BROWSE: Final[str] = "browse"
+        PROXY: Final[str] = "proxy"
+        AUTH: Final[str] = "auth"
+        ALL: Final[str] = "all"
+        NONE: Final[str] = "none"
+
+    class SubjectType:
+        """ACL subject types."""
+
+        USER: Final[str] = "user"
+        GROUP: Final[str] = "group"
+        DN: Final[str] = "dn"
+        SELF: Final[str] = "self"
+        ANONYMOUS: Final[str] = "anonymous"
+        AUTHENTICATED: Final[str] = "authenticated"
+        ANYONE: Final[str] = "anyone"
+
+    class TargetType:
+        """ACL target types."""
+
+        DN: Final[str] = "dn"
+        ATTRIBUTES: Final[str] = "attributes"
+        ENTRY: Final[str] = "entry"
+        FILTER: Final[str] = "filter"
+
+    class OpenLdapKeywords:
+        """OpenLDAP ACL keywords."""
+
+        ACCESS_TO: Final[str] = "access to"
+        BY: Final[str] = "by"
+        ATTRS: Final[str] = "attrs="
+        DN_EXACT: Final[str] = "dn.exact="
+        DN_REGEX: Final[str] = "dn.regex="
+        FILTER: Final[str] = "filter="
+
+    class OracleKeywords:
+        """Oracle Directory ACL keywords."""
+
+        ACCESS_TO: Final[str] = "access to"
+        ATTR: Final[str] = "attr="
+        ENTRY: Final[str] = "entry"
+        BY: Final[str] = "by"
+        GROUP: Final[str] = "group="
+        USER: Final[str] = "user="
+
+    class AciKeywords:
+        """389 DS/Apache DS ACI keywords."""
+
+        TARGET: Final[str] = "target"
+        TARGETATTR: Final[str] = "targetattr"
+        TARGETFILTER: Final[str] = "targetfilter"
+        VERSION: Final[str] = "version 3.0"
+        ACL: Final[str] = "acl"
+        ALLOW: Final[str] = "allow"
+        DENY: Final[str] = "deny"
+        USERDN: Final[str] = "userdn"
+        GROUPDN: Final[str] = "groupdn"
+
+    class ConversionWarnings:
+        """Warning messages for ACL conversion."""
+
+        PERMISSION_NOT_SUPPORTED: Final[str] = (
+            "Permission '{permission}' not supported in {format}, using closest match"
+        )
+        FEATURE_LOSS: Final[str] = (
+            "Feature '{feature}' cannot be preserved in {format} conversion"
+        )
+        SYNTAX_MISMATCH: Final[str] = (
+            "Syntax pattern not directly translatable between formats"
+        )
+
+    class Parsing:
+        """ACL parsing constants."""
+
+        MIN_ACL_PARTS: Final[int] = 4  # Minimum parts for valid ACL (OpenLDAP format)
+
+    # =========================================================================
+    # LITERAL TYPES - All Literal types centralized here per FLEXT standards
+    # =========================================================================
+
+    class LiteralTypes:
+        """Centralized Literal types for LDAP operations."""
+
+        # LDAP scope literals
+        SEARCH_SCOPE_BASE: Final[Literal["BASE"]] = "BASE"
+        SEARCH_SCOPE_LEVEL: Final[Literal["LEVEL"]] = "LEVEL"
+        SEARCH_SCOPE_SUBTREE: Final[Literal["SUBTREE"]] = "SUBTREE"
+
+        # LDAP modify operation literals
+        MODIFY_ADD: Final[Literal["MODIFY_ADD"]] = "MODIFY_ADD"
+        MODIFY_DELETE: Final[Literal["MODIFY_DELETE"]] = "MODIFY_DELETE"
+        MODIFY_REPLACE: Final[Literal["MODIFY_REPLACE"]] = "MODIFY_REPLACE"
+
+        # LDAP connection state literals
+        CONNECTION_STATE_UNBOUND: Final[Literal["unbound"]] = "unbound"
+        CONNECTION_STATE_BOUND: Final[Literal["bound"]] = "bound"
+        CONNECTION_STATE_CLOSED: Final[Literal["closed"]] = "closed"
+        CONNECTION_STATE_ERROR: Final[Literal["error"]] = "error"
+
+        # LDAP operation type literals
+        OPERATION_SEARCH: Final[Literal["search"]] = "search"
+        OPERATION_ADD: Final[Literal["add"]] = "add"
+        OPERATION_MODIFY: Final[Literal["modify"]] = "modify"
+        OPERATION_DELETE: Final[Literal["delete"]] = "delete"
+        OPERATION_COMPARE: Final[Literal["compare"]] = "compare"
+        OPERATION_EXTENDED: Final[Literal["extended"]] = "extended"
+
+        # LDAP security level literals
+        SECURITY_NONE: Final[Literal["none"]] = "none"
+        SECURITY_SIMPLE: Final[Literal["simple"]] = "simple"
+        SECURITY_SASL: Final[Literal["sasl"]] = "sasl"
+
+        # LDAP authentication method literals
+        AUTH_SIMPLE: Final[Literal["simple"]] = "simple"
+        AUTH_SASL: Final[Literal["sasl"]] = "sasl"
+        AUTH_EXTERNAL: Final[Literal["external"]] = "external"
+
+        # LDAP connection info literals
+        CONNECTION_INFO_ALL: Final[Literal["ALL"]] = "ALL"
+        CONNECTION_INFO_DSA: Final[Literal["DSA"]] = "DSA"
+        CONNECTION_INFO_NO_INFO: Final[Literal["NO_INFO"]] = "NO_INFO"
+        CONNECTION_INFO_SCHEMA: Final[Literal["SCHEMA"]] = "SCHEMA"
+
+        # LDAP connection mode literals
+        CONNECTION_MODE_SYNC: Final[Literal["sync"]] = "sync"
+        CONNECTION_MODE_ASYNC: Final[Literal["async"]] = "async"
+
+        # LDAP IP mode literals
+        IP_MODE_SYSTEM_DEFAULT: Final[Literal["IP_SYSTEM_DEFAULT"]] = (
+            "IP_SYSTEM_DEFAULT"
+        )
+        IP_MODE_V4_ONLY: Final[Literal["IP_V4_ONLY"]] = "IP_V4_ONLY"
+        IP_MODE_V4_PREFERRED: Final[Literal["IP_V4_PREFERRED"]] = "IP_V4_PREFERRED"
+        IP_MODE_V6_ONLY: Final[Literal["IP_V6_ONLY"]] = "IP_V6_ONLY"
+        IP_MODE_V6_PREFERRED: Final[Literal["IP_V6_PREFERRED"]] = "IP_V6_PREFERRED"
+
 
 __all__ = [
-    "FlextLdapConstants",
+    "FlextLDAPConstants",
 ]

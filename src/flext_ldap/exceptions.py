@@ -15,8 +15,8 @@ from typing import override
 from flext_core import FlextExceptions, FlextTypes
 
 
-class FlextLdapExceptions:
-    """LDAP-specific exceptions extending FlextExceptions.
+class FlextLDAPExceptions(FlextExceptions):
+    """LDAP-specific exceptions extending FlextExceptions from flext-core.
 
     Provides LDAP domain-specific exception classes for all LDAP operation
     error scenarios while maintaining compatibility with flext-core
@@ -634,7 +634,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapConnectionError:
         """Create a connection error."""
-        return FlextLdapExceptions.LdapConnectionError(
+        return FlextLDAPExceptions.LdapConnectionError(
             message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
         )
 
@@ -646,7 +646,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapConnectionError:
         """Create a connection failed error."""
-        return FlextLdapExceptions.LdapConnectionError(
+        return FlextLDAPExceptions.LdapConnectionError(
             message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
         )
 
@@ -655,7 +655,7 @@ class FlextLdapExceptions:
         message: str, bind_dn: str | None = None, **kwargs: object
     ) -> LdapAuthenticationError:
         """Create an authentication error."""
-        return FlextLdapExceptions.LdapAuthenticationError(
+        return FlextLDAPExceptions.LdapAuthenticationError(
             message, bind_dn=bind_dn, **kwargs
         )
 
@@ -668,7 +668,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapSearchError:
         """Create a search error."""
-        return FlextLdapExceptions.LdapSearchError(
+        return FlextLDAPExceptions.LdapSearchError(
             message,
             base_dn=base_dn,
             filter_str=filter_str,
@@ -684,7 +684,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapModifyError:
         """Create a modify error."""
-        return FlextLdapExceptions.LdapModifyError(
+        return FlextLDAPExceptions.LdapModifyError(
             message, dn=dn, modifications=modifications, **kwargs
         )
 
@@ -696,7 +696,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapAddError:
         """Create an add error."""
-        return FlextLdapExceptions.LdapAddError(
+        return FlextLDAPExceptions.LdapAddError(
             message, dn=dn, object_classes=object_classes, **kwargs
         )
 
@@ -705,7 +705,7 @@ class FlextLdapExceptions:
         message: str, dn: str | None = None, **kwargs: object
     ) -> LdapDeleteError:
         """Create a delete error."""
-        return FlextLdapExceptions.LdapDeleteError(message, dn=dn, **kwargs)
+        return FlextLDAPExceptions.LdapDeleteError(message, dn=dn, **kwargs)
 
     @staticmethod
     def validation_error(
@@ -715,7 +715,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapValidationError:
         """Create a validation error."""
-        return FlextLdapExceptions.LdapValidationError(
+        return FlextLDAPExceptions.LdapValidationError(
             message, ldap_field=field, **kwargs
         )
 
@@ -724,7 +724,7 @@ class FlextLdapExceptions:
         message: str, config_key: str | None = None, **kwargs: object
     ) -> LdapConfigurationError:
         """Create a configuration error."""
-        return FlextLdapExceptions.LdapConfigurationError(
+        return FlextLDAPExceptions.LdapConfigurationError(
             message, ldap_config_key=config_key, section=None
         )
 
@@ -737,7 +737,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapValidationError:
         """Create a type error."""
-        return FlextLdapExceptions.LdapValidationError(
+        return FlextLDAPExceptions.LdapValidationError(
             message, ldap_field=field, **kwargs
         )
 
@@ -746,7 +746,7 @@ class FlextLdapExceptions:
         message: str, username: str | None = None, **kwargs: object
     ) -> LdapEntryNotFoundError:
         """Create a user error."""
-        return FlextLdapExceptions.LdapEntryNotFoundError(
+        return FlextLDAPExceptions.LdapEntryNotFoundError(
             message, dn=username, operation="user_lookup", **kwargs
         )
 
@@ -755,7 +755,7 @@ class FlextLdapExceptions:
         message: str, groupname: str | None = None, **kwargs: object
     ) -> LdapEntryNotFoundError:
         """Create a group error."""
-        return FlextLdapExceptions.LdapEntryNotFoundError(
+        return FlextLDAPExceptions.LdapEntryNotFoundError(
             message, dn=groupname, operation="group_lookup", **kwargs
         )
 
@@ -767,7 +767,7 @@ class FlextLdapExceptions:
         **kwargs: object,
     ) -> LdapSearchError:
         """Create an LDAP error."""
-        return FlextLdapExceptions.LdapSearchError(
+        return FlextLDAPExceptions.LdapSearchError(
             message, base_dn=None, filter_str=None, search_context=operation, **kwargs
         )
 
@@ -776,35 +776,11 @@ class FlextLdapExceptions:
         message: str, operation: str | None = None, **kwargs: object
     ) -> LdapModifyError:
         """Create an operation error."""
-        return FlextLdapExceptions.LdapModifyError(
+        return FlextLDAPExceptions.LdapModifyError(
             message, dn=None, modifications=None, **kwargs
         )
 
 
-# Export nested exception classes for easier importing
-LdapConnectionError = FlextLdapExceptions.LdapConnectionError
-LdapAuthenticationError = FlextLdapExceptions.LdapAuthenticationError
-LdapSearchError = FlextLdapExceptions.LdapSearchError
-LdapModifyError = FlextLdapExceptions.LdapModifyError
-LdapAddError = FlextLdapExceptions.LdapAddError
-LdapDeleteError = FlextLdapExceptions.LdapDeleteError
-LdapValidationError = FlextLdapExceptions.LdapValidationError
-LdapConfigurationError = FlextLdapExceptions.LdapConfigurationError
-LdapTimeoutError = FlextLdapExceptions.LdapTimeoutError
-LdapEntryNotFoundError = FlextLdapExceptions.LdapEntryNotFoundError
-LdapEntryAlreadyExistsError = FlextLdapExceptions.LdapEntryAlreadyExistsError
-
 __all__ = [
-    "FlextLdapExceptions",
-    "LdapAddError",
-    "LdapAuthenticationError",
-    "LdapConfigurationError",
-    "LdapConnectionError",
-    "LdapDeleteError",
-    "LdapEntryAlreadyExistsError",
-    "LdapEntryNotFoundError",
-    "LdapModifyError",
-    "LdapSearchError",
-    "LdapTimeoutError",
-    "LdapValidationError",
+    "FlextLDAPExceptions",
 ]

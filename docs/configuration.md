@@ -13,18 +13,18 @@ FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic Bas
 ### Configuration Hierarchy
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 
 # 1. Default configuration
-config = FlextLdapConfig()
+config = FlextLDAPConfig()
 
 # 2. Environment variables (preferred)
-config = FlextLdapConfig.from_env()
+config = FlextLDAPConfig.from_env()
 
 # 3. Explicit configuration
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     host="ldap.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     bind_dn="cn=admin,dc=example,dc=com",
     bind_password="admin-password",
@@ -46,9 +46,9 @@ export FLEXT_LDAP_BIND_PASSWORD="your-password"
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
 # Optional settings
-export FLEXT_LDAP_PORT=${FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}
+export FLEXT_LDAP_PORT=${FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT}
 export FLEXT_LDAP_USE_SSL=true
-export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
+export FLEXT_LDAP_TIMEOUT=${FlextLDAPConstants.DEFAULT_TIMEOUT}
 export FLEXT_LDAP_POOL_SIZE=5
 ```
 
@@ -86,29 +86,29 @@ export FLEXT_LDAP_RECEIVE_TIMEOUT=30
 Create `ldap_config.py`:
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 
 # Production configuration
-PRODUCTION_CONFIG = FlextLdapConfig(
+PRODUCTION_CONFIG = FlextLDAPConfig(
     host="ldap-prod.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     bind_dn="cn=service-account,ou=applications,dc=example,dc=com",
     bind_password="${LDAP_PROD_PASSWORD}",
     base_dn="dc=example,dc=com",
-    timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
+    timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
     pool_size=10
 )
 
 # Development configuration
-DEVELOPMENT_CONFIG = FlextLdapConfig(
+DEVELOPMENT_CONFIG = FlextLDAPConfig(
     host="ldap-dev.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+    port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=admin,dc=dev,dc=example,dc=com",
     bind_password="${LDAP_DEV_PASSWORD}",
     base_dn="dc=dev,dc=example,dc=com",
-    timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
+    timeout=FlextLDAPConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=3
 )
 ```
@@ -117,9 +117,9 @@ DEVELOPMENT_CONFIG = FlextLdapConfig(
 
 ```python
 import os
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 
-def get_config() -> FlextLdapConfig:
+def get_config() -> FlextLDAPConfig:
     """Get configuration based on environment."""
     env = os.getenv("FLEXT_ENV", "development")
 
@@ -193,16 +193,16 @@ docker run -d \
 ### Test Configuration
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 
-TEST_CONFIG = FlextLdapConfig(
+TEST_CONFIG = FlextLDAPConfig(
     host=FlextConstants["Platform.DEFAULT_HOST"],
-    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+    port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=admin,dc=test,dc=flext,dc=local",
     bind_password="admin",
     base_dn="dc=test,dc=flext,dc=local",
-    timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
+    timeout=FlextLDAPConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=2
 )
 ```
@@ -259,7 +259,7 @@ run(validate_config())
 # Use environment variables for secrets
 import os
 
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     host=os.getenv("FLEXT_LDAP_HOST"),
     bind_password=os.getenv("FLEXT_LDAP_BIND_PASSWORD"),
     # ... other settings
@@ -271,9 +271,9 @@ config = FlextLdapConfig(
 ```python
 from ssl import create_default_context
 
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     host="ldap.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True
@@ -288,10 +288,10 @@ config = FlextLdapConfig(
 
 ```python
 # High-traffic configuration
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     pool_size=20,           # Adjust based on concurrent users
-    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,   # Fast connection timeout
-    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,     # Operation timeout
+    connection_timeout=FlextLDAPConstants.LdapRetry.CONNECTION_RETRY_DELAY,   # Fast connection timeout
+    receive_timeout=FlextLDAPConstants.LdapRetry.SERVER_READY_TIMEOUT,     # Operation timeout
     max_retries=2          # Retry failed operations
 )
 ```
@@ -299,10 +299,10 @@ config = FlextLdapConfig(
 ### Search Optimization
 
 ```python
-from flext_ldap import FlextLdapEntities
+from flext_ldap import FlextLDAPEntities
 
 # Optimized search request
-search_request = FlextLdapEntities.SearchRequest(
+search_request = FlextLDAPEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(&(objectClass=person)(uid=*))",
     scope="onelevel",  # Use minimal scope needed

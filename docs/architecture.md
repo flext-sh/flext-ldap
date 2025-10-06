@@ -13,7 +13,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 ```
 ┌────────────────────────────────────────────────────────┐
 │               Application Layer                        │
-│   FlextLdapAPI, FlextLdapClient                       │
+│   FlextLDAP, FlextLDAPClient                       │
 │   Public facade, connection management                 │
 └────────────────────────────────────────────────────────┘
                         ▼
@@ -42,7 +42,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 
 ### **1. Application Layer**
 
-#### FlextLdapAPI
+#### FlextLDAP
 
 **Purpose**: Public facade for LDAP operations
 **Location**: `src/flext_ldap/api.py`
@@ -53,7 +53,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 - High-level operation orchestration
 - Error handling and result wrapping
 
-#### FlextLdapClient
+#### FlextLDAPClient
 
 **Purpose**: LDAP connection and operation client
 **Location**: `src/flext_ldap/clients.py`
@@ -66,7 +66,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 
 ### **2. Domain Layer**
 
-#### FlextLdapEntryAdapter
+#### FlextLDAPEntryAdapter
 
 **Purpose**: Bidirectional ldap3 ↔ FlextLdif entry conversion
 **Location**: `src/flext_ldap/entry_adapter.py`
@@ -92,7 +92,7 @@ def ldif_entry_to_ldap3_attributes(
     """Convert FlextLdif entry to ldap3 attributes."""
 ```
 
-#### FlextLdapQuirksAdapter
+#### FlextLDAPQuirksAdapter
 
 **Purpose**: Wrap FlextLdif quirks system for server detection
 **Location**: `src/flext_ldap/quirks_integration.py`
@@ -258,7 +258,7 @@ def supports_vlv(self) -> bool:
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLdapClient
+    participant Client as FlextLDAPClient
     participant Adapter as EntryAdapter
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
@@ -276,7 +276,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLdapClient
+    participant Client as FlextLDAPClient
     participant Quirks as QuirksAdapter
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
@@ -296,7 +296,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLdapClient
+    participant Client as FlextLDAPClient
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
 
@@ -320,7 +320,7 @@ sequenceDiagram
 
 ### **1. Adapter Pattern**
 
-**FlextLdapEntryAdapter** bridges ldap3 and FlextLdif representations:
+**FlextLDAPEntryAdapter** bridges ldap3 and FlextLdif representations:
 
 ```python
 # ldap3 → FlextLdif
@@ -423,18 +423,18 @@ Each server operation handles its specific ACL format:
 
 ### **Code Distribution**
 
-| Component                 | Lines     | Purpose                       |
-| ------------------------- | --------- | ----------------------------- |
+| Component                 | Lines     | Purpose                          |
+| ------------------------- | --------- | -------------------------------- |
 | Entry Adapter             | 308       | ldap3 ↔ FlextLdif conversion |
-| Quirks Integration        | 320       | Server detection and quirks   |
-| Base Operations           | 305       | Abstract interface            |
-| OpenLDAP2Operations       | 525       | Complete implementation       |
-| OpenLDAP1Operations       | 102       | Legacy implementation         |
-| OracleOIDOperations       | 361       | Oracle OID implementation     |
-| OracleOUDOperations       | 373       | Oracle OUD implementation     |
-| ActiveDirectoryOperations | 250       | Stub for future               |
-| GenericServerOperations   | 310       | RFC-compliant fallback        |
-| **Total**                 | **2,854** | **Universal LDAP interface**  |
+| Quirks Integration        | 320       | Server detection and quirks      |
+| Base Operations           | 305       | Abstract interface               |
+| OpenLDAP2Operations       | 525       | Complete implementation          |
+| OpenLDAP1Operations       | 102       | Legacy implementation            |
+| OracleOIDOperations       | 361       | Oracle OID implementation        |
+| OracleOUDOperations       | 373       | Oracle OUD implementation        |
+| ActiveDirectoryOperations | 250       | Stub for future                  |
+| GenericServerOperations   | 310       | RFC-compliant fallback           |
+| **Total**                 | **2,854** | **Universal LDAP interface**     |
 
 ### **Operation Coverage**
 

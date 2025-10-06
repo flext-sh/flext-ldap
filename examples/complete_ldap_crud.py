@@ -2,7 +2,7 @@
 """Complete LDAP CRUD Operations Example using FLEXT-LDAP API.
 
 This example demonstrates COMPLETE LDAP functionality using flext-ldap:
-- CREATE users and groups with FlextLdapClient
+- CREATE users and groups with FlextLDAPClient
 - READ/SEARCH operations
 - UPDATE user attributes
 - DELETE operations
@@ -17,11 +17,10 @@ import os
 import sys
 from typing import Final, cast
 
-from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapConstants,
-    FlextLdapModels,
-)
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.models import FlextLDAPModels
+from flext_ldap.typings import FlextLDAPTypes
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
 
@@ -29,7 +28,7 @@ logger = FlextLogger(__name__)
 
 # LDAP connection settings
 LDAP_URI: Final[str] = (
-    f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+    f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
 )
 BASE_DN: Final[str] = "dc=example,dc=com"
 USERS_DN: Final[str] = f"ou=users,{BASE_DN}"
@@ -38,8 +37,8 @@ ADMIN_DN: Final[str] = "cn=admin,dc=example,dc=com"
 ADMIN_PASSWORD: Final[str] = os.getenv("LDAP_ADMIN_PASSWORD") or ""
 
 
-def create_sample_users(api: FlextLdapClient) -> None:
-    """Create sample users using FlextLdapClient."""
+def create_sample_users(api: FlextLDAPClient) -> None:
+    """Create sample users using FlextLDAPClient."""
     logger.info("Creating sample users...")
 
     users_to_create = [
@@ -68,24 +67,19 @@ def create_sample_users(api: FlextLdapClient) -> None:
             logger.warning(f"Skipping user {user_data['cn']} - no email provided")
             continue
 
-        request = FlextLdapModels.CreateUserRequest(
-            dn=user_data["dn"],
-            uid=user_data["uid"],
-            cn=user_data["cn"],
-            sn=user_data["sn"],
-            given_name=user_data.get("given_name"),
-            mail=mail_value,  # Now guaranteed to be str
-            description=None,
-            telephone_number=None,
-            user_password=None,
-            department=None,
-            organizational_unit=None,
-            title=None,
-            organization=None,
-        )
-        create_result: FlextResult[object] = cast(
-            "FlextResult[object]",
-            api.create_user(request),
+        # Convert user data to LDAP attributes
+        attributes = {
+            "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
+            "uid": [user_data["uid"]],
+            "cn": [user_data["cn"]],
+            "sn": [user_data["sn"]],
+            "givenName": [user_data.get("given_name", "")],
+            "mail": [mail_value],  # Now guaranteed to be str
+        }
+
+        create_result = api.add_entry(
+            user_data["dn"],
+            cast(dict[str, str | FlextLDAPTypes.StringList], attributes),
         )
 
         if create_result.is_success:
@@ -96,20 +90,18 @@ def create_sample_users(api: FlextLdapClient) -> None:
             )
 
 
-def search_users(api: FlextLdapClient) -> None:
-    """Search for users using FlextLdapClient."""
+def search_users(api: FlextLDAPClient) -> None:
+    """Search for users using FlextLDAPClient."""
     logger.info("Searching for users...")
 
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.search(
+    result: FlextResult[list[FlextLDAPModels.Entry]] = api.search(
         base_dn=USERS_DN,
         filter_str="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
-        page_size=1000,
-        paged_cookie=None,
     )
 
     if result.is_success:
-        users: list[FlextLdapModels.Entry] = result.value or []
+        users: list[FlextLDAPModels.Entry] = result.value or []
         logger.info(f"✅ Found {len(users)} users:")
 
         for user in users:
@@ -147,8 +139,8 @@ def search_users(api: FlextLdapClient) -> None:
         logger.error(f"❌ Search failed: {result.error}")
 
 
-def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None:
-    """Update user attributes using FlextLdapClient."""
+def update_user(api: FlextLDAPClient, user_dn: str, new_mail: str) -> None:
+    """Update user attributes using FlextLDAPClient."""
     logger.info(f"Updating user {user_dn}...")
 
     # Connect to LDAP server
@@ -174,8 +166,8 @@ def update_user(api: FlextLdapClient, user_dn: str, new_mail: str) -> None:
         logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
-def delete_user(api: FlextLdapClient, user_dn: str) -> None:
-    """Delete user using FlextLdapClient."""
+def delete_user(api: FlextLDAPClient, user_dn: str) -> None:
+    """Delete user using FlextLDAPClient."""
     logger.info(f"Deleting user {user_dn}...")
 
     # Connect to LDAP server
@@ -205,8 +197,8 @@ def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
-    # Get FlextLdapClient instance
-    api = FlextLdapClient()
+    # Get FlextLDAPClient instance
+    api = FlextLDAPClient()
 
     try:
         # CREATE: Add sample users
@@ -245,7 +237,7 @@ def main() -> int:
     logger.info("FLEXT-LDAP Complete CRUD Example")
     logger.info("=" * 50)
     logger.info(
-        f"Ensure LDAP server is running on {FlextConstants.Platform.DEFAULT_HOST}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+        f"Ensure LDAP server is running on {FlextConstants.Platform.DEFAULT_HOST}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
     )
     logger.info("Base DN: dc=example,dc=com")
     logger.info("Admin DN: cn=admin,dc=example,dc=com")

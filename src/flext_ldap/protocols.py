@@ -2,7 +2,7 @@
 
 This module contains all protocol interfaces and abstract base classes
 used throughout the flext-ldap domain. Following FLEXT standards, all
-protocols are organized under a single FlextLdapProtocols class.
+protocols are organized under a single FlextLDAPProtocols class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,10 +17,11 @@ from flext_core import FlextProtocols, FlextResult, FlextTypes
 
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.models import FlextLDAPModels
 
 
-class FlextLdapProtocols:
+class FlextLDAPProtocols(FlextProtocols):
     """Unified LDAP protocols class extending FlextProtocols with LDAP-specific protocols.
 
     This class extends the base FlextProtocols with LDAP-specific protocol definitions,
@@ -30,15 +31,11 @@ class FlextLdapProtocols:
     """
 
     # =========================================================================
-    # RE-EXPORT FOUNDATION PROTOCOLS - Use FlextProtocols from flext-core
+    # INHERIT FOUNDATION PROTOCOLS - Available through inheritance from FlextProtocols
     # =========================================================================
 
-    Foundation = FlextProtocols.Foundation
-    Domain = FlextProtocols.Domain
-    Application = FlextProtocols.Application
-    Infrastructure = FlextProtocols.Infrastructure
-    Extensions = FlextProtocols.Extensions
-    Commands = FlextProtocols.Commands
+    # Foundation, Domain, Application, Infrastructure, Extensions, Commands
+    # are all inherited from FlextProtocols - no need to re-export
 
     # =========================================================================
     # LDAP-SPECIFIC PROTOCOLS - Domain extension for LDAP operations
@@ -80,7 +77,7 @@ class FlextLdapProtocols:
             dn: str
             attributes: dict[str, FlextTypes.StringList]
 
-            def __getitem__(self, key: str) -> FlextLdapProtocols.Ldap.LdapAttribute:
+            def __getitem__(self, key: str) -> FlextLDAPProtocols.Ldap.LdapAttribute:
                 """Get attribute by key."""
                 ...
 
@@ -93,7 +90,7 @@ class FlextLdapProtocols:
 
             bound: bool
             last_error: str
-            entries: list[FlextLdapProtocols.Ldap.LdapEntry]
+            entries: list[FlextLDAPProtocols.Ldap.LdapEntry]
 
             def bind(self) -> bool:
                 """Bind to LDAP server."""
@@ -107,7 +104,11 @@ class FlextLdapProtocols:
                 self,
                 search_base: str,
                 search_filter: str,
-                _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
+                _search_scope: Literal[
+                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE,
+                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
+                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
+                ],
                 attributes: FlextTypes.StringList | None = None,
                 _paged_size: int | None = None,
                 paged_cookie: str | bytes | None = None,
@@ -197,7 +198,7 @@ class FlextLdapProtocols:
                 search_base: str,
                 filter_str: str,
                 attributes: FlextTypes.StringList | None = None,
-            ) -> FlextResult[list[FlextLdapModels.Entry]]:
+            ) -> FlextResult[list[FlextLDAPModels.Entry]]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -206,7 +207,7 @@ class FlextLdapProtocols:
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[list[FlextLdapModels.Entry]]: Search results
+                    FlextResult[list[FlextLDAPModels.Entry]]: Search results
 
                 """
                 ...
@@ -336,11 +337,75 @@ class FlextLdapProtocols:
                 """
                 ...
 
-    # Direct access aliases for compatibility
-    LdifOperationsProtocol = Ldap.LdifOperationsProtocol
-    LdapEntry = Ldap.LdapEntry
+        @runtime_checkable
+        class LdapConnectionManagerProtocol(FlextProtocols.Domain.Service, Protocol):
+            """Protocol for LDAP connection management operations."""
+
+            def test_connection(self) -> FlextResult[bool]:
+                """Test LDAP connection.
+
+                Returns:
+                    FlextResult[bool]: Connection test success status
+                """
+                ...
+
+            def close_connection(self) -> FlextResult[None]:
+                """Close LDAP connection.
+
+                Returns:
+                    FlextResult[None]: Close operation success status
+                """
+                ...
+
+            def get_connection_string(self) -> FlextResult[str]:
+                """Get connection string.
+
+                Returns:
+                    FlextResult[str]: Connection string
+                """
+                ...
+
+        @runtime_checkable
+        class LdapSearcherProtocol(FlextProtocols.Domain.Service, Protocol):
+            """Protocol for LDAP search operations."""
+
+            def search_one(
+                self,
+                search_base: str,
+                filter_str: str,
+                attributes: FlextTypes.StringList | None = None,
+            ) -> FlextResult[FlextTypes.Dict | None]:
+                """Search for single LDAP entry.
+
+                Args:
+                    search_base: LDAP search base DN
+                    filter_str: LDAP search filter
+                    attributes: List of attributes to retrieve
+
+                Returns:
+                    FlextResult[FlextTypes.Dict | None]: Single search result or None
+                """
+                ...
+
+            def search(
+                self,
+                search_base: str,
+                filter_str: str,
+                attributes: FlextTypes.StringList | None = None,
+            ) -> FlextResult[list[FlextTypes.Dict]]:
+                """Search for LDAP entries.
+
+                Args:
+                    search_base: LDAP search base DN
+                    filter_str: LDAP search filter
+                    attributes: List of attributes to retrieve
+
+                Returns:
+                    FlextResult[list[FlextTypes.Dict]]: Search results
+                """
+                ...
 
 
 __all__ = [
-    "FlextLdapProtocols",
+    "FlextLDAPProtocols",
 ]

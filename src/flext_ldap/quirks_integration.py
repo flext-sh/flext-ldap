@@ -16,7 +16,7 @@ from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
-class FlextLdapQuirksAdapter(FlextService[FlextTypes.Dict]):
+class FlextLDAPQuirksIntegration(FlextService[FlextTypes.Dict]):
     """Adapter for FlextLdif quirks system integration with flext-ldap.
 
     This adapter wraps FlextLdif's quirks management to provide:
@@ -63,7 +63,7 @@ class FlextLdapQuirksAdapter(FlextService[FlextTypes.Dict]):
         """
         return FlextResult[FlextTypes.Dict].ok(
             {
-                "service": "FlextLdapQuirksAdapter",
+                "service": "FlextLDAPQuirksAdapter",
                 "server_type": self._detected_server_type,
                 "quirks_loaded": bool(self._quirks_cache),
             }

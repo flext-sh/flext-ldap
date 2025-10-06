@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from typing import override
 
+from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.base_operations import BaseServerOperations
+from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
 
 
-class OracleOUDOperations(BaseServerOperations):
+class FlextLDAPServersOUDOperations(FlextLDAPServersBaseOperations):
     """Complete Oracle OUD operations implementation.
 
     Oracle OUD Features:
@@ -65,7 +66,7 @@ class OracleOUDOperations(BaseServerOperations):
         return "cn=schema"
 
     @override
-    def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from Oracle OUD."""
         try:
             if not connection or not connection.bound:
@@ -146,7 +147,7 @@ class OracleOUDOperations(BaseServerOperations):
 
     @override
     def get_acls(
-        self, connection: object, dn: str
+        self, connection: Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ds-privilege-name ACLs from Oracle OUD."""
         try:
@@ -182,7 +183,7 @@ class OracleOUDOperations(BaseServerOperations):
 
     @override
     def set_acls(
-        self, connection: object, dn: str, acls: list[FlextTypes.Dict]
+        self, connection: Connection, dn: str, acls: list[FlextTypes.Dict]
     ) -> FlextResult[bool]:
         """Set ds-privilege-name ACLs on Oracle OUD."""
         try:
@@ -300,7 +301,7 @@ class OracleOUDOperations(BaseServerOperations):
 
             # Use privilege name if available
             if "privilege" in acl_dict:
-                return FlextResult[str].ok(acl_dict["privilege"])
+                return FlextResult[str].ok(str(acl_dict["privilege"]))
 
             # Default fallback
             return FlextResult[str].fail(
@@ -316,7 +317,7 @@ class OracleOUDOperations(BaseServerOperations):
 
     @override
     def add_entry(
-        self, connection: object, entry: FlextLdifModels.Entry
+        self, connection: Connection, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to Oracle OUD."""
         try:
@@ -348,7 +349,7 @@ class OracleOUDOperations(BaseServerOperations):
 
     @override
     def modify_entry(
-        self, connection: object, dn: str, modifications: FlextTypes.Dict
+        self, connection: Connection, dn: str, modifications: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Modify entry in Oracle OUD."""
         try:
@@ -375,7 +376,7 @@ class OracleOUDOperations(BaseServerOperations):
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
-    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from Oracle OUD."""
         try:
             if not connection or not connection.bound:
@@ -422,7 +423,7 @@ class OracleOUDOperations(BaseServerOperations):
     @override
     def search_with_paging(
         self,
-        connection: object,
+        connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
@@ -446,9 +447,9 @@ class OracleOUDOperations(BaseServerOperations):
                 generator=True,
             )
 
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 
-            adapter = FlextLdapEntryAdapter()
+            adapter = FlextLDAPEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:

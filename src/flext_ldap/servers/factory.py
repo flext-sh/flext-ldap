@@ -13,16 +13,30 @@ from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
-from flext_ldap.servers.ad_operations import ActiveDirectoryOperations
-from flext_ldap.servers.base_operations import BaseServerOperations
-from flext_ldap.servers.generic_operations import GenericServerOperations
-from flext_ldap.servers.oid_operations import OracleOIDOperations
-from flext_ldap.servers.openldap1_operations import OpenLDAP1Operations
-from flext_ldap.servers.openldap2_operations import OpenLDAP2Operations
-from flext_ldap.servers.oud_operations import OracleOUDOperations
+from flext_ldap.servers.ad_operations import (
+    FlextLDAPServersADOperations as ActiveDirectoryOperations,
+)
+from flext_ldap.servers.base_operations import (
+    FlextLDAPServersBaseOperations as BaseServerOperations,
+)
+from flext_ldap.servers.generic_operations import (
+    FlextLDAPServersGenericOperations,
+)
+from flext_ldap.servers.oid_operations import (
+    FlextLDAPServersOIDOperations as OracleOIDOperations,
+)
+from flext_ldap.servers.openldap1_operations import (
+    FlextLDAPServersOpenLDAP1Operations as OpenLDAP1Operations,
+)
+from flext_ldap.servers.openldap2_operations import (
+    FlextLDAPServersOpenLDAP2Operations as OpenLDAP2Operations,
+)
+from flext_ldap.servers.oud_operations import (
+    FlextLDAPServersOUDOperations as OracleOUDOperations,
+)
 
 
-class ServerOperationsFactory(FlextService[None]):
+class FlextLDAPServersFactory(FlextService[None]):
     """Factory for creating appropriate server operations instances.
 
     This factory provides methods to:
@@ -38,7 +52,7 @@ class ServerOperationsFactory(FlextService[None]):
         - "oid" → OracleOIDOperations
         - "oud" → OracleOUDOperations
         - "ad" → ActiveDirectoryOperations (stub)
-        - "generic" → GenericServerOperations (fallback)
+        - "generic" → FlextLDAPServersGenericOperations (fallback)
     """
 
     def __init__(self) -> None:
@@ -53,7 +67,7 @@ class ServerOperationsFactory(FlextService[None]):
             "oid": OracleOIDOperations,
             "oud": OracleOUDOperations,
             "ad": ActiveDirectoryOperations,
-            "generic": GenericServerOperations,
+            "generic": FlextLDAPServersGenericOperations,
         }
 
     def execute(self) -> FlextResult[None]:
@@ -98,7 +112,9 @@ class ServerOperationsFactory(FlextService[None]):
                 "Unknown server type, using generic operations",
                 extra={"server_type": server_type_lower},
             )
-            return FlextResult[BaseServerOperations].ok(GenericServerOperations())
+            return FlextResult[BaseServerOperations].ok(
+                FlextLDAPServersGenericOperations()
+            )
 
         except Exception as e:
             self._logger.error(
@@ -127,7 +143,9 @@ class ServerOperationsFactory(FlextService[None]):
         try:
             if not entries:
                 self._logger.warning("No entries provided, using generic operations")
-                return FlextResult[BaseServerOperations].ok(GenericServerOperations())
+                return FlextResult[BaseServerOperations].ok(
+                    FlextLDAPServersGenericOperations()
+                )
 
             # Use quirks manager to detect server type
             detection_result = self._quirks_manager.detect_server_type(entries)
@@ -136,7 +154,9 @@ class ServerOperationsFactory(FlextService[None]):
                     "Server type detection failed, using generic operations",
                     extra={"error": detection_result.error},
                 )
-                return FlextResult[BaseServerOperations].ok(GenericServerOperations())
+                return FlextResult[BaseServerOperations].ok(
+                    FlextLDAPServersGenericOperations()
+                )
 
             detected_type = detection_result.unwrap()
             self._logger.info(
@@ -295,7 +315,9 @@ class ServerOperationsFactory(FlextService[None]):
                     "Server detection from connection failed, using generic",
                     extra={"error": detection_result.error},
                 )
-                return FlextResult[BaseServerOperations].ok(GenericServerOperations())
+                return FlextResult[BaseServerOperations].ok(
+                    FlextLDAPServersGenericOperations()
+                )
 
             detected_type = detection_result.unwrap()
 

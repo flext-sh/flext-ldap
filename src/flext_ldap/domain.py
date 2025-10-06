@@ -14,14 +14,13 @@ from typing import List
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.entities import FlextLdapEntities
-from flext_ldap.value_objects import FlextLdapValueObjects
+from flext_ldap.models import FlextLDAPModels
 
 
 _logger = FlextLogger(__name__)
 
 
-class FlextLdapDomain:
+class FlextLDAPDomain:
     """Namespace class for all LDAP domain logic and specifications.
 
     Contains domain services, specifications, and business rules that
@@ -80,7 +79,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def can_add_member_to_group(
-            group: FlextLdapEntities.Group, member_dn: str, max_members: int = 1000
+            group: FlextLDAPModels.Group, member_dn: str, max_members: int = 1000
         ) -> FlextResult[bool]:
             """Check if a member can be added to a group."""
             if not member_dn or not member_dn.strip():
@@ -136,7 +135,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def validate_search_scope(
-            base_dn: str, scope: FlextLdapValueObjects.Scope, max_depth: int = 5
+            base_dn: str, scope: FlextLDAPModels.Scope, max_depth: int = 5
         ) -> FlextResult[bool]:
             """Validate search scope against business rules."""
             if not base_dn:
@@ -156,7 +155,7 @@ class FlextLdapDomain:
         """Domain services implementing business logic."""
 
         @staticmethod
-        def calculate_user_display_name(user: FlextLdapEntities.User) -> str:
+        def calculate_user_display_name(user: FlextLDAPModels.User) -> str:
             """Calculate display name for user based on domain rules."""
             # Priority: displayName > givenName + sn > cn > uid
             if user.display_name:
@@ -171,7 +170,7 @@ class FlextLdapDomain:
             return user.uid or "Unknown User"
 
         @staticmethod
-        def determine_user_status(user: FlextLdapEntities.User) -> str:
+        def determine_user_status(user: FlextLDAPModels.User) -> str:
             """Determine user status based on LDAP attributes."""
             # Check for account lock attributes
             lock_attrs = [
@@ -198,7 +197,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def validate_group_membership_rules(
-            user: FlextLdapEntities.User, group: FlextLdapEntities.Group
+            user: FlextLDAPModels.User, group: FlextLDAPModels.Group
         ) -> FlextResult[bool]:
             """Validate if user can be member of group based on business rules."""
             # Example business rule: users must have email for certain groups
@@ -219,7 +218,7 @@ class FlextLdapDomain:
         @staticmethod
         def generate_unique_username(
             base_name: str,
-            existing_users: List[FlextLdapEntities.User],
+            existing_users: List[FlextLDAPModels.User],
             max_attempts: int = 100,
         ) -> FlextResult[str]:
             """Generate unique username based on domain rules."""
@@ -254,5 +253,5 @@ class FlextLdapDomain:
 
 
 __all__ = [
-    "FlextLdapDomain",
+    "FlextLDAPDomain",
 ]

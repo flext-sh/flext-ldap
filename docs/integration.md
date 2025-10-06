@@ -49,7 +49,7 @@ class UserService:
 
 ```python
 # Environment-based configuration following FLEXT patterns
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 from pydantic import BaseSettings
 
 class AppSettings(BaseSettings):
@@ -67,9 +67,9 @@ class AppSettings(BaseSettings):
     app_name: str = "flext-app"
     debug: bool = False
 
-    def get_ldap_config(self) -> FlextLdapConfig:
+    def get_ldap_config(self) -> FlextLDAPConfig:
         """Create LDAP configuration from app settings."""
-        return FlextLdapConfig(
+        return FlextLDAPConfig(
             host=self.ldap_host,
             port=self.ldap_port,
             use_ssl=self.ldap_use_ssl,
@@ -92,7 +92,7 @@ ldap_config = settings.get_ldap_config()
 ```python
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
 from flext_core import FlextResult
 
 app = FastAPI(title="FLEXT LDAP API")
@@ -129,7 +129,7 @@ def search_users(
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
-    search_request = FlextLdapEntities.SearchRequest(
+    search_request = FlextLDAPEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
         filter_str=filter_str,
         scope="subtree",
@@ -163,7 +163,7 @@ def create_user(
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
-    create_request = FlextLdapEntities.CreateUserRequest(
+    create_request = FlextLDAPEntities.CreateUserRequest(
         dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
         uid=user_data["uid"],
         cn=user_data["cn"],
@@ -198,7 +198,7 @@ from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from flext_ldap import get_flext_ldap_api
 
-class FlextLdapBackend(BaseBackend):
+class FlextLDAPBackend(BaseBackend):
     """Django authentication backend using FLEXT-LDAP."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -256,7 +256,7 @@ class FlextLdapBackend(BaseBackend):
 
 # settings.py
 AUTHENTICATION_BACKENDS = [
-    'myapp.auth.FlextLdapBackend',
+    'myapp.auth.FlextLDAPBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 ```
@@ -266,7 +266,7 @@ AUTHENTICATION_BACKENDS = [
 ```python
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
 
 class Command(BaseCommand):
     """Sync users from LDAP to Django database."""
@@ -289,7 +289,7 @@ class Command(BaseCommand):
         ldap_api = get_flext_ldap_api()
 
         # Search for all users
-        search_request = FlextLdapEntities.SearchRequest(
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn="ou=users,dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -368,7 +368,7 @@ class Command(BaseCommand):
 ```python
 from flask import Flask, request, jsonify, g
 from functools import wraps
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
 
 app = Flask(__name__)
 
@@ -418,7 +418,7 @@ def search_users():
 
     ldap_api = get_flext_ldap_api()
 
-    search_request = FlextLdapEntities.SearchRequest(
+    search_request = FlextLDAPEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
         filter_str=filter_str,
         scope="subtree",
@@ -629,11 +629,11 @@ data:
 FLEXT-LDAP uses FlextLdif for universal LDIF entry handling with automatic server quirks detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 
 # Convert ldap3 entries to FlextLdif format
 connection = ldap3.Connection(
@@ -661,12 +661,12 @@ for ldap3_entry in connection.entries:
 Process LDIF files with FlextLdif integration:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldap.servers import OpenLDAP2Operations
 
 def process_ldif_file():
     """Process LDIF file and import to LDAP server."""
-    adapter = FlextLdapEntryAdapter()
+    adapter = FlextLDAPEntryAdapter()
     ops = OpenLDAP2Operations()
 
     # Load LDIF file
@@ -702,13 +702,13 @@ run(process_ldif_file())
 Export LDAP entries to LDIF format:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldap.servers import OpenLDAP2Operations
 import ldap3
 
 def export_to_ldif():
     """Export LDAP entries to LDIF file."""
-    adapter = FlextLdapEntryAdapter()
+    adapter = FlextLDAPEntryAdapter()
     ops = OpenLDAP2Operations()
 
     # Connect and search
@@ -750,8 +750,8 @@ run(export_to_ldif())
 Use FlextLdif quirks system for automatic server detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldap.servers import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
@@ -766,8 +766,8 @@ def detect_and_configure():
         auto_bind=True
     )
 
-    adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    adapter = FlextLDAPEntryAdapter()
+    quirks = FlextLDAPQuirksAdapter()
 
     # Get root DSE and schema entries
     connection.search('', '(objectClass=*)', search_scope='BASE', attributes=['*', '+'])
@@ -817,8 +817,8 @@ run(detect_and_configure())
 Complete example combining FlextLdif with server operations:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldap.servers import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations, GenericServerOperations
 )
@@ -832,8 +832,8 @@ class UniversalLdapProcessor:
         self.host = host
         self.bind_dn = bind_dn
         self.bind_password = bind_password
-        self.adapter = FlextLdapEntryAdapter()
-        self.quirks = FlextLdapQuirksAdapter()
+        self.adapter = FlextLDAPEntryAdapter()
+        self.quirks = FlextLDAPQuirksAdapter()
         self.ops = None
         self.connection = None
 

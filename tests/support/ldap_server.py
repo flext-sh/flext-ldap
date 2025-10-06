@@ -16,8 +16,8 @@ Note: This file has type checking disabled due to limitations in the official ty
 import os
 from typing import Protocol, TypedDict, cast
 
-from flext_ldap import FlextLdapModels, FlextLdapTypes
-from flext_ldap.constants import FlextLdapConstants
+from flext_ldap import FlextLDAPModels, FlextLDAPTypes
+from flext_ldap.constants import FlextLDAPConstants
 from flext_tests import FlextTestDocker
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
@@ -130,25 +130,25 @@ class LdapTestServer:
         while time.time() - start_time < timeout_seconds:
             try:
                 # Try to connect to LDAP server
-                server = FlextLdapTypes.Server(
+                server = FlextLDAPTypes.Server(
                     host="localhost",
                     port=self.port,
                     use_ssl=False,
                     connect_timeout=5,
                 )
 
-                conn = FlextLdapTypes.Connection(
+                conn = FlextLDAPTypes.Connection(
                     server=server,
                     user="cn=admin,dc=flext,dc=local",
                     password=self.admin_password,
                     auto_bind=True,
-                    authentication=FlextLdapTypes.SIMPLE,
+                    authentication=FlextLDAPTypes.SIMPLE,
                 )
 
                 conn.search(
                     search_base="dc=flext,dc=local",
                     search_filter="(objectClass=*)",
-                    search_scope=FlextLdapTypes.BASE,
+                    search_scope=FlextLDAPTypes.BASE,
                 )
 
                 conn.unbind()
@@ -156,7 +156,7 @@ class LdapTestServer:
                 return True
             except Exception as e:
                 logger.debug("LDAP server not ready yet: %s", e)
-                time.sleep(FlextLdapConstants.LdapRetry.SERVER_READY_RETRY_DELAY)
+                time.sleep(FlextLDAPConstants.LdapRetry.SERVER_READY_RETRY_DELAY)
 
         logger.exception("LDAP server failed to become ready within timeout")
         return False
@@ -165,18 +165,18 @@ class LdapTestServer:
         """Set up initial test data in LDAP server."""
         try:
             # Connect to LDAP server
-            server = FlextLdapTypes.Server(
+            server = FlextLDAPTypes.Server(
                 host="localhost",
                 port=self.port,
                 use_ssl=False,
             )
 
-            conn = FlextLdapTypes.Connection(
+            conn = FlextLDAPTypes.Connection(
                 server=server,
                 user="cn=admin,dc=flext,dc=local",
                 password=self.admin_password,
                 auto_bind=True,
-                authentication=FlextLdapTypes.SIMPLE,
+                authentication=FlextLDAPTypes.SIMPLE,
             )
 
             # Create organizational units first
@@ -220,9 +220,9 @@ class LdapTestServer:
             logger.exception("Failed to setup test data")
             return FlextResult[bool].fail(f"Failed to setup test data: {e}")
 
-    def get_connection_config(self) -> FlextLdapModels.ConnectionConfig:
+    def get_connection_config(self) -> FlextLDAPModels.ConnectionConfig:
         """Get connection configuration for test server."""
-        return FlextLdapModels.ConnectionConfig(
+        return FlextLDAPModels.ConnectionConfig(
             server=f"ldap://localhost:{self.port}",
             bind_dn="cn=admin,dc=flext,dc=local",
             bind_password=self.admin_password or "admin123",
@@ -258,10 +258,10 @@ class LdapTestServer:
         )
 
 
-def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:
+def get_test_ldap_config() -> FlextLDAPModels.ConnectionConfig:
     """Get test LDAP connection configuration."""
     admin_password = os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123")
-    return FlextLdapModels.ConnectionConfig(
+    return FlextLDAPModels.ConnectionConfig(
         server="ldap://localhost:3390",
         bind_dn="cn=admin,dc=flext,dc=local",
         bind_password=admin_password,
@@ -281,26 +281,26 @@ def wait_for_ldap_server(
     start_time = time.time()
     while time.time() - start_time < timeout_seconds:
         try:
-            server = FlextLdapTypes.Server(
+            server = FlextLDAPTypes.Server(
                 host=host,
                 port=port,
                 use_ssl=False,
                 connect_timeout=5,
             )
 
-            conn_raw = FlextLdapTypes.Connection(
+            conn_raw = FlextLDAPTypes.Connection(
                 server=server,
                 user="cn=admin,dc=flext,dc=local",
                 password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
                 auto_bind=True,
-                authentication=FlextLdapTypes.SIMPLE,
+                authentication=FlextLDAPTypes.SIMPLE,
             )
             conn = conn_raw
 
             conn.search(
                 search_base="dc=flext,dc=local",
                 search_filter="(objectClass=*)",
-                search_scope=FlextLdapTypes.BASE,
+                search_scope=FlextLDAPTypes.BASE,
             )
 
             conn.unbind()

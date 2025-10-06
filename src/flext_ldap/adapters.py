@@ -14,12 +14,12 @@ import time
 from typing import Any, Callable
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.models import FlextLDAPModels
 
 _logger = FlextLogger(__name__)
 
 
-class FlextLdapAdapters:
+class FlextLDAPAdapters:
     """Namespace class for all LDAP infrastructure adapters.
 
     Adapters implement the interface between domain models and external
@@ -31,7 +31,7 @@ class FlextLdapAdapters:
         """Adapter for converting between ldap3 entries and domain entities."""
 
         @staticmethod
-        def entry_to_domain(entry: Any) -> FlextResult[FlextLdapModels.Entry]:
+        def entry_to_domain(entry: Any) -> FlextResult[FlextLDAPModels.Entry]:
             """Convert ldap3 Entry to domain Entry entity.
 
             Args:
@@ -47,30 +47,25 @@ class FlextLdapAdapters:
 
                 # Extract attributes
                 attributes = {}
-                raw_attributes = {}
 
                 if hasattr(entry, "entry_attributes"):
                     attributes = dict(entry.entry_attributes)
-                if hasattr(entry, "entry_raw_attributes"):
-                    raw_attributes = dict(entry.entry_raw_attributes)
 
                 # Create domain entity
-                domain_entry = FlextLdapModels.Entry(
-                    dn=dn, attributes=attributes, raw_attributes=raw_attributes
-                )
+                domain_entry = FlextLDAPModels.Entry(dn=dn, attributes=attributes)
 
-                return FlextResult[FlextLdapModels.Entry].ok(domain_entry)
+                return FlextResult[FlextLDAPModels.Entry].ok(domain_entry)
 
             except Exception as e:
                 _logger.error("Failed to convert ldap3 entry to domain", error=str(e))
-                return FlextResult[FlextLdapModels.Entry].fail(
+                return FlextResult[FlextLDAPModels.Entry].fail(
                     f"Entry conversion failed: {e}"
                 )
 
         @staticmethod
         def entries_to_domain(
             entries: list[Any],
-        ) -> FlextResult[list[FlextLdapModels.Entry]]:
+        ) -> FlextResult[list[FlextLDAPModels.Entry]]:
             """Convert list of ldap3 entries to domain entries.
 
             Args:
@@ -84,7 +79,7 @@ class FlextLdapAdapters:
                 domain_entries = []
                 for entry in entries:
                     conversion_result = (
-                        FlextLdapAdapters.Ldap3EntryAdapter.entry_to_domain(entry)
+                        FlextLDAPAdapters.Ldap3EntryAdapter.entry_to_domain(entry)
                     )
                     if conversion_result.is_failure:
                         _logger.warning(
@@ -94,11 +89,11 @@ class FlextLdapAdapters:
                         continue
                     domain_entries.append(conversion_result.unwrap())
 
-                return FlextResult[list[FlextLdapModels.Entry]].ok(domain_entries)
+                return FlextResult[list[FlextLDAPModels.Entry]].ok(domain_entries)
 
             except Exception as e:
                 _logger.error("Failed to convert ldap3 entries to domain", error=str(e))
-                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                return FlextResult[list[FlextLDAPModels.Entry]].fail(
                     f"Entries conversion failed: {e}"
                 )
 
@@ -122,7 +117,7 @@ class FlextLdapAdapters:
 
         @staticmethod
         def domain_request_to_ldap3(
-            request: FlextLdapModels.SearchRequest,
+            request: FlextLDAPModels.SearchRequest,
         ) -> FlextTypes.Dict:
             """Convert domain SearchRequest to ldap3 search parameters.
 
@@ -154,7 +149,7 @@ class FlextLdapAdapters:
         @staticmethod
         def ldap3_response_to_domain(
             entries: list[Any], search_time: float = 0.0
-        ) -> FlextResult[FlextLdapModels.SearchResponse]:
+        ) -> FlextResult[FlextLDAPModels.SearchResponse]:
             """Convert ldap3 search response to domain SearchResponse.
 
             Args:
@@ -167,31 +162,31 @@ class FlextLdapAdapters:
             """
             try:
                 # Convert entries
-                entries_result = FlextLdapAdapters.Ldap3EntryAdapter.entries_to_domain(
+                entries_result = FlextLDAPAdapters.Ldap3EntryAdapter.entries_to_domain(
                     entries
                 )
                 if entries_result.is_failure:
-                    return FlextResult[FlextLdapModels.SearchResponse].fail(
+                    return FlextResult[FlextLDAPModels.SearchResponse].fail(
                         entries_result.error or "Entry conversion failed"
                     )
 
                 domain_entries = entries_result.unwrap()
 
                 # Create response
-                response = FlextLdapModels.SearchResponse(
+                response = FlextLDAPModels.SearchResponse(
                     entries=domain_entries,
                     total_count=len(domain_entries),
-                    search_time=search_time,
-                    is_complete=True,  # Assume complete for now
+                    result_code=0,  # Success
+                    time_elapsed=search_time,
                 )
 
-                return FlextResult[FlextLdapModels.SearchResponse].ok(response)
+                return FlextResult[FlextLDAPModels.SearchResponse].ok(response)
 
             except Exception as e:
                 _logger.error(
                     "Failed to convert ldap3 response to domain", error=str(e)
                 )
-                return FlextResult[FlextLdapModels.SearchResponse].fail(
+                return FlextResult[FlextLDAPModels.SearchResponse].fail(
                     f"Response conversion failed: {e}"
                 )
 
@@ -276,7 +271,7 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate base DN
-                dn_result = FlextLdapModels.DistinguishedName.create(base_dn)
+                dn_result = FlextLDAPModels.DistinguishedName.from_string(base_dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid base DN: {dn_result.error}"
@@ -320,7 +315,7 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapModels.DistinguishedName.create(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
@@ -328,7 +323,7 @@ class FlextLdapAdapters:
 
                 # Convert attributes to ldap3 format
                 ldap3_attrs = (
-                    FlextLdapAdapters.Ldap3EntryAdapter.domain_to_ldap3_attributes(
+                    FlextLDAPAdapters.Ldap3EntryAdapter.domain_to_ldap3_attributes(
                         attributes
                     )
                 )
@@ -360,7 +355,7 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapModels.DistinguishedName.create(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
@@ -412,13 +407,13 @@ class FlextLdapAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLdapModels.DistinguishedName.create(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
                     )
 
-                params = {"dn": dn}
+                params: FlextTypes.Dict = {"dn": dn}
 
                 return FlextResult[FlextTypes.Dict].ok(params)
 
@@ -584,5 +579,5 @@ class FlextLdapAdapters:
 
 
 __all__ = [
-    "FlextLdapAdapters",
+    "FlextLDAPAdapters",
 ]

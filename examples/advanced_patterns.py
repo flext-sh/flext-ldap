@@ -22,11 +22,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapConfig,
-    FlextLdapModels,
-)
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.models import FlextLDAPModels
 
 from flext_core import FlextLogger, FlextResult
 
@@ -38,16 +36,16 @@ def ldap_session(
     server_url: str,
     bind_dn: str,
     password: str,
-) -> Iterator[tuple[FlextLdapClient, str]]:
+) -> Iterator[tuple[FlextLDAPClient, str]]:
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
 
     Yields:
-        tuple[FlextLdapClient, str]: A tuple containing the LDAP API instance and session ID.
+        tuple[FlextLDAPClient, str]: A tuple containing the LDAP API instance and session ID.
 
     """
-    api = FlextLdapClient()
+    api = FlextLDAPClient()
     session_id = f"session_{id(api)}"
 
     def _raise_conn_error(message: str) -> None:
@@ -99,20 +97,20 @@ def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
-        dn = FlextLdapModels.DistinguishedName(
+        dn = FlextLDAPModels.DistinguishedName(
             value="cn=admin,ou=users,dc=example,dc=com",
         )
         # DistinguishedName doesn't have validate_business_rules method
         logger.debug(f"Created DN: {dn.value}")
 
-        # 2. LDAP Filters - Using correct FlextLdapFilter class
+        # 2. LDAP Filters - Using correct FlextLDAPFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
         try:
-            filter_obj = FlextLdapModels.Filter(expression=complex_filter)
+            filter_obj = FlextLDAPModels.Filter(expression=complex_filter)
             logger.debug(f"Using filter: {filter_obj.expression}")
         except ValueError as e:
             logger.warning(f"Invalid filter: {e}")
-            filter_obj = FlextLdapModels.Filter(expression="(objectClass=*)")
+            filter_obj = FlextLDAPModels.Filter(expression="(objectClass=*)")
 
     except Exception:
         logger.exception("Value object demonstration failed")
@@ -122,10 +120,10 @@ def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLdapConfig()
+        _settings = FlextLDAPConfig()
 
-        # 2. Create search request using FlextLdapSearchRequest
-        search_request = FlextLdapModels.SearchRequest(
+        # 2. Create search request using FlextLDAPSearchRequest
+        search_request = FlextLDAPModels.SearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -154,7 +152,7 @@ def demonstrate_patterns() -> None:
             "password",
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[FlextResult[list[FlextLdapModels.Entry]]] = []
+            tasks: list[FlextResult[list[FlextLDAPModels.Entry]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",

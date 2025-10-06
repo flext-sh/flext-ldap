@@ -11,12 +11,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
-class BaseServerOperations(FlextService[None], ABC):
+class FlextLDAPServersBaseOperations(FlextService[None], ABC):
     """Abstract base class for server-specific LDAP operations.
 
     All server implementations (OpenLDAP, OID, OUD, AD, etc.) must extend
@@ -36,7 +37,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger = FlextLogger(__name__)
         self._server_type = server_type or "generic"
 
     def execute(self) -> FlextResult[None]:
@@ -86,7 +87,7 @@ class BaseServerOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from server.
 
         Args:
@@ -145,7 +146,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def get_acls(
-        self, connection: object, dn: str
+        self, connection: Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs for a given DN.
 
@@ -160,7 +161,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def set_acls(
-        self, connection: object, dn: str, acls: list[FlextTypes.Dict]
+        self, connection: Connection, dn: str, acls: list[FlextTypes.Dict]
     ) -> FlextResult[bool]:
         """Set ACLs for a given DN.
 
@@ -204,7 +205,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def add_entry(
-        self, connection: object, entry: FlextLdifModels.Entry
+        self, connection: Connection, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to LDAP server.
 
@@ -219,7 +220,7 @@ class BaseServerOperations(FlextService[None], ABC):
 
     @abstractmethod
     def modify_entry(
-        self, connection: object, dn: str, modifications: FlextTypes.Dict
+        self, connection: Connection, dn: str, modifications: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Modify existing entry.
 
@@ -234,7 +235,7 @@ class BaseServerOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from LDAP server.
 
         Args:
@@ -279,7 +280,7 @@ class BaseServerOperations(FlextService[None], ABC):
     @abstractmethod
     def search_with_paging(
         self,
-        connection: object,
+        connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,

@@ -14,9 +14,9 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLdapConfig, optional): Configuration object. If None, uses default config.
+- `config` (FlextLDAPConfig, optional): Configuration object. If None, uses default config.
 
-**Returns:** FlextLdapClient instance
+**Returns:** FlextLDAPClient instance
 
 **Example:**
 
@@ -28,7 +28,7 @@ api = get_flext_ldap_api()
 
 ---
 
-## 🏗️ FlextLdapClient
+## 🏗️ FlextLDAPClient
 
 Main API facade providing high-level LDAP operations.
 
@@ -45,7 +45,7 @@ Search LDAP directory entries.
 **Example:**
 
 ```python
-search_request = FlextLdapEntities.SearchRequest(
+search_request = FlextLDAPEntities.SearchRequest(
     base_dn="dc=example,dc=com",
     filter_str="(objectClass=person)",
     scope="subtree",
@@ -57,7 +57,7 @@ if result.is_success:
     entries = result.unwrap()
 ```
 
-### `authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`
+### `authenticate_user(username: str, password: str) -> FlextResult[FlextLDAPUser]`
 
 Authenticate user credentials against LDAP directory.
 
@@ -77,7 +77,7 @@ if result.is_success:
     print(f"Authenticated: {user.cn}")
 ```
 
-### `create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`
+### `create_user(request: CreateUserRequest) -> FlextResult[FlextLDAPUser]`
 
 Create a new user in LDAP directory.
 
@@ -90,7 +90,7 @@ Create a new user in LDAP directory.
 **Example:**
 
 ```python
-user_request = FlextLdapEntities.CreateUserRequest(
+user_request = FlextLDAPEntities.CreateUserRequest(
     dn="cn=jane.doe,ou=users,dc=example,dc=com",
     uid="jane.doe",
     cn="Jane Doe",
@@ -119,7 +119,7 @@ if result.is_success:
 
 ## 📊 Domain Entities
 
-### FlextLdapEntities
+### FlextLDAPEntities
 
 Container for domain entities and request objects.
 
@@ -149,7 +149,7 @@ User creation request data.
 - `mail` (str, optional): Email address
 - `object_classes` (List[str], optional): LDAP object classes
 
-#### FlextLdapUser
+#### FlextLDAPUser
 
 LDAP user entity.
 
@@ -168,7 +168,7 @@ LDAP user entity.
 - `is_valid() -> bool`: Validate user data
 - `get_display_name() -> str`: Get display name
 
-#### FlextLdapGroup
+#### FlextLDAPGroup
 
 LDAP group entity.
 
@@ -188,7 +188,7 @@ LDAP group entity.
 
 ## 🎯 Value Objects
 
-### FlextLdapModels.ValueObjects
+### FlextLDAPModels.ValueObjects
 
 Container for value objects.
 
@@ -208,7 +208,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-dn = FlextLdapModels.ValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
+dn = FlextLDAPModels.ValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
 print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 ```
@@ -232,11 +232,11 @@ LDAP search filter with validation.
 
 ```python
 # Create filters
-user_filter = FlextLdapModels.ValueObjects.LdapFilter.equals("uid", "john.doe")
-person_filter = FlextLdapModels.ValueObjects.LdapFilter.object_class("person")
+user_filter = FlextLDAPModels.ValueObjects.LdapFilter.equals("uid", "john.doe")
+person_filter = FlextLDAPModels.ValueObjects.LdapFilter.object_class("person")
 
 # Combine filters
-combined = FlextLdapModels.ValueObjects.LdapFilter.and_filters(user_filter, person_filter)
+combined = FlextLDAPModels.ValueObjects.LdapFilter.and_filters(user_filter, person_filter)
 ```
 
 #### LdapScope
@@ -253,7 +253,7 @@ Search scope enumeration.
 
 ## ⚙️ Configuration
 
-### FlextLdapConfig
+### FlextLDAPConfig
 
 LDAP connection configuration.
 
@@ -271,9 +271,9 @@ LDAP connection configuration.
 **Example:**
 
 ```python
-from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
+from Flext_ldap import FlextLDAPConfig, set_flext_ldap_config
 
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -289,7 +289,7 @@ set_flext_ldap_config(config)
 
 ## 🔧 Utilities
 
-### FlextLdapTypeGuards
+### FlextLDAPTypeGuards
 
 Type guard functions for runtime type checking.
 
@@ -300,9 +300,9 @@ Check if string is a valid distinguished name.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapTypeGuards
+from flext_ldap import FlextLDAPTypeGuards
 
-if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
+if FlextLDAPTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
     print("Valid DN")
 ```
 
@@ -310,7 +310,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
 
 Check if object is a valid LDAP entry.
 
-### FlextLdapConstants
+### FlextLDAPConstants
 
 LDAP protocol constants.
 
@@ -326,11 +326,11 @@ LDAP protocol constants.
 
 ## 🚨 Exceptions
 
-### FlextLdapExceptions
+### FlextLDAPExceptions
 
 LDAP-specific exception classes.
 
-#### FlextLdapConnectionError
+#### FlextLDAPConnectionError
 
 Connection-related errors.
 
@@ -339,7 +339,7 @@ Connection-related errors.
 - `message` (str): Error description
 - `server` (str, optional): LDAP server address
 
-#### FlextLdapAuthenticationError
+#### FlextLDAPAuthenticationError
 
 Authentication failures.
 
@@ -348,7 +348,7 @@ Authentication failures.
 - `message` (str): Error description
 - `username` (str, optional): Failed username
 
-#### FlextLdapSearchError
+#### FlextLDAPSearchError
 
 Search operation errors.
 
@@ -361,14 +361,14 @@ Search operation errors.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapExceptions
+from flext_ldap import FlextLDAPExceptions
 
 try:
     result = api.search_entries(request)
     if result.is_failure:
         # Handle FlextResult error
         print(f"Search failed: {result.error}")
-except FlextLdapExceptions.FlextLdapConnectionError as e:
+except FlextLDAPExceptions.FlextLDAPConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 
@@ -420,14 +420,14 @@ else:
 
 ## 🔄 Universal LDAP Interface
 
-### FlextLdapEntryAdapter
+### FlextLDAPEntryAdapter
 
 Bidirectional converter between ldap3 entries and FlextLdif entries.
 
 **Import:**
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 ```
 
 #### `ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`
@@ -443,10 +443,10 @@ Convert ldap3.Entry to FlextLdif entry.
 **Example:**
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 import ldap3
 
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 
 # Search with ldap3
 connection.search('dc=example,dc=com', '(objectClass=person)')
@@ -483,9 +483,9 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 ```python
 from flext_ldif import FlextLdifModels
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 
 # Create FlextLdif entry
 ldif_entry = FlextLdifModels.Entry(
@@ -527,14 +527,14 @@ Write FlextLdif entries to LDIF file.
 
 ---
 
-### FlextLdapQuirksAdapter
+### FlextLDAPQuirksAdapter
 
 Server detection and quirks system integration using FlextLdif.
 
 **Import:**
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 ```
 
 #### `detect_server_type_from_entries(entries) -> FlextResult[str]`
@@ -559,12 +559,12 @@ Detect LDAP server type from entry analysis.
 **Example:**
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldap.servers import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
 
-quirks = FlextLdapQuirksAdapter()
+quirks = FlextLDAPQuirksAdapter()
 
 # Detect from entries
 entries = [...]  # FlextLdif entries from search
@@ -971,8 +971,8 @@ All public APIs include comprehensive type annotations for IDE support and stati
 ```python
 def search_entries(
     self,
-    request: FlextLdapEntities.SearchRequest
-) -> FlextResult[List[FlextLdapEntities.LdapEntry]]:
+    request: FlextLDAPEntities.SearchRequest
+) -> FlextResult[List[FlextLDAPEntities.LdapEntry]]:
     """Search LDAP entries with full type safety."""
 
 # Server operations with FlextLdif integration
@@ -996,8 +996,8 @@ mypy --strict your_code.py
 
 ```python
 import ldap3
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldap.servers import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
@@ -1015,8 +1015,8 @@ def universal_ldap_example():
     )
 
     # Initialize adapters
-    adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    adapter = FlextLDAPEntryAdapter()
+    quirks = FlextLDAPQuirksAdapter()
 
     # Search for entries
     connection.search(
