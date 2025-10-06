@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 
 import pytest
-from flext_ldap import FlextLDAPClient, FlextLDAPModels, FlextLDAPSchema
+from flext_ldap import FlextLDAPClients, FlextLDAPModels, FlextLDAPSchema
 
 # Skip all integration tests when LDAP server is not available
 pytestmark = pytest.mark.integration
@@ -25,7 +25,7 @@ class TestSharedSchemaDiscovery:
 
     def test_discover_schema_from_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test discovering schema from shared LDAP server."""
         # Test schema discovery
@@ -45,7 +45,7 @@ class TestSharedSchemaDiscovery:
 
     def test_detect_server_type_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test server type detection with shared LDAP server."""
         # Get server info first
@@ -65,7 +65,7 @@ class TestSharedSchemaDiscovery:
 
     def test_discover_server_capabilities_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test server capabilities discovery with shared LDAP server."""
         # Test schema discovery
@@ -89,7 +89,7 @@ class TestSharedSchemaDiscovery:
 
     def test_get_server_quirks_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test server quirks detection with shared LDAP server."""
         # Test schema discovery
@@ -111,7 +111,7 @@ class TestSharedSchemaDiscovery:
 
     def test_quirks_detector_with_shared_server_info(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test quirks detector with shared server information."""
         # Test schema discovery
@@ -134,7 +134,7 @@ class TestSharedSchemaDiscovery:
 
     def test_schema_discovery_performance_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test schema discovery performance with shared server."""
         # Measure schema discovery time
@@ -161,7 +161,7 @@ class TestSharedSchemaDiscovery:
         shared_ldap_connection_config: FlextLDAPModels.ConnectionConfig,
     ) -> None:
         """Test schema discovery using shared connection config."""
-        client = FlextLDAPClient()
+        client = FlextLDAPClients()
 
         # Connect using shared config
         assert shared_ldap_connection_config.bind_dn is not None
@@ -190,7 +190,7 @@ class TestSharedSchemaDiscovery:
 
     def test_shared_ldap_schema_components(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test schema components discovery with shared LDAP server."""
         # Test schema discovery
@@ -216,7 +216,7 @@ class TestSharedSchemaDiscovery:
 
     def test_shared_ldap_schema_normalization(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test schema normalization with shared LDAP server."""
         # Test schema discovery
@@ -238,7 +238,7 @@ class TestSharedUniversalOperations:
 
     def test_universal_search_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test universal search with shared LDAP server."""
@@ -257,7 +257,7 @@ class TestSharedUniversalOperations:
 
     def test_universal_modify_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test universal modify with shared LDAP server."""
@@ -283,7 +283,7 @@ class TestSharedUniversalOperations:
 
     def test_universal_add_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test universal add with shared LDAP server."""
@@ -324,7 +324,7 @@ class TestSharedUniversalOperations:
 
     def test_universal_delete_with_shared_server(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test universal delete with shared LDAP server."""

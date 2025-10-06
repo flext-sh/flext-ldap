@@ -1,15 +1,16 @@
-"""Version and package metadata for flext-ldap using importlib.metadata."""
+"""Version and package metadata for flext-ldap using centralized constants."""
 
 from __future__ import annotations
 
 from importlib.metadata import metadata
 
+from flext_ldap.constants import FlextLDAPConstants
+
 _metadata = metadata("flext-ldap")
 
-__version__ = _metadata["Version"]
-__version_info__ = tuple(
-    int(part) if part.isdigit() else part for part in __version__.split(".")
-)
+# Use centralized constants - no module-level constants
+__version__ = FlextLDAPConstants.Version.get_version()
+__version_info__ = FlextLDAPConstants.Version.get_version_info()
 
 
 class FlextLDAPVersion:

@@ -15,7 +15,7 @@ from typing import TypeVar
 
 from flext_core import FlextLogger, FlextProtocols, FlextResult
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.models import FlextLDAPModels
 
 _logger = FlextLogger(__name__)
@@ -40,13 +40,13 @@ class FlextLDAPRepositories:
         operations work with domain entities.
         """
 
-        def __init__(self, client: FlextLDAPClient | None = None) -> None:
+        def __init__(self, client: FlextLDAPClients | None = None) -> None:
             """Initialize repository with LDAP client.
 
             Args:
                 client: LDAP client instance. If None, creates a new instance.
             """
-            self._client = client or FlextLDAPClient()
+            self._client = client or FlextLDAPClients()
             self._logger = FlextLogger(__name__)
 
         # =========================================================================

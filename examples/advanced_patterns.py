@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.models import FlextLDAPModels
 
@@ -36,16 +36,16 @@ def ldap_session(
     server_url: str,
     bind_dn: str,
     password: str,
-) -> Iterator[tuple[FlextLDAPClient, str]]:
+) -> Iterator[tuple[FlextLDAPClients, str]]:
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
 
     Yields:
-        tuple[FlextLDAPClient, str]: A tuple containing the LDAP API instance and session ID.
+        tuple[FlextLDAPClients, str]: A tuple containing the LDAP API instance and session ID.
 
     """
-    api = FlextLDAPClient()
+    api = FlextLDAPClients()
     session_id = f"session_{id(api)}"
 
     def _raise_conn_error(message: str) -> None:

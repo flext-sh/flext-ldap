@@ -108,9 +108,8 @@ class FlextLDAPAclParsers:
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
                 return FlextLDAPModels.AclTarget(
-                    target_type="attributes",
-                    attributes=attributes,
                     dn_pattern="*",
+                    attributes=attributes,
                     filter_expression="",
                 )
 
@@ -118,17 +117,15 @@ class FlextLDAPAclParsers:
             if target_str.startswith("dn.exact="):
                 dn_pattern = target_str[9:].strip('"')  # Remove dn.exact= and quotes
                 return FlextLDAPModels.AclTarget(
-                    target_type="entry",
-                    attributes=[],
                     dn_pattern=dn_pattern,
+                    attributes=[],
                     filter_expression="",
                 )
 
             # Default to entry target
             return FlextLDAPModels.AclTarget(
-                target_type="entry",
-                attributes=[],
                 dn_pattern="*",
+                attributes=[],
                 filter_expression="",
             )
 
@@ -147,7 +144,7 @@ class FlextLDAPAclParsers:
 
             return FlextLDAPModels.AclSubject(
                 subject_type=subject_type,
-                identifier=subject_str,
+                subject_dn=subject_str,
             )
 
         @staticmethod
@@ -265,9 +262,8 @@ class FlextLDAPAclParsers:
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
                 return FlextLDAPModels.AclTarget(
-                    target_type="attributes",
-                    attributes=attributes,
                     dn_pattern="*",
+                    attributes=attributes,
                     filter_expression="",
                 )
             if target_str.startswith("attr="):
@@ -277,16 +273,14 @@ class FlextLDAPAclParsers:
                 attrs_str = attrs_str.strip("()")
                 attributes = [attrs_str.strip()]
                 return FlextLDAPModels.AclTarget(
-                    target_type="attributes",
-                    attributes=attributes,
                     dn_pattern="*",
+                    attributes=attributes,
                     filter_expression="",
                 )
             # Default to entry target
             return FlextLDAPModels.AclTarget(
-                target_type="entry",
-                attributes=[],
                 dn_pattern="*",
+                attributes=[],
                 filter_expression="",
             )
 
@@ -326,7 +320,7 @@ class FlextLDAPAclParsers:
             # Create subject
             subject = FlextLDAPModels.AclSubject(
                 subject_type=subject_type,
-                identifier=subject_str,
+                subject_dn=subject_str,
             )
 
             return subject, permissions
@@ -451,16 +445,15 @@ class FlextLDAPAclParsers:
 
                 # Create target
                 target = FlextLDAPModels.AclTarget(
-                    target_type="entry",
-                    attributes=[],
                     dn_pattern=target_dn,
-                    filter_expression="",
+                    target_attr=[],
+                    target_filter="",
                 )
 
                 # Create subject
                 subject = FlextLDAPModels.AclSubject(
                     subject_type=subject_type,
-                    identifier=subject_identifier,
+                    subject_dn=subject_identifier,
                 )
 
                 # Create permissions
@@ -537,7 +530,7 @@ class FlextLDAPAclParsers:
         @staticmethod
         def format_ad_target(target: FlextLDAPModels.AclTarget) -> str:
             """Format target for Microsoft AD."""
-            if target.target_type == "attributes" and target.attributes:
+            if target.attributes:
                 attrs = ",".join(target.attributes)
                 return f'target="ldap:///{target.dn_pattern};{attrs}"'
             return f'target="ldap:///{target.dn_pattern}"'
@@ -546,12 +539,12 @@ class FlextLDAPAclParsers:
         def format_ad_subject(subject: FlextLDAPModels.AclSubject) -> str:
             """Format subject for Microsoft AD."""
             if subject.subject_type == "user":
-                return f'userdn="{subject.identifier}"'
+                return f'userdn="{subject.subject_dn}"'
             if subject.subject_type == "group":
-                return f'groupdn="{subject.identifier}"'
+                return f'groupdn="{subject.subject_dn}"'
             if subject.subject_type == "anyone":
                 return 'userdn="ldap:///anyone"'
-            return f'userdn="{subject.identifier}"'
+            return f'userdn="{subject.subject_dn}"'
 
         @staticmethod
         def format_ad_permissions(permissions: FlextLDAPModels.AclPermissions) -> str:
@@ -608,7 +601,7 @@ class FlextLDAPAclParsers:
         @staticmethod
         def format_openldap_target(target: FlextLDAPModels.AclTarget) -> str:
             """Format target for OpenLDAP."""
-            if target.target_type == "attributes" and target.attributes:
+            if target.attributes:
                 attrs = ",".join(target.attributes)
                 return f"attrs={attrs}"
             if target.dn_pattern and target.dn_pattern != "*":
@@ -626,7 +619,7 @@ class FlextLDAPAclParsers:
                 return "anonymous"
             if subject.subject_type == "anyone":
                 return "*"
-            return subject.identifier
+            return subject.subject_dn
 
         @staticmethod
         def format_openldap_permissions(
@@ -685,10 +678,10 @@ class FlextLDAPAclParsers:
         def format_aci_subject(subject: FlextLDAPModels.AclSubject) -> str:
             """Format subject for ACI."""
             if subject.subject_type == "group":
-                return f'groupdn="{subject.identifier}"'
+                return f'groupdn="{subject.subject_dn}"'
             if subject.subject_type == "anyone":
                 return 'userdn="ldap:///anyone"'
-            return f'userdn="{subject.identifier}"'
+            return f'userdn="{subject.subject_dn}"'
 
         @staticmethod
         def format_aci_permissions(permissions: FlextLDAPModels.AclPermissions) -> str:

@@ -1,10 +1,11 @@
-"""Version metadata for flext ldap."""
+"""Version metadata for flext ldap using centralized constants."""
 
 from __future__ import annotations
 
-from typing import Final
+from flext_ldap.constants import FlextLDAPConstants
 
-__version__: Final[str] = "0.9.0"
-__version_info__: Final[tuple[int | str, ...]] = (0, 9, 0)
+# Use centralized constants - no module-level constants
+__version__ = FlextLDAPConstants.Version.get_version()
+__version_info__ = FlextLDAPConstants.Version.get_version_info()
 
 __all__ = ["__version__", "__version_info__"]

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldap.models import FlextLDAPModels
@@ -129,7 +129,7 @@ class FlextLDAPAdapters:
 
             """
             # Map domain scope to ldap3 scope
-            scope_map = {
+            scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
                 "base": "BASE",
                 "one": "LEVEL",
                 "subtree": "SUBTREE",
@@ -144,7 +144,7 @@ class FlextLDAPAdapters:
                 "time_limit": request.time_limit,
             }
 
-            return ldap3_params
+            return dict(ldap3_params)  # Cast to dict[str, object]
 
         @staticmethod
         def ldap3_response_to_domain(
@@ -240,7 +240,7 @@ class FlextLDAPAdapters:
                         "Both user and password must be provided for authentication"
                     )
 
-                return FlextResult[FlextTypes.Dict].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
                 _logger.error("Connection parameter validation failed", error=str(e))
@@ -271,7 +271,7 @@ class FlextLDAPAdapters:
             """
             try:
                 # Validate base DN
-                dn_result = FlextLDAPModels.DistinguishedName.from_string(base_dn)
+                dn_result = FlextLDAPModels.DistinguishedName.create(base_dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid base DN: {dn_result.error}"
@@ -290,7 +290,7 @@ class FlextLDAPAdapters:
                     "pool_lifetime": 3600,  # 1 hour
                 }
 
-                return FlextResult[FlextTypes.Dict].ok(config)
+                return FlextResult[FlextTypes.Dict].ok(dict(config))
 
             except Exception as e:
                 _logger.error("Connection config creation failed", error=str(e))
@@ -315,7 +315,7 @@ class FlextLDAPAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
@@ -333,7 +333,7 @@ class FlextLDAPAdapters:
                     "attributes": ldap3_attrs,
                 }
 
-                return FlextResult[FlextTypes.Dict].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
                 _logger.error("Add operation preparation failed", error=str(e))
@@ -355,7 +355,7 @@ class FlextLDAPAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
@@ -388,7 +388,7 @@ class FlextLDAPAdapters:
                     "changes": ldap3_changes,
                 }
 
-                return FlextResult[FlextTypes.Dict].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
                 _logger.error("Modify operation preparation failed", error=str(e))
@@ -407,7 +407,7 @@ class FlextLDAPAdapters:
             """
             try:
                 # Validate DN
-                dn_result = FlextLDAPModels.DistinguishedName.from_string(dn)
+                dn_result = FlextLDAPModels.DistinguishedName.create(dn)
                 if dn_result.is_failure:
                     return FlextResult[FlextTypes.Dict].fail(
                         f"Invalid DN: {dn_result.error}"
@@ -415,7 +415,7 @@ class FlextLDAPAdapters:
 
                 params: FlextTypes.Dict = {"dn": dn}
 
-                return FlextResult[FlextTypes.Dict].ok(params)
+                return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
                 _logger.error("Delete operation preparation failed", error=str(e))

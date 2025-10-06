@@ -360,6 +360,34 @@ class FlextLDAPConstants(FlextConstants):
         IP_MODE_V6_ONLY: Final[Literal["IP_V6_ONLY"]] = "IP_V6_ONLY"
         IP_MODE_V6_PREFERRED: Final[Literal["IP_V6_PREFERRED"]] = "IP_V6_PREFERRED"
 
+    class Version:
+        """Version constants for flext-ldap."""
+
+        # Version information from metadata
+        CURRENT_VERSION: Final[str] = "0.9.0"
+        VERSION_INFO: Final[tuple[int | str, ...]] = (0, 9, 0)
+
+        @classmethod
+        def get_version(cls) -> str:
+            """Get current version."""
+            return cls.CURRENT_VERSION
+
+        @classmethod
+        def get_version_info(cls) -> tuple[int | str, ...]:
+            """Get version info tuple."""
+            return cls.VERSION_INFO
+
+    class Servers:
+        """LDAP server type constants."""
+
+        # Server type identifiers
+        OPENLDAP1: Final[str] = "openldap1"
+        OPENLDAP2: Final[str] = "openldap2"
+        OID: Final[str] = "oid"  # Oracle Internet Directory
+        OUD: Final[str] = "oud"  # Oracle Unified Directory
+        AD: Final[str] = "ad"  # Active Directory
+        GENERIC: Final[str] = "generic"
+
 
 __all__ = [
     "FlextLDAPConstants",

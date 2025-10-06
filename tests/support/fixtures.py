@@ -9,7 +9,7 @@ from collections.abc import Generator
 import pytest
 from flext_ldap import (
     FlextLDAP,
-    FlextLDAPClient,
+    FlextLDAPClients,
     FlextLDAPConfig,
     FlextLDAPModels,
     FlextLDAPValidations,
@@ -78,9 +78,9 @@ def ldap_connection(
 
 
 @pytest.fixture
-def ldap_api() -> FlextLDAPClient:
+def ldap_api() -> FlextLDAPClients:
     """Get configured LDAP API instance."""
-    return FlextLDAPClient()
+    return FlextLDAPClients()
 
 
 @pytest.fixture
@@ -230,8 +230,8 @@ def sample_connection_config() -> FlextLDAPModels.ConnectionConfig:
 @pytest.fixture
 def shared_ldap_client(
     shared_ldap_config: object,
-) -> Generator[FlextLDAPClient]:
-    """Get FlextLDAPClient connected to shared LDAP container.
+) -> Generator[FlextLDAPClients]:
+    """Get FlextLDAPClients connected to shared LDAP container.
 
     This fixture provides a client connected to the shared LDAP container
     managed by the docker/shared_ldap_fixtures.py system.
@@ -239,7 +239,7 @@ def shared_ldap_client(
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
 
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     # Connect to shared LDAP server
     assert isinstance(shared_ldap_config, dict)

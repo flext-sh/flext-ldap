@@ -14,7 +14,6 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import (
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
@@ -29,12 +28,16 @@ from flext_ldap.models import FlextLDAPModels
 from flext_ldap.typings import FlextLDAPTypes
 from flext_ldap.validations import FlextLDAPValidations
 
-from flext_ldap.servers.base_operations import BaseServerOperations
-from flext_ldap.servers.factory import ServerOperationsFactory
+from flext_ldap.servers.base_operations import (
+    FlextLDAPServersBaseOperations as BaseServerOperations,
+)
+from flext_ldap.servers.factory import (
+    FlextLDAPServersFactory as ServerOperationsFactory,
+)
 
 
-class FlextLDAPClient(FlextService[None]):
-    """FlextLDAPClient - Main LDAP client using composition-based architecture.
+class FlextLDAPClients(FlextService[None]):
+    """FlextLDAPClients - Main LDAP clients using composition-based architecture.
 
     **UNIFIED CLASS PATTERN**: Single class per module with composition of specialized components.
 
@@ -70,9 +73,6 @@ class FlextLDAPClient(FlextService[None]):
 
         # Core configuration and logging
         self._config = config
-        # Type annotation: FlextLogger is not Optional (override from FlextService)
-        self._logger: FlextLogger
-        self._logger = FlextLogger(__name__)
 
         # Server operations for advanced features
         self._server_operations_factory = ServerOperationsFactory()
@@ -661,3 +661,20 @@ class FlextLDAPClient(FlextService[None]):
     def server_operations(self) -> BaseServerOperations | None:
         """Get the server operations instance."""
         return self._server_operations
+
+    def get_server_type(self) -> str | None:
+        """Get detected server type."""
+        return self._detected_server_type
+
+    def get_server_quirks(self) -> FlextLDAPModels.ServerQuirks | None:
+        """Get server quirks for detected server type."""
+        if not self._detected_server_type:
+            return None
+        # Create server quirks based on detected type
+        return FlextLDAPModels.ServerQuirks(
+            case_sensitive_dns=self._detected_server_type in ["ad"],
+            case_sensitive_attributes=self._detected_server_type in ["ad"],
+            supports_paged_results=self._detected_server_type not in ["openldap1"],
+            supports_vlv=self._detected_server_type in ["oud", "oid"],
+            max_page_size=1000 if self._detected_server_type != "ad" else 100000
+        )

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap import FlextLDAPClient
+from flext_ldap import FlextLDAPClients
 
 from flext_core import FlextTypes
 
@@ -22,7 +22,7 @@ pytestmark = pytest.mark.integration
 class TestRealLdifExport:
     """Test LDIF export from real LDAP server."""
 
-    def test_export_base_dn_to_ldif(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_export_base_dn_to_ldif(self, shared_ldap_client: FlextLDAPClients) -> None:
         """Test exporting base DN to LDIF format."""
         client = shared_ldap_client
 
@@ -40,7 +40,7 @@ class TestRealLdifExport:
             assert "dn" in entry
             assert "objectClass" in entry
 
-    def test_export_users_to_ldif(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_export_users_to_ldif(self, shared_ldap_client: FlextLDAPClients) -> None:
         """Test exporting user entries to LDIF format."""
         client = shared_ldap_client
 
@@ -84,7 +84,7 @@ class TestRealLdifExport:
         )
         client.delete_entry_universal(dn="ou=ldif_users,dc=flext,dc=local")
 
-    def test_export_groups_to_ldif(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_export_groups_to_ldif(self, shared_ldap_client: FlextLDAPClients) -> None:
         """Test exporting group entries to LDIF format."""
         client = shared_ldap_client
 
@@ -132,7 +132,7 @@ class TestRealLdifImport:
     """Test LDIF import to real LDAP server."""
 
     def test_import_organizational_unit_from_ldif(
-        self, shared_ldap_client: FlextLDAPClient
+        self, shared_ldap_client: FlextLDAPClients
     ) -> None:
         """Test importing organizational unit from LDIF-like data."""
         client = shared_ldap_client
@@ -167,7 +167,7 @@ class TestRealLdifImport:
         # Cleanup
         client.delete_entry_universal(dn="ou=imported,dc=flext,dc=local")
 
-    def test_import_user_from_ldif(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_import_user_from_ldif(self, shared_ldap_client: FlextLDAPClients) -> None:
         """Test importing user from LDIF-like data."""
         client = shared_ldap_client
 
@@ -216,7 +216,7 @@ class TestRealLdifImport:
         )
         client.delete_entry_universal(dn="ou=import_test,dc=flext,dc=local")
 
-    def test_import_group_from_ldif(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_import_group_from_ldif(self, shared_ldap_client: FlextLDAPClients) -> None:
         """Test importing group from LDIF-like data."""
         client = shared_ldap_client
 
@@ -266,7 +266,7 @@ class TestRealLdifRoundTrip:
     """Test LDIF export/import round-trip operations."""
 
     def test_ldif_roundtrip_user_data(
-        self, shared_ldap_client: FlextLDAPClient
+        self, shared_ldap_client: FlextLDAPClients
     ) -> None:
         """Test complete round-trip: export to LDIF, re-import."""
         client = shared_ldap_client
@@ -349,7 +349,9 @@ class TestRealLdifRoundTrip:
         client.delete_entry_universal(dn="cn=reimported,ou=roundtrip,dc=flext,dc=local")
         client.delete_entry_universal(dn="ou=roundtrip,dc=flext,dc=local")
 
-    def test_ldif_bulk_export_import(self, shared_ldap_client: FlextLDAPClient) -> None:
+    def test_ldif_bulk_export_import(
+        self, shared_ldap_client: FlextLDAPClients
+    ) -> None:
         """Test bulk LDIF export and import operations."""
         client = shared_ldap_client
 

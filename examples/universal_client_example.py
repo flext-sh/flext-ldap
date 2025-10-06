@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.schema import FlextLDAPSchema
 
 from flext_core import FlextLogger, FlextTypes
@@ -37,7 +37,7 @@ def demonstrate_universal_client() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create universal FLEXT LDAP client
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     try:
         # Connect with automatic schema discovery
@@ -89,13 +89,17 @@ def demonstrate_universal_client() -> None:
 
 
 def demonstrate_server_capabilities(
-    client: FlextLDAPClient, logger: FlextLogger
+    client: FlextLDAPClients, logger: FlextLogger
 ) -> None:
     """Demonstrate server capabilities detection."""
     logger.info("\n=== Server Capabilities Detection ===")
 
     # Get comprehensive server capabilities
-    capabilities = client.get_server_capabilities()
+    capabilities_result = client.get_server_capabilities()
+    if capabilities_result.is_failure:
+        logger.warning("Failed to get capabilities: %s", capabilities_result.error)
+        return
+    capabilities = capabilities_result.unwrap()
 
     logger.info("Server Capabilities:")
     logger.info("  Connected: %s", capabilities["connected"])
@@ -181,12 +185,16 @@ def demonstrate_server_capabilities(
         )
 
 
-def demonstrate_universal_search(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_universal_search(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate universal search operations."""
     logger.info("\n=== Universal Search Operations ===")
 
     # Get server info for base DN
-    server_info = client.get_server_info()
+    server_info_result = client.get_server_info()
+    if server_info_result.is_failure:
+        logger.warning("Failed to get server info: %s", server_info_result.error)
+        return
+    server_info = server_info_result.unwrap()
     if not server_info or not server_info.get("naming_contexts"):
         logger.warning("No naming contexts available for search operations")
         return
@@ -244,12 +252,16 @@ def demonstrate_universal_search(client: FlextLDAPClient, logger: FlextLogger) -
         logger.error("Search with controls failed: %s", controls_result.error)
 
 
-def demonstrate_universal_crud(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_universal_crud(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate universal CRUD operations."""
     logger.info("\n=== Universal CRUD Operations ===")
 
     # Get server info for base DN
-    server_info = client.get_server_info()
+    server_info_result = client.get_server_info()
+    if server_info_result.is_failure:
+        logger.warning("Failed to get server info: %s", server_info_result.error)
+        return
+    server_info = server_info_result.unwrap()
     if not server_info or not server_info.get("naming_contexts"):
         logger.warning("No naming contexts available for CRUD operations")
         return
@@ -309,12 +321,18 @@ def demonstrate_universal_crud(client: FlextLDAPClient, logger: FlextLogger) -> 
         logger.error("Universal add entry failed: %s", add_result.error)
 
 
-def demonstrate_universal_compare(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_universal_compare(
+    client: FlextLDAPClients, logger: FlextLogger
+) -> None:
     """Demonstrate universal compare operations."""
     logger.info("\n=== Universal Compare Operations ===")
 
     # Get server info for base DN
-    server_info = client.get_server_info()
+    server_info_result = client.get_server_info()
+    if server_info_result.is_failure:
+        logger.warning("Failed to get server info: %s", server_info_result.error)
+        return
+    server_info = server_info_result.unwrap()
     if not server_info or not server_info.get("naming_contexts"):
         logger.warning("No naming contexts available for compare operations")
         return
@@ -340,7 +358,7 @@ def demonstrate_universal_compare(client: FlextLDAPClient, logger: FlextLogger) 
 
 
 def demonstrate_universal_extended(
-    client: FlextLDAPClient, logger: FlextLogger
+    client: FlextLDAPClients, logger: FlextLogger
 ) -> None:
     """Demonstrate universal extended operations."""
     logger.info("\n=== Universal Extended Operations ===")
@@ -360,19 +378,21 @@ def demonstrate_universal_extended(
         logger.error("Who Am I extended operation failed: %s", whoami_result.error)
 
     # Test other extended operations if supported
-    server_info = client.get_server_info()
-    if server_info and "supportedExtensions" in server_info:
-        extensions = server_info["supportedExtensions"]
-        if isinstance(extensions, (list, tuple)):
-            logger.info("Supported extensions: %d", len(extensions))
-            for ext in extensions[:5]:  # Show first 5
-                logger.info("  Extension: %s", ext)
-        else:
-            logger.info("Supported extensions: available")
+    server_info_result = client.get_server_info()
+    if server_info_result.is_success:
+        server_info = server_info_result.unwrap()
+        if server_info and "supportedExtensions" in server_info:
+            extensions = server_info["supportedExtensions"]
+            if isinstance(extensions, (list, tuple)):
+                logger.info("Supported extensions: %d", len(extensions))
+                for ext in extensions[:5]:  # Show first 5
+                    logger.info("  Extension: %s", ext)
+            else:
+                logger.info("Supported extensions: available")
 
 
 def demonstrate_server_adaptations(
-    client: FlextLDAPClient, logger: FlextLogger
+    client: FlextLDAPClients, logger: FlextLogger
 ) -> None:
     """Demonstrate server-specific adaptations."""
     logger.info("\n=== Server-Specific Adaptations ===")

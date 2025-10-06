@@ -10,12 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextLogger, FlextResult, FlextService
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.servers.base_operations import (
     FlextLDAPServersBaseOperations as BaseServerOperations,
 )
@@ -35,13 +36,13 @@ class FlextLDAPServers(FlextService[None]):
     structural subtyping and factory-based delegation.
     """
 
-    # Server type constants
-    SERVER_OPENLDAP1 = "openldap1"
-    SERVER_OPENLDAP2 = "openldap2"
-    SERVER_OID = "oid"
-    SERVER_OUD = "oud"
-    SERVER_AD = "ad"
-    SERVER_GENERIC = "generic"
+    # Server type constants - using centralized constants (ClassVar to avoid Pydantic field detection)
+    SERVER_OPENLDAP1: ClassVar[str] = FlextLDAPConstants.Servers.OPENLDAP1
+    SERVER_OPENLDAP2: ClassVar[str] = FlextLDAPConstants.Servers.OPENLDAP2
+    SERVER_OID: ClassVar[str] = FlextLDAPConstants.Servers.OID
+    SERVER_OUD: ClassVar[str] = FlextLDAPConstants.Servers.OUD
+    SERVER_AD: ClassVar[str] = FlextLDAPConstants.Servers.AD
+    SERVER_GENERIC: ClassVar[str] = FlextLDAPConstants.Servers.GENERIC
 
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize unified server operations.

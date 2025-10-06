@@ -42,6 +42,9 @@ class FlextLDAPTypes(FlextTypes):
     Server = Server
     Connection = Connection
 
+    # Basic collection types - Direct access for LDAP operations
+    StringList = list[str]
+
     # LDAP constants - using centralized constants
     SIMPLE = FlextLDAPConstants.LiteralTypes.AUTH_SIMPLE
     BASE = FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE
