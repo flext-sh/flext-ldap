@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.models import FlextLDAPModels
 
@@ -37,15 +37,15 @@ def demonstrate_configuration() -> None:
     logger.info("Configuration initialized successfully")
 
 
-def demonstrate_api_usage() -> FlextLDAPClient:
+def demonstrate_api_usage() -> FlextLDAPClients:
     """Demonstrate API usage patterns.
 
     Returns:
-        FlextLDAPClient: The initialized LDAP API instance.
+        FlextLDAPClients: The initialized LDAP API instance.
 
     """
     # 1. Initialize API using direct instantiation
-    api = FlextLDAPClient()
+    api = FlextLDAPClients()
 
     # 2. Connect (using demo server for example)
     try:
@@ -67,7 +67,7 @@ def demonstrate_api_usage() -> FlextLDAPClient:
     return api
 
 
-def demonstrate_search_operations(api: FlextLDAPClient) -> None:
+def demonstrate_search_operations(api: FlextLDAPClients) -> None:
     """Demonstrate search operations."""
     # Session ID for demonstration
 
@@ -105,7 +105,7 @@ def demonstrate_error_handling() -> None:
     logger.debug(f"Created filter: {filter_result.expression}")
 
     # 3. Connection errors (simulated)
-    api = FlextLDAPClient()
+    api = FlextLDAPClients()
     try:
         test_password = os.getenv(
             "LDAP_TEST_PASSWORD",

@@ -16,7 +16,7 @@ from flext_ldap.typings import FlextLDAPTypes
 from flext_ldap.validations import FlextLDAPValidations
 
 if TYPE_CHECKING:
-    from flext_ldap.clients import FlextLDAPClient
+    from flext_ldap.clients import FlextLDAPClients
 
 
 class FlextLDAPConnectionManager:
@@ -35,11 +35,11 @@ class FlextLDAPConnectionManager:
     **PROTOCOL COMPLIANCE**: Implements Infrastructure.Connection protocol methods.
     """
 
-    def __init__(self, parent: FlextLDAPClient) -> None:
+    def __init__(self, parent: FlextLDAPClients) -> None:
         """Initialize connection manager with parent client reference.
 
         Args:
-            parent: Parent FlextLDAPClient instance for shared state access.
+            parent: Parent FlextLDAPClients instance for shared state access.
         """
         self._parent = parent
         self._connection: Connection | None = None

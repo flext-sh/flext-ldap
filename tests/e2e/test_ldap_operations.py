@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from flext_ldap import FlextLDAPClient, FlextLDAPModels
+from flext_ldap import FlextLDAPClients, FlextLDAPModels
 
 
 @pytest.mark.e2e
@@ -26,7 +26,7 @@ class TestLdapE2EOperations:
         Currently it tests the API flow without actual LDAP operations.
         """
         # Get API instance
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Test configuration
         FlextLDAPModels.ConnectionConfig(
@@ -75,7 +75,7 @@ class TestLdapE2EOperations:
 
     def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Test search without connection (should fail gracefully)
         # FlextLDAPModels already imported at top
@@ -98,7 +98,7 @@ class TestLdapE2EOperations:
 
     def test_group_management_flow(self) -> None:
         """Test group management workflow."""
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Test group operations structure
         # Note: Actual implementation would require real LDAP server
@@ -113,7 +113,7 @@ class TestLdapE2EOperations:
 
     def test_connection_error_handling(self) -> None:
         """Test connection error handling in E2E scenarios."""
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Test connection to non-existent server
         result = api.connect(
@@ -140,14 +140,14 @@ class TestLdapE2EOperations:
         )
 
         # Create API with configuration
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Should handle configuration properly
         assert api is not None
 
     def test_error_propagation_e2e(self) -> None:
         """Test error propagation through the entire stack."""
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
 
         # Test various error scenarios
         scenarios = [
@@ -189,7 +189,7 @@ class TestLdapE2EWithDockerServer:
         # 2. Test domain: dc=flext,dc=local
         # 3. Admin credentials: cn=admin,dc=flext,dc=local / admin123
 
-        FlextLDAPClient()
+        FlextLDAPClients()
 
         # Connection parameters for Docker test server
 
@@ -221,7 +221,7 @@ class TestLdapE2EWithDockerServer:
         # 3. Attribute retrieval
         # 4. Paged search results
 
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
         assert api is not None
 
     def test_real_ldap_group_operations(self) -> None:
@@ -233,5 +233,5 @@ class TestLdapE2EWithDockerServer:
         # 3. Group search
         # 4. Group deletion
 
-        api = FlextLDAPClient()
+        api = FlextLDAPClients()
         assert api is not None

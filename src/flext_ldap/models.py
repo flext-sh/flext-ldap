@@ -1294,6 +1294,25 @@ class FlextLDAPModels(FlextModels):
             except (AttributeError, TypeError):
                 return self.dn
 
+        # Dict-like interface for compatibility
+        def __getitem__(
+            self, key: str
+        ) -> FlextLDAPTypes.LdapEntries.EntryAttributeValue | None:
+            """Dict-like access to attributes."""
+            return self.get_attribute(key)
+
+        def __contains__(self, key: object) -> bool:
+            """Dict-like containment check."""
+            return isinstance(key, str) and self.has_attribute(key)
+
+        def get(
+            self,
+            key: str,
+            default: FlextLDAPTypes.LdapEntries.EntryAttributeValue | None = None,
+        ) -> FlextLDAPTypes.LdapEntries.EntryAttributeValue | None:
+            """Dict-like get method with default value."""
+            return self.get_attribute(key) or default
+
     # =========================================================================
     # LDAP OPERATION ENTITIES - Request/Response Objects
     # =========================================================================
@@ -1998,310 +2017,6 @@ class FlextLDAPModels(FlextModels):
                 return FlextResult[None].fail(f"Validation failed: {e}")
 
     # =========================================================================
-    # ACL MODELS - Access Control List models (consolidated from acl/models.py)
-    # =========================================================================
-
-    class AclTarget(Base):
-        """ACL target specification - what is being protected."""
-
-        target_type: str = Field(
-            ..., description="Type of target (dn, attributes, entry)"
-        )
-        dn_pattern: str = Field(default="*", description="DN pattern for the target")
-        attributes: FlextTypes.StringList = Field(
-            default_factory=list, description="Specific attributes targeted"
-        )
-        filter_expression: str = Field(
-            default="", description="LDAP filter for dynamic targeting"
-        )
-        scope: str = Field(default="subtree", description="Scope: base, one, subtree")
-
-        @classmethod
-        def create(
-            cls,
-            target_type: str,
-            dn_pattern: str = "*",
-            attributes: FlextTypes.StringList | None = None,
-            filter_expression: str = "",
-            scope: str = "subtree",
-        ) -> FlextResult[FlextLDAPModels.AclTarget]:
-            """Create ACL target with validation."""
-            try:
-                instance = cls(
-                    target_type=target_type,
-                    dn_pattern=dn_pattern,
-                    attributes=attributes or [],
-                    filter_expression=filter_expression,
-                    scope=scope,
-                )
-                return FlextResult[FlextLDAPModels.AclTarget].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.AclTarget].fail(
-                    f"ACL target creation failed: {e}"
-                )
-
-    class AclSubject(Base):
-        """ACL subject specification - who has access."""
-
-        subject_type: str = Field(
-            ..., description="Type of subject (user, group, dn, self)"
-        )
-        identifier: str = Field(
-            default="*", description="Subject identifier (DN, group name, etc.)"
-        )
-        authentication_level: str = Field(
-            default="any", description="Required authentication level"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            subject_type: str,
-            identifier: str = "*",
-            authentication_level: str = "any",
-        ) -> FlextResult[FlextLDAPModels.AclSubject]:
-            """Create ACL subject with validation."""
-            try:
-                instance = cls(
-                    subject_type=subject_type,
-                    identifier=identifier,
-                    authentication_level=authentication_level,
-                )
-                return FlextResult[FlextLDAPModels.AclSubject].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.AclSubject].fail(
-                    f"ACL subject creation failed: {e}"
-                )
-
-    class AclPermissions(Base):
-        """ACL permissions specification."""
-
-        permissions: FlextTypes.StringList = Field(
-            default_factory=list, description="List of granted permissions"
-        )
-        denied_permissions: FlextTypes.StringList = Field(
-            default_factory=list, description="List of explicitly denied permissions"
-        )
-        grant_type: str = Field(
-            default="allow", description="Grant type: allow or deny"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            permissions: FlextTypes.StringList | None = None,
-            denied_permissions: FlextTypes.StringList | None = None,
-            grant_type: str = "allow",
-        ) -> FlextResult[FlextLDAPModels.AclPermissions]:
-            """Create ACL permissions with validation."""
-            try:
-                instance = cls(
-                    permissions=permissions or [],
-                    denied_permissions=denied_permissions or [],
-                    grant_type=grant_type,
-                )
-                return FlextResult[FlextLDAPModels.AclPermissions].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.AclPermissions].fail(
-                    f"ACL permissions creation failed: {e}"
-                )
-
-    class UnifiedAcl(Base):
-        """Unified ACL representation - intermediate format for conversion."""
-
-        name: str = Field(default="", description="ACL rule name")
-        target: FlextLDAPModels.AclTarget = Field(..., description="ACL target")
-        subject: FlextLDAPModels.AclSubject = Field(..., description="ACL subject")
-        permissions: FlextLDAPModels.AclPermissions = Field(
-            ..., description="ACL permissions"
-        )
-        priority: int = Field(default=0, description="ACL evaluation priority")
-        conditions: FlextTypes.Dict = Field(
-            default_factory=dict, description="Additional conditions (time, IP, etc.)"
-        )
-        metadata: FlextTypes.Dict = Field(
-            default_factory=dict, description="Format-specific metadata"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            target: FlextLDAPModels.AclTarget,
-            subject: FlextLDAPModels.AclSubject,
-            permissions: FlextLDAPModels.AclPermissions,
-            name: str = "",
-            priority: int = 0,
-            conditions: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
-        ) -> FlextResult[FlextLDAPModels.UnifiedAcl]:
-            """Create unified ACL with validation."""
-            try:
-                instance = cls(
-                    name=name,
-                    target=target,
-                    subject=subject,
-                    permissions=permissions,
-                    priority=priority,
-                    conditions=conditions or {},
-                    metadata=metadata or {},
-                )
-                return FlextResult[FlextLDAPModels.UnifiedAcl].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
-                    f"Unified ACL creation failed: {e}"
-                )
-
-    class OpenLdapAcl(Base):
-        """OpenLDAP ACL format representation."""
-
-        access_line: str = Field(..., description="Complete OpenLDAP access line")
-        target_spec: str = Field(default="*", description="Target specification")
-        by_clauses: list[FlextTypes.StringDict] = Field(
-            default_factory=list, description="List of by clauses"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            access_line: str,
-            target_spec: str = "*",
-            by_clauses: list[FlextTypes.StringDict] | None = None,
-        ) -> FlextResult[FlextLDAPModels.OpenLdapAcl]:
-            """Create OpenLDAP ACL representation."""
-            try:
-                instance = cls(
-                    access_line=access_line,
-                    target_spec=target_spec,
-                    by_clauses=by_clauses or [],
-                )
-                return FlextResult[FlextLDAPModels.OpenLdapAcl].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.OpenLdapAcl].fail(
-                    f"OpenLDAP ACL creation failed: {e}"
-                )
-
-    class OracleAcl(Base):
-        """Oracle Directory ACL format representation."""
-
-        orclaci_value: str = Field(..., description="Oracle orclaci attribute value")
-        target_type: str = Field(
-            default="entry", description="Target type (entry, attr)"
-        )
-        attributes: FlextTypes.StringList = Field(
-            default_factory=list, description="Targeted attributes"
-        )
-        subject_spec: str = Field(default="", description="Subject specification")
-        permissions: FlextTypes.StringList = Field(
-            default_factory=list, description="Permissions list"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            orclaci_value: str,
-            target_type: str = "entry",
-            attributes: FlextTypes.StringList | None = None,
-            subject_spec: str = "",
-            permissions: FlextTypes.StringList | None = None,
-        ) -> FlextResult[FlextLDAPModels.OracleAcl]:
-            """Create Oracle ACL representation."""
-            try:
-                instance = cls(
-                    orclaci_value=orclaci_value,
-                    target_type=target_type,
-                    attributes=attributes or [],
-                    subject_spec=subject_spec,
-                    permissions=permissions or [],
-                )
-                return FlextResult[FlextLDAPModels.OracleAcl].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.OracleAcl].fail(
-                    f"Oracle ACL creation failed: {e}"
-                )
-
-    class AciFormat(Base):
-        """389 DS/Apache DS ACI format representation."""
-
-        aci_value: str = Field(..., description="Complete ACI string")
-        target_dn: str = Field(default="", description="Target DN")
-        target_attrs: FlextTypes.StringList = Field(
-            default_factory=list, description="Target attributes"
-        )
-        acl_name: str = Field(default="", description="ACL name")
-        grant_type: str = Field(default="allow", description="allow or deny")
-        permissions: FlextTypes.StringList = Field(
-            default_factory=list, description="Permissions"
-        )
-        bind_rules: FlextTypes.StringDict = Field(
-            default_factory=dict, description="Bind rule specifications"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            aci_value: str,
-            target_dn: str = "",
-            target_attrs: FlextTypes.StringList | None = None,
-            acl_name: str = "",
-            grant_type: str = "allow",
-            permissions: FlextTypes.StringList | None = None,
-            bind_rules: FlextTypes.StringDict | None = None,
-        ) -> FlextResult[FlextLDAPModels.AciFormat]:
-            """Create ACI format representation."""
-            try:
-                instance = cls(
-                    aci_value=aci_value,
-                    target_dn=target_dn,
-                    target_attrs=target_attrs or [],
-                    acl_name=acl_name,
-                    grant_type=grant_type,
-                    permissions=permissions or [],
-                    bind_rules=bind_rules or {},
-                )
-                return FlextResult[FlextLDAPModels.AciFormat].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.AciFormat].fail(
-                    f"ACI format creation failed: {e}"
-                )
-
-    class ConversionResult(Base):
-        """Result of ACL conversion with warnings and metadata."""
-
-        converted_acl: str = Field(..., description="Converted ACL string")
-        source_format: str = Field(..., description="Source ACL format")
-        target_format: str = Field(..., description="Target ACL format")
-        warnings: FlextTypes.StringList = Field(
-            default_factory=list, description="Conversion warnings"
-        )
-        metadata: FlextTypes.Dict = Field(
-            default_factory=dict, description="Conversion metadata"
-        )
-
-        @classmethod
-        def create(
-            cls,
-            converted_acl: str,
-            source_format: str,
-            target_format: str,
-            warnings: FlextTypes.StringList | None = None,
-            metadata: FlextTypes.Dict | None = None,
-        ) -> FlextResult[FlextLDAPModels.ConversionResult]:
-            """Create conversion result."""
-            try:
-                instance = cls(
-                    converted_acl=converted_acl,
-                    source_format=source_format,
-                    target_format=target_format,
-                    warnings=warnings or [],
-                    metadata=metadata or {},
-                )
-                return FlextResult[FlextLDAPModels.ConversionResult].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLDAPModels.ConversionResult].fail(
-                    f"Conversion result creation failed: {e}"
-                )
-
-    # =========================================================================
     # CQRS MESSAGE MODELS - Command Query Responsibility Segregation
     # =========================================================================
 
@@ -2463,13 +2178,19 @@ class FlextLDAPModels(FlextModels):
     class AclTarget(Base):
         """ACL target specification for access control rules."""
 
-        target_dn: str = Field(..., description="Target DN for ACL rule")
-        target_attr: FlextTypes.StringList = Field(
+        target_type: str = Field(
+            default="entry", description="Target type (entry, attr, etc.)"
+        )
+        dn_pattern: str = Field(
+            default="*", description="DN pattern for target matching"
+        )
+        attributes: FlextTypes.StringList = Field(
             default_factory=list, description="Target attributes (empty means all)"
         )
-        target_filter: str | None = Field(
-            default=None, description="LDAP filter for target matching"
+        filter_expression: str = Field(
+            default="", description="LDAP filter for target matching"
         )
+        scope: str = Field(default="subtree", description="Search scope for target")
 
     class AclSubject(Base):
         """ACL subject specification for access control rules."""
@@ -2483,16 +2204,34 @@ class FlextLDAPModels(FlextModels):
     class AclPermissions(Base):
         """ACL permissions specification."""
 
-        permissions: FlextTypes.StringList = Field(
-            ..., description="List of permissions (read, write, etc.)"
+        grant_type: str = Field(
+            default="allow", description="Grant type: allow or deny"
         )
-        grant: bool = Field(
-            default=True, description="Whether to grant or deny permissions"
+        granted_permissions: FlextTypes.StringList = Field(
+            default_factory=list, description="Granted permissions (read, write, etc.)"
         )
+        denied_permissions: FlextTypes.StringList = Field(
+            default_factory=list, description="Denied permissions (read, write, etc.)"
+        )
+
+        @property
+        def permissions(self) -> FlextTypes.StringList:
+            """Get permissions based on grant type."""
+            return (
+                self.granted_permissions
+                if self.grant_type == "allow"
+                else self.denied_permissions
+            )
+
+        @property
+        def grant(self) -> bool:
+            """Whether this is a grant rule."""
+            return self.grant_type == "allow"
 
     class UnifiedAcl(Base):
         """Unified ACL representation across different LDAP server types."""
 
+        name: str = Field(..., description="ACL rule name")
         target: FlextLDAPModels.AclTarget
         subject: FlextLDAPModels.AclSubject
         permissions: FlextLDAPModels.AclPermissions
@@ -2500,6 +2239,7 @@ class FlextLDAPModels(FlextModels):
         raw_acl: str | None = Field(
             default=None, description="Raw ACL string if available"
         )
+        priority: int = Field(default=100, description="ACL rule priority")
 
     class AclRule(Base):
         """Generic ACL rule structure."""

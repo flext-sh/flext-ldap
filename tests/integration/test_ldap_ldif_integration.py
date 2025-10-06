@@ -17,7 +17,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from flext_ldap import FlextLDAPClient, FlextLDAPModels
+from flext_ldap import FlextLDAPClients, FlextLDAPModels
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def ldap_client() -> Generator[FlextLDAPClient]:
+def ldap_client() -> Generator[FlextLDAPClients]:
     """Create LDAP client connected to Docker test server."""
     config = FlextLDAPModels.ConnectionConfig(
         server="localhost",
@@ -40,7 +40,7 @@ def ldap_client() -> Generator[FlextLDAPClient]:
         timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
     )
 
-    client = FlextLDAPClient(config=config)
+    client = FlextLDAPClients(config=config)
 
     connection_result = client.connect(
         server_uri="ldap://localhost:3390",
@@ -66,7 +66,7 @@ def ldif_api() -> FlextLdif:
 
 @pytest.fixture
 def test_entries(
-    ldap_client: FlextLDAPClient,
+    ldap_client: FlextLDAPClients,
 ) -> Generator[FlextTypes.StringList]:
     """Create test LDAP entries and clean up after."""
     test_dns: FlextTypes.StringList = []
@@ -119,7 +119,7 @@ class TestLdapLdifExport:
 
     def test_export_ldap_entries_to_ldif_string(
         self,
-        ldap_client: FlextLDAPClient,
+        ldap_client: FlextLDAPClients,
         ldif_api: FlextLdif,
     ) -> None:
         """Test exporting LDAP entries to LDIF string format."""
@@ -160,7 +160,7 @@ class TestLdapLdifExport:
 
     def test_export_ldap_entries_to_ldif_file(
         self,
-        ldap_client: FlextLDAPClient,
+        ldap_client: FlextLDAPClients,
         ldif_api: FlextLdif,
     ) -> None:
         """Test exporting LDAP entries to LDIF file."""
@@ -205,7 +205,7 @@ class TestLdifLdapImport:
     """Test LDIF to LDAP import functionality."""
 
     def test_import_ldif_string_to_ldap(
-        self, ldap_client: FlextLDAPClient, ldif_api: FlextLdif
+        self, ldap_client: FlextLDAPClients, ldif_api: FlextLdif
     ) -> None:
         """Test importing LDIF string to LDAP server."""
         # Create LDIF content
@@ -266,7 +266,7 @@ sn: ImportedUser
             ldap_client.delete(dn)
 
     def test_import_ldif_file_to_ldap(
-        self, ldap_client: FlextLDAPClient, ldif_api: FlextLdif
+        self, ldap_client: FlextLDAPClients, ldif_api: FlextLdif
     ) -> None:
         """Test importing LDIF file to LDAP server."""
         with TemporaryDirectory() as tmpdir:
@@ -434,7 +434,7 @@ class TestRoundTripConversion:
 
     def test_ldap_ldif_ldap_roundtrip(
         self,
-        ldap_client: FlextLDAPClient,
+        ldap_client: FlextLDAPClients,
         ldif_api: FlextLdif,
     ) -> None:
         """Test complete round-trip: export from LDAP, reimport to LDAP."""

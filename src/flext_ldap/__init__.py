@@ -17,7 +17,7 @@ from typing import Final
 from flext_ldap.api import FlextLDAP
 
 # Core domain classes - REQUIRED for tests and external usage
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.models import FlextLDAPModels
@@ -28,16 +28,15 @@ from flext_ldap.exceptions import FlextLDAPExceptions
 # Version information
 from flext_ldap.version import VERSION, FlextLDAPVersion
 
-PROJECT_VERSION: Final[FlextLDAPVersion] = VERSION
-
-__version__: str = VERSION.version
-__version_info__: tuple[int | str, ...] = VERSION.version_info
+# Use centralized constants - no module-level constants
+__version__: str = FlextLDAPConstants.Version.get_version()
+__version_info__: tuple[int | str, ...] = FlextLDAPConstants.Version.get_version_info()
 
 __all__ = [
     # Core facade - PRIMARY API
     "FlextLDAP",
     # Core domain classes - REQUIRED for tests
-    "FlextLDAPClient",
+    "FlextLDAPClients",
     "FlextLDAPConfig",
     "FlextLDAPConstants",
     "FlextLDAPModels",
@@ -45,7 +44,6 @@ __all__ = [
     "FlextLDAPValidations",
     "FlextLDAPExceptions",
     # Version information
-    "PROJECT_VERSION",
     "VERSION",
     "FlextLDAPVersion",
     "__version__",

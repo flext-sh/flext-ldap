@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 import os
 
 from flext_ldap import (
-    FlextLDAPClient,
+    FlextLDAPClients,
     FlextLDAPModels,
     FlextLDAPSchema,
 )
@@ -44,7 +44,7 @@ def demonstrate_oracle_oud_opends_support() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create universal FLEXT LDAP client
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     try:
         # Connect with automatic schema discovery
@@ -89,7 +89,7 @@ def demonstrate_oracle_oud_opends_support() -> None:
             logger.info("Disconnected from LDAP server")
 
 
-def demonstrate_oracle_detection(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_oracle_detection(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle OUD/OpenDS server detection."""
     logger.info("\n=== Oracle OUD/OpenDS Detection ===")
 
@@ -185,7 +185,9 @@ def demonstrate_oracle_detection(client: FlextLDAPClient, logger: FlextLogger) -
                 logger.info("    ✅ Supports Virtual Attributes")
 
 
-def demonstrate_oracle_operations(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_oracle_operations(
+    client: FlextLDAPClients, logger: FlextLogger
+) -> None:
     """Demonstrate Oracle-specific operations."""
     logger.info("\n=== Oracle-Specific Operations ===")
 
@@ -256,7 +258,7 @@ def demonstrate_oracle_operations(client: FlextLDAPClient, logger: FlextLogger) 
         logger.info("  %s → %s", attr, normalized)
 
 
-def demonstrate_oracle_schema(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_oracle_schema(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle schema handling."""
     logger.info("\n=== Oracle Schema Handling ===")
 
@@ -302,7 +304,7 @@ def demonstrate_oracle_schema(client: FlextLDAPClient, logger: FlextLogger) -> N
         logger.info("Schema not yet discovered")
 
 
-def demonstrate_oracle_quirks(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_oracle_quirks(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle-specific quirks handling."""
     logger.info("\n=== Oracle-Specific Quirks Handling ===")
 

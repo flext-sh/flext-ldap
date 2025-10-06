@@ -14,7 +14,7 @@ from uuid import uuid4
 
 import pytest
 from flext_ldap import (
-    FlextLDAPClient,
+    FlextLDAPClients,
     FlextLDAPModels,
 )
 from flext_ldap.constants import FlextLDAPConstants
@@ -43,7 +43,7 @@ class TestLdapClientRealOperations:
         shared_ldap_config: FlextTypes.StringDict,
     ) -> None:
         """Test real LDAP server connection."""
-        client = FlextLDAPClient()
+        client = FlextLDAPClients()
 
         # Connect to real LDAP server
         result = client.connect(
@@ -62,7 +62,7 @@ class TestLdapClientRealOperations:
 
     def test_client_search_real_entries(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: FlextTypes.StringDict,
     ) -> None:
         """Test searching real LDAP entries."""
@@ -108,7 +108,7 @@ class TestLdapClientRealOperations:
     )
     def test_client_add_modify_delete_real_entry(
         self,
-        ldap_api: FlextLDAPClient,
+        ldap_api: FlextLDAPClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test complete CRUD operations with real LDAP entries."""
@@ -240,7 +240,7 @@ class TestLdapServiceRealOperations:
 
     def test_service_user_lifecycle_real_operations(
         self,
-        ldap_client: FlextLDAPClient,
+        ldap_client: FlextLDAPClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
@@ -416,7 +416,7 @@ class TestLdapServiceRealOperations:
     )
     def test_service_group_lifecycle_real_operations(
         self,
-        ldap_api: FlextLDAPClient,
+        ldap_api: FlextLDAPClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
@@ -609,7 +609,7 @@ class TestLdapValidationRealOperations:
 
     def test_business_rules_validation_real_ldap(
         self,
-        ldap_client: FlextLDAPClient,
+        ldap_client: FlextLDAPClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""
@@ -703,7 +703,7 @@ class TestLdapErrorHandlingReal:
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test handling of real connection failures."""
-        client = FlextLDAPClient()
+        client = FlextLDAPClients()
 
         # Test connection to non-existent server (use localhost with invalid port to avoid DNS hangs)
         bad_result = client.connect(
@@ -738,7 +738,7 @@ class TestLdapErrorHandlingReal:
     )
     def test_ldap_operation_error_handling(
         self,
-        ldap_api: FlextLDAPClient,
+        ldap_api: FlextLDAPClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test error handling for LDAP operations."""

@@ -2,7 +2,7 @@
 """Complete LDAP CRUD Operations Example using FLEXT-LDAP API.
 
 This example demonstrates COMPLETE LDAP functionality using flext-ldap:
-- CREATE users and groups with FlextLDAPClient
+- CREATE users and groups with FlextLDAPClients
 - READ/SEARCH operations
 - UPDATE user attributes
 - DELETE operations
@@ -17,7 +17,7 @@ import os
 import sys
 from typing import Final, cast
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.models import FlextLDAPModels
 from flext_ldap.typings import FlextLDAPTypes
@@ -37,8 +37,8 @@ ADMIN_DN: Final[str] = "cn=admin,dc=example,dc=com"
 ADMIN_PASSWORD: Final[str] = os.getenv("LDAP_ADMIN_PASSWORD") or ""
 
 
-def create_sample_users(api: FlextLDAPClient) -> None:
-    """Create sample users using FlextLDAPClient."""
+def create_sample_users(api: FlextLDAPClients) -> None:
+    """Create sample users using FlextLDAPClients."""
     logger.info("Creating sample users...")
 
     users_to_create = [
@@ -90,8 +90,8 @@ def create_sample_users(api: FlextLDAPClient) -> None:
             )
 
 
-def search_users(api: FlextLDAPClient) -> None:
-    """Search for users using FlextLDAPClient."""
+def search_users(api: FlextLDAPClients) -> None:
+    """Search for users using FlextLDAPClients."""
     logger.info("Searching for users...")
 
     result: FlextResult[list[FlextLDAPModels.Entry]] = api.search(
@@ -139,8 +139,8 @@ def search_users(api: FlextLDAPClient) -> None:
         logger.error(f"❌ Search failed: {result.error}")
 
 
-def update_user(api: FlextLDAPClient, user_dn: str, new_mail: str) -> None:
-    """Update user attributes using FlextLDAPClient."""
+def update_user(api: FlextLDAPClients, user_dn: str, new_mail: str) -> None:
+    """Update user attributes using FlextLDAPClients."""
     logger.info(f"Updating user {user_dn}...")
 
     # Connect to LDAP server
@@ -166,8 +166,8 @@ def update_user(api: FlextLDAPClient, user_dn: str, new_mail: str) -> None:
         logger.error(f"❌ Failed to connect: {connect_result.error}")
 
 
-def delete_user(api: FlextLDAPClient, user_dn: str) -> None:
-    """Delete user using FlextLDAPClient."""
+def delete_user(api: FlextLDAPClients, user_dn: str) -> None:
+    """Delete user using FlextLDAPClients."""
     logger.info(f"Deleting user {user_dn}...")
 
     # Connect to LDAP server
@@ -197,8 +197,8 @@ def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
 
-    # Get FlextLDAPClient instance
-    api = FlextLDAPClient()
+    # Get FlextLDAPClients instance
+    api = FlextLDAPClients()
 
     try:
         # CREATE: Add sample users

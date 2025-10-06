@@ -40,7 +40,7 @@ from flext_ldif import FlextLdifModels
 from flext_ldif import FlextLdif
 
 from flext_ldap.acl import FlextLDAPAclManager
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.config import FlextLDAPConfig
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.models import FlextLDAPModels
@@ -77,16 +77,10 @@ class FlextLDAP(FlextService[None]):
         """Initialize the unified LDAP service."""
         super().__init__()
         self._ldap_config: FlextLDAPConfig = config or FlextLDAPConfig()
-        self._client: FlextLDAPClient | None = None
+        self._client: FlextLDAPClients | None = None
         self._acl_manager: FlextLDAPAclManager | None = None
 
-        # Complete FLEXT ecosystem integration
-        self._container = FlextContainer.ensure_global_manager().get_or_create()
-        self._context = FlextContext()
-        self._bus = FlextBus()
-        self._dispatcher = FlextDispatcher()
-        self._processors = FlextProcessors()
-        self._registry = FlextRegistry(dispatcher=self._dispatcher)
+        # Minimal FLEXT ecosystem integration - direct access only
         self._logger = FlextLogger(__name__)
 
         # Lazy-loaded LDAP components
@@ -133,10 +127,10 @@ class FlextLDAP(FlextService[None]):
     # =============================================================================
 
     @property
-    def client(self) -> FlextLDAPClient:
-        """Get the LDAP client instance."""
+    def client(self) -> FlextLDAPClients:
+        """Get the LDAP clients instance."""
         if self._client is None:
-            self._client = FlextLDAPClient()
+            self._client = FlextLDAPClients()
         return self._client
 
     @property

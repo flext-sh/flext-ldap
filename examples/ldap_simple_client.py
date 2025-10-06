@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example usage of FlextLDAPClient.
+"""Example usage of FlextLDAPClients.
 
 This example demonstrates how to use the minimal LDAP infrastructure client
 following Clean Architecture principles.
@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 
 from flext_ldap import (
-    FlextLDAPClient,
+    FlextLDAPClients,
     FlextLDAPConstants,
     FlextLDAPModels,
     FlextLDAPTypes,
@@ -26,7 +26,7 @@ from flext_core import FlextConstants, FlextResult
 def main() -> None:
     """Demonstrate LDAP client usage."""
     # Create client instance
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     # Example 1: Single server connection
     server_uri = os.getenv(

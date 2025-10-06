@@ -16,13 +16,13 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClients
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.models import FlextLDAPModels
 from flext_ldap.schema import FlextLDAPSchema
 from flext_ldap.typings import FlextLDAPTypes
 
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextLogger
 
 
 def demonstrate_flext_integrated_ldap() -> None:
@@ -39,7 +39,7 @@ def demonstrate_flext_integrated_ldap() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create FLEXT LDAP client (using actual client.py)
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     try:
         # Connect using FLEXT patterns
@@ -71,7 +71,7 @@ def demonstrate_flext_integrated_ldap() -> None:
             logger.info("Disconnected from LDAP server")
 
 
-def demonstrate_schema_discovery(client: FlextLDAPClient, logger: FlextLogger) -> None:
+def demonstrate_schema_discovery(client: FlextLDAPClients, logger: FlextLogger) -> None:
     """Demonstrate schema discovery using FLEXT patterns."""
     logger.info("\n=== FLEXT Schema Discovery ===")
 
@@ -79,27 +79,51 @@ def demonstrate_schema_discovery(client: FlextLDAPClient, logger: FlextLogger) -
     discovery_result = client.discover_schema()
 
     if discovery_result.is_success:
-        schema_data = discovery_result.data
+        schema_data = discovery_result.unwrap()
+        if not isinstance(schema_data, dict):
+            logger.error("Schema data is not a dictionary")
+            return
 
         # Access schema data using FLEXT models
         logger.info("Schema Discovery Results:")
-        logger.info("  Server Type: %s", schema_data.server_type.value)
-        logger.info(
-            "  Server Info: %s", schema_data.server_info.get("vendorName", "Unknown")
-        )
-        logger.info("  Naming Contexts: %s", schema_data.naming_contexts)
-        logger.info("  Supported Controls: %s", len(schema_data.supported_controls))
-        logger.info("  Discovered Attributes: %s", len(schema_data.attributes))
-        logger.info("  Discovered Object Classes: %s", len(schema_data.object_classes))
+
+        server_type_info = schema_data.get("server_type")
+        if isinstance(server_type_info, dict):
+            server_type_value = server_type_info.get("value")
+            logger.info("  Server Type: %s", server_type_value)
+
+        server_info = schema_data.get("server_info")
+        if isinstance(server_info, dict):
+            vendor_name = server_info.get("vendorName", "Unknown")
+            logger.info("  Server Info: %s", vendor_name)
+
+        naming_contexts = schema_data.get("naming_contexts")
+        logger.info("  Naming Contexts: %s", naming_contexts)
+
+        supported_controls = schema_data.get("supported_controls")
+        if isinstance(supported_controls, (list, tuple)):
+            logger.info("  Supported Controls: %s", len(supported_controls))
+
+        attributes = schema_data.get("attributes")
+        if isinstance(attributes, dict):
+            logger.info("  Discovered Attributes: %s", len(attributes))
+
+        object_classes = schema_data.get("object_classes")
+        if isinstance(object_classes, (list, tuple)):
+            logger.info("  Discovered Object Classes: %s", len(object_classes))
 
         # Demonstrate server quirks using FLEXT models
-        quirks = schema_data.server_quirks
-        logger.info("Server Quirks:")
-        logger.info("  Case Sensitive DNs: %s", quirks.case_sensitive_dns)
-        logger.info("  Case Sensitive Attributes: %s", quirks.case_sensitive_attributes)
-        logger.info("  Supports Paged Results: %s", quirks.supports_paged_results)
-        logger.info("  Supports VLV: %s", quirks.supports_vlv)
-        logger.info("  Max Page Size: %s", quirks.max_page_size)
+        quirks = schema_data.get("server_quirks")
+        if isinstance(quirks, dict):
+            logger.info("Server Quirks:")
+            logger.info("  Case Sensitive DNs: %s", quirks.get("case_sensitive_dns", False))
+            logger.info(
+                "  Case Sensitive Attributes: %s",
+                quirks.get("case_sensitive_attributes", False),
+            )
+            logger.info("  Supports Paged Results: %s", quirks.get("supports_paged_results", False))
+            logger.info("  Supports VLV: %s", quirks.get("supports_vlv", False))
+            logger.info("  Max Page Size: %s", quirks.get("max_page_size", 1000))
 
         # Demonstrate normalization using FLEXT patterns
         logger.info("Normalization Examples:")
@@ -115,18 +139,23 @@ def demonstrate_schema_discovery(client: FlextLDAPClient, logger: FlextLogger) -
 
 
 def demonstrate_universal_operations(
-    client: FlextLDAPClient, logger: FlextLogger
+    client: FlextLDAPClients, logger: FlextLogger
 ) -> None:
     """Demonstrate universal LDAP operations using FLEXT patterns."""
     logger.info("\n=== Universal LDAP Operations ===")
 
     # Get server information using FLEXT patterns
-    server_info: FlextTypes.Dict = client.get_server_info()
+    server_info_result = client.get_server_info()
+    if server_info_result.is_failure:
+        logger.warning(f"Failed to get server info: {server_info_result.error}")
+        return
+
+    server_info = server_info_result.unwrap()
     if not server_info or not server_info.get("namingContexts"):
         logger.warning("No naming contexts available for operations")
         return
 
-    naming_contexts = server_info["namingContexts"]
+    naming_contexts = server_info.get("namingContexts")
     if isinstance(naming_contexts, list) and len(naming_contexts) > 0:
         base_dn = naming_contexts[0]
     else:
@@ -142,11 +171,11 @@ def demonstrate_universal_operations(
     logger.info("Search Scope: %s", search_scope.value)
 
     # Perform search using FLEXT patterns
-    search_result = client.search(
+    search_result = client.search_universal(
         base_dn=base_dn,
         filter_str=search_filter.expression,
         attributes=["cn", "sn", "mail", "objectClass"],
-        page_size=10,
+        scope="subtree",
     )
 
     if search_result.is_success:
@@ -163,7 +192,7 @@ def demonstrate_universal_operations(
 
 
 def demonstrate_flext_models(
-    client: FlextLDAPClient,
+    client: FlextLDAPClients,
     logger: FlextLogger,
 ) -> None:
     """Demonstrate FLEXT models functionality."""

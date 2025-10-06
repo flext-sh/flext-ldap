@@ -12,11 +12,12 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from pydantic import SecretStr
 
 # Import test support fixtures
 from flext_ldap import (
     FlextLDAP,
-    FlextLDAPClient,
+    FlextLDAPClients,
     FlextLDAPModels,
     FlextLDAPValidations,
 )
@@ -26,6 +27,7 @@ from flext_ldap.acl import (
     FlextLDAPAclParsers,
 )
 from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.config import FlextLDAPConfig
 
 # Import centralized FLEXT Docker infrastructure from flext-core
 # from flext_tests.docker import FlextTestDocker  # TODO: Import from flext-core when available
@@ -38,40 +40,33 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+from flext_ldap.typings import FlextLDAPTypes
 
 
 # Temporary mock implementation until FlextTestDocker is available in flext-core
 class FlextTestDocker:
     """Mock implementation of FlextTestDocker for testing."""
 
-    def get_container_status(self, container_name: str) -> object:
+    def get_container_status(self, container_name: str) -> FlextResult:
         """Mock container status check."""
 
         # Mock implementation - assume container is not running
+        class MockContainerStatus:
+            def __init__(self):
+                self.value = "not_running"
+
         class MockValue:
             def __init__(self):
-                self.status = type(
-                    "MockContainerStatus", (), {"value": "not_running"}
-                )()
+                self.status = MockContainerStatus()
 
-        class MockStatus:
-            def __init__(self):
-                self.is_failure = True
-                self.error = "Mock implementation"
-                self.value = MockValue()
+        # Return as FlextResult.ok with mock value
+        return FlextResult.ok(MockValue())
 
-        return MockStatus()
-
-    def compose_up(self, compose_file: str, service: str) -> object:
+    def compose_up(self, compose_file: str, service: str) -> FlextResult:
         """Mock compose up."""
 
         # Mock implementation - assume failure
-        class MockResult:
-            def __init__(self):
-                self.is_failure = True
-                self.error = "Mock implementation - Docker not available"
-
-        return MockResult()
+        return FlextResult.fail("Mock implementation - Docker not available")
 
 
 # FlextLDAPFactory, FlextLDAPAdvancedService, FlextLDAPWorkflowOrchestrator removed - over-engineering
@@ -151,7 +146,7 @@ logger = FlextLogger(__name__)
 @pytest.fixture(scope="session")
 def flext_container() -> FlextContainer:
     """Get global Flext container for dependency injection."""
-    return FlextContainer.ensure_global_manager().get_or_create()
+    return FlextContainer()
 
 
 @pytest.fixture(scope="session")
@@ -166,29 +161,29 @@ def flext_logger() -> FlextLogger:
 
 
 @pytest.fixture
-def ldap_config() -> FlextLDAPModels.ConnectionConfig:
+def ldap_config() -> FlextLDAPConfig:
     """Get standard LDAP connection configuration."""
-    return FlextLDAPModels.ConnectionConfig(
-        server="localhost",
-        port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
-        use_ssl=False,
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin123",
-        timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
-    )
+    config = FlextLDAPConfig()
+    config.ldap_server_uri = "ldap://localhost"
+    config.ldap_port = FlextLDAPConstants.Protocol.DEFAULT_PORT
+    config.ldap_use_ssl = False
+    config.ldap_bind_dn = "cn=admin,dc=example,dc=com"
+    config.ldap_bind_password = SecretStr("admin123")
+    config.ldap_connection_timeout = FlextLDAPConstants.DEFAULT_TIMEOUT
+    return config
 
 
 @pytest.fixture
-def ldap_config_invalid() -> FlextLDAPModels.ConnectionConfig:
+def ldap_config_invalid() -> FlextLDAPConfig:
     """Get invalid LDAP configuration for error testing."""
-    return FlextLDAPModels.ConnectionConfig(
-        server="",  # Invalid empty server
-        port=FlextLDAPConstants.Protocol.DEFAULT_PORT,
-        use_ssl=False,
-        bind_dn="",  # Invalid empty DN
-        bind_password="",  # Invalid empty password
-        timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
-    )
+    config = FlextLDAPConfig()
+    config.ldap_server_uri = ""  # Invalid empty server
+    config.ldap_port = FlextLDAPConstants.Protocol.DEFAULT_PORT
+    config.ldap_use_ssl = False
+    config.ldap_bind_dn = ""  # Invalid empty DN
+    config.ldap_bind_password = SecretStr("")  # Invalid empty password
+    config.ldap_connection_timeout = FlextLDAPConstants.DEFAULT_TIMEOUT
+    return config
 
 
 @pytest.fixture
@@ -211,15 +206,15 @@ def ldap_server_config() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def ldap_client(ldap_config: FlextLDAPModels.ConnectionConfig) -> FlextLDAPClient:
+def ldap_client(ldap_config: FlextLDAPConfig) -> FlextLDAPClients:
     """Get configured LDAP client instance."""
-    return FlextLDAPClient(config=ldap_config)
+    return FlextLDAPClients(config=ldap_config)
 
 
 @pytest.fixture
-def ldap_client_no_config() -> FlextLDAPClient:
+def ldap_client_no_config() -> FlextLDAPClients:
     """Get LDAP client without configuration."""
-    return FlextLDAPClient()
+    return FlextLDAPClients()
 
 
 @pytest.fixture
@@ -274,7 +269,7 @@ def acl_models() -> FlextLDAPModels:
 
 
 @pytest.fixture
-def sample_acl_data() -> dict[str, str | FlextTypes.StringList]:
+def sample_acl_data() -> dict[str, str | FlextLDAPTypes.StringList]:
     """Get sample ACL data for testing."""
     return SAMPLE_ACL_DATA.copy()
 
@@ -520,12 +515,12 @@ def shared_ldap_connection_config() -> FlextLDAPModels.ConnectionConfig:
 @pytest.fixture(scope="session")
 def shared_ldap_client(
     shared_ldap_config: FlextTypes.StringDict, shared_ldap_container: str
-) -> Generator[FlextLDAPClient]:
+) -> Generator[FlextLDAPClients]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container
     _ = shared_ldap_container  # Container dependency ensures it's started
 
-    client = FlextLDAPClient()
+    client = FlextLDAPClients()
 
     # Connect to the LDAP server with proper parameters
     connect_result = client.connect(

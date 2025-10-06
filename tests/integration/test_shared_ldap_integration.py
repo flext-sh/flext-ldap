@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 import pytest
-from flext_ldap import FlextLDAPClient, FlextLDAPModels
+from flext_ldap import FlextLDAPClients, FlextLDAPModels
 from flext_ldap.constants import FlextLDAPConstants
 
 from ..support.shared_ldap_fixtures import check_docker_available, skip_if_no_docker
@@ -23,7 +23,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_connection(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test connecting to shared LDAP container."""
@@ -42,7 +42,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_schema_discovery(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
     ) -> None:
         """Test schema discovery with shared LDAP container."""
         # Test schema discovery
@@ -145,7 +145,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_crud_operations(
         self,
-        shared_ldap_client: FlextLDAPClient,
+        shared_ldap_client: FlextLDAPClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test CRUD operations with shared LDAP container."""

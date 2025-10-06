@@ -255,9 +255,11 @@ class TestFlextLDAPUtilitiesLdapTypeGuards:
     def test_ensure_ldap_dn_error_not_string(self) -> None:
         """Test LDAP DN validation with non-string."""
         import pytest
-        from flext_ldap.exceptions import LdapValidationError
+        from flext_ldap.exceptions import FlextLDAPExceptions
 
-        with pytest.raises(LdapValidationError, match="DN must be a string"):
+        with pytest.raises(
+            FlextLDAPExceptions.LdapValidationError, match="DN must be a string"
+        ):
             FlextLDAPUtilities.TypeGuards.ensure_ldap_dn(123)
 
     def test_ensure_ldap_dn_error_empty(self) -> None:
