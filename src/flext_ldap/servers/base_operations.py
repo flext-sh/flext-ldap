@@ -38,7 +38,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         """
         super().__init__()
-        self._logger: FlextLogger = FlextLogger(__name__)
+        self.logger: FlextLogger = FlextLogger(__name__)
         self._server_type = server_type or "generic"
 
     def execute(self) -> FlextResult[None]:

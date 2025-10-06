@@ -775,14 +775,14 @@ class TestFlextLdapModels:
         """Test AclSubject model for ACL principals."""
         subject = FlextLdapModels.AclSubject.create(
             subject_type="user",
-            identifier="uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com",
+            subject_dn="uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com",
             authentication_level="simple",
         )
 
         assert subject.is_success
         acl_subject = subject.unwrap()
         assert acl_subject.subject_type == "user"
-        assert acl_subject.identifier == "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"
+        assert acl_subject.subject_dn == "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"
         assert acl_subject.authentication_level == "simple"
 
     def test_acl_permissions_model(self) -> None:
@@ -944,7 +944,7 @@ class TestFlextLdapModels:
         )
         subject_result = FlextLdapModels.AclSubject.create(
             subject_type="user",
-            identifier="uid=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            subject_dn="uid=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
         perms_result = FlextLdapModels.AclPermissions.create(
             permissions=["read", "write"],
@@ -1685,25 +1685,25 @@ class TestFlextLdapModels:
         # User subject
         user_subject = FlextLdapModels.AclSubject(
             subject_type="user",
-            identifier="uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com",
+            subject_dn="uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com",
         )
         assert user_subject.subject_type == "user"
-        assert user_subject.identifier == "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"
+        assert user_subject.subject_dn == "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"
 
         # Group subject
         group_subject = FlextLdapModels.AclSubject(
             subject_type="group",
-            identifier="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
+            subject_dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
         )
         assert group_subject.subject_type == "group"
-        assert group_subject.identifier == "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"
+        assert group_subject.subject_dn == "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"
 
-        # Self subject (uses default identifier)
+        # Self subject (uses default subject_dn)
         self_subject = FlextLdapModels.AclSubject(
             subject_type="self",
         )
         assert self_subject.subject_type == "self"
-        assert self_subject.identifier == "*"  # default value
+        assert self_subject.subject_dn == "*"  # default value
 
     def test_acl_permissions_direct_creation(self) -> None:
         """Test AclPermissions model direct creation with various permission sets."""

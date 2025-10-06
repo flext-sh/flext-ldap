@@ -102,7 +102,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
-            self._logger.error("Schema discovery error", extra={"error": str(e)})
+            self.logger.error("Schema discovery error", extra={"error": str(e)})
             return FlextResult[FlextTypes.Dict].fail(f"Schema discovery failed: {e}")
 
     @override
@@ -178,7 +178,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextTypes.Dict]].ok(acls)
 
         except Exception as e:
-            self._logger.error("Get ACLs error", extra={"error": str(e)})
+            self.logger.error("Get ACLs error", extra={"error": str(e)})
             return FlextResult[list[FlextTypes.Dict]].fail(f"Get ACLs failed: {e}")
 
     @override
@@ -213,7 +213,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Set ACLs error", extra={"error": str(e)})
+            self.logger.error("Set ACLs error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
@@ -344,7 +344,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Add entry error", extra={"error": str(e)})
+            self.logger.error("Add entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
@@ -372,7 +372,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Modify entry error", extra={"error": str(e)})
+            self.logger.error("Modify entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
@@ -391,7 +391,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Delete entry error", extra={"error": str(e)})
+            self.logger.error("Delete entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
@@ -461,7 +461,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self._logger.error("Paged search error", extra={"error": str(e)})
+            self.logger.error("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )

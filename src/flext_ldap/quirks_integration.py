@@ -48,7 +48,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
         self._detected_server_type: str | None = server_type
@@ -93,13 +93,13 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
         """
         try:
             if not entries:
-                self._logger.warning("No entries provided for server detection")
+                self.logger.warning("No entries provided for server detection")
                 return FlextResult[str].ok("generic")
 
             # Use FlextLdif quirks manager for detection
             detection_result = self._quirks_manager.detect_server_type(entries)
             if detection_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Server detection failed, using generic",
                     extra={"error": detection_result.error},
                 )
@@ -108,7 +108,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             detected_type = detection_result.unwrap()
             self._detected_server_type = detected_type
 
-            self._logger.info(
+            self.logger.info(
                 "Server type detected",
                 extra={"server_type": detected_type},
             )
@@ -116,7 +116,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[str].ok(detected_type)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Server type detection error",
                 extra={"error": str(e)},
             )
@@ -145,7 +145,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             quirks = self._quirks_manager._quirks_registry.get(target_type, {})
 
             if not quirks:
-                self._logger.warning(
+                self.logger.warning(
                     "No quirks found for server type, using generic",
                     extra={"server_type": target_type},
                 )
@@ -157,7 +157,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[FlextTypes.Dict].ok(quirks)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to get server quirks",
                 extra={"server_type": target_type, "error": str(e)},
             )
@@ -301,7 +301,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             # This would handle server-specific attribute transformations
             # For now, return the entry as-is (to be enhanced with actual quirks)
 
-            self._logger.debug(
+            self.logger.debug(
                 "Entry normalization",
                 extra={
                     "dn": str(entry.dn),

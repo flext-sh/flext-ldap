@@ -17,7 +17,7 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldap.models import FlextLdapModels
 
 
-_logger = FlextLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapDomain:

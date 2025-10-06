@@ -18,7 +18,7 @@ from flext_core import FlextLogger, FlextProtocols, FlextResult
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
 
-_logger = FlextLogger(__name__)
+logger = FlextLogger(__name__)
 
 TCommand = TypeVar("TCommand", bound=FlextLdapModels.CqrsCommand)
 TQuery = TypeVar("TQuery", bound=FlextLdapModels.CqrsQuery)
@@ -42,7 +42,7 @@ class FlextLdapHandlers:
 
         def __init__(self) -> None:
             """Initialize command handler."""
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def handle(self, command: TCommand) -> FlextResult[object]:
             """Handle command - implements Application.Handler protocol.
@@ -65,7 +65,7 @@ class FlextLdapHandlers:
                 return self._execute_command(command)
 
             except Exception as e:
-                self._logger.error(
+                self.logger.error(
                     "Command handling failed",
                     error=str(e),
                     command_type=command.command_type,
@@ -138,7 +138,7 @@ class FlextLdapHandlers:
 
         def __init__(self) -> None:
             """Initialize query handler."""
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def handle(self, query: TQuery) -> FlextResult[object]:
             """Handle query - implements Application.Handler protocol.
@@ -161,7 +161,7 @@ class FlextLdapHandlers:
                 return self._execute_query(query)
 
             except Exception as e:
-                self._logger.error(
+                self.logger.error(
                     "Query handling failed",
                     error=str(e),
                     query_type=query.query_type,
@@ -281,7 +281,7 @@ class FlextLdapHandlers:
                 return FlextResult[object].fail(result.error or "User creation failed")
 
             user = result.unwrap()
-            self._logger.info(
+            self.logger.info(
                 "User created successfully", user_dn=user.dn, user_uid=user.uid
             )
 
@@ -347,7 +347,7 @@ class FlextLdapHandlers:
                 )
 
             updated_user = update_result.unwrap()
-            self._logger.info("User updated successfully", user_dn=updated_user.dn)
+            self.logger.info("User updated successfully", user_dn=updated_user.dn)
 
             return FlextResult[object].ok({"user": updated_user, "status": "updated"})
 

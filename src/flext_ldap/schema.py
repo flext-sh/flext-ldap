@@ -147,7 +147,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
                 default_id="schema-discovery",
             )
             super().__init__(config=config)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
             self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override

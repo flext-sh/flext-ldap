@@ -31,7 +31,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
     def __init__(self) -> None:
         """Initialize generic server operations."""
         super().__init__(server_type="generic")
-        self._logger.info("Using generic LDAP server operations")
+        self.logger.info("Using generic LDAP server operations")
 
     # =========================================================================
     # CONNECTION OPERATIONS
@@ -77,7 +77,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             )
 
             if not success or not connection.entries:
-                self._logger.warning("Generic schema discovery failed - using defaults")
+                self.logger.warning("Generic schema discovery failed - using defaults")
                 return FlextResult[FlextTypes.Dict].ok(
                     {
                         "object_classes": [],
@@ -104,7 +104,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
-            self._logger.warning(
+            self.logger.warning(
                 "Generic schema discovery error", extra={"error": str(e)}
             )
             return FlextResult[FlextTypes.Dict].ok(
@@ -154,7 +154,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
         self, connection: FlextLdapTypes.Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs from generic LDAP server."""
-        self._logger.warning("Generic ACL retrieval - may not work on all servers")
+        self.logger.warning("Generic ACL retrieval - may not work on all servers")
         return FlextResult[list[FlextTypes.Dict]].ok([])
 
     @override
@@ -213,7 +213,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Add entry error", extra={"error": str(e)})
+            self.logger.error("Add entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
@@ -244,7 +244,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Modify entry error", extra={"error": str(e)})
+            self.logger.error("Modify entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
@@ -265,7 +265,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._logger.error("Delete entry error", extra={"error": str(e)})
+            self.logger.error("Delete entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
@@ -335,7 +335,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self._logger.error("Paged search error", extra={"error": str(e)})
+            self.logger.error("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )

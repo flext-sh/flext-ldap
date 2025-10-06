@@ -186,7 +186,7 @@ class FlextLdapUserService:
 
     def __init__(self) -> None:
         self._client = get_ldap_client()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
         """Authenticate user with proper error handling."""

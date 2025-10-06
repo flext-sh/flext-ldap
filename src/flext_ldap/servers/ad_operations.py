@@ -39,7 +39,7 @@ class FlextLdapServersADOperations(BaseServerOperations):
     def __init__(self) -> None:
         """Initialize Active Directory operations stub."""
         super().__init__(server_type="ad")
-        self._logger.warning(
+        self.logger.warning(
             "Active Directory operations are not yet implemented - using stub"
         )
 
