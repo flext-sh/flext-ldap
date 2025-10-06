@@ -47,7 +47,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._ldif = FlextLdif()  # Direct instantiation without config
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
@@ -123,7 +123,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 )
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to convert ldap3 entry to FlextLdif",
                 extra={"error": str(e)},
             )
@@ -184,7 +184,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[dict[str, FlextTypes.StringList]].ok(attributes)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to convert FlextLdif entry to ldap3 attributes",
                 extra={
                     "error": str(e),
@@ -283,7 +283,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to convert LDIF file to entries",
                 extra={"file": ldif_file_path, "error": str(e)},
             )
@@ -321,7 +321,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[str].ok(output_path)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to write entries to LDIF file",
                 extra={"file": output_path, "error": str(e)},
             )
@@ -361,7 +361,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             # Use quirks manager to detect from single entry
             detection_result = self._quirks_manager.detect_server_type([entry])
             if detection_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Server detection failed, defaulting to generic",
                     extra={"dn": str(entry.dn), "error": detection_result.error},
                 )
@@ -370,7 +370,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             detected_type = detection_result.unwrap()
             self._detected_server_type = detected_type
 
-            self._logger.debug(
+            self.logger.debug(
                 "Server type detected from entry",
                 extra={"dn": str(entry.dn), "server_type": detected_type},
             )
@@ -378,7 +378,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[str].ok(detected_type)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Entry server detection error",
                 extra={"dn": str(entry.dn) if entry else None, "error": str(e)},
             )
@@ -422,7 +422,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             # Get server-specific quirks
             quirks_result = self._quirks_manager.get_server_quirks(target_server_type)
             if quirks_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Failed to get server quirks, returning entry as-is",
                     extra={
                         "target_server": target_server_type,
@@ -435,7 +435,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             # This is where server-specific attribute transformations would be applied
             # For now, we return the entry as-is but with proper logging
 
-            self._logger.debug(
+            self.logger.debug(
                 "Entry normalized for target server",
                 extra={
                     "dn": str(entry.dn),
@@ -484,7 +484,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             # Get server quirks
             quirks_result = self._quirks_manager.get_server_quirks(server_type)
             if quirks_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Could not get server quirks for validation",
                     extra={"server_type": server_type},
                 )
@@ -507,7 +507,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             if isinstance(object_classes, list) and len(object_classes) == 0:
                 return FlextResult[bool].fail("Entry has empty objectClass")
 
-            self._logger.debug(
+            self.logger.debug(
                 "Entry validated for server type",
                 extra={
                     "dn": dn_str,
@@ -561,7 +561,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 # No conversion needed
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-            self._logger.info(
+            self.logger.info(
                 "Converting entry format",
                 extra={
                     "dn": str(entry.dn),
@@ -586,13 +586,13 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 converted_entry, target_server_type
             )
             if validate_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Converted entry failed validation",
                     extra={"error": validate_result.error},
                 )
                 # Continue anyway, validation may be too strict
 
-            self._logger.info(
+            self.logger.info(
                 "Entry format conversion completed",
                 extra={
                     "dn": str(converted_entry.dn),

@@ -21,7 +21,7 @@ class TestFlextLdapExceptions:
         exceptions = FlextLdapExceptions()
         assert exceptions is not None
         assert hasattr(exceptions, "_context")
-        assert hasattr(exceptions, "_logger")
+        assert hasattr(exceptions, "logger")
 
     def test_connection_error_creation(self) -> None:
         """Test connection error creation."""

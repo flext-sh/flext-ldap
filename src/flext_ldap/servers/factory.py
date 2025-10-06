@@ -58,7 +58,7 @@ class FlextLdapServersFactory(FlextService[None]):
     def __init__(self) -> None:
         """Initialize server operations factory."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._quirks_manager = FlextLdifQuirksManager()
         self._server_registry: dict[str, type[BaseServerOperations]] = {
             "openldap1": OpenLDAP1Operations,
@@ -98,7 +98,7 @@ class FlextLdapServersFactory(FlextService[None]):
             if server_type_lower in self._server_registry:
                 operations_class = self._server_registry[server_type_lower]
                 operations_instance = operations_class()
-                self._logger.info(
+                self.logger.info(
                     "Server operations created",
                     extra={
                         "server_type": server_type_lower,
@@ -108,7 +108,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 return FlextResult[BaseServerOperations].ok(operations_instance)
 
             # Fallback to generic
-            self._logger.warning(
+            self.logger.warning(
                 "Unknown server type, using generic operations",
                 extra={"server_type": server_type_lower},
             )
@@ -117,7 +117,7 @@ class FlextLdapServersFactory(FlextService[None]):
             )
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to create server operations",
                 extra={"server_type": server_type, "error": str(e)},
             )
@@ -142,7 +142,7 @@ class FlextLdapServersFactory(FlextService[None]):
         """
         try:
             if not entries:
-                self._logger.warning("No entries provided, using generic operations")
+                self.logger.warning("No entries provided, using generic operations")
                 return FlextResult[BaseServerOperations].ok(
                     FlextLdapServersGenericOperations()
                 )
@@ -150,7 +150,7 @@ class FlextLdapServersFactory(FlextService[None]):
             # Use quirks manager to detect server type
             detection_result = self._quirks_manager.detect_server_type(entries)
             if detection_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Server type detection failed, using generic operations",
                     extra={"error": detection_result.error},
                 )
@@ -159,7 +159,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 )
 
             detected_type = detection_result.unwrap()
-            self._logger.info(
+            self.logger.info(
                 "Server type detected from entries",
                 extra={"server_type": detected_type, "entry_count": len(entries)},
             )
@@ -168,7 +168,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return self.create_from_server_type(detected_type)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to create server operations from entries",
                 extra={"entry_count": len(entries) if entries else 0, "error": str(e)},
             )
@@ -224,7 +224,7 @@ class FlextLdapServersFactory(FlextService[None]):
             )
 
             if not success or not connection.entries:
-                self._logger.warning(
+                self.logger.warning(
                     "Root DSE query failed, unable to detect server type"
                 )
                 return FlextResult[str].ok("generic")
@@ -243,7 +243,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 else:
                     detected_type = "openldap2"  # Default to 2.x
 
-                self._logger.info(
+                self.logger.info(
                     "OpenLDAP detected from root DSE",
                     extra={"version": vendor_version, "type": detected_type},
                 )
@@ -260,7 +260,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 else:
                     detected_type = "oid"  # OID uses traditional structure
 
-                self._logger.info(
+                self.logger.info(
                     "Oracle directory server detected from root DSE",
                     extra={"vendor": vendor_name, "type": detected_type},
                 )
@@ -270,18 +270,18 @@ class FlextLdapServersFactory(FlextService[None]):
             if hasattr(entry, "rootDomainNamingContext") or hasattr(
                 entry, "defaultNamingContext"
             ):
-                self._logger.info("Active Directory detected from root DSE")
+                self.logger.info("Active Directory detected from root DSE")
                 return FlextResult[str].ok("ad")
 
             # Generic fallback
-            self._logger.info(
+            self.logger.info(
                 "Generic LDAP server detected",
                 extra={"vendor": vendor_name or "unknown"},
             )
             return FlextResult[str].ok("generic")
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Root DSE detection error",
                 extra={"error": str(e)},
             )
@@ -311,7 +311,7 @@ class FlextLdapServersFactory(FlextService[None]):
             # Detect server type from root DSE
             detection_result = self.detect_server_type_from_root_dse(connection)
             if detection_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Server detection from connection failed, using generic",
                     extra={"error": detection_result.error},
                 )
@@ -325,7 +325,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return self.create_from_server_type(detected_type)
 
         except Exception as e:
-            self._logger.error(
+            self.logger.error(
                 "Failed to create server operations from connection",
                 extra={"error": str(e)},
             )

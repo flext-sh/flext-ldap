@@ -20,7 +20,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
+from typing import Union, override
 
 from flext_core import (
     FlextLogger,
@@ -40,6 +40,7 @@ except ImportError:
     class FlextLdifModels:
         class Entry:
             pass
+
 
 from flext_ldap.acl import FlextLdapAclManager
 from flext_ldap.clients import FlextLdapClients
@@ -86,7 +87,7 @@ class FlextLdap(FlextService[None]):
         self._logger = FlextLogger(__name__)
 
         # Lazy-loaded LDAP components
-        self._ldif: FlextLdif | None = None
+        self._ldif: Union[FlextLdif, None] = None
 
     @classmethod
     def create(cls) -> FlextLdap:
@@ -241,7 +242,7 @@ class FlextLdap(FlextService[None]):
         search_base: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextResult[Union[FlextLdapModels.Entry, None]]:
         """Perform LDAP search for single entry - implements LdapSearchProtocol.
 
         Args:
@@ -256,15 +257,15 @@ class FlextLdap(FlextService[None]):
         # Use existing search method and return first result
         search_result = self.search(search_base, search_filter, attributes)
         if search_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[Union[FlextLdapModels.Entry, None]].fail(
                 search_result.error or "Search failed"
             )
 
         results = search_result.unwrap()
         if not results:
-            return FlextResult[FlextLdapModels.Entry | None].ok(None)
+            return FlextResult[Union[FlextLdapModels.Entry, None]].ok(None)
 
-        return FlextResult[FlextLdapModels.Entry | None].ok(results[0])
+        return FlextResult[Union[FlextLdapModels.Entry, None]].ok(results[0])
 
     def add_entry(
         self, dn: str, attributes: dict[str, str | FlextTypes.StringList]
@@ -437,7 +438,7 @@ class FlextLdap(FlextService[None]):
         )
         return self.client.search_with_request(request)
 
-    def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
+    def get_group(self, dn: str) -> FlextResult[Union[FlextLdapModels.Group, None]]:
         """Get a specific LDAP group by DN with enhanced validation."""
         # Validate DN
         validation_result = self.validations.validate_dn(dn)
@@ -517,7 +518,7 @@ class FlextLdap(FlextService[None]):
     # =============================================================================
 
     @property
-    def ldif(self) -> FlextLdif | None:
+    def ldif(self) -> Union[FlextLdif, None]:
         """Get FlextLdif instance for LDIF operations.
 
         Returns:

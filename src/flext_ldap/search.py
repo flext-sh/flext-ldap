@@ -52,7 +52,7 @@ class FlextLdapSearch(FlextService[None]):
             parent: Optional parent client for shared state access
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._parent = parent
         # These will be set by the client that uses this service
         self._connection = None
@@ -162,11 +162,11 @@ class FlextLdapSearch(FlextService[None]):
                 elif isinstance(entry_attrs, list):
                     # Handle case where attributes is a list
                     # This might happen in error conditions or with certain LDAP servers
-                    self._logger.warning(
+                    self.logger.warning(
                         f"entry.attributes is a list instead of dict for DN {entry.dn}"
                     )
                 else:
-                    self._logger.warning(
+                    self.logger.warning(
                         f"Unexpected type for entry.attributes: {type(entry_attrs)}"
                     )
 
@@ -200,7 +200,7 @@ class FlextLdapSearch(FlextService[None]):
             return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
-            self._logger.exception("Search failed")
+            self.logger.exception("Search failed")
             return FlextResult[list[FlextLdapModels.Entry]].fail(f"Search failed: {e}")
 
     def user_exists(self, dn: str) -> FlextResult[bool]:
@@ -283,23 +283,23 @@ class FlextLdapSearch(FlextService[None]):
             if not success:
                 error_msg = self._connection.last_error or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
-                    self._logger.debug("Entry not found for DN: %s", dn)
+                    self.logger.debug("Entry not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
-                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                self.logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
 
             if not self._connection.entries:
-                self._logger.debug("No entries found for DN: %s", dn)
+                self.logger.debug("No entries found for DN: %s", dn)
                 return FlextResult[FlextLdapModels.LdapUser | None].ok(None)
 
             user = self._create_user_from_entry(self._connection.entries[0])
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
-            self._logger.exception("Get user failed for DN %s", dn)
+            self.logger.exception("Get user failed for DN %s", dn)
             return FlextResult[FlextLdapModels.LdapUser | None].fail(
                 f"Get user failed: {e}",
             )
@@ -337,10 +337,10 @@ class FlextLdapSearch(FlextService[None]):
             if not success:
                 error_msg = self._connection.last_error or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
-                    self._logger.debug("Group not found for DN: %s", dn)
+                    self.logger.debug("Group not found for DN: %s", dn)
                     return FlextResult[FlextLdapModels.Group | None].ok(None)
 
-                self._logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
+                self.logger.warning("LDAP search failed for DN %s: %s", dn, error_msg)
                 return FlextResult[FlextLdapModels.Group | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
@@ -352,7 +352,7 @@ class FlextLdapSearch(FlextService[None]):
             return FlextResult[FlextLdapModels.Group | None].ok(group)
 
         except Exception as e:
-            self._logger.exception("Get group failed")
+            self.logger.exception("Get group failed")
             return FlextResult[FlextLdapModels.Group | None].fail(
                 f"Get group failed: {e}",
             )

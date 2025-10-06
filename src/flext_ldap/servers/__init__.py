@@ -51,7 +51,7 @@ class FlextLdapServers(FlextService[None]):
             server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic)
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._server_type = server_type or self.SERVER_GENERIC
         self._operations: Any | None = None
 
@@ -88,7 +88,7 @@ class FlextLdapServers(FlextService[None]):
 
         if result.is_failure:
             # Fallback to generic operations
-            self._logger.warning(
+            self.logger.warning(
                 f"Failed to create operations for server type {server_type}, using generic",
                 error=result.error,
             )

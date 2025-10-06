@@ -89,7 +89,7 @@ class FlextLdapConnectionManager:
                     password_validation.error or "Password validation failed"
                 )
 
-            self._parent._logger.info("Connecting to LDAP server: %s", server_uri)
+            self._parent.logger.info("Connecting to LDAP server: %s", server_uri)
 
             # Apply connection options if provided with proper type checking
             if connection_options:
@@ -156,7 +156,7 @@ class FlextLdapConnectionManager:
             if not self._connection.bound:
                 return FlextResult[bool].fail("Failed to bind to LDAP server")
 
-            self._parent._logger.info("Successfully connected to LDAP server")
+            self._parent.logger.info("Successfully connected to LDAP server")
 
             # Auto-detect server type and create server operations instance
             detection_result = (
@@ -171,12 +171,12 @@ class FlextLdapConnectionManager:
                     if self._parent._server_operations
                     else None
                 )
-                self._parent._logger.info(
+                self._parent.logger.info(
                     "Auto-detected LDAP server type: %s",
                     self._parent._detected_server_type,
                 )
             else:
-                self._parent._logger.warning(
+                self._parent.logger.warning(
                     "Server type detection failed, using generic operations: %s",
                     detection_result.error,
                 )
@@ -194,7 +194,7 @@ class FlextLdapConnectionManager:
             if auto_discover_schema:
                 discovery_result = self._parent.discover_schema()
                 if discovery_result.is_failure:
-                    self._parent._logger.warning(
+                    self._parent.logger.warning(
                         "Schema discovery failed: %s", discovery_result.error
                     )
                     # Continue without schema discovery
@@ -202,7 +202,7 @@ class FlextLdapConnectionManager:
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._parent._logger.exception("Connection failed")
+            self._parent.logger.exception("Connection failed")
             return FlextResult[bool].fail(f"Connection failed: {e}")
 
     def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
@@ -234,7 +234,7 @@ class FlextLdapConnectionManager:
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self._parent._logger.exception("Bind operation failed")
+            self._parent.logger.exception("Bind operation failed")
             return FlextResult[bool].fail(f"Bind failed: {e}")
 
     def unbind(self) -> FlextResult[None]:
@@ -251,14 +251,14 @@ class FlextLdapConnectionManager:
 
             if self._connection.bound:
                 self._connection.unbind()
-                self._parent._logger.info("Unbound from LDAP server")
+                self._parent.logger.info("Unbound from LDAP server")
 
             self._connection = None
             self._server = None
             return FlextResult[None].ok(None)
 
         except Exception as e:
-            self._parent._logger.exception("Unbind failed")
+            self._parent.logger.exception("Unbind failed")
             return FlextResult[None].fail(f"Unbind failed: {e}")
 
     def is_connected(self) -> bool:

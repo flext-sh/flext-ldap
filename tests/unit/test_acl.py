@@ -711,7 +711,7 @@ class TestFlextLdapModels:
 
         # Create AclSubject
         subject = acl_models.AclSubject(
-            subject_type="user", identifier="uid=admin,ou=people,dc=example,dc=com"
+            subject_type="user", subject_dn="uid=admin,ou=people,dc=example,dc=com"
         )
 
         # Create AclPermissions
@@ -789,7 +789,7 @@ class TestFlextLdapModels:
 
         # Create AclSubject
         subject = acl_models.AclSubject(
-            subject_type="user", identifier="uid=admin,ou=people,dc=example,dc=com"
+            subject_type="user", subject_dn="uid=admin,ou=people,dc=example,dc=com"
         )
 
         # Create AclPermissions

@@ -2196,7 +2196,7 @@ class FlextLdapModels(FlextModels):
         """ACL subject specification for access control rules."""
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
-        identifier: str = Field(..., description="Subject identifier")
+        subject_dn: str = Field(default="*", description="Subject DN identifier")
         authentication_level: str | None = Field(
             default=None, description="Authentication level"
         )
@@ -2205,16 +2205,18 @@ class FlextLdapModels(FlextModels):
         def create(
             cls,
             subject_type: str,
-            identifier: str,
+            subject_dn: str,
             authentication_level: str | None = None,
         ) -> FlextResult[FlextLdapModels.AclSubject]:
             """Create AclSubject instance."""
             try:
-                return FlextResult.ok(cls(
-                    subject_type=subject_type,
-                    identifier=identifier,
-                    authentication_level=authentication_level,
-                ))
+                return FlextResult.ok(
+                    cls(
+                        subject_type=subject_type,
+                        subject_dn=subject_dn,
+                        authentication_level=authentication_level,
+                    )
+                )
             except Exception as e:
                 return FlextResult.fail(f"Failed to create AclSubject: {e}")
 
@@ -2254,11 +2256,13 @@ class FlextLdapModels(FlextModels):
         ) -> FlextResult[FlextLdapModels.AclPermissions]:
             """Create AclPermissions instance."""
             try:
-                return FlextResult.ok(cls(
-                    granted_permissions=permissions,
-                    denied_permissions=denied_permissions or [],
-                    grant_type=grant_type,
-                ))
+                return FlextResult.ok(
+                    cls(
+                        granted_permissions=permissions,
+                        denied_permissions=denied_permissions or [],
+                        grant_type=grant_type,
+                    )
+                )
             except Exception as e:
                 return FlextResult.fail(f"Failed to create AclPermissions: {e}")
 
@@ -2287,14 +2291,16 @@ class FlextLdapModels(FlextModels):
         ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Create UnifiedAcl instance."""
             try:
-                return FlextResult.ok(cls(
-                    name=name,
-                    target=target,
-                    subject=subject,
-                    permissions=permissions,
-                    server_type=server_type,
-                    priority=priority,
-                ))
+                return FlextResult.ok(
+                    cls(
+                        name=name,
+                        target=target,
+                        subject=subject,
+                        permissions=permissions,
+                        server_type=server_type,
+                        priority=priority,
+                    )
+                )
             except Exception as e:
                 return FlextResult.fail(f"Failed to create UnifiedAcl: {e}")
 

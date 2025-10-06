@@ -252,7 +252,7 @@ class FlextLdapClients(FlextService[None]):
                 )
 
         except Exception as e:
-            self._logger.exception("Add entry failed")
+            self.logger.exception("Add entry failed")
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     def modify_entry(self, dn: str, changes: FlextTypes.Dict) -> FlextResult[bool]:
@@ -280,7 +280,7 @@ class FlextLdapClients(FlextService[None]):
                 )
 
         except Exception as e:
-            self._logger.exception("Modify entry failed")
+            self.logger.exception("Modify entry failed")
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     def delete_entry(self, dn: str) -> FlextResult[bool]:
@@ -298,7 +298,7 @@ class FlextLdapClients(FlextService[None]):
                 )
 
         except Exception as e:
-            self._logger.exception("Delete entry failed")
+            self.logger.exception("Delete entry failed")
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     # =========================================================================
@@ -378,7 +378,7 @@ class FlextLdapClients(FlextService[None]):
             return FlextResult[FlextTypes.Dict].ok(schema_info)
 
         except Exception as e:
-            self._logger.exception("Schema discovery failed")
+            self.logger.exception("Schema discovery failed")
             return FlextResult[FlextTypes.Dict].fail(f"Schema discovery failed: {e}")
 
     # =========================================================================
@@ -615,7 +615,7 @@ class FlextLdapClients(FlextService[None]):
                 group = self._create_group_from_entry(entry)
                 groups.append(group)
             except Exception as e:
-                self._logger.error("Failed to convert entry to group", error=str(e))
+                self.logger.error("Failed to convert entry to group", error=str(e))
                 continue
 
         return FlextResult[list[FlextLdapModels.Group]].ok(groups)

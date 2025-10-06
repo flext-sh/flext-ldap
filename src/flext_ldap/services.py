@@ -15,7 +15,7 @@ from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
 
-_logger = FlextLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapServices(FlextService[None]):
@@ -33,7 +33,7 @@ class FlextLdapServices(FlextService[None]):
     def __init__(self) -> None:
         """Initialize the LDAP application services."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     # =============================================================================
     # USER MANAGEMENT SERVICES
@@ -78,14 +78,14 @@ class FlextLdapServices(FlextService[None]):
             if f"uid={request.uid}" not in request.dn:
                 return FlextResult[bool].fail("DN must contain the specified UID")
 
-            _logger.info(
+            logger.info(
                 "User creation request validated", uid=request.uid, dn=request.dn
             )
 
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            _logger.error("User creation validation failed", error=str(e))
+            logger.error("User creation validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def enrich_user_for_creation(
@@ -113,7 +113,7 @@ class FlextLdapServices(FlextService[None]):
                 # Could set display name, but request object might not have it
                 pass
 
-            _logger.info(
+            logger.info(
                 "User creation request enriched",
                 uid=request.uid,
                 object_classes=request.object_classes,
@@ -122,7 +122,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.CreateUserRequest].ok(request)
 
         except Exception as e:
-            _logger.error("User creation enrichment failed", error=str(e))
+            logger.error("User creation enrichment failed", error=str(e))
             return FlextResult[FlextLdapModels.CreateUserRequest].fail(
                 f"Enrichment failed: {e}"
             )
@@ -159,7 +159,7 @@ class FlextLdapServices(FlextService[None]):
                     scope_check.error or "Invalid search scope"
                 )
 
-            _logger.info(
+            logger.info(
                 "User search request validated",
                 base_dn=request.base_dn,
                 filter=request.filter_str,
@@ -169,7 +169,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            _logger.error("User search validation failed", error=str(e))
+            logger.error("User search validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_user_search_results(
@@ -193,7 +193,7 @@ class FlextLdapServices(FlextService[None]):
                     user = FlextLdapModels.User(**entry.model_dump())
                     user_entries.append(user)
                 except Exception as e:
-                    _logger.warning(
+                    logger.warning(
                         "Failed to convert entry to User entity",
                         dn=entry.dn,
                         error=str(e),
@@ -210,7 +210,7 @@ class FlextLdapServices(FlextService[None]):
                 next_page_cookie=results.next_page_cookie,
             )
 
-            _logger.info(
+            logger.info(
                 "User search results processed",
                 total_entries=len(user_entries),
                 search_time=results.search_time,
@@ -219,7 +219,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
-            _logger.error("User search results processing failed", error=str(e))
+            logger.error("User search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
@@ -254,12 +254,12 @@ class FlextLdapServices(FlextService[None]):
             if len(description) > 500:  # Arbitrary limit
                 return FlextResult[FlextTypes.Dict].fail("Group description too long")
 
-            _logger.info("Group creation request validated", cn=cn)
+            logger.info("Group creation request validated", cn=cn)
 
             return FlextResult[FlextTypes.Dict].ok(group_data)
 
         except Exception as e:
-            _logger.error("Group creation validation failed", error=str(e))
+            logger.error("Group creation validation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def validate_group_membership_operation(
@@ -295,7 +295,7 @@ class FlextLdapServices(FlextService[None]):
                 if not group.has_member(member_dn):
                     return FlextResult[bool].fail("Member not found in group")
 
-            _logger.info(
+            logger.info(
                 "Group membership operation validated",
                 operation=operation,
                 group_cn=group.cn,
@@ -305,7 +305,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            _logger.error("Group membership validation failed", error=str(e))
+            logger.error("Group membership validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_group_search_results(
@@ -329,7 +329,7 @@ class FlextLdapServices(FlextService[None]):
                     group = FlextLdapModels.Group(**entry.model_dump())
                     group_entries.append(group)
                 except Exception as e:
-                    _logger.warning(
+                    logger.warning(
                         "Failed to convert entry to Group entity",
                         dn=entry.dn,
                         error=str(e),
@@ -346,7 +346,7 @@ class FlextLdapServices(FlextService[None]):
                 next_page_cookie=results.next_page_cookie,
             )
 
-            _logger.info(
+            logger.info(
                 "Group search results processed",
                 total_entries=len(group_entries),
                 search_time=results.search_time,
@@ -355,7 +355,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
-            _logger.error("Group search results processing failed", error=str(e))
+            logger.error("Group search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
@@ -425,7 +425,7 @@ class FlextLdapServices(FlextService[None]):
 
             final_results = processed_results.unwrap()
 
-            _logger.info(
+            logger.info(
                 "Search operation coordinated",
                 base_dn=search_request.base_dn,
                 filter=search_request.filter_str,
@@ -435,7 +435,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(final_results)
 
         except Exception as e:
-            _logger.error("Search coordination failed", error=str(e))
+            logger.error("Search coordination failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Coordination failed: {e}"
             )
@@ -501,7 +501,7 @@ class FlextLdapServices(FlextService[None]):
             # Note: This returns a string, but we need to set it on the user
             # In real implementation, User entity would have display_name field
 
-            _logger.info(
+            logger.info(
                 "User provisioning workflow completed",
                 uid=mock_user.uid,
                 dn=mock_user.dn,
@@ -510,7 +510,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.User].ok(mock_user)
 
         except Exception as e:
-            _logger.error("User provisioning workflow failed", error=str(e))
+            logger.error("User provisioning workflow failed", error=str(e))
             return FlextResult[FlextLdapModels.User].fail(f"Workflow failed: {e}")
 
     # =============================================================================
@@ -559,12 +559,12 @@ class FlextLdapServices(FlextService[None]):
             except Exception as e:
                 return FlextResult[FlextTypes.Dict].fail(f"Invalid base DN format: {e}")
 
-            _logger.info("LDAP configuration validated", server=server, port=port)
+            logger.info("LDAP configuration validated", server=server, port=port)
 
             return FlextResult[FlextTypes.Dict].ok(config_data)
 
         except Exception as e:
-            _logger.error("LDAP configuration validation failed", error=str(e))
+            logger.error("LDAP configuration validation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def generate_ldap_operation_report(
@@ -607,7 +607,7 @@ class FlextLdapServices(FlextService[None]):
                 "generated_at": "2025-01-08T00:00:00Z",  # Would use datetime.utcnow()
             }
 
-            _logger.info(
+            logger.info(
                 "LDAP operation report generated",
                 total_operations=total_ops,
                 success_rate=success_rate,
@@ -616,7 +616,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].ok(report)
 
         except Exception as e:
-            _logger.error("LDAP operation report generation failed", error=str(e))
+            logger.error("LDAP operation report generation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Report generation failed: {e}")
 
     def execute(self) -> FlextResult[None]:
