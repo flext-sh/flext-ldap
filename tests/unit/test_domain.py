@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPDomain module."""
+"""Tests for FlextLdapDomain module."""
 
-from flext_ldap.domain import FlextLDAPDomain
+from flext_ldap.domain import FlextLdapDomain
 
 
-class TestFlextLDAPDomain:
-    """Test cases for FlextLDAPDomain."""
+class TestFlextLdapDomain:
+    """Test cases for FlextLdapDomain."""
 
     def test_domain_initialization(self):
         """Test domain initialization."""
-        domain = FlextLDAPDomain()
+        domain = FlextLdapDomain()
         assert domain is not None
 
     def test_domain_basic_functionality(self):
         """Test basic domain functionality."""
-        domain = FlextLDAPDomain()
+        domain = FlextLdapDomain()
         # Add specific test cases based on domain functionality
         assert hasattr(domain, "__class__")

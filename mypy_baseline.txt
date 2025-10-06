@@ -1,4 +1,4 @@
-tests/unit/test_repositories_comprehensive.py: note: In member "test_exists_without_connection" of class "TestFlextLDAPRepositoriesComprehensive":
+tests/unit/test_repositories_comprehensive.py: note: In member "test_exists_without_connection" of class "TestFlextLdapRepositoriesComprehensive":
 tests/unit/test_repositories_comprehensive.py:150:18: error: Incompatible types
 in assignment (expression has type "FlextResult[bool]", variable has type
 "FlextResult[Entry | None]")  [assignment]
@@ -75,28 +75,28 @@ tests/unit/test_domain_functional.py: note: In member "test_user_created_event_s
 tests/unit/test_domain_functional.py:446:65: error: Argument 1 to
 "UserCreatedEvent" has incompatible type "**FlextTypes.Dict"; expected "str" 
 [arg-type]
-    ...   user_created_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
+    ...   user_created_event = FlextLdapDomain.UserCreatedEvent(**event_data)
                                                                   ^~~~~~~~~~
 tests/unit/test_domain_functional.py:446:65: error: Argument 1 to
 "UserCreatedEvent" has incompatible type "**FlextTypes.Dict"; expected
 "datetime"  [arg-type]
-    ...   user_created_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
+    ...   user_created_event = FlextLdapDomain.UserCreatedEvent(**event_data)
                                                                   ^~~~~~~~~~
 tests/unit/test_domain_functional.py: note: In member "test_user_deleted_event_structure" of class "TestDomainEvents":
 tests/unit/test_domain_functional.py:463:65: error: Argument 1 to
 "UserDeletedEvent" has incompatible type "**FlextTypes.Dict"; expected "str" 
 [arg-type]
-    ...   user_deleted_event = FlextLDAPDomain.UserDeletedEvent(**event_data)
+    ...   user_deleted_event = FlextLdapDomain.UserDeletedEvent(**event_data)
                                                                   ^~~~~~~~~~
 tests/unit/test_domain_functional.py:463:65: error: Argument 1 to
 "UserDeletedEvent" has incompatible type "**FlextTypes.Dict"; expected
 "datetime"  [arg-type]
-    ...   user_deleted_event = FlextLDAPDomain.UserDeletedEvent(**event_data)
+    ...   user_deleted_event = FlextLdapDomain.UserDeletedEvent(**event_data)
                                                                   ^~~~~~~~~~
 tests/unit/test_domain_functional.py: note: In member "test_group_membership_changed_event" of class "TestDomainEvents":
-tests/unit/test_domain_functional.py:485:32: error: "type[FlextLDAPDomain]" has
+tests/unit/test_domain_functional.py:485:32: error: "type[FlextLdapDomain]" has
 no attribute "GroupMembershipChangedEvent"  [attr-defined]
-                membership_event = FlextLDAPDomain.GroupMembershipChangedE...
+                membership_event = FlextLdapDomain.GroupMembershipChangedE...
                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 tests/unit/test_domain_functional.py: note: In member "test_domain_uses_flext_result_pattern" of class "TestDomainIntegration":
 tests/unit/test_domain_functional.py:506:54: error: Argument 1 to
@@ -110,12 +110,12 @@ tests/unit/test_domain_functional.py: note: In member "test_domain_follows_flext
 tests/unit/test_domain_functional.py:533:57: error: Argument 1 to
 "UserCreatedEvent" has incompatible type "**FlextTypes.Dict"; expected "str" 
 [arg-type]
-            user_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
+            user_event = FlextLdapDomain.UserCreatedEvent(**event_data)
                                                             ^~~~~~~~~~
 tests/unit/test_domain_functional.py:533:57: error: Argument 1 to
 "UserCreatedEvent" has incompatible type "**FlextTypes.Dict"; expected
 "datetime"  [arg-type]
-            user_event = FlextLDAPDomain.UserCreatedEvent(**event_data)
+            user_event = FlextLdapDomain.UserCreatedEvent(**event_data)
                                                             ^~~~~~~~~~
 tests/unit/test_domain_functional.py: note: In member "test_service_error_handling" of class "TestDomainErrorHandling":
 tests/unit/test_domain_functional.py:617:58: error: Argument 1 to
@@ -147,49 +147,49 @@ operand type for in ("object")  [operator]
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "datetime" 
 [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "str"  [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "int"  [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "list[Event]" 
 [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "FlextTypes.StringList" 
 [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "datetime | None" 
 [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py:65:50: error: Argument 1 to "User"
 has incompatible type "**dict[str, object | object]"; expected "str | None" 
 [arg-type]
-                ldap_user = FlextLDAPEntities.User(**ldap_user_data)
+                ldap_user = FlextLdapEntities.User(**ldap_user_data)
                                                      ^~~~~~~~~~~~~~
 tests/unit/test_comprehensive_flext_tests.py: note: In member "test_real_ldap_operations_with_matchers" of class "TestComprehensiveFlextTests":
 tests/unit/test_comprehensive_flext_tests.py:127:26: error: Missing named
 argument "size_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_comprehensive_flext_tests.py:127:26: error: Missing named
 argument "time_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_comprehensive_flext_tests.py: note: In member "test_hypothesis_like_testing_with_factories" of class "TestComprehensiveFlextTests":
 tests/unit/test_comprehensive_flext_tests.py:175:28: error: Value of type
@@ -238,37 +238,37 @@ tests/unit/test_comprehensive_flext_tests.py:239:56: error: Argument 2 to
 "dict[str, type[str]]"; expected "Sequence[str]"  [arg-type]
     ...  FlextTestsMatchers.assert_json_structure(user, {"name": str, "email"...
                                                         ^~~~~~~~~~~~~~~~~~~~~...
-tests/unit/test_clients_functional.py: note: In member "test_connect_with_empty_credentials" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_connect_with_empty_credentials" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:115:27: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 error_lower = result.error.lower()
                               ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_bind_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_bind_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:128:32: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "connection" in result.error.lower()
                                    ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:149:19: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:149:19: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:159:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_add_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_add_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:174:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_modify_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_modify_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:182:68: error: Argument 2 to "modify" of
-"FlextLDAPClient" has incompatible type
+"FlextLdapClients" has incompatible type
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"; expected "FlextTypes.Dict"
  [arg-type]
     ...result = await client.modify("cn=testuser,dc=test,dc=com", attributes)
@@ -279,37 +279,37 @@ tests/unit/test_clients_functional.py:185:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_delete_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_delete_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:194:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_with_different_scopes" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_with_different_scopes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:213:23: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-                request = FlextLDAPEntities.SearchRequest(
+                request = FlextLdapEntities.SearchRequest(
                           ^
 tests/unit/test_clients_functional.py:213:23: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-                request = FlextLDAPEntities.SearchRequest(
+                request = FlextLdapEntities.SearchRequest(
                           ^
 tests/unit/test_clients_functional.py:224:39: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 assert "not connected" in result.error.lower()
                                           ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_with_size_and_time_limits" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_with_size_and_time_limits" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:243:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_add_with_multiple_object_classes" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_add_with_multiple_object_classes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:261:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_modify_with_multiple_attributes" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_modify_with_multiple_attributes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:273:68: error: Argument 2 to "modify" of
-"FlextLDAPClient" has incompatible type
+"FlextLdapClients" has incompatible type
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"; expected "FlextTypes.Dict"
  [arg-type]
     ...result = await client.modify("cn=testuser,dc=test,dc=com", attributes)
@@ -320,73 +320,73 @@ tests/unit/test_clients_functional.py:277:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_strategy_classes_direct" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_strategy_classes_direct" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:284:19: error: Missing named argument
 "attributes" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:284:19: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:284:19: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:295:24: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 pattern in result.error.lower()
                            ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_entry_conversion_strategy_direct" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_entry_conversion_strategy_direct" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:305:43: error: Argument 1 to
 "convert_entries" of "EntryConversionStrategy" has incompatible type "None";
 expected "Connection"  [arg-type]
             result = strategy.convert_entries(None)
                                               ^~~~
-tests/unit/test_clients_functional.py: note: In member "test_response_builder_with_entries" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_response_builder_with_entries" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:330:19: error: Missing named argument
 "attributes" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:330:19: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            request = FlextLDAPEntities.SearchRequest(
+            request = FlextLdapEntities.SearchRequest(
                       ^
 tests/unit/test_clients_functional.py:344:21: error: Argument "entries" to
 "SearchResponse" has incompatible type "list[FlextTypes.StringDict]"; expected
 "list[FlextTypes.Dict]"  [arg-type]
                 entries=entries,
                         ^~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_full_client_lifecycle_with_docker" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_full_client_lifecycle_with_docker" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:395:30: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-                search_request = FlextLDAPEntities.SearchRequest(
+                search_request = FlextLdapEntities.SearchRequest(
                                  ^
 tests/unit/test_clients_functional.py:395:30: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-                search_request = FlextLDAPEntities.SearchRequest(
+                search_request = FlextLdapEntities.SearchRequest(
                                  ^
 tests/unit/test_clients_functional.py:410:27: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 error_lower = connect_result.error.lower()
                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_attribute_type_handling" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_attribute_type_handling" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:446:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_error_message_consistency" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_error_message_consistency" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:487:17: error: Missing named argument
 "attributes" for "SearchRequest"  [call-arg]
-                    FlextLDAPEntities.SearchRequest(
+                    FlextLdapEntities.SearchRequest(
                     ^
 tests/unit/test_clients_functional.py:487:17: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-                    FlextLDAPEntities.SearchRequest(
+                    FlextLdapEntities.SearchRequest(
                     ^
 tests/unit/test_clients_functional.py:487:17: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-                    FlextLDAPEntities.SearchRequest(
+                    FlextLdapEntities.SearchRequest(
                     ^
 tests/unit/test_clients_functional.py:500:24: error: "object" has no attribute
 "is_success"  [attr-defined]
@@ -396,7 +396,7 @@ tests/unit/test_clients_functional.py:502:27: error: "object" has no attribute
 "error"  [attr-defined]
                     phrase in result.error.lower()
                               ^~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_bind_without_connection_comprehensive" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_bind_without_connection_comprehensive" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:518:32: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 "not connected" in result.error.lower()
@@ -405,7 +405,7 @@ tests/unit/test_clients_functional.py:519:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 or "no connection" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_ssl_tls_connection_configuration" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_ssl_tls_connection_configuration" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:536:33: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                     "connection" in result.error.lower()
@@ -418,10 +418,10 @@ tests/unit/test_clients_functional.py:538:30: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                     or "ldap" in result.error.lower()
                                  ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_strategy_execution_comprehensive" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_strategy_execution_comprehensive" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:545:26: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_clients_functional.py:558:32: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
@@ -431,23 +431,23 @@ tests/unit/test_clients_functional.py:559:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 or "no connection" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_search_with_all_attributes_wildcard" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_search_with_all_attributes_wildcard" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:566:26: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_clients_functional.py:578:31: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "connected" in result.error.lower()
                                   ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_add_operation_comprehensive_attributes" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_add_operation_comprehensive_attributes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:604:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_modify_operation_comprehensive" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_modify_operation_comprehensive" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:620:52: error: Argument 2 to "modify" of
-"FlextLDAPClient" has incompatible type
+"FlextLdapClients" has incompatible type
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"; expected "FlextTypes.Dict"
  [arg-type]
                 "cn=testuser,ou=users,dc=test,dc=com", modifications
@@ -458,17 +458,17 @@ tests/unit/test_clients_functional.py:625:35: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
             assert "not connected" in result.error.lower()
                                       ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_delete_operation_error_scenarios" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_delete_operation_error_scenarios" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:643:39: error: Item "None" of
 "str | None" has no attribute "lower"  [union-attr]
                 assert "not connected" in result.error.lower()
                                           ^~~~~~~~~~~~~~~~~~
-tests/unit/test_clients_functional.py: note: In member "test_connection_state_consistency" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_connection_state_consistency" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:678:46: error: Right operand of "or" is
 never evaluated  [unreachable]
             assert client._connection is None or not getattr(
                                                  ^
-tests/unit/test_clients_functional.py: note: In member "test_error_propagation_consistency" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_clients_functional.py: note: In member "test_error_propagation_consistency" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_clients_functional.py:687:9: error: Need type annotation for
 "operations_results" (hint: "operations_results: list[<type>] = ...") 
 [var-annotated]
@@ -476,17 +476,17 @@ tests/unit/test_clients_functional.py:687:9: error: Need type annotation for
             ^~~~~~~~~~~~~~~~~~
 tests/unit/test_clients_functional.py:693:21: error: Missing named argument
 "attributes" for "SearchRequest"  [call-arg]
-                        FlextLDAPEntities.SearchRequest(
+                        FlextLdapEntities.SearchRequest(
                         ^
 tests/unit/test_clients_functional.py:693:21: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-                        FlextLDAPEntities.SearchRequest(
+                        FlextLdapEntities.SearchRequest(
                         ^
 tests/unit/test_clients_functional.py:693:21: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-                        FlextLDAPEntities.SearchRequest(
+                        FlextLdapEntities.SearchRequest(
                         ^
-tests/unit/test_api_comprehensive.py: note: In member "test_connection_context_manager" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_connection_context_manager" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:143:35: error: Subclass of "str" and
 "FlextResult[object]" cannot exist: would have incompatible method signatures 
 [unreachable]
@@ -496,42 +496,42 @@ tests/unit/test_api_comprehensive.py:144:17: error: Statement is unreachable
 [unreachable]
                     if session_result.is_success:
                     ^
-tests/unit/test_api_comprehensive.py: note: In member "test_search_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:163:26: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_api_comprehensive.py:163:26: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-            search_request = FlextLDAPEntities.SearchRequest(
+            search_request = FlextLdapEntities.SearchRequest(
                              ^
 tests/unit/test_api_comprehensive.py:175:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_simple_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_simple_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:191:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_users_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_users_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:206:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_create_user_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_create_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:226:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_user_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:240:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_update_user_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_update_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:251:44: error: Argument 2 to "update_user"
-of "FlextLDAPClient" has incompatible type "FlextTypes.StringDict"; expected
+of "FlextLdapClients" has incompatible type "FlextTypes.StringDict"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
             result = await api.update_user(dn, attributes)
                                                ^~~~~~~~~~
@@ -541,19 +541,19 @@ tests/unit/test_api_comprehensive.py:256:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_user_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_user_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:270:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_users_by_filter_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_users_by_filter_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:286:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_create_group_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_create_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:302:24: error: No overload variant of
-"create_group" of "FlextLDAPClient" matches argument type "Entry"  [call-overload]
+"create_group" of "FlextLdapClients" matches argument type "Entry"  [call-overload]
             result = await api.create_group(group_entry)
                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/unit/test_api_comprehensive.py:302:24: note: Possible overload variants:
@@ -563,14 +563,14 @@ tests/unit/test_api_comprehensive.py:307:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_group_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:329:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_update_group_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_update_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:341:51: error: Argument 2 to
-"update_group" of "FlextLDAPClient" has incompatible type "FlextTypes.StringDict";
+"update_group" of "FlextLdapClients" has incompatible type "FlextTypes.StringDict";
 expected "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
             result = await api.update_group(group_dn, attributes)
                                                       ^~~~~~~~~~
@@ -580,64 +580,64 @@ tests/unit/test_api_comprehensive.py:346:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_group_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_group_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:360:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_add_member_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_add_member_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:377:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_remove_member_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_remove_member_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:394:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_get_members_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_get_members_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:408:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_delete_entry_without_connection" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_delete_entry_without_connection" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:422:28: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                     pattern in result.error.lower()
                                ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_validate_dn_invalid" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_validate_dn_invalid" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:457:32: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                         pattern in result.error.lower()
                                    ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_validate_filter_invalid" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_validate_filter_invalid" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:494:32: error: Item "None" of "str | None"
 has no attribute "lower"  [union-attr]
                         pattern in result.error.lower()
                                    ^~~~~~~~~~~~~~~~~~
-tests/unit/test_api_comprehensive.py: note: In member "test_search_with_different_scopes" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_search_with_different_scopes" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:552:30: error: Missing named argument
 "size_limit" for "SearchRequest"  [call-arg]
-                search_request = FlextLDAPEntities.SearchRequest(
+                search_request = FlextLdapEntities.SearchRequest(
                                  ^
 tests/unit/test_api_comprehensive.py:552:30: error: Missing named argument
 "time_limit" for "SearchRequest"  [call-arg]
-                search_request = FlextLDAPEntities.SearchRequest(
+                search_request = FlextLdapEntities.SearchRequest(
                                  ^
-tests/unit/test_api_comprehensive.py: note: In member "test_user_operations_with_complex_data" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_user_operations_with_complex_data" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:603:18: error: Incompatible types in
 assignment (expression has type "FlextResult[None]", variable has type
 "FlextResult[User]")  [assignment]
             result = await api.update_user(dn, attributes)
                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/unit/test_api_comprehensive.py:603:44: error: Argument 2 to "update_user"
-of "FlextLDAPClient" has incompatible type "FlextTypes.StringDict"; expected
+of "FlextLdapClients" has incompatible type "FlextTypes.StringDict"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
             result = await api.update_user(dn, attributes)
                                                ^~~~~~~~~~
 tests/unit/test_api_comprehensive.py:603:44: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/unit/test_api_comprehensive.py:603:44: note: Consider using "Mapping" instead, which is covariant in the value type
-tests/unit/test_api_comprehensive.py: note: In member "test_group_operations_comprehensive" of class "TestFlextLDAPClientComprehensive":
+tests/unit/test_api_comprehensive.py: note: In member "test_group_operations_comprehensive" of class "TestFlextLdapClientComprehensive":
 tests/unit/test_api_comprehensive.py:625:18: error: Incompatible types in
 assignment (expression has type "FlextResult[None]", variable has type
 "FlextResult[Group]")  [assignment]
@@ -668,54 +668,54 @@ tests/unit/test_adapters_comprehensive.py: note: In member "test_configuration_v
 tests/unit/test_adapters_comprehensive.py:772:63: error: Argument 1 to
 "ConnectionConfig" has incompatible type "**FlextTypes.StringDict"; expected "int" 
 [arg-type]
-    ...            config = FlextLDAPAdapters.ConnectionConfig(**config_data)
+    ...            config = FlextLdapAdapters.ConnectionConfig(**config_data)
                                                                  ^~~~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:772:63: error: Argument 1 to
 "ConnectionConfig" has incompatible type "**FlextTypes.StringDict"; expected "bool" 
 [arg-type]
-    ...            config = FlextLDAPAdapters.ConnectionConfig(**config_data)
+    ...            config = FlextLdapAdapters.ConnectionConfig(**config_data)
                                                                  ^~~~~~~~~~~
 tests/unit/test_adapters_comprehensive.py: note: In member "test_model_validation_edge_cases" of class "TestAdapterErrorHandling":
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "datetime"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "str"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "int"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "list[Event]"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "FlextTypes.StringList"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/unit/test_adapters_comprehensive.py:853:60: error: Argument 1 to
 "DirectoryEntry" has incompatible type "**dict[str, Collection[str]]"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
-                    entry = FlextLDAPAdapters.DirectoryEntry(**case_data)
+                    entry = FlextLdapAdapters.DirectoryEntry(**case_data)
                                                                ^~~~~~~~~
 tests/support/ldap_server.py: note: In member "get_connection_config" of class "LdapTestServer":
 tests/support/ldap_server.py:202:16: error: Unexpected keyword argument
-"base_dn" for "FlextLDAPModels.ConnectionConfig"  [call-arg]
-            return FlextLDAPModels.ConnectionConfig(
+"base_dn" for "FlextLdapModels.ConnectionConfig"  [call-arg]
+            return FlextLdapModels.ConnectionConfig(
                    ^
-src/flext_ldap/connection_config.py: note: "FlextLDAPModels.ConnectionConfig" defined here
+src/flext_ldap/connection_config.py: note: "FlextLdapModels.ConnectionConfig" defined here
 tests/support/ldap_server.py: note: In function "get_test_ldap_config":
 tests/support/ldap_server.py:214:12: error: Unexpected keyword argument
-"base_dn" for "FlextLDAPModels.ConnectionConfig"  [call-arg]
-        return FlextLDAPModels.ConnectionConfig(
+"base_dn" for "FlextLdapModels.ConnectionConfig"  [call-arg]
+        return FlextLdapModels.ConnectionConfig(
                ^
 tests/support/helpers.py: note: In function "search_entries":
 tests/support/helpers.py:201:18: error: Incompatible default for argument
@@ -751,7 +751,7 @@ tests/integration/test_api.py:130:52: error: Argument 1 to
 tests/integration/test_api.py:130:52: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/integration/test_api.py:130:52: note: Consider using "Mapping" instead, which is covariant in the value type
 tests/integration/test_api.py:131:69: error: Argument 2 to "modify" of
-"FlextLDAPClient" has incompatible type "dict[str, FlextTypes.StringList]"; expected
+"FlextLdapClients" has incompatible type "dict[str, FlextTypes.StringList]"; expected
 "FlextTypes.Dict"  [arg-type]
     ...esult = await connected_ldap_client.modify(test_dn, modify_attributes)
                                                            ^~~~~~~~~~~~~~~~~
@@ -773,7 +773,7 @@ tests/integration/test_api.py:252:52: error: Argument 1 to
 tests/integration/test_api.py:252:52: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/integration/test_api.py:252:52: note: Consider using "Mapping" instead, which is covariant in the value type
 tests/integration/test_api.py:255:13: error: Argument 2 to "update_user" of
-"FlextLDAPServices" has incompatible type "dict[str, FlextTypes.StringList]"; expected
+"FlextLdapServices" has incompatible type "dict[str, FlextTypes.StringList]"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
                 update_attributes,
                 ^~~~~~~~~~~~~~~~~
@@ -802,7 +802,7 @@ tests/integration/test_api.py:383:54: error: Argument 1 to
 tests/integration/test_api.py:383:54: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/integration/test_api.py:383:54: note: Consider using "Mapping" instead, which is covariant in the value type
 tests/integration/test_api.py:384:67: error: Argument 2 to "update_group" of
-"FlextLDAPServices" has incompatible type "dict[str, FlextTypes.StringList]"; expected
+"FlextLdapServices" has incompatible type "dict[str, FlextTypes.StringList]"; expected
 "dict[str, str | bytes | FlextTypes.StringList | list[bytes]]"  [arg-type]
     ...esult = await ldap_service.update_group(group.dn, update_attributes_5)
                                                          ^~~~~~~~~~~~~~~~~~~
@@ -833,13 +833,13 @@ tests/integration/test_api.py:624:53: note: "dict" is invariant -- see https://m
 tests/integration/test_api.py:624:53: note: Consider using "Mapping" instead, which is covariant in the value type
 tests/support/fixtures.py: note: In function "ldap_connection":
 tests/support/fixtures.py:51:12: error: Incompatible return value type (got
-"FlextLDAPModels.ConnectionConfig", expected
-"AsyncGenerator[FlextLDAPModels.ConnectionConfig, None]")  [return-value]
+"FlextLdapModels.ConnectionConfig", expected
+"AsyncGenerator[FlextLdapModels.ConnectionConfig, None]")  [return-value]
         return real_ldap_server.get_connection_config()
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 tests/support/fixtures.py: note: In function "ldap_api":
 tests/support/fixtures.py:57:12: error: Incompatible return value type (got
-"FlextLDAPClient", expected "AsyncGenerator[FlextLDAPClient, None]")  [return-value]
-        return FlextLDAPClient()
+"FlextLdapClients", expected "AsyncGenerator[FlextLdapClients, None]")  [return-value]
+        return FlextLdapClients()
                ^~~~~~~~~~~~~~
 Found 159 errors in 11 files (checked 56 source files)

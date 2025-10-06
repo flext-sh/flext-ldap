@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPServersBaseOperations module."""
+"""Tests for FlextLdapServersBaseOperations module."""
 
-from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
-class TestFlextLDAPServersBaseOperations:
-    """Test cases for FlextLDAPServersBaseOperations."""
+class TestFlextLdapServersBaseOperations:
+    """Test cases for FlextLdapServersBaseOperations."""
 
     def test_servers_base_operations_initialization(self):
         """Test servers base operations initialization."""
-        ops = FlextLDAPServersBaseOperations()
+        ops = FlextLdapServersBaseOperations()
         assert ops is not None
 
     def test_servers_base_operations_basic_functionality(self):
         """Test basic servers base operations functionality."""
-        ops = FlextLDAPServersBaseOperations()
+        ops = FlextLdapServersBaseOperations()
         # Add specific test cases based on servers base operations functionality
         assert hasattr(ops, "__class__")

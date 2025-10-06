@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPConnectionManager module."""
+"""Tests for FlextLdapConnectionManager module."""
 
-from flext_ldap.connection_manager import FlextLDAPConnectionManager
+from flext_ldap.connection_manager import FlextLdapConnectionManager
 
 
-class TestFlextLDAPConnectionManager:
-    """Test cases for FlextLDAPConnectionManager."""
+class TestFlextLdapConnectionManager:
+    """Test cases for FlextLdapConnectionManager."""
 
     def test_connection_manager_initialization(self):
         """Test connection manager initialization."""
-        manager = FlextLDAPConnectionManager()
+        manager = FlextLdapConnectionManager()
         assert manager is not None
 
     def test_connection_manager_basic_functionality(self):
         """Test basic connection manager functionality."""
-        manager = FlextLDAPConnectionManager()
+        manager = FlextLdapConnectionManager()
         # Add specific test cases based on connection manager functionality
         assert hasattr(manager, "__class__")

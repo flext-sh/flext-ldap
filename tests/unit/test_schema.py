@@ -9,29 +9,29 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.models import FlextLDAPModels
-from flext_ldap.schema import FlextLDAPSchema
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.schema import FlextLdapSchema
 
 from flext_core import FlextResult
 
 
-class TestFlextLDAPSchema:
-    """Comprehensive tests for FlextLDAPSchema class."""
+class TestFlextLdapSchema:
+    """Comprehensive tests for FlextLdapSchema class."""
 
     def test_schema_initialization(self) -> None:
         """Test schema initialization."""
-        # FlextLDAPSchema is abstract, test the concrete classes instead
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        # FlextLdapSchema is abstract, test the concrete classes instead
+        detector = FlextLdapSchema.GenericQuirksDetector()
         assert detector is not None
 
     def test_quirks_detector_initialization(self) -> None:
         """Test quirks detector initialization."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         assert detector is not None
 
     def test_quirks_detector_handle_empty_message(self) -> None:
         """Test quirks detector with empty message."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.handle(None)
 
         assert isinstance(result, FlextResult)
@@ -43,7 +43,7 @@ class TestFlextLDAPSchema:
 
     def test_quirks_detector_handle_valid_message(self) -> None:
         """Test quirks detector with valid message."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.handle({"server": "test"})
 
         assert isinstance(result, FlextResult)
@@ -52,25 +52,25 @@ class TestFlextLDAPSchema:
 
     def test_detect_server_type_none(self) -> None:
         """Test server type detection with None input."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.detect_server_type(None)
         assert result is None
 
     def test_detect_server_type_valid(self) -> None:
         """Test server type detection with valid input - returns enum."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.detect_server_type({"server": "test"})
-        assert result == FlextLDAPModels.LdapServerType.GENERIC
+        assert result == FlextLdapModels.LdapServerType.GENERIC
 
     def test_get_server_quirks_none(self) -> None:
         """Test getting server quirks with None server type."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.get_server_quirks(None)
         assert result is None
 
     def test_get_server_quirks_valid(self) -> None:
         """Test getting server quirks with valid server type."""
-        detector = FlextLDAPSchema.GenericQuirksDetector()
+        detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.get_server_quirks("GENERIC")
 
         assert result is not None
@@ -88,5 +88,5 @@ class TestFlextLDAPSchema:
     def test_discovery_initialization(self) -> None:
         """Test discovery initialization."""
         # Discovery is abstract, test that it exists
-        assert hasattr(FlextLDAPSchema, "Discovery")
-        assert FlextLDAPSchema.Discovery is not None
+        assert hasattr(FlextLdapSchema, "Discovery")
+        assert FlextLdapSchema.Discovery is not None

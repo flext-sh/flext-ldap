@@ -9,18 +9,18 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
 
 
-class FlextLDAPAclParsers:
+class FlextLdapAclParsers:
     """ACL parsers for different LDAP server formats."""
 
     class OpenLdapAclParser:
         """Parse OpenLDAP ACL format."""
 
         @classmethod
-        def parse(cls, acl: str | None) -> FlextResult[FlextLDAPModels.UnifiedAcl]:
+        def parse(cls, acl: str | None) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Parse OpenLDAP ACL string to unified ACL format.
 
             Args:
@@ -31,7 +31,7 @@ class FlextLDAPAclParsers:
 
             """
             if not acl or not acl.strip():
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                     "ACL string cannot be empty"
                 )
 
@@ -41,17 +41,17 @@ class FlextLDAPAclParsers:
 
                 # Find "access to" keywords
                 if (
-                    len(parts) < FlextLDAPConstants.Parsing.MIN_ACL_PARTS
+                    len(parts) < FlextLdapConstants.Parsing.MIN_ACL_PARTS
                     or parts[0] != "access"
                     or parts[1] != "to"
                 ):
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid OpenLDAP ACL format"
                     )
 
                 # Find "by" keyword to split target and subject/permissions
                 if "by" not in parts:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid OpenLDAP ACL format"
                     )
 
@@ -64,7 +64,7 @@ class FlextLDAPAclParsers:
                 # Extract subject and permissions (after "by")
                 subject_perms_parts = parts[by_idx + 1 :]
                 if not subject_perms_parts:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid OpenLDAP ACL format"
                     )
 
@@ -84,7 +84,7 @@ class FlextLDAPAclParsers:
                 permissions = cls._parse_openldap_permissions(perms_str)
 
                 # Create unified ACL
-                unified_acl = FlextLDAPModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.UnifiedAcl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -93,21 +93,21 @@ class FlextLDAPAclParsers:
                     priority=100,
                 )
 
-                return FlextResult[FlextLDAPModels.UnifiedAcl].ok(unified_acl)
+                return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
             except Exception as e:
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                     f"Failed to parse OpenLDAP ACL: {e}"
                 )
 
         @staticmethod
-        def _parse_openldap_target(target_str: str) -> FlextLDAPModels.AclTarget:
+        def _parse_openldap_target(target_str: str) -> FlextLdapModels.AclTarget:
             """Parse OpenLDAP ACL target."""
             # Handle attrs= format
             if target_str.startswith("attrs="):
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
-                return FlextLDAPModels.AclTarget(
+                return FlextLdapModels.AclTarget(
                     dn_pattern="*",
                     attributes=attributes,
                     filter_expression="",
@@ -116,21 +116,21 @@ class FlextLDAPAclParsers:
             # Handle dn.exact= format
             if target_str.startswith("dn.exact="):
                 dn_pattern = target_str[9:].strip('"')  # Remove dn.exact= and quotes
-                return FlextLDAPModels.AclTarget(
+                return FlextLdapModels.AclTarget(
                     dn_pattern=dn_pattern,
                     attributes=[],
                     filter_expression="",
                 )
 
             # Default to entry target
-            return FlextLDAPModels.AclTarget(
+            return FlextLdapModels.AclTarget(
                 dn_pattern="*",
                 attributes=[],
                 filter_expression="",
             )
 
         @staticmethod
-        def _parse_openldap_subject(subject_str: str) -> FlextLDAPModels.AclSubject:
+        def _parse_openldap_subject(subject_str: str) -> FlextLdapModels.AclSubject:
             """Parse OpenLDAP ACL subject."""
             # Map OpenLDAP subject keywords to subject types
             subject_mapping = {
@@ -142,7 +142,7 @@ class FlextLDAPAclParsers:
 
             subject_type = subject_mapping.get(subject_str, "user")
 
-            return FlextLDAPModels.AclSubject(
+            return FlextLdapModels.AclSubject(
                 subject_type=subject_type,
                 subject_dn=subject_str,
             )
@@ -150,7 +150,7 @@ class FlextLDAPAclParsers:
         @staticmethod
         def _parse_openldap_permissions(
             perms_str: str,
-        ) -> FlextLDAPModels.AclPermissions:
+        ) -> FlextLdapModels.AclPermissions:
             """Parse OpenLDAP ACL permissions."""
             # Map OpenLDAP permission keywords
             perm_mapping = {
@@ -173,7 +173,7 @@ class FlextLDAPAclParsers:
             if not permissions:
                 permissions.append("read")
 
-            return FlextLDAPModels.AclPermissions(
+            return FlextLdapModels.AclPermissions(
                 permissions=permissions, denied_permissions=[], grant_type="allow"
             )
 
@@ -183,11 +183,11 @@ class FlextLDAPAclParsers:
         @staticmethod
         def parse(
             acl_string: str | None,
-        ) -> FlextResult[FlextLDAPModels.UnifiedAcl]:
+        ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Parse Oracle ACL string to unified representation."""
             try:
                 if not acl_string or not acl_string.strip():
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "ACL string cannot be empty"
                     )
 
@@ -195,8 +195,8 @@ class FlextLDAPAclParsers:
                 # Format: access to <target> by <subject> (<permissions>)
                 parts = acl_string.strip().split()
 
-                if len(parts) < FlextLDAPConstants.Parsing.MIN_ACL_PARTS:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                if len(parts) < FlextLdapConstants.Parsing.MIN_ACL_PARTS:
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid Oracle ACL format"
                     )
 
@@ -206,7 +206,7 @@ class FlextLDAPAclParsers:
                 by_idx = parts.index("by") if "by" in parts else -1
 
                 if access_idx == -1 or to_idx == -1 or by_idx == -1:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Missing required keywords in Oracle ACL"
                     )
 
@@ -218,19 +218,19 @@ class FlextLDAPAclParsers:
                 subject_perms = parts[by_idx + 1 :]
 
                 # Parse target
-                target = FlextLDAPAclParsers.OracleAclParser.parse_oracle_target(
+                target = FlextLdapAclParsers.OracleAclParser.parse_oracle_target(
                     target_str
                 )
 
                 # Parse subject and permissions
                 subject, permissions = (
-                    FlextLDAPAclParsers.OracleAclParser.parse_oracle_subject_permissions(
+                    FlextLdapAclParsers.OracleAclParser.parse_oracle_subject_permissions(
                         subject_perms
                     )
                 )
 
                 # Create unified ACL
-                unified_acl = FlextLDAPModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.UnifiedAcl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -239,19 +239,19 @@ class FlextLDAPAclParsers:
                     priority=100,
                 )
 
-                return FlextResult[FlextLDAPModels.UnifiedAcl].ok(unified_acl)
+                return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
             except Exception as e:
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                     f"Failed to parse Oracle ACL: {e}"
                 )
 
         @staticmethod
-        def parse_oracle_target(target_str: str) -> FlextLDAPModels.AclTarget:
+        def parse_oracle_target(target_str: str) -> FlextLdapModels.AclTarget:
             """Parse Oracle ACL target."""
             # Handle different target types
             if target_str == "entry":
-                return FlextLDAPModels.AclTarget(
+                return FlextLdapModels.AclTarget(
                     target_type="entry",
                     attributes=[],
                     dn_pattern="*",
@@ -261,7 +261,7 @@ class FlextLDAPAclParsers:
                 # Attribute target: attrs=mail,cn
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
-                return FlextLDAPModels.AclTarget(
+                return FlextLdapModels.AclTarget(
                     dn_pattern="*",
                     attributes=attributes,
                     filter_expression="",
@@ -272,13 +272,13 @@ class FlextLDAPAclParsers:
                 # Remove parentheses if present
                 attrs_str = attrs_str.strip("()")
                 attributes = [attrs_str.strip()]
-                return FlextLDAPModels.AclTarget(
+                return FlextLdapModels.AclTarget(
                     dn_pattern="*",
                     attributes=attributes,
                     filter_expression="",
                 )
             # Default to entry target
-            return FlextLDAPModels.AclTarget(
+            return FlextLdapModels.AclTarget(
                 dn_pattern="*",
                 attributes=[],
                 filter_expression="",
@@ -287,7 +287,7 @@ class FlextLDAPAclParsers:
         @staticmethod
         def parse_oracle_subject_permissions(
             subject_perms: FlextTypes.StringList,
-        ) -> tuple[FlextLDAPModels.AclSubject, FlextLDAPModels.AclPermissions]:
+        ) -> tuple[FlextLdapModels.AclSubject, FlextLdapModels.AclPermissions]:
             """Parse Oracle ACL subject and permissions."""
             if not subject_perms:
                 subject_str = "anonymous"
@@ -302,7 +302,7 @@ class FlextLDAPAclParsers:
                 )
 
             # Parse permissions
-            permissions = FlextLDAPAclParsers.OracleAclParser.parse_oracle_permissions(
+            permissions = FlextLdapAclParsers.OracleAclParser.parse_oracle_permissions(
                 perms_str
             )
 
@@ -318,7 +318,7 @@ class FlextLDAPAclParsers:
                 subject_type = "anonymous"
 
             # Create subject
-            subject = FlextLDAPModels.AclSubject(
+            subject = FlextLdapModels.AclSubject(
                 subject_type=subject_type,
                 subject_dn=subject_str,
             )
@@ -326,7 +326,7 @@ class FlextLDAPAclParsers:
             return subject, permissions
 
         @staticmethod
-        def parse_oracle_permissions(perms_str: str) -> FlextLDAPModels.AclPermissions:
+        def parse_oracle_permissions(perms_str: str) -> FlextLdapModels.AclPermissions:
             """Parse Oracle ACL permissions."""
             permissions = []
 
@@ -360,7 +360,7 @@ class FlextLDAPAclParsers:
             if not permissions:
                 permissions.append("read")
 
-            return FlextLDAPModels.AclPermissions(
+            return FlextLdapModels.AclPermissions(
                 permissions=permissions, denied_permissions=[], grant_type="allow"
             )
 
@@ -368,7 +368,7 @@ class FlextLDAPAclParsers:
         """Parse 389 DS/Apache DS ACI format."""
 
         @classmethod
-        def parse(cls, aci: str) -> FlextResult[FlextLDAPModels.UnifiedAcl]:
+        def parse(cls, aci: str) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Parse ACI string to unified ACL format.
 
             Args:
@@ -379,7 +379,7 @@ class FlextLDAPAclParsers:
 
             """
             if not aci or not aci.strip():
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                     "ACI string cannot be empty"
                 )
 
@@ -391,7 +391,7 @@ class FlextLDAPAclParsers:
                 # Extract target
                 target_match = re.search(r'\(target="([^"]+)"\)', aci)
                 if not target_match:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing target"
                     )
 
@@ -400,7 +400,7 @@ class FlextLDAPAclParsers:
                 # Extract ACL name
                 name_match = re.search(r'acl\s+"([^"]+)"', aci)
                 if not name_match:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing ACL name"
                     )
 
@@ -409,7 +409,7 @@ class FlextLDAPAclParsers:
                 # Extract grant type (allow or deny)
                 grant_type_match = re.search(r";\s*(allow|deny)\s+", aci)
                 if not grant_type_match:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing grant type"
                     )
 
@@ -418,7 +418,7 @@ class FlextLDAPAclParsers:
                 # Extract permissions
                 perms_match = re.search(r"(allow|deny)\s+\(([^)]+)\)", aci)
                 if not perms_match:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing permissions"
                     )
 
@@ -428,7 +428,7 @@ class FlextLDAPAclParsers:
                 # Extract subject
                 subject_match = re.search(r'(userdn|groupdn)="([^"]+)"', aci)
                 if not subject_match:
-                    return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                    return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                         "Invalid ACI format: missing subject"
                     )
 
@@ -444,34 +444,34 @@ class FlextLDAPAclParsers:
                     subject_type = "user"
 
                 # Create target
-                target = FlextLDAPModels.AclTarget(
+                target = FlextLdapModels.AclTarget(
                     dn_pattern=target_dn,
                     target_attr=[],
                     target_filter="",
                 )
 
                 # Create subject
-                subject = FlextLDAPModels.AclSubject(
+                subject = FlextLdapModels.AclSubject(
                     subject_type=subject_type,
                     subject_dn=subject_identifier,
                 )
 
                 # Create permissions
                 if grant_type == "allow":
-                    permissions = FlextLDAPModels.AclPermissions(
+                    permissions = FlextLdapModels.AclPermissions(
                         permissions=permissions_list,
                         denied_permissions=[],
                         grant_type="allow",
                     )
                 else:  # deny
-                    permissions = FlextLDAPModels.AclPermissions(
+                    permissions = FlextLdapModels.AclPermissions(
                         permissions=[],
                         denied_permissions=permissions_list,
                         grant_type="deny",
                     )
 
                 # Create unified ACL
-                unified_acl = FlextLDAPModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.UnifiedAcl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -480,10 +480,10 @@ class FlextLDAPAclParsers:
                     priority=100,
                 )
 
-                return FlextResult[FlextLDAPModels.UnifiedAcl].ok(unified_acl)
+                return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
             except Exception as e:
-                return FlextResult[FlextLDAPModels.UnifiedAcl].fail(
+                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
                     f"Failed to parse ACI: {e}"
                 )
 
@@ -492,7 +492,7 @@ class FlextLDAPAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLDAPModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.UnifiedAcl,
         ) -> FlextResult[str]:
             """Convert unified ACL to Microsoft AD format.
 
@@ -505,16 +505,16 @@ class FlextLDAPAclParsers:
             """
             try:
                 # Basic Microsoft AD ACL format conversion
-                target_str = FlextLDAPAclParsers.MicrosoftAdConverter.format_ad_target(
+                target_str = FlextLdapAclParsers.MicrosoftAdConverter.format_ad_target(
                     unified_acl.target
                 )
                 subject_str = (
-                    FlextLDAPAclParsers.MicrosoftAdConverter.format_ad_subject(
+                    FlextLdapAclParsers.MicrosoftAdConverter.format_ad_subject(
                         unified_acl.subject
                     )
                 )
                 permissions_str = (
-                    FlextLDAPAclParsers.MicrosoftAdConverter.format_ad_permissions(
+                    FlextLdapAclParsers.MicrosoftAdConverter.format_ad_permissions(
                         unified_acl.permissions
                     )
                 )
@@ -528,7 +528,7 @@ class FlextLDAPAclParsers:
                 return FlextResult[str].fail(f"Microsoft AD conversion failed: {e}")
 
         @staticmethod
-        def format_ad_target(target: FlextLDAPModels.AclTarget) -> str:
+        def format_ad_target(target: FlextLdapModels.AclTarget) -> str:
             """Format target for Microsoft AD."""
             if target.attributes:
                 attrs = ",".join(target.attributes)
@@ -536,7 +536,7 @@ class FlextLDAPAclParsers:
             return f'target="ldap:///{target.dn_pattern}"'
 
         @staticmethod
-        def format_ad_subject(subject: FlextLDAPModels.AclSubject) -> str:
+        def format_ad_subject(subject: FlextLdapModels.AclSubject) -> str:
             """Format subject for Microsoft AD."""
             if subject.subject_type == "user":
                 return f'userdn="{subject.subject_dn}"'
@@ -547,7 +547,7 @@ class FlextLDAPAclParsers:
             return f'userdn="{subject.subject_dn}"'
 
         @staticmethod
-        def format_ad_permissions(permissions: FlextLDAPModels.AclPermissions) -> str:
+        def format_ad_permissions(permissions: FlextLdapModels.AclPermissions) -> str:
             """Format permissions for Microsoft AD."""
             if permissions.grant_type == "deny":
                 perms_str = ",".join(permissions.denied_permissions)
@@ -560,7 +560,7 @@ class FlextLDAPAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLDAPModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.UnifiedAcl,
         ) -> FlextResult[str]:
             """Convert unified ACL to OpenLDAP format.
 
@@ -574,17 +574,17 @@ class FlextLDAPAclParsers:
             try:
                 # OpenLDAP format: access to <target> by <subject> <permissions>
                 target_str = (
-                    FlextLDAPAclParsers.OpenLdapConverter.format_openldap_target(
+                    FlextLdapAclParsers.OpenLdapConverter.format_openldap_target(
                         unified_acl.target
                     )
                 )
                 subject_str = (
-                    FlextLDAPAclParsers.OpenLdapConverter.format_openldap_subject(
+                    FlextLdapAclParsers.OpenLdapConverter.format_openldap_subject(
                         unified_acl.subject
                     )
                 )
                 permissions_str = (
-                    FlextLDAPAclParsers.OpenLdapConverter.format_openldap_permissions(
+                    FlextLdapAclParsers.OpenLdapConverter.format_openldap_permissions(
                         unified_acl.permissions
                     )
                 )
@@ -599,7 +599,7 @@ class FlextLDAPAclParsers:
                 return FlextResult[str].fail(f"OpenLDAP conversion failed: {e}")
 
         @staticmethod
-        def format_openldap_target(target: FlextLDAPModels.AclTarget) -> str:
+        def format_openldap_target(target: FlextLdapModels.AclTarget) -> str:
             """Format target for OpenLDAP."""
             if target.attributes:
                 attrs = ",".join(target.attributes)
@@ -609,7 +609,7 @@ class FlextLDAPAclParsers:
             return "*"
 
         @staticmethod
-        def format_openldap_subject(subject: FlextLDAPModels.AclSubject) -> str:
+        def format_openldap_subject(subject: FlextLdapModels.AclSubject) -> str:
             """Format subject for OpenLDAP."""
             if subject.subject_type == "self":
                 return "self"
@@ -623,7 +623,7 @@ class FlextLDAPAclParsers:
 
         @staticmethod
         def format_openldap_permissions(
-            permissions: FlextLDAPModels.AclPermissions,
+            permissions: FlextLdapModels.AclPermissions,
         ) -> str:
             """Format permissions for OpenLDAP."""
             if permissions.grant_type == "deny":
@@ -636,7 +636,7 @@ class FlextLDAPAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLDAPModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.UnifiedAcl,
         ) -> FlextResult[str]:
             """Convert unified ACL to ACI format.
 
@@ -649,14 +649,14 @@ class FlextLDAPAclParsers:
             """
             try:
                 # ACI format: (target="...")(version 3.0; acl "name"; allow/deny (permissions) subject;)
-                target_str = FlextLDAPAclParsers.AciConverter.format_aci_target(
+                target_str = FlextLdapAclParsers.AciConverter.format_aci_target(
                     unified_acl.target
                 )
-                subject_str = FlextLDAPAclParsers.AciConverter.format_aci_subject(
+                subject_str = FlextLdapAclParsers.AciConverter.format_aci_subject(
                     unified_acl.subject
                 )
                 permissions_str = (
-                    FlextLDAPAclParsers.AciConverter.format_aci_permissions(
+                    FlextLdapAclParsers.AciConverter.format_aci_permissions(
                         unified_acl.permissions
                     )
                 )
@@ -670,12 +670,12 @@ class FlextLDAPAclParsers:
                 return FlextResult[str].fail(f"ACI conversion failed: {e}")
 
         @staticmethod
-        def format_aci_target(target: FlextLDAPModels.AclTarget) -> str:
+        def format_aci_target(target: FlextLdapModels.AclTarget) -> str:
             """Format target for ACI."""
             return target.dn_pattern or "*"
 
         @staticmethod
-        def format_aci_subject(subject: FlextLDAPModels.AclSubject) -> str:
+        def format_aci_subject(subject: FlextLdapModels.AclSubject) -> str:
             """Format subject for ACI."""
             if subject.subject_type == "group":
                 return f'groupdn="{subject.subject_dn}"'
@@ -684,7 +684,7 @@ class FlextLDAPAclParsers:
             return f'userdn="{subject.subject_dn}"'
 
         @staticmethod
-        def format_aci_permissions(permissions: FlextLDAPModels.AclPermissions) -> str:
+        def format_aci_permissions(permissions: FlextLdapModels.AclPermissions) -> str:
             """Format permissions for ACI."""
             if permissions.grant_type == "deny":
                 return ",".join(permissions.denied_permissions)
@@ -732,4 +732,4 @@ class FlextLDAPAclParsers:
             return FlextResult[FlextResult[object]].fail(f"ACL parsing failed: {e}")
 
 
-__all__ = ["FlextLDAPAclParsers"]
+__all__ = ["FlextLdapAclParsers"]

@@ -2,7 +2,7 @@
 
 This module contains all protocol interfaces and abstract base classes
 used throughout the flext-ldap domain. Following FLEXT standards, all
-protocols are organized under a single FlextLDAPProtocols class.
+protocols are organized under a single FlextLdapProtocols class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,11 +17,11 @@ from flext_core import FlextProtocols, FlextResult, FlextTypes
 
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
 
 
-class FlextLDAPProtocols(FlextProtocols):
+class FlextLdapProtocols(FlextProtocols):
     """Unified LDAP protocols class extending FlextProtocols with LDAP-specific protocols.
 
     This class extends the base FlextProtocols with LDAP-specific protocol definitions,
@@ -77,7 +77,7 @@ class FlextLDAPProtocols(FlextProtocols):
             dn: str
             attributes: dict[str, FlextTypes.StringList]
 
-            def __getitem__(self, key: str) -> FlextLDAPProtocols.Ldap.LdapAttribute:
+            def __getitem__(self, key: str) -> FlextLdapProtocols.Ldap.LdapAttribute:
                 """Get attribute by key."""
                 ...
 
@@ -90,7 +90,7 @@ class FlextLDAPProtocols(FlextProtocols):
 
             bound: bool
             last_error: str
-            entries: list[FlextLDAPProtocols.Ldap.LdapEntry]
+            entries: list[FlextLdapProtocols.Ldap.LdapEntry]
 
             def bind(self) -> bool:
                 """Bind to LDAP server."""
@@ -105,9 +105,9 @@ class FlextLDAPProtocols(FlextProtocols):
                 search_base: str,
                 search_filter: str,
                 _search_scope: Literal[
-                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE,
-                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
-                    FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
+                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE,
+                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
+                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
                 ],
                 attributes: FlextTypes.StringList | None = None,
                 _paged_size: int | None = None,
@@ -198,7 +198,7 @@ class FlextLDAPProtocols(FlextProtocols):
                 search_base: str,
                 filter_str: str,
                 attributes: FlextTypes.StringList | None = None,
-            ) -> FlextResult[list[FlextLDAPModels.Entry]]:
+            ) -> FlextResult[list[FlextLdapModels.Entry]]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -207,7 +207,7 @@ class FlextLDAPProtocols(FlextProtocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[list[FlextLDAPModels.Entry]]: Search results
+                    FlextResult[list[FlextLdapModels.Entry]]: Search results
 
                 """
                 ...
@@ -341,6 +341,60 @@ class FlextLDAPProtocols(FlextProtocols):
         class LdapConnectionManagerProtocol(FlextProtocols.Domain.Service, Protocol):
             """Protocol for LDAP connection management operations."""
 
+            def connect(
+                self,
+                server_uri: str,
+                bind_dn: str | None = None,
+                password: str | None = None,
+            ) -> FlextResult[bool]:
+                """Establish LDAP connection.
+
+                Args:
+                    server_uri: LDAP server URI
+                    bind_dn: Bind DN for authentication
+                    password: Password for authentication
+
+                Returns:
+                    FlextResult[bool]: Connection success status
+                """
+                ...
+
+            def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
+                """Bind to LDAP server.
+
+                Args:
+                    bind_dn: Distinguished name for binding
+                    password: Authentication password
+
+                Returns:
+                    FlextResult[bool]: Bind success status
+                """
+                ...
+
+            def unbind(self) -> FlextResult[None]:
+                """Unbind from LDAP server.
+
+                Returns:
+                    FlextResult[None]: Unbind success status
+                """
+                ...
+
+            def disconnect(self) -> FlextResult[None]:
+                """Disconnect from LDAP server.
+
+                Returns:
+                    FlextResult[None]: Disconnect success status
+                """
+                ...
+
+            def is_connected(self) -> bool:
+                """Check if connected to LDAP server.
+
+                Returns:
+                    bool: Connection status
+                """
+                ...
+
             def test_connection(self) -> FlextResult[bool]:
                 """Test LDAP connection.
 
@@ -374,7 +428,7 @@ class FlextLDAPProtocols(FlextProtocols):
                 search_base: str,
                 filter_str: str,
                 attributes: FlextTypes.StringList | None = None,
-            ) -> FlextResult[FlextTypes.Dict | None]:
+            ) -> FlextResult[FlextLdapModels.Entry | None]:
                 """Search for single LDAP entry.
 
                 Args:
@@ -383,29 +437,73 @@ class FlextLDAPProtocols(FlextProtocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[FlextTypes.Dict | None]: Single search result or None
+                    FlextResult[FlextLdapModels.Entry | None]: Single search result or None
                 """
                 ...
 
             def search(
                 self,
-                search_base: str,
+                base_dn: str,
                 filter_str: str,
                 attributes: FlextTypes.StringList | None = None,
-            ) -> FlextResult[list[FlextTypes.Dict]]:
+            ) -> FlextResult[list[FlextLdapModels.Entry]]:
                 """Search for LDAP entries.
 
                 Args:
-                    search_base: LDAP search base DN
+                    base_dn: LDAP search base DN
                     filter_str: LDAP search filter
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[list[FlextTypes.Dict]]: Search results
+                    FlextResult[list[FlextLdapModels.Entry]]: Search results
+                """
+                ...
+
+            def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
+                """Get user by DN.
+
+                Args:
+                    dn: User distinguished name
+
+                Returns:
+                    FlextResult[FlextLdapModels.LdapUser | None]: User object or None
+                """
+                ...
+
+            def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
+                """Get group by DN.
+
+                Args:
+                    dn: Group distinguished name
+
+                Returns:
+                    FlextResult[FlextLdapModels.Group | None]: Group object or None
+                """
+                ...
+
+            def user_exists(self, dn: str) -> FlextResult[bool]:
+                """Check if user exists.
+
+                Args:
+                    dn: User distinguished name
+
+                Returns:
+                    FlextResult[bool]: True if user exists
+                """
+                ...
+
+            def group_exists(self, dn: str) -> FlextResult[bool]:
+                """Check if group exists.
+
+                Args:
+                    dn: Group distinguished name
+
+                Returns:
+                    FlextResult[bool]: True if group exists
                 """
                 ...
 
 
 __all__ = [
-    "FlextLDAPProtocols",
+    "FlextLdapProtocols",
 ]

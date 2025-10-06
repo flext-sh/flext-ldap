@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.acl.converters import FlextLDAPAclConverters
-from flext_ldap.acl.manager import FlextLDAPAclManager
-from flext_ldap.acl.parsers import FlextLDAPAclParsers
+from flext_ldap.acl.converters import FlextLdapAclConverters
+from flext_ldap.acl.manager import FlextLdapAclManager
+from flext_ldap.acl.parsers import FlextLdapAclParsers
 
 __all__ = [
-    "FlextLDAPAclConverters",
-    "FlextLDAPAclManager",
-    "FlextLDAPAclParsers",
+    "FlextLdapAclConverters",
+    "FlextLdapAclManager",
+    "FlextLdapAclParsers",
 ]

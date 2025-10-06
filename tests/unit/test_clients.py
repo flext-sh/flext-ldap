@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap.clients import FlextLDAPClients
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.clients import FlextLdapClients
+from flext_ldap.models import FlextLdapModels
 
 from flext_core import FlextTypes
 
@@ -22,12 +22,12 @@ from flext_core import FlextTypes
 # pyright: reportPrivateUsage=false, reportArgumentType=false, reportCallIssue=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportIndexIssue=false
 
 
-class TestFlextLDAPClientsComprehensive:
-    """Comprehensive tests for FlextLDAPClients class focusing on low coverage methods."""
+class TestFlextLdapClientsComprehensive:
+    """Comprehensive tests for FlextLdapClients class focusing on low coverage methods."""
 
     def test_connect_invalid_server_uri(self) -> None:
         """Test connect with invalid server URI."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.connect(
             server_uri="invalid://localhost:389",
@@ -45,7 +45,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_connect_missing_parameters(self) -> None:
         """Test connect with missing parameters."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Test with empty server_uri
         result = client.connect("", "cn=admin,dc=test,dc=com", "testpass")
@@ -62,7 +62,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_bind_not_connected(self) -> None:
         """Test bind when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.bind("cn=admin,dc=test,dc=com", "testpass")
         assert result.is_failure
@@ -75,7 +75,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_unbind_not_connected(self) -> None:
         """Test unbind when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.unbind()
         # unbind is idempotent - returns success when not connected
@@ -84,12 +84,12 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_is_connected_initial_state(self) -> None:
         """Test is_connected in initial state."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         assert not client.is_connected()
 
     def test_test_connection_not_connected(self) -> None:
         """Test test_connection when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.test_connection()
         assert result.is_failure
@@ -102,7 +102,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_authenticate_user_not_connected(self) -> None:
         """Test authenticate_user when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.authenticate_user("testuser", "testpass")
         assert result.is_failure
@@ -115,7 +115,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_validate_connection_not_connected(self) -> None:
         """Test _validate_connection when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client._validate_connection()
         assert result.is_failure
@@ -128,7 +128,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_user_by_username_not_connected(self) -> None:
         """Test _search_user_by_username when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client._search_user_by_username("testuser")
         assert result.is_failure
@@ -141,7 +141,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_authenticate_user_credentials_not_connected(self) -> None:
         """Test _authenticate_user_credentials when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock user entry
         class MockAttribute:
@@ -167,7 +167,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_create_user_from_entry_result_empty_entry(self) -> None:
         """Test _create_user_from_entry_result with empty entry."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock empty entry
         class MockAttribute:
@@ -189,9 +189,9 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_validate_search_request_valid(self) -> None:
         """Test _validate_search_request with valid request."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        request = FlextLDAPModels.SearchRequest(
+        request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=person)",
             scope="SUBTREE",
@@ -209,7 +209,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_validate_search_request_valid_with_connection(self) -> None:
         """Test _validate_search_request with valid request and mock connection."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock a connection object that implements LdapConnectionProtocol
         class MockConnection:
@@ -231,7 +231,7 @@ class TestFlextLDAPClientsComprehensive:
         mock_conn = MockConnection()
         object.__setattr__(client, "_connection", mock_conn)
 
-        request = FlextLDAPModels.SearchRequest(
+        request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=person)",
             scope="SUBTREE",
@@ -244,9 +244,9 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_with_request_not_connected(self) -> None:
         """Test search_with_request when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        request = FlextLDAPModels.SearchRequest(
+        request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=person)",
             scope="SUBTREE",
@@ -264,7 +264,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_users_not_connected(self) -> None:
         """Test search_users when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_users("dc=test,dc=com", "(objectClass=person)")
         assert result.is_failure
@@ -277,7 +277,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_groups("dc=test,dc=com", "(objectClass=group)")
         assert result.is_failure
@@ -290,7 +290,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_get_user_not_connected(self) -> None:
         """Test get_user when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.get_user("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -303,7 +303,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_get_group_not_connected(self) -> None:
         """Test get_group when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.get_group("cn=testgroup,dc=test,dc=com")
         assert result.is_failure
@@ -316,9 +316,9 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_create_user_not_connected(self) -> None:
         """Test create_user when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        user_request = FlextLDAPModels.CreateUserRequest(
+        user_request = FlextLdapModels.CreateUserRequest(
             dn="cn=testuser,dc=test,dc=com",
             cn="Test User",
             sn="User",
@@ -345,9 +345,9 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_build_user_attributes_missing_required_fields(self) -> None:
         """Test _build_user_attributes with minimal required fields and optional None values."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        user_data = FlextLDAPModels.CreateUserRequest(
+        user_data = FlextLdapModels.CreateUserRequest(
             dn="cn=testuser,dc=test,dc=com",
             uid="testuser",
             cn="Test User",
@@ -373,7 +373,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_add_user_to_ldap_not_connected(self) -> None:
         """Test _add_user_to_ldap when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         attributes = {
             "cn": ["Test User"],
@@ -393,7 +393,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_retrieve_created_user_not_connected(self) -> None:
         """Test retrieve_created_user when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.retrieve_created_user("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -406,9 +406,9 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_create_group_not_connected(self) -> None:
         """Test create_group when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        group_request = FlextLDAPModels.CreateGroupRequest(
+        group_request = FlextLdapModels.CreateGroupRequest(
             dn="cn=testgroup,dc=test,dc=com",
             cn="Test Group",
             description="Test group",
@@ -426,7 +426,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_close_connection_not_connected(self) -> None:
         """Test close_connection when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.close_connection()
         assert result.is_success
@@ -434,7 +434,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_update_group_not_connected(self) -> None:
         """Test update_group_attributes when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.update_group_attributes(
             "cn=testgroup,dc=test,dc=com", {"cn": "Updated Group"}
@@ -449,7 +449,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_remove_member_not_connected(self) -> None:
         """Test remove_member when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.remove_member(
             "cn=testgroup,dc=test,dc=com", "cn=testuser,dc=test,dc=com"
@@ -464,7 +464,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_get_members_not_connected(self) -> None:
         """Test get_members when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.get_members("cn=testgroup,dc=test,dc=com")
         assert result.is_failure
@@ -477,7 +477,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_user_exists_not_connected(self) -> None:
         """Test user_exists when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.user_exists("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -490,7 +490,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_group_exists_not_connected(self) -> None:
         """Test group_exists when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.group_exists("cn=testgroup,dc=test,dc=com")
         assert result.is_success
@@ -498,7 +498,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search(
             base_dn="dc=test,dc=com",
@@ -515,7 +515,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_update_user_attributes_not_connected(self) -> None:
         """Test update_user_attributes when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.update_user_attributes(
             "cn=testuser,dc=test,dc=com", {"cn": "Updated User"}
@@ -530,7 +530,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_update_group_attributes_not_connected(self) -> None:
         """Test update_group_attributes when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.update_group_attributes(
             "cn=testgroup,dc=test,dc=com", {"cn": "Updated Group"}
@@ -545,7 +545,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_delete_user_not_connected(self) -> None:
         """Test delete_user when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.delete_user("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -558,7 +558,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_delete_group_not_connected(self) -> None:
         """Test delete_group when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.delete_group("cn=testgroup,dc=test,dc=com")
         assert result.is_failure
@@ -571,7 +571,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_add_not_connected(self) -> None:
         """Test add when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.add("cn=testuser,dc=test,dc=com", {"cn": "Test User"})
         assert result.is_failure
@@ -584,7 +584,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_modify_not_connected(self) -> None:
         """Test modify when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         changes = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
         result = client.modify("cn=testuser,dc=test,dc=com", changes)
@@ -598,7 +598,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_delete_not_connected(self) -> None:
         """Test delete when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.delete("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -611,7 +611,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_add_member_not_connected(self) -> None:
         """Test add_member when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.add_member(
             "cn=testgroup,dc=test,dc=com", "cn=testuser,dc=test,dc=com"
@@ -626,7 +626,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_session_id_property(self) -> None:
         """Test session_id property getter and setter."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Test initial state
         assert client.session_id is None
@@ -641,7 +641,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_create_user_from_entry_empty_attributes(self) -> None:
         """Test _create_user_from_entry with empty attributes."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock entry with empty attributes
         class MockAttribute:
@@ -662,7 +662,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_create_group_from_entry_empty_attributes(self) -> None:
         """Test _create_group_from_entry with empty attributes."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock entry with empty attributes
         class MockAttribute:
@@ -685,7 +685,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_universal_not_connected(self) -> None:
         """Test search_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_universal(
             base_dn="dc=test,dc=com",
@@ -702,7 +702,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_add_entry_universal_not_connected(self) -> None:
         """Test add_entry_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.add_entry_universal(
             "cn=testuser,dc=test,dc=com", {"cn": "Test User"}
@@ -717,7 +717,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_modify_entry_universal_not_connected(self) -> None:
         """Test modify_entry_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         changes: FlextTypes.Dict = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
         result = client.modify_entry_universal("cn=testuser,dc=test,dc=com", changes)
@@ -731,7 +731,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_delete_entry_universal_not_connected(self) -> None:
         """Test delete_entry_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.delete_entry_universal("cn=testuser,dc=test,dc=com")
         assert result.is_failure
@@ -744,7 +744,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_compare_universal_not_connected(self) -> None:
         """Test compare_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.compare_universal(
             "cn=testuser,dc=test,dc=com", "cn", "Test User"
@@ -759,7 +759,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_extended_operation_universal_not_connected(self) -> None:
         """Test extended_operation_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.extended_operation_universal("1.3.6.1.4.1.1466.20037", b"test")
         assert result.is_failure
@@ -772,7 +772,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_search_with_controls_universal_not_connected(self) -> None:
         """Test search_with_controls_universal when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_with_controls_universal(
             base_dn="dc=test,dc=com",
@@ -789,7 +789,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_get_server_capabilities_not_connected(self) -> None:
         """Test get_server_capabilities when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.get_server_capabilities()
         # Should return capabilities structure even when not connected
@@ -799,7 +799,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_normalize_filter(self) -> None:
         """Test _normalize_filter method."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Test with whitespace
         result = client._normalize_filter("  (objectClass=person)  ")
@@ -811,7 +811,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_normalize_attributes(self) -> None:
         """Test _normalize_attributes method."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Test with whitespace
         attributes = ["  cn  ", "  sn  ", "mail"]
@@ -821,7 +821,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_normalize_entry_attributes(self) -> None:
         """Test _normalize_entry_attributes method."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock entry attributes
         attributes: dict[str, str | FlextTypes.StringList] = {
@@ -839,7 +839,7 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_normalize_modify_changes(self) -> None:
         """Test _normalize_modify_changes method."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         changes: FlextTypes.Dict = {
             "cn": [("MODIFY_REPLACE", ["  Test User  "])],
@@ -854,23 +854,23 @@ class TestFlextLDAPClientsComprehensive:
 
     def test_normalize_search_results(self) -> None:
         """Test _normalize_search_results method."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Mock search results as Entry models
-        from flext_ldap.models import FlextLDAPModels
+        from flext_ldap.models import FlextLdapModels
 
-        entry = FlextLDAPModels.Entry(
+        entry = FlextLdapModels.Entry(
             dn="cn=testuser,dc=test,dc=com",
             attributes={"cn": ["  Test User  "], "sn": ["User"]},
             object_classes=["person"],
         )
-        results: list[FlextLDAPModels.Entry] = [entry]
+        results: list[FlextLdapModels.Entry] = [entry]
 
         result = client._normalize_search_results(results)
         assert len(result) == 1
         # Without server quirks setup, normalization returns results as-is
         first_result = result[0]
-        assert isinstance(first_result, FlextLDAPModels.Entry)
+        assert isinstance(first_result, FlextLdapModels.Entry)
         assert first_result.dn == "cn=testuser,dc=test,dc=com"
         # Normalization may trim whitespace even without server quirks
         assert first_result.attributes["cn"] in (["  Test User  "], ["Test User"])
@@ -878,36 +878,36 @@ class TestFlextLDAPClientsComprehensive:
 
 
 @pytest.mark.unit
-class TestFlextLDAPClientsConnection:
-    """Test FlextLDAPClients connection lifecycle operations."""
+class TestFlextLdapClientsConnection:
+    """Test FlextLdapClients connection lifecycle operations."""
 
     def test_client_initialization_no_config(self) -> None:
         """Test client can be initialized without configuration."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         assert client is not None
         assert not client.is_connected()
 
     def test_client_initialization_with_config(self) -> None:
         """Test client initialization with configuration."""
-        config = FlextLDAPModels.ConnectionConfig(
+        config = FlextLdapModels.ConnectionConfig(
             server="ldap://localhost:3390",
             port=3390,
             bind_dn="cn=admin,dc=flext,dc=local",
             bind_password="admin123",
             use_ssl=False,
         )
-        client = FlextLDAPClients(config=config)
+        client = FlextLdapClients(config=config)
         assert client is not None
         assert not client.is_connected()
 
     def test_is_connected_before_connection(self) -> None:
         """Test is_connected returns False before connecting."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         assert not client.is_connected()
 
     def test_connect_missing_server_uri(self) -> None:
         """Test connect fails with invalid (empty) server URI."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         result = client.connect(
             server_uri="",  # Invalid empty URI
             bind_dn="cn=admin,dc=flext,dc=local",
@@ -920,7 +920,7 @@ class TestFlextLDAPClientsConnection:
 
     def test_connect_missing_bind_dn(self) -> None:
         """Test connect fails with invalid (empty) bind DN."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         result = client.connect(
             server_uri="ldap://localhost:3390",
             bind_dn="",  # Invalid empty DN
@@ -933,7 +933,7 @@ class TestFlextLDAPClientsConnection:
 
     def test_connect_missing_password(self) -> None:
         """Test connect fails with invalid (empty) password."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         result = client.connect(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=admin,dc=flext,dc=local",
@@ -944,7 +944,7 @@ class TestFlextLDAPClientsConnection:
 
     def test_disconnect_before_connect(self) -> None:
         """Test disconnect returns success even if not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
         result = client.disconnect()
         # Should succeed gracefully (idempotent)
         assert result.is_success
@@ -952,12 +952,12 @@ class TestFlextLDAPClientsConnection:
 
 @pytest.mark.integration
 @pytest.mark.docker
-class TestFlextLDAPClientsConnectionIntegration:
-    """Integration tests for FlextLDAPClients connection with real LDAP server."""
+class TestFlextLdapClientsConnectionIntegration:
+    """Integration tests for FlextLdapClients connection with real LDAP server."""
 
     def test_connect_success(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test successful connection to LDAP server."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect using container info
         result = client.connect(
@@ -977,7 +977,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test connection fails with invalid credentials."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Attempt connection with wrong password
         result = client.connect(
@@ -996,7 +996,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test connection fails with invalid bind DN."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Attempt connection with invalid DN
         result = client.connect(
@@ -1012,7 +1012,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test disconnect after successful connection."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect
         connect_result = client.connect(
@@ -1032,7 +1032,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test can reconnect after disconnect."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # First connection
         result1 = client.connect(
@@ -1064,7 +1064,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test test_connection method validates connectivity."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect first
         client.connect(
@@ -1083,7 +1083,7 @@ class TestFlextLDAPClientsConnectionIntegration:
 
     def test_test_connection_not_connected(self) -> None:
         """Test test_connection fails when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.test_connection()
         assert result.is_failure
@@ -1091,7 +1091,7 @@ class TestFlextLDAPClientsConnectionIntegration:
 
     def test_bind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test bind operation after connection."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect
         client.connect(
@@ -1112,7 +1112,7 @@ class TestFlextLDAPClientsConnectionIntegration:
 
     def test_unbind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test unbind operation after connection."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect
         client.connect(
@@ -1131,7 +1131,7 @@ class TestFlextLDAPClientsConnectionIntegration:
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test session ID persists across connection lifecycle."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Get initial session ID
         session_id_1 = client.session_id
@@ -1158,14 +1158,14 @@ class TestFlextLDAPClientsConnectionIntegration:
 @pytest.mark.integration
 @pytest.mark.docker
 @pytest.mark.slow
-class TestFlextLDAPClientsConnectionEdgeCases:
-    """Edge case tests for FlextLDAPClients connection management."""
+class TestFlextLdapClientsConnectionEdgeCases:
+    """Edge case tests for FlextLdapClients connection management."""
 
     def test_multiple_disconnect_calls_idempotent(
         self, clean_ldap_container: FlextTypes.Dict
     ) -> None:
         """Test multiple disconnect calls are idempotent."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Connect
         client.connect(
@@ -1189,14 +1189,14 @@ class TestFlextLDAPClientsConnectionEdgeCases:
     ) -> None:
         """Test connect parameters override config object."""
         # Create config with wrong credentials
-        config = FlextLDAPModels.ConnectionConfig(
+        config = FlextLdapModels.ConnectionConfig(
             server="ldap://wrong-server:389",
             port=389,
             bind_dn="cn=wrong,dc=example,dc=com",
             bind_password="wrong",
             use_ssl=False,
         )
-        client = FlextLDAPClients(config=config)
+        client = FlextLdapClients(config=config)
 
         # Connect with correct parameters (should override config)
         result = client.connect(
@@ -1212,12 +1212,12 @@ class TestFlextLDAPClientsConnectionEdgeCases:
 
 
 @pytest.mark.unit
-class TestFlextLDAPClientsAuthenticationUnit:
-    """Test FlextLDAPClients authentication operations - unit tests (no Docker)."""
+class TestFlextLdapClientsAuthenticationUnit:
+    """Test FlextLdapClients authentication operations - unit tests (no Docker)."""
 
     def test_authenticate_user_not_connected(self) -> None:
         """Test authenticate_user fails when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.authenticate_user(username="testuser", password="password123")
 
@@ -1228,7 +1228,7 @@ class TestFlextLDAPClientsAuthenticationUnit:
 
     def test_authenticate_user_empty_username(self) -> None:
         """Test authenticate_user with empty username."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Even though client is not connected, empty username should be caught
         result = client.authenticate_user(username="", password="password123")
@@ -1238,7 +1238,7 @@ class TestFlextLDAPClientsAuthenticationUnit:
 
     def test_authenticate_user_empty_password(self) -> None:
         """Test authenticate_user with empty password."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         # Even though client is not connected, empty password should be caught
         result = client.authenticate_user(username="testuser", password="")
@@ -1249,8 +1249,8 @@ class TestFlextLDAPClientsAuthenticationUnit:
 
 @pytest.mark.integration
 @pytest.mark.docker
-class TestFlextLDAPClientsAuthenticationIntegration:
-    """Integration tests for FlextLDAPClients authentication with real LDAP server.
+class TestFlextLdapClientsAuthenticationIntegration:
+    """Integration tests for FlextLdapClients authentication with real LDAP server.
 
     Note: Full authentication tests with user creation are skipped due to hardcoded
     search base in clients.py (_search_user_by_username uses 'ou=users,dc=example,dc=com').
@@ -1260,9 +1260,9 @@ class TestFlextLDAPClientsAuthenticationIntegration:
     @pytest.fixture
     def authenticated_client(
         self, clean_ldap_container: FlextTypes.Dict
-    ) -> FlextLDAPClients:
+    ) -> FlextLdapClients:
         """Create and connect LDAP client for authentication tests."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         connect_result = client.connect(
             server_uri=str(clean_ldap_container["server_url"]),
@@ -1276,7 +1276,7 @@ class TestFlextLDAPClientsAuthenticationIntegration:
         return client
 
     def test_authenticate_user_not_found(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication fails for non-existent user."""
         result = authenticated_client.authenticate_user(
@@ -1289,7 +1289,7 @@ class TestFlextLDAPClientsAuthenticationIntegration:
         )
 
     def test_authenticate_disconnected_during_auth(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication handles disconnection gracefully."""
         # Disconnect the client
@@ -1308,15 +1308,15 @@ class TestFlextLDAPClientsAuthenticationIntegration:
 @pytest.mark.integration
 @pytest.mark.docker
 @pytest.mark.slow
-class TestFlextLDAPClientsAuthenticationEdgeCases:
-    """Edge case tests for FlextLDAPClients authentication."""
+class TestFlextLdapClientsAuthenticationEdgeCases:
+    """Edge case tests for FlextLdapClients authentication."""
 
     @pytest.fixture
     def authenticated_client(
         self, clean_ldap_container: FlextTypes.Dict
-    ) -> FlextLDAPClients:
+    ) -> FlextLdapClients:
         """Create and connect LDAP client for edge case tests."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         connect_result = client.connect(
             server_uri=str(clean_ldap_container["server_url"]),
@@ -1330,7 +1330,7 @@ class TestFlextLDAPClientsAuthenticationEdgeCases:
         return client
 
     def test_authenticate_special_characters_in_username(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication with special characters in username."""
         result = authenticated_client.authenticate_user(
@@ -1345,7 +1345,7 @@ class TestFlextLDAPClientsAuthenticationEdgeCases:
         )
 
     def test_authenticate_ldap_injection_attempt(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication prevents LDAP injection."""
         # Attempt LDAP injection in username
@@ -1358,7 +1358,7 @@ class TestFlextLDAPClientsAuthenticationEdgeCases:
         assert result.is_failure
 
     def test_authenticate_very_long_username(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication with very long username."""
         long_username = "a" * 1000
@@ -1371,7 +1371,7 @@ class TestFlextLDAPClientsAuthenticationEdgeCases:
         assert result.is_failure
 
     def test_authenticate_unicode_username(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test authentication with unicode characters in username."""
         result = authenticated_client.authenticate_user(
@@ -1384,14 +1384,14 @@ class TestFlextLDAPClientsAuthenticationEdgeCases:
 
 
 @pytest.mark.unit
-class TestFlextLDAPClientsSearchUnit:
-    """Test FlextLDAPClients search operations - unit tests (no Docker)."""
+class TestFlextLdapClientsSearchUnit:
+    """Test FlextLdapClients search operations - unit tests (no Docker)."""
 
     def test_search_with_request_not_connected(self) -> None:
         """Test search_with_request fails when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -1408,11 +1408,11 @@ class TestFlextLDAPClientsSearchUnit:
         """Test search_with_request validates base DN at Pydantic level."""
         from pydantic_core import ValidationError
 
-        FlextLDAPClients()
+        FlextLdapClients()
 
         # Pydantic validation should reject empty DN at model construction
         with pytest.raises(ValidationError) as exc_info:
-            FlextLDAPModels.SearchRequest(
+            FlextLdapModels.SearchRequest(
                 base_dn="",  # Invalid empty DN
                 filter_str="(objectClass=person)",
                 scope="subtree",
@@ -1427,11 +1427,11 @@ class TestFlextLDAPClientsSearchUnit:
         """Test search_with_request validates filter at Pydantic level."""
         from pydantic_core import ValidationError
 
-        FlextLDAPClients()
+        FlextLdapClients()
 
         # Pydantic validation should reject empty filter at model construction
         with pytest.raises(ValidationError) as exc_info:
-            FlextLDAPModels.SearchRequest(
+            FlextLdapModels.SearchRequest(
                 base_dn="dc=flext,dc=local",
                 filter_str="",  # Invalid empty filter
                 scope="subtree",
@@ -1441,7 +1441,7 @@ class TestFlextLDAPClientsSearchUnit:
 
     def test_search_users_not_connected(self) -> None:
         """Test search_users fails when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_users(base_dn="ou=users,dc=flext,dc=local")
 
@@ -1452,7 +1452,7 @@ class TestFlextLDAPClientsSearchUnit:
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups fails when not connected."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         result = client.search_groups(base_dn="ou=groups,dc=flext,dc=local")
 
@@ -1464,15 +1464,15 @@ class TestFlextLDAPClientsSearchUnit:
 
 @pytest.mark.integration
 @pytest.mark.docker
-class TestFlextLDAPClientsSearchIntegration:
-    """Integration tests for FlextLDAPClients search with real LDAP server."""
+class TestFlextLdapClientsSearchIntegration:
+    """Integration tests for FlextLdapClients search with real LDAP server."""
 
     @pytest.fixture
     def authenticated_client(
         self, clean_ldap_container: FlextTypes.Dict
-    ) -> FlextLDAPClients:
+    ) -> FlextLdapClients:
         """Create and connect LDAP client for search tests."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         connect_result = client.connect(
             server_uri=str(clean_ldap_container["server_url"]),
@@ -1487,11 +1487,11 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_with_request_base_search(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request with BASE scope."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=dcObject)",
             scope="base",
@@ -1503,16 +1503,16 @@ class TestFlextLDAPClientsSearchIntegration:
         assert result.is_success
         response = result.value
         assert response is not None
-        assert isinstance(response, FlextLDAPModels.SearchResponse)
+        assert isinstance(response, FlextLdapModels.SearchResponse)
         assert len(response.entries) > 0
 
     def test_search_with_request_subtree_search(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request with SUBTREE scope."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=organizationalUnit)",
             scope="subtree",
@@ -1528,11 +1528,11 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_with_request_returns_response(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_with_request returns SearchResponse object."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=dcObject)",  # More specific filter
             scope="base",  # Base search for reliability
@@ -1552,7 +1552,7 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_users_all_users(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_users retrieves all users."""
@@ -1567,7 +1567,7 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_users_with_uid_filter(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_users with UID filter."""
@@ -1583,7 +1583,7 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_groups_all_groups(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups retrieves all groups."""
@@ -1598,7 +1598,7 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_groups_with_cn_filter(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups with CN filter."""
@@ -1614,14 +1614,14 @@ class TestFlextLDAPClientsSearchIntegration:
 
     def test_search_disconnected_during_search(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search handles disconnection gracefully."""
         # Disconnect the client
         authenticated_client.disconnect()
 
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="subtree",
@@ -1638,15 +1638,15 @@ class TestFlextLDAPClientsSearchIntegration:
 @pytest.mark.integration
 @pytest.mark.docker
 @pytest.mark.slow
-class TestFlextLDAPClientsSearchEdgeCases:
-    """Edge case tests for FlextLDAPClients search operations."""
+class TestFlextLdapClientsSearchEdgeCases:
+    """Edge case tests for FlextLdapClients search operations."""
 
     @pytest.fixture
     def authenticated_client(
         self, clean_ldap_container: FlextTypes.Dict
-    ) -> FlextLDAPClients:
+    ) -> FlextLdapClients:
         """Create and connect LDAP client for edge case tests."""
-        client = FlextLDAPClients()
+        client = FlextLdapClients()
 
         connect_result = client.connect(
             server_uri=str(clean_ldap_container["server_url"]),
@@ -1661,11 +1661,11 @@ class TestFlextLDAPClientsSearchEdgeCases:
 
     def test_search_with_complex_filter(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with complex LDAP filter."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(&(objectClass=organizationalUnit)(!(ou=readonly)))",
             scope="subtree",
@@ -1678,11 +1678,11 @@ class TestFlextLDAPClientsSearchEdgeCases:
 
     def test_search_with_invalid_attribute_list(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with non-existent attribute in list."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="base",
@@ -1696,11 +1696,11 @@ class TestFlextLDAPClientsSearchEdgeCases:
 
     def test_search_with_wildcard_filter(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search with wildcard in filter."""
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="subtree",
@@ -1715,12 +1715,12 @@ class TestFlextLDAPClientsSearchEdgeCases:
 
     def test_search_with_case_insensitive_scope(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search handles case-insensitive scope values."""
         # Test uppercase scope
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="SUBTREE",  # Uppercase
@@ -1732,7 +1732,7 @@ class TestFlextLDAPClientsSearchEdgeCases:
         assert result.is_success
 
     def test_search_users_empty_base_dn(
-        self, authenticated_client: FlextLDAPClients
+        self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test search_users with empty base DN."""
         result = authenticated_client.search_users(base_dn="")
@@ -1745,7 +1745,7 @@ class TestFlextLDAPClientsSearchEdgeCases:
 
     def test_search_groups_special_characters_in_cn(
         self,
-        authenticated_client: FlextLDAPClients,
+        authenticated_client: FlextLdapClients,
         clean_ldap_container: FlextTypes.Dict,
     ) -> None:
         """Test search_groups with special characters in CN."""

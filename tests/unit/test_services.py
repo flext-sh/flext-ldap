@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPServices module."""
+"""Tests for FlextLdapServices module."""
 
-from flext_ldap.services import FlextLDAPServices
+from flext_ldap.services import FlextLdapServices
 
 
-class TestFlextLDAPServices:
-    """Test cases for FlextLDAPServices."""
+class TestFlextLdapServices:
+    """Test cases for FlextLdapServices."""
 
     def test_services_initialization(self):
         """Test services initialization."""
-        services = FlextLDAPServices()
+        services = FlextLdapServices()
         assert services is not None
 
     def test_services_basic_functionality(self):
         """Test basic services functionality."""
-        services = FlextLDAPServices()
+        services = FlextLdapServices()
         # Add specific test cases based on services functionality
         assert hasattr(services, "__class__")

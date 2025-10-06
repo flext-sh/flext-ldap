@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPServersFactory module."""
+"""Tests for FlextLdapServersFactory module."""
 
-from flext_ldap.servers.factory import FlextLDAPServersFactory
+from flext_ldap.servers.factory import FlextLdapServersFactory
 
 
-class TestFlextLDAPServersFactory:
-    """Test cases for FlextLDAPServersFactory."""
+class TestFlextLdapServersFactory:
+    """Test cases for FlextLdapServersFactory."""
 
     def test_servers_factory_initialization(self):
         """Test servers factory initialization."""
-        factory = FlextLDAPServersFactory()
+        factory = FlextLdapServersFactory()
         assert factory is not None
 
     def test_servers_factory_basic_functionality(self):
         """Test basic servers factory functionality."""
-        factory = FlextLDAPServersFactory()
+        factory = FlextLdapServersFactory()
         # Add specific test cases based on servers factory functionality
         assert hasattr(factory, "__class__")

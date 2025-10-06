@@ -13,7 +13,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 ```
 ┌────────────────────────────────────────────────────────┐
 │               Application Layer                        │
-│   FlextLDAP, FlextLDAPClient                       │
+│   FlextLdap, FlextLdapClients                       │
 │   Public facade, connection management                 │
 └────────────────────────────────────────────────────────┘
                         ▼
@@ -42,7 +42,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 
 ### **1. Application Layer**
 
-#### FlextLDAP
+#### FlextLdap
 
 **Purpose**: Public facade for LDAP operations
 **Location**: `src/flext_ldap/api.py`
@@ -53,7 +53,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 - High-level operation orchestration
 - Error handling and result wrapping
 
-#### FlextLDAPClient
+#### FlextLdapClients
 
 **Purpose**: LDAP connection and operation client
 **Location**: `src/flext_ldap/clients.py`
@@ -66,7 +66,7 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 
 ### **2. Domain Layer**
 
-#### FlextLDAPEntryAdapter
+#### FlextLdapEntryAdapter
 
 **Purpose**: Bidirectional ldap3 ↔ FlextLdif entry conversion
 **Location**: `src/flext_ldap/entry_adapter.py`
@@ -92,7 +92,7 @@ def ldif_entry_to_ldap3_attributes(
     """Convert FlextLdif entry to ldap3 attributes."""
 ```
 
-#### FlextLDAPQuirksAdapter
+#### FlextLdapQuirksAdapter
 
 **Purpose**: Wrap FlextLdif quirks system for server detection
 **Location**: `src/flext_ldap/quirks_integration.py`
@@ -258,7 +258,7 @@ def supports_vlv(self) -> bool:
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLDAPClient
+    participant Client as FlextLdapClients
     participant Adapter as EntryAdapter
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
@@ -276,7 +276,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLDAPClient
+    participant Client as FlextLdapClients
     participant Quirks as QuirksAdapter
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
@@ -296,7 +296,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client as FlextLDAPClient
+    participant Client as FlextLdapClients
     participant Ops as ServerOperations
     participant ldap3 as ldap3 Library
 
@@ -320,7 +320,7 @@ sequenceDiagram
 
 ### **1. Adapter Pattern**
 
-**FlextLDAPEntryAdapter** bridges ldap3 and FlextLdif representations:
+**FlextLdapEntryAdapter** bridges ldap3 and FlextLdif representations:
 
 ```python
 # ldap3 → FlextLdif

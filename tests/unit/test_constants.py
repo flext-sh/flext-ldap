@@ -1,29 +1,29 @@
-"""Tests for FlextLDAPConstants module."""
+"""Tests for FlextLdapConstants module."""
 
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.constants import FlextLdapConstants
 
 
-class TestFlextLDAPConstants:
-    """Test cases for FlextLDAPConstants."""
+class TestFlextLdapConstants:
+    """Test cases for FlextLdapConstants."""
 
     def test_constants_initialization(self):
         """Test constants initialization."""
-        constants = FlextLDAPConstants()
+        constants = FlextLdapConstants()
         assert constants is not None
 
     def test_protocol_constants(self):
         """Test protocol constants."""
-        assert FlextLDAPConstants.Protocol.DEFAULT_PORT == 389
-        assert FlextLDAPConstants.Protocol.DEFAULT_SSL_PORT == 636
+        assert FlextLdapConstants.Protocol.DEFAULT_PORT == 389
+        assert FlextLdapConstants.Protocol.DEFAULT_SSL_PORT == 636
 
     def test_scopes_constants(self):
         """Test scopes constants."""
-        assert FlextLDAPConstants.Scopes.BASE == "base"
-        assert FlextLDAPConstants.Scopes.ONELEVEL == "level"
-        assert FlextLDAPConstants.Scopes.SUBTREE == "subtree"
+        assert FlextLdapConstants.Scopes.BASE == "base"
+        assert FlextLdapConstants.Scopes.ONELEVEL == "level"
+        assert FlextLdapConstants.Scopes.SUBTREE == "subtree"
 
     def test_literal_types_constants(self):
         """Test literal types constants."""
-        assert FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE == "BASE"
-        assert FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_LEVEL == "LEVEL"
-        assert FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE == "SUBTREE"
+        assert FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE == "BASE"
+        assert FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL == "LEVEL"
+        assert FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE == "SUBTREE"

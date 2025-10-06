@@ -68,7 +68,7 @@ FLEXT-LDAP provides **complete server-specific implementations** with automatic 
 ```mermaid
 graph TB
     subgraph "Application Layer"
-        A[FlextLDAP] --> B[FlextLDAPClient]
+        A[FlextLdap] --> B[FlextLdapClients]
     end
 
     subgraph "Domain Layer"
@@ -102,8 +102,8 @@ graph TB
 
 | Component                     | Purpose                          | Status      |
 | ----------------------------- | -------------------------------- | ----------- |
-| **FlextLDAPEntryAdapter**     | ldap3 ↔ FlextLdif conversion | 🟢 Complete |
-| **FlextLDAPQuirksAdapter**    | Server quirks detection          | 🟢 Complete |
+| **FlextLdapEntryAdapter**     | ldap3 ↔ FlextLdif conversion | 🟢 Complete |
+| **FlextLdapQuirksAdapter**    | Server quirks detection          | 🟢 Complete |
 | **BaseServerOperations**      | Abstract server interface        | 🟢 Complete |
 | **OpenLDAP2Operations**       | OpenLDAP 2.x implementation      | 🟢 Complete |
 | **OpenLDAP1Operations**       | OpenLDAP 1.x implementation      | 🟢 Complete |
@@ -120,7 +120,7 @@ graph TB
 
 ```python
 from flext_ldap.servers import OpenLDAP2Operations, OracleOIDOperations
-from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
@@ -163,12 +163,12 @@ oid_ops = OracleOIDOperations()
 ### **FlextLdif Integration**
 
 ```python
-from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
-from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldif import FlextLdifModels
 
 # Entry conversion
-adapter = FlextLDAPEntryAdapter()
+adapter = FlextLdapEntryAdapter()
 
 # ldap3 → FlextLdif
 ldap3_entry = connection.entries[0]
@@ -186,7 +186,7 @@ ldif_entry = FlextLdifModels.Entry(
 attributes_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 
 # Quirks detection
-quirks = FlextLDAPQuirksAdapter()
+quirks = FlextLdapQuirksAdapter()
 server_type_result = quirks.detect_server_type_from_entries([ldif_entry])
 acl_attr_result = quirks.get_acl_attribute_name(server_type="openldap2")
 ```
@@ -215,13 +215,13 @@ make validate  # Run quality checks
 ### **Basic Usage**
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 def basic_ldap_search():
     """Basic LDAP search using FlextResult patterns."""
     api = get_flext_ldap_api()
 
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=person)",
         scope="subtree",

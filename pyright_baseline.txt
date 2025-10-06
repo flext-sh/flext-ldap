@@ -73,15 +73,15 @@
       Type parameter "_VT@dict" is invariant, but "FlextTypes.StringList" is not the same as "object"
       Consider switching from "dict" to "Mapping" which is covariant in the value type (reportArgumentType)
 /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py
-  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:51:12 - error: Type "FlextLDAPModels.ConnectionConfig" is not assignable to return type "AsyncGenerator[FlextLDAPModels.ConnectionConfig, None]"
-    "FlextLDAPModels.ConnectionConfig" is incompatible with protocol "AsyncGenerator[FlextLDAPModels.ConnectionConfig, None]"
+  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:51:12 - error: Type "FlextLdapModels.ConnectionConfig" is not assignable to return type "AsyncGenerator[FlextLdapModels.ConnectionConfig, None]"
+    "FlextLdapModels.ConnectionConfig" is incompatible with protocol "AsyncGenerator[FlextLdapModels.ConnectionConfig, None]"
       "__anext__" is not present
       "asend" is not present
       "athrow" is not present
       "aclose" is not present
       "__aiter__" is not present (reportReturnType)
-  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:57:12 - error: Type "FlextLDAPClient" is not assignable to return type "AsyncGenerator[FlextLDAPClient, None]"
-    "FlextLDAPClient" is incompatible with protocol "AsyncGenerator[FlextLDAPClient, None]"
+  /home/marlonsc/flext/flext-ldap/tests/support/fixtures.py:57:12 - error: Type "FlextLdapClients" is not assignable to return type "AsyncGenerator[FlextLdapClients, None]"
+    "FlextLdapClients" is incompatible with protocol "AsyncGenerator[FlextLdapClients, None]"
       "__anext__" is not present
       "asend" is not present
       "athrow" is not present
@@ -254,7 +254,7 @@
       Type parameter "_VT@dict" is invariant, but "str" is not the same as "object"
       Consider switching from "dict" to "Mapping" which is covariant in the value type (reportArgumentType)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:387:21 - error: Arguments missing for parameters "modified_at", "given_name", "mail", "user_password" (reportCallIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:485:48 - error: Cannot access attribute "GroupMembershipChangedEvent" for class "type[FlextLDAPDomain]"
+  /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:485:48 - error: Cannot access attribute "GroupMembershipChangedEvent" for class "type[FlextLdapDomain]"
     Attribute "GroupMembershipChangedEvent" is unknown (reportAttributeAccessIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:506:54 - error: Argument of type "FlextTypes.StringDict" cannot be assigned to parameter "user_data" of type "Dict" in function "validate_user_creation"
     "FlextTypes.StringDict" is not assignable to "FlextTypes.Dict"
@@ -293,13 +293,13 @@
     Attribute "update_entry" is unknown (reportAttributeAccessIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1867:42 - error: Cannot access attribute "remove_entry" for class "EntryOperations"
     Attribute "remove_entry" is unknown (reportAttributeAccessIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1896:35 - error: Cannot access attribute "_calculate_duration" for class "FlextLDAPOperations"
+  /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1896:35 - error: Cannot access attribute "_calculate_duration" for class "FlextLdapOperations"
     Attribute "_calculate_duration" is unknown (reportAttributeAccessIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1931:41 - error: Cannot access attribute "bind_connection" for class "ConnectionOperations"
     Attribute "bind_connection" is unknown (reportAttributeAccessIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1936:41 - error: Cannot access attribute "authenticate" for class "ConnectionOperations"
     Attribute "authenticate" is unknown (reportAttributeAccessIssue)
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1948:39 - error: Cannot access attribute "modify_password" for class "FlextLDAPOperations"
+  /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1948:39 - error: Cannot access attribute "modify_password" for class "FlextLdapOperations"
     Attribute "modify_password" is unknown (reportAttributeAccessIssue)
   /home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py:1961:33 - error: Cannot assign to attribute "_active_connections" for class "ConnectionOperations"
     Expression of type "dict[str, FlextTypes.StringDict]" cannot be assigned to attribute "_active_connections" of class "ConnectionOperations"

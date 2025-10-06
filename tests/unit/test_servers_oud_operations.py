@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPServersOUDOperations module."""
+"""Tests for FlextLdapServersOUDOperations module."""
 
-from flext_ldap.servers.oud_operations import FlextLDAPServersOUDOperations
+from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 
 
-class TestFlextLDAPServersOUDOperations:
-    """Test cases for FlextLDAPServersOUDOperations."""
+class TestFlextLdapServersOUDOperations:
+    """Test cases for FlextLdapServersOUDOperations."""
 
     def test_servers_oud_operations_initialization(self):
         """Test servers OUD operations initialization."""
-        ops = FlextLDAPServersOUDOperations()
+        ops = FlextLdapServersOUDOperations()
         assert ops is not None
 
     def test_servers_oud_operations_basic_functionality(self):
         """Test basic servers OUD operations functionality."""
-        ops = FlextLDAPServersOUDOperations()
+        ops = FlextLdapServersOUDOperations()
         # Add specific test cases based on servers OUD operations functionality
         assert hasattr(ops, "__class__")

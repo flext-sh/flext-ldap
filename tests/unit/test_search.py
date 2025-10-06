@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPSearch module."""
+"""Tests for FlextLdapSearch module."""
 
-from flext_ldap.search import FlextLDAPSearch
+from flext_ldap.search import FlextLdapSearch
 
 
-class TestFlextLDAPSearch:
-    """Test cases for FlextLDAPSearch."""
+class TestFlextLdapSearch:
+    """Test cases for FlextLdapSearch."""
 
     def test_search_initialization(self):
         """Test search initialization."""
-        search = FlextLDAPSearch()
+        search = FlextLdapSearch()
         assert search is not None
 
     def test_search_basic_functionality(self):
         """Test basic search functionality."""
-        search = FlextLDAPSearch()
+        search = FlextLdapSearch()
         # Add specific test cases based on search functionality
         assert hasattr(search, "__class__")

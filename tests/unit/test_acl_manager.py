@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPAclManager module."""
+"""Tests for FlextLdapAclManager module."""
 
-from flext_ldap.acl.manager import FlextLDAPAclManager
+from flext_ldap.acl.manager import FlextLdapAclManager
 
 
-class TestFlextLDAPAclManager:
-    """Test cases for FlextLDAPAclManager."""
+class TestFlextLdapAclManager:
+    """Test cases for FlextLdapAclManager."""
 
     def test_acl_manager_initialization(self):
         """Test ACL manager initialization."""
-        manager = FlextLDAPAclManager()
+        manager = FlextLdapAclManager()
         assert manager is not None
 
     def test_acl_manager_basic_functionality(self):
         """Test basic ACL manager functionality."""
-        manager = FlextLDAPAclManager()
+        manager = FlextLdapAclManager()
         # Add specific test cases based on ACL manager functionality
         assert hasattr(manager, "__class__")

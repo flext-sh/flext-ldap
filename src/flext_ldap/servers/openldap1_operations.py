@@ -13,10 +13,10 @@ from typing import override
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.openldap2_operations import FlextLDAPServersOpenLDAP2Operations
+from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
 
-class FlextLDAPServersOpenLDAP1Operations(FlextLDAPServersOpenLDAP2Operations):
+class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     """Complete OpenLDAP 1.x operations implementation.
 
     OpenLDAP 1.x Features:

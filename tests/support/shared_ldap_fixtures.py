@@ -10,9 +10,17 @@ from collections.abc import Callable
 from typing import Protocol, cast
 
 import pytest
-from flext_tests import FlextTestDocker
+# from flext_tests import FlextTestDocker  # TODO: Import when available
 
 from flext_core import FlextResult
+
+
+# Temporary placeholder until FlextTestDocker is available
+class FlextTestDocker:
+    """Placeholder for FlextTestDocker until it's available in flext_tests."""
+
+    def get_docker_version(self) -> FlextResult[str]:
+        return FlextResult[str].fail("FlextTestDocker not available")
 
 
 class DockerManagerProtocol(Protocol):

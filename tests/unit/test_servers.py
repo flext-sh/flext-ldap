@@ -1,4 +1,4 @@
-"""Unit tests for ServerOperationsFactory.
+"""Unit tests for FlextLdapServersFactory.
 
 Tests the factory pattern implementation for creating server operations instances
 from various sources (explicit type, entries, Root DSE detection).
@@ -12,30 +12,30 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-from flext_ldap.servers.ad_operations import FlextLDAPServersADOperations
-from flext_ldap.servers.factory import ServerOperationsFactory
-from flext_ldap.servers.generic_operations import FlextLDAPServersGenericOperations
-from flext_ldap.servers.oid_operations import FlextLDAPServersOIDOperations
-from flext_ldap.servers.openldap1_operations import FlextLDAPServersOpenLDAP1Operations
-from flext_ldap.servers.openldap2_operations import FlextLDAPServersOpenLDAP2Operations
-from flext_ldap.servers.oud_operations import FlextLDAPServersOUDOperations
+from flext_ldap.servers.ad_operations import FlextLdapServersADOperations
+from flext_ldap.servers.factory import FlextLdapServersFactory
+from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
+from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
+from flext_ldap.servers.openldap1_operations import FlextLdapServersOpenLDAP1Operations
+from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
+from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 from flext_ldif import FlextLdifModels
 
 
-class TestServerOperationsFactory:
-    """Test suite for ServerOperationsFactory."""
+class TestFlextLdapServersFactory:
+    """Test suite for FlextLdapServersFactory."""
 
     @pytest.fixture
-    def factory(self) -> ServerOperationsFactory:
+    def factory(self) -> FlextLdapServersFactory:
         """Create factory instance for testing."""
-        return ServerOperationsFactory()
+        return FlextLdapServersFactory()
 
     # =========================================================================
     # FACTORY CREATION TESTS - Explicit Server Type
     # =========================================================================
 
     def test_create_from_server_type_openldap1(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating OpenLDAP 1.x operations from explicit server type."""
         # Act
@@ -44,13 +44,13 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP1Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP1Operations)
         assert ops.server_type == "openldap1"
         assert ops.get_acl_attribute_name() == "access"
         assert ops.get_acl_format() == "openldap1"
 
     def test_create_from_server_type_openldap2(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating OpenLDAP 2.x operations from explicit server type."""
         # Act
@@ -59,13 +59,13 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP2Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
         assert ops.get_acl_attribute_name() == "olcAccess"
         assert ops.get_acl_format() == "openldap2"
 
     def test_create_from_server_type_openldap_alias(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating OpenLDAP operations using 'openldap' alias."""
         # Act
@@ -74,11 +74,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP2Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
 
     def test_create_from_server_type_oid(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating Oracle OID operations from explicit server type."""
         # Act
@@ -87,13 +87,13 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOIDOperations)
+        assert isinstance(ops, FlextLdapServersOIDOperations)
         assert ops.server_type == "oid"
         assert ops.get_acl_attribute_name() == "orclaci"
         assert ops.get_acl_format() == "oracle"
 
     def test_create_from_server_type_oud(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating Oracle OUD operations from explicit server type."""
         # Act
@@ -102,12 +102,12 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOUDOperations)
+        assert isinstance(ops, FlextLdapServersOUDOperations)
         assert ops.server_type == "oud"
         assert ops.get_acl_attribute_name() == "ds-privilege-name"
         assert ops.get_acl_format() == "oracle"
 
-    def test_create_from_server_type_ad(self, factory: ServerOperationsFactory) -> None:
+    def test_create_from_server_type_ad(self, factory: FlextLdapServersFactory) -> None:
         """Test creating Active Directory operations from explicit server type."""
         # Act
         result = factory.create_from_server_type("ad")
@@ -115,13 +115,13 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersADOperations)
+        assert isinstance(ops, FlextLdapServersADOperations)
         assert ops.server_type == "ad"
         assert ops.get_acl_attribute_name() == "nTSecurityDescriptor"
         assert ops.get_acl_format() == "ad"
 
     def test_create_from_server_type_generic(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating generic operations from explicit server type."""
         # Act
@@ -130,11 +130,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
         assert ops.server_type == "generic"
 
     def test_create_from_server_type_unknown(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating operations with unknown server type falls back to generic."""
         # Act
@@ -143,11 +143,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
         assert ops.server_type == "generic"
 
     def test_create_from_server_type_empty_string(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating operations with empty server type falls back to generic."""
         # Act
@@ -166,7 +166,7 @@ class TestServerOperationsFactory:
     # =========================================================================
 
     def test_create_from_entries_openldap1_access_acl(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting OpenLDAP 1.x from entries with 'access' ACL attribute."""
         # Arrange - create entry with OpenLDAP 1.x characteristics
@@ -189,11 +189,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP1Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP1Operations)
         assert ops.server_type == "openldap1"
 
     def test_create_from_entries_openldap2_olcaccess(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting OpenLDAP 2.x from entries with 'olcAccess' attribute."""
         # Arrange - create entry with OpenLDAP 2.x characteristics
@@ -219,11 +219,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP2Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
 
     def test_create_from_entries_oid_orclaci(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Oracle OID from entries with 'orclaci' attribute."""
         # Arrange - create entry with Oracle OID characteristics
@@ -246,11 +246,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOIDOperations)
+        assert isinstance(ops, FlextLdapServersOIDOperations)
         assert ops.server_type == "oid"
 
     def test_create_from_entries_oud_ds_privilege(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Oracle OUD from entries with 'ds-privilege-name' attribute."""
         # Arrange - create entry with Oracle OUD characteristics
@@ -275,11 +275,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOUDOperations)
+        assert isinstance(ops, FlextLdapServersOUDOperations)
         assert ops.server_type == "oud"
 
     def test_create_from_entries_ad_object_guid(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Active Directory from entries with AD-specific attributes."""
         # Arrange - create entry with Active Directory characteristics
@@ -311,12 +311,12 @@ class TestServerOperationsFactory:
         # This is expected behavior until quirks are enhanced for Active Directory
         assert ops.server_type in ["ad", "generic"]  # Accept both until quirks enhanced
         if ops.server_type == "ad":
-            assert isinstance(ops, FlextLDAPServersADOperations)
+            assert isinstance(ops, FlextLdapServersADOperations)
         else:
-            assert isinstance(ops, FlextLDAPServersGenericOperations)
+            assert isinstance(ops, FlextLdapServersGenericOperations)
 
     def test_create_from_entries_empty_list(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating operations from empty entry list falls back to generic."""
         # Act
@@ -325,11 +325,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
         assert ops.server_type == "generic"
 
     def test_create_from_entries_no_identifying_attributes(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating operations from entries without identifying attributes."""
         # Arrange - generic entry without server-specific attributes
@@ -351,10 +351,10 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
 
     def test_create_from_entries_multiple_entries_openldap2(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting server type from multiple entries."""
         # Arrange - multiple entries, first one has OpenLDAP 2.x characteristics
@@ -388,7 +388,7 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP2Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
 
     # =========================================================================
@@ -396,7 +396,7 @@ class TestServerOperationsFactory:
     # =========================================================================
 
     def test_create_from_connection_openldap2_root_dse(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting OpenLDAP 2.x from Root DSE vendorName."""
         # Arrange - mock connection with OpenLDAP Root DSE
@@ -416,7 +416,7 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOpenLDAP2Operations)
+        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
 
         # Verify Root DSE search was called
@@ -426,7 +426,7 @@ class TestServerOperationsFactory:
         assert "(objectClass=*)" in call_args[1]["search_filter"]
 
     def test_create_from_connection_oid_root_dse(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Oracle OID from Root DSE vendorName."""
         # Arrange - mock connection with Oracle OID Root DSE
@@ -446,11 +446,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOIDOperations)
+        assert isinstance(ops, FlextLdapServersOIDOperations)
         assert ops.server_type == "oid"
 
     def test_create_from_connection_oud_root_dse(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Oracle OUD from Root DSE vendorName."""
         # Arrange - mock connection with Oracle OUD Root DSE
@@ -470,11 +470,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersOUDOperations)
+        assert isinstance(ops, FlextLdapServersOUDOperations)
         assert ops.server_type == "oud"
 
     def test_create_from_connection_ad_root_dse(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test detecting Active Directory from Root DSE vendorName."""
         # Arrange - mock connection with Active Directory Root DSE
@@ -494,11 +494,11 @@ class TestServerOperationsFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersADOperations)
+        assert isinstance(ops, FlextLdapServersADOperations)
         assert ops.server_type == "ad"
 
     def test_create_from_connection_not_bound(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating from unbound connection fails gracefully."""
         # Arrange - mock unbound connection
@@ -511,10 +511,10 @@ class TestServerOperationsFactory:
         # Assert - should fail gracefully and return generic
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
 
     def test_create_from_connection_search_failure(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating from connection when Root DSE search fails."""
         # Arrange - mock connection with search failure
@@ -528,10 +528,10 @@ class TestServerOperationsFactory:
         # Assert - should fall back to generic
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
 
     def test_create_from_connection_no_entries(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test creating from connection when Root DSE returns no entries."""
         # Arrange - mock connection with empty entries
@@ -546,14 +546,14 @@ class TestServerOperationsFactory:
         # Assert - should fall back to generic
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLDAPServersGenericOperations)
+        assert isinstance(ops, FlextLdapServersGenericOperations)
 
     # =========================================================================
     # ROOT DSE DETECTION TESTS
     # =========================================================================
 
     def test_detect_server_type_from_root_dse_openldap(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test Root DSE detection returns correct server type for OpenLDAP."""
         # Arrange
@@ -576,7 +576,7 @@ class TestServerOperationsFactory:
         assert server_type == "openldap2"
 
     def test_detect_server_type_from_root_dse_oid(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test Root DSE detection returns correct server type for Oracle OID."""
         # Arrange
@@ -599,7 +599,7 @@ class TestServerOperationsFactory:
         assert server_type == "oid"
 
     def test_detect_server_type_from_root_dse_oud(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test Root DSE detection returns correct server type for Oracle OUD."""
         # Arrange
@@ -622,7 +622,7 @@ class TestServerOperationsFactory:
         assert server_type == "oud"
 
     def test_detect_server_type_from_root_dse_generic_fallback(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test Root DSE detection falls back to generic for unknown servers."""
         # Arrange

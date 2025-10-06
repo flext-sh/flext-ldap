@@ -13,7 +13,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 **Symptom:**
 
 ```
-FlextLDAPConnectionError: Connection failed: [Errno 111] Connection refused
+FlextLdapConnectionError: Connection failed: [Errno 111] Connection refused
 ```
 
 **Diagnosis:**
@@ -42,7 +42,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w 
 **Symptom:**
 
 ```
-FlextLDAPConnectionError: TLS handshake failed
+FlextLdapConnectionError: TLS handshake failed
 ```
 
 **Diagnosis:**
@@ -66,10 +66,10 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=admin,dc=example,dc=com"
 4. **Configure certificate verification settings**
 
 ```python
-from Flext_ldap import FlextLDAPConfig
+from Flext_ldap import FlextLdapConfig
 
 # Disable certificate verification (development only)
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -77,7 +77,7 @@ config = FlextLDAPConfig(
 )
 
 # Proper certificate configuration
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -95,7 +95,7 @@ config = FlextLDAPConfig(
 **Symptom:**
 
 ```
-FlextLDAPAuthenticationError: Authentication failed: Invalid credentials
+FlextLdapAuthenticationError: Authentication failed: Invalid credentials
 ```
 
 **Diagnosis:**
@@ -131,7 +131,7 @@ run(diagnose_auth())
 **Symptom:**
 
 ```
-FlextLDAPSearchError: Invalid DN format
+FlextLdapSearchError: Invalid DN format
 ```
 
 **Common DN Format Mistakes:**
@@ -153,12 +153,12 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 **Validation:**
 
 ```python
-from flext_ldap import FlextLDAPModels.ValueObjects
+from flext_ldap import FlextLdapModels.ValueObjects
 
 def validate_dn(dn_string: str) -> bool:
     """Validate DN format."""
     try:
-        dn = FlextLDAPModels.ValueObjects.DistinguishedName.create(dn_string)
+        dn = FlextLdapModels.ValueObjects.DistinguishedName.create(dn_string)
         return True
     except ValueError as e:
         print(f"Invalid DN: {e}")
@@ -185,7 +185,7 @@ for test_dn in test_dns:
 **Symptom:**
 
 ```
-FlextLDAPSearchError: Bad search filter
+FlextLdapSearchError: Bad search filter
 ```
 
 **Common Filter Mistakes:**
@@ -213,12 +213,12 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 **Filter Validation:**
 
 ```python
-from flext_ldap import FlextLDAPModels.ValueObjects
+from flext_ldap import FlextLdapModels.ValueObjects
 
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""
     try:
-        ldap_filter = FlextLDAPModels.ValueObjects.Filter(expression=filter_string)
+        ldap_filter = FlextLdapModels.ValueObjects.Filter(expression=filter_string)
         return True
     except ValueError as e:
         print(f"Invalid filter: {e}")
@@ -242,19 +242,19 @@ for test_filter in test_filters:
 **Symptom:**
 
 ```
-FlextLDAPSearchError: No such object: ou=users,dc=example,dc=com
+FlextLdapSearchError: No such object: ou=users,dc=example,dc=com
 ```
 
 **Diagnosis:**
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 def diagnose_base_dn():
     api = get_flext_ldap_api()
 
     # Search from root to find available bases
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=*)",
         scope="onelevel",  # Only immediate children
@@ -288,7 +288,7 @@ run(diagnose_base_dn())
 
 ```python
 import time
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 def diagnose_performance():
     api = get_flext_ldap_api()
@@ -318,7 +318,7 @@ def diagnose_performance():
     for test_case in test_cases:
         start_time = time.time()
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapEntities.SearchRequest(
             base_dn=test_case["base_dn"],
             filter_str=test_case["filter"],
             scope=test_case["scope"],
@@ -344,14 +344,14 @@ run(diagnose_performance())
 
 ```python
 # ❌ Inefficient - searches entire directory
-search_request = FlextLDAPEntities.SearchRequest(
+search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com",
     filter_str="(uid=john.doe)",
     scope="subtree"
 )
 
 # ✅ Efficient - searches specific branch
-search_request = FlextLDAPEntities.SearchRequest(
+search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(uid=john.doe)",
     scope="onelevel"
@@ -374,7 +374,7 @@ filter_str = "(&(objectClass=person)(uid=john.doe))"
 3. **Limit result sets:**
 
 ```python
-search_request = FlextLDAPEntities.SearchRequest(
+search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(objectClass=person)",
     scope="subtree",
@@ -389,16 +389,16 @@ search_request = FlextLDAPEntities.SearchRequest(
 **Symptoms:**
 
 ```
-FlextLDAPConnectionError: Connection pool exhausted
+FlextLdapConnectionError: Connection pool exhausted
 ```
 
 **Diagnosis:**
 
 ```python
 # Check connection pool configuration
-from Flext_ldap import FlextLDAPConfig
+from Flext_ldap import FlextLdapConfig
 
-config = FlextLDAPConfig.from_env()
+config = FlextLdapConfig.from_env()
 print(f"Pool size: {config.pool_size}")
 print(f"Connection timeout: {config.connection_timeout}")
 ```
@@ -408,7 +408,7 @@ print(f"Connection timeout: {config.connection_timeout}")
 1. **Increase pool size:**
 
 ```python
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
     connection_timeout=10,
@@ -442,11 +442,11 @@ class LDAPService:
 
 ```python
 import os
-from Flext_ldap import FlextLDAPConfig
+from Flext_ldap import FlextLdapConfig
 
 def diagnose_config():
     """Check configuration values."""
-    config = FlextLDAPConfig.from_env()
+    config = FlextLdapConfig.from_env()
 
     print("LDAP Configuration:")
     print(f"  Host: {config.host}")
@@ -519,7 +519,7 @@ services:
 **Symptom:**
 
 ```python
-ImportError: cannot import name 'FlextLDAPClient' from 'flext_ldap'
+ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```
 
 **Diagnosis:**
@@ -541,8 +541,8 @@ except ImportError as e:
     print(f"❌ Import error: {e}")
 
 try:
-    from flext_ldap import FlextLDAPEntities
-    print("✅ FlextLDAPEntities available")
+    from flext_ldap import FlextLdapEntities
+    print("✅ FlextLdapEntities available")
 except ImportError as e:
     print(f"❌ Import error: {e}")
 ```
@@ -655,14 +655,14 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=admin,dc=example,dc=com" -w passwor
 ```python
 import cProfile
 import pstats
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 def profile_ldap_operations():
     """Profile LDAP operations for performance analysis."""
     api = get_flext_ldap_api()
 
     # Create multiple search requests
-    search_request = FlextLDAPEntities.SearchRequest(
+    search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=person)",
         scope="subtree",
@@ -725,7 +725,7 @@ When reporting issues, include:
 ```python
 import sys
 import pkg_resources
-from Flext_ldap import FlextLDAPConfig
+from Flext_ldap import FlextLdapConfig
 
 def collect_diagnostic_info():
     """Collect diagnostic information for bug reports."""
@@ -746,7 +746,7 @@ def collect_diagnostic_info():
 
     # Configuration (sanitized)
     try:
-        config = FlextLDAPConfig.from_env()
+        config = FlextLdapConfig.from_env()
         print(f"LDAP Host: {config.host}")
         print(f"LDAP Port: {config.port}")
         print(f"Use SSL: {config.use_ssl}")

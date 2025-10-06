@@ -14,11 +14,11 @@ from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import (
-    FlextLDAPServersBaseOperations as BaseServerOperations,
+    FlextLdapServersBaseOperations as BaseServerOperations,
 )
 
 
-class FlextLDAPServersADOperations(BaseServerOperations):
+class FlextLdapServersADOperations(BaseServerOperations):
     """Active Directory operations stub.
 
     TODO: Complete implementation for Active Directory.

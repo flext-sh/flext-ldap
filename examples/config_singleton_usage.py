@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Example demonstrating FlextLDAPConfig singleton usage.
+"""Example demonstrating FlextLdapConfig singleton usage.
 
-This example shows how to use the FlextLDAPConfig singleton as the single
+This example shows how to use the FlextLdapConfig singleton as the single
 source of truth for LDAP configuration, with parameter overrides to change
 behavior at runtime.
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import traceback
 
-from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.config import FlextLdapConfig
 
 
 def demonstrate_singleton_pattern() -> None:
@@ -24,14 +24,14 @@ def demonstrate_singleton_pattern() -> None:
         RuntimeError: If instance creation fails.
 
     """
-    print("FlextLDAPConfig Instance Creation Demo")
+    print("FlextLdapConfig Instance Creation Demo")
 
     # Create instances directly (no singleton pattern)
-    config1 = FlextLDAPConfig()
+    config1 = FlextLdapConfig()
     print(f"First instance ID: {id(config1)}")
 
     # Create second instance
-    config2 = FlextLDAPConfig()
+    config2 = FlextLdapConfig()
     print(f"Second instance ID: {id(config2)}")
 
     # Verify they are different instances
@@ -58,7 +58,7 @@ def demonstrate_environment_loading() -> None:
     )
 
     # Create new instance to pick up environment variables
-    FlextLDAPConfig()
+    FlextLdapConfig()
 
     # print(f"Bind DN from environment: {config.ldap_bind_dn}")
     # print(f"Use SSL from environment: {config.ldap_use_ssl}")
@@ -94,7 +94,7 @@ def demonstrate_parameter_overrides() -> None:
     # print(f"Default SSL setting: {config.ldap_use_ssl}")
 
     # Create new instance with overrides using constructor parameters
-    # override_config = FlextLDAPConfig(
+    # override_config = FlextLdapConfig(
     #     ldap_bind_dn="cn=override-user,dc=test,dc=com",
     #     ldap_bind_password=SecretStr("override-password"),
     #     ldap_use_ssl=True,
@@ -113,7 +113,7 @@ def demonstrate_validation_features() -> None:
 
     try:
         # Test validation with valid configuration
-        # valid_config = FlextLDAPConfig(
+        # valid_config = FlextLdapConfig(
         #     ldap_bind_dn="cn=valid-user,dc=example,dc=com",
         #     ldap_bind_password=SecretStr("valid-password"),
         #     ldap_use_ssl=True,
@@ -145,7 +145,7 @@ def main() -> None:
 
         print("=" * 50)
         print("✅ All demonstrations completed successfully!")
-        print("✅ FlextLDAPConfig direct instantiation working correctly")
+        print("✅ FlextLdapConfig direct instantiation working correctly")
         print("✅ Environment variable loading functional")
         print("✅ Environment configurations providing correct settings")
         print("✅ Parameter overrides working as expected")

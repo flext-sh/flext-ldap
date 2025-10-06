@@ -20,12 +20,12 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.models import FlextLDAPModels
-from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 
 
-class FlextLDAPSchema(FlextService[FlextResult[object]]):
+class FlextLdapSchema(FlextService[FlextResult[object]]):
     """Unified LDAP schema class following FLEXT one-class-per-module standards.
 
     This class consolidates ALL schema-related functionality including:
@@ -77,7 +77,7 @@ class FlextLDAPSchema(FlextService[FlextResult[object]]):
 
         def detect_server_type(
             self, server_info: object
-        ) -> FlextLDAPModels.LdapServerType | None:
+        ) -> FlextLdapModels.LdapServerType | None:
             """Detect LDAP server type from server info.
 
             Args:
@@ -91,7 +91,7 @@ class FlextLDAPSchema(FlextService[FlextResult[object]]):
                 return None
 
             # Generic detection - return a default type enum
-            return FlextLDAPModels.LdapServerType.GENERIC
+            return FlextLdapModels.LdapServerType.GENERIC
 
         def get_server_quirks(self, server_type: str | None) -> object | None:
             """Get server quirks for the specified server type.
@@ -107,15 +107,15 @@ class FlextLDAPSchema(FlextService[FlextResult[object]]):
                 return None
 
             # Return generic quirks for any server type
-            return FlextLDAPModels.ServerQuirks(
-                server_type=FlextLDAPModels.LdapServerType.GENERIC,
+            return FlextLdapModels.ServerQuirks(
+                server_type=FlextLdapModels.LdapServerType.GENERIC,
                 case_sensitive_dns=True,
                 case_sensitive_attributes=True,
                 supports_paged_results=True,
                 supports_vlv=False,
                 supports_sync=False,
-                max_page_size=FlextLDAPConstants.Connection.MAX_SIZE_LIMIT,
-                default_timeout=FlextLDAPConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
+                max_page_size=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                default_timeout=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
                 supports_start_tls=True,
                 requires_explicit_bind=False,
             )
@@ -132,7 +132,7 @@ class FlextLDAPSchema(FlextService[FlextResult[object]]):
         """
 
         def __init__(
-            self, quirks_adapter: FlextLDAPQuirksAdapter | None = None
+            self, quirks_adapter: FlextLdapQuirksIntegration | None = None
         ) -> None:
             """Initialize schema discovery with optional quirks adapter.
 
@@ -148,7 +148,7 @@ class FlextLDAPSchema(FlextService[FlextResult[object]]):
             )
             super().__init__(config=config)
             self._logger = FlextLogger(__name__)
-            self._quirks_adapter = quirks_adapter or FlextLDAPQuirksAdapter()
+            self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override
         def handle(self, message: object) -> FlextResult[object]:

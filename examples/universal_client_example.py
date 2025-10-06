@@ -17,8 +17,8 @@ SPDX-License-Identifier: MIT
 
 import os
 
-from flext_ldap.clients import FlextLDAPClients
-from flext_ldap.schema import FlextLDAPSchema
+from flext_ldap.clients import FlextLdapClients
+from flext_ldap.schema import FlextLdapSchema
 
 from flext_core import FlextLogger, FlextTypes
 
@@ -37,7 +37,7 @@ def demonstrate_universal_client() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create universal FLEXT LDAP client
-    client = FlextLDAPClients()
+    client = FlextLdapClients()
 
     try:
         # Connect with automatic schema discovery
@@ -89,7 +89,7 @@ def demonstrate_universal_client() -> None:
 
 
 def demonstrate_server_capabilities(
-    client: FlextLDAPClients, logger: FlextLogger
+    client: FlextLdapClients, logger: FlextLogger
 ) -> None:
     """Demonstrate server capabilities detection."""
     logger.info("\n=== Server Capabilities Detection ===")
@@ -185,7 +185,7 @@ def demonstrate_server_capabilities(
         )
 
 
-def demonstrate_universal_search(client: FlextLDAPClients, logger: FlextLogger) -> None:
+def demonstrate_universal_search(client: FlextLdapClients, logger: FlextLogger) -> None:
     """Demonstrate universal search operations."""
     logger.info("\n=== Universal Search Operations ===")
 
@@ -252,7 +252,7 @@ def demonstrate_universal_search(client: FlextLDAPClients, logger: FlextLogger) 
         logger.error("Search with controls failed: %s", controls_result.error)
 
 
-def demonstrate_universal_crud(client: FlextLDAPClients, logger: FlextLogger) -> None:
+def demonstrate_universal_crud(client: FlextLdapClients, logger: FlextLogger) -> None:
     """Demonstrate universal CRUD operations."""
     logger.info("\n=== Universal CRUD Operations ===")
 
@@ -322,7 +322,7 @@ def demonstrate_universal_crud(client: FlextLDAPClients, logger: FlextLogger) ->
 
 
 def demonstrate_universal_compare(
-    client: FlextLDAPClients, logger: FlextLogger
+    client: FlextLdapClients, logger: FlextLogger
 ) -> None:
     """Demonstrate universal compare operations."""
     logger.info("\n=== Universal Compare Operations ===")
@@ -358,7 +358,7 @@ def demonstrate_universal_compare(
 
 
 def demonstrate_universal_extended(
-    client: FlextLDAPClients, logger: FlextLogger
+    client: FlextLdapClients, logger: FlextLogger
 ) -> None:
     """Demonstrate universal extended operations."""
     logger.info("\n=== Universal Extended Operations ===")
@@ -392,7 +392,7 @@ def demonstrate_universal_extended(
 
 
 def demonstrate_server_adaptations(
-    client: FlextLDAPClients, logger: FlextLogger
+    client: FlextLdapClients, logger: FlextLogger
 ) -> None:
     """Demonstrate server-specific adaptations."""
     logger.info("\n=== Server-Specific Adaptations ===")
@@ -445,7 +445,7 @@ def demonstrate_server_type_detection() -> None:
     logger.info("\n=== Server Type Detection ===")
 
     # Create quirks detector
-    detector = FlextLDAPSchema.GenericQuirksDetector()
+    detector = FlextLdapSchema.GenericQuirksDetector()
 
     # Test various server types
     test_servers = [

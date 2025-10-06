@@ -15,9 +15,10 @@ from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_ldap.models import FlextLdapModels
 
 
-class FlextLDAPServersBaseOperations(FlextService[None], ABC):
+class FlextLdapServersBaseOperations(FlextService[None], ABC):
     """Abstract base class for server-specific LDAP operations.
 
     All server implementations (OpenLDAP, OID, OUD, AD, etc.) must extend
@@ -285,7 +286,7 @@ class FlextLDAPServersBaseOperations(FlextService[None], ABC):
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search.
 
         Args:

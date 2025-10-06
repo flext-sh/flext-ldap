@@ -15,23 +15,23 @@ from typing import Generic, TypeVar
 
 from flext_core import FlextLogger, FlextProtocols, FlextResult
 
-from flext_ldap.models import FlextLDAPModels
-from flext_ldap.repositories import FlextLDAPRepositories
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.repositories import FlextLdapRepositories
 
 _logger = FlextLogger(__name__)
 
-TCommand = TypeVar("TCommand", bound=FlextLDAPModels.CqrsCommand)
-TQuery = TypeVar("TQuery", bound=FlextLDAPModels.CqrsQuery)
+TCommand = TypeVar("TCommand", bound=FlextLdapModels.CqrsCommand)
+TQuery = TypeVar("TQuery", bound=FlextLdapModels.CqrsQuery)
 
 
-class FlextLDAPHandlers:
+class FlextLdapHandlers:
     """Unified namespace class for LDAP command and query handlers.
 
     Consolidates all LDAP handlers into a single namespace class following
     FLEXT single-class-per-module pattern while maintaining CQRS architecture.
     """
 
-    class FlextLDAPLdapCommandHandler(
+    class FlextLdapLdapCommandHandler(
         FlextProtocols.Application.Handler, Generic[TCommand]
     ):
         """Base class for LDAP command handlers implementing Application.Handler protocol.
@@ -83,7 +83,7 @@ class FlextLDAPHandlers:
                 True if handler can process the command
             """
             return isinstance(
-                command, FlextLDAPModels.CqrsCommand
+                command, FlextLdapModels.CqrsCommand
             ) and self._can_handle_command(command)
 
         def _validate_command(self, command: TCommand) -> FlextResult[None]:
@@ -127,7 +127,7 @@ class FlextLDAPHandlers:
             """
             ...
 
-    class FlextLDAPLdapQueryHandler(
+    class FlextLdapLdapQueryHandler(
         FlextProtocols.Application.Handler, Generic[TQuery]
     ):
         """Base class for LDAP query handlers implementing Application.Handler protocol.
@@ -179,7 +179,7 @@ class FlextLDAPHandlers:
                 True if handler can process the query
             """
             return isinstance(
-                query, FlextLDAPModels.CqrsQuery
+                query, FlextLdapModels.CqrsQuery
             ) and self._can_handle_query(query)
 
         def _validate_query(self, query: TQuery) -> FlextResult[None]:
@@ -223,25 +223,25 @@ class FlextLDAPHandlers:
             """
             ...
 
-    class FlextLDAPCreateUserCommandHandler(
-        FlextLDAPLdapCommandHandler[FlextLDAPModels.CqrsCommand]
+    class FlextLdapCreateUserCommandHandler(
+        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand]
     ):
         """Handler for CreateUser commands implementing Application.Handler protocol."""
 
         def __init__(self) -> None:
             """Initialize CreateUser command handler."""
             super().__init__()
-            self._user_repository = FlextLDAPRepositories.UserRepository()
+            self._user_repository = FlextLdapRepositories.UserRepository()
 
         def _can_handle_command(self, command: object) -> bool:
             """Check if this handler can process CreateUser commands."""
             return (
-                isinstance(command, FlextLDAPModels.CqrsCommand)
+                isinstance(command, FlextLdapModels.CqrsCommand)
                 and command.command_type == "create_user"
             )
 
         def _execute_command(
-            self, command: FlextLDAPModels.CqrsCommand
+            self, command: FlextLdapModels.CqrsCommand
         ) -> FlextResult[object]:
             """Execute CreateUser command.
 
@@ -257,7 +257,7 @@ class FlextLDAPHandlers:
             payload = command.payload
 
             # Create user entity
-            create_request = FlextLDAPModels.CreateUserRequest(
+            create_request = FlextLdapModels.CreateUserRequest(
                 dn=payload.get("dn"),
                 uid=payload.get("uid"),
                 cn=payload.get("cn"),
@@ -287,25 +287,25 @@ class FlextLDAPHandlers:
 
             return FlextResult[object].ok({"user": user, "status": "created"})
 
-    class FlextLDAPUpdateUserCommandHandler(
-        FlextLDAPLdapCommandHandler[FlextLDAPModels.CqrsCommand]
+    class FlextLdapUpdateUserCommandHandler(
+        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand]
     ):
         """Handler for UpdateUser commands implementing Application.Handler protocol."""
 
         def __init__(self) -> None:
             """Initialize UpdateUser command handler."""
             super().__init__()
-            self._user_repository = FlextLDAPRepositories.UserRepository()
+            self._user_repository = FlextLdapRepositories.UserRepository()
 
         def _can_handle_command(self, command: object) -> bool:
             """Check if this handler can process UpdateUser commands."""
             return (
-                isinstance(command, FlextLDAPModels.CqrsCommand)
+                isinstance(command, FlextLdapModels.CqrsCommand)
                 and command.command_type == "update_user"
             )
 
         def _execute_command(
-            self, command: FlextLDAPModels.CqrsCommand
+            self, command: FlextLdapModels.CqrsCommand
         ) -> FlextResult[object]:
             """Execute UpdateUser command.
 
@@ -351,25 +351,25 @@ class FlextLDAPHandlers:
 
             return FlextResult[object].ok({"user": updated_user, "status": "updated"})
 
-    class FlextLDAPGetUserQueryHandler(
-        FlextLDAPLdapQueryHandler[FlextLDAPModels.CqrsQuery]
+    class FlextLdapGetUserQueryHandler(
+        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery]
     ):
         """Handler for GetUser queries implementing Application.Handler protocol."""
 
         def __init__(self) -> None:
             """Initialize GetUser query handler."""
             super().__init__()
-            self._user_repository = FlextLDAPRepositories.UserRepository()
+            self._user_repository = FlextLdapRepositories.UserRepository()
 
         def _can_handle_query(self, query: object) -> bool:
             """Check if this handler can process GetUser queries."""
             return (
-                isinstance(query, FlextLDAPModels.CqrsQuery)
+                isinstance(query, FlextLdapModels.CqrsQuery)
                 and query.query_type == "get_user"
             )
 
         def _execute_query(
-            self, query: FlextLDAPModels.CqrsQuery
+            self, query: FlextLdapModels.CqrsQuery
         ) -> FlextResult[object]:
             """Execute GetUser query.
 
@@ -404,25 +404,25 @@ class FlextLDAPHandlers:
 
             return FlextResult[object].ok(user)
 
-    class FlextLDAPListUsersQueryHandler(
-        FlextLDAPLdapQueryHandler[FlextLDAPModels.CqrsQuery]
+    class FlextLdapListUsersQueryHandler(
+        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery]
     ):
         """Handler for ListUsers queries implementing Application.Handler protocol."""
 
         def __init__(self) -> None:
             """Initialize ListUsers query handler."""
             super().__init__()
-            self._user_repository = FlextLDAPRepositories.UserRepository()
+            self._user_repository = FlextLdapRepositories.UserRepository()
 
         def _can_handle_query(self, query: object) -> bool:
             """Check if this handler can process ListUsers queries."""
             return (
-                isinstance(query, FlextLDAPModels.CqrsQuery)
+                isinstance(query, FlextLdapModels.CqrsQuery)
                 and query.query_type == "list_users"
             )
 
         def _execute_query(
-            self, query: FlextLDAPModels.CqrsQuery
+            self, query: FlextLdapModels.CqrsQuery
         ) -> FlextResult[object]:
             """Execute ListUsers query.
 
@@ -454,34 +454,34 @@ class FlextLDAPHandlers:
 
             return FlextResult[object].ok({"users": users, "count": len(users)})
 
-    class FlextLDAPLdapHandlerRegistry:
+    class FlextLdapLdapHandlerRegistry:
         """Registry of all LDAP command and query handlers."""
 
         @staticmethod
         def get_command_handlers() -> list[
-            FlextLDAPHandlers.FlextLDAPLdapCommandHandler
+            FlextLdapHandlers.FlextLdapLdapCommandHandler
         ]:
             """Get all available command handlers."""
             return [
-                FlextLDAPHandlers.FlextLDAPCreateUserCommandHandler(),
-                FlextLDAPHandlers.FlextLDAPUpdateUserCommandHandler(),
+                FlextLdapHandlers.FlextLdapCreateUserCommandHandler(),
+                FlextLdapHandlers.FlextLdapUpdateUserCommandHandler(),
             ]
 
         @staticmethod
-        def get_query_handlers() -> list[FlextLDAPHandlers.FlextLDAPLdapQueryHandler]:
+        def get_query_handlers() -> list[FlextLdapHandlers.FlextLdapLdapQueryHandler]:
             """Get all available query handlers."""
             return [
-                FlextLDAPHandlers.FlextLDAPGetUserQueryHandler(),
-                FlextLDAPHandlers.FlextLDAPListUsersQueryHandler(),
+                FlextLdapHandlers.FlextLdapGetUserQueryHandler(),
+                FlextLdapHandlers.FlextLdapListUsersQueryHandler(),
             ]
 
         @staticmethod
         def get_all_handlers() -> list[
-            FlextLDAPHandlers.FlextLDAPLdapCommandHandler
-            | FlextLDAPHandlers.FlextLDAPLdapQueryHandler
+            FlextLdapHandlers.FlextLdapLdapCommandHandler
+            | FlextLdapHandlers.FlextLdapLdapQueryHandler
         ]:
             """Get all available handlers."""
             return [
-                *FlextLDAPHandlers.FlextLDAPLdapHandlerRegistry.get_command_handlers(),
-                *FlextLDAPHandlers.FlextLDAPLdapHandlerRegistry.get_query_handlers(),
+                *FlextLdapHandlers.FlextLdapLdapHandlerRegistry.get_command_handlers(),
+                *FlextLdapHandlers.FlextLdapLdapHandlerRegistry.get_query_handlers(),
             ]

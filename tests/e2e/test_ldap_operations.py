@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from flext_ldap import FlextLDAPClients, FlextLDAPModels
+from flext_ldap import FlextLdapClients, FlextLdapModels
 
 
 @pytest.mark.e2e
@@ -26,10 +26,10 @@ class TestLdapE2EOperations:
         Currently it tests the API flow without actual LDAP operations.
         """
         # Get API instance
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Test configuration
-        FlextLDAPModels.ConnectionConfig(
+        FlextLdapModels.ConnectionConfig(
             server="ldap://localhost",
             port=3389,  # Test port for Docker LDAP server
         )
@@ -46,7 +46,7 @@ class TestLdapE2EOperations:
         assert hasattr(connection_result, "is_success")
 
         # Create user request
-        user_request = FlextLDAPModels.CreateUserRequest(
+        user_request = FlextLdapModels.CreateUserRequest(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             uid="testuser",
             cn="Test User",
@@ -75,12 +75,12 @@ class TestLdapE2EOperations:
 
     def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Test search without connection (should fail gracefully)
-        # FlextLDAPModels already imported at top
+        # FlextLdapModels already imported at top
 
-        search_request = FlextLDAPModels.SearchRequest(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -98,7 +98,7 @@ class TestLdapE2EOperations:
 
     def test_group_management_flow(self) -> None:
         """Test group management workflow."""
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Test group operations structure
         # Note: Actual implementation would require real LDAP server
@@ -113,7 +113,7 @@ class TestLdapE2EOperations:
 
     def test_connection_error_handling(self) -> None:
         """Test connection error handling in E2E scenarios."""
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Test connection to non-existent server
         result = api.connect(
@@ -133,21 +133,21 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
 
-        FlextLDAPModels.ConnectionConfig(
+        FlextLdapModels.ConnectionConfig(
             server="ldaps://test.ldap.server",
             port=636,
             timeout=60,
         )
 
         # Create API with configuration
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Should handle configuration properly
         assert api is not None
 
     def test_error_propagation_e2e(self) -> None:
         """Test error propagation through the entire stack."""
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
 
         # Test various error scenarios
         scenarios = [
@@ -189,12 +189,12 @@ class TestLdapE2EWithDockerServer:
         # 2. Test domain: dc=flext,dc=local
         # 3. Admin credentials: cn=admin,dc=flext,dc=local / admin123
 
-        FlextLDAPClients()
+        FlextLdapClients()
 
         # Connection parameters for Docker test server
 
         # For now, just test the structure
-        user_request = FlextLDAPModels.CreateUserRequest(
+        user_request = FlextLdapModels.CreateUserRequest(
             dn="cn=e2etest,ou=users,dc=flext,dc=local",
             uid="e2etest",
             cn="E2E Test User",
@@ -221,7 +221,7 @@ class TestLdapE2EWithDockerServer:
         # 3. Attribute retrieval
         # 4. Paged search results
 
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
         assert api is not None
 
     def test_real_ldap_group_operations(self) -> None:
@@ -233,5 +233,5 @@ class TestLdapE2EWithDockerServer:
         # 3. Group search
         # 4. Group deletion
 
-        api = FlextLDAPClients()
+        api = FlextLdapClients()
         assert api is not None
