@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPAclParsers module."""
+"""Tests for FlextLdapAclParsers module."""
 
-from flext_ldap.acl.parsers import FlextLDAPAclParsers
+from flext_ldap.acl.parsers import FlextLdapAclParsers
 
 
-class TestFlextLDAPAclParsers:
-    """Test cases for FlextLDAPAclParsers."""
+class TestFlextLdapAclParsers:
+    """Test cases for FlextLdapAclParsers."""
 
     def test_acl_parsers_initialization(self):
         """Test ACL parsers initialization."""
-        parsers = FlextLDAPAclParsers()
+        parsers = FlextLdapAclParsers()
         assert parsers is not None
 
     def test_acl_parsers_basic_functionality(self):
         """Test basic ACL parsers functionality."""
-        parsers = FlextLDAPAclParsers()
+        parsers = FlextLdapAclParsers()
         # Add specific test cases based on ACL parsers functionality
         assert hasattr(parsers, "__class__")

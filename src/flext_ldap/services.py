@@ -12,13 +12,13 @@ from __future__ import annotations
 from typing import Callable
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
-from flext_ldap.domain import FlextLDAPDomain
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.domain import FlextLdapDomain
+from flext_ldap.models import FlextLdapModels
 
 _logger = FlextLogger(__name__)
 
 
-class FlextLDAPServices(FlextService[None]):
+class FlextLdapServices(FlextService[None]):
     """Unified application services class for LDAP operations.
 
     This class implements the Application Services layer of Clean Architecture,
@@ -40,7 +40,7 @@ class FlextLDAPServices(FlextService[None]):
     # =============================================================================
 
     def validate_user_creation_request(
-        self, request: FlextLDAPModels.CreateUserRequest
+        self, request: FlextLdapModels.CreateUserRequest
     ) -> FlextResult[bool]:
         """Validate user creation request against domain business rules.
 
@@ -53,11 +53,11 @@ class FlextLDAPServices(FlextService[None]):
         """
         try:
             # Domain validation: username format
-            if not FlextLDAPDomain.UserSpecification.is_valid_username(request.uid):
+            if not FlextLdapDomain.UserSpecification.is_valid_username(request.uid):
                 return FlextResult[bool].fail("Invalid username format")
 
             # Domain validation: email format
-            if request.mail and not FlextLDAPDomain.UserSpecification.is_valid_email(
+            if request.mail and not FlextLdapDomain.UserSpecification.is_valid_email(
                 request.mail
             ):
                 return FlextResult[bool].fail("Invalid email format")
@@ -65,7 +65,7 @@ class FlextLDAPServices(FlextService[None]):
             # Domain validation: password policy
             if request.user_password:
                 password_result = (
-                    FlextLDAPDomain.UserSpecification.meets_password_policy(
+                    FlextLdapDomain.UserSpecification.meets_password_policy(
                         request.user_password
                     )
                 )
@@ -89,8 +89,8 @@ class FlextLDAPServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def enrich_user_for_creation(
-        self, request: FlextLDAPModels.CreateUserRequest
-    ) -> FlextResult[FlextLDAPModels.CreateUserRequest]:
+        self, request: FlextLdapModels.CreateUserRequest
+    ) -> FlextResult[FlextLdapModels.CreateUserRequest]:
         """Enrich user creation request with domain defaults and business logic.
 
         Args:
@@ -119,16 +119,16 @@ class FlextLDAPServices(FlextService[None]):
                 object_classes=request.object_classes,
             )
 
-            return FlextResult[FlextLDAPModels.CreateUserRequest].ok(request)
+            return FlextResult[FlextLdapModels.CreateUserRequest].ok(request)
 
         except Exception as e:
             _logger.error("User creation enrichment failed", error=str(e))
-            return FlextResult[FlextLDAPModels.CreateUserRequest].fail(
+            return FlextResult[FlextLdapModels.CreateUserRequest].fail(
                 f"Enrichment failed: {e}"
             )
 
     def validate_user_search_request(
-        self, request: FlextLDAPModels.SearchRequest
+        self, request: FlextLdapModels.SearchRequest
     ) -> FlextResult[bool]:
         """Validate user search request against domain rules.
 
@@ -141,7 +141,7 @@ class FlextLDAPServices(FlextService[None]):
         """
         try:
             # Domain validation: safe filter
-            filter_check = FlextLDAPDomain.SearchSpecification.is_safe_search_filter(
+            filter_check = FlextLdapDomain.SearchSpecification.is_safe_search_filter(
                 request.filter_str
             )
             if filter_check.is_failure:
@@ -150,8 +150,8 @@ class FlextLDAPServices(FlextService[None]):
                 )
 
             # Domain validation: search scope
-            scope_obj = FlextLDAPModels.Scope.create(request.scope)
-            scope_check = FlextLDAPDomain.SearchSpecification.validate_search_scope(
+            scope_obj = FlextLdapModels.Scope.create(request.scope)
+            scope_check = FlextLdapDomain.SearchSpecification.validate_search_scope(
                 request.base_dn, scope_obj
             )
             if scope_check.is_failure:
@@ -173,8 +173,8 @@ class FlextLDAPServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_user_search_results(
-        self, results: FlextLDAPModels.SearchResponse
-    ) -> FlextResult[FlextLDAPModels.SearchResponse]:
+        self, results: FlextLdapModels.SearchResponse
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Process and enrich user search results with domain logic.
 
         Args:
@@ -190,7 +190,7 @@ class FlextLDAPServices(FlextService[None]):
             for entry in results.entries:
                 try:
                     # Try to create User entity from entry
-                    user = FlextLDAPModels.User(**entry.model_dump())
+                    user = FlextLdapModels.User(**entry.model_dump())
                     user_entries.append(user)
                 except Exception as e:
                     _logger.warning(
@@ -202,7 +202,7 @@ class FlextLDAPServices(FlextService[None]):
                     user_entries.append(entry)
 
             # Create enriched response
-            enriched_results = FlextLDAPModels.SearchResponse(
+            enriched_results = FlextLdapModels.SearchResponse(
                 entries=user_entries,
                 total_count=len(user_entries),
                 search_time=results.search_time,
@@ -216,11 +216,11 @@ class FlextLDAPServices(FlextService[None]):
                 search_time=results.search_time,
             )
 
-            return FlextResult[FlextLDAPModels.SearchResponse].ok(enriched_results)
+            return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
             _logger.error("User search results processing failed", error=str(e))
-            return FlextResult[FlextLDAPModels.SearchResponse].fail(
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
 
@@ -246,7 +246,7 @@ class FlextLDAPServices(FlextService[None]):
                 return FlextResult[FlextTypes.Dict].fail("Group CN is required")
 
             # Domain validation: group name format
-            if not FlextLDAPDomain.GroupSpecification.is_valid_group_name(cn):
+            if not FlextLdapDomain.GroupSpecification.is_valid_group_name(cn):
                 return FlextResult[FlextTypes.Dict].fail("Invalid group name format")
 
             # Domain validation: description
@@ -263,7 +263,7 @@ class FlextLDAPServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def validate_group_membership_operation(
-        self, group: FlextLDAPModels.Group, member_dn: str, operation: str
+        self, group: FlextLdapModels.Group, member_dn: str, operation: str
     ) -> FlextResult[bool]:
         """Validate group membership operations against domain rules.
 
@@ -282,7 +282,7 @@ class FlextLDAPServices(FlextService[None]):
 
             if operation == "add":
                 # Domain validation: can add member
-                add_check = FlextLDAPDomain.GroupSpecification.can_add_member_to_group(
+                add_check = FlextLdapDomain.GroupSpecification.can_add_member_to_group(
                     group, member_dn
                 )
                 if add_check.is_failure:
@@ -309,8 +309,8 @@ class FlextLDAPServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_group_search_results(
-        self, results: FlextLDAPModels.SearchResponse
-    ) -> FlextResult[FlextLDAPModels.SearchResponse]:
+        self, results: FlextLdapModels.SearchResponse
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Process and enrich group search results with domain logic.
 
         Args:
@@ -326,7 +326,7 @@ class FlextLDAPServices(FlextService[None]):
             for entry in results.entries:
                 try:
                     # Try to create Group entity from entry
-                    group = FlextLDAPModels.Group(**entry.model_dump())
+                    group = FlextLdapModels.Group(**entry.model_dump())
                     group_entries.append(group)
                 except Exception as e:
                     _logger.warning(
@@ -338,7 +338,7 @@ class FlextLDAPServices(FlextService[None]):
                     group_entries.append(entry)
 
             # Create enriched response
-            enriched_results = FlextLDAPModels.SearchResponse(
+            enriched_results = FlextLdapModels.SearchResponse(
                 entries=group_entries,
                 total_count=len(group_entries),
                 search_time=results.search_time,
@@ -352,11 +352,11 @@ class FlextLDAPServices(FlextService[None]):
                 search_time=results.search_time,
             )
 
-            return FlextResult[FlextLDAPModels.SearchResponse].ok(enriched_results)
+            return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
             _logger.error("Group search results processing failed", error=str(e))
-            return FlextResult[FlextLDAPModels.SearchResponse].fail(
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
 
@@ -366,9 +366,9 @@ class FlextLDAPServices(FlextService[None]):
 
     def coordinate_search_operation(
         self,
-        search_request: FlextLDAPModels.SearchRequest,
+        search_request: FlextLdapModels.SearchRequest,
         result_processor: Callable | None = None,
-    ) -> FlextResult[FlextLDAPModels.SearchResponse]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Coordinate search operation with domain validation and processing.
 
         This is the main orchestration method for searches that:
@@ -388,7 +388,7 @@ class FlextLDAPServices(FlextService[None]):
             # Step 1: Domain validation
             validation_result = self.validate_user_search_request(search_request)
             if validation_result.is_failure:
-                return FlextResult[FlextLDAPModels.SearchResponse].fail(
+                return FlextResult[FlextLdapModels.SearchResponse].fail(
                     validation_result.error or "Search validation failed"
                 )
 
@@ -398,7 +398,7 @@ class FlextLDAPServices(FlextService[None]):
             # Step 3: Simulate infrastructure call (in real implementation, this would
             # call the infrastructure layer through dependency injection)
             # For this optimization, we'll create mock results
-            mock_results = FlextLDAPModels.SearchResponse(
+            mock_results = FlextLdapModels.SearchResponse(
                 entries=[],  # Would be populated by infrastructure
                 total_count=0,
                 search_time=0.1,
@@ -414,12 +414,12 @@ class FlextLDAPServices(FlextService[None]):
             elif "group" in search_request.filter_str:
                 processed_results = self.process_group_search_results(mock_results)
             else:
-                processed_results = FlextResult[FlextLDAPModels.SearchResponse].ok(
+                processed_results = FlextResult[FlextLdapModels.SearchResponse].ok(
                     mock_results
                 )
 
             if processed_results.is_failure:
-                return FlextResult[FlextLDAPModels.SearchResponse].fail(
+                return FlextResult[FlextLdapModels.SearchResponse].fail(
                     processed_results.error or "Result processing failed"
                 )
 
@@ -432,11 +432,11 @@ class FlextLDAPServices(FlextService[None]):
                 result_count=final_results.total_count,
             )
 
-            return FlextResult[FlextLDAPModels.SearchResponse].ok(final_results)
+            return FlextResult[FlextLdapModels.SearchResponse].ok(final_results)
 
         except Exception as e:
             _logger.error("Search coordination failed", error=str(e))
-            return FlextResult[FlextLDAPModels.SearchResponse].fail(
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Coordination failed: {e}"
             )
 
@@ -445,8 +445,8 @@ class FlextLDAPServices(FlextService[None]):
     # =============================================================================
 
     def execute_user_provisioning_workflow(
-        self, user_request: FlextLDAPModels.CreateUserRequest
-    ) -> FlextResult[FlextLDAPModels.User]:
+        self, user_request: FlextLdapModels.CreateUserRequest
+    ) -> FlextResult[FlextLdapModels.User]:
         """Execute complete user provisioning workflow with domain orchestration.
 
         This method orchestrates the entire user provisioning process:
@@ -466,14 +466,14 @@ class FlextLDAPServices(FlextService[None]):
             # Step 1: Domain validation
             validation_result = self.validate_user_creation_request(user_request)
             if validation_result.is_failure:
-                return FlextResult[FlextLDAPModels.User].fail(
+                return FlextResult[FlextLdapModels.User].fail(
                     validation_result.error or "User validation failed"
                 )
 
             # Step 2: Domain enrichment
             enrichment_result = self.enrich_user_for_creation(user_request)
             if enrichment_result.is_failure:
-                return FlextResult[FlextLDAPModels.User].fail(
+                return FlextResult[FlextLdapModels.User].fail(
                     enrichment_result.error or "User enrichment failed"
                 )
 
@@ -485,7 +485,7 @@ class FlextLDAPServices(FlextService[None]):
 
             # Step 4: Simulate user creation (infrastructure layer)
             # In real implementation, this would call repository/infrastructure
-            mock_user = FlextLDAPModels.User(
+            mock_user = FlextLdapModels.User(
                 dn=enriched_request.dn,
                 attributes=enriched_request.to_attributes(),
                 uid=enriched_request.uid,
@@ -497,7 +497,7 @@ class FlextLDAPServices(FlextService[None]):
 
             # Step 5: Domain post-processing
             # Apply domain services for enrichment
-            FlextLDAPDomain.DomainServices.calculate_user_display_name(mock_user)
+            FlextLdapDomain.DomainServices.calculate_user_display_name(mock_user)
             # Note: This returns a string, but we need to set it on the user
             # In real implementation, User entity would have display_name field
 
@@ -507,11 +507,11 @@ class FlextLDAPServices(FlextService[None]):
                 dn=mock_user.dn,
             )
 
-            return FlextResult[FlextLDAPModels.User].ok(mock_user)
+            return FlextResult[FlextLdapModels.User].ok(mock_user)
 
         except Exception as e:
             _logger.error("User provisioning workflow failed", error=str(e))
-            return FlextResult[FlextLDAPModels.User].fail(f"Workflow failed: {e}")
+            return FlextResult[FlextLdapModels.User].fail(f"Workflow failed: {e}")
 
     # =============================================================================
     # UTILITY SERVICES
@@ -555,7 +555,7 @@ class FlextLDAPServices(FlextService[None]):
 
             # Try to create DN value object for validation
             try:
-                FlextLDAPModels.DistinguishedName.from_string(base_dn)
+                FlextLdapModels.DistinguishedName.from_string(base_dn)
             except Exception as e:
                 return FlextResult[FlextTypes.Dict].fail(f"Invalid base DN format: {e}")
 
@@ -625,5 +625,5 @@ class FlextLDAPServices(FlextService[None]):
 
 
 __all__ = [
-    "FlextLDAPServices",
+    "FlextLdapServices",
 ]

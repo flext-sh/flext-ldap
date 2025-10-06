@@ -14,10 +14,10 @@ from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
-class FlextLDAPServersOIDOperations(FlextLDAPServersBaseOperations):
+class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     """Complete Oracle OID operations implementation.
 
     Oracle OID Features:
@@ -559,9 +559,9 @@ class FlextLDAPServersOIDOperations(FlextLDAPServersBaseOperations):
                 generator=True,
             )
 
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLDAPEntryAdapter()
+            adapter = FlextLdapEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:

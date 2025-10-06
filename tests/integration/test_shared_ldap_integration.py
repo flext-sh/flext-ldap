@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 """
 
 import pytest
-from flext_ldap import FlextLDAPClients, FlextLDAPModels
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap.constants import FlextLdapConstants
 
 from ..support.shared_ldap_fixtures import check_docker_available, skip_if_no_docker
 
@@ -23,7 +23,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_connection(
         self,
-        shared_ldap_client: FlextLDAPClients,
+        shared_ldap_client: FlextLdapClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test connecting to shared LDAP container."""
@@ -42,7 +42,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_schema_discovery(
         self,
-        shared_ldap_client: FlextLDAPClients,
+        shared_ldap_client: FlextLdapClients,
     ) -> None:
         """Test schema discovery with shared LDAP container."""
         # Test schema discovery
@@ -55,7 +55,7 @@ class TestSharedLDAPIntegration:
 
         # Verify we got some schema information
         schema_data = schema_result.value
-        assert isinstance(schema_data, FlextLDAPModels.SchemaDiscoveryResult)
+        assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
         assert schema_data.server_info is not None
 
     def test_shared_ldap_container_manager(
@@ -128,7 +128,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_connection_config(
         self,
-        shared_ldap_connection_config: FlextLDAPModels.ConnectionConfig,
+        shared_ldap_connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test shared LDAP connection config fixture."""
         assert shared_ldap_connection_config is not None
@@ -140,12 +140,12 @@ class TestSharedLDAPIntegration:
         assert shared_ldap_connection_config.base_dn == "dc=flext,dc=local"
         assert shared_ldap_connection_config.use_ssl is False
         assert (
-            shared_ldap_connection_config.timeout == FlextLDAPConstants.DEFAULT_TIMEOUT
+            shared_ldap_connection_config.timeout == FlextLdapConstants.DEFAULT_TIMEOUT
         )
 
     def test_shared_ldap_crud_operations(
         self,
-        shared_ldap_client: FlextLDAPClients,
+        shared_ldap_client: FlextLdapClients,
         shared_ldap_config: dict,
     ) -> None:
         """Test CRUD operations with shared LDAP container."""

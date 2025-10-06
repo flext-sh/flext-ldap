@@ -99,7 +99,7 @@ PYTHONPATH=src pyright src/flext_ldap --level error
 
 ```bash
 pytest tests/unit/ -v
-pytest tests/unit/test_entities.py::TestFlextLDAPUser -v
+pytest tests/unit/test_entities.py::TestFlextLdapUser -v
 ```
 
 **Integration Tests** - Real LDAP operations:
@@ -181,14 +181,14 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 **1. Single Responsibility Classes**
 
 ```python
-class FlextLDAPUserService:
+class FlextLdapUserService:
     """Single responsibility - user operations only."""
 
     def __init__(self) -> None:
         self._client = get_ldap_client()
         self._logger = FlextLogger(__name__)
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLDAPUser]:
+    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
@@ -197,18 +197,18 @@ class FlextLDAPUserService:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLDAPUser]:
+def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
     if not request.is_valid():
-        return FlextResult[FlextLDAPUser].fail("Invalid user data")
+        return FlextResult[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
-        return FlextResult[FlextLDAPUser].fail(f"User creation failed: {result.error}")
+        return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
-    return FlextResult[FlextLDAPUser].ok(FlextLDAPUser.from_ldap_entry(result.unwrap()))
+    return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
 
 # ❌ WRONG - Try/catch fallbacks
-def create_user(self, request: CreateUserRequest) -> FlextLDAPUser | None:
+def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
     try:
         # Implementation...
         return user
@@ -267,13 +267,13 @@ def authenticate_user(
     self,
     username: str,
     password: str
-) -> FlextResult[FlextLDAPUser]:
+) -> FlextResult[FlextLdapUser]:
     """Complete type signature required."""
 
 # Generic types for FlextResult patterns
 T = TypeVar('T')
 
-class FlextLDAPService(Generic[T]):
+class FlextLdapService(Generic[T]):
     """Generic service with type constraints."""
 ```
 
@@ -292,7 +292,7 @@ from ldap3 import Connection, Server
 from flext_core import FlextResult, FlextLogger
 
 # Local imports
-from flext_ldap.entities import FlextLDAPUser
+from flext_ldap.entities import FlextLdapUser
 from flext_ldap.value_objects import DistinguishedName
 ```
 
@@ -304,14 +304,14 @@ from flext_ldap.value_objects import DistinguishedName
 
 ```python
 import pytest
-from flext_ldap.entities import FlextLDAPUser, CreateUserRequest
+from flext_ldap.entities import FlextLdapUser, CreateUserRequest
 
-class TestFlextLDAPUser:
+class TestFlextLdapUser:
     """Test domain entity behavior."""
 
     def test_user_validation_success(self):
         """Test valid user data passes validation."""
-        user = FlextLDAPUser(
+        user = FlextLdapUser(
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
@@ -323,7 +323,7 @@ class TestFlextLDAPUser:
 
     def test_user_validation_failure(self):
         """Test invalid user data fails validation."""
-        user = FlextLDAPUser(
+        user = FlextLdapUser(
             dn="",  # Invalid empty DN
             uid="john.doe",
             cn="John Doe",
@@ -339,7 +339,7 @@ class TestFlextLDAPUser:
     ])
     def test_uid_validation(self, uid: str, expected: bool):
         """Test UID validation with parameters."""
-        user = FlextLDAPUser(
+        user = FlextLdapUser(
             dn="cn=test,dc=example,dc=com",
             uid=uid,
             cn="Test User",
@@ -353,7 +353,7 @@ class TestFlextLDAPUser:
 
 ```python
 import pytest
-from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
+from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 @pytest.mark.integration
 @pytest.mark.io
@@ -365,7 +365,7 @@ class TestLdapOperations:
         api = get_flext_ldap_api()
 
         # Create test user first
-        create_request = FlextLDAPEntities.CreateUserRequest(
+        create_request = FlextLdapEntities.CreateUserRequest(
             dn="cn=test.user,ou=users,dc=flext,dc=local",
             uid="test.user",
             cn="Test User",
@@ -388,7 +388,7 @@ class TestLdapOperations:
         """Test user search functionality."""
         api = get_flext_ldap_api()
 
-        search_request = FlextLDAPEntities.SearchRequest(
+        search_request = FlextLdapEntities.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -409,7 +409,7 @@ class TestLdapOperations:
 import pytest
 from flext_tests import FlextTestDocker
 from flext_core import FlextResult
-from Flext_ldap import FlextLDAPConfig, set_flext_ldap_config
+from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
 def ldap_server():
@@ -446,7 +446,7 @@ def ldap_server():
         pytest.skip(f"LDAP server not ready: {health_result.error}")
 
     # Configure flext-ldap for testing
-    test_config = FlextLDAPConfig(
+    test_config = FlextLdapConfig(
         host="localhost",
         port=3390,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
@@ -466,7 +466,7 @@ def authenticated_user():
     api = get_flext_ldap_api()
 
     # Create test user
-    create_request = FlextLDAPEntities.CreateUserRequest(
+    create_request = FlextLdapEntities.CreateUserRequest(
         dn="cn=auth.test,ou=users,dc=flext,dc=local",
         uid="auth.test",
         cn="Auth Test",
@@ -490,7 +490,7 @@ def authenticated_user():
 ### Code Documentation
 
 ```python
-class FlextLDAPClient:
+class FlextLdapClients:
     """High-level LDAP API following Clean Architecture patterns.
 
     This class serves as the main entry point for LDAP operations,
@@ -514,7 +514,7 @@ class FlextLDAPClient:
         self,
         username: str,
         password: str
-    ) -> FlextResult[FlextLDAPUser]:
+    ) -> FlextResult[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:
@@ -557,9 +557,9 @@ All public APIs require comprehensive documentation including:
 
 ```python
 # Use connection pooling for high-traffic scenarios
-from Flext_ldap import FlextLDAPConfig
+from Flext_ldap import FlextLdapConfig
 
-config = FlextLDAPConfig(
+config = FlextLdapConfig(
     host="ldap.example.com",
     pool_size=10,  # Adjust based on load
     connection_timeout=5,
@@ -571,7 +571,7 @@ config = FlextLDAPConfig(
 
 ```python
 # Optimize LDAP searches
-search_request = FlextLDAPEntities.SearchRequest(
+search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",  # Use specific base DN
     filter_str="(&(objectClass=person)(uid=j*))",  # Indexed attributes
     scope="onelevel",  # Minimal scope needed

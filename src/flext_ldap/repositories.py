@@ -15,15 +15,15 @@ from typing import TypeVar
 
 from flext_core import FlextLogger, FlextProtocols, FlextResult
 
-from flext_ldap.clients import FlextLDAPClients
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.clients import FlextLdapClients
+from flext_ldap.models import FlextLdapModels
 
 _logger = FlextLogger(__name__)
 
-T = TypeVar("T", bound=FlextLDAPModels.Entity)
+T = TypeVar("T", bound=FlextLdapModels.Entity)
 
 
-class FlextLDAPRepositories:
+class FlextLdapRepositories:
     """Unified namespace class for LDAP repositories.
 
     Consolidates all LDAP repository implementations into a single namespace class
@@ -36,17 +36,17 @@ class FlextLDAPRepositories:
         This class provides the foundation for LDAP-specific repository implementations,
         implementing the flext-core Domain.Repository protocol through explicit inheritance.
 
-        Generic type T is bound to FlextLDAPModels.Entity to ensure all repository
+        Generic type T is bound to FlextLdapModels.Entity to ensure all repository
         operations work with domain entities.
         """
 
-        def __init__(self, client: FlextLDAPClients | None = None) -> None:
+        def __init__(self, client: FlextLdapClients | None = None) -> None:
             """Initialize repository with LDAP client.
 
             Args:
                 client: LDAP client instance. If None, creates a new instance.
             """
-            self._client = client or FlextLDAPClients()
+            self._client = client or FlextLdapClients()
             self._logger = FlextLogger(__name__)
 
         # =========================================================================
@@ -127,10 +127,10 @@ class FlextLDAPRepositories:
                 )
             return FlextResult[bool].ok(result.unwrap() is not None)
 
-    class UserRepository(LdapRepository[FlextLDAPModels.User]):
+    class UserRepository(LdapRepository[FlextLdapModels.User]):
         """Repository for LDAP User entities implementing Domain.Repository protocol."""
 
-        def get_by_id(self, id: str) -> FlextResult[FlextLDAPModels.User | None]:
+        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.User | None]:
             """Get user by ID (DN or UID).
 
             Args:
@@ -149,16 +149,16 @@ class FlextLDAPRepositories:
                         base_dn=self._client.config.ldap_user_base_dn, uid=id
                     )
                     if search_result.is_failure:
-                        return FlextResult[FlextLDAPModels.User | None].fail(
+                        return FlextResult[FlextLdapModels.User | None].fail(
                             search_result.error or "User search failed"
                         )
 
                     users = search_result.unwrap()
                     if not users:
-                        return FlextResult[FlextLDAPModels.User | None].ok(None)
+                        return FlextResult[FlextLdapModels.User | None].ok(None)
 
                     # Return first match
-                    result = FlextResult[FlextLDAPModels.User].ok(users[0])
+                    result = FlextResult[FlextLdapModels.User].ok(users[0])
 
                 if result.is_failure:
                     # If DN lookup failed, try UID search
@@ -170,23 +170,23 @@ class FlextLDAPRepositories:
                         if search_result.is_success:
                             users = search_result.unwrap()
                             if users:
-                                return FlextResult[FlextLDAPModels.User | None].ok(
+                                return FlextResult[FlextLdapModels.User | None].ok(
                                     users[0]
                                 )
 
-                    return FlextResult[FlextLDAPModels.User | None].fail(
+                    return FlextResult[FlextLdapModels.User | None].fail(
                         result.error or "User not found"
                     )
 
-                return FlextResult[FlextLDAPModels.User | None].ok(result.unwrap())
+                return FlextResult[FlextLdapModels.User | None].ok(result.unwrap())
 
             except Exception as e:
                 self._logger.error("Failed to get user by ID", error=str(e), user_id=id)
-                return FlextResult[FlextLDAPModels.User | None].fail(
+                return FlextResult[FlextLdapModels.User | None].fail(
                     f"User lookup failed: {e}"
                 )
 
-        def get_all(self) -> FlextResult[list[FlextLDAPModels.User]]:
+        def get_all(self) -> FlextResult[list[FlextLdapModels.User]]:
             """Get all users.
 
             Returns:
@@ -197,19 +197,19 @@ class FlextLDAPRepositories:
                     base_dn=self._client.config.ldap_user_base_dn
                 )
                 if result.is_failure:
-                    return FlextResult[list[FlextLDAPModels.User]].fail(
+                    return FlextResult[list[FlextLdapModels.User]].fail(
                         result.error or "User search failed"
                     )
-                return FlextResult[list[FlextLDAPModels.User]].ok(result.unwrap())
+                return FlextResult[list[FlextLdapModels.User]].ok(result.unwrap())
             except Exception as e:
                 self._logger.error("Failed to get all users", error=str(e))
-                return FlextResult[list[FlextLDAPModels.User]].fail(
+                return FlextResult[list[FlextLdapModels.User]].fail(
                     f"User retrieval failed: {e}"
                 )
 
         def add(
-            self, entity: FlextLDAPModels.User
-        ) -> FlextResult[FlextLDAPModels.User]:
+            self, entity: FlextLdapModels.User
+        ) -> FlextResult[FlextLdapModels.User]:
             """Add new user.
 
             Args:
@@ -220,7 +220,7 @@ class FlextLDAPRepositories:
             """
             try:
                 # Convert entity to create request
-                create_request = FlextLDAPModels.CreateUserRequest(
+                create_request = FlextLdapModels.CreateUserRequest(
                     dn=entity.dn,
                     uid=entity.uid,
                     cn=entity.cn,
@@ -233,23 +233,23 @@ class FlextLDAPRepositories:
 
                 result = self._client.create_user(create_request)
                 if result.is_failure:
-                    return FlextResult[FlextLDAPModels.User].fail(
+                    return FlextResult[FlextLdapModels.User].fail(
                         result.error or "User creation failed"
                     )
 
-                return FlextResult[FlextLDAPModels.User].ok(result.unwrap())
+                return FlextResult[FlextLdapModels.User].ok(result.unwrap())
 
             except Exception as e:
                 self._logger.error(
                     "Failed to add user", error=str(e), user_dn=entity.dn
                 )
-                return FlextResult[FlextLDAPModels.User].fail(
+                return FlextResult[FlextLdapModels.User].fail(
                     f"User creation failed: {e}"
                 )
 
         def update(
-            self, entity: FlextLDAPModels.User
-        ) -> FlextResult[FlextLDAPModels.User]:
+            self, entity: FlextLdapModels.User
+        ) -> FlextResult[FlextLdapModels.User]:
             """Update existing user.
 
             Args:
@@ -269,18 +269,18 @@ class FlextLDAPRepositories:
 
                 result = self._client.update_user_attributes(entity.dn, attributes)
                 if result.is_failure:
-                    return FlextResult[FlextLDAPModels.User].fail(
+                    return FlextResult[FlextLdapModels.User].fail(
                         result.error or "User update failed"
                     )
 
                 # Return updated entity (could refetch for consistency)
-                return FlextResult[FlextLDAPModels.User].ok(entity)
+                return FlextResult[FlextLdapModels.User].ok(entity)
 
             except Exception as e:
                 self._logger.error(
                     "Failed to update user", error=str(e), user_dn=entity.dn
                 )
-                return FlextResult[FlextLDAPModels.User].fail(
+                return FlextResult[FlextLdapModels.User].fail(
                     f"User update failed: {e}"
                 )
 
@@ -317,10 +317,10 @@ class FlextLDAPRepositories:
                 self._logger.error("Failed to delete user", error=str(e), user_id=id)
                 return FlextResult[bool].fail(f"User deletion failed: {e}")
 
-    class GroupRepository(LdapRepository[FlextLDAPModels.Group]):
+    class GroupRepository(LdapRepository[FlextLdapModels.Group]):
         """Repository for LDAP Group entities implementing Domain.Repository protocol."""
 
-        def get_by_id(self, id: str) -> FlextResult[FlextLDAPModels.Group | None]:
+        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Group | None]:
             """Get group by ID (DN or CN).
 
             Args:
@@ -332,19 +332,19 @@ class FlextLDAPRepositories:
             try:
                 result = self._client.get_group(id)
                 if result.is_failure:
-                    return FlextResult[FlextLDAPModels.Group | None].fail(
+                    return FlextResult[FlextLdapModels.Group | None].fail(
                         result.error or "Group lookup failed"
                     )
-                return FlextResult[FlextLDAPModels.Group | None].ok(result.unwrap())
+                return FlextResult[FlextLdapModels.Group | None].ok(result.unwrap())
             except Exception as e:
                 self._logger.error(
                     "Failed to get group by ID", error=str(e), group_id=id
                 )
-                return FlextResult[FlextLDAPModels.Group | None].fail(
+                return FlextResult[FlextLdapModels.Group | None].fail(
                     f"Group lookup failed: {e}"
                 )
 
-        def get_all(self) -> FlextResult[list[FlextLDAPModels.Group]]:
+        def get_all(self) -> FlextResult[list[FlextLdapModels.Group]]:
             """Get all groups.
 
             Returns:
@@ -355,19 +355,19 @@ class FlextLDAPRepositories:
                     base_dn=self._client.config.ldap_group_base_dn
                 )
                 if result.is_failure:
-                    return FlextResult[list[FlextLDAPModels.Group]].fail(
+                    return FlextResult[list[FlextLdapModels.Group]].fail(
                         result.error or "Group search failed"
                     )
-                return FlextResult[list[FlextLDAPModels.Group]].ok(result.unwrap())
+                return FlextResult[list[FlextLdapModels.Group]].ok(result.unwrap())
             except Exception as e:
                 self._logger.error("Failed to get all groups", error=str(e))
-                return FlextResult[list[FlextLDAPModels.Group]].fail(
+                return FlextResult[list[FlextLdapModels.Group]].fail(
                     f"Group retrieval failed: {e}"
                 )
 
         def add(
-            self, entity: FlextLDAPModels.Group
-        ) -> FlextResult[FlextLDAPModels.Group]:
+            self, entity: FlextLdapModels.Group
+        ) -> FlextResult[FlextLdapModels.Group]:
             """Add new group.
 
             Args:
@@ -378,7 +378,7 @@ class FlextLDAPRepositories:
             """
             try:
                 # Convert entity to create request
-                create_request = FlextLDAPModels.CreateGroupRequest(
+                create_request = FlextLdapModels.CreateGroupRequest(
                     dn=entity.dn,
                     cn=entity.cn,
                     description=getattr(entity, "description", None),
@@ -389,23 +389,23 @@ class FlextLDAPRepositories:
 
                 result = self._client.create_group(create_request)
                 if result.is_failure:
-                    return FlextResult[FlextLDAPModels.Group].fail(
+                    return FlextResult[FlextLdapModels.Group].fail(
                         result.error or "Group creation failed"
                     )
 
-                return FlextResult[FlextLDAPModels.Group].ok(result.unwrap())
+                return FlextResult[FlextLdapModels.Group].ok(result.unwrap())
 
             except Exception as e:
                 self._logger.error(
                     "Failed to add group", error=str(e), group_dn=entity.dn
                 )
-                return FlextResult[FlextLDAPModels.Group].fail(
+                return FlextResult[FlextLdapModels.Group].fail(
                     f"Group creation failed: {e}"
                 )
 
         def update(
-            self, entity: FlextLDAPModels.Group
-        ) -> FlextResult[FlextLDAPModels.Group]:
+            self, entity: FlextLdapModels.Group
+        ) -> FlextResult[FlextLdapModels.Group]:
             """Update existing group.
 
             Args:
@@ -424,17 +424,17 @@ class FlextLDAPRepositories:
 
                 result = self._client.update_group_attributes(entity.dn, attributes)
                 if result.is_failure:
-                    return FlextResult[FlextLDAPModels.Group].fail(
+                    return FlextResult[FlextLdapModels.Group].fail(
                         result.error or "Group update failed"
                     )
 
-                return FlextResult[FlextLDAPModels.Group].ok(entity)
+                return FlextResult[FlextLdapModels.Group].ok(entity)
 
             except Exception as e:
                 self._logger.error(
                     "Failed to update group", error=str(e), group_dn=entity.dn
                 )
-                return FlextResult[FlextLDAPModels.Group].fail(
+                return FlextResult[FlextLdapModels.Group].fail(
                     f"Group update failed: {e}"
                 )
 

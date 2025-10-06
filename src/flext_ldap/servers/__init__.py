@@ -1,6 +1,6 @@
 """Unified LDAP server operations for flext-ldap domain.
 
-This module provides a single FlextLDAPServers class that consolidates all
+This module provides a single FlextLdapServers class that consolidates all
 server-specific LDAP operations into one unified interface following FLEXT
 single-class-per-module pattern.
 
@@ -16,13 +16,13 @@ from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import (
-    FlextLDAPServersBaseOperations as BaseServerOperations,
+    FlextLdapServersBaseOperations as BaseServerOperations,
 )
 
 
-class FlextLDAPServers(FlextService[None]):
+class FlextLdapServers(FlextService[None]):
     """Unified LDAP server operations class consolidating all server-specific implementations.
 
     This class provides a single interface for all LDAP server operations across
@@ -37,12 +37,12 @@ class FlextLDAPServers(FlextService[None]):
     """
 
     # Server type constants - using centralized constants (ClassVar to avoid Pydantic field detection)
-    SERVER_OPENLDAP1: ClassVar[str] = FlextLDAPConstants.Servers.OPENLDAP1
-    SERVER_OPENLDAP2: ClassVar[str] = FlextLDAPConstants.Servers.OPENLDAP2
-    SERVER_OID: ClassVar[str] = FlextLDAPConstants.Servers.OID
-    SERVER_OUD: ClassVar[str] = FlextLDAPConstants.Servers.OUD
-    SERVER_AD: ClassVar[str] = FlextLDAPConstants.Servers.AD
-    SERVER_GENERIC: ClassVar[str] = FlextLDAPConstants.Servers.GENERIC
+    SERVER_OPENLDAP1: ClassVar[str] = FlextLdapConstants.Servers.OPENLDAP1
+    SERVER_OPENLDAP2: ClassVar[str] = FlextLdapConstants.Servers.OPENLDAP2
+    SERVER_OID: ClassVar[str] = FlextLdapConstants.Servers.OID
+    SERVER_OUD: ClassVar[str] = FlextLdapConstants.Servers.OUD
+    SERVER_AD: ClassVar[str] = FlextLdapConstants.Servers.AD
+    SERVER_GENERIC: ClassVar[str] = FlextLdapConstants.Servers.GENERIC
 
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize unified server operations.
@@ -81,9 +81,9 @@ class FlextLDAPServers(FlextService[None]):
             Server operations instance
         """
         # Import here to avoid circular imports
-        from flext_ldap.servers.factory import ServerOperationsFactory
+        from flext_ldap.servers.factory import FlextLdapServersFactory
 
-        factory = ServerOperationsFactory()
+        factory = FlextLdapServersFactory()
         result = factory.create_from_server_type(server_type)
 
         if result.is_failure:
@@ -213,36 +213,36 @@ class FlextLDAPServers(FlextService[None]):
     # =========================================================================
 
     @classmethod
-    def for_openldap1(cls) -> FlextLDAPServers:
+    def for_openldap1(cls) -> FlextLdapServers:
         """Create operations for OpenLDAP 1.x."""
         return cls(cls.SERVER_OPENLDAP1)
 
     @classmethod
-    def for_openldap2(cls) -> FlextLDAPServers:
+    def for_openldap2(cls) -> FlextLdapServers:
         """Create operations for OpenLDAP 2.x."""
         return cls(cls.SERVER_OPENLDAP2)
 
     @classmethod
-    def for_oracle_oid(cls) -> FlextLDAPServers:
+    def for_oracle_oid(cls) -> FlextLdapServers:
         """Create operations for Oracle Internet Directory."""
         return cls(cls.SERVER_OID)
 
     @classmethod
-    def for_oracle_oud(cls) -> FlextLDAPServers:
+    def for_oracle_oud(cls) -> FlextLdapServers:
         """Create operations for Oracle Unified Directory."""
         return cls(cls.SERVER_OUD)
 
     @classmethod
-    def for_active_directory(cls) -> FlextLDAPServers:
+    def for_active_directory(cls) -> FlextLdapServers:
         """Create operations for Active Directory."""
         return cls(cls.SERVER_AD)
 
     @classmethod
-    def generic(cls) -> FlextLDAPServers:
+    def generic(cls) -> FlextLdapServers:
         """Create generic operations."""
         return cls(cls.SERVER_GENERIC)
 
 
 __all__ = [
-    "FlextLDAPServers",
+    "FlextLdapServers",
 ]

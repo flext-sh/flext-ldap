@@ -30,8 +30,8 @@
       "path": "src/flext_ldap/acl/manager.py",
       "code": -2,
       "name": "bad-param-name-override",
-      "description": "Class member `FlextLDAPAclManager.handle` overrides parent class `FlextHandlers` in an inconsistent manner\n  Got parameter name `request`, expected `message`",
-      "concise_description": "Class member `FlextLDAPAclManager.handle` overrides parent class `FlextHandlers` in an inconsistent manner"
+      "description": "Class member `FlextLdapAclManager.handle` overrides parent class `FlextHandlers` in an inconsistent manner\n  Got parameter name `request`, expected `message`",
+      "concise_description": "Class member `FlextLdapAclManager.handle` overrides parent class `FlextHandlers` in an inconsistent manner"
     },
     {
       "line": 146,
@@ -52,8 +52,8 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLDAPConstants.Validation` has type `type[FlextLDAPConstants.Validation]`, which is not assignable to `type[FlextConstants["Validation]`, the type of `FlextConstants.Validation`""],
-      "concise_description": "Class member `FlextLDAPConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner"
+      "description": "Class member `FlextLdapConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Validation` has type `type[FlextLdapConstants.Validation]`, which is not assignable to `type[FlextConstants["Validation]`, the type of `FlextConstants.Validation`""],
+      "concise_description": "Class member `FlextLdapConstants.Validation` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
       "line": 142,
@@ -63,8 +63,8 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLDAPConstants.Messages` has type `type[FlextLDAPConstants.Messages]`, which is not assignable to `type[FlextConstants["Messages]`, the type of `FlextConstants.Messages`""],
-      "concise_description": "Class member `FlextLDAPConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner"
+      "description": "Class member `FlextLdapConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Messages` has type `type[FlextLdapConstants.Messages]`, which is not assignable to `type[FlextConstants["Messages]`, the type of `FlextConstants.Messages`""],
+      "concise_description": "Class member `FlextLdapConstants.Messages` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
       "line": 159,
@@ -74,8 +74,8 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLDAPConstants.Errors` has type `type[FlextLDAPConstants.Errors]`, which is not assignable to `type[FlextConstants["Errors]`, the type of `FlextConstants.Errors`""],
-      "concise_description": "Class member `FlextLDAPConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner"
+      "description": "Class member `FlextLdapConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Errors` has type `type[FlextLdapConstants.Errors]`, which is not assignable to `type[FlextConstants["Errors]`, the type of `FlextConstants.Errors`""],
+      "concise_description": "Class member `FlextLdapConstants.Errors` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
       "line": 175,
@@ -85,8 +85,8 @@
       "path": "src/flext_ldap/constants.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLDAPConstants.Defaults` has type `type[FlextLDAPConstants.Defaults]`, which is not assignable to `type[FlextConstants["Defaults]`, the type of `FlextConstants.Defaults`""],
-      "concise_description": "Class member `FlextLDAPConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner"
+      "description": "Class member `FlextLdapConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner\n  `FlextLdapConstants.Defaults` has type `type[FlextLdapConstants.Defaults]`, which is not assignable to `type[FlextConstants["Defaults]`, the type of `FlextConstants.Defaults`""],
+      "concise_description": "Class member `FlextLdapConstants.Defaults` overrides parent class `FlextConstants` in an inconsistent manner"
     },
     {
       "line": 446,
@@ -118,7 +118,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `UserRepository.handle` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.handle` has type `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, message: FlextLDAPModels.LdapUser) -> FlextResult[FlextLDAPModels.LdapUser]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, message: T) -> FlextResult[T]]`, the type of `Repository.handle`",
+      "description": "Class member `UserRepository.handle` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.handle` has type `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, message: FlextLdapModels.LdapUser) -> FlextResult[FlextLdapModels.LdapUser]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, message: T) -> FlextResult[T]]`, the type of `Repository.handle`",
       "concise_description": "Class member `UserRepository.handle` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -129,7 +129,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `UserRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.find_by_dn` has type `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[FlextLDAPModels.LdapUser]]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[T]]]`, the type of `Repository.find_by_dn`",
+      "description": "Class member `UserRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.find_by_dn` has type `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[FlextLdapModels.LdapUser]]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[T]]]`, the type of `Repository.find_by_dn`",
       "concise_description": "Class member `UserRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -613,7 +613,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `UserRepository.search` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.search` has type `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[FlextLDAPModels.LdapUser]]]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.UserRepository, (self: FlextLDAPRepositories.UserRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[T]]]]`, the type of `Repository.search`",
+      "description": "Class member `UserRepository.search` overrides parent class `Repository` in an inconsistent manner\n  `UserRepository.search` has type `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[FlextLdapModels.LdapUser]]]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.UserRepository, (self: FlextLdapRepositories.UserRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[T]]]]`, the type of `Repository.search`",
       "concise_description": "Class member `UserRepository.search` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -723,7 +723,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `GroupRepository.handle` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.handle` has type `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, message: FlextLDAPModels.Group) -> FlextResult[FlextLDAPModels.Group]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, message: T) -> FlextResult[T]]`, the type of `Repository.handle`",
+      "description": "Class member `GroupRepository.handle` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.handle` has type `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, message: FlextLdapModels.Group) -> FlextResult[FlextLdapModels.Group]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, message: T) -> FlextResult[T]]`, the type of `Repository.handle`",
       "concise_description": "Class member `GroupRepository.handle` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -734,7 +734,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `GroupRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.find_by_dn` has type `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[FlextLDAPModels.Group]]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[T]]]`, the type of `Repository.find_by_dn`",
+      "description": "Class member `GroupRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.find_by_dn` has type `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[FlextLdapModels.Group]]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, dn: str) -> Coroutine[Unknown, Unknown, FlextResult[T]]]`, the type of `Repository.find_by_dn`",
       "concise_description": "Class member `GroupRepository.find_by_dn` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -756,7 +756,7 @@
       "path": "src/flext_ldap/repositories.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `GroupRepository.search` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.search` has type `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[FlextLDAPModels.Group]]]]`, which is not assignable to `BoundMethod[FlextLDAPRepositories.GroupRepository, (self: FlextLDAPRepositories.GroupRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[T]]]]`, the type of `Repository.search`",
+      "description": "Class member `GroupRepository.search` overrides parent class `Repository` in an inconsistent manner\n  `GroupRepository.search` has type `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[FlextLdapModels.Group]]]]`, which is not assignable to `BoundMethod[FlextLdapRepositories.GroupRepository, (self: FlextLdapRepositories.GroupRepository, base_dn: str, filter_str: str, page_size: int | None = None, paged_cookie: str | None = None) -> Coroutine[Unknown, Unknown, FlextResult[list[T]]]]`, the type of `Repository.search`",
       "concise_description": "Class member `GroupRepository.search` overrides parent class `Repository` in an inconsistent manner"
     },
     {
@@ -844,8 +844,8 @@
       "path": "src/flext_ldap/utilities.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPUtilities.TypeGuards` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLDAPUtilities.TypeGuards` has type `type[FlextLDAPUtilities.TypeGuards]`, which is not assignable to `type[FlextUtilities.TypeGuards]`, the type of `FlextUtilities.TypeGuards`",
-      "concise_description": "Class member `FlextLDAPUtilities.TypeGuards` overrides parent class `FlextUtilities` in an inconsistent manner"
+      "description": "Class member `FlextLdapUtilities.TypeGuards` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLdapUtilities.TypeGuards` has type `type[FlextLdapUtilities.TypeGuards]`, which is not assignable to `type[FlextUtilities.TypeGuards]`, the type of `FlextUtilities.TypeGuards`",
+      "concise_description": "Class member `FlextLdapUtilities.TypeGuards` overrides parent class `FlextUtilities` in an inconsistent manner"
     },
     {
       "line": 194,
@@ -855,8 +855,8 @@
       "path": "src/flext_ldap/utilities.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPUtilities.Processing` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLDAPUtilities.Processing` has type `type[FlextLDAPUtilities.Processing]`, which is not assignable to `type[FlextUtilities.Processing]`, the type of `FlextUtilities.Processing`",
-      "concise_description": "Class member `FlextLDAPUtilities.Processing` overrides parent class `FlextUtilities` in an inconsistent manner"
+      "description": "Class member `FlextLdapUtilities.Processing` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLdapUtilities.Processing` has type `type[FlextLdapUtilities.Processing]`, which is not assignable to `type[FlextUtilities.Processing]`, the type of `FlextUtilities.Processing`",
+      "concise_description": "Class member `FlextLdapUtilities.Processing` overrides parent class `FlextUtilities` in an inconsistent manner"
     },
     {
       "line": 228,
@@ -866,8 +866,8 @@
       "path": "src/flext_ldap/utilities.py",
       "code": -2,
       "name": "bad-override",
-      "description": "Class member `FlextLDAPUtilities.Conversion` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLDAPUtilities.Conversion` has type `type[FlextLDAPUtilities.Conversion]`, which is not assignable to `type[FlextUtilities.Conversion]`, the type of `FlextUtilities.Conversion`",
-      "concise_description": "Class member `FlextLDAPUtilities.Conversion` overrides parent class `FlextUtilities` in an inconsistent manner"
+      "description": "Class member `FlextLdapUtilities.Conversion` overrides parent class `FlextUtilities` in an inconsistent manner\n  `FlextLdapUtilities.Conversion` has type `type[FlextLdapUtilities.Conversion]`, which is not assignable to `type[FlextUtilities.Conversion]`, the type of `FlextUtilities.Conversion`",
+      "concise_description": "Class member `FlextLdapUtilities.Conversion` overrides parent class `FlextUtilities` in an inconsistent manner"
     }
   ]
 }

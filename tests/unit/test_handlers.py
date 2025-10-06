@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPHandlers module."""
+"""Tests for FlextLdapHandlers module."""
 
-from flext_ldap.handlers import FlextLDAPHandlers
+from flext_ldap.handlers import FlextLdapHandlers
 
 
-class TestFlextLDAPHandlers:
-    """Test cases for FlextLDAPHandlers."""
+class TestFlextLdapHandlers:
+    """Test cases for FlextLdapHandlers."""
 
     def test_handlers_initialization(self):
         """Test handlers initialization."""
-        handlers = FlextLDAPHandlers()
+        handlers = FlextLdapHandlers()
         assert handlers is not None
 
     def test_handlers_basic_functionality(self):
         """Test basic handlers functionality."""
-        handlers = FlextLDAPHandlers()
+        handlers = FlextLdapHandlers()
         # Add specific test cases based on handlers functionality
         assert hasattr(handlers, "__class__")

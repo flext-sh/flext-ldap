@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.api import FlextLDAP
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap.api import FlextLdap
+from flext_ldap.models import FlextLdapModels
 
 from flext_core import FlextLogger, FlextResult
 
@@ -34,19 +34,19 @@ def demonstrate_basic_operations() -> None:
     _demo_error_handling(service)
 
 
-def _initialize_ldap_service() -> FlextLDAP:
+def _initialize_ldap_service() -> FlextLdap:
     """Initialize LDAP service - Single Responsibility.
 
     Returns:
-        FlextLDAP: The initialized LDAP API instance.
+        FlextLdap: The initialized LDAP API instance.
 
     """
-    return FlextLDAP()
+    return FlextLdap()
 
 
-def _demo_create_primary_user(_service: FlextLDAP) -> None:
+def _demo_create_primary_user(_service: FlextLdap) -> None:
     """Create primary test user - Single Responsibility."""
-    FlextLDAPModels.CreateUserRequest(
+    FlextLdapModels.CreateUserRequest(
         dn="cn=johndoe,ou=users,dc=example,dc=com",
         uid="johndoe",
         cn="John Doe",
@@ -66,23 +66,23 @@ def _demo_create_primary_user(_service: FlextLDAP) -> None:
     # Simplified for compatibility - would normally use proper session management
 
 
-def _demo_search_user(_service: FlextLDAP) -> None:
+def _demo_search_user(_service: FlextLdap) -> None:
     """Search for user - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-def _demo_update_user(_service: FlextLDAP) -> None:
+def _demo_update_user(_service: FlextLdap) -> None:
     """Update user information - Single Responsibility."""
     # Split long line for readability
     # Simplified for compatibility - would normally use update_user() with session
 
 
-def _demo_list_users(_service: FlextLDAP, context: str) -> None:
+def _demo_list_users(_service: FlextLdap, context: str) -> None:
     """List all users with context - Single Responsibility."""
     # Simplified for compatibility - would normally use search() with session
 
 
-def _demo_create_additional_users(_service: FlextLDAP) -> None:
+def _demo_create_additional_users(_service: FlextLdap) -> None:
     """Create additional test users - Single Responsibility."""
     # Split long lines for readability
     additional_users = [
@@ -96,7 +96,7 @@ def _demo_create_additional_users(_service: FlextLDAP) -> None:
     ]
 
     for user_data in additional_users:
-        FlextLDAPModels.CreateUserRequest(
+        FlextLdapModels.CreateUserRequest(
             dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
             uid=user_data["uid"],
             cn=user_data["cn"],
@@ -116,19 +116,19 @@ def _demo_create_additional_users(_service: FlextLDAP) -> None:
         # Simplified for compatibility - would normally use create_user() with session
 
 
-def _demo_delete_user(_service: FlextLDAP) -> None:
+def _demo_delete_user(_service: FlextLdap) -> None:
     """Delete user demonstration - Single Responsibility."""
     # Simplified for compatibility - would normally use delete_user() with session
 
 
-def _demo_error_handling(_service: FlextLDAP) -> None:
+def _demo_error_handling(_service: FlextLdap) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Simplified for compatibility - would normally use proper error handling
 
 
 def demonstrate_connection_handling() -> None:
     """Demonstrate connection handling capabilities."""
-    service = FlextLDAP()
+    service = FlextLdap()
 
     # Test connection (will fail gracefully if no config)
     result: FlextResult[bool] = service.connect()
@@ -140,7 +140,7 @@ def demonstrate_connection_handling() -> None:
         service.unbind()
 
     # Show that operations still work in memory mode
-    FlextLDAPModels.CreateUserRequest(
+    FlextLdapModels.CreateUserRequest(
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",

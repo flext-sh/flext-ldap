@@ -9,18 +9,18 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextHandlers, FlextResult, FlextTypes
-from flext_ldap.acl.converters import FlextLDAPAclConverters
-from flext_ldap.acl.parsers import FlextLDAPAclParsers
+from flext_ldap.acl.converters import FlextLdapAclConverters
+from flext_ldap.acl.parsers import FlextLdapAclParsers
 
 
-class FlextLDAPAclManager(FlextHandlers[object, object]):
+class FlextLdapAclManager(FlextHandlers[object, object]):
     """ACL Manager for comprehensive ACL operations."""
 
     def __init__(self) -> None:
         """Initialize ACL Manager."""
         # Initialize parsers and converters - unified classes without config
-        self.parsers: FlextLDAPAclParsers = FlextLDAPAclParsers()
-        self.converters: FlextLDAPAclConverters = FlextLDAPAclConverters()
+        self.parsers: FlextLdapAclParsers = FlextLdapAclParsers()
+        self.converters: FlextLdapAclConverters = FlextLdapAclConverters()
 
     @override
     def handle(self, message: object) -> FlextResult[object]:
@@ -173,4 +173,4 @@ class FlextLDAPAclManager(FlextHandlers[object, object]):
             return FlextResult[bool].fail(f"ACL syntax validation failed: {e}")
 
 
-__all__ = ["FlextLDAPAclManager"]
+__all__ = ["FlextLdapAclManager"]

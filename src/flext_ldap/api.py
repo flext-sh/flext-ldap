@@ -1,4 +1,4 @@
-"""FlextLDAP - Thin facade for LDAP operations with full FLEXT integration.
+"""FlextLdap - Thin facade for LDAP operations with full FLEXT integration.
 
 This module provides the main facade for the flext-ldap domain.
 Following FLEXT standards, this is the thin entry point that provides
@@ -23,33 +23,35 @@ from pathlib import Path
 from typing import override
 
 from flext_core import (
-    FlextBus,
-    FlextContainer,
-    FlextContext,
-    FlextDispatcher,
     FlextLogger,
-    FlextProcessors,
-    FlextRegistry,
     FlextResult,
     FlextService,
     FlextTypes,
 )
 
-from flext_ldif import FlextLdifModels
 
-from flext_ldif import FlextLdif
+try:
+    from flext_ldif import FlextLdif, FlextLdifModels
+except ImportError:
+    # Define placeholder for type checking when flext_ldif is not available
+    def FlextLdif():
+        raise ImportError("flext_ldif not available")
 
-from flext_ldap.acl import FlextLDAPAclManager
-from flext_ldap.clients import FlextLDAPClients
-from flext_ldap.config import FlextLDAPConfig
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.models import FlextLDAPModels
-from flext_ldap.protocols import FlextLDAPProtocols
-from flext_ldap.typings import FlextLDAPTypes
-from flext_ldap.validations import FlextLDAPValidations
+    class FlextLdifModels:
+        class Entry:
+            pass
+
+from flext_ldap.acl import FlextLdapAclManager
+from flext_ldap.clients import FlextLdapClients
+from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLDAP(FlextService[None]):
+class FlextLdap(FlextService[None]):
     """Unified LDAP domain class providing complete FLEXT ecosystem integration.
 
     This is the single unified class for the flext-ldap domain providing
@@ -57,8 +59,8 @@ class FlextLDAP(FlextService[None]):
 
     **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
     **CENTRALIZED APPROACH**: All operations follow centralized patterns:
-    - FlextLDAP.* for LDAP-specific operations
-    - Centralized validation through FlextLDAPValidations
+    - FlextLdap.* for LDAP-specific operations
+    - Centralized validation through FlextLdapValidations
     - No wrappers, aliases, or fallbacks
     - Direct use of flext-core centralized services
 
@@ -73,12 +75,12 @@ class FlextLDAP(FlextService[None]):
     """
 
     @override
-    def __init__(self, config: FlextLDAPConfig | None = None) -> None:
+    def __init__(self, config: FlextLdapConfig | None = None) -> None:
         """Initialize the unified LDAP service."""
         super().__init__()
-        self._ldap_config: FlextLDAPConfig = config or FlextLDAPConfig()
-        self._client: FlextLDAPClients | None = None
-        self._acl_manager: FlextLDAPAclManager | None = None
+        self._ldap_config: FlextLdapConfig = config or FlextLdapConfig()
+        self._client: FlextLdapClients | None = None
+        self._acl_manager: FlextLdapAclManager | None = None
 
         # Minimal FLEXT ecosystem integration - direct access only
         self._logger = FlextLogger(__name__)
@@ -87,8 +89,8 @@ class FlextLDAP(FlextService[None]):
         self._ldif: FlextLdif | None = None
 
     @classmethod
-    def create(cls) -> FlextLDAP:
-        """Create a new FlextLDAP instance (factory method)."""
+    def create(cls) -> FlextLdap:
+        """Create a new FlextLdap instance (factory method)."""
         return cls()
 
     @override
@@ -127,38 +129,38 @@ class FlextLDAP(FlextService[None]):
     # =============================================================================
 
     @property
-    def client(self) -> FlextLDAPClients:
+    def client(self) -> FlextLdapClients:
         """Get the LDAP clients instance."""
         if self._client is None:
-            self._client = FlextLDAPClients()
+            self._client = FlextLdapClients()
         return self._client
 
     @property
-    def config(self) -> FlextLDAPConfig:
+    def config(self) -> FlextLdapConfig:
         """Get the LDAP configuration instance."""
         if self._ldap_config is not None:
             return self._ldap_config
-        return FlextLDAPConfig()
+        return FlextLdapConfig()
 
     @property
-    def models(self) -> type[FlextLDAPModels]:
+    def models(self) -> type[FlextLdapModels]:
         """Get the LDAP models class."""
         return
 
     @property
-    def types(self) -> type[FlextLDAPTypes]:
+    def types(self) -> type[FlextLdapTypes]:
         """Get the LDAP types class."""
-        return FlextLDAPTypes
+        return FlextLdapTypes
 
     @property
-    def protocols(self) -> type[FlextLDAPProtocols]:
+    def protocols(self) -> type[FlextLdapProtocols]:
         """Get the LDAP protocols class."""
-        return FlextLDAPProtocols
+        return FlextLdapProtocols
 
     @property
-    def validations(self) -> type[FlextLDAPValidations]:
+    def validations(self) -> type[FlextLdapValidations]:
         """Get the LDAP validations class."""
-        return FlextLDAPValidations
+        return FlextLdapValidations
 
     # =============================================================================
     # CONNECTION MANAGEMENT METHODS - Enhanced with proper error handling
@@ -202,7 +204,7 @@ class FlextLDAP(FlextService[None]):
         return self.unbind()
 
     # =============================================================================
-    # PROTOCOL IMPLEMENTATION METHODS - FlextLDAPProtocols compliance
+    # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance
     # =============================================================================
 
     def search(
@@ -210,7 +212,7 @@ class FlextLDAP(FlextService[None]):
         search_base: str,
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[list[FlextLDAPModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform LDAP search operation - implements LdapSearchProtocol.
 
         Args:
@@ -219,27 +221,27 @@ class FlextLDAP(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult[list[FlextLDAPModels.Entry]]: Entry models search results
+            FlextResult[list[FlextLdapModels.Entry]]: Entry models search results
 
         """
         # Get search response and extract entries
         search_result = self.search_entries(
-            search_base, filter_str, FlextLDAPConstants.Scopes.SUBTREE, attributes
+            search_base, filter_str, FlextLdapConstants.Scopes.SUBTREE, attributes
         )
         if search_result.is_failure:
-            return FlextResult[list[FlextLDAPModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 search_result.error or "Search failed"
             )
 
         response = search_result.unwrap()
-        return FlextResult[list[FlextLDAPModels.Entry]].ok(response.entries)
+        return FlextResult[list[FlextLdapModels.Entry]].ok(response.entries)
 
     def search_one(
         self,
         search_base: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLDAPModels.Entry | None]:
+    ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Perform LDAP search for single entry - implements LdapSearchProtocol.
 
         Args:
@@ -248,21 +250,21 @@ class FlextLDAP(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult[FlextLDAPModels.Entry | None]: Single Entry model result or None
+            FlextResult[FlextLdapModels.Entry | None]: Single Entry model result or None
 
         """
         # Use existing search method and return first result
         search_result = self.search(search_base, search_filter, attributes)
         if search_result.is_failure:
-            return FlextResult[FlextLDAPModels.Entry | None].fail(
+            return FlextResult[FlextLdapModels.Entry | None].fail(
                 search_result.error or "Search failed"
             )
 
         results = search_result.unwrap()
         if not results:
-            return FlextResult[FlextLDAPModels.Entry | None].ok(None)
+            return FlextResult[FlextLdapModels.Entry | None].ok(None)
 
-        return FlextResult[FlextLDAPModels.Entry | None].ok(results[0])
+        return FlextResult[FlextLdapModels.Entry | None].ok(results[0])
 
     def add_entry(
         self, dn: str, attributes: dict[str, str | FlextTypes.StringList]
@@ -357,7 +359,7 @@ class FlextLDAP(FlextService[None]):
         client = self.client
         return client.validate_dn(dn)
 
-    def validate_entry(self, entry: FlextLDAPModels.Entry) -> FlextResult[bool]:
+    def validate_entry(self, entry: FlextLdapModels.Entry) -> FlextResult[bool]:
         """Validate LDAP entry structure - implements LdapValidationProtocol.
 
         Args:
@@ -380,21 +382,21 @@ class FlextLDAP(FlextService[None]):
         base_dn: str,
         cn: str | None = None,
         filter_str: str | None = None,
-        scope: str = FlextLDAPConstants.Scopes.SUBTREE,
+        scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[list[FlextLDAPModels.Group]]:
+    ) -> FlextResult[list[FlextLdapModels.Group]]:
         """Search for LDAP groups with enhanced validation."""
         # Validate inputs
         dn_validation = self.validations.validate_dn(base_dn)
         if dn_validation.is_failure:
-            return FlextResult[list[FlextLDAPModels.Group]].fail(
+            return FlextResult[list[FlextLdapModels.Group]].fail(
                 f"Invalid base DN: {dn_validation.error}"
             )
 
         if filter_str:
             filter_validation = self.validations.validate_filter(filter_str)
             if filter_validation.is_failure:
-                return FlextResult[list[FlextLDAPModels.Group]].fail(
+                return FlextResult[list[FlextLdapModels.Group]].fail(
                     f"Invalid filter: {filter_validation.error}"
                 )
 
@@ -408,20 +410,20 @@ class FlextLDAP(FlextService[None]):
         self,
         base_dn: str,
         filter_str: str,
-        scope: str = FlextLDAPConstants.Scopes.SUBTREE,
+        scope: str = FlextLdapConstants.Scopes.SUBTREE,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLDAPModels.SearchResponse]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for LDAP entries using search_with_request with enhanced validation."""
         # Validate inputs
         dn_validation = self.validations.validate_dn(base_dn)
         if dn_validation.is_failure:
-            return FlextResult[FlextLDAPModels.SearchResponse].fail(
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Invalid base DN: {dn_validation.error}"
             )
 
         filter_validation = self.validations.validate_filter(filter_str)
         if filter_validation.is_failure:
-            return FlextResult[FlextLDAPModels.SearchResponse].fail(
+            return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Invalid filter: {filter_validation.error}"
             )
 
@@ -430,17 +432,17 @@ class FlextLDAP(FlextService[None]):
             filter_str=filter_str,
             scope=scope,
             attributes=attributes or [],
-            page_size=FlextLDAPConstants.Connection.DEFAULT_PAGE_SIZE,
+            page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
             paged_cookie=b"",
         )
         return self.client.search_with_request(request)
 
-    def get_group(self, dn: str) -> FlextResult[FlextLDAPModels.Group | None]:
+    def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get a specific LDAP group by DN with enhanced validation."""
         # Validate DN
         validation_result = self.validations.validate_dn(dn)
         if validation_result.is_failure:
-            return FlextResult[FlextLDAPModels.Group | None].fail(
+            return FlextResult[FlextLdapModels.Group | None].fail(
                 f"Invalid DN: {validation_result.error}"
             )
 
@@ -535,7 +537,7 @@ class FlextLDAP(FlextService[None]):
                 self._ldif = None
         return self._ldif
 
-    def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLDAPModels.Entry]]:
+    def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Import entries from LDIF file using FlextLdif.
 
         Args:
@@ -547,22 +549,22 @@ class FlextLDAP(FlextService[None]):
         """
         ldif_instance = self.ldif
         if ldif_instance is None:
-            return FlextResult[list[FlextLDAPModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 "FlextLdif not available. Install with: pip install flext-ldif"
             )
 
         # Parse LDIF file
         result = ldif_instance.parse(path)
         if result.is_failure:
-            return FlextResult[list[FlextLDAPModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 f"LDIF parsing failed: {result.error}"
             )
 
-        # Convert FlextLdif entries to FlextLDAP entries
+        # Convert FlextLdif entries to FlextLdap entries
         ldif_entries = result.unwrap() or []
         ldap_entries = []
         for ldif_entry in ldif_entries:
-            ldap_entry = FlextLDAPModels.Entry(
+            ldap_entry = FlextLdapModels.Entry(
                 dn=str(ldif_entry.dn),
                 attributes=dict(ldif_entry.attributes),
             )
@@ -576,10 +578,10 @@ class FlextLDAP(FlextService[None]):
                 entry_count=len(ldap_entries),
             )
 
-        return FlextResult[list[FlextLDAPModels.Entry]].ok(ldap_entries)
+        return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
 
     def export_to_ldif(
-        self, entries: list[FlextLDAPModels.Entry], path: Path
+        self, entries: list[FlextLdapModels.Entry], path: Path
     ) -> FlextResult[bool]:
         """Export entries to LDIF file using FlextLdif.
 
@@ -597,7 +599,7 @@ class FlextLDAP(FlextService[None]):
                 "FlextLdif not available. Install with: pip install flext-ldif"
             )
 
-        # Convert FlextLDAP entries to FlextLdif entries
+        # Convert FlextLdap entries to FlextLdif entries
         ldif_entries = []
         for ldap_entry in entries:
             ldif_entry_result = FlextLdifModels.Entry.create(
@@ -639,7 +641,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing server type string or None if not detected
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> server_type_result = api.get_detected_server_type()
             >>> if server_type_result.is_success:
@@ -661,7 +663,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing BaseServerOperations instance or None
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> ops_result = api.get_server_operations()
             >>> if ops_result.is_success:
@@ -684,7 +686,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing capabilities dictionary
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> caps_result = api.get_server_capabilities()
             >>> if caps_result.is_success:
@@ -731,7 +733,7 @@ class FlextLDAP(FlextService[None]):
         attributes: FlextTypes.StringList | None = None,
         scope: str = "subtree",
         use_paging: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Universal search with automatic server-specific optimization.
 
         Performs LDAP search with automatic detection and usage of server-specific
@@ -749,7 +751,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing list of FlextLdif Entry objects
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> result = api.search_universal(
             ...     base_dn="ou=users,dc=example,dc=com",
@@ -813,7 +815,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing normalized FlextLdif Entry
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> entry = ...  # FlextLdif Entry
             >>> result = api.normalize_entry_for_server(entry, "openldap2")
@@ -822,7 +824,7 @@ class FlextLDAP(FlextService[None]):
 
         """
         try:
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
             if not self._client:
                 return FlextResult[FlextLdifModels.Entry].fail("Client not initialized")
@@ -836,7 +838,7 @@ class FlextLDAP(FlextService[None]):
                     )
 
             # Use entry adapter to normalize
-            adapter = FlextLDAPEntryAdapter(server_type=target_server_type)
+            adapter = FlextLdapEntryAdapter(server_type=target_server_type)
             normalize_result = adapter.normalize_entry_for_server(
                 entry=entry, target_server_type=target_server_type
             )
@@ -869,7 +871,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing converted FlextLdif Entry
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> entry = ...  # Entry from OpenLDAP 1.x
             >>> result = api.convert_entry_between_servers(
             ...     entry=entry,
@@ -879,9 +881,9 @@ class FlextLDAP(FlextService[None]):
 
         """
         try:
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLDAPEntryAdapter(server_type=source_server_type)
+            adapter = FlextLdapEntryAdapter(server_type=source_server_type)
             convert_result = adapter.convert_entry_format(
                 entry=entry,
                 source_server_type=source_server_type,
@@ -910,7 +912,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing detected server type string
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> entry = ...  # Entry from unknown source
             >>> result = api.detect_entry_server_type(entry)
             >>> if result.is_success:
@@ -918,9 +920,9 @@ class FlextLDAP(FlextService[None]):
 
         """
         try:
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLDAPEntryAdapter()
+            adapter = FlextLdapEntryAdapter()
             detection_result = adapter.detect_entry_server_type(entry)
 
             return detection_result
@@ -944,7 +946,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> entry = ...  # FlextLdif Entry
             >>> result = api.validate_entry_for_server(entry, "oud")
@@ -953,7 +955,7 @@ class FlextLDAP(FlextService[None]):
 
         """
         try:
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
             if not self._client:
                 return FlextResult[bool].fail("Client not initialized")
@@ -966,7 +968,7 @@ class FlextLDAP(FlextService[None]):
                         "No server type specified and none detected"
                     )
 
-            adapter = FlextLDAPEntryAdapter(server_type=server_type)
+            adapter = FlextLdapEntryAdapter(server_type=server_type)
             validation_result = adapter.validate_entry_for_server(
                 entry=entry, server_type=server_type
             )
@@ -991,7 +993,7 @@ class FlextLDAP(FlextService[None]):
             FlextResult containing server-specific attributes dictionary
 
         Example:
-            >>> api = FlextLDAP()
+            >>> api = FlextLdap()
             >>> api.connect()
             >>> result = api.get_server_specific_attributes("oid")
             >>> if result.is_success:
@@ -1000,7 +1002,7 @@ class FlextLDAP(FlextService[None]):
 
         """
         try:
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
             if not self._client:
                 return FlextResult[FlextTypes.Dict].fail("Client not initialized")
@@ -1013,7 +1015,7 @@ class FlextLDAP(FlextService[None]):
                         "No server type specified and none detected"
                     )
 
-            adapter = FlextLDAPEntryAdapter(server_type=server_type)
+            adapter = FlextLdapEntryAdapter(server_type=server_type)
             attrs_result = adapter.get_server_specific_attributes(server_type)
 
             return attrs_result
@@ -1025,5 +1027,5 @@ class FlextLDAP(FlextService[None]):
 
 
 __all__ = [
-    "FlextLDAP",
+    "FlextLdap",
 ]

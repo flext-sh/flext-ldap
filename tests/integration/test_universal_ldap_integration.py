@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap import FlextLDAP
-from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
-from flext_ldap.servers.factory import ServerOperationsFactory
+from flext_ldap import FlextLdap
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldif import FlextLdifModels
 
 
@@ -21,26 +21,26 @@ class TestUniversalLdapIntegration:
     """Integration tests for complete universal LDAP system."""
 
     @pytest.fixture
-    def factory(self) -> ServerOperationsFactory:
+    def factory(self) -> FlextLdapServersFactory:
         """Create factory for testing."""
-        return ServerOperationsFactory()
+        return FlextLdapServersFactory()
 
     @pytest.fixture
-    def entry_adapter(self) -> FlextLDAPEntryAdapter:
+    def entry_adapter(self) -> FlextLdapEntryAdapter:
         """Create entry adapter for testing."""
-        return FlextLDAPEntryAdapter()
+        return FlextLdapEntryAdapter()
 
     @pytest.fixture
-    def ldap_api(self) -> FlextLDAP:
+    def ldap_api(self) -> FlextLdap:
         """Create LDAP API for testing."""
-        return FlextLDAP()
+        return FlextLdap()
 
     # =========================================================================
     # FACTORY → OPERATIONS INTEGRATION
     # =========================================================================
 
     def test_factory_creates_all_server_types(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test factory can create all supported server types."""
         server_types = ["openldap1", "openldap2", "oid", "oud", "ad", "generic"]
@@ -52,7 +52,7 @@ class TestUniversalLdapIntegration:
             assert ops.server_type in [server_type, "openldap2", "generic", "ad"]
 
     def test_factory_provides_server_capabilities(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test factory can retrieve server capabilities for all types."""
         server_types = ["openldap2", "oid", "oud"]
@@ -74,7 +74,7 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_entry_adapter_detects_and_factory_creates(
-        self, factory: ServerOperationsFactory, entry_adapter: FlextLDAPEntryAdapter
+        self, factory: FlextLdapServersFactory, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test entry adapter detection works with factory creation."""
         # Create OpenLDAP 2.x entry
@@ -109,7 +109,7 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_complete_entry_conversion_workflow(
-        self, entry_adapter: FlextLDAPEntryAdapter
+        self, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test complete workflow: detect → convert → validate."""
         # Step 1: Create OpenLDAP 1.x entry
@@ -161,7 +161,7 @@ class TestUniversalLdapIntegration:
     # API INTEGRATION
     # =========================================================================
 
-    def test_api_provides_universal_methods(self, ldap_api: FlextLDAP) -> None:
+    def test_api_provides_universal_methods(self, ldap_api: FlextLdap) -> None:
         """Test API exposes all universal methods."""
         # Verify all universal methods exist
         assert hasattr(ldap_api, "get_detected_server_type")
@@ -174,7 +174,7 @@ class TestUniversalLdapIntegration:
         assert hasattr(ldap_api, "get_server_specific_attributes")
 
     def test_api_server_type_detection_without_connection(
-        self, ldap_api: FlextLDAP
+        self, ldap_api: FlextLdap
     ) -> None:
         """Test API server type detection requires initialized client."""
         result = ldap_api.get_detected_server_type()
@@ -183,7 +183,7 @@ class TestUniversalLdapIntegration:
         assert result.error is not None and "Client not initialized" in result.error
 
     def test_api_entry_detection_works_without_connection(
-        self, ldap_api: FlextLDAP
+        self, ldap_api: FlextLdap
     ) -> None:
         """Test API entry detection works without active connection."""
         # Create entry
@@ -210,7 +210,7 @@ class TestUniversalLdapIntegration:
         # This is expected behavior until quirks are registered for OUD attributes
         assert detected_type in ["oud", "generic"]  # Accept both until quirks enhanced
 
-    def test_api_entry_conversion_without_connection(self, ldap_api: FlextLDAP) -> None:
+    def test_api_entry_conversion_without_connection(self, ldap_api: FlextLdap) -> None:
         """Test API entry conversion works without active connection."""
         # Create OID entry
         oid_attrs = {
@@ -243,7 +243,7 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_multiple_server_operations_coexist(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test multiple server operations can be created and used simultaneously."""
         # Create operations for different servers
@@ -270,7 +270,7 @@ class TestUniversalLdapIntegration:
         assert oud_ops.get_schema_dn() == "cn=schema"
 
     def test_entry_normalization_for_multiple_targets(
-        self, entry_adapter: FlextLDAPEntryAdapter
+        self, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test entry can be normalized for multiple target servers."""
         # Create generic entry
@@ -307,7 +307,7 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_factory_handles_empty_entry_list(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test factory handles empty entry list gracefully."""
         result = factory.create_from_entries([])
@@ -317,7 +317,7 @@ class TestUniversalLdapIntegration:
         assert ops.server_type == "generic"
 
     def test_entry_adapter_handles_malformed_entry(
-        self, entry_adapter: FlextLDAPEntryAdapter
+        self, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test entry adapter handles malformed entries gracefully."""
         # Entry with no objectClass (invalid)
@@ -341,7 +341,7 @@ class TestUniversalLdapIntegration:
         assert validate_result.is_failure
         assert "objectClass" in validate_result.error
 
-    def test_api_handles_invalid_server_types(self, ldap_api: FlextLDAP) -> None:
+    def test_api_handles_invalid_server_types(self, ldap_api: FlextLdap) -> None:
         """Test API handles invalid server types gracefully."""
         # Create valid entry
         valid_attrs = {
@@ -363,7 +363,7 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_factory_creates_operations_efficiently(
-        self, factory: ServerOperationsFactory
+        self, factory: FlextLdapServersFactory
     ) -> None:
         """Test factory creates operations efficiently (no heavy initialization)."""
         import time
@@ -380,7 +380,7 @@ class TestUniversalLdapIntegration:
         assert elapsed < 5.0, f"Factory creation too slow: {elapsed}s for 30 operations"
 
     def test_entry_adapter_converts_batch_efficiently(
-        self, entry_adapter: FlextLDAPEntryAdapter
+        self, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test entry adapter handles batch conversions efficiently."""
         import time

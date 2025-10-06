@@ -20,9 +20,9 @@ SPDX-License-Identifier: MIT
 import os
 
 from flext_ldap import (
-    FlextLDAPClients,
-    FlextLDAPModels,
-    FlextLDAPSchema,
+    FlextLdapClients,
+    FlextLdapModels,
+    FlextLdapSchema,
 )
 
 from flext_core import FlextLogger
@@ -44,7 +44,7 @@ def demonstrate_oracle_oud_opends_support() -> None:
     logger.info("Bind DN: %s", bind_dn)
 
     # Create universal FLEXT LDAP client
-    client = FlextLDAPClients()
+    client = FlextLdapClients()
 
     try:
         # Connect with automatic schema discovery
@@ -89,7 +89,7 @@ def demonstrate_oracle_oud_opends_support() -> None:
             logger.info("Disconnected from LDAP server")
 
 
-def demonstrate_oracle_detection(client: FlextLDAPClients, logger: FlextLogger) -> None:
+def demonstrate_oracle_detection(client: FlextLdapClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle OUD/OpenDS server detection."""
     logger.info("\n=== Oracle OUD/OpenDS Detection ===")
 
@@ -122,8 +122,8 @@ def demonstrate_oracle_detection(client: FlextLDAPClients, logger: FlextLogger) 
             server_type_value = server_type
 
         if server_type in {
-            FlextLDAPModels.LdapServerType.ORACLE_OUD,
-            FlextLDAPModels.LdapServerType.SUN_OPENDS,
+            FlextLdapModels.LdapServerType.ORACLE_OUD,
+            FlextLdapModels.LdapServerType.SUN_OPENDS,
         }:
             logger.info("  ✅ Oracle OUD/OpenDS detected!")
         else:
@@ -186,7 +186,7 @@ def demonstrate_oracle_detection(client: FlextLDAPClients, logger: FlextLogger) 
 
 
 def demonstrate_oracle_operations(
-    client: FlextLDAPClients, logger: FlextLogger
+    client: FlextLdapClients, logger: FlextLogger
 ) -> None:
     """Demonstrate Oracle-specific operations."""
     logger.info("\n=== Oracle-Specific Operations ===")
@@ -258,7 +258,7 @@ def demonstrate_oracle_operations(
         logger.info("  %s → %s", attr, normalized)
 
 
-def demonstrate_oracle_schema(client: FlextLDAPClients, logger: FlextLogger) -> None:
+def demonstrate_oracle_schema(client: FlextLdapClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle schema handling."""
     logger.info("\n=== Oracle Schema Handling ===")
 
@@ -304,7 +304,7 @@ def demonstrate_oracle_schema(client: FlextLDAPClients, logger: FlextLogger) -> 
         logger.info("Schema not yet discovered")
 
 
-def demonstrate_oracle_quirks(client: FlextLDAPClients, logger: FlextLogger) -> None:
+def demonstrate_oracle_quirks(client: FlextLdapClients, logger: FlextLogger) -> None:
     """Demonstrate Oracle-specific quirks handling."""
     logger.info("\n=== Oracle-Specific Quirks Handling ===")
 
@@ -364,7 +364,7 @@ def demonstrate_oracle_server_types() -> None:
     logger.info("\n=== Oracle Server Type Detection ===")
 
     # Create quirks detector
-    detector = FlextLDAPSchema.GenericQuirksDetector()
+    detector = FlextLdapSchema.GenericQuirksDetector()
 
     # Test various Oracle server types
     oracle_servers = [

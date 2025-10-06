@@ -14,29 +14,29 @@ from flext_ldif.quirks import FlextLdifQuirksManager
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldap.servers.ad_operations import (
-    FlextLDAPServersADOperations as ActiveDirectoryOperations,
+    FlextLdapServersADOperations as ActiveDirectoryOperations,
 )
 from flext_ldap.servers.base_operations import (
-    FlextLDAPServersBaseOperations as BaseServerOperations,
+    FlextLdapServersBaseOperations as BaseServerOperations,
 )
 from flext_ldap.servers.generic_operations import (
-    FlextLDAPServersGenericOperations,
+    FlextLdapServersGenericOperations,
 )
 from flext_ldap.servers.oid_operations import (
-    FlextLDAPServersOIDOperations as OracleOIDOperations,
+    FlextLdapServersOIDOperations as OracleOIDOperations,
 )
 from flext_ldap.servers.openldap1_operations import (
-    FlextLDAPServersOpenLDAP1Operations as OpenLDAP1Operations,
+    FlextLdapServersOpenLDAP1Operations as OpenLDAP1Operations,
 )
 from flext_ldap.servers.openldap2_operations import (
-    FlextLDAPServersOpenLDAP2Operations as OpenLDAP2Operations,
+    FlextLdapServersOpenLDAP2Operations as OpenLDAP2Operations,
 )
 from flext_ldap.servers.oud_operations import (
-    FlextLDAPServersOUDOperations as OracleOUDOperations,
+    FlextLdapServersOUDOperations as OracleOUDOperations,
 )
 
 
-class FlextLDAPServersFactory(FlextService[None]):
+class FlextLdapServersFactory(FlextService[None]):
     """Factory for creating appropriate server operations instances.
 
     This factory provides methods to:
@@ -52,7 +52,7 @@ class FlextLDAPServersFactory(FlextService[None]):
         - "oid" → OracleOIDOperations
         - "oud" → OracleOUDOperations
         - "ad" → ActiveDirectoryOperations (stub)
-        - "generic" → FlextLDAPServersGenericOperations (fallback)
+        - "generic" → FlextLdapServersGenericOperations (fallback)
     """
 
     def __init__(self) -> None:
@@ -67,7 +67,7 @@ class FlextLDAPServersFactory(FlextService[None]):
             "oid": OracleOIDOperations,
             "oud": OracleOUDOperations,
             "ad": ActiveDirectoryOperations,
-            "generic": FlextLDAPServersGenericOperations,
+            "generic": FlextLdapServersGenericOperations,
         }
 
     def execute(self) -> FlextResult[None]:
@@ -113,7 +113,7 @@ class FlextLDAPServersFactory(FlextService[None]):
                 extra={"server_type": server_type_lower},
             )
             return FlextResult[BaseServerOperations].ok(
-                FlextLDAPServersGenericOperations()
+                FlextLdapServersGenericOperations()
             )
 
         except Exception as e:
@@ -144,7 +144,7 @@ class FlextLDAPServersFactory(FlextService[None]):
             if not entries:
                 self._logger.warning("No entries provided, using generic operations")
                 return FlextResult[BaseServerOperations].ok(
-                    FlextLDAPServersGenericOperations()
+                    FlextLdapServersGenericOperations()
                 )
 
             # Use quirks manager to detect server type
@@ -155,7 +155,7 @@ class FlextLDAPServersFactory(FlextService[None]):
                     extra={"error": detection_result.error},
                 )
                 return FlextResult[BaseServerOperations].ok(
-                    FlextLDAPServersGenericOperations()
+                    FlextLdapServersGenericOperations()
                 )
 
             detected_type = detection_result.unwrap()
@@ -316,7 +316,7 @@ class FlextLDAPServersFactory(FlextService[None]):
                     extra={"error": detection_result.error},
                 )
                 return FlextResult[BaseServerOperations].ok(
-                    FlextLDAPServersGenericOperations()
+                    FlextLdapServersGenericOperations()
                 )
 
             detected_type = detection_result.unwrap()

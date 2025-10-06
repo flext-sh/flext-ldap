@@ -13,8 +13,8 @@ from __future__ import annotations
 import os
 from urllib.parse import urlparse
 
-from flext_ldap import FlextLDAPClients
-from flext_ldap.models import FlextLDAPModels
+from flext_ldap import FlextLdapClients
+from flext_ldap.models import FlextLdapModels
 
 from flext_core import FlextLogger, FlextResult
 
@@ -36,11 +36,11 @@ def main() -> None:
     _demo_error_handling(ldap_service)
 
 
-def _initialize_ldap_service() -> FlextLDAPClients:
+def _initialize_ldap_service() -> FlextLdapClients:
     """Initialize LDAP service - Single Responsibility.
 
     Returns:
-        FlextLDAPClients: The initialized LDAP API instance.
+        FlextLdapClients: The initialized LDAP API instance.
 
     """
     # Check if we're running with Docker environment variables
@@ -49,14 +49,14 @@ def _initialize_ldap_service() -> FlextLDAPClients:
         urlparse(server_url)
 
         # Create service using current API
-        service = FlextLDAPClients()
+        service = FlextLdapClients()
     else:
-        service = FlextLDAPClients()
+        service = FlextLdapClients()
 
     return service
 
 
-def _verify_ldap_directory_structure(ldap_service: FlextLDAPClients) -> None:
+def _verify_ldap_directory_structure(ldap_service: FlextLdapClients) -> None:
     """Verify LDAP directory structure exists - CRITICAL for operations to work."""
     # Get connection parameters from environment
 
@@ -81,7 +81,7 @@ def _verify_ldap_directory_structure(ldap_service: FlextLDAPClients) -> None:
 
             for ou_dn in ous_to_verify:
                 # Search for the OU to verify it exists
-                search_result: FlextResult[list[FlextLDAPModels.Entry]] = (
+                search_result: FlextResult[list[FlextLdapModels.Entry]] = (
                     ldap_service.search(
                         base_dn=ou_dn,
                         filter_str="(objectClass=organizationalUnit)",
@@ -101,7 +101,7 @@ def _verify_ldap_directory_structure(ldap_service: FlextLDAPClients) -> None:
         logger.debug(f"Demo operation encountered exception: {e}")
 
 
-def _demo_user_operations(ldap_service: FlextLDAPClients) -> None:
+def _demo_user_operations(ldap_service: FlextLdapClients) -> None:
     """Demonstrate user operations - Single Responsibility."""
     # Focus on search operations which don't require special authentication
 
@@ -121,7 +121,7 @@ def _demo_user_operations(ldap_service: FlextLDAPClients) -> None:
 
         try:
             # Search for existing users in the people OU
-            search_result: FlextResult[list[FlextLDAPModels.Entry]] = (
+            search_result: FlextResult[list[FlextLdapModels.Entry]] = (
                 ldap_service.search(
                     base_dn="ou=people,dc=flext,dc=local",
                     filter_str="(objectClass=person)",
@@ -130,7 +130,7 @@ def _demo_user_operations(ldap_service: FlextLDAPClients) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                user_entries: list[FlextLDAPModels.Entry] = search_result.value
+                user_entries: list[FlextLdapModels.Entry] = search_result.value
                 for user_entry in user_entries:
                     # Access attributes directly from Entry model
                     uid_raw = user_entry.get_attribute("uid")
@@ -146,7 +146,7 @@ def _demo_user_operations(ldap_service: FlextLDAPClients) -> None:
                 _perform_user_search_validation(ldap_service, "demo_session")
             else:
                 # Test wildcard search
-                wildcard_result: FlextResult[list[FlextLDAPModels.Entry]] = (
+                wildcard_result: FlextResult[list[FlextLdapModels.Entry]] = (
                     ldap_service.search(
                         base_dn="dc=flext,dc=local",
                         filter_str="(objectClass=*)",
@@ -170,12 +170,12 @@ def _demo_user_operations(ldap_service: FlextLDAPClients) -> None:
 
 
 def _perform_user_search_validation(
-    ldap_service: FlextLDAPClients,
+    ldap_service: FlextLdapClients,
     _session_id: str,
 ) -> None:
     """Perform REAL user search validation with different filters."""
     # Test 1: Search by object class
-    search_result: FlextResult[list[FlextLDAPModels.Entry]] = ldap_service.search(
+    search_result: FlextResult[list[FlextLdapModels.Entry]] = ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
@@ -185,7 +185,7 @@ def _perform_user_search_validation(
         pass
 
     # Test 2: Search with compound filter
-    compound_result: FlextResult[list[FlextLDAPModels.Entry]] = ldap_service.search(
+    compound_result: FlextResult[list[FlextLdapModels.Entry]] = ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
@@ -195,7 +195,7 @@ def _perform_user_search_validation(
         pass
 
     # Test 3: Base scope search on root
-    base_result: FlextResult[list[FlextLDAPModels.Entry]] = ldap_service.search(
+    base_result: FlextResult[list[FlextLdapModels.Entry]] = ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(objectClass=*)",
         attributes=["dc", "objectClass"],
@@ -207,7 +207,7 @@ def _perform_user_search_validation(
         entry.get_attribute("objectClass")
 
 
-def _demo_group_operations(ldap_service: FlextLDAPClients) -> None:
+def _demo_group_operations(ldap_service: FlextLdapClients) -> None:
     """Demonstrate group search operations - Single Responsibility."""
     # Get connection parameters from environment
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
@@ -224,7 +224,7 @@ def _demo_group_operations(ldap_service: FlextLDAPClients) -> None:
 
         try:
             # Search for existing groups in the groups OU
-            search_result: FlextResult[list[FlextLDAPModels.Entry]] = (
+            search_result: FlextResult[list[FlextLdapModels.Entry]] = (
                 ldap_service.search(
                     base_dn="ou=groups,dc=flext,dc=local",
                     filter_str="(objectClass=groupOfNames)",
@@ -233,7 +233,7 @@ def _demo_group_operations(ldap_service: FlextLDAPClients) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                group_search_entries: list[FlextLDAPModels.Entry] = search_result.value
+                group_search_entries: list[FlextLdapModels.Entry] = search_result.value
                 for group_entry in group_search_entries:
                     # Access attributes directly from Entry model
                     cn_raw = group_entry.get_attribute("cn")
@@ -251,7 +251,7 @@ def _demo_group_operations(ldap_service: FlextLDAPClients) -> None:
                 _perform_group_search_validation(ldap_service, "demo_session")
             else:
                 # Test alternative group object classes
-                alt_result: FlextResult[list[FlextLDAPModels.Entry]] = (
+                alt_result: FlextResult[list[FlextLdapModels.Entry]] = (
                     ldap_service.search(
                         base_dn="ou=groups,dc=flext,dc=local",
                         filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
@@ -271,19 +271,19 @@ def _demo_group_operations(ldap_service: FlextLDAPClients) -> None:
 
 
 def _perform_group_search_validation(
-    ldap_service: FlextLDAPClients,
+    ldap_service: FlextLdapClients,
     _session_id: str,
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     # Test 1: Search for all group types
-    all_groups_result: FlextResult[list[FlextLDAPModels.Entry]] = ldap_service.search(
+    all_groups_result: FlextResult[list[FlextLdapModels.Entry]] = ldap_service.search(
         base_dn="dc=flext,dc=local",
         filter_str="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
     )
 
     if all_groups_result.is_success:
-        group_entries: list[FlextLDAPModels.Entry] = all_groups_result.value or []
+        group_entries: list[FlextLdapModels.Entry] = all_groups_result.value or []
         for group_entry in group_entries:
             # Access attributes directly from Entry model
             cn_raw = group_entry.get_attribute("cn")
@@ -306,7 +306,7 @@ def _perform_group_search_validation(
         pass
 
     # Test 3: Search with scope validation
-    scope_result: FlextResult[list[FlextLDAPModels.Entry]] = ldap_service.search(
+    scope_result: FlextResult[list[FlextLdapModels.Entry]] = ldap_service.search(
         base_dn="ou=groups,dc=flext,dc=local",
         filter_str="(objectClass=*)",
         attributes=[
@@ -318,7 +318,7 @@ def _perform_group_search_validation(
         pass
 
 
-def _demo_connection_management(ldap_service: FlextLDAPClients) -> None:
+def _demo_connection_management(ldap_service: FlextLdapClients) -> None:
     """Demonstrate connection management - Single Responsibility."""
     # Get connection parameters from environment
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
@@ -341,7 +341,7 @@ def _demo_connection_management(ldap_service: FlextLDAPClients) -> None:
         logger.debug(f"Demo operation encountered exception: {e}")
 
 
-def _demo_error_handling(_: FlextLDAPClients) -> None:
+def _demo_error_handling(_: FlextLdapClients) -> None:
     """Demonstrate error handling - Single Responsibility."""
     # Demonstrate error handling with connection attempts
     logger.info("Error handling demonstration completed")

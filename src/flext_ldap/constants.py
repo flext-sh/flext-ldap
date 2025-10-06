@@ -11,7 +11,7 @@ from typing import Final, Literal
 from flext_core import FlextConstants, FlextTypes
 
 
-class FlextLDAPConstants(FlextConstants):
+class FlextLdapConstants(FlextConstants):
     """LDAP domain-specific constants - essential constants only."""
 
     # Import universal constants from flext-core (single source of truth)
@@ -390,5 +390,5 @@ class FlextLDAPConstants(FlextConstants):
 
 
 __all__ = [
-    "FlextLDAPConstants",
+    "FlextLdapConstants",
 ]

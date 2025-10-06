@@ -16,18 +16,18 @@ from pydantic import SecretStr
 
 # Import test support fixtures
 from flext_ldap import (
-    FlextLDAP,
-    FlextLDAPClients,
-    FlextLDAPModels,
-    FlextLDAPValidations,
+    FlextLdap,
+    FlextLdapClients,
+    FlextLdapModels,
+    FlextLdapValidations,
 )
 from flext_ldap.acl import (
-    FlextLDAPAclConverters,
-    FlextLDAPAclManager,
-    FlextLDAPAclParsers,
+    FlextLdapAclConverters,
+    FlextLdapAclManager,
+    FlextLdapAclParsers,
 )
-from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.config import FlextLdapConfig
 
 # Import centralized FLEXT Docker infrastructure from flext-core
 # from flext_tests.docker import FlextTestDocker  # TODO: Import from flext-core when available
@@ -40,7 +40,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from flext_ldap.typings import FlextLDAPTypes
+from flext_ldap.typings import FlextLdapTypes
 
 
 # Temporary mock implementation until FlextTestDocker is available in flext-core
@@ -69,9 +69,9 @@ class FlextTestDocker:
         return FlextResult.fail("Mock implementation - Docker not available")
 
 
-# FlextLDAPFactory, FlextLDAPAdvancedService, FlextLDAPWorkflowOrchestrator removed - over-engineering
-# FlextLDAPRepositories removed - mock implementations violating law
-# FlextLDAPDomainServices removed - mock CQRS/Event Sourcing violating law
+# FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
+# FlextLdapRepositories removed - mock implementations violating law
+# FlextLdapDomainServices removed - mock CQRS/Event Sourcing violating law
 
 # Import test data directly to avoid pyrefly import issues
 SAMPLE_ACL_DATA = {
@@ -161,28 +161,28 @@ def flext_logger() -> FlextLogger:
 
 
 @pytest.fixture
-def ldap_config() -> FlextLDAPConfig:
+def ldap_config() -> FlextLdapConfig:
     """Get standard LDAP connection configuration."""
-    config = FlextLDAPConfig()
+    config = FlextLdapConfig()
     config.ldap_server_uri = "ldap://localhost"
-    config.ldap_port = FlextLDAPConstants.Protocol.DEFAULT_PORT
+    config.ldap_port = FlextLdapConstants.Protocol.DEFAULT_PORT
     config.ldap_use_ssl = False
     config.ldap_bind_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
     config.ldap_bind_password = SecretStr("REDACTED_LDAP_BIND_PASSWORD123")
-    config.ldap_connection_timeout = FlextLDAPConstants.DEFAULT_TIMEOUT
+    config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
     return config
 
 
 @pytest.fixture
-def ldap_config_invalid() -> FlextLDAPConfig:
+def ldap_config_invalid() -> FlextLdapConfig:
     """Get invalid LDAP configuration for error testing."""
-    config = FlextLDAPConfig()
+    config = FlextLdapConfig()
     config.ldap_server_uri = ""  # Invalid empty server
-    config.ldap_port = FlextLDAPConstants.Protocol.DEFAULT_PORT
+    config.ldap_port = FlextLdapConstants.Protocol.DEFAULT_PORT
     config.ldap_use_ssl = False
     config.ldap_bind_dn = ""  # Invalid empty DN
     config.ldap_bind_password = SecretStr("")  # Invalid empty password
-    config.ldap_connection_timeout = FlextLDAPConstants.DEFAULT_TIMEOUT
+    config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
     return config
 
 
@@ -190,11 +190,11 @@ def ldap_config_invalid() -> FlextLDAPConfig:
 def ldap_server_config() -> FlextTypes.Dict:
     """Get LDAP server configuration for testing."""
     return {
-        "server_uri": f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+        "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
         "base_dn": "dc=example,dc=com",
-        "port": FlextLDAPConstants.Protocol.DEFAULT_PORT,
+        "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
         "use_ssl": False,
         "use_tls": False,
     }
@@ -206,28 +206,28 @@ def ldap_server_config() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def ldap_client(ldap_config: FlextLDAPConfig) -> FlextLDAPClients:
+def ldap_client(ldap_config: FlextLdapConfig) -> FlextLdapClients:
     """Get configured LDAP client instance."""
-    return FlextLDAPClients(config=ldap_config)
+    return FlextLdapClients(config=ldap_config)
 
 
 @pytest.fixture
-def ldap_client_no_config() -> FlextLDAPClients:
+def ldap_client_no_config() -> FlextLdapClients:
     """Get LDAP client without configuration."""
-    return FlextLDAPClients()
+    return FlextLdapClients()
 
 
 @pytest.fixture
-def ldap_api() -> FlextLDAP:
+def ldap_api() -> FlextLdap:
     """Get LDAP API instance."""
-    return FlextLDAP()
+    return FlextLdap()
 
 
 # =============================================================================
 # DOMAIN SERVICES FIXTURES
 # =============================================================================
 
-# FlextLDAPDomainServices fixture removed - class was deleted during cleanup
+# FlextLdapDomainServices fixture removed - class was deleted during cleanup
 
 
 # Fixtures for removed modules (factory, advanced_service, workflow_orchestrator) deleted
@@ -239,37 +239,37 @@ def ldap_api() -> FlextLDAP:
 
 
 @pytest.fixture
-def acl_constants() -> FlextLDAPConstants:
+def acl_constants() -> FlextLdapConstants:
     """Get ACL constants instance."""
-    return FlextLDAPConstants()
+    return FlextLdapConstants()
 
 
 @pytest.fixture
-def acl_converters() -> FlextLDAPAclConverters:
+def acl_converters() -> FlextLdapAclConverters:
     """Get ACL converters instance."""
-    return FlextLDAPAclConverters()
+    return FlextLdapAclConverters()
 
 
 @pytest.fixture
-def acl_manager() -> FlextLDAPAclManager:
+def acl_manager() -> FlextLdapAclManager:
     """Get ACL manager instance."""
-    return FlextLDAPAclManager()
+    return FlextLdapAclManager()
 
 
 @pytest.fixture
-def acl_parsers() -> FlextLDAPAclParsers:
+def acl_parsers() -> FlextLdapAclParsers:
     """Get ACL parsers instance."""
-    return FlextLDAPAclParsers()
+    return FlextLdapAclParsers()
 
 
 @pytest.fixture
-def acl_models() -> FlextLDAPModels:
+def acl_models() -> FlextLdapModels:
     """Get ACL models instance."""
-    return FlextLDAPModels()
+    return FlextLdapModels()
 
 
 @pytest.fixture
-def sample_acl_data() -> dict[str, str | FlextLDAPTypes.StringList]:
+def sample_acl_data() -> dict[str, str | FlextLdapTypes.StringList]:
     """Get sample ACL data for testing."""
     return SAMPLE_ACL_DATA.copy()
 
@@ -280,9 +280,9 @@ def sample_acl_data() -> dict[str, str | FlextLDAPTypes.StringList]:
 
 
 @pytest.fixture
-def sample_user() -> FlextLDAPModels.LdapUser:
+def sample_user() -> FlextLdapModels.LdapUser:
     """Get sample user entity."""
-    return FlextLDAPModels.LdapUser(
+    return FlextLdapModels.LdapUser(
         dn="cn=testuser,ou=people,dc=example,dc=com",
         cn="Test User",
         uid="testuser",
@@ -300,9 +300,9 @@ def sample_user() -> FlextLDAPModels.LdapUser:
 
 
 @pytest.fixture
-def sample_group() -> FlextLDAPModels.Group:
+def sample_group() -> FlextLdapModels.Group:
     """Get sample group entity."""
-    return FlextLDAPModels.Group(
+    return FlextLdapModels.Group(
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
         gid_number=1000,
@@ -312,17 +312,17 @@ def sample_group() -> FlextLDAPModels.Group:
 
 
 @pytest.fixture
-def sample_dn() -> FlextLDAPModels.DistinguishedName:
+def sample_dn() -> FlextLdapModels.DistinguishedName:
     """Get sample distinguished name."""
-    return FlextLDAPModels.DistinguishedName(
+    return FlextLdapModels.DistinguishedName(
         value="uid=testuser,ou=people,dc=example,dc=com"
     )
 
 
 @pytest.fixture
-def sample_filter() -> FlextLDAPModels.Filter:
+def sample_filter() -> FlextLdapModels.Filter:
     """Get sample LDAP filter."""
-    return FlextLDAPModels.Filter(expression="(objectClass=person)")
+    return FlextLdapModels.Filter(expression="(objectClass=person)")
 
 
 @pytest.fixture
@@ -355,9 +355,9 @@ def multiple_test_groups() -> list[FlextTypes.Dict]:
 
 
 @pytest.fixture
-def validations() -> FlextLDAPValidations:
+def validations() -> FlextLdapValidations:
     """Get validations instance."""
-    return FlextLDAPValidations()
+    return FlextLdapValidations()
 
 
 @pytest.fixture
@@ -399,7 +399,7 @@ def sample_invalid_email() -> str:
 def mock_ldap_server() -> Server:
     """Get mock LDAP server for testing."""
     return Server(
-        "localhost", port=FlextLDAPConstants.Protocol.DEFAULT_PORT, get_info="ALL"
+        "localhost", port=FlextLdapConstants.Protocol.DEFAULT_PORT, get_info="ALL"
     )
 
 
@@ -500,27 +500,27 @@ def shared_ldap_config() -> FlextTypes.StringDict:
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_connection_config() -> FlextLDAPModels.ConnectionConfig:
+def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
     """Shared LDAP connection configuration for integration tests."""
-    return FlextLDAPModels.ConnectionConfig(
+    return FlextLdapModels.ConnectionConfig(
         server="ldap://localhost:3390",
         port=3390,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
         bind_password="REDACTED_LDAP_BIND_PASSWORD123",
         use_ssl=False,
-        timeout=FlextLDAPConstants.DEFAULT_TIMEOUT,
+        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
 
 
 @pytest.fixture(scope="session")
 def shared_ldap_client(
     shared_ldap_config: FlextTypes.StringDict, shared_ldap_container: str
-) -> Generator[FlextLDAPClients]:
+) -> Generator[FlextLdapClients]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container
     _ = shared_ldap_container  # Container dependency ensures it's started
 
-    client = FlextLDAPClients()
+    client = FlextLdapClients()
 
     # Connect to the LDAP server with proper parameters
     connect_result = client.connect(

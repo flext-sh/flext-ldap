@@ -14,10 +14,10 @@ from flext_ldif import FlextLdifModels
 from ldap3 import Connection, MODIFY_REPLACE
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
-class FlextLDAPServersOpenLDAP2Operations(FlextLDAPServersBaseOperations):
+class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     """Complete OpenLDAP 2.x operations implementation.
 
     OpenLDAP 2.x Features:
@@ -531,9 +531,9 @@ class FlextLDAPServersOpenLDAP2Operations(FlextLDAPServersBaseOperations):
             )
 
             # Convert results to FlextLdif entries
-            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLDAPEntryAdapter()
+            adapter = FlextLdapEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:

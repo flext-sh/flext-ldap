@@ -1,18 +1,18 @@
-"""Tests for FlextLDAPRepositories module."""
+"""Tests for FlextLdapRepositories module."""
 
-from flext_ldap.repositories import FlextLDAPRepositories
+from flext_ldap.repositories import FlextLdapRepositories
 
 
-class TestFlextLDAPRepositories:
-    """Test cases for FlextLDAPRepositories."""
+class TestFlextLdapRepositories:
+    """Test cases for FlextLdapRepositories."""
 
     def test_repositories_initialization(self):
         """Test repositories initialization."""
-        repos = FlextLDAPRepositories()
+        repos = FlextLdapRepositories()
         assert repos is not None
 
     def test_repositories_basic_functionality(self):
         """Test basic repositories functionality."""
-        repos = FlextLDAPRepositories()
+        repos = FlextLdapRepositories()
         # Add specific test cases based on repositories functionality
         assert hasattr(repos, "__class__")

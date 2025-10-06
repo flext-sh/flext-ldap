@@ -1,6 +1,6 @@
-"""Comprehensive tests for FlextLDAPExceptions.
+"""Comprehensive tests for FlextLdapExceptions.
 
-This module provides complete test coverage for the FlextLDAPExceptions class
+This module provides complete test coverage for the FlextLdapExceptions class
 following FLEXT standards with proper domain separation and centralized fixtures.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -9,57 +9,57 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import FlextLDAPExceptions
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap import FlextLdapExceptions
+from flext_ldap.constants import FlextLdapConstants
 
 
-class TestFlextLDAPExceptions:
-    """Comprehensive test suite for FlextLDAPExceptions."""
+class TestFlextLdapExceptions:
+    """Comprehensive test suite for FlextLdapExceptions."""
 
     def test_exceptions_initialization(self) -> None:
         """Test exceptions initialization."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
         assert exceptions is not None
         assert hasattr(exceptions, "_context")
         assert hasattr(exceptions, "_logger")
 
     def test_connection_error_creation(self) -> None:
         """Test connection error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
         assert (
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
             in str(error)
         )
 
     def test_connection_error_with_ldap_code(self) -> None:
         """Test connection error with LDAP result code."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             ldap_code=49,
         )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
         assert (
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
             in str(error)
         )
         assert "49" in str(error)
 
     def test_authentication_error_creation(self) -> None:
         """Test authentication error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.authentication_error(
             "Invalid credentials", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
@@ -71,7 +71,7 @@ class TestFlextLDAPExceptions:
 
     def test_authentication_error_branches(self) -> None:
         """Test authentication error with different branches."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test with username
         error1 = exceptions.authentication_error("Invalid credentials", "testuser")
@@ -87,7 +87,7 @@ class TestFlextLDAPExceptions:
 
     def test_search_error_creation(self) -> None:
         """Test search error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.search_error(
             "Search failed", "(objectClass=person)", "dc=example,dc=com"
@@ -100,7 +100,7 @@ class TestFlextLDAPExceptions:
 
     def test_search_error_with_context(self) -> None:
         """Test search error with additional context."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.search_error(
             "Search failed",
@@ -115,7 +115,7 @@ class TestFlextLDAPExceptions:
 
     def test_operation_error_creation(self) -> None:
         """Test operation error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.operation_error(
             "Add failed", "uid=testuser,ou=people,dc=example,dc=com"
@@ -127,7 +127,7 @@ class TestFlextLDAPExceptions:
 
     def test_operation_error_with_target(self) -> None:
         """Test operation error with target information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.operation_error(
             "Modify failed",
@@ -141,7 +141,7 @@ class TestFlextLDAPExceptions:
 
     def test_validation_error_creation(self) -> None:
         """Test validation error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.validation_error("Invalid DN format", "invalid-dn")
 
@@ -151,7 +151,7 @@ class TestFlextLDAPExceptions:
 
     def test_validation_error_with_field_details(self) -> None:
         """Test validation error with field details."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.validation_error(
             "Invalid email format", "test@invalid", field="mail"
@@ -164,7 +164,7 @@ class TestFlextLDAPExceptions:
 
     def test_configuration_error_creation(self) -> None:
         """Test configuration error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.configuration_error(
             "Invalid server URI", "ldap://invalid-server"
@@ -176,7 +176,7 @@ class TestFlextLDAPExceptions:
 
     def test_configuration_error_with_section(self) -> None:
         """Test configuration error with section information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.configuration_error(
             "Missing required field", "bind_dn", section="connection"
@@ -189,7 +189,7 @@ class TestFlextLDAPExceptions:
 
     def test_type_error_creation(self) -> None:
         """Test type error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.type_error(
             "Invalid attribute type", "cn", expected_type="string"
@@ -202,7 +202,7 @@ class TestFlextLDAPExceptions:
 
     def test_type_error_with_type_info(self) -> None:
         """Test type error with type information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.type_error(
             "Invalid attribute type", "cn", expected_type="string", actual_type="int"
@@ -215,7 +215,7 @@ class TestFlextLDAPExceptions:
 
     def test_ldap_error_creation(self) -> None:
         """Test LDAP error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.ldap_error("LDAP operation failed", "search", ldap_code=32)
 
@@ -226,7 +226,7 @@ class TestFlextLDAPExceptions:
 
     def test_ldap_error_with_operation_and_code(self) -> None:
         """Test LDAP error with operation and code."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.ldap_error("LDAP operation failed", "add", ldap_code=68)
 
@@ -237,7 +237,7 @@ class TestFlextLDAPExceptions:
 
     def test_user_error_creation(self) -> None:
         """Test user error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.user_error("User not found", "testuser")
 
@@ -247,7 +247,7 @@ class TestFlextLDAPExceptions:
 
     def test_user_error_with_all_fields(self) -> None:
         """Test user error with all fields."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.user_error(
             "User creation failed",
@@ -264,7 +264,7 @@ class TestFlextLDAPExceptions:
 
     def test_group_error_creation(self) -> None:
         """Test group error creation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.group_error("Group not found", "testgroup")
 
@@ -274,7 +274,7 @@ class TestFlextLDAPExceptions:
 
     def test_group_error_with_operation(self) -> None:
         """Test group error with operation."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         error = exceptions.group_error(
             "Group creation failed", "testgroup", operation="create"
@@ -287,7 +287,7 @@ class TestFlextLDAPExceptions:
 
     def test_factory_methods_connection_failed_with_different_params(self) -> None:
         """Test connection failed factory method with different parameters."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test with minimal parameters
         error1 = exceptions.connection_failed("Connection timeout")
@@ -297,11 +297,11 @@ class TestFlextLDAPExceptions:
         # Test with server URI
         error2 = exceptions.connection_failed(
             "Connection timeout",
-            server_uri=f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
         assert isinstance(error2, Exception)
         assert (
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
             in str(error2)
         )
 
@@ -312,7 +312,7 @@ class TestFlextLDAPExceptions:
 
     def test_factory_methods_with_ldap_result_codes(self) -> None:
         """Test factory methods with LDAP result codes."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test various LDAP result codes
         ldap_codes = [32, 49, 68, 81, 82]
@@ -326,7 +326,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_inheritance(self) -> None:
         """Test that all exceptions inherit from base exception."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that all created exceptions are instances of Exception
         error_types = [
@@ -347,12 +347,12 @@ class TestFlextLDAPExceptions:
 
     def test_exception_string_representations(self) -> None:
         """Test exception string representations."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that all exceptions have meaningful string representations
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
         error_str = str(error)
 
@@ -360,13 +360,13 @@ class TestFlextLDAPExceptions:
         assert len(error_str) > 0
         assert "Connection failed" in error_str
         assert (
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
             in error_str
         )
 
     def test_exception_error_messages(self) -> None:
         """Test exception error messages."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that error messages are informative
         error = exceptions.validation_error(
@@ -380,7 +380,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_context_information(self) -> None:
         """Test exception context information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that exceptions include relevant context
         error = exceptions.search_error(
@@ -398,7 +398,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_ldap_code_information(self) -> None:
         """Test exception LDAP code information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that LDAP codes are included when provided
         error = exceptions.ldap_error("LDAP operation failed", "search", ldap_code=32)
@@ -410,7 +410,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_operation_information(self) -> None:
         """Test exception operation information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that operation information is included
         error = exceptions.operation_error(
@@ -426,7 +426,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_field_information(self) -> None:
         """Test exception field information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that field information is included
         error = exceptions.validation_error(
@@ -440,7 +440,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_section_information(self) -> None:
         """Test exception section information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that section information is included
         error = exceptions.configuration_error(
@@ -454,7 +454,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_type_information(self) -> None:
         """Test exception type information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that type information is included
         error = exceptions.type_error(
@@ -469,7 +469,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_user_information(self) -> None:
         """Test exception user information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that user information is included
         error = exceptions.user_error(
@@ -487,7 +487,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_group_information(self) -> None:
         """Test exception group information."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that group information is included
         error = exceptions.group_error(
@@ -501,12 +501,12 @@ class TestFlextLDAPExceptions:
 
     def test_exception_integration_complete_workflow(self) -> None:
         """Test complete exception workflow integration."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test complete workflow with different exception types
         connection_error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
         assert isinstance(connection_error, Exception)
 
@@ -553,7 +553,7 @@ class TestFlextLDAPExceptions:
 
     def test_exception_error_handling_consistency(self) -> None:
         """Test consistent error handling across exception methods."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test that all exception methods return Exception instances
         exception_methods = [
@@ -576,13 +576,13 @@ class TestFlextLDAPExceptions:
 
     def test_exception_performance_large_datasets(self) -> None:
         """Test exception performance with large datasets."""
-        exceptions = FlextLDAPExceptions()
+        exceptions = FlextLdapExceptions()
 
         # Test creating many exceptions
         for i in range(100):
             error = exceptions.connection_error(
                 f"Connection failed {i}",
-                f"ldap://server{i}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
+                f"ldap://server{i}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             )
             assert isinstance(error, Exception)
             assert str(i) in str(error)
