@@ -30,6 +30,7 @@ from flext_core import (
 )
 
 
+# Import flext_ldif components with fallback
 try:
     from flext_ldif import FlextLdif, FlextLdifModels
 except ImportError:
@@ -37,9 +38,22 @@ except ImportError:
     def FlextLdif():
         raise ImportError("flext_ldif not available")
 
-    class FlextLdifModels:
+    # Define minimal placeholder to avoid type errors
+    class _FlextLdifModelsPlaceholder:
         class Entry:
-            pass
+            def __init__(self, dn=None, attributes=None):
+                self.dn = dn
+                self.attributes = attributes
+
+        class DistinguishedName:
+            def __init__(self, value=None):
+                self.value = value
+
+        class LdifAttributes:
+            def __init__(self, attributes=None):
+                self.attributes = attributes
+
+    FlextLdifModels = _FlextLdifModelsPlaceholder
 
 
 from flext_ldap.acl import FlextLdapAclManager
@@ -603,17 +617,22 @@ class FlextLdap(FlextService[None]):
         # Convert FlextLdap entries to FlextLdif entries
         ldif_entries = []
         for ldap_entry in entries:
-            ldif_entry_result = FlextLdifModels.Entry.create(
-                data={
-                    "dn": ldap_entry.dn,
-                    "attributes": ldap_entry.attributes,
-                }
-            )
-            if ldif_entry_result.is_failure:
-                return FlextResult[bool].fail(
-                    f"Entry conversion failed: {ldif_entry_result.error}"
+            try:
+                # Convert DN string to DistinguishedName if needed
+                dn = ldap_entry.dn
+                if isinstance(dn, str):
+                    dn = FlextLdifModels.DistinguishedName(value=dn)
+
+                # Create LDIF entry directly
+                ldif_entry = FlextLdifModels.Entry(
+                    dn=dn,
+                    attributes=FlextLdifModels.LdifAttributes(
+                        attributes=ldap_entry.attributes
+                    ),
                 )
-            ldif_entries.append(ldif_entry_result.unwrap())
+                ldif_entries.append(ldif_entry)
+            except Exception as e:
+                return FlextResult[bool].fail(f"Entry conversion failed: {e}")
 
         # Use FlextLdif for writing
         result = ldif_instance.write(ldif_entries, path)
