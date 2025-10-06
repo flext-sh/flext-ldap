@@ -2,7 +2,7 @@
 
 This module consolidates all type aliases, type definitions, and protocol
 definitions used throughout the flext-ldap domain. Following FLEXT standards,
-all types are organized under a single FlextLdapTypes class and extend
+all types are organized under a single FlextLDAPTypes class and extend
 centralized types from flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,35 +15,11 @@ from typing import Literal
 
 from ldap3 import Connection, Server
 
-from flext_core import (
-    T1,
-    T2,
-    T3,
-    E,
-    F,
-    FlextTypes,
-    K,
-    P,
-    R,
-    T,
-    T_co,
-    T_contra,
-    TCommand,
-    TCommand_contra,
-    TEvent,
-    TEvent_contra,
-    TQuery,
-    TQuery_contra,
-    TResult,
-    TState,
-    TState_co,
-    U,
-    V,
-    W,
-)
+from flext_core import FlextTypes
+from flext_ldap.constants import FlextLDAPConstants
 
 
-class FlextLdapTypes(FlextTypes):
+class FlextLDAPTypes(FlextTypes):
     """Unified LDAP types class extending FlextTypes with LDAP-specific type definitions.
 
     This class extends the base FlextTypes with LDAP-specific type aliases, type variables,
@@ -65,17 +41,15 @@ class FlextLdapTypes(FlextTypes):
     # Core LDAP3 types
     Server = Server
     Connection = Connection
-    SIMPLE: Literal["SIMPLE"] = "SIMPLE"
 
-    # LDAP scope constants - using proper literal types
-    BASE: Literal["BASE"] = "BASE"
-    LEVEL: Literal["LEVEL"] = "LEVEL"
-    SUBTREE: Literal["SUBTREE"] = "SUBTREE"
-
-    # LDAP modify operation constants
-    MODIFY_ADD: Literal["MODIFY_ADD"] = "MODIFY_ADD"
-    MODIFY_DELETE: Literal["MODIFY_DELETE"] = "MODIFY_DELETE"
-    MODIFY_REPLACE: Literal["MODIFY_REPLACE"] = "MODIFY_REPLACE"
+    # LDAP constants - using centralized constants
+    SIMPLE = FlextLDAPConstants.LiteralTypes.AUTH_SIMPLE
+    BASE = FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE
+    LEVEL = FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_LEVEL
+    SUBTREE = FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE
+    MODIFY_ADD = FlextLDAPConstants.LiteralTypes.MODIFY_ADD
+    MODIFY_DELETE = FlextLDAPConstants.LiteralTypes.MODIFY_DELETE
+    MODIFY_REPLACE = FlextLDAPConstants.LiteralTypes.MODIFY_REPLACE
 
     # =========================================================================
     # LDAP DOMAIN TYPES - LDAP-specific type definitions
@@ -91,7 +65,11 @@ class FlextLdapTypes(FlextTypes):
 
         # LDAP search and filter types
         type SearchFilter = str
-        type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+        type SearchScope = Literal[
+            FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_BASE,
+            FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
+            FlextLDAPConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
+        ]
         type SearchResult = list[FlextTypes.Dict]
 
         # LDAP connection and server types
@@ -103,12 +81,30 @@ class FlextLdapTypes(FlextTypes):
         # LDAP protocol types
         type ObjectClass = str
         type AttributeName = str
-        type ConnectionState = Literal["unbound", "bound", "closed", "error"]
-        type OperationType = Literal[
-            "search", "add", "modify", "delete", "compare", "extended"
+        type ConnectionState = Literal[
+            FlextLDAPConstants.LiteralTypes.CONNECTION_STATE_UNBOUND,
+            FlextLDAPConstants.LiteralTypes.CONNECTION_STATE_BOUND,
+            FlextLDAPConstants.LiteralTypes.CONNECTION_STATE_CLOSED,
+            FlextLDAPConstants.LiteralTypes.CONNECTION_STATE_ERROR,
         ]
-        type SecurityLevel = Literal["none", "simple", "sasl"]
-        type AuthenticationMethod = Literal["simple", "sasl", "external"]
+        type OperationType = Literal[
+            FlextLDAPConstants.LiteralTypes.OPERATION_SEARCH,
+            FlextLDAPConstants.LiteralTypes.OPERATION_ADD,
+            FlextLDAPConstants.LiteralTypes.OPERATION_MODIFY,
+            FlextLDAPConstants.LiteralTypes.OPERATION_DELETE,
+            FlextLDAPConstants.LiteralTypes.OPERATION_COMPARE,
+            FlextLDAPConstants.LiteralTypes.OPERATION_EXTENDED,
+        ]
+        type SecurityLevel = Literal[
+            FlextLDAPConstants.LiteralTypes.SECURITY_NONE,
+            FlextLDAPConstants.LiteralTypes.SECURITY_SIMPLE,
+            FlextLDAPConstants.LiteralTypes.SECURITY_SASL,
+        ]
+        type AuthenticationMethod = Literal[
+            FlextLDAPConstants.LiteralTypes.AUTH_SIMPLE,
+            FlextLDAPConstants.LiteralTypes.AUTH_SASL,
+            FlextLDAPConstants.LiteralTypes.AUTH_EXTERNAL,
+        ]
 
         # Complex LDAP operation types
         type BulkOperation = list[dict[str, AttributeValue | OperationType]]
@@ -119,7 +115,7 @@ class FlextLdapTypes(FlextTypes):
     # LDAP CORE TYPES - Domain-specific core types extending FlextTypes
     # =========================================================================
 
-    class Core:
+    class LdapCore:
         """Core LDAP types extending FlextTypes."""
 
         # LDAP-specific core types for configuration and operations
@@ -156,11 +152,11 @@ class FlextLdapTypes(FlextTypes):
     class LdapConfig:
         """LDAP configuration types."""
 
-        type ServerConfig = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type ConnectionConfig = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type ConnectionConfigData = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type SecurityConfig = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type SearchConfig = dict[str, FlextLdapTypes.Core.ConfigValue]
+        type ServerConfig = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type ConnectionConfig = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type ConnectionConfigData = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type SecurityConfig = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type SearchConfig = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
         type TimeoutConfig = dict[str, int]
 
     # =========================================================================
@@ -170,12 +166,12 @@ class FlextLdapTypes(FlextTypes):
     class LdapOperations:
         """LDAP operation types."""
 
-        type SearchOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type ModifyOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type AddOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type DeleteOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type CompareOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
-        type ExtendedOperation = dict[str, FlextLdapTypes.Core.ConfigValue]
+        type SearchOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type ModifyOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type AddOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type DeleteOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type CompareOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
+        type ExtendedOperation = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue]
 
     # =========================================================================
     # LDAP RESULT TYPES - Result and response types
@@ -238,39 +234,18 @@ class FlextLdapTypes(FlextTypes):
         ]
 
         # LDAP-specific project configurations
-        type LdapProjectConfig = dict[str, FlextLdapTypes.Core.ConfigValue | object]
+        type LdapProjectConfig = dict[
+            str, FlextLDAPTypes.LdapCore.LdapConfigValue | object
+        ]
         type DirectoryConfig = dict[str, str | int | bool | FlextTypes.StringList]
         type AuthenticationConfig = dict[str, bool | str | FlextTypes.Dict]
-        type SyncConfig = dict[str, FlextLdapTypes.Core.ConfigValue | object]
+        type SyncConfig = dict[str, FlextLDAPTypes.LdapCore.LdapConfigValue | object]
 
 
 # =========================================================================
-# PUBLIC API EXPORTS - FlextLdapTypes and flext-core TypeVars
+# PUBLIC API EXPORTS - FlextLDAPTypes and flext-core TypeVars
 # =========================================================================
 
 __all__: FlextTypes.StringList = [
-    "T1",
-    "T2",
-    "T3",
-    "E",
-    "F",
-    "FlextLdapTypes",
-    "K",
-    "P",
-    "R",
-    "T",
-    "TCommand",
-    "TCommand_contra",
-    "TEvent",
-    "TEvent_contra",
-    "TQuery",
-    "TQuery_contra",
-    "TResult",
-    "TState",
-    "TState_co",
-    "T_co",
-    "T_contra",
-    "U",
-    "V",
-    "W",
+    "FlextLDAPTypes",
 ]

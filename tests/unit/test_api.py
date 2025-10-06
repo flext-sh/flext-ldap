@@ -13,10 +13,11 @@ import threading
 import time
 
 import pytest
-from flext_ldap.api import FlextLdapAPI
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import (
+    FlextLDAP,
+    FlextLDAPConfig,
+    FlextLDAPConstants,
+)
 from flext_tests import FlextTestsFactories
 from pydantic import SecretStr
 
@@ -24,12 +25,12 @@ from flext_core import FlextResult
 
 
 @pytest.mark.unit
-class TestFlextLdapAPI:
-    """Comprehensive tests for FlextLdapAPI class."""
+class TestFlextLDAPApi:
+    """Comprehensive tests for FlextLDAP class."""
 
     def test_api_initialization(self) -> None:
         """Test API initialization with default configuration."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         assert api is not None
         assert hasattr(api, "_client")
@@ -38,32 +39,32 @@ class TestFlextLdapAPI:
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
-        config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        config = FlextLDAPConfig(
+            ldap_server_uri=f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
             ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
         )
 
-        api = FlextLdapAPI(config)
+        api = FlextLDAP(config)
 
         assert api is not None
         assert api._config is not None
         assert (
             api._config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
         )
 
     def test_api_factory_method(self) -> None:
         """Test API factory method."""
-        api = FlextLdapAPI.create()
+        api = FlextLDAP.create()
 
-        assert isinstance(api, FlextLdapAPI)
+        assert isinstance(api, FlextLDAP)
         assert api is not None
 
     def test_api_properties(self) -> None:
         """Test API property accessors."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test client property
         client = api.client
@@ -78,7 +79,6 @@ class TestFlextLdapAPI:
         # Test models property
         models = api.models
         assert models is not None
-        assert models == FlextLdapModels
 
         # Test types property
         types = api.types
@@ -94,7 +94,7 @@ class TestFlextLdapAPI:
 
     def test_api_connection_methods(self) -> None:
         """Test API connection methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test is_connected method
         connected = api.is_connected()
@@ -114,7 +114,7 @@ class TestFlextLdapAPI:
 
     def test_api_search_methods(self) -> None:
         """Test API search methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test search_groups method
         result = api.search_groups(
@@ -141,7 +141,7 @@ class TestFlextLdapAPI:
 
     def test_api_update_methods(self) -> None:
         """Test API update methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test update_user_attributes method
         result = api.update_user_attributes(
@@ -159,7 +159,7 @@ class TestFlextLdapAPI:
 
     def test_api_delete_methods(self) -> None:
         """Test API delete methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test delete_user method
         result = api.delete_user("cn=testuser,dc=test,dc=com")
@@ -167,7 +167,7 @@ class TestFlextLdapAPI:
 
     def test_api_validation_methods(self) -> None:
         """Test API validation methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test validate_configuration_consistency method
         result = api.validate_configuration_consistency()
@@ -183,7 +183,7 @@ class TestFlextLdapAPI:
 
     def test_api_validation_with_invalid_input(self) -> None:
         """Test API validation with invalid input."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test validate_dn with invalid DN
         result = api.validate_dn("")
@@ -197,7 +197,7 @@ class TestFlextLdapAPI:
 
     def test_api_execute_methods(self) -> None:
         """Test API execute methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test execute method
         result = api.execute()
@@ -206,7 +206,7 @@ class TestFlextLdapAPI:
 
     def test_api_execute_method(self) -> None:
         """Test API execute method."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test execute method
         result = api.execute()
@@ -215,7 +215,7 @@ class TestFlextLdapAPI:
 
     def test_api_error_handling(self) -> None:
         """Test API error handling mechanisms."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test with invalid DN
         result = api.validate_dn("invalid-dn")
@@ -231,7 +231,7 @@ class TestFlextLdapAPI:
 
     def test_api_thread_safety(self) -> None:
         """Test API thread safety."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test concurrent operations
 
@@ -257,7 +257,7 @@ class TestFlextLdapAPI:
 
     def test_api_memory_usage(self) -> None:
         """Test API memory usage patterns."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test multiple operations
         results = []
@@ -277,7 +277,7 @@ class TestFlextLdapAPI:
         NOTE: This test is sensitive to resource contention and should be run
         in isolation using 'make test-performance' to avoid intermittent failures.
         """
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test validation performance
         start_time = time.time()
@@ -292,49 +292,49 @@ class TestFlextLdapAPI:
 
     def test_api_configuration_persistence(self) -> None:
         """Test API configuration persistence."""
-        config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        config = FlextLDAPConfig(
+            ldap_server_uri=f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
             ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
         )
 
-        api = FlextLdapAPI(config)
+        api = FlextLDAP(config)
 
         # Verify configuration is properly stored
         stored_config = api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com"
         assert stored_config.ldap_base_dn == "dc=test,dc=com"
 
     def test_api_extensibility(self) -> None:
         """Test API extensibility features."""
-        FlextLdapAPI()
+        FlextLDAP()
 
         # Test that API can be extended with custom configurations
-        custom_config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+        custom_config = FlextLDAPConfig(
+            ldap_server_uri=f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}",
             ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
         )
 
-        custom_api = FlextLdapAPI(custom_config)
+        custom_api = FlextLDAP(custom_config)
 
         # Verify custom configuration is preserved
         stored_config = custom_api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLDAPConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLDAPConstants.Protocol.DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com"
 
     def test_api_integration_complete_workflow(self) -> None:
         """Test complete API workflow integration."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test complete workflow
         # 1. Validate configuration
@@ -355,9 +355,9 @@ class TestFlextLdapAPI:
         assert execute_result.is_success
 
 
-"""Comprehensive tests for FlextLdapAPI following FLEXT standards.
+"""Comprehensive tests for FlextLDAP following FLEXT standards.
 
-This module provides complete test coverage for the FlextLdapAPI class
+This module provides complete test coverage for the FlextLDAP class
 using flext_tests library, centralized fixtures, and real functionality testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -365,12 +365,12 @@ SPDX-License-Identifier: MIT
 """
 
 
-class TestFlextLdapAPIComprehensive:
-    """Comprehensive test suite for FlextLdapAPI using FLEXT standards."""
+class TestFlextLDAPApiComprehensive:
+    """Comprehensive test suite for FlextLDAP using FLEXT standards."""
 
     def test_api_initialization_default(self) -> None:
         """Test API initialization with default configuration."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         assert api is not None
         assert api._client is None  # Lazy initialization
@@ -379,22 +379,22 @@ class TestFlextLdapAPIComprehensive:
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
-        config = FlextLdapConfig()
-        api = FlextLdapAPI(config=config)
+        config = FlextLDAPConfig()
+        api = FlextLDAP(config=config)
 
         assert api is not None
         assert api._config == config
 
     def test_api_factory_method(self) -> None:
         """Test API factory method."""
-        api = FlextLdapAPI.create()
+        api = FlextLDAP.create()
 
-        assert isinstance(api, FlextLdapAPI)
+        assert isinstance(api, FlextLDAP)
         assert api._client is None
 
     def test_api_execute_method(self) -> None:
         """Test API execute method (required by FlextService)."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
         result = api.execute()
 
         assert isinstance(result, FlextResult)
@@ -403,7 +403,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_client_property_lazy_initialization(self) -> None:
         """Test client property lazy initialization."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # First access should create the client
         client1 = api.client
@@ -415,21 +415,21 @@ class TestFlextLdapAPIComprehensive:
 
     def test_config_property_with_custom_config(self) -> None:
         """Test config property with custom configuration."""
-        config = FlextLdapConfig()
-        api = FlextLdapAPI(config=config)
+        config = FlextLDAPConfig()
+        api = FlextLDAP(config=config)
 
         assert api.config == config
 
     def test_config_property_with_global_instance(self) -> None:
         """Test config property uses global instance when no custom config."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
         config = api.config
 
-        assert isinstance(config, FlextLdapConfig)
+        assert isinstance(config, FlextLDAPConfig)
 
     def test_validate_configuration_consistency(self) -> None:
         """Test configuration consistency validation."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         result = api.validate_configuration_consistency()
         assert isinstance(result, FlextResult)
@@ -438,7 +438,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_dn_valid_format(self) -> None:
         """Test DN validation with valid format."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         valid_dn = "cn=testuser,ou=users,dc=example,dc=com"
         result = api.validate_dn(valid_dn)
@@ -448,7 +448,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_dn_invalid_format(self) -> None:
         """Test DN validation with invalid format."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         invalid_dn = "invalid-dn-format"
         result = api.validate_dn(invalid_dn)
@@ -458,7 +458,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_dn_empty(self) -> None:
         """Test DN validation with empty string."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         result = api.validate_dn("")
 
@@ -467,7 +467,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_filter_valid_format(self) -> None:
         """Test filter validation with valid format."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         valid_filter = "(objectClass=person)"
         result = api.validate_filter(valid_filter)
@@ -477,7 +477,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_filter_invalid_format(self) -> None:
         """Test filter validation with invalid format."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         invalid_filter = "invalid@filter#with$invalid%chars"
         result = api.validate_filter(invalid_filter)
@@ -487,7 +487,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_validate_filter_empty(self) -> None:
         """Test filter validation with empty string."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         result = api.validate_filter("")
 
@@ -499,7 +499,7 @@ class TestFlextLdapAPIComprehensive:
         # Use flext_tests factories to create test data
         FlextTestsFactories.create_realistic_test_data()
 
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # Test that API can handle realistic test data
         assert api is not None
@@ -510,7 +510,7 @@ class TestFlextLdapAPIComprehensive:
 
     def test_api_error_handling_consistency(self) -> None:
         """Test consistent error handling across API methods."""
-        api = FlextLdapAPI()
+        api = FlextLDAP()
 
         # All methods should return FlextResult
         methods_to_test = [

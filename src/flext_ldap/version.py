@@ -12,7 +12,7 @@ __version_info__ = tuple(
 )
 
 
-class FlextLdapVersion:
+class FlextLDAPVersion:
     """Simple version class for flext-ldap with metadata access."""
 
     def __init__(self, version: str, version_info: tuple[int | str, ...]) -> None:
@@ -26,11 +26,11 @@ class FlextLdapVersion:
         self.requires_python = _metadata.get("Requires-Python", "")
 
     @classmethod
-    def current(cls) -> FlextLdapVersion:
+    def current(cls) -> FlextLDAPVersion:
         """Return current version."""
         return cls(__version__, __version_info__)
 
 
-VERSION = FlextLdapVersion.current()
+VERSION = FlextLDAPVersion.current()
 
-__all__ = ["VERSION", "FlextLdapVersion", "__version__", "__version_info__"]
+__all__ = ["VERSION", "FlextLDAPVersion", "__version__", "__version_info__"]

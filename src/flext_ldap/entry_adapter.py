@@ -19,7 +19,7 @@ from ldap3 import Entry as Ldap3Entry
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
 
-class FlextLdapEntryAdapter(FlextService[None]):
+class FlextLDAPEntryAdapter(FlextService[None]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:

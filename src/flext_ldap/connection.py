@@ -24,15 +24,15 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.models import FlextLDAPModels
 from flext_ldap.servers import BaseServerOperations, ServerOperationsFactory
-from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.utilities import FlextLdapUtilities
-from flext_ldap.validations import FlextLdapValidations
+from flext_ldap.typings import FlextLDAPTypes
+from flext_ldap.utilities import FlextLDAPUtilities
+from flext_ldap.validations import FlextLDAPValidations
 
 
-class FlextLdapConnection(FlextService[None]):
+class FlextLDAPConnection(FlextService[None]):
     """Unified LDAP connection management class.
 
     This class provides comprehensive LDAP connection lifecycle management
@@ -61,8 +61,8 @@ class FlextLdapConnection(FlextService[None]):
         self._detected_server_type: str | None = None
 
     @classmethod
-    def create(cls) -> FlextLdapConnection:
-        """Create a new FlextLdapConnection instance (factory method)."""
+    def create(cls) -> FlextLDAPConnection:
+        """Create a new FlextLDAPConnection instance (factory method)."""
         return cls()
 
     def connect(
@@ -89,21 +89,21 @@ class FlextLdapConnection(FlextService[None]):
         """
         try:
             # Use centralized server URI validation
-            uri_validation = FlextLdapValidations.validate_server_uri(server_uri)
+            uri_validation = FlextLDAPValidations.validate_server_uri(server_uri)
             if uri_validation.is_failure:
                 return FlextResult[bool].fail(
                     uri_validation.error or "Server URI validation failed"
                 )
 
             # Use centralized DN validation for bind_dn
-            bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn, "Bind DN")
+            bind_dn_validation = FlextLDAPValidations.validate_dn(bind_dn, "Bind DN")
             if bind_dn_validation.is_failure:
                 return FlextResult[bool].fail(
                     bind_dn_validation.error or "Bind DN validation failed"
                 )
 
             # Use centralized password validation
-            password_validation = FlextLdapValidations.validate_password(password)
+            password_validation = FlextLDAPValidations.validate_password(password)
             if password_validation.is_failure:
                 return FlextResult[bool].fail(
                     password_validation.error or "Password validation failed"
@@ -122,7 +122,12 @@ class FlextLdapConnection(FlextService[None]):
 
                 get_info_value = connection_options.get("get_info")
                 # Valid get_info values for ldap3 - use proper type narrowing
-                get_info: Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+                get_info: Literal[
+                    FlextLDAPConstants.LiteralTypes.CONNECTION_INFO_ALL,
+                    FlextLDAPConstants.LiteralTypes.CONNECTION_INFO_DSA,
+                    FlextLDAPConstants.LiteralTypes.CONNECTION_INFO_NO_INFO,
+                    FlextLDAPConstants.LiteralTypes.CONNECTION_INFO_SCHEMA,
+                ]
                 if isinstance(get_info_value, str) and get_info_value in (
                     "NO_INFO",
                     "DSA",
@@ -136,22 +141,22 @@ class FlextLdapConnection(FlextService[None]):
                 mode_value = connection_options.get("mode")
                 # Valid mode values for ldap3 - use proper type narrowing
                 mode: Literal[
-                    "IP_SYSTEM_DEFAULT",
-                    "IP_V4_ONLY",
-                    "IP_V4_PREFERRED",
-                    "IP_V6_ONLY",
-                    "IP_V6_PREFERRED",
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V4_ONLY,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V4_PREFERRED,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V6_ONLY,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
                 ]
                 if isinstance(mode_value, str) and mode_value in (
-                    "IP_SYSTEM_DEFAULT",
-                    "IP_V4_ONLY",
-                    "IP_V6_ONLY",
-                    "IP_V4_PREFERRED",
-                    "IP_V6_PREFERRED",
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V4_ONLY,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V6_ONLY,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V4_PREFERRED,
+                    FlextLDAPConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
                 ):
                     mode = mode_value  # Narrowed by isinstance and in check
                 else:
-                    mode = "IP_SYSTEM_DEFAULT"
+                    mode = FlextLDAPConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT
 
                 self._server = Server(
                     server_uri,
@@ -296,8 +301,8 @@ class FlextLdapConnection(FlextService[None]):
             if self._connection:
                 self._connection.search(
                     "",
-                    FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                    FlextLdapTypes.SUBTREE,
+                    FlextLDAPConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                    FlextLDAPTypes.SUBTREE,
                     attributes=["objectClass"],
                 )
             return FlextResult[bool].ok(True)
@@ -357,7 +362,7 @@ class FlextLdapConnection(FlextService[None]):
             FlextResult[bool]: Connection result
 
         Examples:
-            >>> client = FlextLdapConnection()
+            >>> client = FlextLDAPConnection()
             >>> result = client("ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password")
             >>> if result.is_success:
             ...     print("Connected successfully")
@@ -383,37 +388,37 @@ class FlextLdapConnection(FlextService[None]):
         )
 
     # Private helper methods
-    def _discover_schema(self) -> FlextResult[FlextLdapModels.DiscoveredSchema]:
+    def _discover_schema(self) -> FlextResult[FlextLDAPModels.DiscoveredSchema]:
         """Discover LDAP schema from connected server.
 
         Returns:
-            FlextResult[FlextLdapModels.DiscoveredSchema]: Schema discovery result
+            FlextResult[FlextLDAPModels.DiscoveredSchema]: Schema discovery result
 
         """
         try:
             if not self._connection:
-                return FlextResult[FlextLdapModels.DiscoveredSchema].fail(
+                return FlextResult[FlextLDAPModels.DiscoveredSchema].fail(
                     "No connection available for schema discovery"
                 )
 
             # Get server info
-            server_info = FlextLdapUtilities.get_server_info(self._connection)
+            server_info = FlextLDAPUtilities.get_server_info(self._connection)
 
             # Get schema info if available
             schema_info = None
             if hasattr(self._connection, "server") and self._connection.server.schema:
-                schema_info = FlextLdapUtilities.get_schema_info(self._connection)
+                schema_info = FlextLDAPUtilities.get_schema_info(self._connection)
 
             # Create discovered schema
-            discovered_schema = FlextLdapModels.DiscoveredSchema(
+            discovered_schema = FlextLDAPModels.DiscoveredSchema(
                 server_info=server_info,
                 schema_info=schema_info,
             )
 
-            return FlextResult[FlextLdapModels.DiscoveredSchema].ok(discovered_schema)
+            return FlextResult[FlextLDAPModels.DiscoveredSchema].ok(discovered_schema)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.DiscoveredSchema].fail(
+            return FlextResult[FlextLDAPModels.DiscoveredSchema].fail(
                 f"Schema discovery failed: {e}"
             )
 
@@ -423,5 +428,5 @@ class FlextLdapConnection(FlextService[None]):
 
 
 __all__ = [
-    "FlextLdapConnection",
+    "FlextLDAPConnection",
 ]

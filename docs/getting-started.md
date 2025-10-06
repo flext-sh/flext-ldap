@@ -90,9 +90,9 @@ export FLEXT_LDAP_POOL_SIZE=5
 Create `flext_ldap_config.py`:
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLDAPConfig
 
-config = FlextLdapConfig(
+config = FlextLDAPConfig(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -129,13 +129,13 @@ run(test_connection())
 ### **Simple Directory Search**
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import get_flext_ldap_api, FlextLDAPEntities
 
 def basic_search():
     """Perform a basic directory search."""
     api = get_flext_ldap_api()
 
-    search_request = FlextLdapEntities.SearchRequest(
+    search_request = FlextLDAPEntities.SearchRequest(
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=organizationalUnit)",
         scope="subtree",
@@ -186,8 +186,8 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 
 ```python
 import ldap3
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldap.servers import OpenLDAP2Operations, OracleOIDOperations
 
 def server_specific_operations():
@@ -202,8 +202,8 @@ def server_specific_operations():
     )
 
     # Initialize adapters
-    adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    adapter = FlextLDAPEntryAdapter()
+    quirks = FlextLDAPQuirksAdapter()
 
     # Search for entries
     connection.search('dc=example,dc=com', '(objectClass=*)', attributes=['*'])
@@ -244,11 +244,11 @@ run(server_specific_operations())
 Convert between ldap3 and FlextLdif entry formats:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 
 # ldap3 → FlextLdif
 connection.search('dc=example,dc=com', '(objectClass=person)')

@@ -14,7 +14,7 @@ import re
 from flext_core import FlextConstants, FlextResult, FlextTypes, FlextUtilities
 
 
-class FlextLdapValidations:
+class FlextLDAPValidations:
     """Centralized LDAP validations to eliminate circular dependencies."""
 
     @staticmethod
@@ -205,4 +205,4 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
 
-__all__ = ["FlextLdapValidations"]
+__all__ = ["FlextLDAPValidations"]

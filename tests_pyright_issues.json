@@ -1685,7 +1685,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
-      "message": "Cannot access attribute \"GroupMembershipChangedEvent\" for class \"type[FlextLdapDomain]\"\n  Attribute \"GroupMembershipChangedEvent\" is unknown",
+      "message": "Cannot access attribute \"GroupMembershipChangedEvent\" for class \"type[FlextLDAPDomain]\"\n  Attribute \"GroupMembershipChangedEvent\" is unknown",
       "range": {
         "start": {
           "line": 484,
@@ -2037,7 +2037,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
-      "message": "Cannot access attribute \"_calculate_duration\" for class \"FlextLdapOperations\"\n  Attribute \"_calculate_duration\" is unknown",
+      "message": "Cannot access attribute \"_calculate_duration\" for class \"FlextLDAPOperations\"\n  Attribute \"_calculate_duration\" is unknown",
       "range": {
         "start": {
           "line": 1895,
@@ -2085,7 +2085,7 @@
     {
       "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
-      "message": "Cannot access attribute \"modify_password\" for class \"FlextLdapOperations\"\n  Attribute \"modify_password\" is unknown",
+      "message": "Cannot access attribute \"modify_password\" for class \"FlextLDAPOperations\"\n  Attribute \"modify_password\" is unknown",
       "range": {
         "start": {
           "line": 1947,

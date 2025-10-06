@@ -1,4 +1,4 @@
-"""Unit tests for FlextLdapEntryAdapter universal methods.
+"""Unit tests for FlextLDAPEntryAdapter universal methods.
 
 Tests the universal entry conversion, detection, validation, and normalization
 methods that integrate with the quirks system.
@@ -10,44 +10,44 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldif import FlextLdifModels
 
 
 class TestEntryAdapterUniversal:
-    """Test suite for FlextLdapEntryAdapter universal methods."""
+    """Test suite for FlextLDAPEntryAdapter universal methods."""
 
     @pytest.fixture
-    def adapter_openldap2(self) -> FlextLdapEntryAdapter:
+    def adapter_openldap2(self) -> FlextLDAPEntryAdapter:
         """Create entry adapter for OpenLDAP 2.x."""
-        return FlextLdapEntryAdapter(server_type="openldap2")
+        return FlextLDAPEntryAdapter(server_type="openldap2")
 
     @pytest.fixture
-    def adapter_openldap1(self) -> FlextLdapEntryAdapter:
+    def adapter_openldap1(self) -> FlextLDAPEntryAdapter:
         """Create entry adapter for OpenLDAP 1.x."""
-        return FlextLdapEntryAdapter(server_type="openldap1")
+        return FlextLDAPEntryAdapter(server_type="openldap1")
 
     @pytest.fixture
-    def adapter_oid(self) -> FlextLdapEntryAdapter:
+    def adapter_oid(self) -> FlextLDAPEntryAdapter:
         """Create entry adapter for Oracle OID."""
-        return FlextLdapEntryAdapter(server_type="oid")
+        return FlextLDAPEntryAdapter(server_type="oid")
 
     @pytest.fixture
-    def adapter_oud(self) -> FlextLdapEntryAdapter:
+    def adapter_oud(self) -> FlextLDAPEntryAdapter:
         """Create entry adapter for Oracle OUD."""
-        return FlextLdapEntryAdapter(server_type="oud")
+        return FlextLDAPEntryAdapter(server_type="oud")
 
     @pytest.fixture
-    def adapter_generic(self) -> FlextLdapEntryAdapter:
+    def adapter_generic(self) -> FlextLDAPEntryAdapter:
         """Create generic entry adapter."""
-        return FlextLdapEntryAdapter(server_type=None)
+        return FlextLDAPEntryAdapter(server_type=None)
 
     # =========================================================================
     # SERVER TYPE DETECTION TESTS
     # =========================================================================
 
     def test_detect_entry_server_type_openldap2_olcaccess(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting OpenLDAP 2.x from entry with olcAccess attribute."""
         # Arrange - entry with OpenLDAP 2.x characteristics
@@ -73,7 +73,7 @@ class TestEntryAdapterUniversal:
         assert detected_type == "openldap2"
 
     def test_detect_entry_server_type_openldap1_access(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting OpenLDAP 1.x from entry with access attribute."""
         # Arrange - entry with OpenLDAP 1.x characteristics
@@ -105,7 +105,7 @@ class TestEntryAdapterUniversal:
         ]  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_oid_orclaci(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting Oracle OID from entry with orclaci attribute."""
         # Arrange - entry with Oracle OID characteristics
@@ -134,7 +134,7 @@ class TestEntryAdapterUniversal:
         assert detected_type in ["oid", "generic"]  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_oud_ds_privilege(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting Oracle OUD from entry with ds-privilege-name attribute."""
         # Arrange - entry with Oracle OUD characteristics
@@ -159,7 +159,7 @@ class TestEntryAdapterUniversal:
         assert detected_type in ["oud", "generic"]  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_ad_object_guid(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting Active Directory from entry with AD-specific attributes."""
         # Arrange - entry with Active Directory characteristics
@@ -189,7 +189,7 @@ class TestEntryAdapterUniversal:
         assert detected_type in ["ad", "generic"]  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_generic_fallback(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test detecting server type falls back to generic for standard entries."""
         # Arrange - generic entry without server-specific attributes
@@ -218,7 +218,7 @@ class TestEntryAdapterUniversal:
     # =========================================================================
 
     def test_normalize_entry_for_server_openldap2(
-        self, adapter_openldap2: FlextLdapEntryAdapter
+        self, adapter_openldap2: FlextLDAPEntryAdapter
     ) -> None:
         """Test normalizing entry for OpenLDAP 2.x server."""
         # Arrange - entry with mixed attributes
@@ -252,7 +252,7 @@ class TestEntryAdapterUniversal:
         assert len(normalized_entry.attributes.attributes) > 0
 
     def test_normalize_entry_for_server_openldap1(
-        self, adapter_openldap1: FlextLdapEntryAdapter
+        self, adapter_openldap1: FlextLDAPEntryAdapter
     ) -> None:
         """Test normalizing entry for OpenLDAP 1.x server."""
         # Arrange - entry with OpenLDAP 2.x attributes
@@ -284,7 +284,7 @@ class TestEntryAdapterUniversal:
         assert len(normalized_entry.attributes.attributes) > 0
 
     def test_normalize_entry_for_server_preserves_standard_attributes(
-        self, adapter_openldap2: FlextLdapEntryAdapter
+        self, adapter_openldap2: FlextLDAPEntryAdapter
     ) -> None:
         """Test normalizing entry preserves standard LDAP attributes."""
         # Arrange - entry with standard attributes
@@ -319,7 +319,7 @@ class TestEntryAdapterUniversal:
     # =========================================================================
 
     def test_validate_entry_for_server_openldap2_valid(
-        self, adapter_openldap2: FlextLdapEntryAdapter
+        self, adapter_openldap2: FlextLDAPEntryAdapter
     ) -> None:
         """Test validating valid OpenLDAP 2.x entry."""
         # Arrange - valid OpenLDAP 2.x entry
@@ -345,7 +345,7 @@ class TestEntryAdapterUniversal:
         assert is_valid is True
 
     def test_validate_entry_for_server_generic_entry_valid(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test validating generic entry is valid for any server."""
         # Arrange - generic entry
@@ -372,7 +372,7 @@ class TestEntryAdapterUniversal:
         assert result_oud.is_success and result_oud.unwrap()
 
     def test_validate_entry_for_server_missing_required_attributes(
-        self, adapter_openldap2: FlextLdapEntryAdapter
+        self, adapter_openldap2: FlextLDAPEntryAdapter
     ) -> None:
         """Test validating entry with missing required attributes fails."""
         # Arrange - entry missing objectClass
@@ -398,7 +398,7 @@ class TestEntryAdapterUniversal:
     # =========================================================================
 
     def test_convert_entry_format_openldap1_to_openldap2(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test converting entry from OpenLDAP 1.x to OpenLDAP 2.x format."""
         # Arrange - OpenLDAP 1.x entry
@@ -430,7 +430,7 @@ class TestEntryAdapterUniversal:
         assert converted_entry.dn == entry.dn
 
     def test_convert_entry_format_openldap2_to_openldap1(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test converting entry from OpenLDAP 2.x to OpenLDAP 1.x format."""
         # Arrange - OpenLDAP 2.x entry
@@ -462,7 +462,7 @@ class TestEntryAdapterUniversal:
         assert converted_entry.dn == entry.dn
 
     def test_convert_entry_format_oid_to_oud(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test converting entry from Oracle OID to Oracle OUD format."""
         # Arrange - Oracle OID entry
@@ -494,7 +494,7 @@ class TestEntryAdapterUniversal:
         assert converted_entry.dn == entry.dn
 
     def test_convert_entry_format_same_server_type_no_change(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test converting entry to same server type preserves entry."""
         # Arrange - entry
@@ -524,7 +524,7 @@ class TestEntryAdapterUniversal:
     # =========================================================================
 
     def test_get_server_specific_attributes_openldap2(
-        self, adapter_openldap2: FlextLdapEntryAdapter
+        self, adapter_openldap2: FlextLDAPEntryAdapter
     ) -> None:
         """Test getting server-specific attributes for OpenLDAP 2.x."""
         # Act
@@ -539,7 +539,7 @@ class TestEntryAdapterUniversal:
         assert attrs["server_type"] == "openldap2"
 
     def test_get_server_specific_attributes_oid(
-        self, adapter_oid: FlextLdapEntryAdapter
+        self, adapter_oid: FlextLDAPEntryAdapter
     ) -> None:
         """Test getting server-specific attributes for Oracle OID."""
         # Act
@@ -560,7 +560,7 @@ class TestEntryAdapterUniversal:
             )
 
     def test_get_server_specific_attributes_oud(
-        self, adapter_oud: FlextLdapEntryAdapter
+        self, adapter_oud: FlextLDAPEntryAdapter
     ) -> None:
         """Test getting server-specific attributes for Oracle OUD."""
         # Act
@@ -581,7 +581,7 @@ class TestEntryAdapterUniversal:
             )
 
     def test_get_server_specific_attributes_generic(
-        self, adapter_generic: FlextLdapEntryAdapter
+        self, adapter_generic: FlextLDAPEntryAdapter
     ) -> None:
         """Test getting server-specific attributes for generic server."""
         # Act

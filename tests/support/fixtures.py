@@ -8,11 +8,11 @@ from collections.abc import Generator
 
 import pytest
 from flext_ldap import (
-    FlextLdapAPI,
-    FlextLdapClient,
-    FlextLdapConfig,
-    FlextLdapModels,
-    FlextLdapValidations,
+    FlextLDAP,
+    FlextLDAPClient,
+    FlextLDAPConfig,
+    FlextLDAPModels,
+    FlextLDAPValidations,
 )
 
 from flext_core import FlextLogger, FlextTypes
@@ -72,15 +72,15 @@ def real_ldap_server(
 @pytest.fixture
 def ldap_connection(
     real_ldap_server: LdapTestServer,
-) -> FlextLdapModels.ConnectionConfig:
+) -> FlextLDAPModels.ConnectionConfig:
     """Get LDAP connection configuration for testing."""
     return real_ldap_server.get_connection_config()
 
 
 @pytest.fixture
-def ldap_api() -> FlextLdapClient:
+def ldap_api() -> FlextLDAPClient:
     """Get configured LDAP API instance."""
-    return FlextLdapClient()
+    return FlextLDAPClient()
 
 
 @pytest.fixture
@@ -108,7 +108,7 @@ def multiple_test_groups() -> list[FlextTypes.Dict]:
 
 
 @pytest.fixture
-def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
+def test_ldap_config() -> FlextLDAPModels.ConnectionConfig:
     """Get test LDAP configuration."""
     return get_test_ldap_config()
 
@@ -134,7 +134,7 @@ def clean_ldap_container(
 # Synchronous fixtures for compatibility
 @pytest.fixture
 def clean_ldap_state(
-    ldap_connection: FlextLdapModels.ConnectionConfig,
+    ldap_connection: FlextLDAPModels.ConnectionConfig,
 ) -> Generator[None]:
     """Ensure clean LDAP state for each test."""
     # helpers already imported at top
@@ -171,27 +171,27 @@ def clean_ldap_state(
 
 
 @pytest.fixture
-def flext_ldap_api() -> Generator[FlextLdapAPI]:
-    """Create FlextLdapAPI instance with clean configuration."""
-    FlextLdapConfig.reset_global_instance()
-    api = FlextLdapAPI.create()
+def flext_ldap_api() -> Generator[FlextLDAP]:
+    """Create FlextLDAP instance with clean configuration."""
+    FlextLDAPConfig.reset_global_instance()
+    api = FlextLDAP.create()
     yield api
-    FlextLdapConfig.reset_global_instance()
+    FlextLDAPConfig.reset_global_instance()
 
 
 @pytest.fixture
-def flext_ldap_config() -> Generator[FlextLdapConfig]:
-    """Create clean FlextLdapConfig instance."""
-    FlextLdapConfig.reset_global_instance()
-    config = FlextLdapConfig()
+def flext_ldap_config() -> Generator[FlextLDAPConfig]:
+    """Create clean FlextLDAPConfig instance."""
+    FlextLDAPConfig.reset_global_instance()
+    config = FlextLDAPConfig()
     yield config
-    FlextLdapConfig.reset_global_instance()
+    FlextLDAPConfig.reset_global_instance()
 
 
 @pytest.fixture
-def flext_ldap_validations() -> type[FlextLdapValidations]:
-    """Get FlextLdapValidations class for testing."""
-    return FlextLdapValidations
+def flext_ldap_validations() -> type[FlextLDAPValidations]:
+    """Get FlextLDAPValidations class for testing."""
+    return FlextLDAPValidations
 
 
 @pytest.fixture
@@ -213,9 +213,9 @@ def sample_valid_email() -> str:
 
 
 @pytest.fixture
-def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
+def sample_connection_config() -> FlextLDAPModels.ConnectionConfig:
     """Get sample connection configuration."""
-    return FlextLdapModels.ConnectionConfig(
+    return FlextLDAPModels.ConnectionConfig(
         server="ldap://localhost:389",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         bind_password="password",
@@ -230,8 +230,8 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 def shared_ldap_client(
     shared_ldap_config: object,
-) -> Generator[FlextLdapClient]:
-    """Get FlextLdapClient connected to shared LDAP container.
+) -> Generator[FlextLDAPClient]:
+    """Get FlextLDAPClient connected to shared LDAP container.
 
     This fixture provides a client connected to the shared LDAP container
     managed by the docker/shared_ldap_fixtures.py system.
@@ -239,7 +239,7 @@ def shared_ldap_client(
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
 
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     # Connect to shared LDAP server
     assert isinstance(shared_ldap_config, dict)
@@ -265,8 +265,8 @@ def shared_ldap_client(
 @pytest.fixture
 def shared_ldap_connection_config(
     shared_ldap_config: object,
-) -> FlextLdapModels.ConnectionConfig:
-    """Get FlextLdapModels.ConnectionConfig for shared LDAP container."""
+) -> FlextLDAPModels.ConnectionConfig:
+    """Get FlextLDAPModels.ConnectionConfig for shared LDAP container."""
     if shared_ldap_config is None:
         pytest.skip("Shared LDAP fixtures not available")
 
@@ -275,7 +275,7 @@ def shared_ldap_connection_config(
     assert "bind_dn" in shared_ldap_config
     assert "password" in shared_ldap_config
 
-    return FlextLdapModels.ConnectionConfig(
+    return FlextLDAPModels.ConnectionConfig(
         server=str(shared_ldap_config["server_url"]),
         bind_dn=str(shared_ldap_config["bind_dn"]),
         bind_password=str(shared_ldap_config["password"]),

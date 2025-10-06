@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 
-class FlextLdapAclConverters:
+class FlextLDAPAclConverters:
     """ACL converters for bidirectional format conversion."""
 
     def handle(self, message: object) -> FlextResult[FlextResult[object]]:

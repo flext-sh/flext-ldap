@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from typing import override
 
+from ldap3 import Connection
 from flext_ldif import FlextLdifModels
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.servers.base_operations import BaseServerOperations
+from flext_ldap.servers.base_operations import FlextLDAPServersBaseOperations
 
 
-class OracleOIDOperations(BaseServerOperations):
+class FlextLDAPServersOIDOperations(FlextLDAPServersBaseOperations):
     """Complete Oracle OID operations implementation.
 
     Oracle OID Features:
@@ -59,7 +60,7 @@ class OracleOIDOperations(BaseServerOperations):
         return "cn=subschemasubentry"
 
     @override
-    def discover_schema(self, connection: object) -> FlextResult[FlextTypes.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from Oracle OID.
 
         Args:
@@ -145,7 +146,7 @@ class OracleOIDOperations(BaseServerOperations):
 
     @override
     def get_acls(
-        self, connection: object, dn: str
+        self, connection: Connection, dn: str
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get orclaci ACLs from Oracle OID."""
         try:
@@ -179,7 +180,7 @@ class OracleOIDOperations(BaseServerOperations):
 
     @override
     def set_acls(
-        self, connection: object, dn: str, acls: list[FlextTypes.Dict]
+        self, connection: Connection, dn: str, acls: list[FlextTypes.Dict]
     ) -> FlextResult[bool]:
         """Set orclaci ACLs on Oracle OID."""
         try:
@@ -324,7 +325,7 @@ class OracleOIDOperations(BaseServerOperations):
 
             # Add target
             target_type = acl_dict.get("target_type", "entry")
-            target = acl_dict.get("target", "*")
+            target = str(acl_dict.get("target", "*"))
 
             if target_type == "attr":
                 parts.append(f"attr:{target}")
@@ -336,13 +337,13 @@ class OracleOIDOperations(BaseServerOperations):
             # Add "by" clause
             parts.append("by")
 
-            subject = acl_dict.get("subject", "*")
+            subject = str(acl_dict.get("subject", "*"))
             parts.append(subject)
 
             # Add permissions
             permissions = acl_dict.get("permissions", ["read"])
-            if permissions:
-                perms_str = ", ".join(permissions)
+            if permissions and isinstance(permissions, list):
+                perms_str = ", ".join(str(p) for p in permissions)
                 parts.append(f": {perms_str}")
 
             return FlextResult[str].ok(" ".join(parts))
@@ -356,7 +357,7 @@ class OracleOIDOperations(BaseServerOperations):
 
     @override
     def add_entry(
-        self, connection: object, entry: FlextLdifModels.Entry
+        self, connection: Connection, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
         """Add entry to Oracle OID."""
         try:
@@ -388,7 +389,7 @@ class OracleOIDOperations(BaseServerOperations):
 
     @override
     def modify_entry(
-        self, connection: object, dn: str, modifications: FlextTypes.Dict
+        self, connection: Connection, dn: str, modifications: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Modify entry in Oracle OID."""
         try:
@@ -415,7 +416,7 @@ class OracleOIDOperations(BaseServerOperations):
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
-    def delete_entry(self, connection: object, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from Oracle OID."""
         try:
             if not connection or not connection.bound:
@@ -458,7 +459,13 @@ class OracleOIDOperations(BaseServerOperations):
             # Ensure objectClass compatibility for Oracle OID
             if "objectClass" in attributes_dict:
                 object_class_attr = attributes_dict["objectClass"]
-                object_classes = object_class_attr.values
+                # Handle both list and AttributeValues types
+                if isinstance(object_class_attr, list):
+                    object_classes = object_class_attr
+                elif hasattr(object_class_attr, "values"):
+                    object_classes = object_class_attr.values
+                else:
+                    object_classes = [str(object_class_attr)]
 
                 # Map standard objectClasses to Oracle equivalents
                 mapped_classes = []
@@ -485,9 +492,7 @@ class OracleOIDOperations(BaseServerOperations):
 
                 # Update objectClass if changed
                 if mapped_classes != object_classes:
-                    attributes_dict["objectClass"] = FlextLdifModels.AttributeValues(
-                        values=mapped_classes
-                    )
+                    attributes_dict["objectClass"] = mapped_classes
 
             # Handle Oracle-specific attribute mappings
             # Map userPassword to orclPassword if Oracle extensions are used
@@ -530,7 +535,7 @@ class OracleOIDOperations(BaseServerOperations):
     @override
     def search_with_paging(
         self,
-        connection: object,
+        connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
@@ -554,9 +559,9 @@ class OracleOIDOperations(BaseServerOperations):
                 generator=True,
             )
 
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+            from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 
-            adapter = FlextLdapEntryAdapter()
+            adapter = FlextLDAPEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
             for ldap3_entry in entry_generator:
@@ -637,6 +642,13 @@ class OracleOIDOperations(BaseServerOperations):
 
         """
         if "objectClass" in entry.attributes.attributes:
-            object_classes = entry.attributes.attributes["objectClass"].values
+            object_class_attr = entry.attributes.attributes["objectClass"]
+            # Handle both list and AttributeValues types
+            if isinstance(object_class_attr, list):
+                object_classes = object_class_attr
+            elif hasattr(object_class_attr, "values"):
+                object_classes = object_class_attr.values
+            else:
+                object_classes = [str(object_class_attr)]
             return "orclUserV2" in object_classes
         return False

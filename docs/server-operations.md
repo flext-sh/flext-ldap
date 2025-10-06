@@ -38,8 +38,8 @@ from flext_ldap.servers import (
 )
 
 # Import supporting components
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 from flext_ldif import FlextLdifModels
 ```
 
@@ -444,10 +444,10 @@ search_result = ops.search_with_paging(
 All server operations integrate with the Entry Adapter for ldap3 ↔ FlextLdif conversion:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLDAPEntryAdapter
 from flext_ldap.servers import OpenLDAP2Operations
 
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 ops = OpenLDAP2Operations()
 
 # Search and convert to FlextLdif
@@ -478,9 +478,9 @@ if attrs_result.is_success:
 Server type detection using FlextLdif quirks:
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap.quirks_integration import FlextLDAPQuirksAdapter
 
-quirks = FlextLdapQuirksAdapter()
+quirks = FlextLDAPQuirksAdapter()
 
 # Detect server type from entries
 entries = [...]  # List of FlextLdifModels.Entry
@@ -561,7 +561,7 @@ else:
 Always detect the server type for optimal operations:
 
 ```python
-quirks = FlextLdapQuirksAdapter()
+quirks = FlextLDAPQuirksAdapter()
 server_type_result = quirks.detect_server_type_from_entries(entries)
 
 if server_type_result.is_success:
@@ -587,7 +587,7 @@ else:
 Always use the Entry Adapter for conversions:
 
 ```python
-adapter = FlextLdapEntryAdapter()
+adapter = FlextLDAPEntryAdapter()
 
 # ldap3 → FlextLdif
 ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)

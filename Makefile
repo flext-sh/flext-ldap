@@ -151,11 +151,11 @@ ldap-test: ## Test LDAP connection
 
 .PHONY: ldap-validate
 ldap-validate: ## Validate LDAP configuration
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from Flext_ldap.config import FlextLdapConfig; print('LDAP config valid')"
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from Flext_ldap.config import FlextLDAPConfig; print('LDAP config valid')"
 
 .PHONY: ldap-connect
 ldap-connect: ## Test LDAP server connection
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldap import FlextLdapSimpleClient; print('LDAP connection OK')"
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldap import FlextLDAPSimpleClient; print('LDAP connection OK')"
 
 .PHONY: ldap-operations
 ldap-operations: ldap-validate ldap-connect ldap-test ## Run all LDAP validations
@@ -205,10 +205,42 @@ pre-commit: ## Run pre-commit hooks
 # =============================================================================
 
 .PHONY: clean
-clean: ## Clean build artifacts
-	rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage .mypy_cache/ .pyrefly_cache/ .ruff_cache/
+clean: ## Clean build artifacts and cruft
+	@echo "🧹 Cleaning $(PROJECT_NAME) - removing build artifacts, cache files, and cruft..."
+
+	# Build artifacts
+	rm -rf build/ dist/ *.egg-info/
+
+	# Test artifacts
+	rm -rf .pytest_cache/ htmlcov/ .coverage .coverage.* coverage.xml
+
+	# Python cache directories
+	rm -rf .mypy_cache/ .pyrefly_cache/ .ruff_cache/
+
+	# Python bytecode
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+
+	# LDAP-specific files
+	rm -rf *.ldif test.ldif sample.ldif
+
+	# Data directories
+	rm -rf data/ output/ temp/ fixtures/
+
+	# Temporary files
+	find . -type f -name "*.tmp" -delete 2>/dev/null || true
+	find . -type f -name "*.temp" -delete 2>/dev/null || true
+	find . -type f -name ".DS_Store" -delete 2>/dev/null || true
+
+	# Log files
+	find . -type f -name "*.log" -delete 2>/dev/null || true
+
+	# Editor files
+	find . -type f -name ".vscode/settings.json" -delete 2>/dev/null || true
+	find . -type f -name ".idea/" -type d -exec rm -rf {} + 2>/dev/null || true
+
+	@echo "✅ $(PROJECT_NAME) cleanup complete"
 
 .PHONY: clean-all
 clean-all: clean ## Deep clean including venv

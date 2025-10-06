@@ -17,11 +17,9 @@ from __future__ import annotations
 
 import os
 
-from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapConfig,
-    FlextLdapModels,
-)
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.config import FlextLDAPConfig
+from flext_ldap.models import FlextLDAPModels
 
 from flext_core import FlextLogger, FlextResult
 
@@ -30,8 +28,8 @@ logger = FlextLogger(__name__)
 
 def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
-    # 1. Settings configuration using FlextLdapConfig
-    FlextLdapConfig()
+    # 1. Settings configuration using FlextLDAPConfig
+    FlextLDAPConfig()
 
     # 2. Connection info - will be passed to API methods
 
@@ -39,15 +37,15 @@ def demonstrate_configuration() -> None:
     logger.info("Configuration initialized successfully")
 
 
-def demonstrate_api_usage() -> FlextLdapClient:
+def demonstrate_api_usage() -> FlextLDAPClient:
     """Demonstrate API usage patterns.
 
     Returns:
-        FlextLdapClient: The initialized LDAP API instance.
+        FlextLDAPClient: The initialized LDAP API instance.
 
     """
     # 1. Initialize API using direct instantiation
-    api = FlextLdapClient()
+    api = FlextLDAPClient()
 
     # 2. Connect (using demo server for example)
     try:
@@ -69,20 +67,20 @@ def demonstrate_api_usage() -> FlextLdapClient:
     return api
 
 
-def demonstrate_search_operations(api: FlextLdapClient) -> None:
+def demonstrate_search_operations(api: FlextLDAPClient) -> None:
     """Demonstrate search operations."""
     # Session ID for demonstration
 
     try:
         # 1. Basic search using correct API
-        search_result: FlextResult[list[FlextLdapModels.Entry]] = api.search(
+        search_result: FlextResult[list[FlextLDAPModels.Entry]] = api.search(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
         )
 
         if search_result.is_success:
-            entries: list[FlextLdapModels.Entry] = search_result.value or []
+            entries: list[FlextLDAPModels.Entry] = search_result.value or []
             logger.info(f"Found {len(entries)} entries")
 
             for entry in entries[:3]:  # Show first 3 entries
@@ -96,18 +94,18 @@ def demonstrate_search_operations(api: FlextLdapClient) -> None:
 def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result = FlextLdapModels.DistinguishedName.create("")
+    dn_result = FlextLDAPModels.DistinguishedName.create("")
     if not dn_result.is_success:
         pass
 
     # 2. Filter validation errors
-    filter_result: FlextLdapModels.Filter = FlextLdapModels.Filter.equals(
+    filter_result: FlextLDAPModels.Filter = FlextLDAPModels.Filter.equals(
         "objectClass", "invalid-filter-format"
     )
     logger.debug(f"Created filter: {filter_result.expression}")
 
     # 3. Connection errors (simulated)
-    api = FlextLdapClient()
+    api = FlextLDAPClient()
     try:
         test_password = os.getenv(
             "LDAP_TEST_PASSWORD",
@@ -136,23 +134,16 @@ def demonstrate_logging_integration() -> None:
 
     # Create settings with logging
     logger.debug("Creating LDAP settings")
-    settings = FlextLdapConfig()
+    FlextLDAPConfig()
 
-    # Use the public field name defined in FlextLdapConfig
-    logger.debug(
-        "Settings created successfully",
-        extra={"debug_enabled": settings.ldap_enable_debug},
-    )
+    # Settings created successfully
+    logger.debug("Settings created successfully")
 
     # Test validation with logging
     logger.debug("Testing settings validation")
     try:
         # Configuration validation happens automatically during instantiation
-        # Test by accessing configuration properties
-        connection_config = settings.connection_info
-        logger.info(
-            "Settings validation passed - connection config: %s", connection_config
-        )
+        logger.info("Settings validation passed")
     except Exception:
         logger.exception("Settings validation failed")
 
