@@ -43,12 +43,14 @@ except ImportError:
     # Define minimal placeholder to avoid type errors
     class _FlextLdifModelsPlaceholder:
         class Entry:
-            def __init__(self, dn=None, attributes=None) -> None:
+            def __init__(
+                self, dn: str | None = None, attributes: dict[str, Any] | None = None
+            ) -> None:
                 self.dn = dn
                 self.attributes = attributes
 
         class DistinguishedName:
-            def __init__(self, value=None) -> None:
+            def __init__(self, value: str | None = None) -> None:
                 self.value = value
 
         class LdifAttributes:
