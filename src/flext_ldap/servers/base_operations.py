@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
@@ -38,7 +38,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         """
         super().__init__()
-        self.logger: FlextLogger = FlextLogger(__name__)
+        # logger inherited from FlextService
         self._server_type = server_type or "generic"
 
     def execute(self) -> FlextResult[None]:

@@ -23,10 +23,8 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.schema import FlextLdapSchema
 from flext_ldap.servers import FlextLdapServers
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
-
-# Version information
-from flext_ldap.version import VERSION, FlextLdapVersion
 
 
 # Factory function for API access
@@ -45,8 +43,6 @@ __version__: str = FlextLdapConstants.Version.get_version()
 __version_info__: tuple[int | str, ...] = FlextLdapConstants.Version.get_version_info()
 
 __all__ = [
-    # Version information
-    "VERSION",
     # Core facade - PRIMARY API
     "FlextLdap",
     # Core domain classes - REQUIRED for tests
@@ -58,8 +54,8 @@ __all__ = [
     "FlextLdapSchema",
     "FlextLdapServers",
     "FlextLdapTypes",
+    "FlextLdapUtilities",
     "FlextLdapValidations",
-    "FlextLdapVersion",
     "__version__",
     "__version_info__",
     "get_flext_ldap_api",
