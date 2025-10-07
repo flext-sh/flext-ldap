@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.servers.ad_operations import FlextLdapServersADOperations
+# AD operations removed - using generic operations as fallback
 from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
@@ -116,8 +116,8 @@ class TestFlextLdapServersFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersADOperations)
-        assert ops.server_type == "ad"
+        assert isinstance(ops, FlextLdapServersGenericOperations)  # AD fallback
+        assert ops.server_type == "generic"  # AD maps to generic
         assert ops.get_acl_attribute_name() == "nTSecurityDescriptor"
         assert ops.get_acl_format() == "ad"
 
@@ -312,7 +312,7 @@ class TestFlextLdapServersFactory:
         # This is expected behavior until quirks are enhanced for Active Directory
         assert ops.server_type in {"ad", "generic"}  # Accept both until quirks enhanced
         if ops.server_type == "ad":
-            assert isinstance(ops, FlextLdapServersADOperations)
+            assert isinstance(ops, FlextLdapServersGenericOperations)  # AD fallback
         else:
             assert isinstance(ops, FlextLdapServersGenericOperations)
 
@@ -495,8 +495,8 @@ class TestFlextLdapServersFactory:
         # Assert
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersADOperations)
-        assert ops.server_type == "ad"
+        assert isinstance(ops, FlextLdapServersGenericOperations)  # AD fallback
+        assert ops.server_type == "generic"  # AD maps to generic
 
     def test_create_from_connection_not_bound(
         self, factory: FlextLdapServersFactory

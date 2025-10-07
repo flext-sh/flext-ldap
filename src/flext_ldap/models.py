@@ -1262,6 +1262,77 @@ class FlextLdapModels(FlextModels):
             """Dict-like get method with default value."""
             return self.get_attribute(key) or default
 
+        @classmethod
+        def from_ldif(
+            cls, ldif_entry: Any
+        ) -> FlextLdapModels.Entry:
+            """Convert FlextLdif Entry to FlextLdap Entry using adapter pattern.
+
+            Eliminates duplicate LDIF conversion logic across codebase by centralizing
+            in the domain model where it belongs (Clean Architecture pattern).
+
+            Args:
+                ldif_entry: FlextLdif Entry object with dn and attributes
+
+            Returns:
+                FlextLdapModels.Entry instance
+
+            Raises:
+                ValueError: If ldif_entry is invalid or missing required fields
+
+            Example:
+                >>> from flext_ldif import FlextLdifModels
+                >>> ldif_entry = FlextLdifModels.Entry(...)
+                >>> ldap_entry = FlextLdapModels.Entry.from_ldif(ldif_entry)
+
+            """
+            if not hasattr(ldif_entry, "dn") or not hasattr(ldif_entry, "attributes"):
+                msg = "Invalid LDIF entry: missing dn or attributes"
+                raise ValueError(msg)
+
+            # Convert LDIF entry to LDAP entry - adapter pattern
+            return cls(
+                dn=str(ldif_entry.dn),
+                attributes=dict(ldif_entry.attributes),
+            )
+
+        def to_ldif(self) -> Any:
+            """Convert FlextLdap Entry to FlextLdif Entry using adapter pattern.
+
+            Eliminates duplicate LDIF conversion logic across codebase by centralizing
+            in the domain model where it belongs (Clean Architecture pattern).
+
+            Returns:
+                FlextLdif Entry object
+
+            Raises:
+                ImportError: If flext-ldif is not installed
+                ValueError: If entry data is invalid
+
+            Example:
+                >>> entry = FlextLdapModels.Entry(dn="cn=test,dc=example,dc=com", ...)
+                >>> ldif_entry = entry.to_ldif()
+                >>> # Can now be written with FlextLdif.write([ldif_entry], path)
+
+            """
+            # Lazy import to avoid requiring flext-ldif for all uses
+            try:
+                from flext_ldif import FlextLdifModels
+            except ImportError as e:
+                msg = "FlextLdif not available. Install with: pip install flext-ldif"
+                raise ImportError(msg) from e
+
+            # Convert DN string to DistinguishedName if needed
+            dn = self.dn
+            if isinstance(dn, str):
+                dn = FlextLdifModels.DistinguishedName(value=dn)
+
+            # Create LDIF entry - adapter pattern
+            return FlextLdifModels.Entry(
+                dn=dn,
+                attributes=FlextLdifModels.LdifAttributes(attributes=self.attributes),
+            )
+
     # =========================================================================
     # LDAP OPERATION ENTITIES - Request/Response Objects
     # =========================================================================
@@ -1479,6 +1550,57 @@ class FlextLdapModels(FlextModels):
                     "page_size": 100,  # Default page size
                     "paged_cookie": None,
                 },
+            )
+
+        @classmethod
+        def create(
+            cls,
+            base_dn: str,
+            filter_str: str,
+            scope: str = FlextLdapConstants.Scopes.SUBTREE,
+            attributes: FlextTypes.StringList | None = None,
+        ) -> FlextLdapModels.SearchRequest:
+            """Factory method with smart defaults from FlextLdapConstants.
+
+            Creates a SearchRequest with intelligent defaults for common parameters,
+            eliminating the need to specify page_size, paged_cookie, and other
+            boilerplate parameters.
+
+            Args:
+                base_dn: Search base Distinguished Name
+                filter_str: LDAP search filter
+                scope: Search scope (default: SUBTREE from FlextLdapConstants)
+                attributes: Attributes to retrieve (default: empty list for all attributes)
+
+            Returns:
+                FlextLdapModels.SearchRequest: Configured search request with smart defaults
+
+            Example:
+                # OLD: Manual parameter specification
+                request = FlextLdapModels.SearchRequest(
+                    base_dn=base_dn,
+                    filter_str=filter_str,
+                    scope=scope,
+                    attributes=attributes or [],
+                    page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+                    paged_cookie=b"",
+                )
+
+                # NEW: Factory method with smart defaults (eliminate 3-4 lines)
+                request = FlextLdapModels.SearchRequest.create(base_dn, filter_str, scope, attributes)
+
+            """
+            return cls.model_validate(
+                {
+                    "base_dn": base_dn,
+                    "filter_str": filter_str,
+                    "scope": scope,
+                    "attributes": attributes or [],
+                    "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+                    "paged_cookie": b"",
+                    "size_limit": FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                    "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
+                }
             )
 
     class SearchResponse(Base):

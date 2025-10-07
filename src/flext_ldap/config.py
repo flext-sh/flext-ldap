@@ -1213,6 +1213,71 @@ class FlextLdapConfig(FlextConfig):
         except Exception as e:
             return FlextResult.fail(f"Load failed: {e}")
 
+    @classmethod
+    def from_env(cls, env_prefix: str = "FLEXT_LDAP_") -> FlextLdapConfig:
+        """Load LDAP configuration from environment variables using Pydantic BaseSettings.
+
+        Automatically reads environment variables with the specified prefix and creates
+        a FlextLdapConfig instance. Eliminates manual os.getenv() boilerplate in examples.
+
+        This method leverages Pydantic BaseSettings to automatically:
+        - Read environment variables with the prefix (default: FLEXT_LDAP_)
+        - Convert types appropriately (int, bool, SecretStr, etc.)
+        - Apply validation rules from field definitions
+        - Use field defaults when environment variables are not set
+
+        Args:
+            env_prefix: Environment variable prefix (default: "FLEXT_LDAP_")
+
+        Returns:
+            FlextLdapConfig: Configuration instance loaded from environment variables
+
+        Raises:
+            ValidationError: If environment variable validation fails
+
+        Example:
+            # OLD: Manual environment variable reading (5+ lines per example)
+            >>> import os
+            >>> LDAP_URI = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
+            >>> BIND_DN = os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
+            >>> BIND_PASSWORD = os.getenv("LDAP_BIND_PASSWORD", "admin")
+            >>> BASE_DN = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
+            >>> config = FlextLdapConfig(
+            ...     ldap_server_uri=LDAP_URI,
+            ...     ldap_bind_dn=BIND_DN,
+            ...     ldap_bind_password=BIND_PASSWORD,
+            ...     ldap_base_dn=BASE_DN,
+            ... )
+
+            # NEW: Automatic environment loading (1 line!)
+            >>> config = FlextLdapConfig.from_env()
+            >>> # Automatically reads FLEXT_LDAP_LDAP_SERVER_URI, FLEXT_LDAP_LDAP_BIND_DN, etc.
+
+        Environment Variables:
+            FLEXT_LDAP_LDAP_SERVER_URI: LDAP server URI (default: ldap://localhost:389)
+            FLEXT_LDAP_LDAP_BIND_DN: Bind DN (default: None)
+            FLEXT_LDAP_LDAP_BIND_PASSWORD: Bind password (default: None)
+            FLEXT_LDAP_LDAP_BASE_DN: Base DN (default: dc=example,dc=com)
+            FLEXT_LDAP_LDAP_PORT: LDAP port (default: 389)
+            FLEXT_LDAP_LDAP_USE_SSL: Use SSL (default: True)
+            ... and all other FlextLdapConfig fields
+
+        Note:
+            Uses Pydantic BaseSettings pattern - model_config already defines env_prefix.
+            Simply instantiating FlextLdapConfig() automatically reads environment variables.
+            This classmethod exists for clarity and explicitness in code.
+
+        See Also:
+            FlextLdapConfig.__init__: Direct instantiation (also reads environment)
+            FlextLdapConfig.from_file: Load from JSON file
+            FlextLdapConfig.model_config: Pydantic settings configuration
+
+        """
+        # Pydantic BaseSettings automatically reads environment variables when instantiated
+        # The model_config already defines env_prefix, case sensitivity, etc.
+        # Simply create instance - Pydantic handles environment variable loading
+        return cls()
+
     # =========================================================================
     # Enhanced flext-core Integration Methods
     # =========================================================================

@@ -137,11 +137,11 @@ class FlextLdapRepositories:
     class UserRepository(LdapRepository[FlextLdapModels.User]):
         """Repository for LDAP User entities implementing Domain.Repository protocol."""
 
-        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.User | None]:
+        def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapModels.User | None]:
             """Get user by ID (DN or UID).
 
             Args:
-                id: User DN or UID
+                entity_id: User DN or UID
 
             Returns:
                 FlextResult with User entity or None
@@ -149,12 +149,12 @@ class FlextLdapRepositories:
             """
             try:
                 # Try as DN first
-                if id.startswith(("cn=", "uid=", "ou=")):
-                    result = self._client.get_user(id)
+                if entity_id.startswith(("cn=", "uid=", "ou=")):
+                    result = self._client.get_user(entity_id)
                 else:
                     # Try as UID with search
                     search_result = self._client.search_users(
-                        base_dn=self._client.config.ldap_user_base_dn, uid=id
+                        base_dn=self._client.config.ldap_user_base_dn, uid=entity_id
                     )
                     if search_result.is_failure:
                         return FlextResult[FlextLdapModels.User | None].fail(
@@ -299,11 +299,11 @@ class FlextLdapRepositories:
                     f"User update failed: {e}"
                 )
 
-        def delete(self, id: str) -> FlextResult[bool]:
+        def delete(self, entity_id: str) -> FlextResult[bool]:
             """Delete user by ID.
 
             Args:
-                id: User DN or UID
+                entity_id: User DN or UID
 
             Returns:
                 FlextResult with True if deleted
@@ -311,7 +311,7 @@ class FlextLdapRepositories:
             """
             try:
                 # Get user first to ensure it exists
-                get_result = self.get_by_id(id)
+                get_result = self.get_by_id(entity_id)
                 if get_result.is_failure:
                     return FlextResult[bool].fail(
                         get_result.error or "User lookup failed"
@@ -336,18 +336,18 @@ class FlextLdapRepositories:
     class GroupRepository(LdapRepository[FlextLdapModels.Group]):
         """Repository for LDAP Group entities implementing Domain.Repository protocol."""
 
-        def get_by_id(self, id: str) -> FlextResult[FlextLdapModels.Group | None]:
+        def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapModels.Group | None]:
             """Get group by ID (DN or CN).
 
             Args:
-                id: Group DN or CN
+                entity_id: Group DN or CN
 
             Returns:
                 FlextResult with Group entity or None
 
             """
             try:
-                result = self._client.get_group(id)
+                result = self._client.get_group(entity_id)
                 if result.is_failure:
                     return FlextResult[FlextLdapModels.Group | None].fail(
                         result.error or "Group lookup failed"
@@ -355,7 +355,7 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.Group | None].ok(result.unwrap())
             except Exception as e:
                 self.logger.exception(
-                    "Failed to get group by ID", error=str(e), group_id=id
+                    "Failed to get group by ID", error=str(e), group_id=entity_id
                 )
                 return FlextResult[FlextLdapModels.Group | None].fail(
                     f"Group lookup failed: {e}"
@@ -458,11 +458,11 @@ class FlextLdapRepositories:
                     f"Group update failed: {e}"
                 )
 
-        def delete(self, id: str) -> FlextResult[bool]:
+        def delete(self, entity_id: str) -> FlextResult[bool]:
             """Delete group by ID.
 
             Args:
-                id: Group DN or CN
+                entity_id: Group DN or CN
 
             Returns:
                 FlextResult with True if deleted
@@ -470,7 +470,7 @@ class FlextLdapRepositories:
             """
             try:
                 # Get group first to ensure it exists
-                get_result = self.get_by_id(id)
+                get_result = self.get_by_id(entity_id)
                 if get_result.is_failure:
                     return FlextResult[bool].fail(
                         get_result.error or "Group lookup failed"

@@ -423,18 +423,18 @@ Each server operation handles its specific ACL format:
 
 ### **Code Distribution**
 
-| Component                 | Lines     | Purpose                          |
-| ------------------------- | --------- | -------------------------------- |
+| Component                 | Lines     | Purpose                       |
+| ------------------------- | --------- | ----------------------------- |
 | Entry Adapter             | 308       | ldap3 ↔ FlextLdif conversion |
-| Quirks Integration        | 320       | Server detection and quirks      |
-| Base Operations           | 305       | Abstract interface               |
-| OpenLDAP2Operations       | 525       | Complete implementation          |
-| OpenLDAP1Operations       | 102       | Legacy implementation            |
-| OracleOIDOperations       | 361       | Oracle OID implementation        |
-| OracleOUDOperations       | 373       | Oracle OUD implementation        |
-| ActiveDirectoryOperations | 250       | Stub for future                  |
-| GenericServerOperations   | 310       | RFC-compliant fallback           |
-| **Total**                 | **2,854** | **Universal LDAP interface**     |
+| Quirks Integration        | 320       | Server detection and quirks   |
+| Base Operations           | 305       | Abstract interface            |
+| OpenLDAP2Operations       | 525       | Complete implementation       |
+| OpenLDAP1Operations       | 102       | Legacy implementation         |
+| OracleOIDOperations       | 361       | Oracle OID implementation     |
+| OracleOUDOperations       | 373       | Oracle OUD implementation     |
+| ActiveDirectoryOperations | 250       | Stub for future               |
+| GenericServerOperations   | 310       | RFC-compliant fallback        |
+| **Total**                 | **2,854** | **Universal LDAP interface**  |
 
 ### **Operation Coverage**
 

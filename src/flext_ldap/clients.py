@@ -68,50 +68,28 @@ class FlextLdapClients(FlextService[None]):
     """
 
     def __init__(self, config: FlextLdapConfig | None = None) -> None:
-        """Initialize the LDAP client with composition-based architecture."""
+        """Initialize the LDAP client - consolidated implementation without delegation bloat."""
         super().__init__()
 
         # Core configuration and logging
-        self.config = config
+        self._ldap_config = config
+
+        # Direct connection state (no delegation layer)
+        self._connection: Connection | None = None
+        self._server: object | None = None
 
         # Server operations for advanced features
-        self.server_operations_factory = ServerOperationsFactory()
-        self.server_operations: BaseServerOperations | None = None
-        self.detected_server_type: str | None = None
+        self._server_operations_factory = ServerOperationsFactory()
+        self._server_operations: BaseServerOperations | None = None
+        self._detected_server_type: str | None = None
 
-        # Search scope constant (used by searcher)
+        # Search scope constant
         self._search_scope = FlextLdapTypes.SUBTREE
-
-        # Compose with specialized components
-        # Lazy imports to avoid circular dependencies
-        self._connection_manager: (
-            FlextLdapProtocols.Ldap.LdapConnectionManagerProtocol | None
-        ) = None
-        self._authenticator = FlextLdapAuthentication()
-        self._searcher: FlextLdapProtocols.Ldap.LdapSearcherProtocol | None = None
-
-    def _get_connection_manager(
-        self,
-    ) -> FlextLdapProtocols.Ldap.LdapConnectionManagerProtocol:
-        """Get connection manager with lazy initialization."""
-        if self._connection_manager is None:
-            from flext_ldap.connection_manager import FlextLdapConnectionManager
-
-            self._connection_manager = FlextLdapConnectionManager(self)
-        return self._connection_manager
-
-    def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
-        """Get searcher with lazy initialization."""
-        if self._searcher is None:
-            from flext_ldap.search import FlextLdapSearch
-
-            self._searcher = FlextLdapSearch(parent=self)
-        return self._searcher
 
     @property
     def connection(self) -> Connection | None:
-        """Get the current LDAP connection from the connection manager."""
-        return self._get_connection_manager().connection
+        """Get the current LDAP connection."""
+        return self._connection
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -411,9 +389,9 @@ class FlextLdapClients(FlextService[None]):
             # Convert server info to dictionary
             info_dict = {
                 "server_type": getattr(
-                    self.detected_server_type, "value", str(self.detected_server_type)
+                    self._detected_server_type, "value", str(self._detected_server_type)
                 )
-                if self.detected_server_type
+                if self._detected_server_type
                 else "unknown",
                 "vendor_name": getattr(server_info, "vendor_name", {}).get(
                     "value", "Unknown"
@@ -662,21 +640,21 @@ class FlextLdapClients(FlextService[None]):
     @property
     def server_operations(self) -> BaseServerOperations | None:
         """Get the server operations instance."""
-        return self.server_operations
+        return self._server_operations
 
     def get_server_type(self) -> str | None:
         """Get detected server type."""
-        return self.detected_server_type
+        return self._detected_server_type
 
     def get_server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
         """Get server quirks for detected server type."""
-        if not self.detected_server_type:
+        if not self._detected_server_type:
             return None
         # Create server quirks based on detected type
         return FlextLdapModels.ServerQuirks(
-            case_sensitive_dns=self.detected_server_type == "ad",
-            case_sensitive_attributes=self.detected_server_type == "ad",
-            supports_paged_results=self.detected_server_type != "openldap1",
-            supports_vlv=self.detected_server_type in {"oud", "oid"},
-            max_page_size=1000 if self.detected_server_type != "ad" else 100000,
+            case_sensitive_dns=self._detected_server_type == "ad",
+            case_sensitive_attributes=self._detected_server_type == "ad",
+            supports_paged_results=self._detected_server_type != "openldap1",
+            supports_vlv=self._detected_server_type in {"oud", "oid"},
+            max_page_size=1000 if self._detected_server_type != "ad" else 100000,
         )

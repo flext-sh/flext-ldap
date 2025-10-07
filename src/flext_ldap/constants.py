@@ -86,6 +86,19 @@ class FlextLdapConstants(FlextConstants):
         MEMBER_OF: Final[str] = "memberOf"
         OWNER: Final[str] = "owner"
 
+        # Convenience attribute sets - eliminates need to specify attributes repeatedly
+        MINIMAL_USER_ATTRS: Final[list[str]] = ["uid", "cn", "mail"]
+        MINIMAL_GROUP_ATTRS: Final[list[str]] = ["cn", "member"]
+
+        ALL_USER_ATTRS: Final[list[str]] = [
+            "objectClass", "cn", "sn", "givenName", "displayName",
+            "uid", "mail", "userPassword", "description", "memberOf"
+        ]
+        ALL_GROUP_ATTRS: Final[list[str]] = [
+            "objectClass", "cn", "description", "member",
+            "uniqueMember", "owner", "memberOf"
+        ]
+
         @classmethod
         def get_person_attributes(cls) -> FlextTypes.StringList:
             """Get standard person-related attributes."""
@@ -120,6 +133,27 @@ class FlextLdapConstants(FlextConstants):
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
         GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
+
+    class Filters:
+        """Default LDAP search filters for common operations."""
+
+        # User filters
+        DEFAULT_USER_FILTER: Final[str] = "(objectClass=inetOrgPerson)"
+        ALL_USERS_FILTER: Final[str] = "(objectClass=person)"
+        ACTIVE_USERS_FILTER: Final[str] = (
+            "(&(objectClass=inetOrgPerson)"
+            "(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
+        )
+
+        # Group filters
+        DEFAULT_GROUP_FILTER: Final[str] = "(objectClass=groupOfNames)"
+        ALL_GROUPS_FILTER: Final[str] = (
+            "(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames))"
+        )
+
+        # Common combined filters
+        ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
+        ORGANIZATIONAL_UNITS_FILTER: Final[str] = "(objectClass=organizationalUnit)"
 
     # LDAP-specific validation constants
     class Validation(FlextConstants.Validation):

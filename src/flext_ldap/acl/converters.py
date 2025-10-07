@@ -25,7 +25,7 @@ class FlextLdapAclConverters:
 
     def convert_acl(
         self,
-        acl_content: str | None,
+        _acl_content: str | None,
         source_format: str | None,
         target_format: str | None,
     ) -> FlextResult[object]:
@@ -33,6 +33,12 @@ class FlextLdapAclConverters:
 
         Note: ACL format conversion is not yet implemented.
         This requires deep understanding of each LDAP vendor's ACL syntax.
+
+        Args:
+            _acl_content: ACL content (unused - reserved for future implementation)
+            source_format: Source ACL format
+            target_format: Target ACL format
+
         """
         return FlextResult[object].fail(
             f"ACL conversion from {source_format} to {target_format} is not implemented"

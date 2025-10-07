@@ -13,9 +13,6 @@ from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 
-from flext_ldap.servers.ad_operations import (
-    FlextLdapServersADOperations as ActiveDirectoryOperations,
-)
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
 )
@@ -51,7 +48,7 @@ class FlextLdapServersFactory(FlextService[None]):
         - "openldap" → OpenLDAP2Operations (default to 2.x)
         - "oid" → OracleOIDOperations
         - "oud" → OracleOUDOperations
-        - "ad" → ActiveDirectoryOperations (stub)
+        - "ad" → FlextLdapServersGenericOperations (AD support planned - using generic for now)
         - "generic" → FlextLdapServersGenericOperations (fallback)
     """
 
@@ -66,7 +63,7 @@ class FlextLdapServersFactory(FlextService[None]):
             "openldap": OpenLDAP2Operations,  # Default OpenLDAP to 2.x
             "oid": OracleOIDOperations,
             "oud": OracleOUDOperations,
-            "ad": ActiveDirectoryOperations,
+            "ad": FlextLdapServersGenericOperations,  # AD support planned - using generic for now
             "generic": FlextLdapServersGenericOperations,
         }
 

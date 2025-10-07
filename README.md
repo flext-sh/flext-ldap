@@ -100,17 +100,17 @@ graph TB
 
 ### **Core Components**
 
-| Component                     | Purpose                          | Status      |
-| ----------------------------- | -------------------------------- | ----------- |
+| Component                     | Purpose                       | Status      |
+| ----------------------------- | ----------------------------- | ----------- |
 | **FlextLdapEntryAdapter**     | ldap3 ↔ FlextLdif conversion | 🟢 Complete |
-| **FlextLdapQuirksAdapter**    | Server quirks detection          | 🟢 Complete |
-| **BaseServerOperations**      | Abstract server interface        | 🟢 Complete |
-| **OpenLDAP2Operations**       | OpenLDAP 2.x implementation      | 🟢 Complete |
-| **OpenLDAP1Operations**       | OpenLDAP 1.x implementation      | 🟢 Complete |
-| **OracleOIDOperations**       | Oracle OID implementation        | 🟢 Complete |
-| **OracleOUDOperations**       | Oracle OUD implementation        | 🟢 Complete |
-| **ActiveDirectoryOperations** | AD stub                          | 🟡 Stub     |
-| **GenericServerOperations**   | Generic fallback                 | 🟢 Complete |
+| **FlextLdapQuirksAdapter**    | Server quirks detection       | 🟢 Complete |
+| **BaseServerOperations**      | Abstract server interface     | 🟢 Complete |
+| **OpenLDAP2Operations**       | OpenLDAP 2.x implementation   | 🟢 Complete |
+| **OpenLDAP1Operations**       | OpenLDAP 1.x implementation   | 🟢 Complete |
+| **OracleOIDOperations**       | Oracle OID implementation     | 🟢 Complete |
+| **OracleOUDOperations**       | Oracle OUD implementation     | 🟢 Complete |
+| **ActiveDirectoryOperations** | AD stub                       | 🟡 Stub     |
+| **GenericServerOperations**   | Generic fallback              | 🟢 Complete |
 
 ---
 
