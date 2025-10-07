@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
 from flext_core import FlextTypes
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
@@ -69,35 +67,37 @@ class TestFlextLdapConfig:
         assert result.data.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
         assert result.data.ldap_bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
-    def test_create_connection_config_from_env_success(self) -> None:
-        """Test successful connection config creation from environment."""
-        configs = FlextLdapConfig()
+    # Obsolete test - create_connection_config_from_env method no longer exists
+    # def test_create_connection_config_from_env_success(self) -> None:
+    #     """Test successful connection config creation from environment."""
+    #     configs = FlextLdapConfig()
+    #
+    #     result = configs.create_connection_config_from_env()
+    #
+    #     assert result.is_success
+    #     assert isinstance(result.data, dict)
+    #     # The method uses the global instance with default values
+    #     assert result.data["server"] == "ldap://localhost"
+    #     assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #     assert result.data["bind_dn"] is None  # Default value
+    #     assert not result.data["base_dn"]  # Default value
 
-        result = configs.create_connection_config_from_env()
-
-        assert result.is_success
-        assert isinstance(result.data, dict)
-        # The method uses the global instance with default values
-        assert result.data["server"] == "ldap://localhost"
-        assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
-        assert result.data["bind_dn"] is None  # Default value
-        assert not result.data["base_dn"]  # Default value
-
-    def test_create_connection_config_from_env_missing_vars(self) -> None:
-        """Test connection config creation from environment with missing variables."""
-        configs = FlextLdapConfig()
-
-        with patch.dict("os.environ", {}, clear=True):
-            result = configs.create_connection_config_from_env()
-
-            # The method uses the global instance with default values, so it succeeds
-            assert result.is_success
-            assert isinstance(result.data, dict)
-            # Should have default values
-            assert result.data["server"] == "ldap://localhost"
-            assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
-            assert result.data["bind_dn"] is None
-            assert not result.data["base_dn"]
+    # Obsolete test - create_connection_config_from_env method no longer exists
+    # def test_create_connection_config_from_env_missing_vars(self) -> None:
+    #     """Test connection config creation from environment with missing variables."""
+    #     configs = FlextLdapConfig()
+    #
+    #     with patch.dict("os.environ", {}, clear=True):
+    #         result = configs.create_connection_config_from_env()
+    #
+    #         # The method uses the global instance with default values, so it succeeds
+    #         assert result.is_success
+    #         assert isinstance(result.data, dict)
+    #         # Should have default values
+    #         assert result.data["server"] == "ldap://localhost"
+    #         assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #         assert result.data["bind_dn"] is None
+    #         assert not result.data["base_dn"]
 
     def test_create_search_config_success(self) -> None:
         """Test successful search config creation."""
@@ -600,7 +600,11 @@ class TestFlextLdapConfig:
         """Test validator with invalid server URI."""
         import pytest
 
-        with pytest.raises(ValueError, match="Invalid LDAP server URI"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapConfigurationError, match="Invalid LDAP server URI"
+        ):
             FlextLdapConfig(
                 ldap_server_uri="http://localhost",  # Invalid protocol
                 ldap_bind_password="password",
@@ -667,7 +671,11 @@ class TestFlextLdapConfig:
         """Test consistency validator - SSL required for ldaps://."""
         import pytest
 
-        with pytest.raises(ValueError, match="SSL must be enabled"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapConfigurationError, match="SSL must be enabled"
+        ):
             FlextLdapConfig(
                 ldap_server_uri="ldaps://localhost",  # ldaps protocol
                 ldap_use_ssl=False,  # But SSL disabled

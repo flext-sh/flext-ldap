@@ -36,12 +36,14 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-from flext_ldap.schema import FlextLdapSchema
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapConfig,
+    FlextLdapQuirksIntegration,
+    FlextLdapSchema,
+)
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -181,7 +183,9 @@ def demonstrate_quirks_detection(server_type: str | None) -> None:
         logger.info("   ✅ Server quirks detected:")
         logger.info(f"      Server type: {quirks.server_type}")
         logger.info(f"      Case-sensitive DNs: {quirks.case_sensitive_dns}")
-        logger.info(f"      Case-sensitive attributes: {quirks.case_sensitive_attributes}")
+        logger.info(
+            f"      Case-sensitive attributes: {quirks.case_sensitive_attributes}"
+        )
         logger.info(f"      Paged results: {quirks.supports_paged_results}")
         logger.info(f"      VLV support: {quirks.supports_vlv}")
         logger.info(f"      Max page size: {quirks.max_page_size}")
@@ -290,19 +294,35 @@ def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
             logger.info("\n2. Available schema attributes:")
 
             if "objectClasses" in attrs:
-                oc_count = len(attrs["objectClasses"]) if isinstance(attrs["objectClasses"], list) else 1
+                oc_count = (
+                    len(attrs["objectClasses"])
+                    if isinstance(attrs["objectClasses"], list)
+                    else 1
+                )
                 logger.info(f"   • objectClasses: {oc_count} defined")
 
             if "attributeTypes" in attrs:
-                at_count = len(attrs["attributeTypes"]) if isinstance(attrs["attributeTypes"], list) else 1
+                at_count = (
+                    len(attrs["attributeTypes"])
+                    if isinstance(attrs["attributeTypes"], list)
+                    else 1
+                )
                 logger.info(f"   • attributeTypes: {at_count} defined")
 
             if "ldapSyntaxes" in attrs:
-                syntax_count = len(attrs["ldapSyntaxes"]) if isinstance(attrs["ldapSyntaxes"], list) else 1
+                syntax_count = (
+                    len(attrs["ldapSyntaxes"])
+                    if isinstance(attrs["ldapSyntaxes"], list)
+                    else 1
+                )
                 logger.info(f"   • ldapSyntaxes: {syntax_count} defined")
 
             if "matchingRules" in attrs:
-                mr_count = len(attrs["matchingRules"]) if isinstance(attrs["matchingRules"], list) else 1
+                mr_count = (
+                    len(attrs["matchingRules"])
+                    if isinstance(attrs["matchingRules"], list)
+                    else 1
+                )
                 logger.info(f"   • matchingRules: {mr_count} defined")
 
             logger.info("\n3. Schema discovery successful!")

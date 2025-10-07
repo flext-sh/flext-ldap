@@ -283,7 +283,7 @@ class FlextLdapSearch(FlextService[None]):
 
             success = self._connection.search(
                 dn,
-                FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
                 FlextLdapTypes.BASE,
                 attributes=["*"],
             )
@@ -337,7 +337,7 @@ class FlextLdapSearch(FlextService[None]):
 
             success = self._connection.search(
                 dn,
-                FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
                 FlextLdapTypes.BASE,
                 attributes=["*"],
             )

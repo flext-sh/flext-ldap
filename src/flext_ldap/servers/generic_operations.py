@@ -13,13 +13,11 @@ from typing import override
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.servers.base_operations import (
-    FlextLdapServersBaseOperations as BaseServerOperations,
-)
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.typings import FlextLdapTypes
 
 
-class FlextLdapServersGenericOperations(BaseServerOperations):
+class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     """Generic LDAP server operations stub.
 
     This provides basic LDAP operations for unknown/generic servers.

@@ -10,16 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.servers.base_operations import (
-    FlextLdapServersBaseOperations as BaseServerOperations,
-)
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
 class FlextLdapServers(FlextService[None]):
@@ -54,7 +52,7 @@ class FlextLdapServers(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or self.SERVER_GENERIC
-        self._operations: Any | None = None
+        self._operations: object | None = None
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService."""
@@ -66,13 +64,13 @@ class FlextLdapServers(FlextService[None]):
         return self._server_type
 
     @property
-    def operations(self) -> BaseServerOperations | None:
+    def operations(self) -> FlextLdapServersBaseOperations | None:
         """Get current server operations instance."""
         if self._operations is None:
             self._operations = self._create_operations_for_server(self._server_type)
         return self._operations
 
-    def _create_operations_for_server(self, server_type: str) -> Any:
+    def _create_operations_for_server(self, server_type: str) -> object:
         """Factory method to create operations instance for server type.
 
         Args:
@@ -167,14 +165,14 @@ class FlextLdapServers(FlextService[None]):
 
     def get_root_dse_attributes(
         self, connection: Connection
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
-            return FlextResult[dict[str, Any]].fail("No server operations available")
+            return FlextResult[dict[str, object]].fail("No server operations available")
         return ops.get_root_dse_attributes(connection)
 
-    def detect_server_type_from_root_dse(self, root_dse: dict[str, Any]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect server type from Root DSE."""
         ops = self.operations
         return (

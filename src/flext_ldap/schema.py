@@ -59,7 +59,6 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             )
             super().__init__(config=config)
 
-        @override
         def handle(self, message: object) -> FlextResult[object]:
             """Handle quirks detection message.
 

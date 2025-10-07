@@ -33,16 +33,10 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
-# Configuration from environment using FlextLdapConfig.from_env()
-# OLD: Manual os.getenv() for each variable (5 lines of boilerplate)
-# NEW: Automatic environment loading with Pydantic BaseSettings (eliminates boilerplate)
 config_env = FlextLdapConfig.from_env()
 LDAP_URI: Final[str] = config_env.ldap_server_uri
 BIND_DN: Final[str] = config_env.ldap_bind_dn or "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
@@ -89,7 +83,7 @@ def demonstrate_context_manager() -> None:
             logger.info(f"   Connected: {api.is_connected()}")
             # Connection automatically closed on exit
     except RuntimeError as e:
-        logger.error(f"❌ Connection failed: {e}")
+        logger.exception(f"❌ Connection failed: {e}")
 
 
 def demonstrate_create_entry(api: FlextLdap) -> str | None:

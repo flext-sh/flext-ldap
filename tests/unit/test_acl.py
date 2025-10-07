@@ -177,7 +177,7 @@ class TestFlextLdapAclConverters:
         """Test successful unified to OpenLDAP conversion."""
         # Test the actual convert_acl method
         result = acl_converters.convert_acl(
-            acl_content=str(sample_acl_data["unified_acl"]),
+            _acl_content=str(sample_acl_data["unified_acl"]),
             source_format="unified",
             target_format="openldap",
         )

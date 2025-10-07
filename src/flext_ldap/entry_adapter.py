@@ -50,7 +50,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
         self._ldif = FlextLdif()  # Direct instantiation without config
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
-        self.detected_server_type = server_type
+        self._detected_server_type = (
+            server_type  # Private attribute to avoid Pydantic validation
+        )
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService - no-op for adapter."""
@@ -340,7 +342,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[str].ok("generic")
 
         detected_type = detection_result.unwrap()
-        self.detected_server_type = detected_type
+        self._detected_server_type = detected_type  # Private attribute
 
         self.logger.debug(
             "Server type detected from entry",

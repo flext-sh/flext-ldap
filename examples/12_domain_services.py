@@ -26,11 +26,11 @@ from __future__ import annotations
 import sys
 
 from flext_core import FlextLogger
+from flext_core.loggings import FlextLogger
 
-from flext_ldap.domain import FlextLdapDomain
-from flext_ldap.models import FlextLdapModels
+from flext_ldap import FlextLdapDomain, FlextLdapModels
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 def demonstrate_domain_driven_design_concepts() -> None:
@@ -100,7 +100,12 @@ def demonstrate_user_specification() -> None:
 
     # Test invalid emails
     logger.info("\n4. Invalid Emails:")
-    invalid_emails = ["notanemail", "missing@domain", "@nodomain.com", "spaces in@email.com"]
+    invalid_emails = [
+        "notanemail",
+        "missing@domain",
+        "@nodomain.com",
+        "spaces in@email.com",
+    ]
 
     for email in invalid_emails:
         is_valid = FlextLdapDomain.UserSpecification.is_valid_email(email)
@@ -342,7 +347,7 @@ def demonstrate_specification_pattern_benefits() -> None:
 
     logger.info("\n2. Specification Composition:")
     logger.info("   • AND specifications - All rules must pass")
-    logger.info("   • OR specifications - Any rule can pass")
+    logger.info("   • OR specifications - object rule can pass")
     logger.info("   • NOT specifications - Inverse logic")
     logger.info("   • Complex business rules from simple building blocks")
 
@@ -459,10 +464,14 @@ def main() -> int:
         logger.info("  from flext_ldap.domain import FlextLdapDomain")
         logger.info("  ")
         logger.info("  # Validate username")
-        logger.info("  is_valid = FlextLdapDomain.UserSpecification.is_valid_username('john')")
+        logger.info(
+            "  is_valid = FlextLdapDomain.UserSpecification.is_valid_username('john')"
+        )
         logger.info("  ")
         logger.info("  # Check password policy")
-        logger.info("  result = FlextLdapDomain.UserSpecification.meets_password_policy('Passw0rd')")
+        logger.info(
+            "  result = FlextLdapDomain.UserSpecification.meets_password_policy('Passw0rd')"
+        )
         logger.info("  if result.is_success:")
         logger.info("      print('Password meets policy')")
         logger.info("  ```")
@@ -472,7 +481,9 @@ def main() -> int:
         logger.info("  from flext_ldap.domain import FlextLdapDomain")
         logger.info("  ")
         logger.info("  # Calculate display name")
-        logger.info("  display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(user)")
+        logger.info(
+            "  display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(user)"
+        )
         logger.info("  ```")
 
         return 0

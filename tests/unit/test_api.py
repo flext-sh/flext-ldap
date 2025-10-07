@@ -35,7 +35,7 @@ class TestFlextLdap:
         assert api is not None
         assert hasattr(api, "_client")
         assert hasattr(api, "_acl_manager")
-        assert hasattr(api, "_config")
+        assert hasattr(api, "_ldap_config")  # Corrected from _config to _ldap_config
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
@@ -104,12 +104,9 @@ class TestFlextLdap:
         """Test API search methods."""
         api = FlextLdap()
 
-        # Test search_groups method
+        # Test search_groups method (convenience method with smart defaults)
         result = api.search_groups(
-            base_dn="dc=test,dc=com",
-            cn="testgroup",
-            filter_str="(objectClass=group)",
-            scope="subtree",
+            search_base="dc=test,dc=com",
             attributes=["cn", "member"],
         )
         assert isinstance(result, FlextResult)

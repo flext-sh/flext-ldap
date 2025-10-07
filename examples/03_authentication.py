@@ -32,13 +32,11 @@ from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap import FlextLdap, FlextLdapConfig
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
-# Configuration from environment
-LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
+LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
 BIND_DN: Final[str] = os.getenv("LDAP_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
 BIND_PASSWORD: Final[str] = os.getenv("LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD")
 BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")

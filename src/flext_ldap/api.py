@@ -19,26 +19,25 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-# Validation decorator imports
 import inspect
 from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import Any, ParamSpec, TypeVar, override
+from typing import ParamSpec, Self, TypeVar, override
 
 from flext_core import (
     FlextResult,
     FlextService,
     FlextTypes,
 )
-
-# Import flext_ldif components - required dependency (NO fallback)
+from flext_core.result import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap.acl import FlextLdapAclManager
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.validations import FlextLdapValidations
 
@@ -46,7 +45,9 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def validate_ldap_params(**validators: Callable[[Any], FlextResult[Any]]):
+def validate_ldap_params(
+    **validators: Callable[[object], FlextResult[object]],
+) -> Callable[..., Callable[P, FlextResult[R]]]:
     """Decorator to automatically validate LDAP parameters before method execution.
 
     This decorator eliminates manual validation boilerplate by automatically validating
@@ -154,7 +155,7 @@ class FlextLdap(FlextService[None]):
         # Lazy-loaded LDAP components
         self._ldif: FlextLdif | None = None
 
-    def __enter__(self) -> FlextLdap:
+    def __enter__(self) -> Self:
         """Context manager entry - automatic connection.
 
         Eliminates manual connect/disconnect boilerplate in examples.
@@ -170,7 +171,8 @@ class FlextLdap(FlextService[None]):
         connect_result = self.connect()
         if connect_result.is_failure:
             error_msg = connect_result.error or "Connection failed"
-            raise RuntimeError(f"LDAP connection failed: {error_msg}")
+            msg = f"LDAP connection failed: {error_msg}"
+            raise RuntimeError(msg)
         return self
 
     def __exit__(
@@ -919,7 +921,7 @@ class FlextLdap(FlextService[None]):
         if use_paging and server_ops.supports_paged_results():
             connection = self._client.connection
             if not connection:
-                return FlextResult[list].fail("Not connected to LDAP server")
+                return FlextResult[list].fail("LDAP connection not established")
 
             page_size = min(100, server_ops.get_max_page_size())
             return server_ops.search_with_paging(
@@ -961,8 +963,6 @@ class FlextLdap(FlextService[None]):
             ...     normalized = result.unwrap()
 
         """
-        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
         if not self._client:
             return FlextResult[FlextLdifModels.Entry].fail("Client not initialized")
 
@@ -1010,8 +1010,6 @@ class FlextLdap(FlextService[None]):
             ... )
 
         """
-        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
         adapter = FlextLdapEntryAdapter(server_type=source_server_type)
         return adapter.convert_entry_format(
             entry=entry,
@@ -1041,8 +1039,6 @@ class FlextLdap(FlextService[None]):
             ...     print(f"Entry from: {result.unwrap()}")
 
         """
-        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
         adapter = FlextLdapEntryAdapter()
         return adapter.detect_entry_server_type(entry)
 
@@ -1070,8 +1066,6 @@ class FlextLdap(FlextService[None]):
             ...     print("Entry is compatible with Oracle OUD")
 
         """
-        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
         if not self._client:
             return FlextResult[bool].fail("Client not initialized")
 
@@ -1109,8 +1103,6 @@ class FlextLdap(FlextService[None]):
             ...     print(f"Required: {attrs.get('required_attributes', [])}")
 
         """
-        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
         if not self._client:
             return FlextResult[FlextTypes.Dict].fail("Client not initialized")
 
