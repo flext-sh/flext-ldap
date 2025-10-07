@@ -45,6 +45,7 @@ class FlextLdapRepositories:
 
             Args:
                 client: LDAP client instance. If None, creates a new instance.
+
             """
             self._client = client or FlextLdapClients()
             self.logger = FlextLogger(__name__)
@@ -62,6 +63,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with entity or None if not found
+
             """
             ...
 
@@ -70,6 +72,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with list of all entities
+
             """
             # Default implementation - subclasses should override for efficiency
             return FlextResult[list[T]].fail("get_all not implemented - use subclass")
@@ -83,6 +86,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with added entity
+
             """
             ...
 
@@ -95,6 +99,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with updated entity
+
             """
             ...
 
@@ -107,6 +112,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with True if deleted, False if not found
+
             """
             ...
 
@@ -118,6 +124,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with True if exists, False otherwise
+
             """
             # Default implementation using get_by_id
             result = self.get_by_id(id)
@@ -138,6 +145,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with User entity or None
+
             """
             try:
                 # Try as DN first
@@ -165,7 +173,9 @@ class FlextLdapRepositories:
                     if id.startswith(("cn=", "uid=", "ou=")):
                         search_result = self._client.search_users(
                             base_dn=self._client.config.ldap_user_base_dn,
-                            uid=id.split(",")[0].split("=")[1],  # Extract UID from DN
+                            uid=id.split(",", maxsplit=1)[0].split("=")[
+                                1
+                            ],  # Extract UID from DN
                         )
                         if search_result.is_success:
                             users = search_result.unwrap()
@@ -181,7 +191,9 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.User | None].ok(result.unwrap())
 
             except Exception as e:
-                self.logger.error("Failed to get user by ID", error=str(e), user_id=id)
+                self.logger.exception(
+                    "Failed to get user by ID", error=str(e), user_id=id
+                )
                 return FlextResult[FlextLdapModels.User | None].fail(
                     f"User lookup failed: {e}"
                 )
@@ -191,6 +203,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with list of all users
+
             """
             try:
                 result = self._client.search_users(
@@ -202,7 +215,7 @@ class FlextLdapRepositories:
                     )
                 return FlextResult[list[FlextLdapModels.User]].ok(result.unwrap())
             except Exception as e:
-                self.logger.error("Failed to get all users", error=str(e))
+                self.logger.exception("Failed to get all users", error=str(e))
                 return FlextResult[list[FlextLdapModels.User]].fail(
                     f"User retrieval failed: {e}"
                 )
@@ -217,6 +230,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with added user entity
+
             """
             try:
                 # Convert entity to create request
@@ -240,7 +254,9 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.User].ok(result.unwrap())
 
             except Exception as e:
-                self.logger.error("Failed to add user", error=str(e), user_dn=entity.dn)
+                self.logger.exception(
+                    "Failed to add user", error=str(e), user_dn=entity.dn
+                )
                 return FlextResult[FlextLdapModels.User].fail(
                     f"User creation failed: {e}"
                 )
@@ -255,6 +271,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with updated user entity
+
             """
             try:
                 # For now, use attribute update - could be enhanced with change tracking
@@ -275,7 +292,7 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.User].ok(entity)
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Failed to update user", error=str(e), user_dn=entity.dn
                 )
                 return FlextResult[FlextLdapModels.User].fail(
@@ -290,6 +307,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with True if deleted
+
             """
             try:
                 # Get user first to ensure it exists
@@ -312,7 +330,7 @@ class FlextLdapRepositories:
                 return FlextResult[bool].ok(True)
 
             except Exception as e:
-                self.logger.error("Failed to delete user", error=str(e), user_id=id)
+                self.logger.exception("Failed to delete user", error=str(e), user_id=id)
                 return FlextResult[bool].fail(f"User deletion failed: {e}")
 
     class GroupRepository(LdapRepository[FlextLdapModels.Group]):
@@ -326,6 +344,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with Group entity or None
+
             """
             try:
                 result = self._client.get_group(id)
@@ -335,7 +354,7 @@ class FlextLdapRepositories:
                     )
                 return FlextResult[FlextLdapModels.Group | None].ok(result.unwrap())
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Failed to get group by ID", error=str(e), group_id=id
                 )
                 return FlextResult[FlextLdapModels.Group | None].fail(
@@ -347,6 +366,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with list of all groups
+
             """
             try:
                 result = self._client.search_groups(
@@ -358,7 +378,7 @@ class FlextLdapRepositories:
                     )
                 return FlextResult[list[FlextLdapModels.Group]].ok(result.unwrap())
             except Exception as e:
-                self.logger.error("Failed to get all groups", error=str(e))
+                self.logger.exception("Failed to get all groups", error=str(e))
                 return FlextResult[list[FlextLdapModels.Group]].fail(
                     f"Group retrieval failed: {e}"
                 )
@@ -373,6 +393,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with added group entity
+
             """
             try:
                 # Convert entity to create request
@@ -394,7 +415,7 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.Group].ok(result.unwrap())
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Failed to add group", error=str(e), group_dn=entity.dn
                 )
                 return FlextResult[FlextLdapModels.Group].fail(
@@ -411,6 +432,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with updated group entity
+
             """
             try:
                 # For now, use attribute update
@@ -429,7 +451,7 @@ class FlextLdapRepositories:
                 return FlextResult[FlextLdapModels.Group].ok(entity)
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Failed to update group", error=str(e), group_dn=entity.dn
                 )
                 return FlextResult[FlextLdapModels.Group].fail(
@@ -444,6 +466,7 @@ class FlextLdapRepositories:
 
             Returns:
                 FlextResult with True if deleted
+
             """
             try:
                 # Get group first to ensure it exists
@@ -466,5 +489,7 @@ class FlextLdapRepositories:
                 return FlextResult[bool].ok(True)
 
             except Exception as e:
-                self.logger.error("Failed to delete group", error=str(e), group_id=id)
+                self.logger.exception(
+                    "Failed to delete group", error=str(e), group_id=id
+                )
                 return FlextResult[bool].fail(f"Group deletion failed: {e}")

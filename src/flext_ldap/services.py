@@ -9,9 +9,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
 
@@ -31,9 +33,9 @@ class FlextLdapServices(FlextService[None]):
     """
 
     def __init__(self) -> None:
-        """Initialize the LDAP application services."""
+        """Initialize the LDAP application services with Phase 1 context enrichment."""
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
 
     # =============================================================================
     # USER MANAGEMENT SERVICES
@@ -85,7 +87,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            logger.error("User creation validation failed", error=str(e))
+            logger.exception("User creation validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def enrich_user_for_creation(
@@ -122,7 +124,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.CreateUserRequest].ok(request)
 
         except Exception as e:
-            logger.error("User creation enrichment failed", error=str(e))
+            logger.exception("User creation enrichment failed", error=str(e))
             return FlextResult[FlextLdapModels.CreateUserRequest].fail(
                 f"Enrichment failed: {e}"
             )
@@ -169,7 +171,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            logger.error("User search validation failed", error=str(e))
+            logger.exception("User search validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_user_search_results(
@@ -219,7 +221,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
-            logger.error("User search results processing failed", error=str(e))
+            logger.exception("User search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
@@ -259,7 +261,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].ok(group_data)
 
         except Exception as e:
-            logger.error("Group creation validation failed", error=str(e))
+            logger.exception("Group creation validation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def validate_group_membership_operation(
@@ -277,7 +279,7 @@ class FlextLdapServices(FlextService[None]):
 
         """
         try:
-            if operation not in ["add", "remove"]:
+            if operation not in {"add", "remove"}:
                 return FlextResult[bool].fail("Invalid operation type")
 
             if operation == "add":
@@ -305,7 +307,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            logger.error("Group membership validation failed", error=str(e))
+            logger.exception("Group membership validation failed", error=str(e))
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_group_search_results(
@@ -355,7 +357,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
 
         except Exception as e:
-            logger.error("Group search results processing failed", error=str(e))
+            logger.exception("Group search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Processing failed: {e}"
             )
@@ -435,7 +437,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.SearchResponse].ok(final_results)
 
         except Exception as e:
-            logger.error("Search coordination failed", error=str(e))
+            logger.exception("Search coordination failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 f"Coordination failed: {e}"
             )
@@ -510,7 +512,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextLdapModels.User].ok(mock_user)
 
         except Exception as e:
-            logger.error("User provisioning workflow failed", error=str(e))
+            logger.exception("User provisioning workflow failed", error=str(e))
             return FlextResult[FlextLdapModels.User].fail(f"Workflow failed: {e}")
 
     # =============================================================================
@@ -564,7 +566,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].ok(config_data)
 
         except Exception as e:
-            logger.error("LDAP configuration validation failed", error=str(e))
+            logger.exception("LDAP configuration validation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def generate_ldap_operation_report(
@@ -616,7 +618,7 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].ok(report)
 
         except Exception as e:
-            logger.error("LDAP operation report generation failed", error=str(e))
+            logger.exception("LDAP operation report generation failed", error=str(e))
             return FlextResult[FlextTypes.Dict].fail(f"Report generation failed: {e}")
 
     def execute(self) -> FlextResult[None]:

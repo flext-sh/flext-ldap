@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult, FlextTypes
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
@@ -174,7 +175,9 @@ class FlextLdapAclParsers:
                 permissions.append("read")
 
             return FlextLdapModels.AclPermissions(
-                permissions=permissions, denied_permissions=[], grant_type="allow"
+                granted_permissions=permissions,
+                denied_permissions=[],
+                grant_type="allow",
             )
 
     class OracleAclParser:
@@ -361,7 +364,9 @@ class FlextLdapAclParsers:
                 permissions.append("read")
 
             return FlextLdapModels.AclPermissions(
-                permissions=permissions, denied_permissions=[], grant_type="allow"
+                granted_permissions=permissions,
+                denied_permissions=[],
+                grant_type="allow",
             )
 
     class AciParser:
@@ -446,8 +451,8 @@ class FlextLdapAclParsers:
                 # Create target
                 target = FlextLdapModels.AclTarget(
                     dn_pattern=target_dn,
-                    target_attr=[],
-                    target_filter="",
+                    attributes=[],
+                    filter_expression="",
                 )
 
                 # Create subject
@@ -459,13 +464,13 @@ class FlextLdapAclParsers:
                 # Create permissions
                 if grant_type == "allow":
                     permissions = FlextLdapModels.AclPermissions(
-                        permissions=permissions_list,
+                        granted_permissions=permissions_list,
                         denied_permissions=[],
                         grant_type="allow",
                     )
                 else:  # deny
                     permissions = FlextLdapModels.AclPermissions(
-                        permissions=[],
+                        granted_permissions=[],
                         denied_permissions=permissions_list,
                         grant_type="deny",
                     )

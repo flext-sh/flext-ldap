@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextTypes
+
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.models import FlextLdapModels
-
-from flext_core import FlextTypes
 
 # Disable strict pyright checks for this comprehensive test module. These tests
 # intentionally exercise protected helpers and use lightweight mocks which
@@ -343,8 +343,8 @@ class TestFlextLdapClientsComprehensive:
             and "LDAP connection not established" in result.error
         )
 
-    def test_build_user_attributes_missing_required_fields(self) -> None:
-        """Test _build_user_attributes with minimal required fields and optional None values."""
+    def testbuild_user_attributes_missing_required_fields(self) -> None:
+        """Test build_user_attributes with minimal required fields and optional None values."""
         client = FlextLdapClients()
 
         user_data = FlextLdapModels.CreateUserRequest(
@@ -363,7 +363,7 @@ class TestFlextLdapClientsComprehensive:
             organization=None,
         )
 
-        result = client._build_user_attributes(user_data)
+        result = client.build_user_attributes(user_data)
         assert result.is_success
         attributes = result.unwrap()
         assert attributes["uid"] == ["testuser"]
@@ -371,8 +371,8 @@ class TestFlextLdapClientsComprehensive:
         assert attributes["sn"] == ["User"]
         assert "mail" not in attributes  # Optional fields with None are not included
 
-    def test_add_user_to_ldap_not_connected(self) -> None:
-        """Test _add_user_to_ldap when not connected."""
+    def testadd_user_to_ldap_not_connected(self) -> None:
+        """Test add_user_to_ldap when not connected."""
         client = FlextLdapClients()
 
         attributes = {
@@ -382,7 +382,7 @@ class TestFlextLdapClientsComprehensive:
             "objectClass": ["inetOrgPerson", "top"],
         }
 
-        result = client._add_user_to_ldap("cn=testuser,dc=test,dc=com", attributes)
+        result = client.add_user_to_ldap("cn=testuser,dc=test,dc=com", attributes)
         assert result.is_failure
         assert result.error is not None
         assert (

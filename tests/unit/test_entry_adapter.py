@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
+
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
 
 class TestEntryAdapterUniversal:
@@ -99,10 +100,10 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize "access" attribute as OpenLDAP 1.x
         # This is expected behavior until quirks are enhanced for OpenLDAP 1.x detection
-        assert detected_type in [
+        assert detected_type in {
             "openldap1",
             "generic",
-        ]  # Accept both until quirks enhanced
+        }  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_oid_orclaci(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -131,7 +132,7 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize Oracle OID attributes
         # This is expected behavior until quirks are enhanced for Oracle OID detection
-        assert detected_type in ["oid", "generic"]  # Accept both until quirks enhanced
+        assert detected_type in {"oid", "generic"}  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_oud_ds_privilege(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -156,7 +157,7 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize Oracle OUD attributes
         # This is expected behavior until quirks are enhanced for Oracle OUD detection
-        assert detected_type in ["oud", "generic"]  # Accept both until quirks enhanced
+        assert detected_type in {"oud", "generic"}  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_ad_object_guid(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -186,7 +187,7 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize AD attributes like objectGUID
         # This is expected behavior until quirks are enhanced for Active Directory
-        assert detected_type in ["ad", "generic"]  # Accept both until quirks enhanced
+        assert detected_type in {"ad", "generic"}  # Accept both until quirks enhanced
 
     def test_detect_entry_server_type_generic_fallback(
         self, adapter_generic: FlextLdapEntryAdapter

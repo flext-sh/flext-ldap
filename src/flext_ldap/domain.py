@@ -10,12 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import List
-
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.models import FlextLdapModels
-
 
 logger = FlextLogger(__name__)
 
@@ -86,7 +83,8 @@ class FlextLdapDomain:
                 return FlextResult[bool].fail("Member DN cannot be empty")
 
             # Check current member count
-            if group.member_count() >= max_members:
+            member_count = len(group.member_dns) + len(group.unique_member_dns)
+            if member_count >= max_members:
                 return FlextResult[bool].fail(
                     f"Group exceeds maximum members ({max_members})"
                 )
@@ -155,7 +153,7 @@ class FlextLdapDomain:
         """Domain services implementing business logic."""
 
         @staticmethod
-        def calculate_user_display_name(user: FlextLdapModels.User) -> str:
+        def calculate_user_display_name(user: FlextLdapModels.LdapUser) -> str:
             """Calculate display name for user based on domain rules."""
             # Priority: displayName > givenName + sn > cn > uid
             if user.display_name:
@@ -170,7 +168,7 @@ class FlextLdapDomain:
             return user.uid or "Unknown User"
 
         @staticmethod
-        def determine_user_status(user: FlextLdapModels.User) -> str:
+        def determine_user_status(user: FlextLdapModels.LdapUser) -> str:
             """Determine user status based on LDAP attributes."""
             # Check for account lock attributes
             lock_attrs = [
@@ -182,7 +180,7 @@ class FlextLdapDomain:
             for attr in lock_attrs:
                 value = user.get_attribute(attr)
                 if value:
-                    if isinstance(value, str) and value.lower() in ("true", "1", "yes"):
+                    if isinstance(value, str) and value.lower() in {"true", "1", "yes"}:
                         return "locked"
                     if isinstance(value, int) and value & 2:  # ADS_UF_ACCOUNTDISABLE
                         return "disabled"
@@ -197,18 +195,18 @@ class FlextLdapDomain:
 
         @staticmethod
         def validate_group_membership_rules(
-            user: FlextLdapModels.User, group: FlextLdapModels.Group
+            user: FlextLdapModels.LdapUser, group: FlextLdapModels.Group
         ) -> FlextResult[bool]:
             """Validate if user can be member of group based on business rules."""
             # Example business rule: users must have email for certain groups
-            if group.cn and "REDACTED_LDAP_BIND_PASSWORD" in group.cn.lower():
-                if not user.mail:
-                    return FlextResult[bool].fail(
-                        "Admin group members must have email addresses"
-                    )
+            if group.cn and "REDACTED_LDAP_BIND_PASSWORD" in group.cn.lower() and not user.mail:
+                return FlextResult[bool].fail(
+                    "Admin group members must have email addresses"
+                )
 
             # Example business rule: users must be active
-            if not user.is_active():
+            user_active = user.is_active
+            if not user_active:
                 return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups"
                 )
@@ -218,7 +216,7 @@ class FlextLdapDomain:
         @staticmethod
         def generate_unique_username(
             base_name: str,
-            existing_users: List[FlextLdapModels.User],
+            existing_users: list[FlextLdapModels.LdapUser],
             max_attempts: int = 100,
         ) -> FlextResult[str]:
             """Generate unique username based on domain rules."""

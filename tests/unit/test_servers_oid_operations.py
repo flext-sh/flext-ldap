@@ -6,12 +6,12 @@ from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 class TestFlextLdapServersOIDOperations:
     """Test cases for FlextLdapServersOIDOperations."""
 
-    def test_servers_oid_operations_initialization(self):
+    def test_servers_oid_operations_initialization(self) -> None:
         """Test servers OID operations initialization."""
         ops = FlextLdapServersOIDOperations()
         assert ops is not None
 
-    def test_servers_oid_operations_basic_functionality(self):
+    def test_servers_oid_operations_basic_functionality(self) -> None:
         """Test basic servers OID operations functionality."""
         ops = FlextLdapServersOIDOperations()
         # Add specific test cases based on servers OID operations functionality

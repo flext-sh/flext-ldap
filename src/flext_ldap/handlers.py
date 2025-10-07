@@ -52,6 +52,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult with command result
+
             """
             try:
                 # Validate command
@@ -65,7 +66,7 @@ class FlextLdapHandlers:
                 return self._execute_command(command)
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Command handling failed",
                     error=str(e),
                     command_type=command.command_type,
@@ -81,6 +82,7 @@ class FlextLdapHandlers:
 
             Returns:
                 True if handler can process the command
+
             """
             return isinstance(
                 command, FlextLdapModels.CqrsCommand
@@ -94,6 +96,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult indicating validation success
+
             """
             if not command.command_type:
                 return FlextResult[None].fail("Command type is required")
@@ -112,6 +115,7 @@ class FlextLdapHandlers:
 
             Returns:
                 True if handler can process the command
+
             """
             ...
 
@@ -124,6 +128,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult with execution result
+
             """
             ...
 
@@ -148,6 +153,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult with query result
+
             """
             try:
                 # Validate query
@@ -161,7 +167,7 @@ class FlextLdapHandlers:
                 return self._execute_query(query)
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Query handling failed",
                     error=str(e),
                     query_type=query.query_type,
@@ -177,6 +183,7 @@ class FlextLdapHandlers:
 
             Returns:
                 True if handler can process the query
+
             """
             return isinstance(
                 query, FlextLdapModels.CqrsQuery
@@ -190,6 +197,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult indicating validation success
+
             """
             if not query.query_type:
                 return FlextResult[None].fail("Query type is required")
@@ -208,6 +216,7 @@ class FlextLdapHandlers:
 
             Returns:
                 True if handler can process the query
+
             """
             ...
 
@@ -220,6 +229,7 @@ class FlextLdapHandlers:
 
             Returns:
                 FlextResult with execution result
+
             """
             ...
 

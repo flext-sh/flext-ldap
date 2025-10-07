@@ -20,8 +20,8 @@ from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLdapModels, FlextLdapTypes
 from flext_ldap.constants import FlextLdapConstants
-# from flext_tests import FlextTestDocker  # TODO: Import when available
 
+# from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
 from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 
@@ -38,44 +38,60 @@ class FlextTestDocker:
     """Placeholder for FlextTestDocker until it's available in flext_tests."""
 
     def start_container(self, container_name: str) -> FlextResult[bool]:
+        """Start a container with the given name."""
         return FlextResult[bool].fail("FlextTestDocker not available")
 
     def stop_container(
         self, container_name: str, remove: bool = False
     ) -> FlextResult[bool]:
+        """Stop a container with the given name, optionally removing it."""
         return FlextResult[bool].fail("FlextTestDocker not available")
 
     def get_container_logs(
         self, container_name: str, tail: int = 100
     ) -> FlextResult[str]:
+        """Get logs from a container, optionally limiting to last N lines."""
         return FlextResult[str].fail("FlextTestDocker not available")
 
     def execute_container_command(
         self, container_name: str, command: str
     ) -> FlextResult[str]:
+        """Execute a command in a running container."""
         return FlextResult[str].fail("FlextTestDocker not available")
 
     def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
+        """Get status information for a container."""
         return FlextResult[ContainerInfo].fail("FlextTestDocker not available")
 
 
 class DockerManagerProtocol(Protocol):
     """Protocol for Docker manager with required methods."""
 
-    def start_container(self, container_name: str) -> FlextResult[bool]: ...
-    def stop_container(
-        self, container_name: str, remove: bool
-    ) -> FlextResult[bool]: ...
-    def get_container_logs(
-        self, container_name: str, tail: int
-    ) -> FlextResult[str]: ...
+    def start_container(self, container_name: str) -> FlextResult[bool]:
+        """Start a container with the given name."""
+        ...
+
+    def stop_container(self, container_name: str, remove: bool) -> FlextResult[bool]:
+        """Stop a container with the given name, optionally removing it."""
+        ...
+
+    def get_container_logs(self, container_name: str, tail: int) -> FlextResult[str]:
+        """Get logs from a container, optionally limiting to last N lines."""
+        ...
+
     def execute_container_command(
         self, container_name: str, command: str
-    ) -> FlextResult[str]: ...
-    def get_container_status(
-        self, container_name: str
-    ) -> FlextResult[ContainerInfo]: ...
-    def get_docker_version(self) -> FlextResult[str]: ...
+    ) -> FlextResult[str]:
+        """Execute a command in a running container."""
+        ...
+
+    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
+        """Get status information for a container."""
+        ...
+
+    def get_docker_version(self) -> FlextResult[str]:
+        """Get the Docker version information."""
+        ...
 
 
 logger = FlextLogger(__name__)
@@ -183,7 +199,7 @@ class LdapTestServer:
                 logger.debug("LDAP server not ready yet: %s", e)
                 time.sleep(FlextLdapConstants.LdapRetry.SERVER_READY_RETRY_DELAY)
 
-        logger.exception("LDAP server failed to become ready within timeout")
+        logger.error("LDAP server failed to become ready within timeout")
         return False
 
     def setup_test_data(self) -> FlextResult[bool]:
@@ -273,14 +289,12 @@ class LdapTestServer:
             return FlextResult[FlextTypes.StringDict].fail(error_msg)
 
         container_info: ContainerInfo = status_result.value
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "name": container_info["name"],
-                "status": str(container_info["status"]),  # Convert status to string
-                "ports": container_info["ports"],
-                "image": container_info["image"],
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "name": container_info["name"],
+            "status": str(container_info["status"]),  # Convert status to string
+            "ports": container_info["ports"],
+            "image": container_info["image"],
+        })
 
 
 def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:

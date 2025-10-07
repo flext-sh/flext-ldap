@@ -17,12 +17,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from flext_ldap import FlextLdapClients, FlextLdapModels
-from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextTypes
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
 
-from flext_core import FlextTypes
+from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap.constants import FlextLdapConstants
 
 # Integration tests - require flext-ldif and Docker LDAP server
 pytestmark = pytest.mark.integration
@@ -358,17 +358,16 @@ class TestEntryConversion:
         assert "person" in object_classes
 
     def test_ldif_entry_to_ldap_entry_conversion(self) -> None:
-        ldif_entry_result = FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["inetOrgPerson"],
-                    "cn": ["test"],
-                    "sn": ["Test"],
-                    "uid": ["test123"],
-                },
-            }
-        )
+        """Test conversion from LDIF entry to LDAP entry."""
+        ldif_entry_result = FlextLdifModels.Entry.create({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "objectClass": ["inetOrgPerson"],
+                "cn": ["test"],
+                "sn": ["Test"],
+                "uid": ["test123"],
+            },
+        })
 
         assert ldif_entry_result.is_success
         ldif_entry = ldif_entry_result.unwrap()
@@ -405,6 +404,7 @@ class TestAclIntegration:
     """Test ACL integration between flext-ldap and flext-ldif."""
 
     def test_ldif_acl_models_available_in_ldap(self) -> None:
+        """Test that LDIF ACL models are available in LDAP."""
         target_result = FlextLdapModels.AclTarget.create(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
@@ -416,6 +416,7 @@ class TestAclIntegration:
         assert target.dn_pattern == "ou=users,dc=example,dc=com"
 
     def test_ldap_can_use_ldif_acl_parser(self) -> None:
+        """Test that LDAP can use LDIF ACL parser."""
         parser = FlextLdifAclParser()
 
         openldap_acl = "access to attrs=userPassword by self write by anonymous auth"

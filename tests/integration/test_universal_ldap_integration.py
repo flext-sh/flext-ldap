@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels
+
 from flext_ldap import FlextLdap
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.factory import FlextLdapServersFactory
-from flext_ldif import FlextLdifModels
 
 
 @pytest.mark.integration
@@ -49,7 +50,7 @@ class TestUniversalLdapIntegration:
             result = factory.create_from_server_type(server_type)
             assert result.is_success, f"Failed to create {server_type}: {result.error}"
             ops = result.unwrap()
-            assert ops.server_type in [server_type, "openldap2", "generic", "ad"]
+            assert ops.server_type in {server_type, "openldap2", "generic", "ad"}
 
     def test_factory_provides_server_capabilities(
         self, factory: FlextLdapServersFactory
@@ -133,7 +134,7 @@ class TestUniversalLdapIntegration:
 
         # NOTE: FlextLdif quirks doesn't recognize "access" attribute as OpenLDAP 1.x
         # This is expected behavior until quirks are enhanced
-        assert source_type in ["openldap1", "generic"]
+        assert source_type in {"openldap1", "generic"}
 
         # Step 3: Convert to OpenLDAP 2.x
         convert_result = entry_adapter.convert_entry_format(
@@ -208,7 +209,7 @@ class TestUniversalLdapIntegration:
         # NOTE: FlextLdif quirks manager doesn't yet recognize ds-root-dn-user and
         # ds-privilege-name as OUD-specific, so detection returns "generic"
         # This is expected behavior until quirks are registered for OUD attributes
-        assert detected_type in ["oud", "generic"]  # Accept both until quirks enhanced
+        assert detected_type in {"oud", "generic"}  # Accept both until quirks enhanced
 
     def test_api_entry_conversion_without_connection(self, ldap_api: FlextLdap) -> None:
         """Test API entry conversion works without active connection."""

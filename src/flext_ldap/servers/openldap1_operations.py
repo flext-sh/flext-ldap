@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
 
@@ -106,20 +106,16 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
                             if len(parts) == 2:
-                                rules.append(
-                                    {
-                                        "who": parts[0].strip(),
-                                        "access": parts[1].strip(),
-                                    }
-                                )
+                                rules.append({
+                                    "who": parts[0].strip(),
+                                    "access": parts[1].strip(),
+                                })
                             else:
                                 # Handle rule without explicit access level
-                                rules.append(
-                                    {
-                                        "who": rule,
-                                        "access": "read",  # Default
-                                    }
-                                )
+                                rules.append({
+                                    "who": rule,
+                                    "access": "read",  # Default
+                                })
 
                     acl_dict["rules"] = rules
                     # Keep legacy "by" field for backward compatibility

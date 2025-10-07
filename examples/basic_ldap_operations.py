@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import os
 
+from flext_core import FlextLogger, FlextResult
+
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-
-from flext_core import FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 

@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ldap3 import Connection
-from flext_ldif import FlextLdifModels
-
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_ldif import FlextLdifModels
+from ldap3 import Connection
+
 from flext_ldap.models import FlextLdapModels
 
 

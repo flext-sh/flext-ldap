@@ -13,14 +13,14 @@ from typing import cast
 from uuid import uuid4
 
 import pytest
+from flext_core import FlextResult, FlextTypes
+from pydantic import SecretStr
+
 from flext_ldap import (
     FlextLdapClients,
     FlextLdapModels,
 )
 from flext_ldap.constants import FlextLdapConstants
-from pydantic import SecretStr
-
-from flext_core import FlextResult, FlextTypes
 
 # Skip all integration tests when LDAP server is not available
 pytestmark = pytest.mark.integration

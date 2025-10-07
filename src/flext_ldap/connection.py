@@ -16,14 +16,13 @@ from __future__ import annotations
 
 from typing import Literal
 
-from ldap3 import Connection, Server
-
 from flext_core import (
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
 )
+from ldap3 import Connection, Server
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers import BaseServerOperations
@@ -52,14 +51,14 @@ class FlextLdapConnection(FlextService[None]):
     """
 
     def __init__(self) -> None:
-        """Initialize LDAP connection manager."""
+        """Initialize LDAP connection manager with Phase 1 context enrichment."""
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._connection: Connection | None = None
         self._server: Server | None = None
-        self._server_operations_factory = FlextLdapServersFactory()
-        self._server_operations: BaseServerOperations | None = None
-        self._detected_server_type: str | None = None
+        self.server_operations_factory = FlextLdapServersFactory()
+        self.server_operations: BaseServerOperations | None = None
+        self.detected_server_type: str | None = None
 
     @classmethod
     def create(cls) -> FlextLdapConnection:
@@ -129,12 +128,12 @@ class FlextLdapConnection(FlextService[None]):
                     FlextLdapConstants.LiteralTypes.CONNECTION_INFO_NO_INFO,
                     FlextLdapConstants.LiteralTypes.CONNECTION_INFO_SCHEMA,
                 ]
-                if isinstance(get_info_value, str) and get_info_value in (
+                if isinstance(get_info_value, str) and get_info_value in {
                     "NO_INFO",
                     "DSA",
                     "SCHEMA",
                     "ALL",
-                ):
+                }:
                     get_info = get_info_value  # Narrowed by isinstance and in check
                 else:
                     get_info = "DSA"
@@ -148,13 +147,13 @@ class FlextLdapConnection(FlextService[None]):
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
                 ]
-                if isinstance(mode_value, str) and mode_value in (
+                if isinstance(mode_value, str) and mode_value in {
                     FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V4_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V4_PREFERRED,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
-                ):
+                }:
                     mode = mode_value  # Narrowed by isinstance and in check
                 else:
                     mode = FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT
@@ -180,19 +179,19 @@ class FlextLdapConnection(FlextService[None]):
             self.logger.info("Successfully connected to LDAP server")
 
             # Auto-detect server type and create server operations instance
-            detection_result = self._server_operations_factory.create_from_connection(
+            detection_result = self.server_operations_factory.create_from_connection(
                 self._connection
             )
             if detection_result.is_success:
-                self._server_operations = detection_result.unwrap()
-                self._detected_server_type = (
-                    self._server_operations.server_type
-                    if self._server_operations
+                self.server_operations = detection_result.unwrap()
+                self.detected_server_type = (
+                    self.server_operations.server_type
+                    if self.server_operations
                     else None
                 )
                 self.logger.info(
                     "Auto-detected LDAP server type: %s",
-                    self._detected_server_type,
+                    self.detected_server_type,
                 )
             else:
                 self.logger.warning(
@@ -200,12 +199,12 @@ class FlextLdapConnection(FlextService[None]):
                     detection_result.error,
                 )
                 # Fallback to generic server operations
-                generic_result = (
-                    self._server_operations_factory.create_from_server_type("generic")
+                generic_result = self.server_operations_factory.create_from_server_type(
+                    "generic"
                 )
                 if generic_result.is_success:
-                    self._server_operations = generic_result.unwrap()
-                    self._detected_server_type = "generic"
+                    self.server_operations = generic_result.unwrap()
+                    self.detected_server_type = "generic"
 
             # Perform schema discovery if requested
             if auto_discover_schema:
@@ -364,7 +363,9 @@ class FlextLdapConnection(FlextService[None]):
 
         Examples:
             >>> client = FlextLdapConnection()
-            >>> result = client("ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password")
+            >>> result = client(
+            ...     "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password"
+            ... )
             >>> if result.is_success:
             ...     print("Connected successfully")
 

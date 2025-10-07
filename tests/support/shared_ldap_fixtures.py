@@ -10,8 +10,8 @@ from collections.abc import Callable
 from typing import Protocol, cast
 
 import pytest
-# from flext_tests import FlextTestDocker  # TODO: Import when available
 
+# from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
 from flext_core import FlextResult
 
 

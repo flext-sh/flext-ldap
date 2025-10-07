@@ -42,7 +42,7 @@ class FlextLdapAclConverters:
         """Convert OpenLDAP ACLs to other formats."""
 
         @staticmethod
-        def to_microsoft_ad(acl_content: str | None) -> FlextResult[str]:
+        def to_microsoft_ad(_acl_content: str | None) -> FlextResult[str]:
             """Convert OpenLDAP ACL to Microsoft Active Directory format.
 
             Note: Not implemented. Requires OpenLDAP ACL parser and AD ACL generator.
@@ -52,7 +52,7 @@ class FlextLdapAclConverters:
             )
 
         @staticmethod
-        def to_oracle(acl_content: str | None) -> FlextResult[str]:
+        def to_oracle(_acl_content: str | None) -> FlextResult[str]:
             """Convert OpenLDAP ACL to Oracle format.
 
             Note: Not implemented. Requires OpenLDAP ACL parser and Oracle ACL generator.
@@ -65,7 +65,7 @@ class FlextLdapAclConverters:
         """Convert Microsoft Active Directory ACLs to other formats."""
 
         @staticmethod
-        def to_openldap(acl_content: str | None) -> FlextResult[str]:
+        def to_openldap(_acl_content: str | None) -> FlextResult[str]:
             """Convert Microsoft AD ACL to OpenLDAP format.
 
             Note: Not implemented. Requires AD ACL parser and OpenLDAP ACL generator.
@@ -75,7 +75,7 @@ class FlextLdapAclConverters:
             )
 
         @staticmethod
-        def to_oracle(acl_content: str | None) -> FlextResult[str]:
+        def to_oracle(_acl_content: str | None) -> FlextResult[str]:
             """Convert Microsoft AD ACL to Oracle format.
 
             Note: Not implemented. Requires AD ACL parser and Oracle ACL generator.
@@ -88,7 +88,7 @@ class FlextLdapAclConverters:
         """Convert Oracle ACLs to other formats."""
 
         @staticmethod
-        def to_openldap(acl_content: str | None) -> FlextResult[str]:
+        def to_openldap(_acl_content: str | None) -> FlextResult[str]:
             """Convert Oracle ACL to OpenLDAP format.
 
             Note: Not implemented. Requires Oracle ACL parser and OpenLDAP ACL generator.
@@ -98,7 +98,7 @@ class FlextLdapAclConverters:
             )
 
         @staticmethod
-        def to_microsoft_ad(acl_content: str | None) -> FlextResult[str]:
+        def to_microsoft_ad(_acl_content: str | None) -> FlextResult[str]:
             """Convert Oracle ACL to Microsoft AD format.
 
             Note: Not implemented. Requires Oracle ACL parser and AD ACL generator.

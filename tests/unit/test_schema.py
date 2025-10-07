@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextResult
+
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.schema import FlextLdapSchema
-
-from flext_core import FlextResult
 
 
 class TestFlextLdapSchema:

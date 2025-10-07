@@ -13,6 +13,8 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
+from flext_core import FlextResult, FlextTypes
+
 from flext_ldap import (
     FlextLdapConstants,
     FlextLdapModels,
@@ -22,8 +24,6 @@ from flext_ldap.acl import (
     FlextLdapAclManager,
     FlextLdapAclParsers,
 )
-
-from flext_core import FlextResult, FlextTypes
 
 
 class TestFlextLdapConstants:
@@ -1700,13 +1700,11 @@ class TestFlextLdapAclManagerComprehensive:
         """Test handle method exception handling."""
         manager = FlextLdapAclManager()
         # Mock an exception by passing invalid data that will cause an error
-        result = manager.handle(
-            {
-                "operation": "parse",
-                "acl_string": None,
-                "format": "openldap",
-            }
-        )
+        result = manager.handle({
+            "operation": "parse",
+            "acl_string": None,
+            "format": "openldap",
+        })
         assert result.is_failure
         assert result.error is not None
         assert (

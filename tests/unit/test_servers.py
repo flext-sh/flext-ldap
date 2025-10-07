@@ -12,6 +12,8 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+from flext_ldif import FlextLdifModels
+
 from flext_ldap.servers.ad_operations import FlextLdapServersADOperations
 from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
@@ -19,7 +21,6 @@ from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 from flext_ldap.servers.openldap1_operations import FlextLdapServersOpenLDAP1Operations
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
-from flext_ldif import FlextLdifModels
 
 
 class TestFlextLdapServersFactory:
@@ -309,7 +310,7 @@ class TestFlextLdapServersFactory:
 
         # NOTE: FlextLdif quirks manager doesn't recognize AD attributes like objectGUID
         # This is expected behavior until quirks are enhanced for Active Directory
-        assert ops.server_type in ["ad", "generic"]  # Accept both until quirks enhanced
+        assert ops.server_type in {"ad", "generic"}  # Accept both until quirks enhanced
         if ops.server_type == "ad":
             assert isinstance(ops, FlextLdapServersADOperations)
         else:

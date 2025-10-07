@@ -11,9 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Literal
+from collections.abc import Callable
+from typing import Any, Literal
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
+
 from flext_ldap.models import FlextLdapModels
 
 logger = FlextLogger(__name__)
@@ -31,7 +33,7 @@ class FlextLdapAdapters:
         """Adapter for converting between ldap3 entries and domain entities."""
 
         @staticmethod
-        def entry_to_domain(entry: Any) -> FlextResult[FlextLdapModels.Entry]:
+        def entry_to_domain(entry: object) -> FlextResult[FlextLdapModels.Entry]:
             """Convert ldap3 Entry to domain Entry entity.
 
             Args:
@@ -57,7 +59,9 @@ class FlextLdapAdapters:
                 return FlextResult[FlextLdapModels.Entry].ok(domain_entry)
 
             except Exception as e:
-                logger.error("Failed to convert ldap3 entry to domain", error=str(e))
+                logger.exception(
+                    "Failed to convert ldap3 entry to domain", error=str(e)
+                )
                 return FlextResult[FlextLdapModels.Entry].fail(
                     f"Entry conversion failed: {e}"
                 )
@@ -92,7 +96,9 @@ class FlextLdapAdapters:
                 return FlextResult[list[FlextLdapModels.Entry]].ok(domain_entries)
 
             except Exception as e:
-                logger.error("Failed to convert ldap3 entries to domain", error=str(e))
+                logger.exception(
+                    "Failed to convert ldap3 entries to domain", error=str(e)
+                )
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
                     f"Entries conversion failed: {e}"
                 )
@@ -183,7 +189,9 @@ class FlextLdapAdapters:
                 return FlextResult[FlextLdapModels.SearchResponse].ok(response)
 
             except Exception as e:
-                logger.error("Failed to convert ldap3 response to domain", error=str(e))
+                logger.exception(
+                    "Failed to convert ldap3 response to domain", error=str(e)
+                )
                 return FlextResult[FlextLdapModels.SearchResponse].fail(
                     f"Response conversion failed: {e}"
                 )
@@ -241,7 +249,7 @@ class FlextLdapAdapters:
                 return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
-                logger.error("Connection parameter validation failed", error=str(e))
+                logger.exception("Connection parameter validation failed", error=str(e))
                 return FlextResult[FlextTypes.Dict].fail(
                     f"Parameter validation failed: {e}"
                 )
@@ -291,7 +299,7 @@ class FlextLdapAdapters:
                 return FlextResult[FlextTypes.Dict].ok(dict(config))
 
             except Exception as e:
-                logger.error("Connection config creation failed", error=str(e))
+                logger.exception("Connection config creation failed", error=str(e))
                 return FlextResult[FlextTypes.Dict].fail(f"Config creation failed: {e}")
 
     class Ldap3ModifyAdapter:
@@ -334,7 +342,7 @@ class FlextLdapAdapters:
                 return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
-                logger.error("Add operation preparation failed", error=str(e))
+                logger.exception("Add operation preparation failed", error=str(e))
                 return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
         @staticmethod
@@ -389,7 +397,7 @@ class FlextLdapAdapters:
                 return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
-                logger.error("Modify operation preparation failed", error=str(e))
+                logger.exception("Modify operation preparation failed", error=str(e))
                 return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
         @staticmethod
@@ -416,7 +424,7 @@ class FlextLdapAdapters:
                 return FlextResult[FlextTypes.Dict].ok(dict(params))
 
             except Exception as e:
-                logger.error("Delete operation preparation failed", error=str(e))
+                logger.exception("Delete operation preparation failed", error=str(e))
                 return FlextResult[FlextTypes.Dict].fail(f"Preparation failed: {e}")
 
     class Ldap3ErrorAdapter:
@@ -463,7 +471,7 @@ class FlextLdapAdapters:
                 return f"Directory operation failed: {exc_msg}"
 
             except Exception as e:
-                logger.error("Error adaptation failed", error=str(e))
+                logger.exception("Error adaptation failed", error=str(e))
                 return "An unexpected error occurred during directory operation"
 
         @staticmethod
@@ -523,7 +531,7 @@ class FlextLdapAdapters:
         """Adapter for monitoring ldap3 operation performance."""
 
         @staticmethod
-        def measure_operation_time(operation_func: Callable, *args, **kwargs) -> tuple:
+        def measure_operation_time(operation_func: Callable, *args, **kwargs: dict[str, Any]) -> tuple:
             """Measure execution time of an ldap3 operation.
 
             Args:
@@ -541,9 +549,9 @@ class FlextLdapAdapters:
                 result = operation_func(*args, **kwargs)
                 execution_time = time.time() - start_time
                 return result, execution_time
-            except Exception as e:
+            except Exception:
                 execution_time = time.time() - start_time
-                raise e
+                raise
 
         @staticmethod
         def log_operation_metrics(

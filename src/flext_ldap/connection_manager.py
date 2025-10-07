@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+from flext_core import FlextResult, FlextTypes
 from ldap3 import Connection, Server
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
@@ -40,6 +40,7 @@ class FlextLdapConnectionManager:
 
         Args:
             parent: Parent FlextLdapClients instance for shared state access.
+
         """
         self._parent = parent
         self._connection: Connection | None = None
@@ -108,12 +109,12 @@ class FlextLdapConnectionManager:
                     FlextLdapConstants.LiteralTypes.CONNECTION_INFO_NO_INFO,
                     FlextLdapConstants.LiteralTypes.CONNECTION_INFO_SCHEMA,
                 ]
-                if isinstance(get_info_value, str) and get_info_value in (
+                if isinstance(get_info_value, str) and get_info_value in {
                     "NO_INFO",
                     "DSA",
                     "SCHEMA",
                     "ALL",
-                ):
+                }:
                     get_info = get_info_value  # Narrowed by isinstance and in check
                 else:
                     get_info = "DSA"
@@ -127,13 +128,13 @@ class FlextLdapConnectionManager:
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
                 ]
-                if isinstance(mode_value, str) and mode_value in (
+                if isinstance(mode_value, str) and mode_value in {
                     FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V4_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_ONLY,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V4_PREFERRED,
                     FlextLdapConstants.LiteralTypes.IP_MODE_V6_PREFERRED,
-                ):
+                }:
                     mode = mode_value  # Narrowed by isinstance and in check
                 else:
                     mode = FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT
@@ -160,20 +161,20 @@ class FlextLdapConnectionManager:
 
             # Auto-detect server type and create server operations instance
             detection_result = (
-                self._parent._server_operations_factory.create_from_connection(
+                self._parent.server_operations_factory.create_from_connection(
                     self._connection
                 )
             )
             if detection_result.is_success:
-                self._parent._server_operations = detection_result.unwrap()
-                self._parent._detected_server_type = (
-                    self._parent._server_operations.server_type
-                    if self._parent._server_operations
+                self._parent.server_operations = detection_result.unwrap()
+                self._parent.detected_server_type = (
+                    self._parent.server_operations.server_type
+                    if self._parent.server_operations
                     else None
                 )
                 self._parent.logger.info(
                     "Auto-detected LDAP server type: %s",
-                    self._parent._detected_server_type,
+                    self._parent.detected_server_type,
                 )
             else:
                 self._parent.logger.warning(
@@ -182,13 +183,13 @@ class FlextLdapConnectionManager:
                 )
                 # Fallback to generic server operations
                 generic_result = (
-                    self._parent._server_operations_factory.create_from_server_type(
+                    self._parent.server_operations_factory.create_from_server_type(
                         "generic"
                     )
                 )
                 if generic_result.is_success:
-                    self._parent._server_operations = generic_result.unwrap()
-                    self._parent._detected_server_type = "generic"
+                    self._parent.server_operations = generic_result.unwrap()
+                    self._parent.detected_server_type = "generic"
 
             # Perform schema discovery if requested
             if auto_discover_schema:
@@ -330,9 +331,9 @@ class FlextLdapConnectionManager:
             port = self._server.port
             return FlextResult[str].ok(f"{protocol}://{host}:{port}")
 
-        if self._parent._config and hasattr(self._parent._config, "server_uri"):
+        if self._parent.config and hasattr(self._parent.config, "server_uri"):
             # Return config URI (should already be sanitized)
-            return FlextResult[str].ok(str(self._parent._config.server_uri))
+            return FlextResult[str].ok(str(self._parent.config.server_uri))
 
         return FlextResult[str].ok("ldap://not-connected")
 

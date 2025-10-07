@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import os
 
+from flext_core import FlextConstants, FlextResult
+
 from flext_ldap import (
     FlextLdapClients,
     FlextLdapConstants,
     FlextLdapModels,
     FlextLdapTypes,
 )
-
-from flext_core import FlextConstants, FlextResult
 
 
 def main() -> None:

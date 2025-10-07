@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from flext_ldap.utilities import FlextLdapUtilities
-
 from flext_core import FlextTypes
+
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class TestFlextLdapUtilities:
@@ -255,6 +255,7 @@ class TestFlextLdapUtilitiesLdapTypeGuards:
     def test_ensure_ldap_dn_error_not_string(self) -> None:
         """Test LDAP DN validation with non-string."""
         import pytest
+
         from flext_ldap.exceptions import FlextLdapExceptions
 
         with pytest.raises(
@@ -373,9 +374,9 @@ class TestFlextLdapUtilitiesLdapTypeGuards:
             FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict({"key": 123}) is False
         )
         assert (
-            FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict(
-                {"key": {"nested": "dict"}}
-            )
+            FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict({
+                "key": {"nested": "dict"}
+            })
             is False
         )
 
@@ -638,7 +639,7 @@ class TestFlextLdapUtilitiesConversion:
         }
         result = FlextLdapUtilities.Conversion.dict_to_attributes(data)
         assert result.is_success
-        names, values = result.data
+        names, _values = result.data
         assert len(names) == 2
         assert "cn" in names
         assert "mail" in names

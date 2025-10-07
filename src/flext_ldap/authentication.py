@@ -14,17 +14,15 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from ldap3 import SUBTREE
-
 from flext_core import (
     FlextResult,
     FlextService,
 )
+from ldap3 import SUBTREE, Connection, Server
+
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.typings import FlextLdapTypes
-
-from ldap3 import Connection, Server
 
 
 class FlextLdapAuthentication(FlextService[None]):

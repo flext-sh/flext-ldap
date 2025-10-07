@@ -14,16 +14,21 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 from flext_core import (
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
 )
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
+
+if TYPE_CHECKING:
+    from ldap3 import Connection
 
 
 class FlextLdapSearch(FlextService[None]):
@@ -46,23 +51,24 @@ class FlextLdapSearch(FlextService[None]):
     """
 
     def __init__(self, parent: object = None) -> None:
-        """Initialize LDAP search service.
+        """Initialize LDAP search service with Phase 1 context enrichment.
 
         Args:
             parent: Optional parent client for shared state access
+
         """
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._parent = parent
         # These will be set by the client that uses this service
-        self._connection = None
+        self._connection: Connection | None = None
 
     @classmethod
     def create(cls) -> FlextLdapSearch:
         """Create a new FlextLdapSearch instance (factory method)."""
         return cls()
 
-    def set_connection_context(self, connection: object) -> None:
+    def set_connection_context(self, connection: Connection) -> None:
         """Set the connection context for search operations.
 
         Args:
@@ -192,7 +198,9 @@ class FlextLdapSearch(FlextService[None]):
                 # Create Entry model instance
                 entry_model = FlextLdapModels.Entry(
                     dn=str(entry.dn),
-                    attributes=entry_attributes_dict,
+                    attributes=cast(
+                        "dict[str, str | list[str]]", entry_attributes_dict
+                    ),
                     object_classes=object_classes,
                 )
                 entries.append(entry_model)
@@ -299,7 +307,7 @@ class FlextLdapSearch(FlextService[None]):
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
-            self.logger.exception("Get user failed for DN %s", dn)
+            self.logger.error(f"Get user failed for DN {dn}: {e}", exc_info=True)
             return FlextResult[FlextLdapModels.LdapUser | None].fail(
                 f"Get user failed: {e}",
             )
@@ -377,13 +385,16 @@ class FlextLdapSearch(FlextService[None]):
             description=getattr(entry, "description", [""])[0]
             if hasattr(entry, "description")
             else "",
-            members=getattr(entry, "member", []) if hasattr(entry, "member") else [],
+            member_dns=getattr(entry, "member", []) if hasattr(entry, "member") else [],
         )
 
-    def _get_connection(self) -> object | None:
+    def _get_connection(self) -> Connection | None:
         """Get the LDAP connection from parent or direct context."""
         if self._parent and hasattr(self._parent, "_connection"):
-            return self._parent._connection
+            parent_connection: Connection | None = getattr(
+                self._parent, "_connection", None
+            )
+            return parent_connection
         return self._connection
 
     def execute(self) -> FlextResult[None]:

@@ -32,7 +32,7 @@ class TestFixtures:
                     f"Fixture file not found: {filename}"
                 )
 
-            with Path(filepath).open() as f:
+            with Path(filepath).open(encoding="utf-8") as f:
                 data = json.load(f)
 
             if not isinstance(data, list):
@@ -54,7 +54,7 @@ class TestFixtures:
             if not filepath.exists():
                 return FlextResult[str].fail(f"Fixture file not found: {filename}")
 
-            with Path(filepath).open() as f:
+            with Path(filepath).open(encoding="utf-8") as f:
                 content = f.read()
 
             return FlextResult[str].ok(content)
@@ -69,7 +69,7 @@ class TestFixtures:
             if not filepath.exists():
                 return FlextResult[FlextTypes.Dict].fail("Docker config file not found")
 
-            with Path(filepath).open() as f:
+            with Path(filepath).open(encoding="utf-8") as f:
                 config = json.load(f)
 
             return FlextResult[FlextTypes.Dict].ok(config)

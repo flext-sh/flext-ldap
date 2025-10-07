@@ -13,14 +13,14 @@ import threading
 import time
 
 import pytest
+from flext_core import FlextResult
+from pydantic import SecretStr
+
 from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
     FlextLdapConstants,
 )
-from pydantic import SecretStr
-
-from flext_core import FlextResult
 
 
 @pytest.mark.unit
@@ -496,7 +496,7 @@ class TestFlextLdapComprehensive:
     def test_api_integration_with_flext_tests(self) -> None:
         """Test API integration with flext_tests factories."""
         # Use flext_tests factories to create test data
-        # FlextTestsFactories.create_realistic_test_data()  # TODO: Use when available
+        # FlextTestsFactories.create_realistic_test_data()  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Use when available
 
         api = FlextLdap()
 

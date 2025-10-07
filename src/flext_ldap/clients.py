@@ -13,29 +13,27 @@ from __future__ import annotations
 
 from typing import override
 
-from ldap3 import Connection
-
 from flext_core import (
     FlextResult,
     FlextService,
     FlextTypes,
 )
+from ldap3 import Connection
+
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.models import FlextLdapModels
 
 # Use protocols to avoid circular imports
 from flext_ldap.protocols import FlextLdapProtocols
-
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.validations import FlextLdapValidations
-
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
 )
 from flext_ldap.servers.factory import (
     FlextLdapServersFactory as ServerOperationsFactory,
 )
+from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdapClients(FlextService[None]):
@@ -74,12 +72,12 @@ class FlextLdapClients(FlextService[None]):
         super().__init__()
 
         # Core configuration and logging
-        self._config = config
+        self.config = config
 
         # Server operations for advanced features
-        self._server_operations_factory = ServerOperationsFactory()
-        self._server_operations: BaseServerOperations | None = None
-        self._detected_server_type: str | None = None
+        self.server_operations_factory = ServerOperationsFactory()
+        self.server_operations: BaseServerOperations | None = None
+        self.detected_server_type: str | None = None
 
         # Search scope constant (used by searcher)
         self._search_scope = FlextLdapTypes.SUBTREE
@@ -111,9 +109,9 @@ class FlextLdapClients(FlextService[None]):
         return self._searcher
 
     @property
-    def _connection(self) -> Connection | None:
+    def connection(self) -> Connection | None:
         """Get the current LDAP connection from the connection manager."""
-        return self._get_connection_manager()._connection
+        return self._get_connection_manager().connection
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -232,7 +230,7 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Convert attributes to ldap3 format
@@ -243,13 +241,12 @@ class FlextLdapClients(FlextService[None]):
                 else:
                     ldap3_attributes[key] = [str(value)]
 
-            success = self._connection.add(dn, attributes=ldap3_attributes)
+            success = self.connection.add(dn, attributes=ldap3_attributes)
             if success:
                 return FlextResult[bool].ok(True)
-            else:
-                return FlextResult[bool].fail(
-                    f"Add entry failed: {self._connection.last_error}"
-                )
+            return FlextResult[bool].fail(
+                f"Add entry failed: {self.connection.last_error}"
+            )
 
         except Exception as e:
             self.logger.exception("Add entry failed")
@@ -258,7 +255,7 @@ class FlextLdapClients(FlextService[None]):
     def modify_entry(self, dn: str, changes: FlextTypes.Dict) -> FlextResult[bool]:
         """Modify existing LDAP entry - implements LdapModifyProtocol."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Convert changes to ldap3 format
@@ -271,13 +268,12 @@ class FlextLdapClients(FlextService[None]):
                     # Simple replace operation
                     ldap3_changes[attr] = [("MODIFY_REPLACE", change_spec)]
 
-            success = self._connection.modify(dn, changes=ldap3_changes)
+            success = self.connection.modify(dn, changes=ldap3_changes)
             if success:
                 return FlextResult[bool].ok(True)
-            else:
-                return FlextResult[bool].fail(
-                    f"Modify entry failed: {self._connection.last_error}"
-                )
+            return FlextResult[bool].fail(
+                f"Modify entry failed: {self.connection.last_error}"
+            )
 
         except Exception as e:
             self.logger.exception("Modify entry failed")
@@ -286,16 +282,15 @@ class FlextLdapClients(FlextService[None]):
     def delete_entry(self, dn: str) -> FlextResult[bool]:
         """Delete LDAP entry - implements LdapModifyProtocol."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
 
-            success = self._connection.delete(dn)
+            success = self.connection.delete(dn)
             if success:
                 return FlextResult[bool].ok(True)
-            else:
-                return FlextResult[bool].fail(
-                    f"Delete entry failed: {self._connection.last_error}"
-                )
+            return FlextResult[bool].fail(
+                f"Delete entry failed: {self.connection.last_error}"
+            )
 
         except Exception as e:
             self.logger.exception("Delete entry failed")
@@ -345,7 +340,7 @@ class FlextLdapClients(FlextService[None]):
     def discover_schema(self) -> FlextResult[FlextTypes.Dict]:
         """Discover LDAP schema information."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[FlextTypes.Dict].fail(
                     "LDAP connection not established"
                 )
@@ -353,8 +348,8 @@ class FlextLdapClients(FlextService[None]):
             # Refresh schema
             # Note: refresh_schema() and schema are valid ldap3.Connection attributes
             # but not in types-ldap3 stubs (type: ignore needed for incomplete stubs)
-            self._connection.refresh_schema()
-            schema = self._connection.schema
+            self.connection.refresh_schema()
+            schema = self.connection.schema
 
             if not schema:
                 return FlextResult[FlextTypes.Dict].fail("No schema available")
@@ -387,38 +382,38 @@ class FlextLdapClients(FlextService[None]):
 
     def normalize_attribute_name(self, attribute_name: str) -> str:
         """Normalize LDAP attribute name according to server-specific conventions."""
-        if not self._server_operations:
+        if not self.server_operations:
             return attribute_name.lower()
-        return self._server_operations.normalize_attribute_name(attribute_name)
+        return self.server_operations.normalize_attribute_name(attribute_name)
 
     def normalize_object_class(self, object_class: str) -> str:
         """Normalize LDAP object class name according to server-specific conventions."""
-        if not self._server_operations:
+        if not self.server_operations:
             return object_class.lower()
-        return self._server_operations.normalize_object_class(object_class)
+        return self.server_operations.normalize_object_class(object_class)
 
     def normalize_dn(self, dn: str) -> str:
         """Normalize distinguished name according to server-specific conventions."""
-        if not self._server_operations:
+        if not self.server_operations:
             return dn
-        return self._server_operations.normalize_dn(dn)
+        return self.server_operations.normalize_dn(dn)
 
     def get_server_info(self) -> FlextResult[FlextTypes.Dict]:
         """Get comprehensive server information including capabilities and schema."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[FlextTypes.Dict].fail("Not connected to LDAP server")
 
-            server_info = self._connection.server.info
+            server_info = self.connection.server.info
             if not server_info:
                 return FlextResult[FlextTypes.Dict].fail("Server info not available")
 
             # Convert server info to dictionary
             info_dict = {
                 "server_type": getattr(
-                    self._detected_server_type, "value", str(self._detected_server_type)
+                    self.detected_server_type, "value", str(self.detected_server_type)
                 )
-                if self._detected_server_type
+                if self.detected_server_type
                 else "unknown",
                 "vendor_name": getattr(server_info, "vendor_name", {}).get(
                     "value", "Unknown"
@@ -454,25 +449,25 @@ class FlextLdapClients(FlextService[None]):
     def get_server_capabilities(self) -> FlextResult[FlextTypes.Dict]:
         """Get server capabilities and supported features."""
         try:
-            if not self._server_operations:
+            if not self.server_operations:
                 return FlextResult[FlextTypes.Dict].fail(
                     "Server operations not available"
                 )
 
             capabilities = {
-                "server_type": self._server_operations.server_type,
-                "acl_format": self._server_operations.get_acl_format(),
-                "acl_attribute": self._server_operations.get_acl_attribute_name(),
-                "schema_dn": self._server_operations.get_schema_dn(),
-                "default_port": self._server_operations.get_default_port(use_ssl=False),
-                "default_ssl_port": self._server_operations.get_default_port(
+                "server_type": self.server_operations.server_type,
+                "acl_format": self.server_operations.get_acl_format(),
+                "acl_attribute": self.server_operations.get_acl_attribute_name(),
+                "schema_dn": self.server_operations.get_schema_dn(),
+                "default_port": self.server_operations.get_default_port(use_ssl=False),
+                "default_ssl_port": self.server_operations.get_default_port(
                     use_ssl=True
                 ),
-                "supports_start_tls": self._server_operations.supports_start_tls(),
-                "bind_mechanisms": self._server_operations.get_bind_mechanisms(),
-                "max_page_size": self._server_operations.get_max_page_size(),
-                "supports_paged_results": self._server_operations.supports_paged_results(),
-                "supports_vlv": self._server_operations.supports_vlv(),
+                "supports_start_tls": self.server_operations.supports_start_tls(),
+                "bind_mechanisms": self.server_operations.get_bind_mechanisms(),
+                "max_page_size": self.server_operations.get_max_page_size(),
+                "supports_paged_results": self.server_operations.supports_paged_results(),
+                "supports_vlv": self.server_operations.supports_vlv(),
             }
 
             return FlextResult[FlextTypes.Dict].ok(capabilities)
@@ -492,18 +487,18 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[list]:
         """Universal search with automatic server-specific optimization."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[list].fail("Not connected to LDAP server")
 
-            if not self._server_operations:
+            if not self.server_operations:
                 # Fall back to basic search
                 return self.search(base_dn, filter_str, attributes)
 
             # Use server-specific search with paging if supported
-            if use_paging and self._server_operations.supports_paged_results():
-                page_size = min(100, self._server_operations.get_max_page_size())
-                return self._server_operations.search_with_paging(
-                    connection=self._connection,
+            if use_paging and self.server_operations.supports_paged_results():
+                page_size = min(100, self.server_operations.get_max_page_size())
+                return self.server_operations.search_with_paging(
+                    connection=self.connection,
                     base_dn=base_dn,
                     search_filter=filter_str,
                     attributes=attributes,
@@ -526,7 +521,7 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[list]:
         """Universal search with LDAP controls."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[list].fail("Not connected to LDAP server")
 
             # For now, delegate to regular search - controls support can be added later
@@ -558,10 +553,10 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[bool]:
         """Universal compare operation."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[bool].fail("Not connected to LDAP server")
 
-            result = self._connection.compare(dn, attribute, value)
+            result = self.connection.compare(dn, attribute, value)
             if result is None:
                 return FlextResult[bool].fail("Compare operation failed")
 
@@ -575,10 +570,10 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[object]:
         """Universal extended operation."""
         try:
-            if not self._connection:
+            if not self.connection:
                 return FlextResult[object].fail("Not connected to LDAP server")
 
-            result = self._connection.extended(request_name, request_value)
+            result = self.connection.extended(request_name, request_value)
             if result is None:
                 return FlextResult[object].fail("Extended operation failed")
 
@@ -615,7 +610,7 @@ class FlextLdapClients(FlextService[None]):
                 group = self._create_group_from_entry(entry)
                 groups.append(group)
             except Exception as e:
-                self.logger.error("Failed to convert entry to group", error=str(e))
+                self.logger.exception("Failed to convert entry to group", error=str(e))
                 continue
 
         return FlextResult[list[FlextLdapModels.Group]].ok(groups)
@@ -667,21 +662,21 @@ class FlextLdapClients(FlextService[None]):
     @property
     def server_operations(self) -> BaseServerOperations | None:
         """Get the server operations instance."""
-        return self._server_operations
+        return self.server_operations
 
     def get_server_type(self) -> str | None:
         """Get detected server type."""
-        return self._detected_server_type
+        return self.detected_server_type
 
     def get_server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
         """Get server quirks for detected server type."""
-        if not self._detected_server_type:
+        if not self.detected_server_type:
             return None
         # Create server quirks based on detected type
         return FlextLdapModels.ServerQuirks(
-            case_sensitive_dns=self._detected_server_type in ["ad"],
-            case_sensitive_attributes=self._detected_server_type in ["ad"],
-            supports_paged_results=self._detected_server_type not in ["openldap1"],
-            supports_vlv=self._detected_server_type in ["oud", "oid"],
-            max_page_size=1000 if self._detected_server_type != "ad" else 100000,
+            case_sensitive_dns=self.detected_server_type == "ad",
+            case_sensitive_attributes=self.detected_server_type == "ad",
+            supports_paged_results=self.detected_server_type != "openldap1",
+            supports_vlv=self.detected_server_type in {"oud", "oid"},
+            max_page_size=1000 if self.detected_server_type != "ad" else 100000,
         )

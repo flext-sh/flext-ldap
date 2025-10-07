@@ -11,14 +11,14 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from typing import Literal, cast
 
-from flext_ldap import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_ldap import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 logger = FlextLogger(__name__)
 
