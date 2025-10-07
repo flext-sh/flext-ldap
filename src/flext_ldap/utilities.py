@@ -27,108 +27,16 @@ class FlextLdapUtilities(FlextUtilities):
 
     This class extends the base FlextUtilities with LDAP-specific utility functions,
     type guards, and domain-specific processing following FLEXT domain separation patterns.
+
+    **USAGE**: Access nested classes directly (e.g., FlextLdapUtilities.Processing.normalize_dn())
+    **NO WRAPPERS**: Convenience method wrappers removed - use nested classes directly per FLEXT standards
     """
-
-    # =========================================================================
-    # CONVENIENCE METHODS - Direct access to nested class functionality
-    # =========================================================================
-
-    @staticmethod
-    def normalize_dn(dn: str) -> FlextResult[str]:
-        """Normalize LDAP DN by removing extra spaces."""
-        return FlextLdapUtilities.Processing.normalize_dn(dn)
-
-    @staticmethod
-    def normalize_filter(filter_str: str) -> FlextResult[str]:
-        """Normalize LDAP filter by removing extra spaces."""
-        return FlextLdapUtilities.Processing.normalize_filter(filter_str)
-
-    @staticmethod
-    def normalize_attributes(
-        attributes: FlextTypes.StringList,
-    ) -> FlextResult[FlextTypes.StringList]:
-        """Normalize LDAP attributes list by removing empty values."""
-        return FlextLdapUtilities.Processing.normalize_attributes(attributes)
-
-    @staticmethod
-    def normalize_attribute_name(attribute_name: str) -> str:
-        """Normalize LDAP attribute name by removing extra spaces."""
-        return FlextLdapUtilities.Processing.normalize_attribute_name(attribute_name)
-
-    @staticmethod
-    def normalize_object_class(object_class: str) -> str:
-        """Normalize LDAP object class name by removing extra spaces."""
-        return FlextLdapUtilities.Processing.normalize_object_class(object_class)
-
-    @staticmethod
-    def is_ldap_dn(value: object) -> bool:
-        """Check if value is a valid LDAP DN."""
-        return FlextLdapUtilities.TypeGuards.is_ldap_dn(value)
-
-    @staticmethod
-    def is_ldap_filter(value: object) -> bool:
-        """Check if value is a valid LDAP filter."""
-        if not isinstance(value, str):
-            return False
-        # Basic filter validation
-        return bool(value.strip() and ("=" in value or value.startswith("(")))
-
-    @staticmethod
-    def is_string_list(value: object) -> bool:
-        """Check if value is a list of strings."""
-        return FlextLdapUtilities.TypeGuards.is_string_list(value)
-
-    @staticmethod
-    def is_bytes_list(value: object) -> bool:
-        """Check if value is a list of bytes."""
-        return FlextLdapUtilities.TypeGuards.is_bytes_list(value)
-
-    @staticmethod
-    def is_ldap_attribute_value(value: object) -> bool:
-        """Check if value is a valid LDAP attribute value."""
-        return FlextLdapUtilities.TypeGuards.is_ldap_attribute_value(value)
-
-    @staticmethod
-    def is_ldap_attributes_dict(value: object) -> bool:
-        """Check if value is a valid LDAP attributes dictionary."""
-        return FlextLdapUtilities.TypeGuards.is_ldap_attributes_dict(value)
-
-    @staticmethod
-    def is_ldap_entry_data(value: object) -> bool:
-        """Check if value is valid LDAP entry data."""
-        return FlextLdapUtilities.TypeGuards.is_ldap_entry_data(value)
-
-    @staticmethod
-    def is_ldap_search_result(value: object) -> bool:
-        """Check if value is a valid LDAP search result."""
-        return FlextLdapUtilities.TypeGuards.is_ldap_search_result(value)
-
-    @staticmethod
-    def is_connection_result(value: object) -> bool:
-        """Check if value is a valid connection result."""
-        return FlextLdapUtilities.TypeGuards.is_connection_result(value)
-
-    @staticmethod
-    def dict_to_attributes(
-        attributes_dict: FlextTypes.Dict,
-    ) -> FlextResult[tuple[FlextTypes.StringList, FlextTypes.List]]:
-        """Convert dictionary to LDAP attributes format."""
-        return FlextLdapUtilities.Conversion.dict_to_attributes(attributes_dict)
-
-    @staticmethod
-    def attributes_to_dict(
-        attribute_names: Sequence[str], attribute_values: FlextTypes.List
-    ) -> FlextResult[FlextTypes.StringDict]:
-        """Convert LDAP attributes to dictionary format."""
-        return FlextLdapUtilities.Conversion.attributes_to_dict(
-            attribute_names, attribute_values
-        )
 
     # =========================================================================
     # TYPE GUARDS - LDAP-specific type checking utilities
     # =========================================================================
 
-    class TypeGuards(FlextUtilities.TypeGuards):
+    class LdapTypeGuards:
         """LDAP type guard functions for runtime type checking."""
 
         @staticmethod
@@ -403,7 +311,7 @@ class FlextLdapUtilities(FlextUtilities):
     def ensure_ldap_dn(dn: str) -> FlextResult[str]:
         """Ensure value is a valid LDAP DN."""
         try:
-            validated_dn = FlextLdapUtilities.TypeGuards.ensure_ldap_dn(dn)
+            validated_dn = FlextLdapUtilities.LdapTypeGuards.ensure_ldap_dn(dn)
             return FlextResult[str].ok(validated_dn)
         except (TypeError, ValueError) as e:
             return FlextResult[str].fail(str(e))
@@ -414,7 +322,7 @@ class FlextLdapUtilities(FlextUtilities):
     def ensure_string_list(value: object) -> FlextResult[FlextTypes.StringList]:
         """Ensure value is a list of strings."""
         try:
-            result = FlextLdapUtilities.TypeGuards.ensure_string_list(value)
+            result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list(value)
             return FlextResult[FlextTypes.StringList].ok(result)
         except Exception as e:
             return FlextResult[FlextTypes.StringList].fail(
@@ -513,7 +421,7 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate normalization utilities
             try:
-                dn_result = FlextLdapUtilities.normalize_dn("cn=john,dc=example,dc=com")
+                dn_result = FlextLdapUtilities.Processing.normalize_dn("cn=john,dc=example,dc=com")
                 validation_results["normalization"] = {
                     "status": "available",
                     "details": f"Normalization utilities accessible, DN normalized: {dn_result.is_success}",
@@ -526,7 +434,7 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate type guards utilities
             try:
-                dn_check = FlextLdapUtilities.is_ldap_dn("cn=john,dc=example,dc=com")
+                dn_check = is_ldap_dn("cn=john,dc=example,dc=com")
                 validation_results["type_guards"] = {
                     "status": "available",
                     "details": f"Type guards accessible, DN check: {dn_check}",
@@ -552,7 +460,7 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate validation utilities
             try:
-                attrs_result = FlextLdapUtilities.normalize_attributes([
+                attrs_result = normalize_attributes([
                     "cn",
                     "mail",
                     "",

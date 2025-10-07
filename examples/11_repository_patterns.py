@@ -32,13 +32,16 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger
+from flext_core.loggings import FlextLogger
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.clients import FlextLdapClients
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.repositories import FlextLdapRepositories
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapClients,
+    FlextLdapConfig,
+    FlextLdapRepositories,
+)
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -113,7 +116,7 @@ def demonstrate_user_repository(api: FlextLdap) -> None:
         ldap_base_dn=BASE_DN,
     )
     client = FlextLdapClients(config=config)
-    user_repo = FlextLdapRepositories.UserRepository(client=client)
+    FlextLdapRepositories.UserRepository(client=client)
 
     logger.info("\n1. Creating UserRepository instance:")
     logger.info("   ✅ UserRepository initialized")
@@ -157,7 +160,7 @@ def demonstrate_group_repository(api: FlextLdap) -> None:
         ldap_base_dn=BASE_DN,
     )
     client = FlextLdapClients(config=config)
-    group_repo = FlextLdapRepositories.GroupRepository(client=client)
+    FlextLdapRepositories.GroupRepository(client=client)
 
     logger.info("\n1. Creating GroupRepository instance:")
     logger.info("   ✅ GroupRepository initialized")
@@ -423,7 +426,9 @@ def main() -> int:
 
             logger.info("\nUsage Example:")
             logger.info("  ```python")
-            logger.info("  from flext_ldap import FlextLdapRepositories, FlextLdapClients")
+            logger.info(
+                "  from flext_ldap import FlextLdapRepositories, FlextLdapClients"
+            )
             logger.info("  ")
             logger.info("  client = FlextLdapClients(config)")
             logger.info("  user_repo = FlextLdapRepositories.UserRepository(client)")

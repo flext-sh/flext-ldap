@@ -48,10 +48,9 @@ from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
-# Configuration from environment
-LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
+LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
 BIND_DN: Final[str] = os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
 BIND_PASSWORD: Final[str] = os.getenv("LDAP_BIND_PASSWORD", "admin")
 BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
@@ -364,7 +363,9 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
         )
 
         logger.info("   ✅ OpenLDAP 2.x entry created")
-        logger.info(f"      Attributes: {list(openldap_entry.attributes.attributes.keys())}")
+        logger.info(
+            f"      Attributes: {list(openldap_entry.attributes.attributes.keys())}"
+        )
 
         logger.info("\n2. Converting to Oracle OUD format:")
 
@@ -378,7 +379,9 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
         if result.is_success:
             oud_entry = result.unwrap()
             logger.info("   ✅ Conversion successful")
-            logger.info(f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}")
+            logger.info(
+                f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}"
+            )
             logger.info("      Note: Server-specific attributes adapted")
         else:
             logger.warning(f"   ⚠️  Conversion: {result.error}")
@@ -418,7 +421,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             {
                 "name": "Oracle OID entry",
                 "entry": FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=test,dc=example,dc=com"
+                    ),
                     attributes=FlextLdifModels.LdifAttributes(
                         attributes={
                             "objectClass": ["person"],
@@ -431,7 +436,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             {
                 "name": "389 DS entry",
                 "entry": FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=test,dc=example,dc=com"
+                    ),
                     attributes=FlextLdifModels.LdifAttributes(
                         attributes={
                             "objectClass": ["person"],
@@ -481,7 +488,9 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
 
         # Create entry that might need normalization
         mixed_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=user,ou=users,dc=example,dc=com"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["person", "inetOrgPerson"],
@@ -505,7 +514,9 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
             normalized = result.unwrap()
             logger.info("   ✅ Normalization successful")
             logger.info(f"      Normalized DN: {normalized.dn.value}")
-            logger.info(f"      Attributes: {list(normalized.attributes.attributes.keys())}")
+            logger.info(
+                f"      Attributes: {list(normalized.attributes.attributes.keys())}"
+            )
             logger.info("      Entry is ready for LDAP operations")
         else:
             logger.warning(f"   ⚠️  Normalization: {result.error}")

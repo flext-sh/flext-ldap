@@ -91,12 +91,25 @@ class FlextLdapConstants(FlextConstants):
         MINIMAL_GROUP_ATTRS: Final[list[str]] = ["cn", "member"]
 
         ALL_USER_ATTRS: Final[list[str]] = [
-            "objectClass", "cn", "sn", "givenName", "displayName",
-            "uid", "mail", "userPassword", "description", "memberOf"
+            "objectClass",
+            "cn",
+            "sn",
+            "givenName",
+            "displayName",
+            "uid",
+            "mail",
+            "userPassword",
+            "description",
+            "memberOf",
         ]
         ALL_GROUP_ATTRS: Final[list[str]] = [
-            "objectClass", "cn", "description", "member",
-            "uniqueMember", "owner", "memberOf"
+            "objectClass",
+            "cn",
+            "description",
+            "member",
+            "uniqueMember",
+            "owner",
+            "memberOf",
         ]
 
         @classmethod
@@ -156,7 +169,7 @@ class FlextLdapConstants(FlextConstants):
         ORGANIZATIONAL_UNITS_FILTER: Final[str] = "(objectClass=organizationalUnit)"
 
     # LDAP-specific validation constants
-    class Validation(FlextConstants.Validation):
+    class LdapValidation:
         """LDAP-specific validation constants extending base validation."""
 
         # LDAP DN validation
@@ -177,7 +190,7 @@ class FlextLdapConstants(FlextConstants):
         MAX_PASSWORD_LENGTH: Final[int] = 128
 
     # LDAP-specific error and validation messages
-    class Messages(FlextConstants.Messages):
+    class LdapMessages:
         """LDAP-specific error and validation messages extending base messages."""
 
         # LDAP validation messages
@@ -194,7 +207,7 @@ class FlextLdapConstants(FlextConstants):
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 
     # LDAP-specific error codes
-    class Errors(FlextConstants.Errors):
+    class LdapErrors:
         """LDAP-specific error codes extending universal error codes."""
 
         # LDAP-specific errors
@@ -207,7 +220,7 @@ class FlextLdapConstants(FlextConstants):
         LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
 
     # LDAP-specific default values
-    class Defaults(FlextConstants.Defaults):
+    class LdapDefaults:
         """LDAP-specific default values extending base defaults."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"

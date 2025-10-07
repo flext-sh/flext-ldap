@@ -37,11 +37,9 @@ from typing import Final, TypeVar
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapExceptions
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")

@@ -26,10 +26,9 @@ import sys
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.validations import FlextLdapValidations
+from flext_ldap import FlextLdapModels, FlextLdapValidations
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 def demonstrate_dn_validation() -> None:

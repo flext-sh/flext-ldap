@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Self
+from typing import Self
 
 from flext_core import (
     FlextConfig,
@@ -350,7 +350,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_base_dn: str = Field(
-        default=FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
+        default=FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_BASE,
         description="LDAP base distinguished name for searches",
     )
 
@@ -569,11 +569,11 @@ class FlextLdapConfig(FlextConfig):
         exceptions = FlextLdapExceptions()
 
         # Basic DN validation
-        if len(v) < FlextLdapConstants.Validation.MIN_DN_LENGTH:
+        if len(v) < FlextLdapConstants.LdapValidation.MIN_DN_LENGTH:
             msg = f"LDAP bind DN too short: {v}"
             raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
-        if len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
+        if len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
             msg = f"LDAP bind DN too long: {v}"
             raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
@@ -589,7 +589,7 @@ class FlextLdapConfig(FlextConfig):
     @classmethod
     def validate_base_dn(cls, v: str) -> str:
         """Validate LDAP base DN format with length constraints."""
-        if v and len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
+        if v and len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
             msg = f"LDAP base DN too long: {v}"
             exceptions = FlextLdapExceptions()
             raise exceptions.validation_error(msg, value=v, field="ldap_base_dn")
@@ -636,7 +636,7 @@ class FlextLdapConfig(FlextConfig):
     # ENHANCED DIRECT ACCESS - Dot notation support for LDAP config
     # =========================================================================
 
-    def __call__(self, key: str) -> Any:
+    def __call__(self, key: str) -> object:
         """Enhanced direct value access with LDAP-specific dot notation support.
 
         Extends FlextConfig.__call__ with LDAP-specific nested access patterns.
@@ -822,7 +822,7 @@ class FlextLdapConfig(FlextConfig):
     def save_to_file(
         self,
         file_path: str | Path,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Save LDAP configuration to file with credential protection.
 
@@ -911,7 +911,7 @@ class FlextLdapConfig(FlextConfig):
         ldap_operation: str | None = None,
         handler_name: str | None = None,
         handler_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> FlextTypes.Dict:
         """Create LDAP handler configuration using LDAP-specific utilities.
 
@@ -1035,7 +1035,8 @@ class FlextLdapConfig(FlextConfig):
                 base_dn=str(data.get("base_dn", "")),
                 filter_str=str(
                     data.get(
-                        "filter_str", FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER
+                        "filter_str",
+                        FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
                     )
                 ),
                 attributes=str_attributes,
@@ -1150,8 +1151,8 @@ class FlextLdapConfig(FlextConfig):
 
         """
         config: dict[str, str | int | FlextTypes.StringList] = {
-            "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
-            "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+            "base_dn": FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_BASE,
+            "filter_str": FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
             "scope": FlextLdapConstants.Scopes.SUBTREE,
             "attributes": [
                 FlextLdapConstants.Attributes.COMMON_NAME,

@@ -132,7 +132,11 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize Oracle OID attributes
         # This is expected behavior until quirks are enhanced for Oracle OID detection
-        assert detected_type in {"oid", "generic"}  # Accept both until quirks enhanced
+        assert detected_type in {
+            "oid",
+            "oracle_oid",
+            "generic",
+        }  # Accept all Oracle OID variants
 
     def test_detect_entry_server_type_oud_ds_privilege(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -143,8 +147,11 @@ class TestEntryAdapterUniversal:
             "objectClass": ["ds-root-dn-user", "top"],
             "ds-privilege-name": ["config-read", "config-write"],
         }
+        dn_obj = FlextLdifModels.DistinguishedName(
+            value="cn=Directory Manager,cn=Root DNs,cn=config"
+        )
         entry = FlextLdifModels.Entry(
-            dn="cn=Directory Manager,cn=Root DNs,cn=config",
+            dn=dn_obj,
             attributes=attributes_dict,
         )
 

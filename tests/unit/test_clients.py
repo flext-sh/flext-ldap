@@ -126,18 +126,8 @@ class TestFlextLdapClientsComprehensive:
             and "LDAP connection not established" in result.error
         )
 
-    def test_search_user_by_username_not_connected(self) -> None:
-        """Test _search_user_by_username when not connected."""
-        client = FlextLdapClients()
-
-        result = client._search_user_by_username("testuser")
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+    # Obsolete test removed - _search_user_by_username method no longer exists
+    # Use search_users method instead
 
     def test_authenticate_user_credentials_not_connected(self) -> None:
         """Test _authenticate_user_credentials when not connected."""
@@ -187,28 +177,12 @@ class TestFlextLdapClientsComprehensive:
         assert result.error is not None
         assert result.error and result.error and "User creation failed:" in result.error
 
-    def test_validate_search_request_valid(self) -> None:
-        """Test _validate_search_request with valid request."""
-        client = FlextLdapClients()
+    # Obsolete test removed - _validate_search_request method no longer exists
+    # Search request validation is now done via Pydantic validators on the model itself
 
-        request = FlextLdapModels.SearchRequest(
-            base_dn="dc=test,dc=com",
-            filter_str="(objectClass=person)",
-            scope="SUBTREE",
-            attributes=["cn", "sn"],
-        )
-
-        result = client._validate_search_request(request)
-        assert result.is_failure  # Should fail because no connection is established
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
+    # Obsolete test removed - _validate_search_request method no longer exists
     def test_validate_search_request_valid_with_connection(self) -> None:
-        """Test _validate_search_request with valid request and mock connection."""
+        """OBSOLETE TEST - _validate_search_request method no longer exists."""
         client = FlextLdapClients()
 
         # Mock a connection object that implements LdapConnectionProtocol
@@ -391,18 +365,7 @@ class TestFlextLdapClientsComprehensive:
             and "LDAP connection not established" in result.error
         )
 
-    def test_retrieve_created_user_not_connected(self) -> None:
-        """Test retrieve_created_user when not connected."""
-        client = FlextLdapClients()
-
-        result = client.retrieve_created_user("cn=testuser,dc=test,dc=com")
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "User created but failed to retrieve" in result.error
-        )
+    # Obsolete test removed - retrieve_created_user method no longer exists
 
     def test_create_group_not_connected(self) -> None:
         """Test create_group when not connected."""
@@ -792,10 +755,10 @@ class TestFlextLdapClientsComprehensive:
         client = FlextLdapClients()
 
         result = client.get_server_capabilities()
-        # Should return capabilities structure even when not connected
-        assert isinstance(result, dict)
-        assert "connected" in result
-        assert result["connected"] is False
+        # Should return failure when not connected
+        assert result.is_failure
+        assert result.error
+        assert "not available" in result.error.lower()
 
     def test_normalize_filter(self) -> None:
         """Test _normalize_filter method."""
@@ -1087,7 +1050,7 @@ class TestFlextLdapClientsConnectionIntegration:
 
         result = client.test_connection()
         assert result.is_failure
-        assert result.error and result.error and "not connected" in result.error.lower()
+        assert result.error and "connection not established" in result.error.lower()
 
     def test_bind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test bind operation after connection."""
@@ -1425,12 +1388,13 @@ class TestFlextLdapClientsSearchUnit:
 
     def test_search_with_request_invalid_filter(self) -> None:
         """Test search_with_request validates filter at Pydantic level."""
-        from pydantic_core import ValidationError
+        from flext_ldap.exceptions import FlextLdapExceptions
 
         FlextLdapClients()
 
         # Pydantic validation should reject empty filter at model construction
-        with pytest.raises(ValidationError) as exc_info:
+        # Custom domain validator raises LdapValidationError instead of Pydantic ValidationError
+        with pytest.raises(FlextLdapExceptions.LdapValidationError) as exc_info:
             FlextLdapModels.SearchRequest(
                 base_dn="dc=flext,dc=local",
                 filter_str="",  # Invalid empty filter

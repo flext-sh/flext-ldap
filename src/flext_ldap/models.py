@@ -15,7 +15,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from pydantic import (
@@ -229,25 +229,28 @@ class FlextLdapModels(FlextModels):
         @override
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create DN with validation - compatible with base class signature."""
-            # Explicit FlextResult error handling - NO try/except
+            try:
+                # Handle single argument case for DN string
+                if len(args) == 1 and not kwargs:
+                    dn_string = str(args[0])
+                    dn_obj = cls(value=dn_string.strip())
+                    return FlextResult[object].ok(dn_obj)
 
-            # Handle single argument case for DN string
-            if len(args) == 1 and not kwargs:
-                dn_string = str(args[0])
-                dn_obj = cls(value=dn_string.strip())
+                # Handle kwargs case - ensure value is string
+                if "value" in kwargs:
+                    kwargs["value"] = str(kwargs["value"])
+
+                # Convert all kwargs to proper types for Pydantic validation
+                typed_kwargs: FlextTypes.StringDict = {}
+                for k, v in kwargs.items():
+                    typed_kwargs[k] = str(v)
+
+                dn_obj = cls(**typed_kwargs)
                 return FlextResult[object].ok(dn_obj)
-
-            # Handle kwargs case - ensure value is string
-            if "value" in kwargs:
-                kwargs["value"] = str(kwargs["value"])
-
-            # Convert all kwargs to proper types for Pydantic validation
-            typed_kwargs: FlextTypes.StringDict = {}
-            for k, v in kwargs.items():
-                typed_kwargs[k] = str(v)
-
-            dn_obj = cls(**typed_kwargs)
-            return FlextResult[object].ok(dn_obj)
+            except FlextLdapExceptions.LdapValidationError as e:
+                return FlextResult[object].fail(f"DN creation failed: {e}")
+            except Exception as e:
+                return FlextResult[object].fail(f"DN creation failed: {e}")
 
     class Filter(FlextModels.Value):
         """LDAP filter value object with RFC 4515 compliance.
@@ -427,11 +430,20 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     class Base(FlextModels.ArbitraryTypesModel):
-        """Base model class with common LDAP entity configuration and validation.
+        """Base model class with dynamic LDAP entity support.
 
-        Uses ArbitraryTypesModel instead of TimestampedModel to avoid timestamp conflicts.
-        Provides LDAP-specific configuration for all entity models.
+        **DYNAMIC LDAP SCHEMA**: Allows arbitrary attributes to support varying LDAP server schemas
+        (OpenLDAP, Active Directory, Oracle OID/OUD, 389 DS, etc.) with different custom attributes.
+
+        Uses ArbitraryTypesModel with extra="allow" to accept any LDAP attribute from any server type.
         """
+
+        model_config = ConfigDict(
+            extra="allow",  # CRITICAL: Allow arbitrary LDAP attributes from any server schema
+            arbitrary_types_allowed=True,
+            validate_assignment=True,
+            str_strip_whitespace=True,
+        )
 
         # LDAP-specific timestamp fields (nullable)
         created_at: datetime | None = Field(
@@ -547,14 +559,15 @@ class FlextLdapModels(FlextModels):
 
         # Organizational
         department: str | None = Field(
-            default=FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT,
+            default=FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT,
             description="Department",
         )
         title: str | None = Field(
-            default=FlextLdapConstants.Defaults.DEFAULT_TITLE, description="Job title"
+            default=FlextLdapConstants.LdapDefaults.DEFAULT_TITLE,
+            description="Job title",
         )
         organization: str | None = Field(
-            default=FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION,
+            default=FlextLdapConstants.LdapDefaults.DEFAULT_ORGANIZATION,
             description="Organization",
         )
         organizational_unit: str | None = Field(
@@ -574,7 +587,7 @@ class FlextLdapModels(FlextModels):
 
         # Core enterprise fields
         status: str | None = Field(
-            default=FlextLdapConstants.Defaults.DEFAULT_STATUS,
+            default=FlextLdapConstants.LdapDefaults.DEFAULT_STATUS,
             description="User status",
         )
         created_at: datetime | None = Field(
@@ -601,13 +614,13 @@ class FlextLdapModels(FlextModels):
             if v is None:
                 field_name = info.field_name
                 if field_name == "department":
-                    return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
+                    return FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT
                 if field_name == "title":
-                    return FlextLdapConstants.Defaults.DEFAULT_TITLE
+                    return FlextLdapConstants.LdapDefaults.DEFAULT_TITLE
                 if field_name == "organization":
-                    return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
+                    return FlextLdapConstants.LdapDefaults.DEFAULT_ORGANIZATION
                 if field_name == "status":
-                    return FlextLdapConstants.Defaults.DEFAULT_STATUS
+                    return FlextLdapConstants.LdapDefaults.DEFAULT_STATUS
             return v or ""
 
         @computed_field
@@ -702,7 +715,8 @@ class FlextLdapModels(FlextModels):
             # Validate organizational consistency
             if (
                 self.department
-                and self.department != FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
+                and self.department
+                != FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT
                 and not self.organizational_unit
             ):
                 msg = "Department requires organizational unit"
@@ -901,71 +915,80 @@ class FlextLdapModels(FlextModels):
             **kwargs: object,
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create minimal user with required fields only and enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            try:
+                # Extract specific known optional parameters with proper typing
+                sn_raw = kwargs.get("sn")
+                given_name_raw = kwargs.get("given_name")
+                mail_raw = kwargs.get("mail")
+                telephone_number_raw = kwargs.get("telephone_number")
+                mobile_raw = kwargs.get("mobile")
+                department_raw = kwargs.get("department")
+                title_raw = kwargs.get("title")
+                organization_raw = kwargs.get("organization")
+                organizational_unit_raw = kwargs.get("organizational_unit")
+                user_password_raw = kwargs.get("user_password")
 
-            # Extract specific known optional parameters with proper typing
-            sn_raw = kwargs.get("sn")
-            given_name_raw = kwargs.get("given_name")
-            mail_raw = kwargs.get("mail")
-            telephone_number_raw = kwargs.get("telephone_number")
-            mobile_raw = kwargs.get("mobile")
-            department_raw = kwargs.get("department")
-            title_raw = kwargs.get("title")
-            organization_raw = kwargs.get("organization")
-            organizational_unit_raw = kwargs.get("organizational_unit")
-            user_password_raw = kwargs.get("user_password")
+                # Convert to proper types
+                sn = str(sn_raw) if sn_raw is not None else ""
+                given_name: str | None = (
+                    str(given_name_raw) if given_name_raw is not None else None
+                )
+                mail = str(mail_raw) if mail_raw is not None else ""
+                telephone_number: str | None = (
+                    str(telephone_number_raw)
+                    if telephone_number_raw is not None
+                    else None
+                )
+                mobile: str | None = str(mobile_raw) if mobile_raw is not None else None
+                department: str | None = (
+                    str(department_raw) if department_raw is not None else None
+                )
+                title: str | None = str(title_raw) if title_raw is not None else None
+                organization: str | None = (
+                    str(organization_raw) if organization_raw is not None else None
+                )
+                organizational_unit: str | None = (
+                    str(organizational_unit_raw)
+                    if organizational_unit_raw is not None
+                    else None
+                )
 
-            # Convert to proper types
-            sn = str(sn_raw) if sn_raw is not None else ""
-            given_name: str | None = (
-                str(given_name_raw) if given_name_raw is not None else None
-            )
-            mail = str(mail_raw) if mail_raw is not None else ""
-            telephone_number: str | None = (
-                str(telephone_number_raw) if telephone_number_raw is not None else None
-            )
-            mobile: str | None = str(mobile_raw) if mobile_raw is not None else None
-            department: str | None = (
-                str(department_raw) if department_raw is not None else None
-            )
-            title: str | None = str(title_raw) if title_raw is not None else None
-            organization: str | None = (
-                str(organization_raw) if organization_raw is not None else None
-            )
-            organizational_unit: str | None = (
-                str(organizational_unit_raw)
-                if organizational_unit_raw is not None
-                else None
-            )
+                # Create user_password SecretStr if provided
+                user_password = None
+                if user_password_raw and isinstance(user_password_raw, str):
+                    user_password = SecretStr(user_password_raw)
 
-            # Create user_password SecretStr if provided
-            user_password = None
-            if user_password_raw and isinstance(user_password_raw, str):
-                user_password = SecretStr(user_password_raw)
-
-            # Create user with explicit arguments to avoid **kwargs typing issues
-            user = cls(
-                dn=dn,
-                cn=cn,
-                uid=uid or "",
-                sn=sn,
-                given_name=given_name,
-                mail=mail,
-                telephone_number=telephone_number,
-                mobile=mobile,
-                department=department,
-                title=title,
-                organization=organization,
-                organizational_unit=organizational_unit,
-                user_password=(
-                    user_password.get_secret_value() if user_password else None
-                ),
-                # Use defaults for other fields
-                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
-                status="active",
-                display_name=cn,  # Use cn as display name by default
-            )
-            return FlextResult[FlextLdapModels.LdapUser].ok(user)
+                # Create user with explicit arguments to avoid **kwargs typing issues
+                user = cls(
+                    dn=dn,
+                    cn=cn,
+                    uid=uid or "",
+                    sn=sn,
+                    given_name=given_name,
+                    mail=mail,
+                    telephone_number=telephone_number,
+                    mobile=mobile,
+                    department=department,
+                    title=title,
+                    organization=organization,
+                    organizational_unit=organizational_unit,
+                    user_password=(
+                        user_password.get_secret_value() if user_password else None
+                    ),
+                    # Use defaults for other fields
+                    object_classes=["person", "organizationalPerson", "inetOrgPerson"],
+                    status="active",
+                    display_name=cn,  # Use cn as display name by default
+                )
+                return FlextResult[FlextLdapModels.LdapUser].ok(user)
+            except FlextLdapExceptions.LdapValidationError as e:
+                return FlextResult[FlextLdapModels.LdapUser].fail(
+                    f"User creation failed: {e}"
+                )
+            except Exception as e:
+                return FlextResult[FlextLdapModels.LdapUser].fail(
+                    f"User creation failed: {e}"
+                )
 
     class Group(EntityBase):
         """LDAP Group entity with membership management.
@@ -1247,25 +1270,54 @@ class FlextLdapModels(FlextModels):
         def __getitem__(
             self, key: str
         ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
-            """Dict-like access to attributes."""
+            """Dict-like access to attributes.
+
+            Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
+            """
+            # Special case: DN is a field, not an attribute
+            if key == "dn":
+                return self.dn
+            # Special case: objectClass/objectClasses mapping
+            if key in {"objectClass", "objectClasses"}:
+                return self.object_classes
+            # Regular attribute lookup
             return self.get_attribute(key)
 
         def __contains__(self, key: object) -> bool:
-            """Dict-like containment check."""
-            return isinstance(key, str) and self.has_attribute(key)
+            """Dict-like containment check.
+
+            Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
+            """
+            if not isinstance(key, str):
+                return False
+            # Special cases: DN and objectClass are always present as model fields
+            if key == "dn":
+                return self.dn is not None
+            if key in {"objectClass", "objectClasses"}:
+                return self.object_classes is not None
+            # Regular attribute check
+            return self.has_attribute(key)
 
         def get(
             self,
             key: str,
             default: FlextLdapTypes.LdapEntries.EntryAttributeValue | None = None,
         ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
-            """Dict-like get method with default value."""
+            """Dict-like get method with default value.
+
+            Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
+            """
+            # Special case: DN is a field, not an attribute
+            if key == "dn":
+                return self.dn or default
+            # Special case: objectClass/objectClasses mapping
+            if key in {"objectClass", "objectClasses"}:
+                return self.object_classes or default
+            # Regular attribute lookup
             return self.get_attribute(key) or default
 
         @classmethod
-        def from_ldif(
-            cls, ldif_entry: Any
-        ) -> FlextLdapModels.Entry:
+        def from_ldif(cls, ldif_entry: object) -> FlextLdapModels.Entry:
             """Convert FlextLdif Entry to FlextLdap Entry using adapter pattern.
 
             Eliminates duplicate LDIF conversion logic across codebase by centralizing
@@ -1296,7 +1348,7 @@ class FlextLdapModels(FlextModels):
                 attributes=dict(ldif_entry.attributes),
             )
 
-        def to_ldif(self) -> Any:
+        def to_ldif(self) -> object:
             """Convert FlextLdap Entry to FlextLdif Entry using adapter pattern.
 
             Eliminates duplicate LDIF conversion logic across codebase by centralizing
@@ -1590,18 +1642,16 @@ class FlextLdapModels(FlextModels):
                 request = FlextLdapModels.SearchRequest.create(base_dn, filter_str, scope, attributes)
 
             """
-            return cls.model_validate(
-                {
-                    "base_dn": base_dn,
-                    "filter_str": filter_str,
-                    "scope": scope,
-                    "attributes": attributes or [],
-                    "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
-                    "paged_cookie": b"",
-                    "size_limit": FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
-                    "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
-                }
-            )
+            return cls.model_validate({
+                "base_dn": base_dn,
+                "filter_str": filter_str,
+                "scope": scope,
+                "attributes": attributes or [],
+                "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+                "paged_cookie": b"",
+                "size_limit": FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
+            })
 
     class SearchResponse(Base):
         """LDAP Search Response entity."""
@@ -2352,7 +2402,7 @@ class FlextLdapModels(FlextModels):
         target: FlextLdapModels.AclTarget
         subject: FlextLdapModels.AclSubject
         permissions: FlextLdapModels.AclPermissions
-        conditions: dict[str, Any] = Field(
+        conditions: dict[str, object] = Field(
             default_factory=dict, description="Additional conditions"
         )
         enabled: bool = Field(default=True, description="Whether the rule is enabled")

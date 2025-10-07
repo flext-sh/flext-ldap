@@ -109,6 +109,7 @@ class FlextLdapAclParsers:
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
                 return FlextLdapModels.AclTarget(
+                    target_type="attributes",  # Explicitly set target type for attributes
                     dn_pattern="*",
                     attributes=attributes,
                     filter_expression="",
@@ -118,6 +119,7 @@ class FlextLdapAclParsers:
             if target_str.startswith("dn.exact="):
                 dn_pattern = target_str[9:].strip('"')  # Remove dn.exact= and quotes
                 return FlextLdapModels.AclTarget(
+                    target_type="dn",  # Explicitly set target type for DN
                     dn_pattern=dn_pattern,
                     attributes=[],
                     filter_expression="",
@@ -125,6 +127,7 @@ class FlextLdapAclParsers:
 
             # Default to entry target
             return FlextLdapModels.AclTarget(
+                target_type="entry",  # Explicitly set default type
                 dn_pattern="*",
                 attributes=[],
                 filter_expression="",

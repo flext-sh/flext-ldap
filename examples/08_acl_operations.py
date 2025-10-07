@@ -34,16 +34,17 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger
+from flext_core.loggings import FlextLogger
 
-from flext_ldap.acl import (
+from flext_ldap import (
+    FlextLdap,
     FlextLdapAclConverters,
     FlextLdapAclManager,
     FlextLdapAclParsers,
+    FlextLdapConfig,
 )
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
 
-logger = FlextLogger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")

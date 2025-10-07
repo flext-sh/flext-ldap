@@ -336,7 +336,9 @@ class FlextLdapRepositories:
     class GroupRepository(LdapRepository[FlextLdapModels.Group]):
         """Repository for LDAP Group entities implementing Domain.Repository protocol."""
 
-        def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapModels.Group | None]:
+        def get_by_id(
+            self, entity_id: str
+        ) -> FlextResult[FlextLdapModels.Group | None]:
             """Get group by ID (DN or CN).
 
             Args:

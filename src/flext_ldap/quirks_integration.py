@@ -50,7 +50,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
         # Logger and container inherited from FlextService via FlextMixins
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
-        self.detected_server_type: str | None = server_type
+        self._detected_server_type: str | None = server_type
         self._quirks_cache: FlextTypes.Dict = {}
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
@@ -62,14 +62,14 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
         """
         return FlextResult[FlextTypes.Dict].ok({
             "service": "FlextLdapQuirksAdapter",
-            "server_type": self.detected_server_type,
+            "server_type": self._detected_server_type,
             "quirks_loaded": bool(self._quirks_cache),
         })
 
     @property
     def server_type(self) -> str | None:
         """Get detected server type."""
-        return self.detected_server_type
+        return self._detected_server_type
 
     @property
     def quirks_manager(self) -> FlextLdifQuirksManager:
@@ -103,7 +103,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                 return FlextResult[str].ok("generic")
 
             detected_type = detection_result.unwrap()
-            self.detected_server_type = detected_type
+            self._detected_server_type = detected_type
 
             self.logger.info(
                 "Server type detected",
@@ -131,7 +131,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             FlextResult containing quirks configuration dict
 
         """
-        target_type = server_type or self.detected_server_type or "generic"
+        target_type = server_type or self._detected_server_type or "generic"
 
         try:
             # Check cache first
@@ -326,7 +326,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         """
         try:
-            target_type = server_type or self.detected_server_type or "generic"
+            target_type = server_type or self._detected_server_type or "generic"
 
             # Server-specific connection defaults
             defaults: FlextTypes.Dict = {
