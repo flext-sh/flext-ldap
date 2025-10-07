@@ -31,6 +31,7 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
 
@@ -52,7 +53,7 @@ def setup_api() -> FlextLdap | None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -293,7 +294,7 @@ def demonstrate_bind_authentication() -> None:
         config = FlextLdapConfig(
             ldap_server_uri=LDAP_URI,
             ldap_bind_dn=bind_dn,
-            ldap_bind_password=bind_password,
+            ldap_bind_password=SecretStr(bind_password),
             ldap_base_dn=BASE_DN,
         )
         test_api = FlextLdap(config=config)
@@ -341,7 +342,7 @@ def main() -> int:
             demonstrate_authentication_workflow(api)
             demonstrate_authentication_error_handling(api)
 
-            logger.info("\n" + "=" * 60)
+            logger.info("\n%s", "=" * 60)
             logger.info("✅ All authentication operations completed successfully!")
             logger.info("=" * 60)
 

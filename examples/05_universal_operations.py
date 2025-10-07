@@ -44,6 +44,7 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
+from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
 
@@ -66,7 +67,7 @@ def setup_api() -> FlextLdap | None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)

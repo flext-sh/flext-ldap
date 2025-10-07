@@ -169,7 +169,9 @@ class FlextLdapServers(FlextService[None]):
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
-            return FlextResult[dict[str, object]].fail("No server operations available")
+            return FlextResult[dict[str, object]].fail(
+                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+            )
         return ops.get_root_dse_attributes(connection)
 
     def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
@@ -185,7 +187,9 @@ class FlextLdapServers(FlextService[None]):
         """Get supported controls."""
         ops = self.operations
         if not ops:
-            return FlextResult[list[str]].fail("No server operations available")
+            return FlextResult[list[str]].fail(
+                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+            )
         return ops.get_supported_controls(connection)
 
     def normalize_entry_for_server(
@@ -205,7 +209,9 @@ class FlextLdapServers(FlextService[None]):
         """Validate entry compatibility with server."""
         ops = self.operations
         if not ops:
-            return FlextResult[bool].fail("No server operations available")
+            return FlextResult[bool].fail(
+                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+            )
         return ops.validate_entry_for_server(entry, server_type)
 
     # =========================================================================

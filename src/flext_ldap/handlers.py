@@ -15,6 +15,7 @@ from typing import Generic, TypeVar
 
 from flext_core import FlextLogger, FlextProtocols, FlextResult
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
 
@@ -268,11 +269,11 @@ class FlextLdapHandlers:
 
             # Create user entity
             create_request = FlextLdapModels.CreateUserRequest(
-                dn=payload.get("dn"),
-                uid=payload.get("uid"),
-                cn=payload.get("cn"),
-                sn=payload.get("sn"),
-                mail=payload.get("mail"),
+                dn=payload.get(FlextLdapConstants.DictKeys.DN),
+                uid=payload.get(FlextLdapConstants.DictKeys.UID),
+                cn=payload.get(FlextLdapConstants.DictKeys.CN),
+                sn=payload.get(FlextLdapConstants.DictKeys.SN),
+                mail=payload.get(FlextLdapConstants.DictKeys.MAIL),
                 object_classes=payload.get(
                     "object_classes", ["person", "organizationalPerson"]
                 ),
@@ -329,8 +330,8 @@ class FlextLdapHandlers:
             }
             """
             payload = command.payload
-            dn = payload.get("dn")
-            attributes = payload.get("attributes", {})
+            dn = payload.get(FlextLdapConstants.DictKeys.DN)
+            attributes = payload.get(FlextLdapConstants.DictKeys.ATTRIBUTES, {})
 
             if not dn:
                 return FlextResult[object].fail("User DN is required")
@@ -393,8 +394,8 @@ class FlextLdapHandlers:
             }
             """
             params = query.parameters
-            dn = params.get("dn")
-            uid = params.get("uid")
+            dn = params.get(FlextLdapConstants.DictKeys.DN)
+            uid = params.get(FlextLdapConstants.DictKeys.UID)
 
             if not dn and not uid:
                 return FlextResult[object].fail("Either user DN or UID is required")
@@ -454,8 +455,8 @@ class FlextLdapHandlers:
             users = get_result.unwrap()
 
             # Apply client-side filtering if needed
-            base_dn = params.get("base_dn")
-            filter_str = params.get("filter")
+            base_dn = params.get(FlextLdapConstants.DictKeys.BASE_DN)
+            filter_str = params.get(FlextLdapConstants.DictKeys.FILTER)
 
             if base_dn or filter_str:
                 # For now, return all and let client filter

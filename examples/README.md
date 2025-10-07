@@ -7,6 +7,7 @@
 These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with FlextResult error handling, proper type hints, and zero CLI code.
 
 **Key Principles:**
+
 - ✅ **ALWAYS use api.py (FlextLdap)** as the primary interface
 - ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
 - ✅ **FlextResult patterns** for explicit error handling (NO try/except fallbacks)
@@ -61,6 +62,7 @@ python examples/02_search_operations.py
 **Purpose**: Fundamental LDAP CRUD operations using FlextLdap API
 
 **Demonstrates:**
+
 - Connection management (connect, unbind, is_connected)
 - Create entries (add_entry)
 - Read entries (search, search_one)
@@ -72,11 +74,13 @@ python examples/02_search_operations.py
 **Modules**: api.py, models.py, config.py, constants.py
 
 **Run:**
+
 ```bash
 python examples/01_basic_operations.py
 ```
 
 **Expected Output:**
+
 - Configuration and constants demonstration
 - Connection established
 - User entry created, read, updated, and deleted
@@ -89,6 +93,7 @@ python examples/01_basic_operations.py
 **Purpose**: Comprehensive LDAP search functionality
 
 **Demonstrates:**
+
 - Basic search with filters (search)
 - Single entry search (search_one)
 - Structured search with SearchRequest parameter object
@@ -102,11 +107,13 @@ python examples/01_basic_operations.py
 **Modules**: api.py, models.py, validations.py, constants.py, search.py
 
 **Run:**
+
 ```bash
 python examples/02_search_operations.py
 ```
 
 **Expected Output:**
+
 - DN and filter validation results
 - Basic search with person objects
 - Single entry search (REDACTED_LDAP_BIND_PASSWORD)
@@ -122,6 +129,7 @@ python examples/02_search_operations.py
 **Purpose**: User authentication and credential validation
 
 **Demonstrates:**
+
 - User authentication (authenticate_user)
 - Credential validation with DN (validate_credentials)
 - Complete authentication workflow
@@ -132,11 +140,13 @@ python examples/02_search_operations.py
 **Modules**: api.py, authentication.py, models.py
 
 **Run:**
+
 ```bash
 python examples/03_authentication.py
 ```
 
 **Expected Output:**
+
 - Bind-level authentication tests
 - User authentication with various credentials
 - Credential validation with full DNs
@@ -150,6 +160,7 @@ python examples/03_authentication.py
 **Purpose**: LDIF file import/export with FlextLdif integration
 
 **Demonstrates:**
+
 - Import entries from LDIF files (import_from_ldif)
 - Export entries to LDIF files (export_to_ldif)
 - FlextLdif integration and availability checking
@@ -161,11 +172,13 @@ python examples/03_authentication.py
 **Requirements**: `pip install flext-ldif`
 
 **Run:**
+
 ```bash
 python examples/04_ldif_operations.py
 ```
 
 **Expected Output:**
+
 - FlextLdif availability check
 - Sample LDIF file creation
 - LDIF import with entry parsing
@@ -179,6 +192,7 @@ python examples/04_ldif_operations.py
 **Purpose**: Server-agnostic LDAP operations (works with ANY server)
 
 **Demonstrates:**
+
 - Server type detection (get_detected_server_type)
 - Server capabilities discovery (get_server_capabilities)
 - Server operations access (get_server_operations)
@@ -192,11 +206,13 @@ python examples/04_ldif_operations.py
 **Modules**: api.py, servers/, entry_adapter.py, quirks_integration.py, schema.py
 
 **Run:**
+
 ```bash
 python examples/05_universal_operations.py
 ```
 
 **Expected Output:**
+
 - Detected server type (OpenLDAP, Oracle OID/OUD, etc.)
 - Server capabilities (ACL format, paging support, etc.)
 - Universal search with automatic optimization
@@ -211,6 +227,7 @@ python examples/05_universal_operations.py
 **Purpose**: Domain validation using FlextLdapValidations
 
 **Demonstrates:**
+
 - DN validation (validate_dn)
 - LDAP filter validation (validate_filter)
 - Attribute name validation patterns
@@ -221,11 +238,13 @@ python examples/05_universal_operations.py
 **Modules**: validations.py, models.py
 
 **Run:**
+
 ```bash
 python examples/06_validation_patterns.py
 ```
 
 **Expected Output:**
+
 - DN validation results (valid/invalid DNs)
 - Filter validation results (valid/invalid filters)
 - Attribute name validation
@@ -242,6 +261,7 @@ python examples/06_validation_patterns.py
 **Purpose**: Enterprise-grade patterns for production use
 
 **Demonstrates:**
+
 - Context managers for connection management
 - Retry patterns with exponential backoff
 - Bulk operations with batching
@@ -255,11 +275,13 @@ python examples/06_validation_patterns.py
 **Modules**: api.py, clients.py, models.py, exceptions.py
 
 **Run:**
+
 ```bash
 python examples/07_advanced_patterns.py
 ```
 
 **Expected Output:**
+
 - Context manager automatic connection handling
 - Retry pattern with simulated failures
 - Bulk user creation with batching
@@ -274,6 +296,7 @@ python examples/07_advanced_patterns.py
 **Purpose**: Comprehensive ACL (Access Control List) management across LDAP servers
 
 **Demonstrates:**
+
 - ACL parsing for different formats (OpenLDAP, Oracle, ACI)
 - ACL format conversion between servers
 - Batch ACL operations for migrations
@@ -285,11 +308,13 @@ python examples/07_advanced_patterns.py
 **Modules**: api.py, acl/manager.py, acl/converters.py, acl/parsers.py
 
 **Run:**
+
 ```bash
 python examples/08_acl_operations.py
 ```
 
 **Expected Output:**
+
 - ACL parsing demonstrations (OpenLDAP, Oracle, 389 DS formats)
 - Format conversion between server types
 - Batch conversion for migrations
@@ -303,6 +328,7 @@ python examples/08_acl_operations.py
 **Purpose**: LDAP schema discovery and server quirks handling
 
 **Demonstrates:**
+
 - Server type detection with schema awareness
 - Schema subentry DN discovery
 - Object class and attribute type inspection
@@ -314,11 +340,13 @@ python examples/08_acl_operations.py
 **Modules**: api.py, schema.py, quirks_integration.py
 
 **Run:**
+
 ```bash
 python examples/09_schema_operations.py
 ```
 
 **Expected Output:**
+
 - Server type detection results
 - Schema subentry DN for different servers
 - Server quirks detection
@@ -332,6 +360,7 @@ python examples/09_schema_operations.py
 **Purpose**: Advanced LDAP connection management patterns
 
 **Demonstrates:**
+
 - Connection lifecycle management
 - Health checks and automatic reconnection
 - Connection state monitoring
@@ -344,11 +373,13 @@ python examples/09_schema_operations.py
 **Modules**: api.py, connection_manager.py (conceptual), config.py
 
 **Run:**
+
 ```bash
 python examples/10_connection_management.py
 ```
 
 **Expected Output:**
+
 - Basic connection lifecycle demonstration
 - Connection state monitoring
 - Error handling for various failure scenarios
@@ -363,6 +394,7 @@ python examples/10_connection_management.py
 **Purpose**: Domain-Driven Design repository pattern for LDAP
 
 **Demonstrates:**
+
 - FlextLdapRepositories.UserRepository for user management
 - FlextLdapRepositories.GroupRepository for group management
 - Domain.Repository protocol implementation
@@ -374,11 +406,13 @@ python examples/10_connection_management.py
 **Modules**: api.py, repositories.py, models.py, clients.py
 
 **Run:**
+
 ```bash
 python examples/11_repository_patterns.py
 ```
 
 **Expected Output:**
+
 - Repository pattern concepts and benefits
 - UserRepository and GroupRepository usage
 - Entity lifecycle demonstrations
@@ -393,6 +427,7 @@ python examples/11_repository_patterns.py
 **Purpose**: Domain-Driven Design with Specification Pattern
 
 **Demonstrates:**
+
 - FlextLdapDomain.UserSpecification for user business rules
 - FlextLdapDomain.GroupSpecification for group business rules
 - FlextLdapDomain.SearchSpecification for search validation
@@ -404,11 +439,13 @@ python examples/11_repository_patterns.py
 **Modules**: domain.py, models.py
 
 **Run:**
+
 ```bash
 python examples/12_domain_services.py
 ```
 
 **Expected Output:**
+
 - Username and email validation
 - Password policy enforcement
 - Group membership business rules
@@ -420,29 +457,30 @@ python examples/12_domain_services.py
 
 ## 🎯 Module Coverage Matrix
 
-| Module | Examples | Functionality Demonstrated |
-|--------|----------|----------------------------|
-| **api.py (FlextLdap)** | ALL | Primary facade - all operations |
-| **models.py** | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities |
-| **clients.py** | 07, 11 | Advanced direct client usage, repositories |
-| **config.py** | 01, 10 | FlextLdapConfig configuration, connection management |
-| **constants.py** | 01, 02 | Scopes, timeouts, defaults |
-| **validations.py** | 02, 06 | DN, filter validation |
-| **authentication.py** | 03 | User authentication flows |
-| **search.py** | 02 | Search operations |
-| **entry_adapter.py** | 04, 05 | Entry conversion, format conversion, normalization |
-| **servers/** | 05 | Server-specific operations |
-| **quirks_integration.py** | 05, 09 | Server quirks handling, ACL/paging/timeout quirks |
-| **exceptions.py** | 07 | Error handling |
-| **schema.py** | 09 | Schema discovery, server detection |
-| **acl/manager.py** | 08 | ACL management |
-| **acl/converters.py** | 08 | ACL format conversion |
-| **acl/parsers.py** | 08 | Multi-format ACL parsing |
-| **repositories.py** | 11 | Repository pattern, DDD |
-| **domain.py** | 12 | Domain services, Specification Pattern |
-| **connection_manager.py** | 10 | Connection lifecycle (conceptual) |
+| Module                    | Examples               | Functionality Demonstrated                           |
+| ------------------------- | ---------------------- | ---------------------------------------------------- |
+| **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                      |
+| **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities   |
+| **clients.py**            | 07, 11                 | Advanced direct client usage, repositories           |
+| **config.py**             | 01, 10                 | FlextLdapConfig configuration, connection management |
+| **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                           |
+| **validations.py**        | 02, 06                 | DN, filter validation                                |
+| **authentication.py**     | 03                     | User authentication flows                            |
+| **search.py**             | 02                     | Search operations                                    |
+| **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization   |
+| **servers/**              | 05                     | Server-specific operations                           |
+| **quirks_integration.py** | 05, 09                 | Server quirks handling, ACL/paging/timeout quirks    |
+| **exceptions.py**         | 07                     | Error handling                                       |
+| **schema.py**             | 09                     | Schema discovery, server detection                   |
+| **acl/manager.py**        | 08                     | ACL management                                       |
+| **acl/converters.py**     | 08                     | ACL format conversion                                |
+| **acl/parsers.py**        | 08                     | Multi-format ACL parsing                             |
+| **repositories.py**       | 11                     | Repository pattern, DDD                              |
+| **domain.py**             | 12                     | Domain services, Specification Pattern               |
+| **connection_manager.py** | 10                     | Connection lifecycle (conceptual)                    |
 
 **Coverage Summary:**
+
 - ✅ **19 modules** demonstrated across 12 comprehensive examples
 - ✅ **100% coverage** of public API surface
 - ✅ **All enterprise patterns** showcased (DDD, Repository, Specification)

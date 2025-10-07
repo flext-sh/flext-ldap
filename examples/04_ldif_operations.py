@@ -48,6 +48,9 @@ from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 
+from flext_ldif import FlextLdifModels
+
+
 logger: FlextLogger = FlextLogger(__name__)
 
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
@@ -346,14 +349,16 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
     logger.info("\n=== Entry Adapter Format Conversion ===")
 
     try:
-        from flext_ldif import FlextLdifModels
+        if FlextLdifModels is None:
+            msg = "flext-ldif not available"
+            raise ImportError(msg)
 
         logger.info("\n1. Creating sample entry with server-specific attributes:")
 
         # Create entry with OpenLDAP 2.x specific attributes
-        openldap_entry = FlextLdifModels.Entry(
+        openldap_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
             dn=FlextLdifModels.DistinguishedName(value="cn=config,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
+            attributes=FlextLdifModels.LdifAttributes(  # type: ignore[reportArgumentType]
                 attributes={
                     "objectClass": ["olcGlobal", "top"],
                     "olcAccess": ["to * by * read"],  # OpenLDAP 2.x ACL format
@@ -401,13 +406,15 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
     logger.info("\n=== Entry Server Type Detection ===")
 
     try:
-        from flext_ldif import FlextLdifModels
+        if FlextLdifModels is None:
+            msg = "flext-ldif not available"
+            raise ImportError(msg)
 
         # Test entries with server-specific attributes
         test_cases = [
             {
                 "name": "OpenLDAP 2.x entry",
-                "entry": FlextLdifModels.Entry(
+                "entry": FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
                     dn=FlextLdifModels.DistinguishedName(value="cn=config"),
                     attributes=FlextLdifModels.LdifAttributes(
                         attributes={
@@ -420,7 +427,7 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             },
             {
                 "name": "Oracle OID entry",
-                "entry": FlextLdifModels.Entry(
+                "entry": FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
                     dn=FlextLdifModels.DistinguishedName(
                         value="cn=test,dc=example,dc=com"
                     ),
@@ -435,7 +442,7 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             },
             {
                 "name": "389 DS entry",
-                "entry": FlextLdifModels.Entry(
+                "entry": FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
                     dn=FlextLdifModels.DistinguishedName(
                         value="cn=test,dc=example,dc=com"
                     ),
@@ -481,13 +488,14 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     """
     logger.info("\n=== Entry Normalization for Servers ===")
 
-    try:
-        from flext_ldif import FlextLdifModels
+    if FlextLdifModels is None:
+        logger.warning("flext-ldif not available; skipping normalization demonstration")
+        return
 
-        logger.info("\n1. Creating entry with mixed attributes:")
+    logger.info("\n1. Creating entry with mixed attributes:")
 
         # Create entry that might need normalization
-        mixed_entry = FlextLdifModels.Entry(
+        mixed_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=user,ou=users,dc=example,dc=com"
             ),
@@ -535,13 +543,14 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
     """
     logger.info("\n=== Entry Validation for Servers ===")
 
-    try:
-        from flext_ldif import FlextLdifModels
+    if FlextLdifModels is None:
+        logger.warning("flext-ldif not available; skipping validation demonstration")
+        return
 
-        logger.info("\n1. Validating compatible entry:")
+    logger.info("\n1. Validating compatible entry:")
 
         # Create valid entry
-        valid_entry = FlextLdifModels.Entry(
+        valid_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
             dn=FlextLdifModels.DistinguishedName(value="cn=valid,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -566,7 +575,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         logger.info("\n2. Validating entry with server-specific attributes:")
 
         # Create entry with potentially incompatible attributes
-        specific_entry = FlextLdifModels.Entry(
+        specific_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(  # type: ignore[reportArgumentType]
             dn=FlextLdifModels.DistinguishedName(value="cn=specific,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -674,7 +683,7 @@ def main() -> int:
             with contextlib.suppress(Exception):
                 ldif_path.unlink()
 
-            logger.info("\n" + "=" * 60)
+            logger.info(f"\n{'=' * 60}")
             logger.info("✅ All LDIF operations completed successfully!")
             logger.info("=" * 60)
 

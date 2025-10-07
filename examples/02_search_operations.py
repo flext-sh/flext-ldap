@@ -61,7 +61,7 @@ def setup_api() -> FlextLdap | None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -146,7 +146,7 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     search_request = FlextLdapModels.SearchRequest(
         base_dn=BASE_DN,
         filter_str="(objectClass=organizationalUnit)",
-        scope=FlextLdapConstants.Scopes.ONE_LEVEL,  # ONE_LEVEL scope
+        scope=FlextLdapConstants.Scopes.ONELEVEL,  # ONE_LEVEL scope
         attributes=["ou", "description"],
         size_limit=10,
         time_limit=30,
@@ -194,7 +194,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     logger.info(f"Searching for groups in {groups_dn}")
 
     result: FlextResult[list[FlextLdapModels.Group]] = api.search_groups(
-        base_dn=groups_dn,
+        search_base=groups_dn,
         filter_str="(objectClass=groupOfNames)",
         attributes=["cn", "member", "description"],
     )
@@ -207,7 +207,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
         logger.info(f"   {i}. Group DN: {group.dn}")
-        logger.info(f"      Attributes: {list(group.attributes.keys())}")
+        logger.info(f"      Attributes: {list(group.attributes.keys())}")  # type: ignore[reportAttributeAccessIssue]
 
 
 def demonstrate_search_scopes(api: FlextLdap) -> None:
@@ -221,14 +221,14 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     scopes = [
         (FlextLdapConstants.Scopes.BASE, "BASE - only base object"),
-        (FlextLdapConstants.Scopes.ONE_LEVEL, "ONE_LEVEL - immediate children"),
+        (FlextLdapConstants.Scopes.ONELEVEL, "ONE_LEVEL - immediate children"),
         (FlextLdapConstants.Scopes.SUBTREE, "SUBTREE - entire subtree"),
     ]
 
     for scope, description in scopes:
         logger.info(f"\nTesting {description}:")
         result = api.search_entries(
-            base_dn=BASE_DN,
+            search_base=BASE_DN,
             filter_str="(objectClass=*)",
             scope=scope,
             attributes=["dn"],
@@ -241,7 +241,7 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
             logger.error(f"   ❌ Search failed: {result.error}")
 
 
-def demonstrate_filter_validation(api: FlextLdap) -> None:
+def demonstrate_filter_validation(_api: FlextLdap) -> None:
     """Demonstrate LDAP filter validation.
 
     Args:
@@ -365,7 +365,7 @@ def main() -> int:
             demonstrate_filter_validation(api)
             demonstrate_attribute_filtering(api)
 
-            logger.info("\n" + "=" * 60)
+            logger.info("\n%s", "=" * 60)
             logger.info("✅ All search operations completed successfully!")
             logger.info("=" * 60)
 

@@ -206,6 +206,10 @@ class FlextLdapConstants(FlextConstants):
         EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 
+        # Client and server error messages
+        CLIENT_NOT_INITIALIZED: Final[str] = "Client not initialized"
+        NO_SERVER_OPERATIONS_AVAILABLE: Final[str] = "No server operations available"
+
     # LDAP-specific error codes
     class LdapErrors:
         """LDAP-specific error codes extending universal error codes."""
@@ -241,6 +245,14 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_TITLE: Final[str] = "Employee"
         DEFAULT_STATUS: Final[str] = "active"
 
+        # Error reporting constants
+        ERROR_SUMMARY_MAX_ITEMS: Final[int] = 3
+
+        # Domain validation constants
+        MIN_USERNAME_LENGTH: Final[int] = 3
+        MIN_GROUP_NAME_LENGTH: Final[int] = 2
+        MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
+
     class LdapRetry:
         """LDAP retry and timing constants."""
 
@@ -261,6 +273,105 @@ class FlextLdapConstants(FlextConstants):
         ACI: Final[str] = "aci"  # 389 DS / Apache DS
         ACTIVE_DIRECTORY: Final[str] = "active_directory"
         UNIFIED: Final[str] = "unified"
+        AUTO: Final[str] = "auto"  # Auto-detect format
+
+    class DictKeys:
+        """Standard dictionary key names for LDAP operations."""
+
+        # ACL operation keys
+        OPERATION: Final[str] = "operation"
+        ACL_STRING: Final[str] = "acl_string"
+        ACL_DATA: Final[str] = "acl_data"
+        TARGET_FORMAT: Final[str] = "target_format"
+        FORMAT: Final[str] = "format"
+
+        # LDAP entry attribute keys
+        DN: Final[str] = "dn"
+        UID: Final[str] = "uid"
+        CN: Final[str] = "cn"
+        SN: Final[str] = "sn"
+        MAIL: Final[str] = "mail"
+        GIVEN_NAME: Final[str] = "given_name"
+        TELEPHONE_NUMBER: Final[str] = "telephone_number"
+        MOBILE: Final[str] = "mobile"
+        DEPARTMENT: Final[str] = "department"
+        TITLE: Final[str] = "title"
+        ORGANIZATION: Final[str] = "organization"
+        ORGANIZATIONAL_UNIT: Final[str] = "organizational_unit"
+        USER_PASSWORD: Final[str] = "user_password"  # nosec B105 - Dictionary key
+
+        # LDAP search keys
+        BASE_DN: Final[str] = "base_dn"
+        FILTER: Final[str] = "filter"
+        FILTER_STR: Final[str] = "filter_str"
+
+        # LDAP connection keys
+        LDAP_SERVER: Final[str] = "ldap_server"
+        LDAP_PORT: Final[str] = "ldap_port"
+        BIND_DN: Final[str] = "bind_dn"
+        BIND_PASSWORD: Final[str] = "bind_password"
+        LDAP_BIND_PASSWORD: Final[str] = "ldap_bind_password"
+
+        # Operation config keys
+        OPERATION_TYPE: Final[str] = "operation_type"
+
+        # Additional config/operation keys
+        SERVER: Final[str] = "server"
+        SERVER_URI: Final[str] = "server_uri"
+        PORT: Final[str] = "port"
+        ATTRIBUTES: Final[str] = "attributes"
+        ATTRIBUTE: Final[str] = "attribute"
+        VALUES: Final[str] = "values"
+        INDENT: Final[str] = "indent"
+        SORT_KEYS: Final[str] = "sort_keys"
+        INCLUDE_CREDENTIALS: Final[str] = "include_credentials"
+        DEFAULT_TIMEOUT: Final[str] = "default_timeout"
+        MAX_PAGE_SIZE: Final[str] = "max_page_size"
+        SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
+        SCHEMA_SUBENTRY: Final[str] = "schema_subentry"
+
+        # ACL-specific keys
+        ACL_ATTRIBUTE: Final[str] = "acl_attribute"
+        ACL_FORMAT: Final[str] = "acl_format"
+        SOURCE_FORMAT: Final[str] = "source_format"
+        PERMISSIONS: Final[str] = "permissions"
+        SUBJECT: Final[str] = "subject"
+        TARGET: Final[str] = "target"
+        TARGET_TYPE: Final[str] = "target_type"
+        ACCESS: Final[str] = "access"
+        WHO: Final[str] = "who"
+        TYPE: Final[str] = "type"
+        DESCRIPTION: Final[str] = "description"
+        SUCCESS: Final[str] = "success"
+
+        # Server type keys
+        GENERIC: Final[str] = "generic"
+
+    class LdapAttributeNames:
+        """RFC-standard LDAP attribute names (not Python dict keys)."""
+
+        # Standard person attributes (RFC 4519)
+        DN: Final[str] = "dn"
+        CN: Final[str] = "cn"
+        SN: Final[str] = "sn"
+        GIVEN_NAME: Final[str] = "givenName"
+        UID: Final[str] = "uid"
+        MAIL: Final[str] = "mail"
+        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
+        MOBILE: Final[str] = "mobile"
+        TITLE: Final[str] = "title"
+        DESCRIPTION: Final[str] = "description"
+        DEPARTMENT: Final[str] = "department"
+        O: Final[str] = "o"  # Organization
+        OU: Final[str] = "ou"  # Organizational Unit
+
+        # Group attributes
+        MEMBER: Final[str] = "member"
+        UNIQUE_MEMBER: Final[str] = "uniqueMember"
+        GID_NUMBER: Final[str] = "gidNumber"
+
+        # Object class
+        OBJECT_CLASS: Final[str] = "objectClass"
 
     class Permission:
         """Standard ACL permissions mapped across formats."""
@@ -377,6 +488,10 @@ class FlextLdapConstants(FlextConstants):
         OPERATION_DELETE: Final = "delete"
         OPERATION_COMPARE: Final = "compare"
         OPERATION_EXTENDED: Final = "extended"
+
+        # ACL operation literals
+        OPERATION_PARSE: Final = "parse"
+        OPERATION_CONVERT: Final = "convert"
 
         # LDAP security level literals
         SECURITY_NONE: Final = "none"

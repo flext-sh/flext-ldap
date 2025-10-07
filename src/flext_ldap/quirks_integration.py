@@ -146,7 +146,9 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                     "No quirks found for server type, using generic",
                     extra={"server_type": target_type},
                 )
-                quirks = self._quirks_manager.quirks_registry.get("generic", {})
+                quirks = self._quirks_manager.quirks_registry.get(
+                    FlextLdapConstants.DictKeys.GENERIC, {}
+                )
 
             # Cache the quirks
             self._quirks_cache[target_type] = quirks
@@ -177,7 +179,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
         quirks = quirks_result.unwrap()
-        acl_attr = quirks.get("acl_attribute", "aci")
+        acl_attr = quirks.get(FlextLdapConstants.DictKeys.ACL_ATTRIBUTE, "aci")
 
         return FlextResult[str].ok(str(acl_attr))
 
@@ -196,7 +198,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
         quirks = quirks_result.unwrap()
-        acl_format = quirks.get("acl_format", "generic")
+        acl_format = quirks.get(FlextLdapConstants.DictKeys.ACL_FORMAT, "generic")
 
         return FlextResult[str].ok(str(acl_format))
 
@@ -215,7 +217,9 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
         quirks = quirks_result.unwrap()
-        schema_subentry = quirks.get("schema_subentry", "cn=subschema")
+        schema_subentry = quirks.get(
+            FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY, "cn=subschema"
+        )
 
         return FlextResult[str].ok(str(schema_subentry))
 
@@ -236,7 +240,9 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[bool].ok(True)  # Assume support by default
 
         quirks = quirks_result.unwrap()
-        supports = quirks.get("supports_operational_attrs", True)
+        supports = quirks.get(
+            FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS, True
+        )
 
         return FlextResult[bool].ok(bool(supports))
 
@@ -255,7 +261,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[int].ok(1000)  # Default page size
 
         quirks = quirks_result.unwrap()
-        max_page = quirks.get("max_page_size", 1000)
+        max_page = quirks.get(FlextLdapConstants.DictKeys.MAX_PAGE_SIZE, 1000)
 
         return FlextResult[int].ok(int(max_page))
 
@@ -274,7 +280,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[int].ok(30)  # Default timeout
 
         quirks = quirks_result.unwrap()
-        timeout = quirks.get("default_timeout", 30)
+        timeout = quirks.get(FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT, 30)
 
         return FlextResult[int].ok(int(timeout))
 

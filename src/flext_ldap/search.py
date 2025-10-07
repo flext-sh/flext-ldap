@@ -179,7 +179,9 @@ class FlextLdapSearch(FlextService[None]):
                 # Get object classes safely
                 object_classes: FlextTypes.StringList = []
                 if isinstance(entry_attrs, dict):
-                    object_classes = entry_attrs.get("objectClass", [])
+                    object_classes = entry_attrs.get(
+                        FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS, []
+                    )
                     if isinstance(object_classes, str):
                         object_classes = [object_classes]
                     elif not isinstance(object_classes, list):
@@ -187,7 +189,9 @@ class FlextLdapSearch(FlextService[None]):
                 elif hasattr(entry, "attributes") and hasattr(entry.attributes, "get"):
                     # Fallback for dict-like objects
                     try:
-                        object_classes = entry.attributes.get("objectClass", [])
+                        object_classes = entry.attributes.get(
+                            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS, []
+                        )
                         if isinstance(object_classes, str):
                             object_classes = [object_classes]
                         elif not isinstance(object_classes, list):

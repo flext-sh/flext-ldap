@@ -14,6 +14,7 @@ from collections.abc import Callable
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.models import FlextLdapModels
 
@@ -243,7 +244,7 @@ class FlextLdapServices(FlextService[None]):
 
         """
         try:
-            cn = group_data.get("cn")
+            cn = group_data.get(FlextLdapConstants.DictKeys.CN)
             if not cn:
                 return FlextResult[FlextTypes.Dict].fail("Group CN is required")
 
@@ -252,7 +253,7 @@ class FlextLdapServices(FlextService[None]):
                 return FlextResult[FlextTypes.Dict].fail("Invalid group name format")
 
             # Domain validation: description
-            description = group_data.get("description", "")
+            description = group_data.get(FlextLdapConstants.DictKeys.DESCRIPTION, "")
             if len(description) > 500:  # Arbitrary limit
                 return FlextResult[FlextTypes.Dict].fail("Group description too long")
 
@@ -282,7 +283,7 @@ class FlextLdapServices(FlextService[None]):
             if operation not in {"add", "remove"}:
                 return FlextResult[bool].fail("Invalid operation type")
 
-            if operation == "add":
+            if operation == FlextLdapConstants.LiteralTypes.OPERATION_ADD:
                 # Domain validation: can add member
                 add_check = FlextLdapDomain.GroupSpecification.can_add_member_to_group(
                     group, member_dn
@@ -541,17 +542,17 @@ class FlextLdapServices(FlextService[None]):
                     )
 
             # Domain validation: server format
-            server = config_data.get("ldap_server")
+            server = config_data.get(FlextLdapConstants.DictKeys.LDAP_SERVER)
             if not server or not isinstance(server, str):
                 return FlextResult[FlextTypes.Dict].fail("Invalid LDAP server")
 
             # Domain validation: port range
-            port = config_data.get("ldap_port")
+            port = config_data.get(FlextLdapConstants.DictKeys.LDAP_PORT)
             if not isinstance(port, int) or not (1 <= port <= 65535):
                 return FlextResult[FlextTypes.Dict].fail("Invalid LDAP port")
 
             # Domain validation: base DN format
-            base_dn = config_data.get("base_dn")
+            base_dn = config_data.get(FlextLdapConstants.DictKeys.BASE_DN)
             if not base_dn:
                 return FlextResult[FlextTypes.Dict].fail("Base DN cannot be empty")
 
@@ -588,10 +589,10 @@ class FlextLdapServices(FlextService[None]):
             failure_count = 0
 
             for op in operations:
-                op_type = op.get("type", "unknown")
+                op_type = op.get(FlextLdapConstants.DictKeys.TYPE, "unknown")
                 operation_counts[op_type] = operation_counts.get(op_type, 0) + 1
 
-                if op.get("success", False):
+                if op.get(FlextLdapConstants.DictKeys.SUCCESS, False):
                     success_count += 1
                 else:
                     failure_count += 1

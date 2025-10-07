@@ -17,8 +17,10 @@ class FlextLdapAclConverters:
         if isinstance(message, dict) and "acl_content" in message:
             result = self.convert_acl(
                 message["acl_content"],
-                message.get("source_format", "OPENLDAP"),
-                message.get("target_format", "ACTIVE_DIRECTORY"),
+                message.get(FlextLdapConstants.DictKeys.SOURCE_FORMAT, "OPENLDAP"),
+                message.get(
+                    FlextLdapConstants.DictKeys.TARGET_FORMAT, "ACTIVE_DIRECTORY"
+                ),
             )
             return FlextResult[FlextResult[object]].ok(result)
         return FlextResult[FlextResult[object]].fail("Invalid ACL conversion request")
