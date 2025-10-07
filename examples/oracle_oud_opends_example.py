@@ -19,13 +19,13 @@ SPDX-License-Identifier: MIT
 
 import os
 
+from flext_core import FlextLogger
+
 from flext_ldap import (
     FlextLdapClients,
     FlextLdapModels,
     FlextLdapSchema,
 )
-
-from flext_core import FlextLogger
 
 
 def demonstrate_oracle_oud_opends_support() -> None:

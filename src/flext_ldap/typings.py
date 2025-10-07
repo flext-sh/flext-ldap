@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from typing import Literal
 
+from flext_core import FlextTypes
 from ldap3 import Connection, Server
 
-from flext_core import FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 
 
@@ -68,11 +68,7 @@ class FlextLdapTypes(FlextTypes):
 
         # LDAP search and filter types
         type SearchFilter = str
-        type SearchScope = Literal[
-            FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE,
-            FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
-            FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
-        ]
+        type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
         type SearchResult = list[FlextTypes.Dict]
 
         # LDAP connection and server types
@@ -84,30 +80,12 @@ class FlextLdapTypes(FlextTypes):
         # LDAP protocol types
         type ObjectClass = str
         type AttributeName = str
-        type ConnectionState = Literal[
-            FlextLdapConstants.LiteralTypes.CONNECTION_STATE_UNBOUND,
-            FlextLdapConstants.LiteralTypes.CONNECTION_STATE_BOUND,
-            FlextLdapConstants.LiteralTypes.CONNECTION_STATE_CLOSED,
-            FlextLdapConstants.LiteralTypes.CONNECTION_STATE_ERROR,
-        ]
+        type ConnectionState = Literal["unbound", "bound", "closed", "error"]
         type OperationType = Literal[
-            FlextLdapConstants.LiteralTypes.OPERATION_SEARCH,
-            FlextLdapConstants.LiteralTypes.OPERATION_ADD,
-            FlextLdapConstants.LiteralTypes.OPERATION_MODIFY,
-            FlextLdapConstants.LiteralTypes.OPERATION_DELETE,
-            FlextLdapConstants.LiteralTypes.OPERATION_COMPARE,
-            FlextLdapConstants.LiteralTypes.OPERATION_EXTENDED,
+            "search", "add", "modify", "delete", "compare", "extended"
         ]
-        type SecurityLevel = Literal[
-            FlextLdapConstants.LiteralTypes.SECURITY_NONE,
-            FlextLdapConstants.LiteralTypes.SECURITY_SIMPLE,
-            FlextLdapConstants.LiteralTypes.SECURITY_SASL,
-        ]
-        type AuthenticationMethod = Literal[
-            FlextLdapConstants.LiteralTypes.AUTH_SIMPLE,
-            FlextLdapConstants.LiteralTypes.AUTH_SASL,
-            FlextLdapConstants.LiteralTypes.AUTH_EXTERNAL,
-        ]
+        type SecurityLevel = Literal["none", "simple", "sasl"]
+        type AuthenticationMethod = Literal["simple", "sasl", "external"]
 
         # Complex LDAP operation types
         type BulkOperation = list[dict[str, AttributeValue | OperationType]]

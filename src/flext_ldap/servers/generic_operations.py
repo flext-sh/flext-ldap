@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
 )
@@ -78,13 +78,11 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
 
             if not success or not connection.entries:
                 self.logger.warning("Generic schema discovery failed - using defaults")
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "object_classes": [],
-                        "attribute_types": [],
-                        "server_type": "generic",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "object_classes": [],
+                    "attribute_types": [],
+                    "server_type": "generic",
+                })
 
             entry = connection.entries[0]
             schema_data: FlextTypes.Dict = {
@@ -107,33 +105,27 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             self.logger.warning(
                 "Generic schema discovery error", extra={"error": str(e)}
             )
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "object_classes": [],
-                    "attribute_types": [],
-                    "server_type": "generic",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "object_classes": [],
+                "attribute_types": [],
+                "server_type": "generic",
+            })
 
     @override
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic objectClass definition."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "definition": object_class_def,
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "definition": object_class_def,
+            "server_type": "generic",
+        })
 
     @override
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic attributeType definition."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "definition": attribute_def,
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "definition": attribute_def,
+            "server_type": "generic",
+        })
 
     # =========================================================================
     # ACL OPERATIONS
@@ -173,13 +165,11 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
     @override
     def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic ACL string."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "raw": acl_string,
-                "format": "generic",
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "raw": acl_string,
+            "format": "generic",
+            "server_type": "generic",
+        })
 
     @override
     def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
@@ -213,7 +203,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Add entry error", extra={"error": str(e)})
+            self.logger.exception("Add entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
@@ -244,7 +234,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Modify entry error", extra={"error": str(e)})
+            self.logger.exception("Modify entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
@@ -265,7 +255,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Delete entry error", extra={"error": str(e)})
+            self.logger.exception("Delete entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
@@ -335,7 +325,7 @@ class FlextLdapServersGenericOperations(BaseServerOperations):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self.logger.error("Paged search error", extra={"error": str(e)})
+            self.logger.exception("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )

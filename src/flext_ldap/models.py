@@ -17,6 +17,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, ClassVar, override
 
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,7 +29,6 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.typings import FlextLdapTypes
@@ -173,6 +173,7 @@ class FlextLdapModels(FlextModels):
 
             Returns:
                 DistinguishedName: A new DistinguishedName instance
+
             """
             return cls(value=dn_string)
 
@@ -228,23 +229,25 @@ class FlextLdapModels(FlextModels):
         @override
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create DN with validation - compatible with base class signature."""
-            try:
-                # Handle single argument case for DN string
-                if len(args) == 1 and not kwargs:
-                    dn_string = str(args[0])
-                    dn_obj = cls(value=dn_string.strip())
-                    return FlextResult[object].ok(dn_obj)
-                # Handle kwargs case - ensure value is string
-                if "value" in kwargs:
-                    kwargs["value"] = str(kwargs["value"])
-                # Convert all kwargs to proper types for Pydantic validation
-                typed_kwargs: FlextTypes.StringDict = {}
-                for k, v in kwargs.items():
-                    typed_kwargs[k] = str(v)
-                dn_obj = cls(**typed_kwargs)
+            # Explicit FlextResult error handling - NO try/except
+
+            # Handle single argument case for DN string
+            if len(args) == 1 and not kwargs:
+                dn_string = str(args[0])
+                dn_obj = cls(value=dn_string.strip())
                 return FlextResult[object].ok(dn_obj)
-            except ValueError as e:
-                return FlextResult[object].fail(str(e))
+
+            # Handle kwargs case - ensure value is string
+            if "value" in kwargs:
+                kwargs["value"] = str(kwargs["value"])
+
+            # Convert all kwargs to proper types for Pydantic validation
+            typed_kwargs: FlextTypes.StringDict = {}
+            for k, v in kwargs.items():
+                typed_kwargs[k] = str(v)
+
+            dn_obj = cls(**typed_kwargs)
+            return FlextResult[object].ok(dn_obj)
 
     class Filter(FlextModels.Value):
         """LDAP filter value object with RFC 4515 compliance.
@@ -727,19 +730,16 @@ class FlextLdapModels(FlextModels):
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate user business rules with enhanced error handling."""
-            try:
-                # User-specific validations
-                if "person" not in self.object_classes:
-                    return FlextResult[None].fail(
-                        "User must have 'person' object class"
-                    )
+            # Explicit FlextResult error handling - NO try/except
 
-                if not self.cn:
-                    return FlextResult[None].fail("User must have a Common Name")
+            # User-specific validations
+            if "person" not in self.object_classes:
+                return FlextResult[None].fail("User must have 'person' object class")
 
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Business rule validation failed: {e}")
+            if not self.cn:
+                return FlextResult[None].fail("User must have a Common Name")
+
+            return FlextResult[None].ok(None)
 
         def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
             """Convert user to LDAP attributes format."""
@@ -787,97 +787,90 @@ class FlextLdapModels(FlextModels):
             cls, ldap_attributes: dict[str, FlextTypes.StringList]
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create user from LDAP attributes."""
-            try:
-                # Extract DN
-                dn_values = ldap_attributes.get("dn", [])
-                if not dn_values:
-                    return FlextResult[FlextLdapModels.LdapUser].fail("DN is required")
-                dn = dn_values[0]
+            # Explicit FlextResult error handling - NO try/except
 
-                # Extract core attributes
-                cn_values = ldap_attributes.get("cn", [])
-                cn = cn_values[0] if cn_values else ""
+            # Extract DN
+            dn_values = ldap_attributes.get("dn", [])
+            if not dn_values:
+                return FlextResult[FlextLdapModels.LdapUser].fail("DN is required")
+            dn = dn_values[0]
 
-                uid_values = ldap_attributes.get("uid", [])
-                uid = uid_values[0] if uid_values else None
+            # Extract core attributes
+            cn_values = ldap_attributes.get("cn", [])
+            cn = cn_values[0] if cn_values else ""
 
-                sn_values = ldap_attributes.get("sn", [])
-                sn = sn_values[0] if sn_values else None
+            uid_values = ldap_attributes.get("uid", [])
+            uid = uid_values[0] if uid_values else None
 
-                given_name_values = ldap_attributes.get("givenName", [])
-                given_name = given_name_values[0] if given_name_values else None
+            sn_values = ldap_attributes.get("sn", [])
+            sn = sn_values[0] if sn_values else None
 
-                mail_values = ldap_attributes.get("mail", [])
-                mail = mail_values[0] if mail_values else None
+            given_name_values = ldap_attributes.get("givenName", [])
+            given_name = given_name_values[0] if given_name_values else None
 
-                telephone_number_values = ldap_attributes.get("telephoneNumber", [])
-                telephone_number = (
-                    telephone_number_values[0] if telephone_number_values else None
-                )
+            mail_values = ldap_attributes.get("mail", [])
+            mail = mail_values[0] if mail_values else None
 
-                mobile_values = ldap_attributes.get("mobile", [])
-                mobile = mobile_values[0] if mobile_values else None
+            telephone_number_values = ldap_attributes.get("telephoneNumber", [])
+            telephone_number = (
+                telephone_number_values[0] if telephone_number_values else None
+            )
 
-                department_values = ldap_attributes.get("department", [])
-                department = department_values[0] if department_values else None
+            mobile_values = ldap_attributes.get("mobile", [])
+            mobile = mobile_values[0] if mobile_values else None
 
-                title_values = ldap_attributes.get("title", [])
-                title = title_values[0] if title_values else None
+            department_values = ldap_attributes.get("department", [])
+            department = department_values[0] if department_values else None
 
-                organization_values = ldap_attributes.get("o", [])
-                organization = organization_values[0] if organization_values else None
+            title_values = ldap_attributes.get("title", [])
+            title = title_values[0] if title_values else None
 
-                organizational_unit_values = ldap_attributes.get("ou", [])
-                organizational_unit = (
-                    organizational_unit_values[0]
-                    if organizational_unit_values
-                    else None
-                )
+            organization_values = ldap_attributes.get("o", [])
+            organization = organization_values[0] if organization_values else None
 
-                object_classes = ldap_attributes.get(
-                    "objectClass", ["person", "organizationalPerson", "inetOrgPerson"]
-                )
+            organizational_unit_values = ldap_attributes.get("ou", [])
+            organizational_unit = (
+                organizational_unit_values[0] if organizational_unit_values else None
+            )
 
-                # Create user with proper type handling
-                user = cls(
-                    dn=dn,
-                    cn=cn or "",
-                    uid=uid or "",
-                    sn=sn or "",
-                    given_name=given_name,
-                    mail=mail or "",
-                    telephone_number=telephone_number,
-                    mobile=mobile,
-                    department=department,
-                    title=title,
-                    organization=organization,
-                    organizational_unit=organizational_unit,
-                    object_classes=object_classes,
-                    user_password=None,  # Never store passwords from LDAP
-                    additional_attributes={},
-                    status="active",
-                    created_at=None,
-                    display_name=cn,
-                    modified_at=None,
-                    created_timestamp=None,
-                    modified_timestamp=None,
-                )
+            object_classes = ldap_attributes.get(
+                "objectClass", ["person", "organizationalPerson", "inetOrgPerson"]
+            )
 
-                return FlextResult[FlextLdapModels.LdapUser].ok(user)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
-                    f"Failed to create user from LDAP attributes: {e}"
-                )
+            # Create user with proper type handling
+            user = cls(
+                dn=dn,
+                cn=cn or "",
+                uid=uid or "",
+                sn=sn or "",
+                given_name=given_name,
+                mail=mail or "",
+                telephone_number=telephone_number,
+                mobile=mobile,
+                department=department,
+                title=title,
+                organization=organization,
+                organizational_unit=organizational_unit,
+                object_classes=object_classes,
+                user_password=None,  # Never store passwords from LDAP
+                additional_attributes={},
+                status="active",
+                created_at=None,
+                display_name=cn,
+                modified_at=None,
+                created_timestamp=None,
+                modified_timestamp=None,
+            )
+
+            return FlextResult[FlextLdapModels.LdapUser].ok(user)
 
         def get_attribute(
             self,
             name: str,
         ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
             """Get attribute value by name with enhanced error handling."""
-            try:
-                return self.additional_attributes.get(name)
-            except (KeyError, TypeError, AttributeError):
-                return None
+            # Explicit FlextResult error handling - NO try/except
+            return self.additional_attributes.get(name)
 
         def set_attribute(
             self,
@@ -885,29 +878,19 @@ class FlextLdapModels(FlextModels):
             value: FlextLdapTypes.LdapEntries.EntryAttributeValue,
         ) -> None:
             """Set attribute value by name with enhanced error handling."""
-            try:
-                self.additional_attributes[name] = value
-            except Exception as e:
-                msg = f"Failed to set attribute {name}: {e}"
-                exceptions = FlextLdapExceptions()
-                raise exceptions.validation_error(
-                    msg, value=str(value), field=name
-                ) from e
+            # Explicit FlextResult error handling - NO try/except
+            self.additional_attributes[name] = value
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name (first component) with enhanced error handling."""
-            try:
-                return self.dn.split(",")[0] if "," in self.dn else self.dn
-            except (AttributeError, TypeError):
-                return self.dn
+            # Explicit FlextResult error handling - NO try/except
+            return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         def get_parent_dn(self) -> str | None:
             """Extract parent DN with enhanced error handling."""
-            try:
-                parts = self.dn.split(",", 1)
-                return parts[1] if len(parts) > 1 else None
-            except (AttributeError, TypeError):
-                return None
+            # Explicit FlextResult error handling - NO try/except
+            parts = self.dn.split(",", 1)
+            return parts[1] if len(parts) > 1 else None
 
         @classmethod
         def create_minimal(
@@ -918,76 +901,71 @@ class FlextLdapModels(FlextModels):
             **kwargs: object,
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create minimal user with required fields only and enhanced error handling."""
-            try:
-                # Extract specific known optional parameters with proper typing
-                sn_raw = kwargs.get("sn")
-                given_name_raw = kwargs.get("given_name")
-                mail_raw = kwargs.get("mail")
-                telephone_number_raw = kwargs.get("telephone_number")
-                mobile_raw = kwargs.get("mobile")
-                department_raw = kwargs.get("department")
-                title_raw = kwargs.get("title")
-                organization_raw = kwargs.get("organization")
-                organizational_unit_raw = kwargs.get("organizational_unit")
-                user_password_raw = kwargs.get("user_password")
+            # Explicit FlextResult error handling - NO try/except
 
-                # Convert to proper types
-                sn = str(sn_raw) if sn_raw is not None else ""
-                given_name: str | None = (
-                    str(given_name_raw) if given_name_raw is not None else None
-                )
-                mail = str(mail_raw) if mail_raw is not None else ""
-                telephone_number: str | None = (
-                    str(telephone_number_raw)
-                    if telephone_number_raw is not None
-                    else None
-                )
-                mobile: str | None = str(mobile_raw) if mobile_raw is not None else None
-                department: str | None = (
-                    str(department_raw) if department_raw is not None else None
-                )
-                title: str | None = str(title_raw) if title_raw is not None else None
-                organization: str | None = (
-                    str(organization_raw) if organization_raw is not None else None
-                )
-                organizational_unit: str | None = (
-                    str(organizational_unit_raw)
-                    if organizational_unit_raw is not None
-                    else None
-                )
+            # Extract specific known optional parameters with proper typing
+            sn_raw = kwargs.get("sn")
+            given_name_raw = kwargs.get("given_name")
+            mail_raw = kwargs.get("mail")
+            telephone_number_raw = kwargs.get("telephone_number")
+            mobile_raw = kwargs.get("mobile")
+            department_raw = kwargs.get("department")
+            title_raw = kwargs.get("title")
+            organization_raw = kwargs.get("organization")
+            organizational_unit_raw = kwargs.get("organizational_unit")
+            user_password_raw = kwargs.get("user_password")
 
-                # Create user_password SecretStr if provided
-                user_password = None
-                if user_password_raw and isinstance(user_password_raw, str):
-                    user_password = SecretStr(user_password_raw)
+            # Convert to proper types
+            sn = str(sn_raw) if sn_raw is not None else ""
+            given_name: str | None = (
+                str(given_name_raw) if given_name_raw is not None else None
+            )
+            mail = str(mail_raw) if mail_raw is not None else ""
+            telephone_number: str | None = (
+                str(telephone_number_raw) if telephone_number_raw is not None else None
+            )
+            mobile: str | None = str(mobile_raw) if mobile_raw is not None else None
+            department: str | None = (
+                str(department_raw) if department_raw is not None else None
+            )
+            title: str | None = str(title_raw) if title_raw is not None else None
+            organization: str | None = (
+                str(organization_raw) if organization_raw is not None else None
+            )
+            organizational_unit: str | None = (
+                str(organizational_unit_raw)
+                if organizational_unit_raw is not None
+                else None
+            )
 
-                # Create user with explicit arguments to avoid **kwargs typing issues
-                user = cls(
-                    dn=dn,
-                    cn=cn,
-                    uid=uid or "",
-                    sn=sn,
-                    given_name=given_name,
-                    mail=mail,
-                    telephone_number=telephone_number,
-                    mobile=mobile,
-                    department=department,
-                    title=title,
-                    organization=organization,
-                    organizational_unit=organizational_unit,
-                    user_password=(
-                        user_password.get_secret_value() if user_password else None
-                    ),
-                    # Use defaults for other fields
-                    object_classes=["person", "organizationalPerson", "inetOrgPerson"],
-                    status="active",
-                    display_name=cn,  # Use cn as display name by default
-                )
-                return FlextResult[FlextLdapModels.LdapUser].ok(user)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
-                    f"User creation failed: {e}"
-                )
+            # Create user_password SecretStr if provided
+            user_password = None
+            if user_password_raw and isinstance(user_password_raw, str):
+                user_password = SecretStr(user_password_raw)
+
+            # Create user with explicit arguments to avoid **kwargs typing issues
+            user = cls(
+                dn=dn,
+                cn=cn,
+                uid=uid or "",
+                sn=sn,
+                given_name=given_name,
+                mail=mail,
+                telephone_number=telephone_number,
+                mobile=mobile,
+                department=department,
+                title=title,
+                organization=organization,
+                organizational_unit=organizational_unit,
+                user_password=(
+                    user_password.get_secret_value() if user_password else None
+                ),
+                # Use defaults for other fields
+                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
+                status="active",
+                display_name=cn,  # Use cn as display name by default
+            )
+            return FlextResult[FlextLdapModels.LdapUser].ok(user)
 
     class Group(EntityBase):
         """LDAP Group entity with membership management.
@@ -1044,16 +1022,15 @@ class FlextLdapModels(FlextModels):
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate group business rules with enhanced error handling."""
-            try:
-                # Group-specific validations
-                if "groupOfNames" not in self.object_classes:
-                    return FlextResult[None].fail(
-                        "Group must have 'groupOfNames' object class",
-                    )
+            # Explicit FlextResult error handling - NO try/except
 
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Business rule validation failed: {e}")
+            # Group-specific validations
+            if "groupOfNames" not in self.object_classes:
+                return FlextResult[None].fail(
+                    "Group must have 'groupOfNames' object class",
+                )
+
+            return FlextResult[None].ok(None)
 
         def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
             """Convert group to LDAP attributes format."""
@@ -1089,78 +1066,65 @@ class FlextLdapModels(FlextModels):
             cls, ldap_attributes: dict[str, FlextTypes.StringList]
         ) -> FlextResult[FlextLdapModels.Group]:
             """Create group from LDAP attributes."""
-            try:
-                # Extract DN
-                dn_values = ldap_attributes.get("dn", [])
-                if not dn_values:
-                    return FlextResult[FlextLdapModels.Group].fail("DN is required")
-                dn = dn_values[0]
+            # Explicit FlextResult error handling - NO try/except
 
-                # Extract core attributes
-                cn_values = ldap_attributes.get("cn", [])
-                cn = cn_values[0] if cn_values else ""
+            # Extract DN
+            dn_values = ldap_attributes.get("dn", [])
+            if not dn_values:
+                return FlextResult[FlextLdapModels.Group].fail("DN is required")
+            dn = dn_values[0]
 
-                gid_number_values = ldap_attributes.get("gidNumber", [])
-                gid_number = int(gid_number_values[0]) if gid_number_values else None
+            # Extract core attributes
+            cn_values = ldap_attributes.get("cn", [])
+            cn = cn_values[0] if cn_values else ""
 
-                description_values = ldap_attributes.get("description", [])
-                description = description_values[0] if description_values else None
+            gid_number_values = ldap_attributes.get("gidNumber", [])
+            gid_number = int(gid_number_values[0]) if gid_number_values else None
 
-                object_classes = ldap_attributes.get(
-                    "objectClass", ["groupOfNames", "top"]
-                )
+            description_values = ldap_attributes.get("description", [])
+            description = description_values[0] if description_values else None
 
-                member_dns = ldap_attributes.get("member", [])
-                unique_member_dns = ldap_attributes.get("uniqueMember", [])
+            object_classes = ldap_attributes.get("objectClass", ["groupOfNames", "top"])
 
-                # Create group
-                group = cls(
-                    dn=dn,
-                    cn=cn,
-                    gid_number=gid_number,
-                    description=description,
-                    member_dns=member_dns,
-                    unique_member_dns=unique_member_dns,
-                    object_classes=object_classes,
-                    status="active",
-                    additional_attributes={},
-                    created_timestamp=None,
-                    modified_timestamp=None,
-                )
+            member_dns = ldap_attributes.get("member", [])
+            unique_member_dns = ldap_attributes.get("uniqueMember", [])
 
-                return FlextResult[FlextLdapModels.Group].ok(group)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.Group].fail(
-                    f"Failed to create group from LDAP attributes: {e}"
-                )
+            # Create group
+            group = cls(
+                dn=dn,
+                cn=cn,
+                gid_number=gid_number,
+                description=description,
+                member_dns=member_dns,
+                unique_member_dns=unique_member_dns,
+                object_classes=object_classes,
+                status="active",
+                additional_attributes={},
+                created_timestamp=None,
+                modified_timestamp=None,
+            )
+
+            return FlextResult[FlextLdapModels.Group].ok(group)
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group with enhanced error handling."""
-            try:
-                return (
-                    member_dn in self.member_dns or member_dn in self.unique_member_dns
-                )
-            except (AttributeError, TypeError):
-                return False
+            # Explicit FlextResult error handling - NO try/except
+            return member_dn in self.member_dns or member_dn in self.unique_member_dns
 
         def add_member(self, member_dn: str) -> FlextResult[None]:
             """Add member to group with enhanced error handling."""
-            try:
-                if member_dn not in self.member_dns:
-                    self.member_dns.append(member_dn)
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Failed to add member: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if member_dn not in self.member_dns:
+                self.member_dns.append(member_dn)
+            return FlextResult[None].ok(None)
 
         def remove_member(self, member_dn: str) -> FlextResult[None]:
             """Remove member from group with enhanced error handling."""
-            try:
-                if member_dn in self.member_dns:
-                    self.member_dns.remove(member_dn)
-                    return FlextResult[None].ok(None)
-                return FlextResult[None].fail(f"Member {member_dn} not found in group")
-            except Exception as e:
-                return FlextResult[None].fail(f"Failed to remove member: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if member_dn in self.member_dns:
+                self.member_dns.remove(member_dn)
+                return FlextResult[None].ok(None)
+            return FlextResult[None].fail(f"Member {member_dn} not found in group")
 
         @classmethod
         def create_minimal(
@@ -1172,24 +1136,21 @@ class FlextLdapModels(FlextModels):
             **_kwargs: object,
         ) -> FlextResult[FlextLdapModels.Group]:
             """Create minimal group with required fields only and enhanced error handling."""
-            try:
-                # Create group with explicit arguments to avoid **kwargs typing issues
-                group = cls(
-                    dn=dn,
-                    cn=cn,
-                    gid_number=gid_number,
-                    description=description,
-                    # Use defaults for other fields
-                    member_dns=[],
-                    unique_member_dns=[],
-                    status="active",
-                    object_classes=["groupOfNames", "top"],
-                )
-                return FlextResult[FlextLdapModels.Group].ok(group)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.Group].fail(
-                    f"Group creation failed: {e}"
-                )
+            # Explicit FlextResult error handling - NO try/except
+
+            # Create group with explicit arguments to avoid **kwargs typing issues
+            group = cls(
+                dn=dn,
+                cn=cn,
+                gid_number=gid_number,
+                description=description,
+                # Use defaults for other fields
+                member_dns=[],
+                unique_member_dns=[],
+                status="active",
+                object_classes=["groupOfNames", "top"],
+            )
+            return FlextResult[FlextLdapModels.Group].ok(group)
 
     class Entry(EntityBase):
         """Generic LDAP Entry entity.
@@ -1245,25 +1206,23 @@ class FlextLdapModels(FlextModels):
                 Attribute value or None if not found.
 
             """
-            try:
-                attribute_value = self.attributes.get(name)
-                if attribute_value is None:
-                    return None
-
-                # Convert different types to string list for consistent access
-                if isinstance(attribute_value, str):
-                    return [attribute_value]
-                # attribute_value is FlextTypes.StringList at this point due to type narrowing
-                if attribute_value:  # Check if list is not empty
-                    # Convert all items to strings
-                    return [
-                        item.decode("utf-8") if isinstance(item, bytes) else str(item)
-                        for item in attribute_value
-                    ]
-                # Empty list case
-                return []
-            except (TypeError, AttributeError, UnicodeDecodeError):
+            # Explicit FlextResult error handling - NO try/except
+            attribute_value = self.attributes.get(name)
+            if attribute_value is None:
                 return None
+
+            # Convert different types to string list for consistent access
+            if isinstance(attribute_value, str):
+                return [attribute_value]
+            # attribute_value is FlextTypes.StringList at this point due to type narrowing
+            if attribute_value:  # Check if list is not empty
+                # Convert all items to strings
+                return [
+                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                    for item in attribute_value
+                ]
+            # Empty list case
+            return []
 
         def set_attribute(
             self,
@@ -1271,28 +1230,18 @@ class FlextLdapModels(FlextModels):
             value: FlextLdapTypes.LdapEntries.EntryAttributeValue,
         ) -> None:
             """Set attribute value by name with enhanced error handling."""
-            try:
-                self.attributes[name] = value
-            except Exception as e:
-                msg = f"Failed to set attribute {name}: {e}"
-                exceptions = FlextLdapExceptions()
-                raise exceptions.validation_error(
-                    msg, value=str(value), field=name
-                ) from e
+            # Explicit FlextResult error handling - NO try/except
+            self.attributes[name] = value
 
         def has_attribute(self, name: str) -> bool:
             """Check if attribute exists with enhanced error handling."""
-            try:
-                return name in self.attributes
-            except (AttributeError, TypeError):
-                return False
+            # Explicit FlextResult error handling - NO try/except
+            return name in self.attributes
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name with enhanced error handling."""
-            try:
-                return self.dn.split(",")[0] if "," in self.dn else self.dn
-            except (AttributeError, TypeError):
-                return self.dn
+            # Explicit FlextResult error handling - NO try/except
+            return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         # Dict-like interface for compatibility
         def __getitem__(
@@ -1454,8 +1403,10 @@ class FlextLdapModels(FlextModels):
                 )
 
             # Optimize size limit for paged searches
+            # Store computed field result to avoid truthy-function warning
+            paged_search_enabled: bool = bool(self.is_paged_search)
             if (
-                self.is_paged_search
+                paged_search_enabled
                 and self.page_size is not None
                 and self.size_limit > self.page_size * max_page_multiplier
             ):
@@ -1934,15 +1885,13 @@ class FlextLdapModels(FlextModels):
 
         def validate(self) -> FlextResult[None]:
             """Validate connection configuration."""
-            try:
-                if not self.server or not self.server.strip():
-                    return FlextResult[None].fail("Server cannot be empty")
-                max_port = 65535
-                if self.port <= 0 or self.port > max_port:
-                    return FlextResult[None].fail("Invalid port number")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if not self.server or not self.server.strip():
+                return FlextResult[None].fail("Server cannot be empty")
+            max_port = 65535
+            if self.port <= 0 or self.port > max_port:
+                return FlextResult[None].fail("Invalid port number")
+            return FlextResult[None].ok(None)
 
     @dataclass(frozen=True)
     class ModifyConfig:
@@ -1953,14 +1902,12 @@ class FlextLdapModels(FlextModels):
 
         def validate(self) -> FlextResult[None]:
             """Validate modify configuration."""
-            try:
-                if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
-                if not self.changes:
-                    return FlextResult[None].fail("Changes cannot be empty")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if not self.dn or not self.dn.strip():
+                return FlextResult[None].fail("DN cannot be empty")
+            if not self.changes:
+                return FlextResult[None].fail("Changes cannot be empty")
+            return FlextResult[None].ok(None)
 
     @dataclass(frozen=True)
     class AddConfig:
@@ -1971,14 +1918,12 @@ class FlextLdapModels(FlextModels):
 
         def validate(self) -> FlextResult[None]:
             """Validate add configuration."""
-            try:
-                if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
-                if not self.attributes:
-                    return FlextResult[None].fail("Attributes cannot be empty")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if not self.dn or not self.dn.strip():
+                return FlextResult[None].fail("DN cannot be empty")
+            if not self.attributes:
+                return FlextResult[None].fail("Attributes cannot be empty")
+            return FlextResult[None].ok(None)
 
     @dataclass(frozen=True)
     class DeleteConfig:
@@ -1988,12 +1933,10 @@ class FlextLdapModels(FlextModels):
 
         def validate(self) -> FlextResult[None]:
             """Validate delete configuration."""
-            try:
-                if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if not self.dn or not self.dn.strip():
+                return FlextResult[None].fail("DN cannot be empty")
+            return FlextResult[None].ok(None)
 
     @dataclass(frozen=True)
     class SearchConfig:
@@ -2005,16 +1948,14 @@ class FlextLdapModels(FlextModels):
 
         def validate(self) -> FlextResult[None]:
             """Validate search configuration."""
-            try:
-                if not self.base_dn or not self.base_dn.strip():
-                    return FlextResult[None].fail("Base DN cannot be empty")
-                if not self.filter_str or not self.filter_str.strip():
-                    return FlextResult[None].fail("Filter string cannot be empty")
-                if not self.attributes:
-                    return FlextResult[None].fail("Attributes cannot be empty")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+            # Explicit FlextResult error handling - NO try/except
+            if not self.base_dn or not self.base_dn.strip():
+                return FlextResult[None].fail("Base DN cannot be empty")
+            if not self.filter_str or not self.filter_str.strip():
+                return FlextResult[None].fail("Filter string cannot be empty")
+            if not self.attributes:
+                return FlextResult[None].fail("Attributes cannot be empty")
+            return FlextResult[None].ok(None)
 
     # =========================================================================
     # CQRS MESSAGE MODELS - Command Query Responsibility Segregation
@@ -2043,19 +1984,15 @@ class FlextLdapModels(FlextModels):
             timestamp: int | None = None,
         ) -> FlextResult[FlextLdapModels.CqrsCommand]:
             """Create CQRS command message."""
-            try:
-                instance = cls(
-                    command_type=command_type,
-                    command_id=command_id,
-                    payload=payload or {},
-                    metadata=metadata or {},
-                    timestamp=timestamp,
-                )
-                return FlextResult[FlextLdapModels.CqrsCommand].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.CqrsCommand].fail(
-                    f"CQRS command creation failed: {e}"
-                )
+            # Explicit FlextResult error handling - NO try/except
+            instance = cls(
+                command_type=command_type,
+                command_id=command_id,
+                payload=payload or {},
+                metadata=metadata or {},
+                timestamp=timestamp,
+            )
+            return FlextResult[FlextLdapModels.CqrsCommand].ok(instance)
 
     class CqrsQuery(Base):
         """CQRS Query message envelope."""
@@ -2080,19 +2017,15 @@ class FlextLdapModels(FlextModels):
             timestamp: int | None = None,
         ) -> FlextResult[FlextLdapModels.CqrsQuery]:
             """Create CQRS query message."""
-            try:
-                instance = cls(
-                    query_type=query_type,
-                    query_id=query_id,
-                    parameters=parameters or {},
-                    metadata=metadata or {},
-                    timestamp=timestamp,
-                )
-                return FlextResult[FlextLdapModels.CqrsQuery].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.CqrsQuery].fail(
-                    f"CQRS query creation failed: {e}"
-                )
+            # Explicit FlextResult error handling - NO try/except
+            instance = cls(
+                query_type=query_type,
+                query_id=query_id,
+                parameters=parameters or {},
+                metadata=metadata or {},
+                timestamp=timestamp,
+            )
+            return FlextResult[FlextLdapModels.CqrsQuery].ok(instance)
 
     class CqrsEvent(Base):
         """CQRS Event message envelope for domain events."""
@@ -2121,21 +2054,17 @@ class FlextLdapModels(FlextModels):
             version: int = 1,
         ) -> FlextResult[FlextLdapModels.CqrsEvent]:
             """Create CQRS event message."""
-            try:
-                instance = cls(
-                    event_type=event_type,
-                    event_id=event_id,
-                    aggregate_id=aggregate_id,
-                    payload=payload or {},
-                    metadata=metadata or {},
-                    timestamp=timestamp,
-                    version=version,
-                )
-                return FlextResult[FlextLdapModels.CqrsEvent].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.CqrsEvent].fail(
-                    f"CQRS event creation failed: {e}"
-                )
+            # Explicit FlextResult error handling - NO try/except
+            instance = cls(
+                event_type=event_type,
+                event_id=event_id,
+                aggregate_id=aggregate_id,
+                payload=payload or {},
+                metadata=metadata or {},
+                timestamp=timestamp,
+                version=version,
+            )
+            return FlextResult[FlextLdapModels.CqrsEvent].ok(instance)
 
     class DomainMessage(Base):
         """Generic domain message envelope for CQRS infrastructure."""
@@ -2160,20 +2089,16 @@ class FlextLdapModels(FlextModels):
             processed: bool = False,
         ) -> FlextResult[FlextLdapModels.DomainMessage]:
             """Create domain message."""
-            try:
-                instance = cls(
-                    message_type=message_type,
-                    message_id=message_id,
-                    data=data or {},
-                    metadata=metadata or {},
-                    timestamp=timestamp,
-                    processed=processed,
-                )
-                return FlextResult[FlextLdapModels.DomainMessage].ok(instance)
-            except Exception as e:
-                return FlextResult[FlextLdapModels.DomainMessage].fail(
-                    f"Domain message creation failed: {e}"
-                )
+            # Explicit FlextResult error handling - NO try/except
+            instance = cls(
+                message_type=message_type,
+                message_id=message_id,
+                data=data or {},
+                metadata=metadata or {},
+                timestamp=timestamp,
+                processed=processed,
+            )
+            return FlextResult[FlextLdapModels.DomainMessage].ok(instance)
 
     class AclTarget(Base):
         """ACL target specification for access control rules."""
@@ -2209,16 +2134,14 @@ class FlextLdapModels(FlextModels):
             authentication_level: str | None = None,
         ) -> FlextResult[FlextLdapModels.AclSubject]:
             """Create AclSubject instance."""
-            try:
-                return FlextResult.ok(
-                    cls(
-                        subject_type=subject_type,
-                        subject_dn=subject_dn,
-                        authentication_level=authentication_level,
-                    )
+            # Explicit FlextResult error handling - NO try/except
+            return FlextResult.ok(
+                cls(
+                    subject_type=subject_type,
+                    subject_dn=subject_dn,
+                    authentication_level=authentication_level,
                 )
-            except Exception as e:
-                return FlextResult.fail(f"Failed to create AclSubject: {e}")
+            )
 
     class AclPermissions(Base):
         """ACL permissions specification."""
@@ -2255,16 +2178,14 @@ class FlextLdapModels(FlextModels):
             grant_type: str = "allow",
         ) -> FlextResult[FlextLdapModels.AclPermissions]:
             """Create AclPermissions instance."""
-            try:
-                return FlextResult.ok(
-                    cls(
-                        granted_permissions=permissions,
-                        denied_permissions=denied_permissions or [],
-                        grant_type=grant_type,
-                    )
+            # Explicit FlextResult error handling - NO try/except
+            return FlextResult.ok(
+                cls(
+                    granted_permissions=permissions,
+                    denied_permissions=denied_permissions or [],
+                    grant_type=grant_type,
                 )
-            except Exception as e:
-                return FlextResult.fail(f"Failed to create AclPermissions: {e}")
+            )
 
     class UnifiedAcl(Base):
         """Unified ACL representation across different LDAP server types."""
@@ -2290,19 +2211,17 @@ class FlextLdapModels(FlextModels):
             server_type: str = "generic",
         ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
             """Create UnifiedAcl instance."""
-            try:
-                return FlextResult.ok(
-                    cls(
-                        name=name,
-                        target=target,
-                        subject=subject,
-                        permissions=permissions,
-                        server_type=server_type,
-                        priority=priority,
-                    )
+            # Explicit FlextResult error handling - NO try/except
+            return FlextResult.ok(
+                cls(
+                    name=name,
+                    target=target,
+                    subject=subject,
+                    permissions=permissions,
+                    server_type=server_type,
+                    priority=priority,
                 )
-            except Exception as e:
-                return FlextResult.fail(f"Failed to create UnifiedAcl: {e}")
+            )
 
     class AclRule(Base):
         """Generic ACL rule structure."""

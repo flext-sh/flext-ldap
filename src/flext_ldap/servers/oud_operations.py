@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import override
 
-from ldap3 import Connection
-from flext_ldif import FlextLdifModels
-
 from flext_core import FlextResult, FlextTypes
+from flext_ldif import FlextLdifModels
+from ldap3 import Connection
+
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -102,19 +102,17 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
-            self.logger.error("Schema discovery error", extra={"error": str(e)})
+            self.logger.exception("Schema discovery error", extra={"error": str(e)})
             return FlextResult[FlextTypes.Dict].fail(f"Schema discovery failed: {e}")
 
     @override
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OUD objectClass definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": object_class_def,
-                    "server_type": "oud",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": object_class_def,
+                "server_type": "oud",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -122,12 +120,10 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OUD attributeType definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": attribute_def,
-                    "server_type": "oud",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": attribute_def,
+                "server_type": "oud",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -178,7 +174,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextTypes.Dict]].ok(acls)
 
         except Exception as e:
-            self.logger.error("Get ACLs error", extra={"error": str(e)})
+            self.logger.exception("Get ACLs error", extra={"error": str(e)})
             return FlextResult[list[FlextTypes.Dict]].fail(f"Get ACLs failed: {e}")
 
     @override
@@ -213,7 +209,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Set ACLs error", extra={"error": str(e)})
+            self.logger.exception("Set ACLs error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
@@ -256,13 +252,13 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             acl_dict["privilege"] = privilege_name
 
             # Map common privileges to categories
-            if privilege_name in ("config-read", "config-write"):
+            if privilege_name in {"config-read", "config-write"}:
                 acl_dict["category"] = "configuration"
-            elif privilege_name in ("password-reset", "password-modify"):
+            elif privilege_name in {"password-reset", "password-modify"}:
                 acl_dict["category"] = "password"
-            elif privilege_name in ("proxied-auth", "bypass-acl"):
+            elif privilege_name in {"proxied-auth", "bypass-acl"}:
                 acl_dict["category"] = "administrative"
-            elif privilege_name in ("privilege-change", "update-schema"):
+            elif privilege_name in {"privilege-change", "update-schema"}:
                 acl_dict["category"] = "management"
             else:
                 acl_dict["category"] = "custom"
@@ -344,7 +340,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Add entry error", extra={"error": str(e)})
+            self.logger.exception("Add entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
@@ -372,7 +368,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Modify entry error", extra={"error": str(e)})
+            self.logger.exception("Modify entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
@@ -391,7 +387,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Delete entry error", extra={"error": str(e)})
+            self.logger.exception("Delete entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
@@ -461,7 +457,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self.logger.error("Paged search error", extra={"error": str(e)})
+            self.logger.exception("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )
@@ -520,17 +516,17 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             Category name
 
         """
-        if privilege in ("config-read", "config-write"):
+        if privilege in {"config-read", "config-write"}:
             return "configuration"
-        if privilege in ("password-reset", "password-modify"):
+        if privilege in {"password-reset", "password-modify"}:
             return "password"
-        if privilege in ("proxied-auth", "bypass-acl"):
+        if privilege in {"proxied-auth", "bypass-acl"}:
             return "administrative"
-        if privilege in ("privilege-change", "update-schema"):
+        if privilege in {"privilege-change", "update-schema"}:
             return "management"
-        if privilege in ("ldif-import", "ldif-export"):
+        if privilege in {"ldif-import", "ldif-export"}:
             return "data-management"
-        if privilege in ("backend-backup", "backend-restore"):
+        if privilege in {"backend-backup", "backend-restore"}:
             return "maintenance"
         return "custom"
 

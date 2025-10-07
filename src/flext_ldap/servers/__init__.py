@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from ldap3 import Connection
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
+from ldap3 import Connection
 
-from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
@@ -45,13 +45,14 @@ class FlextLdapServers(FlextService[None]):
     SERVER_GENERIC: ClassVar[str] = FlextLdapConstants.Servers.GENERIC
 
     def __init__(self, server_type: str | None = None) -> None:
-        """Initialize unified server operations.
+        """Initialize unified server operations with Phase 1 context enrichment.
 
         Args:
             server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic)
+
         """
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or self.SERVER_GENERIC
         self._operations: Any | None = None
 
@@ -79,6 +80,7 @@ class FlextLdapServers(FlextService[None]):
 
         Returns:
             Server operations instance
+
         """
         # Import here to avoid circular imports
         from flext_ldap.servers.factory import FlextLdapServersFactory

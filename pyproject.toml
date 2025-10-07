@@ -58,7 +58,7 @@
         Repository    = "https://github.com/flext-sh/flext"
 
 [tool.ruff]
-    # extend = "../ruff-shared.toml"  # Temporarily disabled due to config issues
+    extend = "../ruff-shared.toml"
 
 [tool.bandit]
     exclude_dirs = [

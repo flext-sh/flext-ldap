@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Literal, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, FlextTypes
-
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
@@ -356,6 +355,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[bool]: Connection success status
+
                 """
                 ...
 
@@ -368,6 +368,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[bool]: Bind success status
+
                 """
                 ...
 
@@ -376,6 +377,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[None]: Unbind success status
+
                 """
                 ...
 
@@ -384,6 +386,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[None]: Disconnect success status
+
                 """
                 ...
 
@@ -392,6 +395,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     bool: Connection status
+
                 """
                 ...
 
@@ -400,6 +404,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[bool]: Connection test success status
+
                 """
                 ...
 
@@ -408,6 +413,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[None]: Close operation success status
+
                 """
                 ...
 
@@ -416,6 +422,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[str]: Connection string
+
                 """
                 ...
 
@@ -438,6 +445,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[FlextLdapModels.Entry | None]: Single search result or None
+
                 """
                 ...
 
@@ -456,6 +464,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[list[FlextLdapModels.Entry]]: Search results
+
                 """
                 ...
 
@@ -467,6 +476,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[FlextLdapModels.LdapUser | None]: User object or None
+
                 """
                 ...
 
@@ -478,6 +488,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[FlextLdapModels.Group | None]: Group object or None
+
                 """
                 ...
 
@@ -489,6 +500,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[bool]: True if user exists
+
                 """
                 ...
 
@@ -500,6 +512,7 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                     FlextResult[bool]: True if group exists
+
                 """
                 ...
 

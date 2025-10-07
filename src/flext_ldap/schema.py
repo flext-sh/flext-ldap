@@ -20,6 +20,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration

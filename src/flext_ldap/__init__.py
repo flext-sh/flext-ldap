@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-
 # Core facade - MAIN ENTRY POINT for flext-ldap
 from flext_ldap.api import FlextLdap
 
@@ -19,12 +18,12 @@ from flext_ldap.api import FlextLdap
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.exceptions import FlextLdapExceptions
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.schema import FlextLdapSchema
 from flext_ldap.servers import FlextLdapServers
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
-from flext_ldap.exceptions import FlextLdapExceptions
 
 # Version information
 from flext_ldap.version import VERSION, FlextLdapVersion
@@ -36,6 +35,7 @@ def get_flext_ldap_api() -> FlextLdap:
 
     Returns:
         FlextLdap: The unified LDAP API instance
+
     """
     return FlextLdap()
 
@@ -45,22 +45,22 @@ __version__: str = FlextLdapConstants.Version.get_version()
 __version_info__: tuple[int | str, ...] = FlextLdapConstants.Version.get_version_info()
 
 __all__ = [
+    # Version information
+    "VERSION",
     # Core facade - PRIMARY API
     "FlextLdap",
-    "get_flext_ldap_api",
     # Core domain classes - REQUIRED for tests
     "FlextLdapClients",
     "FlextLdapConfig",
     "FlextLdapConstants",
+    "FlextLdapExceptions",
     "FlextLdapModels",
     "FlextLdapSchema",
     "FlextLdapServers",
     "FlextLdapTypes",
     "FlextLdapValidations",
-    "FlextLdapExceptions",
-    # Version information
-    "VERSION",
     "FlextLdapVersion",
     "__version__",
     "__version_info__",
+    "get_flext_ldap_api",
 ]

@@ -6,12 +6,12 @@ from flext_ldap.adapters import FlextLdapAdapters
 class TestFlextLdapAdapters:
     """Test cases for FlextLdapAdapters."""
 
-    def test_adapters_initialization(self):
+    def test_adapters_initialization(self) -> None:
         """Test adapters initialization."""
         adapters = FlextLdapAdapters()
         assert adapters is not None
 
-    def test_adapters_basic_functionality(self):
+    def test_adapters_basic_functionality(self) -> None:
         """Test basic adapters functionality."""
         adapters = FlextLdapAdapters()
         # Add specific test cases based on adapters functionality

@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldap.servers.ad_operations import (
     FlextLdapServersADOperations as ActiveDirectoryOperations,
 )
@@ -56,9 +56,9 @@ class FlextLdapServersFactory(FlextService[None]):
     """
 
     def __init__(self) -> None:
-        """Initialize server operations factory."""
+        """Initialize server operations factory with Phase 1 context enrichment."""
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._quirks_manager = FlextLdifQuirksManager()
         self._server_registry: dict[str, type[BaseServerOperations]] = {
             "openldap1": OpenLDAP1Operations,
@@ -117,7 +117,7 @@ class FlextLdapServersFactory(FlextService[None]):
             )
 
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to create server operations",
                 extra={"server_type": server_type, "error": str(e)},
             )
@@ -168,7 +168,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return self.create_from_server_type(detected_type)
 
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to create server operations from entries",
                 extra={"entry_count": len(entries) if entries else 0, "error": str(e)},
             )
@@ -281,7 +281,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return FlextResult[str].ok("generic")
 
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Root DSE detection error",
                 extra={"error": str(e)},
             )
@@ -325,7 +325,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return self.create_from_server_type(detected_type)
 
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to create server operations from connection",
                 extra={"error": str(e)},
             )

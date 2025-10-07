@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
+from flext_core import FlextLogger, FlextTypes
+
 from flext_ldap import (
     FlextLdap,
     FlextLdapClients,
@@ -14,8 +16,6 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapValidations,
 )
-
-from flext_core import FlextLogger, FlextTypes
 
 # Import shared LDAP fixtures from docker directory
 from .helpers import cleanup_test_entries, search_entries

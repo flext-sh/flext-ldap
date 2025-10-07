@@ -12,6 +12,16 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_core import (
+    FlextContainer,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
+
+# Import centralized FLEXT Docker infrastructure from flext-core
+# from flext_tests.docker import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import from flext-core when available
+from ldap3 import Server
 from pydantic import SecretStr
 
 # Import test support fixtures
@@ -26,20 +36,8 @@ from flext_ldap.acl import (
     FlextLdapAclManager,
     FlextLdapAclParsers,
 )
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.config import FlextLdapConfig
-
-# Import centralized FLEXT Docker infrastructure from flext-core
-# from flext_tests.docker import FlextTestDocker  # TODO: Import from flext-core when available
-
-from ldap3 import Server
-
-from flext_core import (
-    FlextContainer,
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-)
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -52,11 +50,11 @@ class FlextTestDocker:
 
         # Mock implementation - assume container is not running
         class MockContainerStatus:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.value = "not_running"
 
         class MockValue:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.status = MockContainerStatus()
 
         # Return as FlextResult.ok with mock value
@@ -64,7 +62,6 @@ class FlextTestDocker:
 
     def compose_up(self, compose_file: str, service: str) -> FlextResult:
         """Mock compose up."""
-
         # Mock implementation - assume failure
         return FlextResult.fail("Mock implementation - Docker not available")
 
@@ -412,19 +409,17 @@ def mock_connection_result() -> FlextResult[bool]:
 @pytest.fixture
 def mock_search_result() -> FlextResult[list[FlextTypes.Dict]]:
     """Get mock search result."""
-    return FlextResult[list[FlextTypes.Dict]].ok(
-        [
-            {
-                "dn": "uid=testuser,ou=people,dc=example,dc=com",
-                "attributes": {
-                    "uid": ["testuser"],
-                    "cn": ["Test User"],
-                    "sn": ["User"],
-                    "mail": ["testuser@example.com"],
-                },
-            }
-        ]
-    )
+    return FlextResult[list[FlextTypes.Dict]].ok([
+        {
+            "dn": "uid=testuser,ou=people,dc=example,dc=com",
+            "attributes": {
+                "uid": ["testuser"],
+                "cn": ["Test User"],
+                "sn": ["User"],
+                "mail": ["testuser@example.com"],
+            },
+        }
+    ])
 
 
 @pytest.fixture
@@ -546,8 +541,7 @@ def shared_ldap_container() -> str:
     """Managed LDAP container for tests - simple container name provider."""
     # Simply provide the container name - actual container management
     # is handled externally via docker-compose or manual setup
-    container_name = "flext-openldap-test"
-    return container_name
+    return "flext-openldap-test"
     # Cleanup handled externally
 
 
@@ -555,11 +549,10 @@ def shared_ldap_container() -> str:
 def shared_ldap_container_manager() -> dict[str, str | bool]:
     """Docker control manager for LDAP containers - simplified implementation."""
     # Provide a simple manager object for compatibility
-    manager = {
+    return {
         "container_name": "flext-openldap-test",
         "is_running": True,
     }
-    return manager
 
 
 @pytest.fixture
@@ -596,7 +589,7 @@ def skip_if_no_docker() -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_ldap_state():
+def clean_ldap_state() -> None:
     """Clean LDAP state between tests."""
     # Pre-test cleanup
     return

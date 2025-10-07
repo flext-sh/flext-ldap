@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import override
 
-from ldap3 import Connection
-from flext_ldif import FlextLdifModels
-
 from flext_core import FlextResult, FlextTypes
+from flext_ldif import FlextLdifModels
+from ldap3 import Connection
+
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -101,19 +101,17 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
-            self.logger.error("Schema discovery error", extra={"error": str(e)})
+            self.logger.exception("Schema discovery error", extra={"error": str(e)})
             return FlextResult[FlextTypes.Dict].fail(f"Schema discovery failed: {e}")
 
     @override
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID objectClass definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": object_class_def,
-                    "server_type": "oid",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": object_class_def,
+                "server_type": "oid",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -121,12 +119,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID attributeType definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": attribute_def,
-                    "server_type": "oid",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": attribute_def,
+                "server_type": "oid",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -175,7 +171,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextTypes.Dict]].ok(acls)
 
         except Exception as e:
-            self.logger.error("Get ACLs error", extra={"error": str(e)})
+            self.logger.exception("Get ACLs error", extra={"error": str(e)})
             return FlextResult[list[FlextTypes.Dict]].fail(f"Get ACLs failed: {e}")
 
     @override
@@ -210,7 +206,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Set ACLs error", extra={"error": str(e)})
+            self.logger.exception("Set ACLs error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
@@ -384,7 +380,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Add entry error", extra={"error": str(e)})
+            self.logger.exception("Add entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
@@ -412,7 +408,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Modify entry error", extra={"error": str(e)})
+            self.logger.exception("Modify entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
@@ -431,7 +427,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.error("Delete entry error", extra={"error": str(e)})
+            self.logger.exception("Delete entry error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
@@ -478,7 +474,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     # Track person-related classes
                     if oc == "person":
                         has_person = True
-                    elif oc in ("organizationalPerson", "inetOrgPerson"):
+                    elif oc in {"organizationalPerson", "inetOrgPerson"}:
                         has_org_person = True
 
                 # For user entries, consider adding orclUserV2 for extended features
@@ -573,7 +569,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except Exception as e:
-            self.logger.error("Paged search error", extra={"error": str(e)})
+            self.logger.exception("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )

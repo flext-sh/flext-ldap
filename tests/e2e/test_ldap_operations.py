@@ -12,6 +12,7 @@ from __future__ import annotations
 import os
 
 import pytest
+
 from flext_ldap import FlextLdapClients, FlextLdapModels
 
 
@@ -104,8 +105,8 @@ class TestLdapE2EOperations:
         # Note: Actual implementation would require real LDAP server
 
         # Test that API has group-related methods
-        assert hasattr(api, "create_group") or callable(
-            getattr(api, "create_group", None),
+        assert hasattr(api, "get_group") or callable(
+            getattr(api, "get_group", None),
         )
 
         # Verify API is properly initialized

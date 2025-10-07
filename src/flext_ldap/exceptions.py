@@ -51,33 +51,21 @@ class FlextLdapExceptions(FlextExceptions):
                 message: Error message
                 server_uri: LDAP server URI that failed
                 ldap_code: LDAP result code
-                **kwargs: Additional context (context, correlation_id, error_code)
+                **kwargs: Additional context
 
             """
             self.server_uri = server_uri
             self.ldap_code = ldap_code
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if server_uri:
+                enhanced_message = f"{message} (server: {server_uri})"
+            if ldap_code is not None:
+                enhanced_message = f"{enhanced_message} [LDAP code: {ldap_code}]"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                server_uri=server_uri,
-                ldap_code=ldap_code,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                service="LDAP",
-                endpoint=server_uri,
-                code=error_code or "LDAP_CONNECTION_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -116,25 +104,13 @@ class FlextLdapExceptions(FlextExceptions):
             """
             self.bind_dn = bind_dn
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if bind_dn:
+                enhanced_message = f"{message} (bind_dn: {bind_dn})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                bind_dn=bind_dn,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                auth_method="LDAP_BIND",
-                code=error_code or "LDAP_AUTHENTICATION_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -174,27 +150,15 @@ class FlextLdapExceptions(FlextExceptions):
             self.filter_str = filter_str
             self.search_context = search_context
 
-            # Extract common parameters using helper
-            base_context_dict, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if base_dn:
+                enhanced_message = f"{message} (base_dn: {base_dn})"
+            if filter_str:
+                enhanced_message = f"{enhanced_message} (filter: {filter_str})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context_dict,
-                base_dn=base_dn,
-                filter_str=filter_str,
-                search_context=search_context,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                operation="LDAP_SEARCH",
-                code=error_code or "LDAP_SEARCH_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -238,26 +202,13 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.modifications = modifications
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if dn:
+                enhanced_message = f"{message} (dn: {dn})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                dn=dn,
-                modifications=modifications,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                operation="LDAP_MODIFY",
-                code=error_code or "LDAP_MODIFY_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -294,26 +245,13 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.object_classes = object_classes
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if dn:
+                enhanced_message = f"{message} (dn: {dn})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                dn=dn,
-                object_classes=object_classes,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                operation="LDAP_ADD",
-                code=error_code or "LDAP_ADD_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
     class LdapDeleteError(FlextExceptions.OperationError):
         """LDAP delete operation failure.
@@ -339,25 +277,13 @@ class FlextLdapExceptions(FlextExceptions):
             """
             self.dn = dn
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if dn:
+                enhanced_message = f"{message} (dn: {dn})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                dn=dn,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                operation="LDAP_DELETE",
-                code=error_code or "LDAP_DELETE_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
     class LdapValidationError(FlextExceptions.ValidationError):
         """LDAP data validation failure.
@@ -383,25 +309,13 @@ class FlextLdapExceptions(FlextExceptions):
             """
             self.ldap_field = ldap_field
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if ldap_field:
+                enhanced_message = f"{message} (field: {ldap_field})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                ldap_field=ldap_field,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                field=ldap_field,
-                code=error_code or "LDAP_VALIDATION_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -438,26 +352,15 @@ class FlextLdapExceptions(FlextExceptions):
             self.ldap_config_key = ldap_config_key
             self.section = section
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if ldap_config_key:
+                enhanced_message = f"{message} (config_key: {ldap_config_key})"
+            if section:
+                enhanced_message = f"{enhanced_message} (section: {section})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                ldap_config_key=ldap_config_key,
-                section=section,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                config_key=ldap_config_key,
-                code=error_code or "LDAP_CONFIGURATION_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -497,26 +400,17 @@ class FlextLdapExceptions(FlextExceptions):
 
             """
             self.operation = operation
+            self.timeout_seconds = timeout_seconds
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if operation:
+                enhanced_message = f"{message} (operation: {operation})"
+            if timeout_seconds is not None:
+                enhanced_message = f"{enhanced_message} (timeout: {timeout_seconds}s)"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                operation=operation,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                timeout_seconds=timeout_seconds,
-                code=error_code or "LDAP_TIMEOUT_ERROR",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
     class LdapEntryNotFoundError(FlextExceptions.NotFoundError):
         """LDAP entry not found.
@@ -545,27 +439,15 @@ class FlextLdapExceptions(FlextExceptions):
             self.dn = dn
             self.operation = operation
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if dn:
+                enhanced_message = f"{message} (dn: {dn})"
+            if operation:
+                enhanced_message = f"{enhanced_message} (operation: {operation})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                dn=dn,
-                operation=operation,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                resource_id=dn,
-                resource_type="LDAP_ENTRY",
-                code=error_code or "LDAP_ENTRY_NOT_FOUND",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
         @override
         def __str__(self) -> str:
@@ -604,26 +486,13 @@ class FlextLdapExceptions(FlextExceptions):
             """
             self.dn = dn
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
-            )
+            # Build error message with LDAP context
+            enhanced_message = message
+            if dn:
+                enhanced_message = f"{message} (dn: {dn})"
 
-            # Build context with LDAP-specific fields
-            context = self._build_context(
-                base_context,
-                dn=dn,
-            )
-
-            # Call parent with complete error information
-            super().__init__(
-                message,
-                resource_id=dn,
-                resource_type="LDAP_ENTRY",
-                code=error_code or "LDAP_ENTRY_ALREADY_EXISTS",
-                context=context,
-                correlation_id=correlation_id,
-            )
+            # Call parent with enhanced message
+            super().__init__(enhanced_message)
 
     # Factory methods for direct access
     @staticmethod

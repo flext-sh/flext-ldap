@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, Literal
+from typing import Final
 
 from flext_core import FlextConstants, FlextTypes
 
@@ -308,57 +308,55 @@ class FlextLdapConstants(FlextConstants):
         """Centralized Literal types for LDAP operations."""
 
         # LDAP scope literals
-        SEARCH_SCOPE_BASE: Final[Literal["BASE"]] = "BASE"
-        SEARCH_SCOPE_LEVEL: Final[Literal["LEVEL"]] = "LEVEL"
-        SEARCH_SCOPE_SUBTREE: Final[Literal["SUBTREE"]] = "SUBTREE"
+        SEARCH_SCOPE_BASE: Final = "BASE"
+        SEARCH_SCOPE_LEVEL: Final = "LEVEL"
+        SEARCH_SCOPE_SUBTREE: Final = "SUBTREE"
 
         # LDAP modify operation literals
-        MODIFY_ADD: Final[Literal["MODIFY_ADD"]] = "MODIFY_ADD"
-        MODIFY_DELETE: Final[Literal["MODIFY_DELETE"]] = "MODIFY_DELETE"
-        MODIFY_REPLACE: Final[Literal["MODIFY_REPLACE"]] = "MODIFY_REPLACE"
+        MODIFY_ADD: Final = "MODIFY_ADD"
+        MODIFY_DELETE: Final = "MODIFY_DELETE"
+        MODIFY_REPLACE: Final = "MODIFY_REPLACE"
 
         # LDAP connection state literals
-        CONNECTION_STATE_UNBOUND: Final[Literal["unbound"]] = "unbound"
-        CONNECTION_STATE_BOUND: Final[Literal["bound"]] = "bound"
-        CONNECTION_STATE_CLOSED: Final[Literal["closed"]] = "closed"
-        CONNECTION_STATE_ERROR: Final[Literal["error"]] = "error"
+        CONNECTION_STATE_UNBOUND: Final = "unbound"
+        CONNECTION_STATE_BOUND: Final = "bound"
+        CONNECTION_STATE_CLOSED: Final = "closed"
+        CONNECTION_STATE_ERROR: Final = "error"
 
         # LDAP operation type literals
-        OPERATION_SEARCH: Final[Literal["search"]] = "search"
-        OPERATION_ADD: Final[Literal["add"]] = "add"
-        OPERATION_MODIFY: Final[Literal["modify"]] = "modify"
-        OPERATION_DELETE: Final[Literal["delete"]] = "delete"
-        OPERATION_COMPARE: Final[Literal["compare"]] = "compare"
-        OPERATION_EXTENDED: Final[Literal["extended"]] = "extended"
+        OPERATION_SEARCH: Final = "search"
+        OPERATION_ADD: Final = "add"
+        OPERATION_MODIFY: Final = "modify"
+        OPERATION_DELETE: Final = "delete"
+        OPERATION_COMPARE: Final = "compare"
+        OPERATION_EXTENDED: Final = "extended"
 
         # LDAP security level literals
-        SECURITY_NONE: Final[Literal["none"]] = "none"
-        SECURITY_SIMPLE: Final[Literal["simple"]] = "simple"
-        SECURITY_SASL: Final[Literal["sasl"]] = "sasl"
+        SECURITY_NONE: Final = "none"
+        SECURITY_SIMPLE: Final = "simple"
+        SECURITY_SASL: Final = "sasl"
 
         # LDAP authentication method literals
-        AUTH_SIMPLE: Final[Literal["simple"]] = "simple"
-        AUTH_SASL: Final[Literal["sasl"]] = "sasl"
-        AUTH_EXTERNAL: Final[Literal["external"]] = "external"
+        AUTH_SIMPLE: Final = "simple"
+        AUTH_SASL: Final = "sasl"
+        AUTH_EXTERNAL: Final = "external"
 
         # LDAP connection info literals
-        CONNECTION_INFO_ALL: Final[Literal["ALL"]] = "ALL"
-        CONNECTION_INFO_DSA: Final[Literal["DSA"]] = "DSA"
-        CONNECTION_INFO_NO_INFO: Final[Literal["NO_INFO"]] = "NO_INFO"
-        CONNECTION_INFO_SCHEMA: Final[Literal["SCHEMA"]] = "SCHEMA"
+        CONNECTION_INFO_ALL: Final = "ALL"
+        CONNECTION_INFO_DSA: Final = "DSA"
+        CONNECTION_INFO_NO_INFO: Final = "NO_INFO"
+        CONNECTION_INFO_SCHEMA: Final = "SCHEMA"
 
         # LDAP connection mode literals
-        CONNECTION_MODE_SYNC: Final[Literal["sync"]] = "sync"
-        CONNECTION_MODE_ASYNC: Final[Literal["async"]] = "async"
+        CONNECTION_MODE_SYNC: Final = "sync"
+        CONNECTION_MODE_ASYNC: Final = "async"
 
         # LDAP IP mode literals
-        IP_MODE_SYSTEM_DEFAULT: Final[Literal["IP_SYSTEM_DEFAULT"]] = (
-            "IP_SYSTEM_DEFAULT"
-        )
-        IP_MODE_V4_ONLY: Final[Literal["IP_V4_ONLY"]] = "IP_V4_ONLY"
-        IP_MODE_V4_PREFERRED: Final[Literal["IP_V4_PREFERRED"]] = "IP_V4_PREFERRED"
-        IP_MODE_V6_ONLY: Final[Literal["IP_V6_ONLY"]] = "IP_V6_ONLY"
-        IP_MODE_V6_PREFERRED: Final[Literal["IP_V6_PREFERRED"]] = "IP_V6_PREFERRED"
+        IP_MODE_SYSTEM_DEFAULT: Final = "IP_SYSTEM_DEFAULT"
+        IP_MODE_V4_ONLY: Final = "IP_V4_ONLY"
+        IP_MODE_V4_PREFERRED: Final = "IP_V4_PREFERRED"
+        IP_MODE_V6_ONLY: Final = "IP_V6_ONLY"
+        IP_MODE_V6_PREFERRED: Final = "IP_V6_PREFERRED"
 
     class Version:
         """Version constants for flext-ldap."""

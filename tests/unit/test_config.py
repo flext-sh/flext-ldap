@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from flext_core import FlextTypes
+
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
-
-from flext_core import FlextTypes
 
 
 class TestFlextLdapConfig:
@@ -294,13 +294,11 @@ class TestFlextLdapConfig:
         filter_result = FlextLdapValidations.validate_filter("(objectClass=person)")
         assert filter_result.is_success
 
-        attributes_result = FlextLdapValidations.validate_attributes(
-            [
-                "cn",
-                "sn",
-                "mail",
-            ]
-        )
+        attributes_result = FlextLdapValidations.validate_attributes([
+            "cn",
+            "sn",
+            "mail",
+        ])
         assert attributes_result.is_success
 
     def test_validate_search_data_failure(self) -> None:
@@ -546,32 +544,26 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test consistent error handling with valid data
-        conn_result = configs.create_from_connection_config_data(
-            {
-                "server": "ldap://localhost",
-                "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
-                "bind_dn": "cn=admin,dc=example,dc=com",
-                "bind_password": "password",
-            }
-        )
+        conn_result = configs.create_from_connection_config_data({
+            "server": "ldap://localhost",
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "bind_dn": "cn=admin,dc=example,dc=com",
+            "bind_password": "password",
+        })
         assert conn_result.is_success
 
-        search_result = configs.create_search_config(
-            {
-                "base_dn": "dc=example,dc=com",
-                "filter_str": "(objectClass=*)",
-            }
-        )
+        search_result = configs.create_search_config({
+            "base_dn": "dc=example,dc=com",
+            "filter_str": "(objectClass=*)",
+        })
         assert search_result.is_success
 
-        modify_result = configs.create_modify_config(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "operation": "replace",
-                "attribute": "description",
-                "values": ["test description"],
-            }
-        )
+        modify_result = configs.create_modify_config({
+            "dn": "cn=test,dc=example,dc=com",
+            "operation": "replace",
+            "attribute": "description",
+            "values": ["test description"],
+        })
         assert modify_result.is_success
 
     def test_config_integration_complete_workflow(self) -> None:
@@ -873,17 +865,20 @@ class TestFlextLdapConfig:
 
     def test_create_modify_config_exception(self) -> None:
         """Test create_modify_config exception - covers lines 430-431."""
-        result = FlextLdapConfig.create_modify_config(
-            {"dn": "cn=test,dc=com", "attribute": "cn", "values": ["test"]}
-        )
+        result = FlextLdapConfig.create_modify_config({
+            "dn": "cn=test,dc=com",
+            "attribute": "cn",
+            "values": ["test"],
+        })
         # Should succeed with valid data
         assert result.is_success
 
     def test_create_add_config_exception(self) -> None:
         """Test create_add_config exception - covers lines 454-455."""
-        result = FlextLdapConfig.create_add_config(
-            {"dn": "cn=test,dc=com", "attributes": {"cn": ["test"]}}
-        )
+        result = FlextLdapConfig.create_add_config({
+            "dn": "cn=test,dc=com",
+            "attributes": {"cn": ["test"]},
+        })
         # Should succeed with valid data
         assert result.is_success
 

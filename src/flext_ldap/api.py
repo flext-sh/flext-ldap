@@ -23,34 +23,36 @@ from pathlib import Path
 from typing import Union, override
 
 from flext_core import (
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
 )
 
-
 # Import flext_ldif components with fallback
 try:
     from flext_ldif import FlextLdif, FlextLdifModels
 except ImportError:
-    # Define placeholder for type checking when flext_ldif is not available
-    def FlextLdif():
-        raise ImportError("flext_ldif not available")
+    # Define placeholder class for type checking when flext_ldif is not available
+    class FlextLdif:
+        """Placeholder for FlextLdif when not available."""
+
+        def __init__(self) -> None:
+            msg = "flext_ldif not available"
+            raise ImportError(msg)
 
     # Define minimal placeholder to avoid type errors
     class _FlextLdifModelsPlaceholder:
         class Entry:
-            def __init__(self, dn=None, attributes=None):
+            def __init__(self, dn=None, attributes=None) -> None:
                 self.dn = dn
                 self.attributes = attributes
 
         class DistinguishedName:
-            def __init__(self, value=None):
+            def __init__(self, value=None) -> None:
                 self.value = value
 
         class LdifAttributes:
-            def __init__(self, attributes=None):
+            def __init__(self, attributes=None) -> None:
                 self.attributes = attributes
 
     FlextLdifModels = _FlextLdifModelsPlaceholder
@@ -91,17 +93,15 @@ class FlextLdap(FlextService[None]):
 
     @override
     def __init__(self, config: FlextLdapConfig | None = None) -> None:
-        """Initialize the unified LDAP service."""
+        """Initialize the unified LDAP service with Phase 1 context enrichment."""
         super().__init__()
+        # Logger and container inherited from FlextService via FlextMixins
         self._ldap_config: FlextLdapConfig = config or FlextLdapConfig()
         self._client: FlextLdapClients | None = None
         self._acl_manager: FlextLdapAclManager | None = None
 
-        # Minimal FLEXT ecosystem integration - direct access only
-        self._logger = FlextLogger(__name__)
-
         # Lazy-loaded LDAP components
-        self._ldif: Union[FlextLdif, None] = None
+        self._ldif: FlextLdif | None = None
 
     @classmethod
     def create(cls) -> FlextLdap:
@@ -125,6 +125,7 @@ class FlextLdap(FlextService[None]):
 
         Returns:
             FlextResult with failure containing formatted error message
+
         """
         error_msg = f"{prefix}{operation} failed: {error}".strip()
         if error is not None:
@@ -132,11 +133,9 @@ class FlextLdap(FlextService[None]):
             assert error is not None
             error_str = str(error)
             error_type = type(error).__name__
-            if self._logger is not None:
-                self._logger.error(error_msg, error=error_str, error_type=error_type)
+            self.logger.error(error_msg, error=error_str, error_type=error_type)
         else:
-            if self._logger is not None:
-                self._logger.error(error_msg)
+            self.logger.error(error_msg)
         return FlextResult[object].fail(error_msg)
 
     # =============================================================================
@@ -160,7 +159,7 @@ class FlextLdap(FlextService[None]):
     @property
     def models(self) -> type[FlextLdapModels]:
         """Get the LDAP models class."""
-        return
+        return FlextLdapModels
 
     @property
     def types(self) -> type[FlextLdapTypes]:
@@ -187,25 +186,19 @@ class FlextLdap(FlextService[None]):
 
     def test_connection(self) -> FlextResult[bool]:
         """Test the LDAP connection with enhanced error handling."""
-        try:
-            return self.client.test_connection()
-        except Exception as e:
-            return FlextResult[bool].fail(f"Connection test failed: {e}")
+        # Explicit FlextResult error handling - NO try/except
+        return self.client.test_connection()
 
     def connect(self) -> FlextResult[bool]:
         """Connect to LDAP server with enhanced error handling."""
-        try:
-            return self.client.test_connection()
-        except Exception as e:
-            return FlextResult[bool].fail(f"Connection failed: {e}")
+        # Explicit FlextResult error handling - NO try/except
+        return self.client.test_connection()
 
     def unbind(self) -> FlextResult[None]:
         """Unbind from LDAP server with enhanced error handling."""
-        try:
-            # Implementation would go here - for now return success
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Unbind failed: {e}")
+        # Explicit FlextResult error handling - NO try/except
+        # Implementation would go here - for now return success
+        return FlextResult[None].ok(None)
 
     def disconnect(self) -> FlextResult[None]:
         """Disconnect from LDAP server - implements LdapConnectionProtocol.
@@ -256,7 +249,7 @@ class FlextLdap(FlextService[None]):
         search_base: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[Union[FlextLdapModels.Entry, None]]:
+    ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Perform LDAP search for single entry - implements LdapSearchProtocol.
 
         Args:
@@ -452,7 +445,7 @@ class FlextLdap(FlextService[None]):
         )
         return self.client.search_with_request(request)
 
-    def get_group(self, dn: str) -> FlextResult[Union[FlextLdapModels.Group, None]]:
+    def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
         """Get a specific LDAP group by DN with enhanced validation."""
         # Validate DN
         validation_result = self.validations.validate_dn(dn)
@@ -532,23 +525,23 @@ class FlextLdap(FlextService[None]):
     # =============================================================================
 
     @property
-    def ldif(self) -> Union[FlextLdif, None]:
+    def ldif(self) -> FlextLdif | None:
         """Get FlextLdif instance for LDIF operations.
 
         Returns:
             FlextLdif instance if available, None if initialization failed.
+
         """
         if self._ldif is None:
             try:
                 self._ldif = FlextLdif()
             except (ImportError, AttributeError, TypeError) as exc:
                 # FlextLdif not available - this will be handled by calling methods
-                if self._logger is not None:
-                    self._logger.warning(
-                        "FlextLdif initialization failed",
-                        error=str(exc),
-                        error_type=type(exc).__name__,
-                    )
+                self.logger.warning(
+                    "FlextLdif initialization failed",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                )
                 self._ldif = None
         return self._ldif
 
@@ -586,12 +579,11 @@ class FlextLdap(FlextService[None]):
             ldap_entries.append(ldap_entry)
 
         # Log import event
-        if self._logger is not None:
-            self._logger.info(
-                "LDIF import successful",
-                path=str(path),
-                entry_count=len(ldap_entries),
-            )
+        self.logger.info(
+            "LDIF import successful",
+            path=str(path),
+            entry_count=len(ldap_entries),
+        )
 
         return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
 
@@ -617,22 +609,19 @@ class FlextLdap(FlextService[None]):
         # Convert FlextLdap entries to FlextLdif entries
         ldif_entries = []
         for ldap_entry in entries:
-            try:
-                # Convert DN string to DistinguishedName if needed
-                dn = ldap_entry.dn
-                if isinstance(dn, str):
-                    dn = FlextLdifModels.DistinguishedName(value=dn)
+            # Convert DN string to DistinguishedName if needed
+            dn = ldap_entry.dn
+            if isinstance(dn, str):
+                dn = FlextLdifModels.DistinguishedName(value=dn)
 
-                # Create LDIF entry directly
-                ldif_entry = FlextLdifModels.Entry(
-                    dn=dn,
-                    attributes=FlextLdifModels.LdifAttributes(
-                        attributes=ldap_entry.attributes
-                    ),
-                )
-                ldif_entries.append(ldif_entry)
-            except Exception as e:
-                return FlextResult[bool].fail(f"Entry conversion failed: {e}")
+            # Create LDIF entry directly
+            ldif_entry = FlextLdifModels.Entry(
+                dn=dn,
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes=ldap_entry.attributes
+                ),
+            )
+            ldif_entries.append(ldif_entry)
 
         # Use FlextLdif for writing
         result = ldif_instance.write(ldif_entries, path)
@@ -640,10 +629,9 @@ class FlextLdap(FlextService[None]):
             return FlextResult[bool].fail(f"LDIF writing failed: {result.error}")
 
         # Log export event
-        if self._logger is not None:
-            self._logger.info(
-                "LDIF export successful", path=str(path), entry_count=len(entries)
-            )
+        self.logger.info(
+            "LDIF export successful", path=str(path), entry_count=len(entries)
+        )
 
         return FlextResult[bool].ok(True)
 
@@ -670,7 +658,7 @@ class FlextLdap(FlextService[None]):
         """
         if not self._client:
             return FlextResult[str | None].fail("Client not initialized")
-        server_type = self._client._detected_server_type
+        server_type = self._client.detected_server_type
         return FlextResult[str | None].ok(server_type)
 
     def get_server_operations(self) -> FlextResult[object | None]:
@@ -715,36 +703,31 @@ class FlextLdap(FlextService[None]):
             ...     print(f"ACL format: {caps['acl_format']}")
 
         """
-        try:
-            if not self._client:
-                return FlextResult[FlextTypes.Dict].fail("Client not initialized")
+        # Explicit FlextResult error handling - NO try/except
+        if not self._client:
+            return FlextResult[FlextTypes.Dict].fail("Client not initialized")
 
-            server_ops = self._client.server_operations
-            if not server_ops:
-                return FlextResult[FlextTypes.Dict].fail(
-                    "No server operations available - connect first"
-                )
-
-            capabilities: FlextTypes.Dict = {
-                "server_type": server_ops.server_type,
-                "acl_format": server_ops.get_acl_format(),
-                "acl_attribute": server_ops.get_acl_attribute_name(),
-                "schema_dn": server_ops.get_schema_dn(),
-                "default_port": server_ops.get_default_port(use_ssl=False),
-                "default_ssl_port": server_ops.get_default_port(use_ssl=True),
-                "supports_start_tls": server_ops.supports_start_tls(),
-                "bind_mechanisms": server_ops.get_bind_mechanisms(),
-                "max_page_size": server_ops.get_max_page_size(),
-                "supports_paged_results": server_ops.supports_paged_results(),
-                "supports_vlv": server_ops.supports_vlv(),
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(capabilities)
-
-        except Exception as e:
+        server_ops = self._client.server_operations
+        if not server_ops:
             return FlextResult[FlextTypes.Dict].fail(
-                f"Failed to get server capabilities: {e}"
+                "No server operations available - connect first"
             )
+
+        capabilities: FlextTypes.Dict = {
+            "server_type": server_ops.server_type,
+            "acl_format": server_ops.get_acl_format(),
+            "acl_attribute": server_ops.get_acl_attribute_name(),
+            "schema_dn": server_ops.get_schema_dn(),
+            "default_port": server_ops.get_default_port(use_ssl=False),
+            "default_ssl_port": server_ops.get_default_port(use_ssl=True),
+            "supports_start_tls": server_ops.supports_start_tls(),
+            "bind_mechanisms": server_ops.get_bind_mechanisms(),
+            "max_page_size": server_ops.get_max_page_size(),
+            "supports_paged_results": server_ops.supports_paged_results(),
+            "supports_vlv": server_ops.supports_vlv(),
+        }
+
+        return FlextResult[FlextTypes.Dict].ok(capabilities)
 
     def search_universal(
         self,
@@ -776,48 +759,43 @@ class FlextLdap(FlextService[None]):
             >>> result = api.search_universal(
             ...     base_dn="ou=users,dc=example,dc=com",
             ...     filter_str="(objectClass=person)",
-            ...     attributes=["uid", "cn", "mail"]
+            ...     attributes=["uid", "cn", "mail"],
             ... )
 
         """
-        try:
-            if not self._client:
-                return FlextResult[list].fail("Client not initialized")
+        if not self._client:
+            return FlextResult[list].fail("Client not initialized")
 
-            server_ops = self._client.server_operations
-            if not server_ops:
-                # Fall back to standard search if no server operations
-                return self.search(
-                    search_base=base_dn,
-                    filter_str=filter_str,
-                    attributes=attributes,
-                )
-
-            # Use server-specific search with paging if supported
-            if use_paging and server_ops.supports_paged_results():
-                connection = self._client._connection
-                if not connection:
-                    return FlextResult[list].fail("Not connected to LDAP server")
-
-                page_size = min(100, server_ops.get_max_page_size())
-                search_result = server_ops.search_with_paging(
-                    connection=connection,
-                    base_dn=base_dn,
-                    search_filter=filter_str,
-                    attributes=attributes,
-                    page_size=page_size,
-                )
-                return search_result
-
-            # Fall back to standard search
+        server_ops = self._client.server_operations
+        if not server_ops:
+            # Fall back to standard search if no server operations
             return self.search(
                 search_base=base_dn,
                 filter_str=filter_str,
                 attributes=attributes,
             )
 
-        except Exception as e:
-            return FlextResult[list].fail(f"Universal search failed: {e}")
+        # Use server-specific search with paging if supported
+        if use_paging and server_ops.supports_paged_results():
+            connection = self._client.connection
+            if not connection:
+                return FlextResult[list].fail("Not connected to LDAP server")
+
+            page_size = min(100, server_ops.get_max_page_size())
+            return server_ops.search_with_paging(
+                connection=connection,
+                base_dn=base_dn,
+                search_filter=filter_str,
+                attributes=attributes,
+                page_size=page_size,
+            )
+
+        # Fall back to standard search
+        return self.search(
+            search_base=base_dn,
+            filter_str=filter_str,
+            attributes=attributes,
+        )
 
     def normalize_entry_for_server(
         self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
@@ -843,32 +821,24 @@ class FlextLdap(FlextService[None]):
             ...     normalized = result.unwrap()
 
         """
-        try:
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            if not self._client:
-                return FlextResult[FlextLdifModels.Entry].fail("Client not initialized")
+        if not self._client:
+            return FlextResult[FlextLdifModels.Entry].fail("Client not initialized")
 
-            # Determine target server type
-            if target_server_type is None:
-                target_server_type = self._client._detected_server_type
-                if not target_server_type:
-                    return FlextResult[FlextLdifModels.Entry].fail(
-                        "No target server type specified and none detected"
-                    )
+        # Determine target server type
+        if target_server_type is None:
+            target_server_type = self._client.detected_server_type
+            if not target_server_type:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "No target server type specified and none detected"
+                )
 
-            # Use entry adapter to normalize
-            adapter = FlextLdapEntryAdapter(server_type=target_server_type)
-            normalize_result = adapter.normalize_entry_for_server(
-                entry=entry, target_server_type=target_server_type
-            )
-
-            return normalize_result
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Entry normalization failed: {e}"
-            )
+        # Use entry adapter to normalize
+        adapter = FlextLdapEntryAdapter(server_type=target_server_type)
+        return adapter.normalize_entry_for_server(
+            entry=entry, target_server_type=target_server_type
+        )
 
     def convert_entry_between_servers(
         self,
@@ -896,26 +866,18 @@ class FlextLdap(FlextService[None]):
             >>> result = api.convert_entry_between_servers(
             ...     entry=entry,
             ...     source_server_type="openldap1",
-            ...     target_server_type="openldap2"
+            ...     target_server_type="openldap2",
             ... )
 
         """
-        try:
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLdapEntryAdapter(server_type=source_server_type)
-            convert_result = adapter.convert_entry_format(
-                entry=entry,
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
-            )
-
-            return convert_result
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Entry conversion failed: {e}"
-            )
+        adapter = FlextLdapEntryAdapter(server_type=source_server_type)
+        return adapter.convert_entry_format(
+            entry=entry,
+            source_server_type=source_server_type,
+            target_server_type=target_server_type,
+        )
 
     def detect_entry_server_type(
         self, entry: FlextLdifModels.Entry
@@ -939,16 +901,10 @@ class FlextLdap(FlextService[None]):
             ...     print(f"Entry from: {result.unwrap()}")
 
         """
-        try:
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            adapter = FlextLdapEntryAdapter()
-            detection_result = adapter.detect_entry_server_type(entry)
-
-            return detection_result
-
-        except Exception as e:
-            return FlextResult[str].fail(f"Server type detection failed: {e}")
+        adapter = FlextLdapEntryAdapter()
+        return adapter.detect_entry_server_type(entry)
 
     def validate_entry_for_server(
         self, entry: FlextLdifModels.Entry, server_type: str | None = None
@@ -974,29 +930,21 @@ class FlextLdap(FlextService[None]):
             ...     print("Entry is compatible with Oracle OUD")
 
         """
-        try:
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            if not self._client:
-                return FlextResult[bool].fail("Client not initialized")
+        if not self._client:
+            return FlextResult[bool].fail("Client not initialized")
 
-            # Determine target server type
-            if server_type is None:
-                server_type = self._client._detected_server_type
-                if not server_type:
-                    return FlextResult[bool].fail(
-                        "No server type specified and none detected"
-                    )
+        # Determine target server type
+        if server_type is None:
+            server_type = self._client.detected_server_type
+            if not server_type:
+                return FlextResult[bool].fail(
+                    "No server type specified and none detected"
+                )
 
-            adapter = FlextLdapEntryAdapter(server_type=server_type)
-            validation_result = adapter.validate_entry_for_server(
-                entry=entry, server_type=server_type
-            )
-
-            return validation_result
-
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        adapter = FlextLdapEntryAdapter(server_type=server_type)
+        return adapter.validate_entry_for_server(entry=entry, server_type=server_type)
 
     def get_server_specific_attributes(
         self, server_type: str | None = None
@@ -1021,29 +969,21 @@ class FlextLdap(FlextService[None]):
             ...     print(f"Required: {attrs.get('required_attributes', [])}")
 
         """
-        try:
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+        from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
-            if not self._client:
-                return FlextResult[FlextTypes.Dict].fail("Client not initialized")
+        if not self._client:
+            return FlextResult[FlextTypes.Dict].fail("Client not initialized")
 
-            # Determine target server type
-            if server_type is None:
-                server_type = self._client._detected_server_type
-                if not server_type:
-                    return FlextResult[FlextTypes.Dict].fail(
-                        "No server type specified and none detected"
-                    )
+        # Determine target server type
+        if server_type is None:
+            server_type = self._client.detected_server_type
+            if not server_type:
+                return FlextResult[FlextTypes.Dict].fail(
+                    "No server type specified and none detected"
+                )
 
-            adapter = FlextLdapEntryAdapter(server_type=server_type)
-            attrs_result = adapter.get_server_specific_attributes(server_type)
-
-            return attrs_result
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
-                f"Failed to get server attributes: {e}"
-            )
+        adapter = FlextLdapEntryAdapter(server_type=server_type)
+        return adapter.get_server_specific_attributes(server_type)
 
 
 __all__ = [

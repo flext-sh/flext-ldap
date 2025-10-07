@@ -17,12 +17,12 @@ import os
 import sys
 from typing import Final, cast
 
+from flext_core import FlextConstants, FlextLogger, FlextResult
+
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
-
-from flext_core import FlextConstants, FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 
@@ -79,7 +79,7 @@ def create_sample_users(api: FlextLdapClients) -> None:
 
         create_result = api.add_entry(
             user_data["dn"],
-            cast(dict[str, str | FlextLdapTypes.StringList], attributes),
+            cast("dict[str, str | FlextLdapTypes.StringList]", attributes),
         )
 
         if create_result.is_success:
