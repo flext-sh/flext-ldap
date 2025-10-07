@@ -531,7 +531,9 @@ class FlextLdapAdapters:
         """Adapter for monitoring ldap3 operation performance."""
 
         @staticmethod
-        def measure_operation_time(operation_func: Callable, *args, **kwargs: dict[str, Any]) -> tuple:
+        def measure_operation_time(
+            operation_func: Callable, *args, **kwargs: dict[str, Any]
+        ) -> tuple:
             """Measure execution time of an ldap3 operation.
 
             Args:
