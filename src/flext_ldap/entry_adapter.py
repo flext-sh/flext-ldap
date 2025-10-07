@@ -590,9 +590,13 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Extract commonly used attributes
         server_attrs: FlextTypes.Dict = {
-            "acl_attribute": quirks.get("acl_attribute", "aci"),
-            "acl_format": quirks.get("acl_format", "generic"),
-            "schema_subentry": quirks.get("schema_subentry", "cn=subschema"),
+            "acl_attribute": quirks.get(
+                FlextLdapConstants.DictKeys.ACL_ATTRIBUTE, "aci"
+            ),
+            "acl_format": quirks.get(FlextLdapConstants.DictKeys.ACL_FORMAT, "generic"),
+            "schema_subentry": quirks.get(
+                FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY, "cn=subschema"
+            ),
             "supports_operational_attrs": quirks.get(
                 "supports_operational_attrs", True
             ),

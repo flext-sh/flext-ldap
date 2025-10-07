@@ -19,18 +19,14 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-import inspect
-from collections.abc import Callable
-from functools import wraps
 from pathlib import Path
-from typing import ParamSpec, Self, TypeVar, override
+from typing import Self, override
 
 from flext_core import (
     FlextResult,
     FlextService,
     FlextTypes,
 )
-from flext_core.result import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap.acl import FlextLdapAclManager
@@ -39,74 +35,6 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.validations import FlextLdapValidations
-
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
-def validate_ldap_params(
-    **validators: Callable[[object], FlextResult[object]],
-) -> Callable[..., Callable[P, FlextResult[R]]]:
-    """Decorator to automatically validate LDAP parameters before method execution.
-
-    This decorator eliminates manual validation boilerplate by automatically validating
-    specified parameters using FlextLdapValidations methods. Validation errors are
-    returned as FlextResult failures without executing the method.
-
-    Args:
-        **validators: Mapping of parameter names to validation functions.
-            Each validator should accept a parameter value and return FlextResult[None].
-
-    Returns:
-        Decorator function that wraps the target method with automatic validation.
-
-    Example:
-        @validate_ldap_params(
-            base_dn=FlextLdapValidations.validate_dn,
-            filter_str=FlextLdapValidations.validate_filter
-        )
-        def search_groups(self, base_dn: str, filter_str: str | None = None, ...):
-            # Validation happens automatically before this code runs
-            return self.client.search_groups(base_dn=base_dn, ...)
-
-    Benefits:
-        - Eliminates ~8 lines of validation boilerplate per method
-        - Consistent error messages across all methods
-        - Type-safe parameter validation
-        - Examples don't need to manually validate inputs
-
-    """
-
-    def decorator(func: Callable[P, FlextResult[R]]) -> Callable[P, FlextResult[R]]:
-        @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[R]:
-            # Get function signature and bind arguments
-            sig = inspect.signature(func)
-            try:
-                bound_args = sig.bind(*args, **kwargs)
-                bound_args.apply_defaults()
-            except TypeError as e:
-                return FlextResult[R].fail(f"Invalid arguments: {e}")
-
-            # Validate specified parameters
-            for param_name, validator in validators.items():
-                if param_name in bound_args.arguments:
-                    value = bound_args.arguments[param_name]
-                    # Skip None values unless validator explicitly handles them
-                    if value is not None:
-                        validation = validator(value)
-                        if validation.is_failure:
-                            return FlextResult[R].fail(
-                                f"Invalid {param_name}: {validation.error}"
-                            )
-
-            # All validations passed, execute original function
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 class FlextLdap(FlextService[None]):
@@ -273,10 +201,6 @@ class FlextLdap(FlextService[None]):
     # PROTOCOL IMPLEMENTATION METHODS - FlextLdapProtocols compliance
     # =============================================================================
 
-    @validate_ldap_params(
-        search_base=FlextLdapValidations.validate_dn,
-        filter_str=FlextLdapValidations.validate_filter,
-    )
     def search(
         self,
         search_base: str,
@@ -284,6 +208,9 @@ class FlextLdap(FlextService[None]):
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform LDAP search operation - implements LdapSearchProtocol.
+
+        Validation: For explicit validation, use FlextLdapValidations.validate_dn(search_base)
+        and FlextLdapValidations.validate_filter(filter_str) before calling.
 
         Args:
             search_base: LDAP search base DN
@@ -299,10 +226,6 @@ class FlextLdap(FlextService[None]):
             search_base, filter_str, FlextLdapConstants.Scopes.SUBTREE, attributes
         ).map(lambda response: response.entries)
 
-    @validate_ldap_params(
-        search_base=FlextLdapValidations.validate_dn,
-        search_filter=FlextLdapValidations.validate_filter,
-    )
     def search_one(
         self,
         search_base: str,
@@ -417,11 +340,12 @@ class FlextLdap(FlextService[None]):
         attrs = attributes or FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS
         return self.search_one(search_base, filter_str, attrs)
 
-    @validate_ldap_params(dn=FlextLdapValidations.validate_dn)
     def add_entry(
         self, dn: str, attributes: dict[str, str | FlextTypes.StringList]
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
+
+        Validation: For explicit validation, use FlextLdapValidations.validate_dn(dn) before calling.
 
         Args:
             dn: Distinguished name for new entry
@@ -470,12 +394,13 @@ class FlextLdap(FlextService[None]):
                 results.append(add_result.unwrap())
 
         if errors:
+            max_items = FlextLdapConstants.LdapDefaults.ERROR_SUMMARY_MAX_ITEMS
             error_summary = (
                 f"Batch add completed with {len(errors)} errors: "
-                f"{'; '.join(errors[:3])}"
+                f"{'; '.join(errors[:max_items])}"
             )
-            if len(errors) > 3:
-                error_summary += f" (and {len(errors) - 3} more)"
+            if len(errors) > max_items:
+                error_summary += f" (and {len(errors) - max_items} more)"
             return FlextResult[list[bool]].fail(error_summary)
 
         return FlextResult[list[bool]].ok(results)
@@ -516,19 +441,21 @@ class FlextLdap(FlextService[None]):
                 results.append(search_result.unwrap())
 
         if errors:
+            max_items = FlextLdapConstants.LdapDefaults.ERROR_SUMMARY_MAX_ITEMS
             error_summary = (
                 f"Bulk search completed with {len(errors)} errors: "
-                f"{'; '.join(errors[:3])}"
+                f"{'; '.join(errors[:max_items])}"
             )
-            if len(errors) > 3:
-                error_summary += f" (and {len(errors) - 3} more)"
+            if len(errors) > max_items:
+                error_summary += f" (and {len(errors) - max_items} more)"
             return FlextResult[list[list[FlextLdapModels.Entry]]].fail(error_summary)
 
         return FlextResult[list[list[FlextLdapModels.Entry]]].ok(results)
 
-    @validate_ldap_params(dn=FlextLdapValidations.validate_dn)
     def modify_entry(self, dn: str, changes: FlextTypes.Dict) -> FlextResult[bool]:
         """Modify existing LDAP entry - implements LdapModifyProtocol.
+
+        Validation: For explicit validation, use FlextLdapValidations.validate_dn(dn) before calling.
 
         Args:
             dn: Distinguished name of entry to modify
@@ -542,9 +469,10 @@ class FlextLdap(FlextService[None]):
         client = self.client
         return client.modify_entry(dn, changes)
 
-    @validate_ldap_params(dn=FlextLdapValidations.validate_dn)
     def delete_entry(self, dn: str) -> FlextResult[bool]:
         """Delete LDAP entry - implements LdapModifyProtocol.
+
+        Validation: For explicit validation, use FlextLdapValidations.validate_dn(dn) before calling.
 
         Args:
             dn: Distinguished name of entry to delete
@@ -663,6 +591,150 @@ class FlextLdap(FlextService[None]):
             return FlextResult[None].fail(f"Invalid DN: {validation_result.error}")
 
         return self.client.delete_user(dn)
+
+    # =============================================================================
+    # EXISTENCE CHECK METHODS - Delegated to FlextLdapClients
+    # =============================================================================
+
+    def user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists in LDAP directory.
+
+        Args:
+            dn: Distinguished name of user to check.
+
+        Returns:
+            FlextResult[bool]: True if user exists, False otherwise.
+
+        """
+        return self.client.user_exists(dn)
+
+    def group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists in LDAP directory.
+
+        Args:
+            dn: Distinguished name of group to check.
+
+        Returns:
+            FlextResult[bool]: True if group exists, False otherwise.
+
+        """
+        return self.client.group_exists(dn)
+
+    def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
+        """Get user by distinguished name.
+
+        Args:
+            dn: Distinguished name of user.
+
+        Returns:
+            FlextResult[FlextLdapModels.LdapUser | None]: User model if found, None otherwise.
+
+        """
+        return self.client.get_user(dn)
+
+    # =============================================================================
+    # NORMALIZATION & VALIDATION UTILITIES - Delegated to FlextLdapClients
+    # =============================================================================
+
+    def normalize_dn(self, dn: str) -> FlextResult[str]:
+        """Normalize distinguished name to RFC 4514 format.
+
+        Args:
+            dn: Distinguished name to normalize.
+
+        Returns:
+            FlextResult[str]: Normalized DN or error.
+
+        """
+        return self.client.normalize_dn(dn)
+
+    def normalize_attribute_name(self, attribute_name: str) -> FlextResult[str]:
+        """Normalize LDAP attribute name to lowercase canonical form.
+
+        Args:
+            attribute_name: Attribute name to normalize.
+
+        Returns:
+            FlextResult[str]: Normalized attribute name or error.
+
+        """
+        return self.client.normalize_attribute_name(attribute_name)
+
+    def normalize_object_class(self, object_class: str) -> FlextResult[str]:
+        """Normalize LDAP object class name.
+
+        Args:
+            object_class: Object class name to normalize.
+
+        Returns:
+            FlextResult[str]: Normalized object class or error.
+
+        """
+        return self.client.normalize_object_class(object_class)
+
+    def validate_dn(self, dn: str) -> FlextResult[bool]:
+        """Validate distinguished name format.
+
+        Args:
+            dn: Distinguished name to validate.
+
+        Returns:
+            FlextResult[bool]: True if valid, error otherwise.
+
+        """
+        return self.client.validate_dn(dn)
+
+    def validate_entry(self, entry: FlextLdapModels.Entry) -> FlextResult[bool]:
+        """Validate LDAP entry model.
+
+        Args:
+            entry: Entry model to validate.
+
+        Returns:
+            FlextResult[bool]: True if valid, error otherwise.
+
+        """
+        return self.client.validate_entry(entry)
+
+    # =============================================================================
+    # SERVER INTROSPECTION - Delegated to FlextLdapClients
+    # =============================================================================
+
+    def get_server_type(self) -> FlextResult[str]:
+        """Get LDAP server type (OpenLDAP, Active Directory, etc.).
+
+        Returns:
+            FlextResult[str]: Server type identifier or error.
+
+        """
+        return self.client.get_server_type()
+
+    def get_server_info(self) -> FlextResult[FlextTypes.Dict]:
+        """Get LDAP server information from root DSE.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Server info dictionary or error.
+
+        """
+        return self.client.get_server_info()
+
+    def get_server_quirks(self) -> FlextResult[FlextTypes.Dict]:
+        """Get server-specific quirks and behavior configurations.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Server quirks dictionary or error.
+
+        """
+        return self.client.get_server_quirks()
+
+    def discover_schema(self) -> FlextResult[FlextTypes.Dict]:
+        """Discover LDAP schema from server.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Schema information or error.
+
+        """
+        return self.client.discover_schema()
 
     # =============================================================================
     # VALIDATION METHODS - Enhanced with proper error handling
@@ -847,7 +919,9 @@ class FlextLdap(FlextService[None]):
         """
         # Explicit FlextResult error handling - NO try/except
         if not self._client:
-            return FlextResult[FlextTypes.Dict].fail("Client not initialized")
+            return FlextResult[FlextTypes.Dict].fail(
+                FlextLdapConstants.LdapMessages.CLIENT_NOT_INITIALIZED
+            )
 
         server_ops = self._client.server_operations
         if not server_ops:
@@ -1104,7 +1178,9 @@ class FlextLdap(FlextService[None]):
 
         """
         if not self._client:
-            return FlextResult[FlextTypes.Dict].fail("Client not initialized")
+            return FlextResult[FlextTypes.Dict].fail(
+                FlextLdapConstants.LdapMessages.CLIENT_NOT_INITIALIZED
+            )
 
         # Determine target server type
         if server_type is None:

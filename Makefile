@@ -161,6 +161,68 @@ ldap-connect: ## Test LDAP server connection
 ldap-operations: ldap-validate ldap-connect ldap-test ## Run all LDAP validations
 
 # =============================================================================
+# DOCKER LDAP SERVER (REAL TESTING)
+# =============================================================================
+
+.PHONY: ldap-start
+ldap-start: ## Start flext-openldap-test Docker container
+	@echo "🐳 Starting flext-openldap-test LDAP server..."
+	docker-compose up -d
+	@echo "⏳ Waiting for health check..."
+	@sleep 5
+	@$(MAKE) ldap-health
+
+.PHONY: ldap-stop
+ldap-stop: ## Stop LDAP Docker container
+	@echo "🛑 Stopping flext-openldap-test..."
+	docker-compose stop
+
+.PHONY: ldap-restart
+ldap-restart: ldap-stop ldap-start ## Restart LDAP Docker container
+
+.PHONY: ldap-logs
+ldap-logs: ## View LDAP Docker container logs
+	docker-compose logs -f flext-openldap-test
+
+.PHONY: ldap-logs-tail
+ldap-logs-tail: ## Tail LDAP Docker logs (last 50 lines)
+	docker-compose logs --tail=50 flext-openldap-test
+
+.PHONY: ldap-health
+ldap-health: ## Check LDAP server health
+	@echo "🏥 Checking LDAP server health..."
+	@docker ps | grep flext-openldap-test > /dev/null && echo "✅ Container running" || (echo "❌ Container not running" && exit 1)
+	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=admin,dc=flext,dc=local" -w "admin123" -b "dc=flext,dc=local" -s base > /dev/null 2>&1 && echo "✅ LDAP server responding" || (echo "❌ LDAP server not responding" && exit 1)
+
+.PHONY: ldap-clean
+ldap-clean: ## Clean LDAP Docker (remove containers and volumes)
+	@echo "🧹 Cleaning LDAP Docker environment..."
+	docker-compose down -v
+	@echo "✅ LDAP Docker cleanup complete"
+
+.PHONY: ldap-reset
+ldap-reset: ldap-clean ldap-start ## Reset LDAP server (clean + restart)
+
+.PHONY: ldap-shell
+ldap-shell: ## Open shell in LDAP Docker container
+	docker exec -it flext-openldap-test /bin/bash
+
+.PHONY: ldap-search
+ldap-search: ## Search LDAP server (all entries)
+	@echo "🔍 Searching LDAP server..."
+	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=admin,dc=flext,dc=local" -w "admin123" -b "dc=flext,dc=local"
+
+.PHONY: ldap-search-users
+ldap-search-users: ## Search LDAP users
+	@echo "🔍 Searching LDAP users..."
+	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=admin,dc=flext,dc=local" -w "admin123" -b "ou=users,dc=flext,dc=local"
+
+.PHONY: ldap-search-groups
+ldap-search-groups: ## Search LDAP groups
+	@echo "🔍 Searching LDAP groups..."
+	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=admin,dc=flext,dc=local" -w "admin123" -b "ou=groups,dc=flext,dc=local"
+
+# =============================================================================
 # DOCUMENTATION
 # =============================================================================
 

@@ -138,8 +138,27 @@ class FlextLdapUtilities(FlextUtilities):
                 return False
             # All items should be valid entry data
             return all(
-                FlextLdapUtilities.TypeGuards.is_ldap_entry_data(item) for item in value
+                FlextLdapUtilities.LdapTypeGuards.is_ldap_entry_data(item)
+                for item in value
             )
+
+        @staticmethod
+        def is_ldap_filter(value: object) -> bool:
+            """Check if value is a valid LDAP filter string."""
+            if not isinstance(value, str):
+                return False
+
+            filter_str = value.strip()
+            if not filter_str:
+                return False
+
+            # Basic LDAP filter validation - must be wrapped in parentheses
+            if not (filter_str.startswith("(") and filter_str.endswith(")")):
+                return False
+
+            # Must contain at least one operator (=, ~, >=, <=, etc.)
+            operators = ["=", "~=", ">=", "<=", "=*", "~=*"]
+            return any(op in filter_str for op in operators)
 
         @staticmethod
         def ensure_ldap_dn(value: object) -> str:
@@ -421,7 +440,9 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate normalization utilities
             try:
-                dn_result = FlextLdapUtilities.Processing.normalize_dn("cn=john,dc=example,dc=com")
+                dn_result = FlextLdapUtilities.Processing.normalize_dn(
+                    "cn=john,dc=example,dc=com"
+                )
                 validation_results["normalization"] = {
                     "status": "available",
                     "details": f"Normalization utilities accessible, DN normalized: {dn_result.is_success}",
@@ -434,7 +455,9 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate type guards utilities
             try:
-                dn_check = is_ldap_dn("cn=john,dc=example,dc=com")
+                dn_check = FlextLdapUtilities.LdapTypeGuards.is_ldap_dn(
+                    "cn=john,dc=example,dc=com"
+                )
                 validation_results["type_guards"] = {
                     "status": "available",
                     "details": f"Type guards accessible, DN check: {dn_check}",
@@ -447,7 +470,9 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate processing utilities
             try:
-                filter_result = FlextLdapUtilities.normalize_filter("(cn=john*)")
+                filter_result = FlextLdapUtilities.Processing.normalize_filter(
+                    "(cn=john*)"
+                )
                 validation_results["processing"] = {
                     "status": "available",
                     "details": f"Processing utilities accessible, filter normalized: {filter_result.is_success}",
@@ -460,7 +485,7 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate validation utilities
             try:
-                attrs_result = normalize_attributes([
+                attrs_result = FlextLdapUtilities.Processing.normalize_attributes([
                     "cn",
                     "mail",
                     "",
@@ -525,12 +550,16 @@ class FlextLdapUtilities(FlextUtilities):
                     f"Utilities creation failed: {utilities_result.error}"
                 )
 
-            utilities = utilities_result.unwrap()
+            utilities_result.unwrap()
 
             # Demonstrate normalization pattern
-            dn_normalization = utilities.normalize_dn("cn=john doe ,dc=example,dc=com")
-            filter_normalization = utilities.normalize_filter("(cn=john*)")
-            attr_normalization = utilities.normalize_attributes([
+            dn_normalization = FlextLdapUtilities.Processing.normalize_dn(
+                "cn=john doe ,dc=example,dc=com"
+            )
+            filter_normalization = FlextLdapUtilities.Processing.normalize_filter(
+                "(cn=john*)"
+            )
+            attr_normalization = FlextLdapUtilities.Processing.normalize_attributes([
                 "cn",
                 "mail",
                 "",
@@ -538,16 +567,26 @@ class FlextLdapUtilities(FlextUtilities):
             ])
 
             # Demonstrate validation pattern
-            dn_validation = utilities.is_ldap_dn("cn=john.doe,dc=example,dc=com")
-            filter_validation = utilities.is_ldap_filter("(cn=john*)")
-            entry_validation = utilities.is_ldap_entry_data({
+            dn_validation = FlextLdapUtilities.LdapTypeGuards.is_ldap_dn(
+                "cn=john.doe,dc=example,dc=com"
+            )
+            filter_validation = FlextLdapUtilities.LdapTypeGuards.is_ldap_filter(
+                "(cn=john*)"
+            )
+            entry_validation = FlextLdapUtilities.LdapTypeGuards.is_ldap_entry_data({
                 "dn": "cn=john,dc=example,dc=com",
                 "attributes": {"cn": ["John"]},
             })
 
             # Demonstrate type guards pattern
-            string_list_check = utilities.is_string_list(["cn", "mail"])
-            bytes_list_check = utilities.is_bytes_list([b"data1", b"data2"])
+            string_list_check = FlextLdapUtilities.LdapTypeGuards.is_string_list([
+                "cn",
+                "mail",
+            ])
+            bytes_list_check = FlextLdapUtilities.LdapTypeGuards.is_bytes_list([
+                b"data1",
+                b"data2",
+            ])
 
             return FlextResult[FlextTypes.Dict].ok({
                 "demonstration_status": "successful",

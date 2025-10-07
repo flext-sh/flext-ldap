@@ -195,7 +195,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             )
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
@@ -226,7 +228,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             success = connection.modify(dn, ldap3_mods)
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
@@ -247,7 +251,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             success = connection.delete(dn)
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)

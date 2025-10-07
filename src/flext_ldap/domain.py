@@ -30,7 +30,8 @@ class FlextLdapDomain:
         @staticmethod
         def is_valid_username(username: str) -> bool:
             """Check if username meets domain requirements."""
-            if not username or len(username.strip()) < 3:
+            min_length = FlextLdapConstants.LdapDefaults.MIN_USERNAME_LENGTH
+            if not username or len(username.strip()) < min_length:
                 return False
 
             # Check for valid characters (alphanumeric, underscore, dash)
@@ -56,8 +57,11 @@ class FlextLdapDomain:
             if not password:
                 return FlextResult[bool].fail("Password cannot be empty")
 
-            if len(password) < 8:
-                return FlextResult[bool].fail("Password must be at least 8 characters")
+            min_length = FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
+            if len(password) < min_length:
+                return FlextResult[bool].fail(
+                    f"Password must be at least {min_length} characters"
+                )
 
             # Check for complexity
             has_upper = any(c.isupper() for c in password)

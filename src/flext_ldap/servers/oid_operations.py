@@ -200,7 +200,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             )
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
@@ -320,8 +322,8 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             parts = ["access to"]
 
             # Add target
-            target_type = acl_dict.get("target_type", "entry")
-            target = str(acl_dict.get("target", "*"))
+            target_type = acl_dict.get(FlextLdapConstants.DictKeys.TARGET_TYPE, "entry")
+            target = str(acl_dict.get(FlextLdapConstants.DictKeys.TARGET, "*"))
 
             if target_type == "attr":
                 parts.append(f"attr:{target}")
@@ -333,11 +335,13 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             # Add "by" clause
             parts.append("by")
 
-            subject = str(acl_dict.get("subject", "*"))
+            subject = str(acl_dict.get(FlextLdapConstants.DictKeys.SUBJECT, "*"))
             parts.append(subject)
 
             # Add permissions
-            permissions = acl_dict.get("permissions", ["read"])
+            permissions = acl_dict.get(
+                FlextLdapConstants.DictKeys.PERMISSIONS, ["read"]
+            )
             if permissions and isinstance(permissions, list):
                 perms_str = ", ".join(str(p) for p in permissions)
                 parts.append(f": {perms_str}")
@@ -374,7 +378,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             )
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
@@ -402,7 +408,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             success = connection.modify(dn, ldap3_mods)
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
@@ -421,7 +429,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             success = connection.delete(dn)
 
             if not success:
-                error_msg = connection.result.get("description", "Unknown error")
+                error_msg = connection.result.get(
+                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                )
                 return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
 
             return FlextResult[bool].ok(True)

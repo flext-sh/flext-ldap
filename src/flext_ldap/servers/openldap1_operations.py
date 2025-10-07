@@ -164,8 +164,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
             # Add "by" clauses from structured rules
             if "rules" in acl_dict:
                 for rule in acl_dict["rules"]:
-                    who = rule.get("who", "*")
-                    access = rule.get("access", "read")
+                    who = rule.get(FlextLdapConstants.DictKeys.WHO, "*")
+                    access = rule.get(FlextLdapConstants.DictKeys.ACCESS, "read")
                     parts.append(f"by {who} {access}")
             # Fallback to legacy "by" string
             elif "by" in acl_dict:

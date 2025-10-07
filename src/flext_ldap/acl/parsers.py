@@ -707,8 +707,10 @@ class FlextLdapAclParsers:
                     "Message must be a dictionary"
                 )
 
-            format_type = message.get("format", "auto")
-            acl_string = message.get("acl_string")
+            format_type = message.get(
+                FlextLdapConstants.DictKeys.FORMAT, FlextLdapConstants.AclFormat.AUTO
+            )
+            acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
 
             if not isinstance(acl_string, str):
                 return FlextResult[FlextResult[object]].fail(
@@ -716,14 +718,14 @@ class FlextLdapAclParsers:
                 )
 
             if not isinstance(format_type, str):
-                format_type = "auto"
+                format_type = FlextLdapConstants.AclFormat.AUTO
 
             # Route to appropriate parser based on format type
-            if format_type == "openldap":
+            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
                 result = self.OpenLdapAclParser.parse(acl_string)
-            elif format_type == "oracle":
+            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
                 result = self.OracleAclParser.parse(acl_string)
-            elif format_type == "aci":
+            elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self.AciParser.parse(acl_string)
             else:
                 return FlextResult[FlextResult[object]].fail(

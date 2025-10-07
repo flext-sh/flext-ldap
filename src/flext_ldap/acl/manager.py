@@ -12,6 +12,7 @@ from flext_core import FlextHandlers, FlextResult, FlextTypes
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
+from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapAclManager(FlextHandlers[object, object]):
@@ -31,14 +32,14 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
             if not isinstance(message, dict):
                 return FlextResult[object].fail("Message must be a dictionary")
 
-            operation = message.get("operation")
+            operation = message.get(FlextLdapConstants.DictKeys.OPERATION)
             if not isinstance(operation, str):
                 return FlextResult[object].fail("Operation must be a string")
 
             # Route to appropriate handler based on operation
-            if operation == "parse":
+            if operation == FlextLdapConstants.LiteralTypes.OPERATION_PARSE:
                 return self._handle_parse(message)
-            if operation == "convert":
+            if operation == FlextLdapConstants.LiteralTypes.OPERATION_CONVERT:
                 return self._handle_convert(message)
             return FlextResult[object].fail(f"Unknown operation: {operation}")
 
@@ -48,20 +49,22 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
     def _handle_parse(self, message: FlextTypes.Dict) -> FlextResult[object]:
         """Handle ACL parsing operations."""
         try:
-            acl_string = message.get("acl_string")
+            acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
             if not isinstance(acl_string, str):
                 return FlextResult[object].fail("ACL string must be provided")
 
-            format_type = message.get("format", "auto")
+            format_type = message.get(
+                FlextLdapConstants.DictKeys.FORMAT, FlextLdapConstants.AclFormat.AUTO
+            )
             if not isinstance(format_type, str):
-                format_type = "auto"
+                format_type = FlextLdapConstants.AclFormat.AUTO
 
             # Use parser to parse ACL based on format type
-            if format_type == "openldap":
+            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
                 result = self.parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == "oracle":
+            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
                 result = self.parsers.OracleAclParser.parse(acl_string)
-            elif format_type == "aci":
+            elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self.parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[object].fail(
@@ -76,18 +79,20 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
     def _handle_convert(self, message: FlextTypes.Dict) -> FlextResult[object]:
         """Handle ACL conversion operations."""
         try:
-            acl_data = message.get("acl_data")
+            acl_data = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
             if not isinstance(acl_data, str):
                 return FlextResult[object].fail("ACL data must be a string")
 
-            target_format = message.get("target_format")
+            target_format = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
             if not isinstance(target_format, str):
                 return FlextResult[object].fail("Target format must be specified")
 
             # Use converter to convert ACL
-            source_format = message.get("source_format", "auto")
+            source_format = message.get(
+                "source_format", FlextLdapConstants.AclFormat.AUTO
+            )
             if not isinstance(source_format, str):
-                source_format = "auto"
+                source_format = FlextLdapConstants.AclFormat.AUTO
             result = self.converters.convert_acl(acl_data, source_format, target_format)
             return FlextResult[object].ok(result)
 
@@ -98,11 +103,11 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         """Parse ACL string using the specified format."""
         try:
             # Use parser to parse ACL based on format type
-            if format_type == "openldap":
+            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
                 result = self.parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == "oracle":
+            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
                 result = self.parsers.OracleAclParser.parse(acl_string)
-            elif format_type == "aci":
+            elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self.parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[object].fail(
@@ -157,11 +162,11 @@ class FlextLdapAclManager(FlextHandlers[object, object]):
         """Validate ACL syntax for the specified format."""
         try:
             # Use parser to validate ACL syntax
-            if format_type == "openldap":
+            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
                 result = self.parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == "oracle":
+            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
                 result = self.parsers.OracleAclParser.parse(acl_string)
-            elif format_type == "aci":
+            elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self.parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[bool].fail(f"Unsupported ACL format: {format_type}")

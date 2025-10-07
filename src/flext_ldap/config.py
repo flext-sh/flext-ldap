@@ -209,7 +209,9 @@ class FlextLdapConfig(FlextConfig):
 
                 # Try dict access
                 if isinstance(operation_config, dict):
-                    config_mode_dict = operation_config.get("operation_type")
+                    config_mode_dict = operation_config.get(
+                        FlextLdapConstants.DictKeys.OPERATION_TYPE
+                    )
                     if (
                         isinstance(config_mode_dict, str)
                         and config_mode_dict in valid_modes
@@ -844,16 +846,26 @@ class FlextLdapConfig(FlextConfig):
             config_data = self.model_dump()
 
             # Handle SecretStr fields - conditionally include based on kwargs
-            include_credentials = kwargs.get("include_credentials", False)
+            include_credentials = kwargs.get(
+                FlextLdapConstants.DictKeys.INCLUDE_CREDENTIALS, False
+            )
             if not include_credentials:
                 # Redact sensitive LDAP data by default
-                if config_data.get("ldap_bind_password"):
-                    config_data["ldap_bind_password"] = "***REDACTED***"
+                if config_data.get(FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD):
+                    config_data[FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD] = (
+                        "***REDACTED***"
+                    )
 
             # Determine format from extension
             if path.suffix.lower() == ".json":
-                indent = int(kwargs.get("indent", self.json_indent))
-                sort_keys = bool(kwargs.get("sort_keys", self.json_sort_keys))
+                indent = int(
+                    kwargs.get(FlextLdapConstants.DictKeys.INDENT, self.json_indent)
+                )
+                sort_keys = bool(
+                    kwargs.get(
+                        FlextLdapConstants.DictKeys.SORT_KEYS, self.json_sort_keys
+                    )
+                )
 
                 with path.open("w", encoding="utf-8") as f:
                     json.dump(
@@ -986,19 +998,24 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            bind_password_value = data.get("bind_password")
+            bind_password_value = data.get(FlextLdapConstants.DictKeys.BIND_PASSWORD)
             config = cls(
                 ldap_server_uri=str(
-                    data.get("server_uri", data.get("server", "ldap://localhost"))
+                    data.get(
+                        FlextLdapConstants.DictKeys.SERVER_URI,
+                        data.get(
+                            FlextLdapConstants.DictKeys.SERVER, "ldap://localhost"
+                        ),
+                    )
                 ),
-                ldap_port=int(str(data.get("port", 389))),
-                ldap_bind_dn=str(data.get("bind_dn", ""))
-                if data.get("bind_dn")
+                ldap_port=int(str(data.get(FlextLdapConstants.DictKeys.PORT, 389))),
+                ldap_bind_dn=str(data.get(FlextLdapConstants.DictKeys.BIND_DN, ""))
+                if data.get(FlextLdapConstants.DictKeys.BIND_DN)
                 else None,
                 ldap_bind_password=SecretStr(str(bind_password_value))
                 if bind_password_value
                 else None,
-                ldap_base_dn=str(data.get("base_dn", "")),
+                ldap_base_dn=str(data.get(FlextLdapConstants.DictKeys.BASE_DN, "")),
             )
             return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
@@ -1024,7 +1041,7 @@ class FlextLdapConfig(FlextConfig):
                     "Data must be a dictionary"
                 )
 
-            attributes_data = data.get("attributes", [])
+            attributes_data = data.get(FlextLdapConstants.DictKeys.ATTRIBUTES, [])
             if isinstance(attributes_data, list):
                 str_attributes = [
                     str(attr) for attr in attributes_data if attr is not None
@@ -1032,7 +1049,7 @@ class FlextLdapConfig(FlextConfig):
             else:
                 str_attributes = []
             config = FlextLdapModels.SearchConfig(
-                base_dn=str(data.get("base_dn", "")),
+                base_dn=str(data.get(FlextLdapConstants.DictKeys.BASE_DN, "")),
                 filter_str=str(
                     data.get(
                         "filter_str",
@@ -1065,16 +1082,22 @@ class FlextLdapConfig(FlextConfig):
             if not isinstance(data, dict):
                 return FlextResult[FlextTypes.Dict].fail("Data must be a dictionary")
 
-            values = data.get("values", [])
+            values = data.get(FlextLdapConstants.DictKeys.VALUES, [])
             if isinstance(values, list):
                 str_values = [str(v) for v in values if v is not None]
             else:
                 str_values = []
             config: dict[str, str | FlextTypes.StringList] = {
-                "dn": str(data.get("dn", "")),
-                "operation": str(data.get("operation", "replace")),
-                "attribute": str(data.get("attribute", "")),
-                "values": str_values,
+                FlextLdapConstants.DictKeys.DN: str(
+                    data.get(FlextLdapConstants.DictKeys.DN, "")
+                ),
+                FlextLdapConstants.DictKeys.OPERATION: str(
+                    data.get(FlextLdapConstants.DictKeys.OPERATION, "replace")
+                ),
+                FlextLdapConstants.DictKeys.ATTRIBUTE: str(
+                    data.get(FlextLdapConstants.DictKeys.ATTRIBUTE, "")
+                ),
+                FlextLdapConstants.DictKeys.VALUES: str_values,
             }
             return FlextResult[dict[str, str | FlextTypes.StringList]].ok(config)
         except Exception as e:
@@ -1097,12 +1120,14 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            attributes = data.get("attributes", {})
+            attributes = data.get(FlextLdapConstants.DictKeys.ATTRIBUTES, {})
             if not isinstance(attributes, dict):
                 attributes = {}
 
             config: dict[str, str | dict[str, FlextTypes.StringList]] = {
-                "dn": str(data.get("dn", "")),
+                FlextLdapConstants.DictKeys.DN: str(
+                    data.get(FlextLdapConstants.DictKeys.DN, "")
+                ),
                 "attributes": {
                     str(k): [
                         str(v) for v in (vals if isinstance(vals, list) else [vals])
@@ -1133,7 +1158,11 @@ class FlextLdapConfig(FlextConfig):
 
         """
         try:
-            config: dict[str, str] = {"dn": str(data.get("dn", ""))}
+            config: dict[str, str] = {
+                FlextLdapConstants.DictKeys.DN: str(
+                    data.get(FlextLdapConstants.DictKeys.DN, "")
+                )
+            }
             return FlextResult[dict[str, str]].ok(config)
         except Exception as e:
             return FlextResult[dict[str, str]].fail(

@@ -804,51 +804,76 @@ class FlextLdapModels(FlextModels):
             # Explicit FlextResult error handling - NO try/except
 
             # Extract DN
-            dn_values = ldap_attributes.get("dn", [])
+            dn_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.DN, []
+            )
             if not dn_values:
                 return FlextResult[FlextLdapModels.LdapUser].fail("DN is required")
             dn = dn_values[0]
 
             # Extract core attributes
-            cn_values = ldap_attributes.get("cn", [])
+            cn_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.CN, []
+            )
             cn = cn_values[0] if cn_values else ""
 
-            uid_values = ldap_attributes.get("uid", [])
+            uid_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.UID, []
+            )
             uid = uid_values[0] if uid_values else None
 
-            sn_values = ldap_attributes.get("sn", [])
+            sn_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.SN, []
+            )
             sn = sn_values[0] if sn_values else None
 
-            given_name_values = ldap_attributes.get("givenName", [])
+            given_name_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.GIVEN_NAME, []
+            )
             given_name = given_name_values[0] if given_name_values else None
 
-            mail_values = ldap_attributes.get("mail", [])
+            mail_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.MAIL, []
+            )
             mail = mail_values[0] if mail_values else None
 
-            telephone_number_values = ldap_attributes.get("telephoneNumber", [])
+            telephone_number_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER, []
+            )
             telephone_number = (
                 telephone_number_values[0] if telephone_number_values else None
             )
 
-            mobile_values = ldap_attributes.get("mobile", [])
+            mobile_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.MOBILE, []
+            )
             mobile = mobile_values[0] if mobile_values else None
 
-            department_values = ldap_attributes.get("department", [])
+            department_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.DEPARTMENT, []
+            )
             department = department_values[0] if department_values else None
 
-            title_values = ldap_attributes.get("title", [])
+            title_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.TITLE, []
+            )
             title = title_values[0] if title_values else None
 
-            organization_values = ldap_attributes.get("o", [])
+            organization_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.O, []
+            )
             organization = organization_values[0] if organization_values else None
 
-            organizational_unit_values = ldap_attributes.get("ou", [])
+            organizational_unit_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.OU, []
+            )
             organizational_unit = (
                 organizational_unit_values[0] if organizational_unit_values else None
             )
 
             object_classes = ldap_attributes.get(
-                "objectClass", ["person", "organizationalPerson", "inetOrgPerson"]
+                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
+                ["person", "organizationalPerson", "inetOrgPerson"],
             )
 
             # Create user with proper type handling
@@ -917,16 +942,22 @@ class FlextLdapModels(FlextModels):
             """Create minimal user with required fields only and enhanced error handling."""
             try:
                 # Extract specific known optional parameters with proper typing
-                sn_raw = kwargs.get("sn")
-                given_name_raw = kwargs.get("given_name")
-                mail_raw = kwargs.get("mail")
-                telephone_number_raw = kwargs.get("telephone_number")
-                mobile_raw = kwargs.get("mobile")
-                department_raw = kwargs.get("department")
-                title_raw = kwargs.get("title")
-                organization_raw = kwargs.get("organization")
-                organizational_unit_raw = kwargs.get("organizational_unit")
-                user_password_raw = kwargs.get("user_password")
+                sn_raw = kwargs.get(FlextLdapConstants.DictKeys.SN)
+                given_name_raw = kwargs.get(FlextLdapConstants.DictKeys.GIVEN_NAME)
+                mail_raw = kwargs.get(FlextLdapConstants.DictKeys.MAIL)
+                telephone_number_raw = kwargs.get(
+                    FlextLdapConstants.DictKeys.TELEPHONE_NUMBER
+                )
+                mobile_raw = kwargs.get(FlextLdapConstants.DictKeys.MOBILE)
+                department_raw = kwargs.get(FlextLdapConstants.DictKeys.DEPARTMENT)
+                title_raw = kwargs.get(FlextLdapConstants.DictKeys.TITLE)
+                organization_raw = kwargs.get(FlextLdapConstants.DictKeys.ORGANIZATION)
+                organizational_unit_raw = kwargs.get(
+                    FlextLdapConstants.DictKeys.ORGANIZATIONAL_UNIT
+                )
+                user_password_raw = kwargs.get(
+                    FlextLdapConstants.DictKeys.USER_PASSWORD
+                )
 
                 # Convert to proper types
                 sn = str(sn_raw) if sn_raw is not None else ""
@@ -1092,25 +1123,40 @@ class FlextLdapModels(FlextModels):
             # Explicit FlextResult error handling - NO try/except
 
             # Extract DN
-            dn_values = ldap_attributes.get("dn", [])
+            dn_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.DN, []
+            )
             if not dn_values:
                 return FlextResult[FlextLdapModels.Group].fail("DN is required")
             dn = dn_values[0]
 
             # Extract core attributes
-            cn_values = ldap_attributes.get("cn", [])
+            cn_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.CN, []
+            )
             cn = cn_values[0] if cn_values else ""
 
-            gid_number_values = ldap_attributes.get("gidNumber", [])
+            gid_number_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.GID_NUMBER, []
+            )
             gid_number = int(gid_number_values[0]) if gid_number_values else None
 
-            description_values = ldap_attributes.get("description", [])
+            description_values = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.DESCRIPTION, []
+            )
             description = description_values[0] if description_values else None
 
-            object_classes = ldap_attributes.get("objectClass", ["groupOfNames", "top"])
+            object_classes = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
+                ["groupOfNames", "top"],
+            )
 
-            member_dns = ldap_attributes.get("member", [])
-            unique_member_dns = ldap_attributes.get("uniqueMember", [])
+            member_dns = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.MEMBER, []
+            )
+            unique_member_dns = ldap_attributes.get(
+                FlextLdapConstants.LdapAttributeNames.UNIQUE_MEMBER, []
+            )
 
             # Create group
             group = cls(
