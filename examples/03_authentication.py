@@ -29,7 +29,7 @@ from __future__ import annotations
 import os
 import sys
 from copy import deepcopy
-from typing import Final
+from typing import ClassVar, Final
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
@@ -47,7 +47,7 @@ BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
 class DemoAuthScenarios:
     """Inline scenario data for authentication demonstrations."""
 
-    _USERS: dict[str, dict[str, object]] = {
+    _USERS: ClassVar[dict[str, dict[str, object]]] = {
         "admin": {
             "password": "admin",
             "dn": "cn=admin,dc=example,dc=com",
@@ -70,6 +70,16 @@ class DemoAuthScenarios:
 
     @classmethod
     def authenticate(cls, username: str, password: str) -> tuple[bool, str | None]:
+        """Authenticate user with username and password.
+
+        Args:
+            username: Username to authenticate
+            password: Password for authentication
+
+        Returns:
+            Tuple of (success: bool, error_message: str | None)
+
+        """
         if not username:
             return False, "Username cannot be empty"
         if not password:
@@ -83,6 +93,16 @@ class DemoAuthScenarios:
 
     @classmethod
     def validate(cls, dn: str, password: str) -> tuple[bool, str | None]:
+        """Validate credentials with DN and password.
+
+        Args:
+            dn: Distinguished name for validation
+            password: Password for validation
+
+        Returns:
+            Tuple of (success: bool, error_message: str | None)
+
+        """
         if not dn:
             return False, "Distinguished name cannot be empty"
         if not password:
@@ -96,10 +116,19 @@ class DemoAuthScenarios:
 
     @classmethod
     def get_attributes(cls, username: str) -> dict[str, list[str]] | None:
+        """Get user attributes by username.
+
+        Args:
+            username: Username to look up
+
+        Returns:
+            User attributes dictionary or None if user not found
+
+        """
         user = cls._USERS.get(username)
         if user is None:
             return None
-        return deepcopy(user["attributes"])  # type: ignore[return-value]
+        return deepcopy(user["attributes"])  # type: ignore[arg-type]
 
 
 class DemoLdapApi:
@@ -115,27 +144,71 @@ class DemoLdapApi:
         self._connected = False
 
     def connect(self) -> FlextResult[bool]:
+        """Connect to the demo LDAP API.
+
+        Returns:
+            Success result
+
+        """
         self._connected = True
         logger.info("🔁 Using in-memory demo LDAP API (no external server)")
         return FlextResult[bool].ok(True)
 
     def disconnect(self) -> FlextResult[bool]:
+        """Disconnect from the demo LDAP API.
+
+        Returns:
+            Success result
+
+        """
         self._connected = False
         return FlextResult[bool].ok(True)
 
     def unbind(self) -> FlextResult[bool]:
+        """Unbind from the demo LDAP API.
+
+        Returns:
+            Success result
+
+        """
         return self.disconnect()
 
     def is_connected(self) -> bool:
+        """Check if connected to the demo LDAP API.
+
+        Returns:
+            True if connected
+
+        """
         return self._connected
 
     def authenticate_user(self, username: str, password: str) -> FlextResult[bool]:
+        """Authenticate user with username and password.
+
+        Args:
+            username: Username to authenticate
+            password: Password for authentication
+
+        Returns:
+            Success result or error result
+
+        """
         success, error = DemoAuthScenarios.authenticate(username, password)
         if success:
             return FlextResult[bool].ok(True)
         return FlextResult[bool].fail(error or "Authentication failed")
 
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+        """Validate credentials with DN and password.
+
+        Args:
+            dn: Distinguished name for validation
+            password: Password for validation
+
+        Returns:
+            Success result or error result
+
+        """
         success, error = DemoAuthScenarios.validate(dn, password)
         if success:
             return FlextResult[bool].ok(True)
@@ -145,6 +218,15 @@ class DemoLdapApi:
         self,
         request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
+        """Search for a single entry in the demo LDAP.
+
+        Args:
+            request: Search request parameters
+
+        Returns:
+            Single entry result or None
+
+        """
         filter_str = request.filter_str
         username = ""
         if filter_str.startswith("(") and filter_str.endswith(")"):
@@ -323,7 +405,7 @@ def demonstrate_authentication_workflow(api: FlextLdap | DemoLdapApi) -> None:
     if user_entry:
         attributes_obj = getattr(user_entry, "attributes", {})
         if hasattr(attributes_obj, "data"):
-            attribute_keys = list(getattr(attributes_obj, "data").keys())  # type: ignore[call-arg]
+            attribute_keys = list(getattr(attributes_obj, "data").keys())
         elif isinstance(attributes_obj, dict):
             attribute_keys = list(attributes_obj.keys())
         else:
@@ -486,7 +568,7 @@ def main() -> int:
                 if hasattr(api, "unbind"):
                     api.unbind()
                 else:
-                    api.disconnect()  # type: ignore[attr-defined]
+                    api.disconnect()
                 logger.info("Disconnected from LDAP server")
 
         return 0

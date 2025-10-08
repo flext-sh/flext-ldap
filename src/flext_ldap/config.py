@@ -15,6 +15,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 from typing import Self
 
@@ -252,8 +253,6 @@ class FlextLdapConfig(FlextConfig):
 
             # Generate default handler_id if not provided or empty
             if not handler_id:
-                import uuid
-
                 unique_suffix = uuid.uuid4().hex[:8]
                 handler_id = f"ldap_{resolved_mode}_handler_{unique_suffix}"
 
@@ -806,12 +805,13 @@ class FlextLdapConfig(FlextConfig):
             include_credentials = kwargs.get(
                 FlextLdapConstants.DictKeys.INCLUDE_CREDENTIALS, False
             )
-            if not include_credentials:
+            if not include_credentials and config_data.get(
+                FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD
+            ):
                 # Redact sensitive LDAP data by default
-                if config_data.get(FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD):
-                    config_data[FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD] = (
-                        "***REDACTED***"
-                    )
+                config_data[FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD] = (
+                    "***REDACTED***"
+                )
 
             # Determine format from extension
             if path.suffix.lower() == ".json":
@@ -857,14 +857,20 @@ class FlextLdapConfig(FlextConfig):
             return business_validation
 
         # Validate LDAP URI and port consistency
-        if self.ldap_server_uri.startswith("ldaps://") and self.ldap_port == 389:
+        if (
+            self.ldap_server_uri.startswith("ldaps://")
+            and self.ldap_port == FlextConstants.Platform.LDAP_DEFAULT_PORT
+        ):
             return FlextResult[None].fail(
-                "Port 389 is default for LDAP, not LDAPS. Use 636 for LDAPS."
+                f"Port {FlextConstants.Platform.LDAP_DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextConstants.Platform.LDAPS_DEFAULT_PORT} for LDAPS."
             )
 
-        if self.ldap_server_uri.startswith("ldap://") and self.ldap_port == 636:
+        if (
+            self.ldap_server_uri.startswith("ldap://")
+            and self.ldap_port == FlextConstants.Platform.LDAPS_DEFAULT_PORT
+        ):
             return FlextResult[None].fail(
-                "Port 636 is default for LDAPS, not LDAP. Use 389 for LDAP."
+                f"Port {FlextConstants.Platform.LDAPS_DEFAULT_PORT} is default for LDAPS, not LDAP. Use {FlextConstants.Platform.LDAP_DEFAULT_PORT} for LDAP."
             )
 
         # Validate timeout relationships

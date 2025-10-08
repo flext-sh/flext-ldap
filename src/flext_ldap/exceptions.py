@@ -503,9 +503,8 @@ class FlextLdapExceptions(FlextExceptions):
         **kwargs: object,
     ) -> LdapConnectionError:
         """Create a connection error."""
-        return FlextLdapExceptions.LdapConnectionError(
-            message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
-        )
+        error_kwargs = {"server_uri": server_uri, "ldap_code": ldap_code, **kwargs}
+        return FlextLdapExceptions.LdapConnectionError(message, **error_kwargs)
 
     @staticmethod
     def connection_failed(
@@ -515,9 +514,8 @@ class FlextLdapExceptions(FlextExceptions):
         **kwargs: object,
     ) -> LdapConnectionError:
         """Create a connection failed error."""
-        return FlextLdapExceptions.LdapConnectionError(
-            message, server_uri=server_uri, ldap_code=ldap_code, **kwargs
-        )
+        error_kwargs = {"server_uri": server_uri, "ldap_code": ldap_code, **kwargs}
+        return FlextLdapExceptions.LdapConnectionError(message, **error_kwargs)
 
     @staticmethod
     def authentication_error(
@@ -584,18 +582,16 @@ class FlextLdapExceptions(FlextExceptions):
         **kwargs: object,
     ) -> LdapValidationError:
         """Create a validation error."""
-        return FlextLdapExceptions.LdapValidationError(
-            message, ldap_field=field, **kwargs
-        )
+        error_kwargs = {"ldap_field": field, "ldap_value": value, **kwargs}
+        return FlextLdapExceptions.LdapValidationError(message, **error_kwargs)
 
     @staticmethod
     def configuration_error(
         message: str, config_key: str | None = None, **kwargs: object
     ) -> LdapConfigurationError:
         """Create a configuration error."""
-        return FlextLdapExceptions.LdapConfigurationError(
-            message, ldap_config_key=config_key, section=None
-        )
+        error_kwargs = {"ldap_config_key": config_key, "section": None, **kwargs}
+        return FlextLdapExceptions.LdapConfigurationError(message, **error_kwargs)
 
     @staticmethod
     def type_error(
@@ -606,17 +602,22 @@ class FlextLdapExceptions(FlextExceptions):
         **kwargs: object,
     ) -> LdapValidationError:
         """Create a type error."""
-        return FlextLdapExceptions.LdapValidationError(
-            message, ldap_field=field, **kwargs
-        )
+        error_kwargs = {
+            "ldap_field": field,
+            "ldap_expected_type": expected_type,
+            "ldap_actual_type": actual_type,
+            **kwargs,
+        }
+        return FlextLdapExceptions.LdapValidationError(message, **error_kwargs)
 
     @staticmethod
     def user_error(
         message: str, username: str | None = None, **kwargs: object
     ) -> LdapEntryNotFoundError:
         """Create a user error."""
+        error_kwargs = {"dn": username, "operation": "user_lookup", **kwargs}
         return FlextLdapExceptions.LdapEntryNotFoundError(
-            message, dn=username, operation="user_lookup", **kwargs
+            message, **error_kwargs
         )
 
     @staticmethod
@@ -624,8 +625,9 @@ class FlextLdapExceptions(FlextExceptions):
         message: str, groupname: str | None = None, **kwargs: object
     ) -> LdapEntryNotFoundError:
         """Create a group error."""
+        error_kwargs = {"dn": groupname, "operation": "group_lookup", **kwargs}
         return FlextLdapExceptions.LdapEntryNotFoundError(
-            message, dn=groupname, operation="group_lookup", **kwargs
+            message, **error_kwargs
         )
 
     @staticmethod
@@ -636,17 +638,23 @@ class FlextLdapExceptions(FlextExceptions):
         **kwargs: object,
     ) -> LdapSearchError:
         """Create an LDAP error."""
-        return FlextLdapExceptions.LdapSearchError(
-            message, base_dn=None, filter_str=None, search_context=operation, **kwargs
-        )
+        error_kwargs = {
+            "base_dn": None,
+            "filter_str": None,
+            "search_context": operation,
+            "ldap_code": ldap_code,
+            **kwargs,
+        }
+        return FlextLdapExceptions.LdapSearchError(message, **error_kwargs)
 
     @staticmethod
     def operation_error(
         message: str, operation: str | None = None, **kwargs: object
     ) -> LdapModifyError:
         """Create an operation error."""
+        error_kwargs = {"dn": None, "modifications": None, "operation": operation, **kwargs}
         return FlextLdapExceptions.LdapModifyError(
-            message, dn=None, modifications=None, **kwargs
+            message, **error_kwargs
         )
 
 

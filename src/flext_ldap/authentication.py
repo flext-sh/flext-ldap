@@ -126,13 +126,29 @@ class FlextLdapAuthentication(FlextService[None]):
         """
         # Use existing authenticate_user logic adapted for DN-based validation
         try:
-            # Create a test connection with the provided credentials
-            from flext_ldap.clients import FlextLdapClients
-
-            test_connection = FlextLdapClients()
-            connection_result = test_connection.bind(dn, password)
-            test_connection.disconnect()
-            return FlextResult[bool].ok(connection_result.is_success)
+            # Use the existing connection context if available
+            if self._connection is not None:
+                # Create a test connection using the same server but different credentials
+                test_connection = Connection(
+                    self._server,
+                    user=dn,
+                    password=password,
+                    auto_bind=True,
+                    auto_range=True,
+                )
+                try:
+                    # Test the connection by attempting to bind
+                    test_connection.bind()
+                    is_valid = test_connection.bound
+                    return FlextResult[bool].ok(is_valid)
+                finally:
+                    test_connection.unbind()
+                    test_connection = None
+            else:
+                # Fallback: Create a minimal test connection if no context is available
+                return FlextResult[bool].fail(
+                    "No connection context available for credential validation"
+                )
         except Exception as e:
             return FlextResult[bool].fail(f"Credential validation failed: {e}")
 

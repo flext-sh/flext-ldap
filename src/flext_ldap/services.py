@@ -512,7 +512,7 @@ class FlextLdapServices(FlextService[None]):
 
             # Step 5: Domain post-processing
             # Apply domain services for enrichment
-            # TODO: Implement domain service for user display name calculation
+            # TODO @marlonsc: Implement domain service for user display name calculation
             # display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(mock_user)
             # mock_user.display_name = display_name
             # In real implementation, User entity would have display_name field

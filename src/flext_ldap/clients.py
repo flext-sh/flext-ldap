@@ -502,7 +502,7 @@ class FlextLdapClients(FlextService[None]):
             # Get schema (automatically loaded with connection)
             # Note: schema may not be available on all connection types
             try:
-                schema = getattr(self.connection, "schema", None)  # type: ignore[attr-defined]
+                schema = getattr(self.connection, "schema", None)
                 if not schema:
                     return FlextResult[FlextTypes.Dict].fail(
                         "Schema not available on this connection type"
@@ -642,7 +642,7 @@ class FlextLdapClients(FlextService[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
-        _scope: str = "subtree",  # TODO: Implement scope support for LDAP search operations
+        _scope: str = "subtree",  # TODO @marlonsc: Implement scope support for LDAP search operations
         use_paging: bool = True,
     ) -> FlextResult[list]:
         """Universal search with automatic server-specific optimization."""
