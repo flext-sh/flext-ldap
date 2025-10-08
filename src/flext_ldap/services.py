@@ -12,7 +12,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import (
+    FlextConstants,
+    FlextLogger,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+)
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.domain import FlextLdapDomain
@@ -153,7 +159,14 @@ class FlextLdapServices(FlextService[None]):
                 )
 
             # Domain validation: search scope
-            scope_obj = FlextLdapModels.Scope.create(request.scope)
+            scope_result = FlextLdapModels.Scope.create(request.scope)
+            if scope_result.is_failure:
+                return FlextResult[bool].fail(
+                    scope_result.error or "Invalid search scope creation"
+                )
+            scope_obj = scope_result.unwrap()
+            if not isinstance(scope_obj, FlextLdapModels.Scope):
+                return FlextResult[bool].fail("Invalid scope object type")
             scope_check = FlextLdapDomain.SearchSpecification.validate_search_scope(
                 request.base_dn, scope_obj
             )
@@ -254,7 +267,7 @@ class FlextLdapServices(FlextService[None]):
 
             # Domain validation: description
             description = group_data.get(FlextLdapConstants.DictKeys.DESCRIPTION, "")
-            if len(description) > 500:  # Arbitrary limit
+            if len(description) > FlextLdapConstants.Validation.MAX_DESCRIPTION_LENGTH:
                 return FlextResult[FlextTypes.Dict].fail("Group description too long")
 
             logger.info("Group creation request validated", cn=cn)
@@ -548,7 +561,9 @@ class FlextLdapServices(FlextService[None]):
 
             # Domain validation: port range
             port = config_data.get(FlextLdapConstants.DictKeys.LDAP_PORT)
-            if not isinstance(port, int) or not (1 <= port <= 65535):
+            if not isinstance(port, int) or not (
+                1 <= port <= FlextConstants.Network.MAX_PORT
+            ):
                 return FlextResult[FlextTypes.Dict].fail("Invalid LDAP port")
 
             # Domain validation: base DN format

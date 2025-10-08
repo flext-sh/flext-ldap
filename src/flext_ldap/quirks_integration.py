@@ -11,9 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextService, FlextTypes
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
+
+from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
@@ -137,7 +138,11 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
         try:
             # Check cache first
             if target_type in self._quirks_cache:
-                return FlextResult[FlextTypes.Dict].ok(self._quirks_cache[target_type])
+                cached_quirks = self._quirks_cache[target_type]
+                if isinstance(cached_quirks, dict):
+                    return FlextResult[FlextTypes.Dict].ok(cached_quirks)
+                # Invalid cache entry, remove it
+                del self._quirks_cache[target_type]
 
             # Get quirks from FlextLdif manager
             quirks = self._quirks_manager.quirks_registry.get(target_type, {})
@@ -262,9 +267,13 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[int].ok(1000)  # Default page size
 
         quirks = quirks_result.unwrap()
-        max_page = quirks.get(FlextLdapConstants.DictKeys.MAX_PAGE_SIZE, 1000)
+        max_page_raw = quirks.get(FlextLdapConstants.DictKeys.MAX_PAGE_SIZE, 1000)
 
-        return FlextResult[int].ok(int(max_page))
+        try:
+            max_page = int(max_page_raw) if max_page_raw is not None else 1000
+            return FlextResult[int].ok(max_page)
+        except (TypeError, ValueError):
+            return FlextResult[int].ok(1000)  # Default on conversion error
 
     def get_default_timeout(self, server_type: str | None = None) -> FlextResult[int]:
         """Get default timeout for server operations.
@@ -281,9 +290,13 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[int].ok(30)  # Default timeout
 
         quirks = quirks_result.unwrap()
-        timeout = quirks.get(FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT, 30)
+        timeout_raw = quirks.get(FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT, 30)
 
-        return FlextResult[int].ok(int(timeout))
+        try:
+            timeout = int(timeout_raw) if timeout_raw is not None else 30
+            return FlextResult[int].ok(timeout)
+        except (TypeError, ValueError):
+            return FlextResult[int].ok(30)  # Default on conversion error
 
     def normalize_entry_for_server(
         self,
@@ -347,7 +360,11 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                 "generic": {"port": 389, "use_ssl": False, "supports_starttls": True},
             }
 
-            config: FlextTypes.Dict = defaults.get(target_type) or defaults["generic"]
+            config_raw = defaults.get(target_type) or defaults["generic"]
+            if isinstance(config_raw, dict):
+                config: FlextTypes.Dict = config_raw
+            else:
+                config = defaults["generic"]
             return FlextResult[FlextTypes.Dict].ok(config)
 
         except Exception as e:

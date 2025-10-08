@@ -17,7 +17,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import FlextResult, FlextTypes, FlextUtilities
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 
 from flext_ldap.exceptions import FlextLdapExceptions
 
@@ -377,10 +384,6 @@ class FlextLdapUtilities(FlextUtilities):
 
             # Validate utilities can access flext-core components
             try:
-                from flext_core.config import FlextConfig
-                from flext_core.container import FlextContainer
-                from flext_core.loggings import FlextLogger
-
                 # Test integration with core components
                 FlextConfig()
                 FlextLogger(__name__)

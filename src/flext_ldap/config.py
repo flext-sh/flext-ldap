@@ -47,10 +47,8 @@ class FlextLdapConfig(FlextConfig):
     - LDAP-specific handler configuration utilities
     - Enhanced singleton management for LDAP contexts
     - Comprehensive validation with business rules
-    - Environment-based configuration with FLEXT_LDAP_ prefix
 
     **Function**: Enterprise LDAP configuration management
-        - Environment variable mapping with FLEXT_LDAP_ prefix
         - LDAP connection, authentication, and operation settings
         - Pooling, caching, retry, and logging configurations
         - Computed fields for derived connection strings and capabilities
@@ -81,9 +79,6 @@ class FlextLdapConfig(FlextConfig):
         bind_dn = config.ldap_bind_dn
         timeout = config.ldap_connection_timeout
 
-        # Example 3: Environment variable override
-        # Set FLEXT_LDAP_LDAP_SERVER_URI=ldap://production.example.com
-        # config.ldap_server_uri will be "ldap://production.example.com"
 
         # Example 4: Check LDAP configuration validity
         validation_result = config.validate_ldap_requirements()
@@ -143,13 +138,12 @@ class FlextLdapConfig(FlextConfig):
 
     Note:
         Direct instantiation pattern - create with FlextLdapConfig().
-        Environment variables prefixed with FLEXT_LDAP_ override defaults.
         SecretStr protects LDAP credentials. Configuration validated on load.
         Supports advanced dot notation access (config('ldap.connection.server')).
 
     Warning:
         Never commit LDAP credentials to source control.
-        Use environment variables for production LDAP secrets.
+        All configuration through direct instantiation or file loading.
         LDAP configuration changes require service restart.
 
     Example:
@@ -294,7 +288,6 @@ class FlextLdapConfig(FlextConfig):
             return config
 
     model_config = SettingsConfigDict(
-        env_prefix="FLEXT_LDAP_",
         case_sensitive=False,
         extra="ignore",  # Changed from "forbid" to "ignore" for LDAP ecosystem compatibility
         use_enum_values=True,
@@ -306,7 +299,6 @@ class FlextLdapConfig(FlextConfig):
         # Enhanced settings features
         cli_parse_args=False,  # Disable CLI parsing by default for LDAP
         cli_avoid_json=True,  # Avoid JSON CLI options for LDAP configs
-        enable_decoding=True,  # Enable JSON decoding for environment variables
         nested_model_default_partial_update=True,  # Allow partial updates to nested LDAP models
         # Advanced Pydantic 2.11+ features
         str_strip_whitespace=True,  # Strip whitespace from LDAP strings
@@ -540,9 +532,7 @@ class FlextLdapConfig(FlextConfig):
             "has_authentication": self.ldap_bind_dn is not None,
             "has_pooling": self.ldap_pool_size > 1,
             "is_production_ready": (
-                self.ldap_use_ssl
-                and self.ldap_bind_dn is not None
-                and self.environment.lower() == "production"
+                self.ldap_use_ssl and self.ldap_bind_dn is not None
             ),
         }
 
@@ -620,17 +610,6 @@ class FlextLdapConfig(FlextConfig):
         if self.ldap_server_uri.startswith("ldaps://") and not self.ldap_use_ssl:
             msg = "SSL must be enabled for ldaps:// server URIs"
             raise exceptions.configuration_error(msg, config_key="ldap_use_ssl")
-
-        # Validate production requirements
-        if self.is_production():
-            if not self.ldap_use_ssl:
-                msg = "SSL must be enabled in production environment"
-                raise exceptions.configuration_error(msg, config_key="ldap_use_ssl")
-            if not self.ldap_verify_certificates:
-                msg = "Certificate verification must be enabled in production"
-                raise exceptions.configuration_error(
-                    msg, config_key="ldap_verify_certificates"
-                )
 
         return self
 
@@ -796,28 +775,6 @@ class FlextLdapConfig(FlextConfig):
             FlextResult[None]: Success if valid, failure with error details
 
         """
-        # Production environment checks
-        if self.is_production():
-            if not self.ldap_use_ssl:
-                return FlextResult[None].fail(
-                    "SSL must be enabled in production environment"
-                )
-            if not self.ldap_verify_certificates:
-                return FlextResult[None].fail(
-                    "Certificate verification must be enabled in production"
-                )
-            if self.ldap_bind_dn is None:
-                return FlextResult[None].fail(
-                    "Authentication must be configured in production"
-                )
-
-        # Development environment checks
-        if self.is_development():
-            if self.ldap_enable_trace and not self.ldap_enable_debug:
-                return FlextResult[None].fail(
-                    "Trace mode requires debug mode to be enabled"
-                )
-
         return FlextResult[None].ok(None)
 
     # Infrastructure.ConfigPersistence protocol methods
@@ -858,9 +815,10 @@ class FlextLdapConfig(FlextConfig):
 
             # Determine format from extension
             if path.suffix.lower() == ".json":
-                indent = int(
-                    kwargs.get(FlextLdapConstants.DictKeys.INDENT, self.json_indent)
+                indent_raw = kwargs.get(
+                    FlextLdapConstants.DictKeys.INDENT, self.json_indent
                 )
+                indent = int(indent_raw) if indent_raw is not None else self.json_indent
                 sort_keys = bool(
                     kwargs.get(
                         FlextLdapConstants.DictKeys.SORT_KEYS, self.json_sort_keys
@@ -957,21 +915,6 @@ class FlextLdapConfig(FlextConfig):
 
         """
         return f"{self.ldap_server_uri}:{self.ldap_port}"
-
-    def is_ldap_ready_for_production(self) -> bool:
-        """Check if LDAP configuration is production-ready.
-
-        Returns:
-            bool: True if configuration meets production requirements
-
-        """
-        return (
-            self.ldap_use_ssl
-            and self.ldap_verify_certificates
-            and self.ldap_bind_dn is not None
-            and self.ldap_bind_password is not None
-            and self.is_production()
-        )
 
     def get_effective_bind_password(self) -> str | None:
         """Get the effective bind password (safely extract from SecretStr)."""
@@ -1242,71 +1185,6 @@ class FlextLdapConfig(FlextConfig):
             return FlextResult.fail(f"Invalid JSON: {e}")
         except Exception as e:
             return FlextResult.fail(f"Load failed: {e}")
-
-    @classmethod
-    def from_env(cls, env_prefix: str = "FLEXT_LDAP_") -> FlextLdapConfig:
-        """Load LDAP configuration from environment variables using Pydantic BaseSettings.
-
-        Automatically reads environment variables with the specified prefix and creates
-        a FlextLdapConfig instance. Eliminates manual os.getenv() boilerplate in examples.
-
-        This method leverages Pydantic BaseSettings to automatically:
-        - Read environment variables with the prefix (default: FLEXT_LDAP_)
-        - Convert types appropriately (int, bool, SecretStr, etc.)
-        - Apply validation rules from field definitions
-        - Use field defaults when environment variables are not set
-
-        Args:
-            env_prefix: Environment variable prefix (default: "FLEXT_LDAP_")
-
-        Returns:
-            FlextLdapConfig: Configuration instance loaded from environment variables
-
-        Raises:
-            ValidationError: If environment variable validation fails
-
-        Example:
-            # OLD: Manual environment variable reading (5+ lines per example)
-            >>> import os
-            >>> LDAP_URI = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
-            >>> BIND_DN = os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
-            >>> BIND_PASSWORD = os.getenv("LDAP_BIND_PASSWORD", "admin")
-            >>> BASE_DN = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
-            >>> config = FlextLdapConfig(
-            ...     ldap_server_uri=LDAP_URI,
-            ...     ldap_bind_dn=BIND_DN,
-            ...     ldap_bind_password=BIND_PASSWORD,
-            ...     ldap_base_dn=BASE_DN,
-            ... )
-
-            # NEW: Automatic environment loading (1 line!)
-            >>> config = FlextLdapConfig.from_env()
-            >>> # Automatically reads FLEXT_LDAP_LDAP_SERVER_URI, FLEXT_LDAP_LDAP_BIND_DN, etc.
-
-        Environment Variables:
-            FLEXT_LDAP_LDAP_SERVER_URI: LDAP server URI (default: ldap://localhost:389)
-            FLEXT_LDAP_LDAP_BIND_DN: Bind DN (default: None)
-            FLEXT_LDAP_LDAP_BIND_PASSWORD: Bind password (default: None)
-            FLEXT_LDAP_LDAP_BASE_DN: Base DN (default: dc=example,dc=com)
-            FLEXT_LDAP_LDAP_PORT: LDAP port (default: 389)
-            FLEXT_LDAP_LDAP_USE_SSL: Use SSL (default: True)
-            ... and all other FlextLdapConfig fields
-
-        Note:
-            Uses Pydantic BaseSettings pattern - model_config already defines env_prefix.
-            Simply instantiating FlextLdapConfig() automatically reads environment variables.
-            This classmethod exists for clarity and explicitness in code.
-
-        See Also:
-            FlextLdapConfig.__init__: Direct instantiation (also reads environment)
-            FlextLdapConfig.from_file: Load from JSON file
-            FlextLdapConfig.model_config: Pydantic settings configuration
-
-        """
-        # Pydantic BaseSettings automatically reads environment variables when instantiated
-        # The model_config already defines env_prefix, case sensitivity, etc.
-        # Simply create instance - Pydantic handles environment variable loading
-        return cls()
 
     # =========================================================================
     # Enhanced flext-core Integration Methods

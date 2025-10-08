@@ -11,9 +11,9 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdifModels
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
 
@@ -35,7 +35,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         self._server_type = "openldap1"
 
     @override
-    def get_default_port(self, use_ssl: bool = False) -> int:
+    def get_default_port(self, *, use_ssl: bool = False) -> int:
         """OpenLDAP 1.x uses standard LDAP ports."""
         return 636 if use_ssl else 389
 
@@ -106,7 +106,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         if rule:
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
-                            if len(parts) == 2:
+                            if len(parts) == FlextLdapConstants.Parsing.ACL_RULE_PARTS:
                                 rules.append({
                                     "who": parts[0].strip(),
                                     "access": parts[1].strip(),
@@ -220,7 +220,11 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         continue
                     if oc.startswith("olc"):
                         # Remove olc prefix for 1.x compatibility
-                        mapped_classes.append(oc[3:] if len(oc) > 3 else oc)
+                        prefix_len = FlextLdapConstants.Parsing.OPENLDAP_PREFIX_LENGTH
+                        min_len = FlextLdapConstants.Parsing.MIN_OC_LENGTH
+                        mapped_classes.append(
+                            oc[prefix_len:] if len(oc) > min_len else oc
+                        )
                     else:
                         mapped_classes.append(oc)
 

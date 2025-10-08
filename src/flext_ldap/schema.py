@@ -93,7 +93,9 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             # Generic detection - return a default type enum
             return FlextLdapModels.LdapServerType.GENERIC
 
-        def get_server_quirks(self, server_type: str | None) -> object | None:
+        def get_server_quirks(
+            self, server_type: str | None
+        ) -> FlextLdapModels.ServerQuirks | None:
             """Get server quirks for the specified server type.
 
             Args:

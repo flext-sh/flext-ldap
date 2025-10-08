@@ -54,6 +54,11 @@ class FlextLdapConstants(FlextConstants):
             FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
         )
         DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.Performance.DEFAULT_PAGE_SIZE
+        DEFAULT_SEARCH_PAGE_SIZE: Final[int] = 100  # Default page size for searches
+        MAX_PAGE_SIZE_GENERIC: Final[int] = (
+            1000  # Max page size for generic LDAP servers
+        )
+        MAX_PAGE_SIZE_AD: Final[int] = 100000  # Max page size for Active Directory
 
     class Scopes:
         """LDAP search scope constants - extending centralized FlextConstants."""
@@ -258,6 +263,14 @@ class FlextLdapConstants(FlextConstants):
         MIN_USERNAME_LENGTH: Final[int] = 3
         MIN_GROUP_NAME_LENGTH: Final[int] = 2
         MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
+
+        # Service limits
+        MAX_DESCRIPTION_LENGTH: Final[int] = (
+            500  # Maximum description length for groups/users
+        )
+
+        # Connection argument count
+        MIN_CONNECTION_ARGS: Final[int] = 3
 
     # Alias for backwards compatibility
     LdapDefaults = Defaults
@@ -466,6 +479,11 @@ class FlextLdapConstants(FlextConstants):
         """ACL parsing constants."""
 
         MIN_ACL_PARTS: Final[int] = 4  # Minimum parts for valid ACL (OpenLDAP format)
+        ACL_RULE_PARTS: Final[int] = (
+            2  # Number of parts in an ACL rule (<who> <access>)
+        )
+        OPENLDAP_PREFIX_LENGTH: Final[int] = 3  # Length of "olc" prefix
+        MIN_OC_LENGTH: Final[int] = 3  # Minimum length for object class with prefix
 
     # =========================================================================
     # LITERAL TYPES - All Literal types centralized here per FLEXT standards

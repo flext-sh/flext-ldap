@@ -17,6 +17,7 @@ from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -52,7 +53,7 @@ class FlextLdapServers(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or self.SERVER_GENERIC
-        self._operations: object | None = None
+        self._operations: FlextLdapServersBaseOperations | None = None
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService."""
@@ -70,7 +71,9 @@ class FlextLdapServers(FlextService[None]):
             self._operations = self._create_operations_for_server(self._server_type)
         return self._operations
 
-    def _create_operations_for_server(self, server_type: str) -> object:
+    def _create_operations_for_server(
+        self, server_type: str
+    ) -> FlextLdapServersBaseOperations | None:
         """Factory method to create operations instance for server type.
 
         Args:
@@ -94,6 +97,14 @@ class FlextLdapServers(FlextService[None]):
             )
             result = factory.create_from_server_type(self.SERVER_GENERIC)
 
+        if result.is_failure:
+            # Even generic operations failed - this shouldn't happen
+            self.logger.error(
+                f"Failed to create even generic operations for server type {server_type}",
+                error=result.error,
+            )
+            return None
+
         return result.unwrap()
 
     # =========================================================================
@@ -115,10 +126,12 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         return ops.get_schema_dn() if ops else "cn=schema"
 
-    def get_default_port(self, use_ssl: bool = False) -> int:
+    def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for current server type."""
         ops = self.operations
-        return ops.get_default_port(use_ssl) if ops else (636 if use_ssl else 389)
+        return (
+            ops.get_default_port(use_ssl=use_ssl) if ops else (636 if use_ssl else 389)
+        )
 
     def supports_start_tls(self) -> bool:
         """Check if server supports STARTTLS."""
@@ -152,11 +165,11 @@ class FlextLdapServers(FlextService[None]):
         search_filter: str,
         attributes: list[str] | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform paged search operation."""
         ops = self.operations
         if not ops:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 "No server operations available"
             )
         return ops.search_with_paging(
@@ -194,11 +207,11 @@ class FlextLdapServers(FlextService[None]):
 
     def normalize_entry_for_server(
         self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for target server type."""
         ops = self.operations
         if not ops:
-            return FlextResult[FlextLdifModels.Entry].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 "No server operations available"
             )
         return ops.normalize_entry_for_server(entry, target_server_type)

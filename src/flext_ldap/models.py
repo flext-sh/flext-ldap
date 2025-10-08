@@ -235,7 +235,7 @@ class FlextLdapModels(FlextModels):
                 if len(args) == 1 and not kwargs:
                     dn_string = str(args[0])
                     dn_obj = cls(value=dn_string.strip())
-                    return FlextResult[object].ok(dn_obj)
+                    return FlextResult[FlextLdapModels.DistinguishedName].ok(dn_obj)
 
                 # Handle kwargs case - ensure value is string
                 if "value" in kwargs:
@@ -247,11 +247,15 @@ class FlextLdapModels(FlextModels):
                     typed_kwargs[k] = str(v)
 
                 dn_obj = cls(**typed_kwargs)
-                return FlextResult[object].ok(dn_obj)
+                return FlextResult[FlextLdapModels.DistinguishedName].ok(dn_obj)
             except FlextLdapExceptions.LdapValidationError as e:
-                return FlextResult[object].fail(f"DN creation failed: {e}")
+                return FlextResult[FlextLdapModels.DistinguishedName].fail(
+                    f"DN creation failed: {e}"
+                )
             except Exception as e:
-                return FlextResult[object].fail(f"DN creation failed: {e}")
+                return FlextResult[FlextLdapModels.DistinguishedName].fail(
+                    f"DN creation failed: {e}"
+                )
 
     class Filter(FlextModels.Value):
         """LDAP filter value object with RFC 4515 compliance.
@@ -860,9 +864,7 @@ class FlextLdapModels(FlextModels):
             )
             title = title_values[0] if title_values else None
 
-            organization_values = ldap_attributes.get(
-                FlextLdapConstants.LdapAttributeNames.O, []
-            )
+            organization_values = ldap_attributes.get("o", [])
             organization = organization_values[0] if organization_values else None
 
             organizational_unit_values = ldap_attributes.get(
@@ -1330,7 +1332,7 @@ class FlextLdapModels(FlextModels):
             # Regular attribute lookup
             return self.get_attribute(key)
 
-        def __contains__(self, key: object) -> bool:
+        def __contains__(self, key: str) -> bool:
             """Dict-like containment check.
 
             Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
@@ -1364,7 +1366,7 @@ class FlextLdapModels(FlextModels):
             return self.get_attribute(key) or default
 
         @classmethod
-        def from_ldif(cls, ldif_entry: object) -> FlextLdapModels.Entry:
+        def from_ldif(cls, ldif_entry: FlextLdifModels.Entry) -> FlextLdapModels.Entry:
             """Convert FlextLdif Entry to FlextLdap Entry using adapter pattern.
 
             Eliminates duplicate LDIF conversion logic across codebase by centralizing
@@ -1413,22 +1415,37 @@ class FlextLdapModels(FlextModels):
                 >>> # Can now be written with FlextLdif.write([ldif_entry], path)
 
             """
-            # Lazy import to avoid requiring flext-ldif for all uses
-            try:
-                from flext_ldif import FlextLdifModels
-            except ImportError as e:
-                msg = "FlextLdif not available. Install with: pip install flext-ldif"
-                raise ImportError(msg) from e
+            # Required import - flext-ldif is mandatory dependency
+            from flext_ldif import FlextLdifModels
 
             # Convert DN string to DistinguishedName if needed
             dn = self.dn
             if isinstance(dn, str):
                 dn = FlextLdifModels.DistinguishedName(value=dn)
 
+            # Convert attributes to proper LDIF format
+            ldif_attributes: dict[str, FlextLdifModels.AttributeValues] = {}
+            for attr_name, attr_values in self.attributes.items():
+                if isinstance(attr_values, str):
+                    # Single string value - convert to list
+                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                        values=[attr_values]
+                    )
+                elif isinstance(attr_values, list):
+                    # List of values - ensure they are strings
+                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                        values=[str(v) for v in attr_values]
+                    )
+                else:
+                    # Handle other types by converting to string
+                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                        values=[str(attr_values)]
+                    )
+
             # Create LDIF entry - adapter pattern
             return FlextLdifModels.Entry(
                 dn=dn,
-                attributes=FlextLdifModels.LdifAttributes(attributes=self.attributes),
+                attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attributes),
             )
 
     # =========================================================================
@@ -1440,9 +1457,7 @@ class FlextLdapModels(FlextModels):
 
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(
-            ..., description="LDAP search filter", alias="search_filter"
-        )
+        filter_str: str = Field(..., description="LDAP search filter")
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
@@ -1495,7 +1510,7 @@ class FlextLdapModels(FlextModels):
             return self.page_size is not None and self.page_size > 0
 
         @computed_field
-        def search_complexity(self) -> str:
+        def search_complexity(self: FlextLdapModels.SearchRequest) -> str:
             """Computed field for search complexity assessment."""
             max_filter_complexity = 2  # Maximum filter complexity threshold
             if self.scope == "base":
@@ -1515,7 +1530,7 @@ class FlextLdapModels(FlextModels):
             return self.scope.lower()
 
         @computed_field
-        def estimated_result_count(self) -> int:
+        def estimated_result_count(self: FlextLdapModels.SearchRequest) -> int:
             """Computed field for estimated result count based on search parameters."""
             if self.scope == "base":
                 return 1
@@ -1696,7 +1711,7 @@ class FlextLdapModels(FlextModels):
 
             return cls.model_validate({
                 "base_dn": base_dn,
-                "filter_str": filter_str,
+                "search_filter": filter_str,
                 "scope": scope,
                 "attributes": attributes or [],
                 "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
@@ -1959,6 +1974,112 @@ class FlextLdapModels(FlextModels):
             }
 
             return attributes
+
+    class AddEntryRequest(Base, ValidationMixin):
+        """LDAP Add Entry Request entity for general entry creation.
+
+        Uses FlextModels patterns for centralized validation and parameter management.
+        Supports any LDAP object class with flexible attribute handling.
+        """
+
+        # Required fields
+        dn: str = Field(..., description="Distinguished Name for new entry")
+        attributes: dict[str, str | FlextTypes.StringList] = Field(
+            ..., description="Entry attributes as key-value pairs"
+        )
+
+        # Optional object classes - defaults will be determined by attributes if not specified
+        object_classes: FlextTypes.StringList | None = Field(
+            default=None,
+            description="LDAP object classes (auto-detected from attributes if not specified)",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format using centralized validation."""
+            return cls.validate_dn_field(v)
+
+        @field_validator("attributes")
+        @classmethod
+        def validate_attributes(
+            cls, v: dict[str, str | FlextTypes.StringList]
+        ) -> dict[str, str | FlextTypes.StringList]:
+            """Validate entry attributes."""
+            if not v:
+                msg = "Attributes cannot be empty"
+                raise ValueError(msg)
+            return v
+
+        @model_validator(mode="after")
+        def validate_entry_consistency(self) -> FlextLdapModels.AddEntryRequest:
+            """Validate entry consistency and auto-detect object classes if needed."""
+            FlextLdapExceptions()
+
+            # Auto-detect object classes if not specified
+            if not self.object_classes:
+                detected_classes = self._detect_object_classes_from_attributes()
+                if detected_classes:
+                    self.object_classes = detected_classes
+                else:
+                    # Default to 'top' if no specific classes detected
+                    self.object_classes = [FlextLdapConstants.ObjectClasses.TOP]
+
+            # Ensure objectClass is in attributes if not present
+            if "objectClass" not in self.attributes:
+                self.attributes["objectClass"] = self.object_classes
+
+            return self
+
+        def _detect_object_classes_from_attributes(self) -> FlextTypes.StringList:
+            """Auto-detect object classes based on common attribute patterns."""
+            classes = []
+
+            # Always include top
+            classes.append(FlextLdapConstants.ObjectClasses.TOP)
+
+            # Detect person-related attributes
+            person_attrs = {
+                "cn",
+                "sn",
+                "givenName",
+                "mail",
+                "telephoneNumber",
+                "userPassword",
+                "uid",
+                "description",
+            }
+            if any(attr in self.attributes for attr in person_attrs):
+                classes.append(FlextLdapConstants.ObjectClasses.PERSON)
+                # Check for inetOrgPerson specific attributes
+                inet_attrs = {"mail", "telephoneNumber", "department", "title"}
+                if any(attr in self.attributes for attr in inet_attrs):
+                    classes.append(FlextLdapConstants.ObjectClasses.INET_ORG_PERSON)
+
+            # Detect group-related attributes
+            if "member" in self.attributes or "uniqueMember" in self.attributes:
+                if "uniqueMember" in self.attributes:
+                    classes.append(
+                        FlextLdapConstants.ObjectClasses.GROUP_OF_UNIQUE_NAMES
+                    )
+                else:
+                    classes.append(FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES)
+
+            # Detect organizational unit
+            if "ou" in self.attributes:
+                classes.append("organizationalUnit")
+
+            return classes
+
+        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
+            """Convert attributes to LDAP format (all values as lists)."""
+            ldap_attrs = {}
+            for key, value in self.attributes.items():
+                if isinstance(value, list):
+                    ldap_attrs[key] = value
+                else:
+                    ldap_attrs[key] = [str(value)]
+            return ldap_attrs
 
     # =========================================================================
     # CONNECTION AND CONFIGURATION ENTITIES
@@ -2508,7 +2629,7 @@ class FlextLdapModels(FlextModels):
         target: FlextLdapModels.AclTarget
         subject: FlextLdapModels.AclSubject
         permissions: FlextLdapModels.AclPermissions
-        conditions: dict[str, object] = Field(
+        conditions: FlextTypes.Dict = Field(
             default_factory=dict, description="Additional conditions"
         )
         enabled: bool = Field(default=True, description="Whether the rule is enabled")

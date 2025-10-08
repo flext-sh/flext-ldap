@@ -12,6 +12,7 @@ from __future__ import annotations
 from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
+from ldap3 import Connection
 
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
@@ -163,7 +164,9 @@ class FlextLdapServersFactory(FlextService[None]):
                 f"Server operations creation from entries failed: {e}"
             )
 
-    def detect_server_type_from_root_dse(self, connection: object) -> FlextResult[str]:
+    def detect_server_type_from_root_dse(
+        self, connection: Connection
+    ) -> FlextResult[str]:
         """Detect server type from root DSE (rootDomainServiceEntry).
 
         The root DSE contains server-specific attributes that can be used
@@ -275,7 +278,7 @@ class FlextLdapServersFactory(FlextService[None]):
             return FlextResult[str].fail(f"Root DSE detection failed: {e}")
 
     def create_from_connection(
-        self, connection: object
+        self, connection: Connection
     ) -> FlextResult[FlextLdapServersBaseOperations]:
         """Create server operations instance by detecting server type from connection.
 

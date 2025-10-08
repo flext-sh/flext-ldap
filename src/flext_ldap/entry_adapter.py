@@ -13,10 +13,11 @@ from __future__ import annotations
 import pathlib
 
 from flext_core import FlextResult, FlextService, FlextTypes
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from ldap3 import Entry as Ldap3Entry
+
+from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapEntryAdapter(FlextService[None]):
@@ -60,12 +61,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[None].ok(None)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: Ldap3Entry
+        self, ldap3_entry: Ldap3Entry | dict[str, object]
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Convert ldap3.Entry to FlextLdifModels.Entry.
+        """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
         Args:
-            ldap3_entry: ldap3 Entry object from search results
+            ldap3_entry: ldap3 Entry object from search results or dict with 'dn' and 'attributes' keys
 
         Returns:
             FlextResult containing FlextLdifModels.Entry or error
@@ -75,28 +76,48 @@ class FlextLdapEntryAdapter(FlextService[None]):
         if not ldap3_entry:
             return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry cannot be None")
 
-        # Extract DN from ldap3 entry
-        dn_str = str(ldap3_entry.entry_dn)
-        if not dn_str:
-            return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry missing DN")
-
-        # Extract attributes from ldap3 entry
-        attributes: dict[str, FlextTypes.List] = {}
-        for attr_name in ldap3_entry.entry_attributes:
-            attr_value = ldap3_entry[attr_name]
-
-            # Handle multi-valued attributes
-            if isinstance(attr_value, list):
-                attributes[attr_name] = attr_value
-            elif attr_value.value is not None:
-                # Single value - convert to list for consistency
-                value = attr_value.value
-                attributes[attr_name] = (
-                    [value] if not isinstance(value, list) else value
+        # Handle both ldap3 Entry objects and dict objects
+        if isinstance(ldap3_entry, dict):
+            # Handle dict input (from search operations)
+            if "dn" not in ldap3_entry:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Dict entry missing 'dn' key"
                 )
-            else:
-                # Empty attribute
-                attributes[attr_name] = []
+            if "attributes" not in ldap3_entry:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Dict entry missing 'attributes' key"
+                )
+
+            dn_str = str(ldap3_entry["dn"])
+            attributes = ldap3_entry["attributes"]
+            if not isinstance(attributes, dict):
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Dict entry 'attributes' must be a dictionary"
+                )
+        else:
+            # Handle ldap3 Entry object input
+            # Extract DN from ldap3 entry
+            dn_str = str(ldap3_entry.entry_dn)
+            if not dn_str:
+                return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry missing DN")
+
+            # Extract attributes from ldap3 entry
+            attributes: dict[str, FlextTypes.List] = {}
+            for attr_name in ldap3_entry.entry_attributes:
+                attr_value = ldap3_entry[attr_name]
+
+                # Handle multi-valued attributes
+                if isinstance(attr_value, list):
+                    attributes[attr_name] = attr_value
+                elif attr_value.value is not None:
+                    # Single value - convert to list for consistency
+                    value = attr_value.value
+                    attributes[attr_name] = (
+                        [value] if not isinstance(value, list) else value
+                    )
+                else:
+                    # Empty attribute
+                    attributes[attr_name] = []
 
         # Convert attributes dict to FlextLdifModels.LdifAttributes
         # Explicit FlextResult error handling - NO try/except
@@ -111,7 +132,11 @@ class FlextLdapEntryAdapter(FlextService[None]):
                     f"Failed to create AttributeValues for {attr_name}: {attr_values_result.error}"
                 )
 
-            attr_values: FlextLdifModels.AttributeValues = attr_values_result.unwrap()
+            attr_values = attr_values_result.unwrap()
+            if not isinstance(attr_values, FlextLdifModels.AttributeValues):
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Invalid AttributeValues type for {attr_name}"
+                )
             attr_values_dict[attr_name] = attr_values
 
         # Create LdifAttributes
@@ -123,9 +148,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 f"Failed to create LdifAttributes: {ldif_attributes_result.error}"
             )
 
-        ldif_attributes: FlextLdifModels.LdifAttributes = (
-            ldif_attributes_result.unwrap()
-        )
+        ldif_attributes_raw = ldif_attributes_result.unwrap()
+        if not isinstance(ldif_attributes_raw, FlextLdifModels.LdifAttributes):
+            return FlextResult[FlextLdifModels.Entry].fail(
+                "Invalid LdifAttributes type"
+            )
+        ldif_attributes: FlextLdifModels.LdifAttributes = ldif_attributes_raw
 
         # Create DistinguishedName
         dn_result = FlextLdifModels.DistinguishedName.create(value=dn_str)
@@ -134,7 +162,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 f"Failed to create DistinguishedName: {dn_result.error}"
             )
 
-        dn: FlextLdifModels.DistinguishedName = dn_result.unwrap()
+        dn_raw = dn_result.unwrap()
+        if not isinstance(dn_raw, FlextLdifModels.DistinguishedName):
+            return FlextResult[FlextLdifModels.Entry].fail(
+                "Invalid DistinguishedName type"
+            )
+        dn: FlextLdifModels.DistinguishedName = dn_raw
 
         # Create Entry
         entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)

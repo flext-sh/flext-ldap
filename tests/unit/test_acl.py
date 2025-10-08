@@ -2585,7 +2585,7 @@ class TestFlextLdapAclParsersAciParser:
         assert result.is_success
         assert result.data is not None
         assert result.data.subject.subject_type == "user"
-        assert result.data.subject.identifier == "ldap:///all"
+        assert result.data.subject.subject_dn == "ldap:///all"
 
     def test_parse_groupdn_subject(self) -> None:
         """Test parsing ACI with 'groupdn' subject."""
@@ -2594,7 +2594,7 @@ class TestFlextLdapAclParsersAciParser:
         assert result.is_success
         assert result.data is not None
         assert result.data.subject.subject_type == "group"
-        assert result.data.subject.identifier == "ldap:///cn=admins,dc=example,dc=com"
+        assert result.data.subject.subject_dn == "ldap:///cn=admins,dc=example,dc=com"
 
     def test_parse_anyone_subject(self) -> None:
         """Test parsing ACI with 'anyone' in subject."""

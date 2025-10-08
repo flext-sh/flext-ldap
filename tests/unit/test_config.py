@@ -624,8 +624,12 @@ class TestFlextLdapConfig:
         """Test validator with bind DN too long."""
         import pytest
 
+        from flext_ldap.exceptions import FlextLdapExceptions
+
         long_dn = "cn=" + ("x" * 10000)  # Exceeds MAX_DN_LENGTH
-        with pytest.raises(ValueError, match="LDAP bind DN too long"):
+        with pytest.raises(
+            FlextLdapExceptions.LdapValidationError, match="LDAP bind DN too long"
+        ):
             FlextLdapConfig(ldap_bind_dn=long_dn, ldap_bind_password="password")
 
     def test_validator_bind_dn_invalid_format(self) -> None:
@@ -683,7 +687,7 @@ class TestFlextLdapConfig:
             )
 
     def test_get_connection_config(self) -> None:
-        """Test get_connection_config method."""
+        """Test connection_info computed field."""
         config = FlextLdapConfig(
             ldap_server_uri="ldaps://localhost",
             ldap_port=636,
@@ -692,13 +696,13 @@ class TestFlextLdapConfig:
             ldap_bind_password="secret",
         )
 
-        conn_config = config.get_connection_config()
+        conn_config = config.connection_info
+        auth_config = config.authentication_info
 
         assert conn_config["server_uri"] == "ldaps://localhost"
         assert conn_config["port"] == 636
         assert conn_config["use_ssl"] is True
-        assert conn_config["bind_dn"] == "cn=admin,dc=example,dc=com"
-        assert conn_config["bind_password_configured"] is True
+        assert auth_config["bind_dn_configured"] is True
 
     def test_get_pool_config(self) -> None:
         """Test get_pool_config method."""

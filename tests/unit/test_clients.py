@@ -130,7 +130,7 @@ class TestFlextLdapClientsComprehensive:
     # Use search_users method instead
 
     def test_authenticate_user_credentials_not_connected(self) -> None:
-        """Test _authenticate_user_credentials when not connected."""
+        """Test authenticate_user when not connected."""
         client = FlextLdapClients()
 
         # Mock user entry
@@ -146,13 +146,13 @@ class TestFlextLdapClientsComprehensive:
             def __getitem__(self, key: str) -> MockAttribute:
                 return MockAttribute(self.entry_attributes.get(key, []))
 
-        result = client._authenticate_user_credentials(MockEntry(), "testpass")
+        result = client.authenticate_user("testuser", "testpass")
         assert result.is_failure
         assert result.error is not None
         assert (
             result.error
             and result.error
-            and "No server connection established" in result.error
+            and "LDAP connection not established" in result.error
         )
 
     def test_create_user_from_entry_result_empty_entry(self) -> None:
@@ -201,9 +201,9 @@ class TestFlextLdapClientsComprehensive:
             # Only implement LdapConnectionProtocol methods
             # (bind, unbind, connect, disconnect, is_connected are inherited or implemented elsewhere)
 
-        # Set mock connection - using object.__setattr__ to bypass Pydantic validation
+        # Set mock connection - using setattr to bypass Pydantic validation
         mock_conn = MockConnection()
-        object.__setattr__(client, "_connection", mock_conn)  # noqa: PLC2801
+        setattr(client, "_connection", mock_conn)
 
         request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",

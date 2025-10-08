@@ -15,6 +15,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 from __future__ import annotations
 
 from flext_core import (
+    FlextModels,
     FlextResult,
     FlextService,
 )
@@ -57,8 +58,8 @@ class FlextLdapAuthentication(FlextService[None]):
 
     def set_connection_context(
         self,
-        connection: Connection,
-        server: Server,
+        connection: Connection | None,
+        server: Server | None,
         config: object,
     ) -> None:
         """Set the connection context for authentication operations.
@@ -126,10 +127,9 @@ class FlextLdapAuthentication(FlextService[None]):
         # Use existing authenticate_user logic adapted for DN-based validation
         try:
             # Create a test connection with the provided credentials
-            # Import here to avoid circular imports
-            from flext_ldap.connection import FlextLdapConnection
+            from flext_ldap.clients import FlextLdapClients
 
-            test_connection = FlextLdapConnection()
+            test_connection = FlextLdapClients()
             connection_result = test_connection.bind(dn, password)
             test_connection.disconnect()
             return FlextResult[bool].ok(connection_result.is_success)
@@ -236,9 +236,25 @@ class FlextLdapAuthentication(FlextService[None]):
                 f"User creation failed: {e}"
             )
 
-    def execute(self) -> FlextResult[None]:
+    def execute(self) -> FlextResult[object]:
         """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[None].ok(None)
+        return FlextResult[object].ok(None)
+
+    def execute_operation(
+        self, operation: FlextModels.OperationExecutionRequest
+    ) -> FlextResult[object]:
+        """Execute operation using OperationExecutionRequest model (Domain.Service protocol).
+
+        Args:
+            operation: OperationExecutionRequest containing operation settings
+
+        Returns:
+            FlextResult[object]: Success with result or failure with error
+
+        """
+        # Use operation parameter to satisfy protocol requirements
+        _ = operation
+        return self.execute()
 
 
 __all__ = [

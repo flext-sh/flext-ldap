@@ -41,7 +41,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     # =========================================================================
 
     @override
-    def get_default_port(self, use_ssl: bool = False) -> int:
+    def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for OpenLDAP."""
         return 636 if use_ssl else 389
 
@@ -97,22 +97,20 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             entry = connection.entries[0]
             schema_data: FlextTypes.Dict = {
                 "object_classes": (
-                    entry.objectClasses.values  # type: ignore[attr-defined]
+                    entry.objectClasses.values
                     if hasattr(entry, "objectClasses")
                     else []
                 ),
                 "attribute_types": (
-                    entry.attributeTypes.values  # type: ignore[attr-defined]
+                    entry.attributeTypes.values
                     if hasattr(entry, "attributeTypes")
                     else []
                 ),
                 "syntaxes": (
-                    entry.ldapSyntaxes.values  # type: ignore[attr-defined]
-                    if hasattr(entry, "ldapSyntaxes")
-                    else []
+                    entry.ldapSyntaxes.values if hasattr(entry, "ldapSyntaxes") else []
                 ),
                 "matching_rules": (
-                    entry.matchingRules.values  # type: ignore[attr-defined]
+                    entry.matchingRules.values
                     if hasattr(entry, "matchingRules")
                     else []
                 ),
@@ -209,11 +207,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextResult[list[FlextTypes.Dict]].ok([])
 
             entry = connection.entries[0]
-            acl_values = entry.olcAccess.values if hasattr(entry, "olcAccess") else []  # type: ignore[attr-defined]
+            acl_values = entry.olcAccess.values if hasattr(entry, "olcAccess") else []
 
             acls: list[FlextTypes.Dict] = []
-            for acl_str in acl_values:
-                acl_str: str = str(acl_str)
+            for acl_value in acl_values:
+                acl_str = str(acl_value)
                 parse_result = self.parse_acl(acl_str)
                 if parse_result.is_success:
                     acls.append(parse_result.unwrap())
@@ -546,20 +544,21 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 generator=True,
             )
 
-            # Convert results to FlextLdif entries
+            # Convert results to FlextLdap entries
             adapter = FlextLdapEntryAdapter()
-            entries: list[FlextLdifModels.Entry] = []
+            entries: list[FlextLdapModels.Entry] = []
 
             for ldap3_entry in entry_generator:
                 if "dn" in ldap3_entry and "attributes" in ldap3_entry:
-                    # Create mock ldap3 entry for adapter
-                    # In production, would use actual ldap3.Entry objects
-                    entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-                    if entry_result.is_success:
-                        entries.append(entry_result.unwrap())
+                    # Convert ldap3 entry to LDIF entry first
+                    ldif_entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+                    if ldif_entry_result.is_success:
+                        ldif_entry = ldif_entry_result.unwrap()
+                        # Convert LDIF entry to LDAP entry
+                        ldap_entry = FlextLdapModels.Entry.from_ldif(ldif_entry)
+                        entries.append(ldap_entry)
 
-            # Cast to expected return type
-            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)  # type: ignore[arg-type]
+            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
             self.logger.exception(

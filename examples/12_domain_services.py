@@ -290,7 +290,7 @@ def demonstrate_domain_services() -> None:
     logger.info("\n1. User Display Name Calculation:")
 
     # Test different scenarios
-    user_scenarios = [  # type: ignore[reportUnknownVariableType]
+    user_scenarios = [
         {
             "name": "User with display name",
             "user": FlextLdapModels.LdapUser(
@@ -322,16 +322,16 @@ def demonstrate_domain_services() -> None:
         },
     ]
 
-    for scenario in user_scenarios:  # type: ignore[reportUnknownVariableType]
+    for scenario in user_scenarios:
         display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(
-            scenario["user"]  # type: ignore[reportUnknownArgumentType]
+            scenario["user"]
         )
-        is_correct = display_name == scenario["expected"]  # type: ignore[reportUnknownVariableType]
+        is_correct = display_name == scenario["expected"]
         status = "✅" if is_correct else "❌"
 
-        logger.info(f"   {status} {scenario['name']}")  # type: ignore[reportUnknownVariableType]
+        logger.info(f"   {status} {scenario['name']}")
         logger.info(f"      Result: {display_name}")
-        logger.info(f"      Expected: {scenario['expected']}")  # type: ignore[reportUnknownVariableType]
+        logger.info(f"      Expected: {scenario['expected']}")
 
 
 def demonstrate_specification_pattern_benefits() -> None:

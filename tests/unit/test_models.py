@@ -2794,9 +2794,9 @@ class TestFlextLdapModels:
 
     def test_ldap_user_validate_object_classes_empty(self) -> None:
         """Test LdapUser validation with empty object_classes."""
-        from pydantic import ValidationError
+        from flext_ldap.exceptions import FlextLdapExceptions
 
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(FlextLdapExceptions.LdapValidationError) as exc_info:
             FlextLdapModels.LdapUser(
                 dn="uid=test,ou=users,dc=example,dc=com",
                 cn="Test User",

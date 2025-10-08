@@ -49,6 +49,7 @@ from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -155,7 +156,7 @@ def demonstrate_server_operations(api: FlextLdap) -> None:
     logger.info("\n=== Server Operations Access ===")
 
     # Get server operations instance
-    result: FlextResult[object | None] = api.get_server_operations()
+    result = api.get_server_operations()
 
     if result.is_failure:
         logger.error(f"❌ Failed to get server operations: {result.error}")
@@ -166,11 +167,16 @@ def demonstrate_server_operations(api: FlextLdap) -> None:
         logger.info("✅ Server operations instance available")
         logger.info(f"   Type: {type(server_ops).__name__}")
 
-        # Access server-specific information
-        if hasattr(server_ops, "server_type"):
+        # Access server-specific information - we know this is BaseServerOperations
+        # but need to handle the type annotation issue from the API
+        if isinstance(server_ops, FlextLdapServersBaseOperations):
             logger.info(f"   Server Type: {server_ops.server_type}")
-        if hasattr(server_ops, "get_acl_format"):
             logger.info(f"   ACL Format: {server_ops.get_acl_format()}")
+        else:
+            logger.warning(
+                f"   ⚠️  Unexpected server operations type: {type(server_ops)}"
+            )
+            return
     else:
         logger.warning("⚠️  Server operations not available")
 

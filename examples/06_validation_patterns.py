@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -163,7 +164,7 @@ def demonstrate_search_request_validation() -> None:
     logger.info("\n=== SearchRequest Validation ===")
 
     # Test various SearchRequest configurations
-    test_cases: list[dict[str, str | dict[str, str | int | list[str]]]] = [  # type: ignore[reportUnknownVariableType]
+    test_cases: list[dict[str, object]] = [
         {
             "name": "Valid basic search",
             "params": {
@@ -182,7 +183,7 @@ def demonstrate_search_request_validation() -> None:
             "name": "Valid with paging",
             "params": {
                 "base_dn": "ou=users,dc=example,dc=com",
-                "filter_str": "(uid=*)",
+                "search_filter": "(uid=*)",
                 "scope": "one",
                 "attributes": [],
                 "size_limit": 0,
@@ -196,7 +197,7 @@ def demonstrate_search_request_validation() -> None:
             "name": "Empty base DN",
             "params": {
                 "base_dn": "",
-                "filter_str": "(objectClass=*)",
+                "search_filter": "(objectClass=*)",
                 "scope": "base",
                 "attributes": [],
                 "size_limit": 0,
@@ -210,7 +211,7 @@ def demonstrate_search_request_validation() -> None:
             "name": "Invalid scope",
             "params": {
                 "base_dn": "dc=example,dc=com",
-                "filter_str": "(objectClass=*)",
+                "search_filter": "(objectClass=*)",
                 "scope": "invalid_scope",
                 "attributes": [],
                 "size_limit": 0,
@@ -223,11 +224,12 @@ def demonstrate_search_request_validation() -> None:
     ]
 
     logger.info("\nTesting SearchRequest validation:")
-    for test_case in test_cases:  # type: ignore[reportUnknownVariableType]
+    for test_case in test_cases:
         logger.info(f"\nTest: {test_case['name']}")
 
         try:
-            search_request = FlextLdapModels.SearchRequest(**test_case["params"])  # type: ignore[reportUnknownArgumentType]
+            params = cast("dict[str, object]", test_case["params"])
+            search_request = FlextLdapModels.SearchRequest(**params)
             logger.info("   ✅ SearchRequest created successfully")
             logger.info(f"      Base DN: {search_request.base_dn}")
             logger.info(f"      Filter: {search_request.filter_str}")
@@ -238,7 +240,7 @@ def demonstrate_search_request_validation() -> None:
             logger.info(f"   ❌ Validation failed: {e}")
             success = False
 
-        expected: bool = test_case["should_succeed"]  # type: ignore[reportUnknownVariableType]
+        expected = test_case["should_succeed"]
         result_str = "Success" if success else "Failure"
         if success == expected:
             logger.info(f"   Result: As expected ({result_str})")

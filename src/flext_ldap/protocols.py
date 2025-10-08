@@ -282,7 +282,7 @@ class FlextLdapProtocols(FlextProtocols):
 
             def authenticate_user(
                 self, username: str, password: str
-            ) -> FlextResult[bool]:
+            ) -> FlextResult[FlextLdapModels.LdapUser]:
                 """Authenticate user against LDAP.
 
                 Args:
@@ -290,7 +290,7 @@ class FlextLdapProtocols(FlextProtocols):
                     password: Password for authentication
 
                 Returns:
-                    FlextResult[bool]: Authentication success status
+                    FlextResult[LdapUser]: Authentication result with user object
 
                 """
                 ...

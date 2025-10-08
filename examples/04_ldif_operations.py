@@ -347,56 +347,47 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
     """
     logger.info("\n=== Entry Adapter Format Conversion ===")
 
-    try:
-        if FlextLdifModels is None:
-            msg = "flext-ldif not available"
-            raise ImportError(msg)
+    logger.info("\n1. Creating sample entry with server-specific attributes:")
 
-        logger.info("\n1. Creating sample entry with server-specific attributes:")
+    # Create entry with OpenLDAP 2.x specific attributes
+    openldap_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
+        dn=FlextLdifModels.DistinguishedName(value="cn=config,dc=example,dc=com"),
+        attributes=FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": FlextLdifModels.AttributeValues(
+                    values=["olcGlobal", "top"]
+                ),
+                "olcAccess": FlextLdifModels.AttributeValues(
+                    values=["to * by * read"]
+                ),  # OpenLDAP 2.x ACL format
+                "olcLogLevel": FlextLdifModels.AttributeValues(values=["stats"]),
+            }
+        ),
+    )
 
-        # Create entry with OpenLDAP 2.x specific attributes
-        openldap_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=config,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["olcGlobal", "top"]
-                    ),
-                    "olcAccess": FlextLdifModels.AttributeValues(
-                        values=["to * by * read"]
-                    ),  # OpenLDAP 2.x ACL format
-                    "olcLogLevel": FlextLdifModels.AttributeValues(values=["stats"]),
-                }
-            ),
-        )
+    logger.info("   ✅ OpenLDAP 2.x entry created")
+    logger.info(
+        f"      Attributes: {list(openldap_entry.attributes.attributes.keys())}"
+    )
 
-        logger.info("   ✅ OpenLDAP 2.x entry created")
+    logger.info("\n2. Converting to Oracle OUD format:")
+
+    # Use entry adapter to convert between server formats
+    result = api.convert_entry_between_servers(
+        entry=openldap_entry,
+        source_server_type="openldap2",
+        target_server_type="oud",
+    )
+
+    if result.is_success:
+        oud_entry = result.unwrap()
+        logger.info("   ✅ Conversion successful")
         logger.info(
-            f"      Attributes: {list(openldap_entry.attributes.attributes.keys())}"
+            f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}"
         )
-
-        logger.info("\n2. Converting to Oracle OUD format:")
-
-        # Use entry adapter to convert between server formats
-        result = api.convert_entry_between_servers(
-            entry=openldap_entry,
-            source_server_type="openldap2",
-            target_server_type="oud",
-        )
-
-        if result.is_success:
-            oud_entry = result.unwrap()
-            logger.info("   ✅ Conversion successful")
-            logger.info(
-                f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}"
-            )
-            logger.info("      Note: Server-specific attributes adapted")
-        else:
-            logger.warning(f"   ⚠️  Conversion: {result.error}")
-
-    except ImportError:
-        logger.warning("⚠️  FlextLdif not available - skipping conversion demo")
-        logger.info("   Install with: pip install flext-ldif")
+        logger.info("      Note: Server-specific attributes adapted")
+    else:
+        logger.warning(f"   ⚠️  Conversion: {result.error}")
 
 
 def demonstrate_entry_server_detection(api: FlextLdap) -> None:
@@ -408,94 +399,82 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
     """
     logger.info("\n=== Entry Server Type Detection ===")
 
-    try:
-        if FlextLdifModels is None:
-            msg = "flext-ldif not available"
-            raise ImportError(msg)
-
-        # Test entries with server-specific attributes
-        test_cases = [
-            {
-                "name": "OpenLDAP 2.x entry",
-                "entry": FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(value="cn=config"),
-                    attributes=FlextLdifModels.LdifAttributes(
-                        attributes={
-                            "objectClass": FlextLdifModels.AttributeValues(
-                                values=["olcGlobal"]
-                            ),
-                            "olcAccess": FlextLdifModels.AttributeValues(
-                                values=["to * by * read"]
-                            ),
-                        }
-                    ),
+    # Test entries with server-specific attributes
+    test_cases: list[dict[str, str | FlextLdifModels.Entry]] = [
+        {
+            "name": "OpenLDAP 2.x entry",
+            "entry": FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value="cn=config"),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["olcGlobal"]
+                        ),
+                        "olcAccess": FlextLdifModels.AttributeValues(
+                            values=["to * by * read"]
+                        ),
+                    }
                 ),
-                "expected": "openldap2",
-            },
-            {
-                "name": "Oracle OID entry",
-                "entry": FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(
-                        value="cn=test,dc=example,dc=com"
-                    ),
-                    attributes=FlextLdifModels.LdifAttributes(
-                        attributes={
-                            "objectClass": FlextLdifModels.AttributeValues(
-                                values=["person"]
-                            ),
-                            "orclaci": FlextLdifModels.AttributeValues(
-                                values=["access to entry by * (read)"]
-                            ),
-                        }
-                    ),
+            ),
+            "expected": "openldap2",
+        },
+        {
+            "name": "Oracle OID entry",
+            "entry": FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
+                        "orclaci": FlextLdifModels.AttributeValues(
+                            values=["access to entry by * (read)"]
+                        ),
+                    }
                 ),
-                "expected": "oid",
-            },
-            {
-                "name": "389 DS entry",
-                "entry": FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(
-                        value="cn=test,dc=example,dc=com"
-                    ),
-                    attributes=FlextLdifModels.LdifAttributes(
-                        attributes={
-                            "objectClass": FlextLdifModels.AttributeValues(
-                                values=["person"]
-                            ),
-                            "aci": FlextLdifModels.AttributeValues(
-                                values=['(targetattr="*")(version 3.0; acl "test";)']
-                            ),
-                        }
-                    ),
+            ),
+            "expected": "oid",
+        },
+        {
+            "name": "389 DS entry",
+            "entry": FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
+                        "aci": FlextLdifModels.AttributeValues(
+                            values=['(targetattr="*")(version 3.0; acl "test";)']
+                        ),
+                    }
                 ),
-                "expected": "389ds",
-            },
-        ]
+            ),
+            "expected": "389ds",
+        },
+    ]
 
-        logger.info("\n1. Detecting server types from entries:")
+    logger.info("\n1. Detecting server types from entries:")
 
-        for test_case in test_cases:
-            logger.info(f"\n   Testing: {test_case['name']}")
+    for test_case in test_cases:
+        logger.info(f"\n   Testing: {test_case['name']}")
 
-            entry = test_case["entry"]
-            if isinstance(entry, str):
-                logger.warning(f"   ⚠️  Skipping string entry: {entry}")
-                continue
-            result = api.detect_entry_server_type(entry)
+        entry = test_case["entry"]
+        if isinstance(entry, str):
+            logger.warning(f"   ⚠️  Skipping string entry: {entry}")
+            continue
+        # entry is now guaranteed to be FlextLdifModels.Entry
+        result = api.detect_entry_server_type(entry)
 
-            if result.is_success:
-                detected = result.unwrap()
-                logger.info(f"   ✅ Detected: {detected}")
-                if detected == test_case["expected"]:
-                    logger.info("      Matches expected server type")
-                else:
-                    logger.info(f"      Expected: {test_case['expected']}")
+        if result.is_success:
+            detected = result.unwrap()
+            logger.info(f"   ✅ Detected: {detected}")
+            if detected == test_case["expected"]:
+                logger.info("      Matches expected server type")
             else:
-                logger.warning(f"   ⚠️  Detection failed: {result.error}")
-
-    except ImportError:
-        logger.warning("⚠️  FlextLdif not available - skipping detection demo")
-        logger.info("   Install with: pip install flext-ldif")
+                logger.info(f"      Expected: {test_case['expected']}")
+        else:
+            logger.warning(f"   ⚠️  Detection failed: {result.error}")
 
 
 def demonstrate_entry_normalization(api: FlextLdap) -> None:
@@ -506,57 +485,45 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
 
     """
     logger.info("\n=== Entry Normalization for Servers ===")
-
-    if FlextLdifModels is None:
-        logger.warning("flext-ldif not available; skipping normalization demonstration")
-        return
-
     logger.info("\n1. Creating entry with mixed attributes:")
 
-    try:
-        # Create entry that might need normalization
-        mixed_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=user,ou=users,dc=example,dc=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["person", "inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["user"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
-                    "mail": FlextLdifModels.AttributeValues(
-                        values=["user@example.com"]
-                    ),
-                    # Some attributes might need normalization
-                    "userPassword": FlextLdifModels.AttributeValues(
-                        values=["{SSHA}encryptedpassword"]
-                    ),
-                }
-            ),
+    # Create entry that might need normalization
+    mixed_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
+        dn=FlextLdifModels.DistinguishedName(
+            value="cn=user,ou=users,dc=example,dc=com"
+        ),
+        attributes=FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": FlextLdifModels.AttributeValues(
+                    values=["person", "inetOrgPerson"]
+                ),
+                "cn": FlextLdifModels.AttributeValues(values=["user"]),
+                "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                "mail": FlextLdifModels.AttributeValues(values=["user@example.com"]),
+                # Some attributes might need normalization
+                "userPassword": FlextLdifModels.AttributeValues(
+                    values=["{SSHA}encryptedpassword"]
+                ),
+            }
+        ),
+    )
+
+    logger.info("   ✅ Entry created with attributes:")
+    logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
+
+    logger.info("\n2. Normalizing for current server:")
+    result = api.normalize_entry_for_server(mixed_entry)
+
+    if result.is_success:
+        normalized = result.unwrap()
+        logger.info("   ✅ Normalization successful")
+        logger.info(f"      Normalized DN: {normalized.dn.value}")
+        logger.info(
+            f"      Attributes: {list(normalized.attributes.attributes.keys())}"
         )
-
-        logger.info("   ✅ Entry created with attributes:")
-        logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
-
-        logger.info("\n2. Normalizing for current server:")
-        result = api.normalize_entry_for_server(mixed_entry)
-
-        if result.is_success:
-            normalized = result.unwrap()
-            logger.info("   ✅ Normalization successful")
-            logger.info(f"      Normalized DN: {normalized.dn.value}")
-            logger.info(
-                f"      Attributes: {list(normalized.attributes.attributes.keys())}"
-            )
-            logger.info("      Entry is ready for LDAP operations")
-        else:
-            logger.warning(f"   ⚠️  Normalization: {result.error}")
-
-    except ImportError:
-        logger.warning("⚠️  FlextLdif not available - skipping normalization demo")
-        logger.info("   Install with: pip install flext-ldif")
+        logger.info("      Entry is ready for LDAP operations")
+    else:
+        logger.warning(f"   ⚠️  Normalization: {result.error}")
 
 
 def demonstrate_entry_validation(api: FlextLdap) -> None:
@@ -567,70 +534,60 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
 
     """
     logger.info("\n=== Entry Validation for Servers ===")
-
-    if FlextLdifModels is None:
-        logger.warning("flext-ldif not available; skipping validation demonstration")
-        return
-
     logger.info("\n1. Validating compatible entry:")
 
-    try:
-        # Create valid entry
-        valid_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=valid,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["person", "top"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["valid"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
-                }
-            ),
-        )
+    # Create valid entry
+    valid_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
+        dn=FlextLdifModels.DistinguishedName(value="cn=valid,dc=example,dc=com"),
+        attributes=FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": FlextLdifModels.AttributeValues(
+                    values=["person", "top"]
+                ),
+                "cn": FlextLdifModels.AttributeValues(values=["valid"]),
+                "sn": FlextLdifModels.AttributeValues(values=["User"]),
+            }
+        ),
+    )
 
-        result = api.validate_entry_for_server(valid_entry)
+    result = api.validate_entry_for_server(valid_entry)
 
-        if result.is_success:
-            is_valid = result.unwrap()
-            if is_valid:
-                logger.info("   ✅ Entry is valid for current server")
-            else:
-                logger.warning("   ⚠️  Entry validation failed (incompatible)")
+    if result.is_success:
+        is_valid = result.unwrap()
+        if is_valid:
+            logger.info("   ✅ Entry is valid for current server")
         else:
-            logger.warning(f"   ⚠️  Validation error: {result.error}")
+            logger.warning("   ⚠️  Entry validation failed (incompatible)")
+    else:
+        logger.warning(f"   ⚠️  Validation error: {result.error}")
 
-        logger.info("\n2. Validating entry with server-specific attributes:")
+    logger.info("\n2. Validating entry with server-specific attributes:")
 
-        # Create entry with potentially incompatible attributes
-        specific_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=specific,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["specific"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
-                    "olcAccess": FlextLdifModels.AttributeValues(
-                        values=["to * by * read"]
-                    ),  # OpenLDAP-specific
-                }
-            ),
-        )
+    # Create entry with potentially incompatible attributes
+    specific_entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
+        dn=FlextLdifModels.DistinguishedName(value="cn=specific,dc=example,dc=com"),
+        attributes=FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
+                "cn": FlextLdifModels.AttributeValues(values=["specific"]),
+                "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                "olcAccess": FlextLdifModels.AttributeValues(
+                    values=["to * by * read"]
+                ),  # OpenLDAP-specific
+            }
+        ),
+    )
 
-        result = api.validate_entry_for_server(specific_entry)
+    result = api.validate_entry_for_server(specific_entry)
 
-        if result.is_success:
-            is_valid = result.unwrap()
-            if is_valid:
-                logger.info("   ✅ Entry compatible with current server")
-            else:
-                logger.info("   INFO Entry may contain server-specific attributes")
+    if result.is_success:
+        is_valid = result.unwrap()
+        if is_valid:
+            logger.info("   ✅ Entry compatible with current server")
         else:
-            logger.info(f"   INFO Validation note: {result.error}")
-
-    except ImportError:
-        logger.warning("⚠️  FlextLdif not available - skipping validation demo")
-        logger.info("   Install with: pip install flext-ldif")
+            logger.info("   INFO Entry may contain server-specific attributes")
+    else:
+        logger.info(f"   INFO Validation note: {result.error}")
 
 
 def demonstrate_server_specific_attributes(api: FlextLdap) -> None:

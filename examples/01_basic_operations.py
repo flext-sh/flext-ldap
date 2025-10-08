@@ -37,7 +37,8 @@ from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdap
 logger: FlextLogger = FlextLogger(__name__)
 
 
-config_env = FlextLdapConfig.from_env()
+# Create LDAP configuration using default settings
+config_env = FlextLdapConfig()
 
 
 def demonstrate_connection() -> FlextLdap | None:
@@ -140,14 +141,16 @@ def demonstrate_read_entry(api: FlextLdap, user_dn: str) -> None:
 
     logger.info(f"Searching for entry: {user_dn}")
     search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
-        search_base=users_dn,
-        search_filter=f"({FlextLdapConstants.LdapAttributeNames.CN}={cn_value})",
-        attributes=[
-            FlextLdapConstants.LdapAttributeNames.CN,
-            FlextLdapConstants.LdapAttributeNames.SN,
-            FlextLdapConstants.LdapAttributeNames.MAIL,
-            FlextLdapConstants.LdapAttributeNames.UID,
-        ],
+        FlextLdapModels.SearchRequest(
+            base_dn=users_dn,
+            filter_str=f"({FlextLdapConstants.LdapAttributeNames.CN}={cn_value})",
+            attributes=[
+                FlextLdapConstants.LdapAttributeNames.CN,
+                FlextLdapConstants.LdapAttributeNames.SN,
+                FlextLdapConstants.LdapAttributeNames.MAIL,
+                FlextLdapConstants.LdapAttributeNames.UID,
+            ],
+        )
     )
 
     if search_result.is_failure:
@@ -212,7 +215,7 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     # OPTIMIZED: Use FlextLdapConstants for object classes and attributes
-    object_classes = [
+    object_classes: FlextTypes.StringList = [
         FlextLdapConstants.ObjectClasses.PERSON,
         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
     ]
