@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final, cast
+from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
@@ -40,7 +40,6 @@ from pydantic import SecretStr
 from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
-    FlextLdapModels,
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
@@ -179,12 +178,9 @@ def demonstrate_quirks_detection(server_type: str | None) -> None:
     logger.info(f"\n1. Detecting quirks for server type: {server_type or 'generic'}")
 
     # Get server quirks
-    quirks = detector.get_server_quirks(server_type)
+    server_quirks = detector.get_server_quirks(server_type)
 
-    if quirks:
-        # Cast to ServerQuirks since we know this is what the function should return
-        server_quirks = cast("FlextLdapModels.ServerQuirks", quirks)
-
+    if server_quirks:
         logger.info("   ✅ Server quirks detected:")
         logger.info(f"      Server type: {server_quirks.server_type}")
         logger.info(f"      Case-sensitive DNs: {server_quirks.case_sensitive_dns}")

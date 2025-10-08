@@ -19,6 +19,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
+import types
 from pathlib import Path
 from typing import Self, override
 
@@ -35,6 +36,7 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.validations import FlextLdapValidations
 
 
@@ -108,7 +110,7 @@ class FlextLdap(FlextService[None]):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: object | None,
+        exc_tb: types.TracebackType | None,
     ) -> None:
         """Context manager exit - automatic disconnect.
 
@@ -135,7 +137,7 @@ class FlextLdap(FlextService[None]):
 
     def _handle_operation_error(
         self, operation: str, error: Exception | None, prefix: str = ""
-    ) -> FlextResult[object]:
+    ) -> FlextResult[None]:
         """Centralize error handling for operations.
 
         Args:
@@ -154,7 +156,7 @@ class FlextLdap(FlextService[None]):
             self.logger.error(error_msg, error=error_str, error_type=error_type)
         else:
             self.logger.error(error_msg)
-        return FlextResult[object].fail(error_msg)
+        return FlextResult[None].fail(error_msg)
 
     # =============================================================================
     # PROPERTY ACCESSORS - Direct access to domain components
@@ -202,48 +204,40 @@ class FlextLdap(FlextService[None]):
 
     def search(
         self,
-        search_base: str,
-        filter_str: str,
-        attributes: FlextTypes.StringList | None = None,
+        search_request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Perform LDAP search operation - implements LdapSearchProtocol.
+        """Perform LDAP search operation using SearchRequest model - implements LdapSearchProtocol.
 
-        Validation: For explicit validation, use FlextLdapValidations.validate_dn(search_base)
-        and FlextLdapValidations.validate_filter(filter_str) before calling.
+        Uses FlextLdapModels.SearchRequest for centralized validation and parameter management.
+        All validation is handled by the SearchRequest model itself.
 
         Args:
-            search_base: LDAP search base DN
-            filter_str: LDAP search filter
-            attributes: List of attributes to retrieve
+            search_request: SearchRequest model with all search parameters and validation
 
         Returns:
             FlextResult[list[FlextLdapModels.Entry]]: Entry models search results
 
         """
-        # Get search response and extract entries using monadic operation
-        return self.search_entries(
-            search_base, filter_str, FlextLdapConstants.Scopes.SUBTREE, attributes
-        ).map(lambda response: response.entries)
+        # Use search_with_request which handles SearchRequest model validation
+        return self.client.search_with_request(search_request).map(
+            lambda response: response.entries
+        )
 
     def search_one(
         self,
-        search_base: str,
-        search_filter: str,
-        attributes: FlextTypes.StringList | None = None,
+        search_request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Perform LDAP search for single entry - implements LdapSearchProtocol.
+        """Perform LDAP search for single entry using SearchRequest model - implements LdapSearchProtocol.
 
         Args:
-            search_base: LDAP search base DN
-            search_filter: LDAP search filter
-            attributes: List of attributes to retrieve
+            search_request: SearchRequest model with all search parameters and validation
 
         Returns:
             FlextResult[FlextLdapModels.Entry | None]: Single Entry model result or None
 
         """
-        # Use existing search method and return first result using monadic operation
-        return self.search(search_base, search_filter, attributes).map(
+        # Use search method and return first result using monadic operation
+        return self.search(search_request).map(
             lambda results: results[0] if results else None
         )
 
@@ -252,7 +246,7 @@ class FlextLdap(FlextService[None]):
         search_base: str,
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Search for user entries with smart defaults.
+        """Search for user entries with smart defaults using SearchRequest model.
 
         Eliminates need to specify filter and attributes every time.
         Uses DEFAULT_USER_FILTER and MINIMAL_USER_ATTRS by default.
@@ -265,16 +259,21 @@ class FlextLdap(FlextService[None]):
             FlextResult[list[FlextLdapModels.Entry]]: User entry results
 
         """
-        filter_str = FlextLdapConstants.Filters.DEFAULT_USER_FILTER
-        attrs = attributes or FlextLdapConstants.Attributes.MINIMAL_USER_ATTRS
-        return self.search(search_base, filter_str, attrs)
+        # Create SearchRequest with smart defaults for user search
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=search_base,
+            filter_str=FlextLdapConstants.Filters.DEFAULT_USER_FILTER,
+            attributes=attributes or FlextLdapConstants.Attributes.MINIMAL_USER_ATTRS,
+            scope=FlextLdapConstants.Scopes.SUBTREE,
+        )
+        return self.search(search_request)
 
     def search_groups(
         self,
         search_base: str,
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Search for group entries with smart defaults.
+        """Search for group entries with smart defaults using SearchRequest model.
 
         Eliminates need to specify filter and attributes every time.
         Uses DEFAULT_GROUP_FILTER and MINIMAL_GROUP_ATTRS by default.
@@ -287,9 +286,14 @@ class FlextLdap(FlextService[None]):
             FlextResult[list[FlextLdapModels.Entry]]: Group entry results
 
         """
-        filter_str = FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER
-        attrs = attributes or FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS
-        return self.search(search_base, filter_str, attrs)
+        # Create SearchRequest with smart defaults for group search
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=search_base,
+            filter_str=FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER,
+            attributes=attributes or FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS,
+            scope=FlextLdapConstants.Scopes.SUBTREE,
+        )
+        return self.search(search_request)
 
     def find_user(
         self,
@@ -297,7 +301,7 @@ class FlextLdap(FlextService[None]):
         search_base: str,
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Find single user by UID with smart defaults.
+        """Find single user by UID with smart defaults using SearchRequest model.
 
         Convenience method that eliminates filter construction boilerplate.
         Uses MINIMAL_USER_ATTRS by default.
@@ -311,9 +315,16 @@ class FlextLdap(FlextService[None]):
             FlextResult[FlextLdapModels.Entry | None]: User entry or None
 
         """
+        # Create SearchRequest with specific user filter
         filter_str = f"(&{FlextLdapConstants.Filters.DEFAULT_USER_FILTER}(uid={uid}))"
-        attrs = attributes or FlextLdapConstants.Attributes.MINIMAL_USER_ATTRS
-        return self.search_one(search_base, filter_str, attrs)
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=search_base,
+            filter_str=filter_str,
+            attributes=attributes or FlextLdapConstants.Attributes.MINIMAL_USER_ATTRS,
+            scope=FlextLdapConstants.Scopes.SUBTREE,
+            size_limit=1,  # Only need one result
+        )
+        return self.search_one(search_request)
 
     def find_group(
         self,
@@ -321,7 +332,7 @@ class FlextLdap(FlextService[None]):
         search_base: str,
         attributes: FlextTypes.StringList | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Find single group by CN with smart defaults.
+        """Find single group by CN with smart defaults using SearchRequest model.
 
         Convenience method that eliminates filter construction boilerplate.
         Uses MINIMAL_GROUP_ATTRS by default.
@@ -335,9 +346,16 @@ class FlextLdap(FlextService[None]):
             FlextResult[FlextLdapModels.Entry | None]: Group entry or None
 
         """
+        # Create SearchRequest with specific group filter
         filter_str = f"(&{FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER}(cn={cn}))"
-        attrs = attributes or FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS
-        return self.search_one(search_base, filter_str, attrs)
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=search_base,
+            filter_str=filter_str,
+            attributes=attributes or FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS,
+            scope=FlextLdapConstants.Scopes.SUBTREE,
+            size_limit=1,  # Only need one result
+        )
+        return self.search_one(search_request)
 
     def add_entry(
         self, dn: str, attributes: dict[str, str | FlextTypes.StringList]
@@ -718,7 +736,10 @@ class FlextLdap(FlextService[None]):
             FlextResult[str]: Server type identifier or error.
 
         """
-        return self.client.get_server_type()
+        server_type = self.client.get_server_type()
+        if server_type is None:
+            return FlextResult[str].fail("Server type not detected")
+        return FlextResult[str].ok(server_type)
 
     def get_server_info(self) -> FlextResult[FlextTypes.Dict]:
         """Get LDAP server information from root DSE.
@@ -736,7 +757,21 @@ class FlextLdap(FlextService[None]):
             FlextResult[FlextTypes.Dict]: Server quirks dictionary or error.
 
         """
-        return self.client.get_server_quirks()
+        server_quirks = self.client.get_server_quirks()
+        if server_quirks is None:
+            return FlextResult[FlextTypes.Dict].fail("Server quirks not available")
+        # Convert ServerQuirks object to dictionary
+        return FlextResult[FlextTypes.Dict].ok({
+            "server_type": server_quirks.server_type,
+            "case_sensitive_dns": server_quirks.case_sensitive_dns,
+            "case_sensitive_attributes": server_quirks.case_sensitive_attributes,
+            "supports_paged_results": server_quirks.supports_paged_results,
+            "supports_vlv": server_quirks.supports_vlv,
+            "max_page_size": server_quirks.max_page_size,
+            "default_timeout": server_quirks.default_timeout,
+            "supports_start_tls": server_quirks.supports_start_tls,
+            "requires_explicit_bind": server_quirks.requires_explicit_bind,
+        })
 
     def discover_schema(self) -> FlextResult[FlextTypes.Dict]:
         """Discover LDAP schema from server.
@@ -776,16 +811,8 @@ class FlextLdap(FlextService[None]):
 
         """
         if self._ldif is None:
-            try:
-                self._ldif = FlextLdif()
-            except (ImportError, AttributeError, TypeError) as exc:
-                # FlextLdif not available - this will be handled by calling methods
-                self.logger.warning(
-                    "FlextLdif initialization failed",
-                    error=str(exc),
-                    error_type=type(exc).__name__,
-                )
-                self._ldif = None
+            # FlextLdif is mandatory dependency - no error handling needed
+            self._ldif = FlextLdif()
         return self._ldif
 
     def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLdapModels.Entry]]:
@@ -886,7 +913,9 @@ class FlextLdap(FlextService[None]):
         server_type = self._client.get_server_type()
         return FlextResult[str | None].ok(server_type)
 
-    def get_server_operations(self) -> FlextResult[object | None]:
+    def get_server_operations(
+        self,
+    ) -> FlextResult[FlextLdapServersBaseOperations | None]:
         """Get current server operations instance for advanced usage.
 
         Returns the BaseServerOperations instance for the detected server type.
@@ -905,9 +934,11 @@ class FlextLdap(FlextService[None]):
 
         """
         if not self._client:
-            return FlextResult[object | None].fail("Client not initialized")
+            return FlextResult[FlextLdapServersBaseOperations | None].fail(
+                "Client not initialized"
+            )
         server_ops = self._client.server_operations
-        return FlextResult[object | None].ok(server_ops)
+        return FlextResult[FlextLdapServersBaseOperations | None].ok(server_ops)
 
     def get_server_capabilities(self) -> FlextResult[FlextTypes.Dict]:
         """Get comprehensive server capabilities information.
@@ -962,6 +993,7 @@ class FlextLdap(FlextService[None]):
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
         _scope: str = "subtree",  # Reserved for future use
+        *,
         use_paging: bool = True,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Universal search with automatic server-specific optimization.
@@ -991,7 +1023,9 @@ class FlextLdap(FlextService[None]):
 
         """
         if not self._client:
-            return FlextResult[list[FlextLdapModels.Entry]].fail("Client not initialized")
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
+                "Client not initialized"
+            )
 
         server_ops = self._client.server_operations
         if not server_ops:
@@ -1006,7 +1040,9 @@ class FlextLdap(FlextService[None]):
         if use_paging and server_ops.supports_paged_results():
             connection = self._client.connection
             if not connection:
-                return FlextResult[list[FlextLdapModels.Entry]].fail("LDAP connection not established")
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    "LDAP connection not established"
+                )
 
             page_size = min(100, server_ops.get_max_page_size())
             return server_ops.search_with_paging(

@@ -195,10 +195,10 @@ class FlextLdapRepositories:
 
                 if result.is_failure:
                     # If DN lookup failed, try UID search
-                    if id.startswith(("cn=", "uid=", "ou=")):
+                    if entity_id.startswith(("cn=", "uid=", "ou=")):
                         search_result = self._client.search_users(
                             base_dn=self._client.config.ldap_user_base_dn,
-                            uid=id.split(",", maxsplit=1)[0].split("=")[
+                            uid=entity_id.split(",", maxsplit=1)[0].split("=")[
                                 1
                             ],  # Extract UID from DN
                         )

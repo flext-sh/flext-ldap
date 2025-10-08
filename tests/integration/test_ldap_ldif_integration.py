@@ -58,10 +58,8 @@ def ldap_client() -> Generator[FlextLdapClients]:
 @pytest.fixture
 def ldif_api() -> FlextLdif:
     """Create LDIF API instance."""
-    try:
-        return FlextLdif()
-    except ImportError:
-        pytest.skip("flext-ldif not installed")
+    # flext-ldif is mandatory dependency
+    return FlextLdif()
 
 
 @pytest.fixture

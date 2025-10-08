@@ -322,7 +322,7 @@ def demonstrate_flext_result_patterns() -> None:
                 # Step 2: Search
                 search_result = api.search_one(
                     search_base=BASE_DN,
-                    search_filter="(objectClass=*)",
+                    filter_str="(objectClass=*)",
                     attributes=["dn"],
                 )
 

@@ -532,8 +532,11 @@ def shared_ldap_client(
     # Disconnect when done
     try:
         client.disconnect()
-    except Exception:  # noqa: S110 - Best effort cleanup
-        pass
+    except Exception as e:
+        # Log disconnection error but don't fail the test
+        import logging
+
+        logging.getLogger(__name__).warning(f"LDAP client disconnection failed: {e}")
 
 
 @pytest.fixture(scope="session")

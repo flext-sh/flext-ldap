@@ -300,3 +300,105 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             FlextResult containing list of entries
 
         """
+
+    @abstractmethod
+    def get_root_dse_attributes(
+        self, connection: Connection
+    ) -> FlextResult[dict[str, object]]:
+        """Get Root DSE attributes.
+
+        Args:
+            connection: Active LDAP connection
+
+        Returns:
+            FlextResult containing Root DSE attributes
+
+        """
+
+    @abstractmethod
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+        """Detect server type from Root DSE.
+
+        Args:
+            root_dse: Root DSE attributes
+
+        Returns:
+            Detected server type
+
+        """
+
+    @abstractmethod
+    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
+        """Get supported LDAP controls.
+
+        Args:
+            connection: Active LDAP connection
+
+        Returns:
+            FlextResult containing list of supported control OIDs
+
+        """
+
+    @abstractmethod
+    def normalize_entry_for_server(
+        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+    ) -> FlextResult[FlextLdapModels.Entry]:
+        """Normalize entry for this server type.
+
+        Args:
+            entry: Entry to normalize
+
+        Returns:
+            FlextResult containing normalized entry
+
+        """
+
+    def normalize_attribute_name(self, attribute_name: str) -> str:
+        """Normalize LDAP attribute name according to server-specific conventions.
+
+        Args:
+            attribute_name: Attribute name to normalize
+
+        Returns:
+            Normalized attribute name (default: lowercase)
+
+        """
+        return attribute_name.lower()
+
+    def normalize_object_class(self, object_class: str) -> str:
+        """Normalize LDAP object class name according to server-specific conventions.
+
+        Args:
+            object_class: Object class name to normalize
+
+        Returns:
+            Normalized object class name (default: lowercase)
+
+        """
+        return object_class.lower()
+
+    def normalize_dn(self, dn: str) -> str:
+        """Normalize distinguished name according to server-specific conventions.
+
+        Args:
+            dn: DN to normalize
+
+        Returns:
+            Normalized DN (default: as-is)
+
+        """
+        return dn
+
+    @abstractmethod
+    def validate_entry_for_server(
+        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+    ) -> FlextResult[bool]:
+        """Validate entry for this server type.
+
+        Args:
+            entry: Entry to validate
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """

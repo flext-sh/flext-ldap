@@ -283,7 +283,7 @@ def demonstrate_acl_with_ldap_api() -> None:
     connect_result = api.connect()
 
     if connect_result.is_failure:
-        logger.warning(f"   ⚠️  Connection failed: {connect_result.error}")  # type: ignore[reportUnknownMemberType]
+        logger.warning(f"   ⚠️  Connection failed: {connect_result.error}")
         logger.info("   INFO  ACL format selection depends on server type detection")
         logger.info("   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD")
         return
@@ -311,7 +311,7 @@ def demonstrate_acl_with_ldap_api() -> None:
         else:
             logger.info("   INFO  Generic LDAP server - use standard ACL format")
     else:
-        logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")  # type: ignore[reportUnknownMemberType]
+        logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")
 
     # Disconnect
     if api.is_connected():
@@ -339,10 +339,10 @@ def demonstrate_acl_migration_workflow() -> None:
     logger.info(f"   Source system: OpenLDAP ({len(source_acls)} ACLs)")
 
     # Create manager for conversion
-    manager = FlextLdapAclManager()  # type: ignore[reportUnknownVariableType]
+    manager = FlextLdapAclManager()
 
     # Convert to Oracle format
-    result = manager.batch_convert(source_acls, "openldap", "oracle")  # type: ignore[reportUnknownMemberType]
+    result = manager.batch_convert(source_acls, "openldap", "oracle")
 
     if result.is_success:
         target_acls = result.unwrap()
@@ -361,7 +361,7 @@ def demonstrate_acl_migration_workflow() -> None:
         logger.info("   ⏳ Verify access control behavior")
 
     else:
-        logger.warning(f"   ⚠️  Migration conversion: {result.error}")  # type: ignore[reportUnknownMemberType]
+        logger.warning(f"   ⚠️  Migration conversion: {result.error}")
         logger.info("\n   INFO  ACL migration workflow includes:")
         logger.info("      1. Parse source ACLs from current server")
         logger.info("      2. Convert to target server format")

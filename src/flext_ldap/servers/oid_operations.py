@@ -39,7 +39,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     # =========================================================================
 
     @override
-    def get_default_port(self, use_ssl: bool = False) -> int:
+    def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for Oracle OID."""
         return 636 if use_ssl else 389
 
@@ -572,7 +572,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 if "dn" in ldap3_entry and "attributes" in ldap3_entry:
                     entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
                     if entry_result.is_success:
-                        entries.append(entry_result.unwrap())
+                        ldif_entry = entry_result.unwrap()
+                        ldap_entry = FlextLdapModels.Entry.from_ldif(ldif_entry)
+                        entries.append(ldap_entry)
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
@@ -655,4 +657,89 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             else:
                 object_classes = [str(object_class_attr)]
             return "orclUserV2" in object_classes
-        return False
+        return None
+
+    @override
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+        """Detect server type from Root DSE for Oracle OID."""
+        # Oracle OID specific detection logic
+        if "vendorname" in root_dse:
+            vendor = str(root_dse["vendorname"]).lower()
+            if "oracle" in vendor or "oid" in vendor:
+                return "oid"
+        return "generic"
+
+    @override
+    def get_root_dse_attributes(
+        self, connection: Connection
+    ) -> FlextResult[dict[str, object]]:
+        """Get Root DSE attributes for Oracle OID."""
+        try:
+            if not connection or not connection.bound:
+                return FlextResult[dict[str, object]].fail("Connection not established")
+
+            root_dse = connection.server.info
+            if not root_dse:
+                return FlextResult[dict[str, object]].fail("Root DSE not available")
+
+            return FlextResult[dict[str, object]].ok(dict(root_dse))
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Failed to get Root DSE: {e}")
+
+    @override
+    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
+        """Get supported LDAP controls for Oracle OID."""
+        try:
+            if not connection or not connection.bound:
+                return FlextResult[list[str]].fail("Connection not established")
+
+            controls = connection.server.info.supported_controls
+            if controls is None:
+                return FlextResult[list[str]].ok([])
+
+            return FlextResult[list[str]].ok(list(controls))
+        except Exception as e:
+            return FlextResult[list[str]].fail(f"Failed to get supported controls: {e}")
+
+    @override
+    def normalize_entry_for_server(
+        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Normalize entry for Oracle OID server."""
+        try:
+            # Oracle OID specific normalization
+            normalized_entry = entry.model_copy()
+
+            # Ensure Oracle-specific object classes are present
+            if "objectClass" not in normalized_entry.attributes.attributes:
+                normalized_entry.attributes.attributes["objectClass"] = (
+                    FlextLdifModels.AttributeValues(values=["top", "person"])
+                )
+
+            return FlextResult[FlextLdifModels.Entry].ok(normalized_entry)
+        except Exception as e:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to normalize entry: {e}"
+            )
+
+    @override
+    def validate_entry_for_server(
+        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+    ) -> FlextResult[bool]:
+        """Validate entry compatibility with Oracle OID."""
+        try:
+            # Oracle OID specific validation
+            if not entry.dn or not entry.dn.strip():
+                return FlextResult[bool].fail("Entry DN cannot be empty")
+
+            if not entry.attributes or not entry.attributes.attributes:
+                return FlextResult[bool].fail("Entry must have attributes")
+
+            # Check for required object classes
+            object_classes = entry.attributes.get_attribute("objectClass")
+            if not object_classes or not object_classes.values:
+                return FlextResult[bool].fail("Entry must have objectClass attribute")
+
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Entry validation failed: {e}")
