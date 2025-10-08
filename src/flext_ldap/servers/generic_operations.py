@@ -323,7 +323,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 
-            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)  # type: ignore[arg-type]
+            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
             self.logger.exception("Paged search error", extra={"error": str(e)})
@@ -425,7 +425,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         try:
             # For generic server, just return the entry as-is
             # In a real implementation, this would apply server-specific transformations
-            return FlextResult[FlextLdapModels.Entry].ok(entry)  # type: ignore[arg-type]
+            return FlextResult[FlextLdapModels.Entry].ok(entry)
 
         except Exception as e:
             self.logger.exception("Entry normalization error", extra={"error": str(e)})

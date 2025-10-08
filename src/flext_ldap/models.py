@@ -1415,9 +1415,6 @@ class FlextLdapModels(FlextModels):
                 >>> # Can now be written with FlextLdif.write([ldif_entry], path)
 
             """
-            # Required import - flext-ldif is mandatory dependency
-            from flext_ldif import FlextLdifModels
-
             # Convert DN string to DistinguishedName if needed
             dn = self.dn
             if isinstance(dn, str):
@@ -2485,6 +2482,7 @@ class FlextLdapModels(FlextModels):
             data: FlextTypes.Dict | None = None,
             metadata: FlextTypes.Dict | None = None,
             timestamp: int | None = None,
+            *,
             processed: bool = False,
         ) -> FlextResult[FlextLdapModels.DomainMessage]:
             """Create domain message."""

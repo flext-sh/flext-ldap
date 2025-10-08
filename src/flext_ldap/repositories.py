@@ -141,18 +141,18 @@ class FlextLdapRepositories:
             """
             ...
 
-        def exists(self, id: str) -> FlextResult[bool]:
+        def exists(self, entity_id: str) -> FlextResult[bool]:
             """Check if entity exists - implements Domain.Repository protocol.
 
             Args:
-                id: Entity identifier
+                entity_id: Entity identifier
 
             Returns:
                 FlextResult with True if exists, False otherwise
 
             """
             # Default implementation using get_by_id
-            result = self.get_by_id(id)
+            result = self.get_by_id(entity_id)
             if result.is_failure:
                 return FlextResult[bool].fail(
                     result.error or "Failed to check existence"
