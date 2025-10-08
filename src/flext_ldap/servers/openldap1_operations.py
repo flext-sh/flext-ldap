@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextResult, FlextTypes
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations

@@ -35,6 +35,7 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdap(FlextService[None]):
@@ -169,9 +170,7 @@ class FlextLdap(FlextService[None]):
     @property
     def config(self) -> FlextLdapConfig:
         """Get the LDAP configuration instance."""
-        if self._ldap_config is not None:
-            return self._ldap_config
-        return FlextLdapConfig()
+        return self._ldap_config
 
     # =============================================================================
     # CONNECTION MANAGEMENT METHODS - Enhanced with proper error handling
@@ -646,7 +645,11 @@ class FlextLdap(FlextService[None]):
             FlextResult[str]: Normalized DN or error.
 
         """
-        return self.client.normalize_dn(dn)
+        try:
+            normalized = self.client.normalize_dn(dn)
+            return FlextResult[str].ok(normalized)
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to normalize DN: {e}")
 
     def normalize_attribute_name(self, attribute_name: str) -> FlextResult[str]:
         """Normalize LDAP attribute name to lowercase canonical form.
@@ -658,7 +661,11 @@ class FlextLdap(FlextService[None]):
             FlextResult[str]: Normalized attribute name or error.
 
         """
-        return self.client.normalize_attribute_name(attribute_name)
+        try:
+            normalized = self.client.normalize_attribute_name(attribute_name)
+            return FlextResult[str].ok(normalized)
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to normalize attribute name: {e}")
 
     def normalize_object_class(self, object_class: str) -> FlextResult[str]:
         """Normalize LDAP object class name.
@@ -670,7 +677,11 @@ class FlextLdap(FlextService[None]):
             FlextResult[str]: Normalized object class or error.
 
         """
-        return self.client.normalize_object_class(object_class)
+        try:
+            normalized = self.client.normalize_object_class(object_class)
+            return FlextResult[str].ok(normalized)
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to normalize object class: {e}")
 
     def validate_dn(self, dn: str) -> FlextResult[bool]:
         """Validate distinguished name format.
@@ -980,7 +991,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if not self._client:
-            return FlextResult[list].fail("Client not initialized")
+            return FlextResult[list[FlextLdapModels.Entry]].fail("Client not initialized")
 
         server_ops = self._client.server_operations
         if not server_ops:
@@ -995,7 +1006,7 @@ class FlextLdap(FlextService[None]):
         if use_paging and server_ops.supports_paged_results():
             connection = self._client.connection
             if not connection:
-                return FlextResult[list].fail("LDAP connection not established")
+                return FlextResult[list[FlextLdapModels.Entry]].fail("LDAP connection not established")
 
             page_size = min(100, server_ops.get_max_page_size())
             return server_ops.search_with_paging(

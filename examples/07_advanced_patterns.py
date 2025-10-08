@@ -36,8 +36,14 @@ from contextlib import contextmanager
 from typing import Final, TypeVar
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import SecretStr
 
-from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapExceptions
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapConfig,
+    FlextLdapConstants,
+    FlextLdapExceptions,
+)
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -80,7 +86,7 @@ def ldap_connection(
     config = FlextLdapConfig(
         ldap_server_uri=server_uri,
         ldap_bind_dn=bind_dn,
-        ldap_bind_password=password,
+        ldap_bind_password=SecretStr(password),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -174,10 +180,10 @@ def demonstrate_context_manager() -> None:
         # Connection automatically closed here
         logger.info("✅ Connection automatically closed")
 
-    except ConnectionError as e:
-        logger.exception(f"❌ Connection error: {e}")
+    except ConnectionError:
+        logger.exception("❌ Connection error in search patterns")
     except Exception:
-        logger.exception("❌ Unexpected error")
+        logger.exception("❌ Unexpected error occurred")
 
 
 def demonstrate_retry_pattern() -> None:
@@ -219,16 +225,16 @@ def demonstrate_bulk_operations() -> None:
     try:
         with ldap_connection() as api:
             # Create multiple entries in bulk
-            users_to_create = [
-                {
-                    "dn": f"cn=user{i},ou=users,{BASE_DN}",
-                    "attributes": {
+            users_to_create: list[tuple[str, dict[str, str | list[str]]]] = [
+                (
+                    f"cn=user{i},ou=users,{BASE_DN}",
+                    {
                         "objectClass": ["person", "inetOrgPerson"],
                         "cn": [f"user{i}"],
                         "sn": ["Test"],
                         "mail": [f"user{i}@example.com"],
                     },
-                }
+                )
                 for i in range(1, 6)
             ]
 
@@ -243,22 +249,22 @@ def demonstrate_bulk_operations() -> None:
                 batch = users_to_create[i : i + batch_size]
                 logger.info(f"\nProcessing batch {i // batch_size + 1}...")
 
-                for user in batch:
-                    result = api.add_entry(user["dn"], user["attributes"])
+                for user_dn, user_attributes in batch:
+                    result = api.add_entry(user_dn, user_attributes)
 
                     if result.is_success:
                         success_count += 1
-                        logger.info(f"   ✅ Created: {user['dn']}")
+                        logger.info(f"   ✅ Created: {user_dn}")
                     else:
                         failure_count += 1
-                        logger.error(f"   ❌ Failed: {user['dn']} - {result.error}")
+                        logger.error(f"   ❌ Failed: {user_dn} - {result.error}")
 
             logger.info("\nBulk operation completed:")
             logger.info(f"   Success: {success_count}/{len(users_to_create)}")
             logger.info(f"   Failures: {failure_count}/{len(users_to_create)}")
 
-    except ConnectionError as e:
-        logger.exception(f"❌ Connection error: {e}")
+    except ConnectionError:
+        logger.exception("❌ Connection error in search patterns")
 
 
 def demonstrate_flext_result_patterns() -> None:
@@ -335,8 +341,8 @@ def demonstrate_flext_result_patterns() -> None:
             if chain_result.is_success:
                 logger.info(f"   ✅ {chain_result.unwrap()}")
 
-    except ConnectionError as e:
-        logger.exception(f"❌ Connection error: {e}")
+    except ConnectionError:
+        logger.exception("❌ Connection error in search patterns")
 
 
 def demonstrate_exception_handling() -> None:
@@ -358,7 +364,7 @@ def demonstrate_exception_handling() -> None:
         config = FlextLdapConfig(
             ldap_server_uri="ldap://invalid-server:389",
             ldap_bind_dn=BIND_DN,
-            ldap_bind_password=BIND_PASSWORD,
+            ldap_bind_password=SecretStr(BIND_PASSWORD),
         )
         api = FlextLdap(config=config)
 
@@ -398,7 +404,6 @@ def demonstrate_performance_patterns() -> None:
 
             # Pattern 2: Scope limitation
             logger.info("\nPattern 2: Scope limitation")
-            from flext_ldap.constants import FlextLdapConstants
 
             result = api.search_entries(
                 base_dn=BASE_DN,
@@ -412,8 +417,8 @@ def demonstrate_performance_patterns() -> None:
                 logger.info(f"   ✅ Found {len(response.entries)} entries (BASE scope)")
                 logger.info("   Optimization: Used BASE scope instead of SUBTREE")
 
-    except ConnectionError as e:
-        logger.exception(f"❌ Connection error: {e}")
+    except ConnectionError:
+        logger.exception("❌ Connection error in search patterns")
 
 
 def main() -> int:
@@ -439,16 +444,16 @@ def main() -> int:
         demonstrate_exception_handling()
         demonstrate_performance_patterns()
 
-        logger.info("\n" + "=" * 60)
+        logger.info(f"\n{'=' * 60}")
         logger.info("✅ All advanced patterns demonstrated successfully!")
-        logger.info("=" * 60)
+        logger.info(f"{'=' * 60}")
         logger.info("Key Patterns:")
         logger.info("- Context managers for resource management")
         logger.info("- Retry with exponential backoff for resilience")
         logger.info("- Bulk operations with batching for efficiency")
         logger.info("- FlextResult patterns for error handling")
         logger.info("- Performance optimizations (filtering, scope limitation)")
-        logger.info("=" * 60)
+        logger.info(f"{'=' * 60}")
 
         return 0
 

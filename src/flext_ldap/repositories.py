@@ -67,15 +67,40 @@ class FlextLdapRepositories:
             """
             ...
 
-        def get_all(self) -> FlextResult[list[T]]:
-            """Get all entities - implements Domain.Repository protocol.
+        def find_all(self) -> FlextResult[list[T]]:
+            """Find all entities - implements Domain.Repository protocol.
 
             Returns:
                 FlextResult with list of all entities
 
             """
             # Default implementation - subclasses should override for efficiency
-            return FlextResult[list[T]].fail("get_all not implemented - use subclass")
+            return FlextResult[list[T]].fail("find_all not implemented - use subclass")
+
+        def save(self, entity: T) -> FlextResult[T]:
+            """Save entity - implements Domain.Repository protocol.
+
+            Args:
+                entity: Entity to save
+
+            Returns:
+                FlextResult with saved entity
+
+            """
+            # Default implementation - check if entity exists and add or update accordingly
+            exists_result = self.exists(
+                entity.dn if hasattr(entity, "dn") else str(entity)
+            )
+            if exists_result.is_failure:
+                return FlextResult[T].fail(
+                    f"Failed to check existence: {exists_result.error}"
+                )
+
+            if exists_result.unwrap():
+                # Entity exists, update it
+                return self.update(entity)
+            # Entity doesn't exist, add it
+            return self.add(entity)
 
         @abstractmethod
         def add(self, entity: T) -> FlextResult[T]:

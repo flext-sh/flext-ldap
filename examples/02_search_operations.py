@@ -34,6 +34,7 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import SecretStr
 
 from flext_ldap import (
     FlextLdap,
@@ -145,7 +146,7 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     # Create SearchRequest with complete parameters
     search_request = FlextLdapModels.SearchRequest(
         base_dn=BASE_DN,
-        filter_str="(objectClass=organizationalUnit)",
+        search_filter="(objectClass=organizationalUnit)",
         scope=FlextLdapConstants.Scopes.ONELEVEL,  # ONE_LEVEL scope
         attributes=["ou", "description"],
         size_limit=10,
@@ -193,9 +194,8 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     groups_dn = f"ou=groups,{BASE_DN}"
     logger.info(f"Searching for groups in {groups_dn}")
 
-    result: FlextResult[list[FlextLdapModels.Group]] = api.search_groups(
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_groups(
         search_base=groups_dn,
-        filter_str="(objectClass=groupOfNames)",
         attributes=["cn", "member", "description"],
     )
 
@@ -203,11 +203,11 @@ def demonstrate_group_search(api: FlextLdap) -> None:
         logger.error(f"❌ Group search failed: {result.error}")
         return
 
-    groups = result.unwrap()
+    groups: list[FlextLdapModels.Group] = result.unwrap()
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
         logger.info(f"   {i}. Group DN: {group.dn}")
-        logger.info(f"      Attributes: {list(group.attributes.keys())}")  # type: ignore[reportAttributeAccessIssue]
+        logger.info(f"      CN: {group.cn}, Members: {len(group.member_dns)}")
 
 
 def demonstrate_search_scopes(api: FlextLdap) -> None:
@@ -227,15 +227,15 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     for scope, description in scopes:
         logger.info(f"\nTesting {description}:")
-        result = api.search_entries(
-            search_base=BASE_DN,
+        result: FlextResult[FlextLdapModels.SearchResponse] = api.search_entries(
+            base_dn=BASE_DN,
             filter_str="(objectClass=*)",
             scope=scope,
             attributes=["dn"],
         )
 
         if result.is_success:
-            response = result.unwrap()
+            response: FlextLdapModels.SearchResponse = result.unwrap()
             logger.info(f"   ✅ Found {len(response.entries)} entries")
         else:
             logger.error(f"   ❌ Search failed: {result.error}")

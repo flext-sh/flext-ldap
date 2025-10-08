@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
 
@@ -193,9 +193,12 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
 
     logger.info("\nFinding specific user with find_user():")
     user_result = api.find_user("john.doe", users_dn)
-    if user_result.is_success and user_result.unwrap():
+    if user_result.is_success:
         user = user_result.unwrap()
-        logger.info(f"✅ Found: {user.dn}")
+        if user:
+            logger.info(f"✅ Found: {user.dn}")
+        else:
+            logger.info("User not found")
     else:
         logger.info("User not found")
 
@@ -215,7 +218,7 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
     ]
 
     # NEW: Batch add multiple users
-    entries = [
+    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = [
         (
             f"cn=batch.user1,{users_dn}",
             {

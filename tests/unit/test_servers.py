@@ -423,7 +423,7 @@ class TestFlextLdapServersFactory:
         # Verify Root DSE search was called
         mock_connection.search.assert_called_once()
         call_args = mock_connection.search.call_args
-        assert call_args[1]["search_base"] == ""
+        assert not call_args[1]["search_base"]
         assert "(objectClass=*)" in call_args[1]["search_filter"]
 
     def test_create_from_connection_oid_root_dse(

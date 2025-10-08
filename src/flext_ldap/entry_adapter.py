@@ -13,6 +13,7 @@ from __future__ import annotations
 import pathlib
 
 from flext_core import FlextResult, FlextService, FlextTypes
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from ldap3 import Entry as Ldap3Entry

@@ -32,13 +32,15 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult
+from pydantic import SecretStr
 
 from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
+    FlextLdapModels,
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
@@ -62,7 +64,7 @@ def setup_api() -> FlextLdap | None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -154,11 +156,11 @@ def demonstrate_schema_discovery(server_type: str | None) -> None:
         }
 
         expected = schema_locations.get(server_type or "generic", "cn=subschema")
-        logger.info(f"   ℹ️  Expected for {server_type}: {expected}")
+        logger.info(f"   ℹ Expected for {server_type}: {expected}")
 
     else:
         logger.warning(f"   ⚠️  Schema subentry discovery: {result.error}")
-        logger.info("   ℹ️  Using default: cn=subschema (RFC 4512)")
+        logger.info("   ℹ Using default: cn=subschema (RFC 4512)")
 
 
 def demonstrate_quirks_detection(server_type: str | None) -> None:
@@ -180,27 +182,31 @@ def demonstrate_quirks_detection(server_type: str | None) -> None:
     quirks = detector.get_server_quirks(server_type)
 
     if quirks:
+        # Cast to ServerQuirks since we know this is what the function should return
+        server_quirks = cast("FlextLdapModels.ServerQuirks", quirks)
+
         logger.info("   ✅ Server quirks detected:")
-        logger.info(f"      Server type: {quirks.server_type}")
-        logger.info(f"      Case-sensitive DNs: {quirks.case_sensitive_dns}")
+        logger.info(f"      Server type: {server_quirks.server_type}")
+        logger.info(f"      Case-sensitive DNs: {server_quirks.case_sensitive_dns}")
         logger.info(
-            f"      Case-sensitive attributes: {quirks.case_sensitive_attributes}"
+            f"      Case-sensitive attributes: {server_quirks.case_sensitive_attributes}"
         )
-        logger.info(f"      Paged results: {quirks.supports_paged_results}")
-        logger.info(f"      VLV support: {quirks.supports_vlv}")
-        logger.info(f"      Max page size: {quirks.max_page_size}")
-        logger.info(f"      Default timeout: {quirks.default_timeout}s")
-        logger.info(f"      StartTLS: {quirks.supports_start_tls}")
-        logger.info(f"      Explicit bind required: {quirks.requires_explicit_bind}")
+        logger.info(f"      Paged results: {server_quirks.supports_paged_results}")
+        logger.info(f"      VLV support: {server_quirks.supports_vlv}")
+        logger.info(f"      Max page size: {server_quirks.max_page_size}")
+        logger.info(f"      Default timeout: {server_quirks.default_timeout}s")
+        logger.info(f"      StartTLS: {server_quirks.supports_start_tls}")
+        logger.info(
+            f"      Explicit bind required: {server_quirks.requires_explicit_bind}"
+        )
     else:
         logger.warning("   ⚠️  No quirks detected (using defaults)")
 
 
-def demonstrate_quirks_integration(api: FlextLdap, server_type: str | None) -> None:
+def demonstrate_quirks_integration(server_type: str | None) -> None:
     """Demonstrate FlextLdapQuirksIntegration usage.
 
     Args:
-        api: Connected FlextLdap instance
         server_type: Detected server type
 
     """
@@ -326,15 +332,15 @@ def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
                 logger.info(f"   • matchingRules: {mr_count} defined")
 
             logger.info("\n3. Schema discovery successful!")
-            logger.info("   ℹ️  Schema contains complete directory metadata")
+            logger.info("   ℹ Schema contains complete directory metadata")
 
         else:
             logger.warning("   ⚠️  Schema entry not found")
-            logger.info(f"   ℹ️  Server may not expose schema at {schema_dn}")
+            logger.info(f"   ℹ Server may not expose schema at {schema_dn}")
 
     else:
         logger.warning(f"   ⚠️  Schema search failed: {result.error}")
-        logger.info("   ℹ️  Schema may not be accessible or different DN required")
+        logger.info("   ℹ Schema may not be accessible or different DN required")
 
 
 def demonstrate_server_capabilities(api: FlextLdap) -> None:
@@ -365,7 +371,7 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
         logger.info(f"   Paged results: {caps.get('supports_paged_results', False)}")
         logger.info(f"   VLV support: {caps.get('supports_vlv', False)}")
 
-        logger.info("\n   ℹ️  Capabilities inform schema discovery strategy")
+        logger.info("\n   ℹ Capabilities inform schema discovery strategy")
 
     else:
         logger.warning(f"   ⚠️  Capabilities discovery: {result.error}")
@@ -392,7 +398,7 @@ def main() -> int:
 
         if not api:
             logger.error("Cannot proceed without connection")
-            logger.info("\nℹ️  Schema operations require LDAP connection")
+            logger.info("\nℹ Schema operations require LDAP connection")
             return 1
 
         try:
@@ -406,7 +412,7 @@ def main() -> int:
             demonstrate_quirks_detection(server_type)
 
             # 5. Quirks Integration
-            demonstrate_quirks_integration(api, server_type)
+            demonstrate_quirks_integration(server_type)
 
             # 6. Schema Search
             demonstrate_schema_search(api, server_type)
@@ -414,7 +420,7 @@ def main() -> int:
             # 7. Server Capabilities
             demonstrate_server_capabilities(api)
 
-            logger.info("\n" + "=" * 70)
+            logger.info(f"\n{'=' * 70}")
             logger.info("✅ Schema operations demonstration completed!")
             logger.info("=" * 70)
 

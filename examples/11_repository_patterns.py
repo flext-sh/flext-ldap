@@ -32,7 +32,7 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger
-from flext_core.loggings import FlextLogger
+from pydantic import SecretStr
 
 from flext_ldap import (
     FlextLdap,
@@ -60,7 +60,7 @@ def setup_api() -> FlextLdap | None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD) if BIND_PASSWORD else None,
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -99,7 +99,7 @@ def demonstrate_repository_pattern_basics() -> None:
     logger.info("   • exists(id) - Check entity existence")
 
 
-def demonstrate_user_repository(api: FlextLdap) -> None:
+def demonstrate_user_repository(api: FlextLdap) -> None:  # noqa: ARG001
     """Demonstrate UserRepository operations.
 
     Args:
@@ -112,7 +112,7 @@ def demonstrate_user_repository(api: FlextLdap) -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD) if BIND_PASSWORD else None,
         ldap_base_dn=BASE_DN,
     )
     client = FlextLdapClients(config=config)
@@ -143,7 +143,7 @@ def demonstrate_user_repository(api: FlextLdap) -> None:
     logger.info("   • Efficient for bulk operations")
 
 
-def demonstrate_group_repository(api: FlextLdap) -> None:
+def demonstrate_group_repository(api: FlextLdap) -> None:  # noqa: ARG001
     """Demonstrate GroupRepository operations.
 
     Args:
@@ -156,7 +156,7 @@ def demonstrate_group_repository(api: FlextLdap) -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD) if BIND_PASSWORD else None,
         ldap_base_dn=BASE_DN,
     )
     client = FlextLdapClients(config=config)
@@ -374,7 +374,7 @@ def main() -> int:
         demonstrate_repository_pattern_basics()
 
         # 2. Connect to LDAP server
-        logger.info("\n" + "=" * 70)
+        logger.info(f"\n{'=' * 70}")
         logger.info("Connecting to LDAP server for repository demonstrations...")
         api = setup_api()
 
@@ -406,7 +406,7 @@ def main() -> int:
             # 9. Advanced patterns
             demonstrate_repository_advanced_patterns()
 
-            logger.info("\n" + "=" * 70)
+            logger.info(f"\n{'=' * 70}")
             logger.info("✅ Repository patterns demonstration completed!")
             logger.info("=" * 70)
 

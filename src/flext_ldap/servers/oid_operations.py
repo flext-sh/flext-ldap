@@ -12,8 +12,11 @@ from typing import override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
-from ldap3 import Connection
+from ldap3 import MODIFY_REPLACE, SUBTREE, Connection
 
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -74,7 +77,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[FlextTypes.Dict].fail("Connection not bound")
 
-            success = connection.search(
+            success: bool = connection.search(
                 search_base=self.get_schema_dn(),
                 search_filter="(objectClass=*)",
                 attributes=["objectClasses", "attributeTypes"],
@@ -149,7 +152,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[list[FlextTypes.Dict]].fail("Connection not bound")
 
-            success = connection.search(
+            success: bool = connection.search(
                 search_base=dn,
                 search_filter="(objectClass=*)",
                 search_scope="BASE",
@@ -180,8 +183,6 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Set orclaci ACLs on Oracle OID."""
         try:
-            from ldap3 import MODIFY_REPLACE
-
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
@@ -372,7 +373,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
             normalized_entry = norm_result.unwrap()
 
-            success = connection.add(
+            success: bool = connection.add(
                 str(normalized_entry.dn),
                 attributes=normalized_entry.attributes,
             )
@@ -395,8 +396,6 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Modify entry in Oracle OID."""
         try:
-            from ldap3 import MODIFY_REPLACE
-
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
@@ -405,7 +404,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 values: FlextTypes.List = value if isinstance(value, list) else [value]
                 ldap3_mods[attr] = [(int(MODIFY_REPLACE), values)]
 
-            success = connection.modify(dn, ldap3_mods)
+            success: bool = connection.modify(dn, ldap3_mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -426,7 +425,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            success = connection.delete(dn)
+            success: bool = connection.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(
@@ -467,38 +466,41 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 object_class_attr = attributes_dict["objectClass"]
                 # Handle both list and AttributeValues types
                 if isinstance(object_class_attr, list):
-                    object_classes = object_class_attr
+                    object_classes: list[str] = object_class_attr
                 elif hasattr(object_class_attr, "values"):
                     object_classes = object_class_attr.values
                 else:
                     object_classes = [str(object_class_attr)]
 
                 # Map standard objectClasses to Oracle equivalents
-                mapped_classes = []
+                mapped_classes: list[str] = []
                 has_person = False
                 has_org_person = False
 
                 for oc in object_classes:
-                    mapped_classes.append(oc)
+                    mapped_classes.append(str(oc))
 
                     # Track person-related classes
-                    if oc == "person":
+                    oc_str = str(oc)
+                    if oc_str == "person":
                         has_person = True
-                    elif oc in {"organizationalPerson", "inetOrgPerson"}:
+                    elif oc_str in {"organizationalPerson", "inetOrgPerson"}:
                         has_org_person = True
 
                 # For user entries, consider adding orclUserV2 for extended features
                 # (Only if not already present and is a person-like entry)
-                if (
-                    has_person or has_org_person
-                ) and "orclUserV2" not in mapped_classes:
+                if (has_person or has_org_person) and "orclUserV2" not in [
+                    str(oc) for oc in object_classes
+                ]:
                     # Note: orclUserV2 should only be added if Oracle schema supports it
                     # and entry will have required Oracle attributes
                     pass  # Conservative approach - don't auto-add
 
                 # Update objectClass if changed
                 if mapped_classes != object_classes:
-                    attributes_dict["objectClass"] = mapped_classes
+                    attributes_dict["objectClass"] = FlextLdifModels.AttributeValues(
+                        values=mapped_classes
+                    )
 
             # Handle Oracle-specific attribute mappings
             # Map userPassword to orclPassword if Oracle extensions are used
@@ -546,15 +548,13 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search on Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "Connection not bound"
                 )
-
-            from ldap3 import SUBTREE
 
             entry_generator = connection.extend.standard.paged_search(
                 search_base=base_dn,
@@ -565,10 +565,8 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 generator=True,
             )
 
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
             adapter = FlextLdapEntryAdapter()
-            entries: list[FlextLdifModels.Entry] = []
+            entries: list[FlextLdapModels.Entry] = []
 
             for ldap3_entry in entry_generator:
                 if "dn" in ldap3_entry and "attributes" in ldap3_entry:
@@ -576,11 +574,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
             self.logger.exception("Paged search error", extra={"error": str(e)})
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )
 

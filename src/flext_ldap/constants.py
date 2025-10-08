@@ -169,7 +169,7 @@ class FlextLdapConstants(FlextConstants):
         ORGANIZATIONAL_UNITS_FILTER: Final[str] = "(objectClass=organizationalUnit)"
 
     # LDAP-specific validation constants
-    class LdapValidation:
+    class Validation:
         """LDAP-specific validation constants extending base validation."""
 
         # LDAP DN validation
@@ -189,8 +189,11 @@ class FlextLdapConstants(FlextConstants):
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
 
+    # Alias for backwards compatibility
+    LdapValidation = Validation
+
     # LDAP-specific error and validation messages
-    class LdapMessages:
+    class Messages:
         """LDAP-specific error and validation messages extending base messages."""
 
         # LDAP validation messages
@@ -210,8 +213,11 @@ class FlextLdapConstants(FlextConstants):
         CLIENT_NOT_INITIALIZED: Final[str] = "Client not initialized"
         NO_SERVER_OPERATIONS_AVAILABLE: Final[str] = "No server operations available"
 
+    # Alias for backwards compatibility
+    LdapMessages = Messages
+
     # LDAP-specific error codes
-    class LdapErrors:
+    class Errors:
         """LDAP-specific error codes extending universal error codes."""
 
         # LDAP-specific errors
@@ -224,7 +230,7 @@ class FlextLdapConstants(FlextConstants):
         LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
 
     # LDAP-specific default values
-    class LdapDefaults:
+    class Defaults:
         """LDAP-specific default values extending base defaults."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
@@ -252,6 +258,9 @@ class FlextLdapConstants(FlextConstants):
         MIN_USERNAME_LENGTH: Final[int] = 3
         MIN_GROUP_NAME_LENGTH: Final[int] = 2
         MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
+
+    # Alias for backwards compatibility
+    LdapDefaults = Defaults
 
     class LdapRetry:
         """LDAP retry and timing constants."""
@@ -362,7 +371,7 @@ class FlextLdapConstants(FlextConstants):
         TITLE: Final[str] = "title"
         DESCRIPTION: Final[str] = "description"
         DEPARTMENT: Final[str] = "department"
-        O: Final[str] = "o"  # Organization
+        ORGANIZATION: Final[str] = "o"  # Organization
         OU: Final[str] = "ou"  # Organizational Unit
 
         # Group attributes

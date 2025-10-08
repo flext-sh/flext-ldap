@@ -27,13 +27,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import time
 from typing import Final
 
 from flext_core import FlextLogger
+from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
 
@@ -58,7 +58,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
 
@@ -95,7 +95,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
             api.unbind()
             logger.info("   ✅ Disconnected successfully")
         else:
-            logger.info("   ℹ️  Already disconnected")
+            logger.info("   ℹ Already disconnected")
 
 
 def demonstrate_connection_state_monitoring() -> None:
@@ -105,7 +105,7 @@ def demonstrate_connection_state_monitoring() -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -147,7 +147,7 @@ def demonstrate_connection_error_handling() -> None:
     invalid_config = FlextLdapConfig(
         ldap_server_uri="ldap://invalid-server:389",
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=invalid_config)
@@ -162,7 +162,7 @@ def demonstrate_connection_error_handling() -> None:
     invalid_creds = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password="wrong_password",
+        ldap_bind_password=SecretStr("wrong_password"),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=invalid_creds)
@@ -177,7 +177,7 @@ def demonstrate_connection_error_handling() -> None:
     timeout_config = FlextLdapConfig(
         ldap_server_uri="ldap://192.0.2.1:389",  # TEST-NET-1 (non-routable)
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=timeout_config)
@@ -202,7 +202,7 @@ def demonstrate_connection_context_manager() -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
 
@@ -243,7 +243,7 @@ def demonstrate_connection_retry_pattern() -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
 
@@ -289,14 +289,14 @@ def demonstrate_multiple_connections() -> None:
     config1 = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
 
     config2 = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
 
@@ -334,7 +334,7 @@ def demonstrate_multiple_connections() -> None:
             api2.unbind()
 
 
-async def demonstrate_async_connection_patterns() -> None:
+def demonstrate_async_connection_patterns() -> None:
     """Demonstrate asynchronous connection patterns (future implementation)."""
     logger.info("\n=== Async Connection Patterns (Conceptual) ===")
 
@@ -350,7 +350,7 @@ async def demonstrate_async_connection_patterns() -> None:
     logger.info("   • Efficient connection pooling")
     logger.info("   • Scalable LDAP operations")
 
-    logger.info("\n   ℹ️  Full async support planned for future releases")
+    logger.info("\n   ℹ Full async support planned for future releases")
 
 
 def demonstrate_connection_pooling_concept() -> None:
@@ -374,7 +374,7 @@ def demonstrate_connection_pooling_concept() -> None:
     logger.info("   • Multiple instances can be used for pooling effect")
     logger.info("   • Proper lifecycle management is essential")
 
-    logger.info("\n   ℹ️  Dedicated connection pool implementation planned")
+    logger.info("\n   ℹ Dedicated connection pool implementation planned")
 
 
 def main() -> int:
@@ -411,12 +411,12 @@ def main() -> int:
         demonstrate_multiple_connections()
 
         # 7. Async patterns (conceptual)
-        asyncio.run(demonstrate_async_connection_patterns())
+        demonstrate_async_connection_patterns()
 
         # 8. Pooling concept
         demonstrate_connection_pooling_concept()
 
-        logger.info("\n" + "=" * 70)
+        logger.info(f"\n{'=' * 70}")
         logger.info("✅ Connection management demonstration completed!")
         logger.info("=" * 70)
 

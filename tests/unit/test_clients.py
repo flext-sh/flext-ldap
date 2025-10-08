@@ -203,7 +203,7 @@ class TestFlextLdapClientsComprehensive:
 
         # Set mock connection - using object.__setattr__ to bypass Pydantic validation
         mock_conn = MockConnection()
-        object.__setattr__(client, "_connection", mock_conn)
+        object.__setattr__(client, "_connection", mock_conn)  # noqa: PLC2801
 
         request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",

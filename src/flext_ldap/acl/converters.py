@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
+from flext_ldap.constants import FlextLdapConstants
+
 
 class FlextLdapAclConverters:
     """ACL converters for bidirectional format conversion."""

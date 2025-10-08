@@ -42,7 +42,7 @@ class FlextTestDocker:
         return FlextResult[bool].fail("FlextTestDocker not available")
 
     def stop_container(
-        self, container_name: str, remove: bool = False
+        self, container_name: str, *, remove: bool = False
     ) -> FlextResult[bool]:
         """Stop a container with the given name, optionally removing it."""
         return FlextResult[bool].fail("FlextTestDocker not available")
