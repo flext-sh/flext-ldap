@@ -12,8 +12,11 @@ from typing import override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
-from ldap3 import Connection
+from ldap3 import MODIFY_REPLACE, SUBTREE, Connection
 
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -183,8 +186,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Set ds-privilege-name ACLs on Oracle OUD."""
         try:
-            from ldap3 import MODIFY_REPLACE
-
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
@@ -353,8 +354,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Modify entry in Oracle OUD."""
         try:
-            from ldap3 import MODIFY_REPLACE
-
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
@@ -432,15 +431,13 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search on Oracle OUD."""
         try:
             if not connection or not connection.bound:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "Connection not bound"
                 )
-
-            from ldap3 import SUBTREE
 
             entry_generator = connection.extend.standard.paged_search(
                 search_base=base_dn,
@@ -450,8 +447,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 paged_size=page_size,
                 generator=True,
             )
-
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
             adapter = FlextLdapEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []

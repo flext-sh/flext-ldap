@@ -34,14 +34,13 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger
-from flext_core.loggings import FlextLogger
+from pydantic import SecretStr
 
-from flext_ldap import (
-    FlextLdap,
+from flext_ldap import FlextLdap, FlextLdapConfig
+from flext_ldap.acl import (
     FlextLdapAclConverters,
     FlextLdapAclManager,
     FlextLdapAclParsers,
-    FlextLdapConfig,
 )
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -83,7 +82,7 @@ def demonstrate_acl_parsing() -> None:
         else:
             logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
     except AttributeError:
-        logger.info("   ℹ️  OpenLDAP parser structure available")
+        logger.info("   INFO  OpenLDAP parser structure available")
 
     # Oracle OID/OUD ACL format example
     oracle_aci = """
@@ -103,7 +102,7 @@ def demonstrate_acl_parsing() -> None:
         else:
             logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
     except AttributeError:
-        logger.info("   ℹ️  Oracle parser structure available")
+        logger.info("   INFO  Oracle parser structure available")
 
     # 389 DS / Red Hat DS ACI format
     ds_aci = """
@@ -122,7 +121,7 @@ def demonstrate_acl_parsing() -> None:
         else:
             logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
     except AttributeError:
-        logger.info("   ℹ️  ACI parser structure available")
+        logger.info("   INFO  ACI parser structure available")
 
 
 def demonstrate_acl_conversion() -> None:
@@ -155,7 +154,9 @@ def demonstrate_acl_conversion() -> None:
         logger.info(f"   Target (Oracle ACI): {converted}")
     else:
         logger.warning(f"   ⚠️  Conversion not fully implemented: {result.error}")
-        logger.info("   ℹ️  ACL converter structure available for future implementation")
+        logger.info(
+            "   INFO  ACL converter structure available for future implementation"
+        )
 
     # Example: Converting Oracle ACI to OpenLDAP
     oracle_aci = """
@@ -175,7 +176,7 @@ def demonstrate_acl_conversion() -> None:
         logger.info(f"   Target (OpenLDAP): {converted}")
     else:
         logger.warning(f"   ⚠️  Conversion not fully implemented: {result.error}")
-        logger.info("   ℹ️  ACL converter supports openldap ↔ oracle ↔ 389ds formats")
+        logger.info("   INFO  ACL converter supports openldap ↔ oracle ↔ 389ds formats")
 
 
 def demonstrate_acl_manager() -> None:
@@ -206,7 +207,7 @@ def demonstrate_acl_manager() -> None:
         logger.info(f"   ✅ Parsed via manager: {type(parsed).__name__}")
     else:
         logger.warning(f"   ⚠️  Manager parsing: {result.error}")
-        logger.info("   ℹ️  FlextLdapAclManager provides unified ACL operations")
+        logger.info("   INFO  FlextLdapAclManager provides unified ACL operations")
 
     # Convert ACL using manager
     logger.info("\n2. Using ACL Manager for conversion:")
@@ -256,7 +257,7 @@ def demonstrate_batch_acl_operations() -> None:
             logger.info(f"      Target: {converted}")
     else:
         logger.warning(f"   ⚠️  Batch conversion: {result.error}")
-        logger.info("   ℹ️  Batch operations support bulk ACL migration scenarios")
+        logger.info("   INFO  Batch operations support bulk ACL migration scenarios")
 
 
 def demonstrate_acl_with_ldap_api() -> None:
@@ -271,7 +272,7 @@ def demonstrate_acl_with_ldap_api() -> None:
     config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
-        ldap_bind_password=BIND_PASSWORD,
+        ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
     api = FlextLdap(config=config)
@@ -282,9 +283,9 @@ def demonstrate_acl_with_ldap_api() -> None:
     connect_result = api.connect()
 
     if connect_result.is_failure:
-        logger.warning(f"   ⚠️  Connection failed: {connect_result.error}")
-        logger.info("   ℹ️  ACL format selection depends on server type detection")
-        logger.info("   ℹ️  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD")
+        logger.warning(f"   ⚠️  Connection failed: {connect_result.error}")  # type: ignore[reportUnknownMemberType]
+        logger.info("   INFO  ACL format selection depends on server type detection")
+        logger.info("   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD")
         return
 
     # Get detected server type
@@ -306,11 +307,11 @@ def demonstrate_acl_with_ldap_api() -> None:
 
         if server_type:
             acl_format = acl_format_map.get(server_type, "generic")
-            logger.info(f"   ℹ️  Recommended ACL format: {acl_format}")
+            logger.info(f"   INFO  Recommended ACL format: {acl_format}")
         else:
-            logger.info("   ℹ️  Generic LDAP server - use standard ACL format")
+            logger.info("   INFO  Generic LDAP server - use standard ACL format")
     else:
-        logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")
+        logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")  # type: ignore[reportUnknownMemberType]
 
     # Disconnect
     if api.is_connected():
@@ -338,10 +339,10 @@ def demonstrate_acl_migration_workflow() -> None:
     logger.info(f"   Source system: OpenLDAP ({len(source_acls)} ACLs)")
 
     # Create manager for conversion
-    manager = FlextLdapAclManager()
+    manager = FlextLdapAclManager()  # type: ignore[reportUnknownVariableType]
 
     # Convert to Oracle format
-    result = manager.batch_convert(source_acls, "openldap", "oracle")
+    result = manager.batch_convert(source_acls, "openldap", "oracle")  # type: ignore[reportUnknownMemberType]
 
     if result.is_success:
         target_acls = result.unwrap()
@@ -360,8 +361,8 @@ def demonstrate_acl_migration_workflow() -> None:
         logger.info("   ⏳ Verify access control behavior")
 
     else:
-        logger.warning(f"   ⚠️  Migration conversion: {result.error}")
-        logger.info("\n   ℹ️  ACL migration workflow includes:")
+        logger.warning(f"   ⚠️  Migration conversion: {result.error}")  # type: ignore[reportUnknownMemberType]
+        logger.info("\n   INFO  ACL migration workflow includes:")
         logger.info("      1. Parse source ACLs from current server")
         logger.info("      2. Convert to target server format")
         logger.info("      3. Validate on test environment")
@@ -401,7 +402,7 @@ def main() -> int:
         # 6. Complete Migration Workflow
         demonstrate_acl_migration_workflow()
 
-        logger.info("\n" + "=" * 70)
+        logger.info(f"\n{'=' * 70}")
         logger.info("✅ ACL operations demonstration completed!")
         logger.info("=" * 70)
 

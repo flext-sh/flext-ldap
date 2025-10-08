@@ -849,6 +849,68 @@ class FlextLdapClients(FlextService[None]):
         # For now, return a placeholder
         return FlextResult[None].fail("delete_user not implemented")
 
+    def create_user(
+        self, user_request: FlextLdapModels.CreateUserRequest
+    ) -> FlextResult[FlextLdapModels.LdapUser]:
+        """Create a new user in LDAP directory."""
+        # Convert CreateUserRequest to attributes dict
+        attributes = user_request.to_attributes()
+
+        # Add entry
+        add_result = self.add_entry(user_request.dn, attributes)
+        if add_result.is_failure:
+            return FlextResult[FlextLdapModels.LdapUser].fail(
+                add_result.error or "Failed to create user"
+            )
+
+        # Return created user by fetching it
+        return self.get_user(user_request.dn)
+
+    def create_group(
+        self, group_request: FlextLdapModels.CreateGroupRequest
+    ) -> FlextResult[FlextLdapModels.Group]:
+        """Create a new group in LDAP directory."""
+        # Convert CreateGroupRequest to attributes dict
+        attributes = group_request.to_attributes()
+
+        # Add entry
+        add_result = self.add_entry(group_request.dn, attributes)
+        if add_result.is_failure:
+            return FlextResult[FlextLdapModels.Group].fail(
+                add_result.error or "Failed to create group"
+            )
+
+        # Return created group by fetching it
+        return self.get_group(group_request.dn)
+
+    def add_member(self, group_dn: str, member_dn: str) -> FlextResult[bool]:
+        """Add a member to a group."""
+        # Use modify_entry to add member
+        changes = {"member": [(2, member_dn)]}  # 2 = ADD operation in ldap3
+        return self.modify_entry(group_dn, changes)
+
+    def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[bool]:
+        """Remove a member from a group."""
+        # Use modify_entry to remove member
+        changes = {"member": [(1, member_dn)]}  # 1 = DELETE operation in ldap3
+        return self.modify_entry(group_dn, changes)
+
+    def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get all members of a group."""
+        # Get the group and extract members
+        group_result = self.get_group(group_dn)
+        if group_result.is_failure:
+            return FlextResult[list[str]].fail(
+                group_result.error or "Failed to get group"
+            )
+
+        group = group_result.unwrap()
+        if not group or not hasattr(group, "member"):
+            return FlextResult[list[str]].ok([])
+
+        members = group.member if isinstance(group.member, list) else [group.member]
+        return FlextResult[list[str]].ok(members)
+
     @property
     def server_operations(self) -> BaseServerOperations | None:
         """Get the server operations instance."""

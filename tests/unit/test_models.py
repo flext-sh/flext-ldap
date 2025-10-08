@@ -2945,8 +2945,8 @@ class TestFlextLdapModels:
         assert user.dn == "uid=factory,ou=users,dc=example,dc=com"
         assert user.cn == "Factory User"
         assert user.mail == "factory@example.com"
-        assert user.uid == ""  # Default empty string
-        assert user.sn == ""  # Default empty string
+        assert not user.uid  # Default empty string
+        assert not user.sn  # Default empty string
         assert user.object_classes == [
             "person",
             "organizationalPerson",

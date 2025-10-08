@@ -167,15 +167,15 @@ class FlextLdapAclParsers:
                 "auth": "auth",
             }
 
-            permissions = []
+            permissions: list[str] = []
             for perm in perms_str.split(","):
                 perm_clean = perm.strip().lower()
                 if perm_clean in perm_mapping:
-                    permissions.append(perm_mapping[perm_clean])
+                    permissions.append(perm_mapping[perm_clean])  # type: ignore[unknown-member-type]
 
             # Default to read if no permissions found
             if not permissions:
-                permissions.append("read")
+                permissions.append("read")  # type: ignore[unknown-member-type]
 
             return FlextLdapModels.AclPermissions(
                 granted_permissions=permissions,
@@ -707,10 +707,10 @@ class FlextLdapAclParsers:
                     "Message must be a dictionary"
                 )
 
-            format_type = message.get(
+            format_type: str | None = message.get(  # type: ignore[unknown-member-type]
                 FlextLdapConstants.DictKeys.FORMAT, FlextLdapConstants.AclFormat.AUTO
             )
-            acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
+            acl_string: str | None = message.get(FlextLdapConstants.DictKeys.ACL_STRING)  # type: ignore[unknown-member-type]
 
             if not isinstance(acl_string, str):
                 return FlextResult[FlextResult[object]].fail(

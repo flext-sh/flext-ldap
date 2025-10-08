@@ -12,8 +12,11 @@ from typing import override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
-from ldap3 import MODIFY_REPLACE, Connection
+from ldap3 import MODIFY_REPLACE, SUBTREE, Connection
 
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
@@ -77,7 +80,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextResult[FlextTypes.Dict].fail("Connection not bound")
 
             # Search for schema
-            success = connection.search(
+            success: bool = connection.search(
                 search_base=self.get_schema_dn(),
                 search_filter="(objectClass=*)",
                 attributes=[
@@ -94,20 +97,22 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             entry = connection.entries[0]
             schema_data: FlextTypes.Dict = {
                 "object_classes": (
-                    entry.objectClasses.values
+                    entry.objectClasses.values  # type: ignore[attr-defined]
                     if hasattr(entry, "objectClasses")
                     else []
                 ),
                 "attribute_types": (
-                    entry.attributeTypes.values
+                    entry.attributeTypes.values  # type: ignore[attr-defined]
                     if hasattr(entry, "attributeTypes")
                     else []
                 ),
                 "syntaxes": (
-                    entry.ldapSyntaxes.values if hasattr(entry, "ldapSyntaxes") else []
+                    entry.ldapSyntaxes.values  # type: ignore[attr-defined]
+                    if hasattr(entry, "ldapSyntaxes")
+                    else []
                 ),
                 "matching_rules": (
-                    entry.matchingRules.values
+                    entry.matchingRules.values  # type: ignore[attr-defined]
                     if hasattr(entry, "matchingRules")
                     else []
                 ),
@@ -193,7 +198,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[list[FlextTypes.Dict]].fail("Connection not bound")
 
-            success = connection.search(
+            success: bool = connection.search(
                 search_base=dn,
                 search_filter="(objectClass=*)",
                 search_scope="BASE",
@@ -204,11 +209,12 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextResult[list[FlextTypes.Dict]].ok([])
 
             entry = connection.entries[0]
-            acl_values = entry.olcAccess.values if hasattr(entry, "olcAccess") else []
+            acl_values = entry.olcAccess.values if hasattr(entry, "olcAccess") else []  # type: ignore[attr-defined]
 
             acls: list[FlextTypes.Dict] = []
             for acl_str in acl_values:
-                parse_result = self.parse_acl(str(acl_str))
+                acl_str: str = str(acl_str)
+                parse_result = self.parse_acl(acl_str)
                 if parse_result.is_success:
                     acls.append(parse_result.unwrap())
 
@@ -248,7 +254,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 formatted_acls.append(format_result.unwrap())
 
             # Modify entry with new ACLs
-            success = connection.modify(
+            success: bool = connection.modify(
                 dn,
                 {"olcAccess": [(MODIFY_REPLACE, formatted_acls)]},
             )
@@ -374,7 +380,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             normalized_entry = norm_result.unwrap()
 
             # Add entry using ldap3
-            success = connection.add(
+            success: bool = connection.add(
                 str(normalized_entry.dn),
                 attributes=normalized_entry.attributes,
             )
@@ -450,7 +456,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            success = connection.delete(dn)
+            success: bool = connection.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(
@@ -510,7 +516,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search on OpenLDAP 2.x.
 
         Args:
@@ -526,11 +532,9 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """
         try:
             if not connection or not connection.bound:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "Connection not bound"
                 )
-
-            from ldap3 import SUBTREE
 
             # Use ldap3 paged search
             entry_generator = connection.extend.standard.paged_search(
@@ -543,8 +547,6 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             )
 
             # Convert results to FlextLdif entries
-            from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-
             adapter = FlextLdapEntryAdapter()
             entries: list[FlextLdifModels.Entry] = []
 
@@ -556,12 +558,13 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            # Cast to expected return type
+            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)  # type: ignore[arg-type]
 
         except Exception as e:
             self.logger.exception(
                 "Paged search error", extra={"base_dn": base_dn, "error": str(e)}
             )
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 f"Paged search failed: {e}"
             )

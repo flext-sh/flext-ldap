@@ -18,6 +18,7 @@ from enum import Enum
 from typing import ClassVar, override
 
 from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
+from flext_ldif import FlextLdifModels
 from pydantic import (
     ConfigDict,
     Field,
@@ -987,7 +988,7 @@ class FlextLdapModels(FlextModels):
                 # Create user_password SecretStr if provided
                 user_password = None
                 if user_password_raw and isinstance(user_password_raw, str):
-                    user_password = SecretStr(user_password_raw)
+                    user_password = SecretStr(str(user_password_raw))
 
                 # Create user with explicit arguments to avoid **kwargs typing issues
                 user = cls(
@@ -1379,8 +1380,7 @@ class FlextLdapModels(FlextModels):
                 ValueError: If ldif_entry is invalid or missing required fields
 
             Example:
-                >>> from flext_ldif import FlextLdifModels
-                >>> ldif_entry = FlextLdifModels.Entry(...)
+                >>>                 >>> ldif_entry = FlextLdifModels.Entry(...)
                 >>> ldap_entry = FlextLdapModels.Entry.from_ldif(ldif_entry)
 
             """
@@ -1394,7 +1394,7 @@ class FlextLdapModels(FlextModels):
                 attributes=dict(ldif_entry.attributes),
             )
 
-        def to_ldif(self) -> object:
+        def to_ldif(self) -> FlextLdifModels.Entry:
             """Convert FlextLdap Entry to FlextLdif Entry using adapter pattern.
 
             Eliminates duplicate LDIF conversion logic across codebase by centralizing
@@ -1440,7 +1440,9 @@ class FlextLdapModels(FlextModels):
 
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter")
+        filter_str: str = Field(
+            ..., description="LDAP search filter", alias="search_filter"
+        )
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
@@ -1654,7 +1656,7 @@ class FlextLdapModels(FlextModels):
         def create(
             cls,
             base_dn: str,
-            filter_str: str,
+            filter_str: str | None = None,
             scope: str = FlextLdapConstants.Scopes.SUBTREE,
             attributes: FlextTypes.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
@@ -1688,6 +1690,10 @@ class FlextLdapModels(FlextModels):
                 request = FlextLdapModels.SearchRequest.create(base_dn, filter_str, scope, attributes)
 
             """
+            if filter_str is None:
+                msg = "filter_str must be provided"
+                raise ValueError(msg)
+
             return cls.model_validate({
                 "base_dn": base_dn,
                 "filter_str": filter_str,
@@ -1859,6 +1865,47 @@ class FlextLdapModels(FlextModels):
                 modified_at=None,
             )
 
+        def to_attributes(
+            self,
+        ) -> dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]:
+            """Convert request to LDAP attributes dictionary for entry creation."""
+            attributes: dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue] = {
+                "objectClass": self.object_classes,
+                "uid": self.uid,
+                "cn": self.cn,
+                "sn": self.sn,
+            }
+
+            # Add optional attributes if they exist
+            if self.given_name:
+                attributes["givenName"] = self.given_name
+            if self.mail:
+                attributes["mail"] = self.mail
+            if self.user_password:
+                password = (
+                    self.user_password.get_secret_value()
+                    if isinstance(self.user_password, SecretStr)
+                    else self.user_password
+                )
+                attributes["userPassword"] = password
+            if self.telephone_number:
+                attributes["telephoneNumber"] = self.telephone_number
+            if self.description:
+                attributes["description"] = self.description
+            if self.department:
+                attributes["department"] = self.department
+            if self.organizational_unit:
+                attributes["ou"] = self.organizational_unit
+            if self.title:
+                attributes["title"] = self.title
+            if self.organization:
+                attributes["o"] = self.organization
+
+            # Add additional attributes
+            attributes.update(self.additional_attributes)
+
+            return attributes
+
     class CreateGroupRequest(Base, ValidationMixin):
         """LDAP Group Creation Request entity."""
 
@@ -1899,6 +1946,19 @@ class FlextLdapModels(FlextModels):
                     error_msg, value=str(v), field="members"
                 )
             return v
+
+        def to_attributes(
+            self,
+        ) -> dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]:
+            """Convert request to LDAP attributes dictionary for entry creation."""
+            attributes: dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue] = {
+                "objectClass": self.object_classes,
+                "cn": self.cn,
+                "description": self.description,
+                "member": self.members,
+            }
+
+            return attributes
 
     # =========================================================================
     # CONNECTION AND CONFIGURATION ENTITIES

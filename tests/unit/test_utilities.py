@@ -620,7 +620,7 @@ class TestFlextLdapUtilitiesLdapProcessing:
     def test_normalize_attribute_name_empty(self) -> None:
         """Test attribute name normalization with empty string."""
         result = FlextLdapUtilities.Processing.normalize_attribute_name("")
-        assert result == ""
+        assert not result
 
     def test_normalize_attribute_name_already_normalized(self) -> None:
         """Test attribute name normalization with already normalized string."""
@@ -635,7 +635,7 @@ class TestFlextLdapUtilitiesLdapProcessing:
     def test_normalize_object_class_empty(self) -> None:
         """Test object class normalization with empty string."""
         result = FlextLdapUtilities.Processing.normalize_object_class("")
-        assert result == ""
+        assert not result
 
     def test_normalize_object_class_already_normalized(self) -> None:
         """Test object class normalization with already normalized string."""

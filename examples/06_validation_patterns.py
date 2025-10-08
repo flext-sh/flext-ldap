@@ -163,7 +163,7 @@ def demonstrate_search_request_validation() -> None:
     logger.info("\n=== SearchRequest Validation ===")
 
     # Test various SearchRequest configurations
-    test_cases = [
+    test_cases: list[dict[str, str | dict[str, str | int | list[str]]]] = [  # type: ignore[reportUnknownVariableType]
         {
             "name": "Valid basic search",
             "params": {
@@ -223,11 +223,11 @@ def demonstrate_search_request_validation() -> None:
     ]
 
     logger.info("\nTesting SearchRequest validation:")
-    for test_case in test_cases:
+    for test_case in test_cases:  # type: ignore[reportUnknownVariableType]
         logger.info(f"\nTest: {test_case['name']}")
 
         try:
-            search_request = FlextLdapModels.SearchRequest(**test_case["params"])
+            search_request = FlextLdapModels.SearchRequest(**test_case["params"])  # type: ignore[reportUnknownArgumentType]
             logger.info("   ✅ SearchRequest created successfully")
             logger.info(f"      Base DN: {search_request.base_dn}")
             logger.info(f"      Filter: {search_request.filter_str}")
@@ -238,7 +238,7 @@ def demonstrate_search_request_validation() -> None:
             logger.info(f"   ❌ Validation failed: {e}")
             success = False
 
-        expected = test_case["should_succeed"]
+        expected: bool = test_case["should_succeed"]  # type: ignore[reportUnknownVariableType]
         result_str = "Success" if success else "Failure"
         if success == expected:
             logger.info(f"   Result: As expected ({result_str})")
@@ -379,9 +379,9 @@ def main() -> int:
         demonstrate_input_sanitization()
         demonstrate_business_rule_validation()
 
-        logger.info("\n" + "=" * 60)
+        logger.info(f"\n{'=' * 60}")
         logger.info("✅ All validation patterns demonstrated successfully!")
-        logger.info("=" * 60)
+        logger.info(f"{'=' * 60}")
         logger.info("Key Takeaways:")
         logger.info("- Always validate DNs before LDAP operations")
         logger.info("- Validate and sanitize filters to prevent injection")

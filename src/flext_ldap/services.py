@@ -404,8 +404,8 @@ class FlextLdapServices(FlextService[None]):
             mock_results = FlextLdapModels.SearchResponse(
                 entries=[],  # Would be populated by infrastructure
                 total_count=0,
-                search_time=0.1,
-                is_complete=True,
+                time_elapsed=0.1,
+                has_more=False,
             )
 
             # Step 4: Domain processing of results
@@ -488,9 +488,8 @@ class FlextLdapServices(FlextService[None]):
 
             # Step 4: Simulate user creation (infrastructure layer)
             # In real implementation, this would call repository/infrastructure
-            mock_user = FlextLdapModels.User(
+            mock_user = FlextLdapModels.LdapUser(
                 dn=enriched_request.dn,
-                attributes=enriched_request.to_attributes(),
                 uid=enriched_request.uid,
                 cn=enriched_request.cn,
                 sn=enriched_request.sn,
@@ -500,8 +499,9 @@ class FlextLdapServices(FlextService[None]):
 
             # Step 5: Domain post-processing
             # Apply domain services for enrichment
-            FlextLdapDomain.DomainServices.calculate_user_display_name(mock_user)
-            # Note: This returns a string, but we need to set it on the user
+            # TODO: Implement domain service for user display name calculation
+            # display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(mock_user)
+            # mock_user.display_name = display_name
             # In real implementation, User entity would have display_name field
 
             logger.info(

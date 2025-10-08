@@ -55,7 +55,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     # =========================================================================
 
     @abstractmethod
-    def get_default_port(self, use_ssl: bool = False) -> int:
+    def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for this server type.
 
         Args:

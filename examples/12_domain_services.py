@@ -26,7 +26,6 @@ from __future__ import annotations
 import sys
 
 from flext_core import FlextLogger
-from flext_core.loggings import FlextLogger
 
 from flext_ldap import FlextLdapDomain, FlextLdapModels
 
@@ -291,7 +290,7 @@ def demonstrate_domain_services() -> None:
     logger.info("\n1. User Display Name Calculation:")
 
     # Test different scenarios
-    user_scenarios = [
+    user_scenarios = [  # type: ignore[reportUnknownVariableType]
         {
             "name": "User with display name",
             "user": FlextLdapModels.LdapUser(
@@ -323,16 +322,16 @@ def demonstrate_domain_services() -> None:
         },
     ]
 
-    for scenario in user_scenarios:
+    for scenario in user_scenarios:  # type: ignore[reportUnknownVariableType]
         display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(
-            scenario["user"]
+            scenario["user"]  # type: ignore[reportUnknownArgumentType]
         )
-        is_correct = display_name == scenario["expected"]
+        is_correct = display_name == scenario["expected"]  # type: ignore[reportUnknownVariableType]
         status = "✅" if is_correct else "❌"
 
-        logger.info(f"   {status} {scenario['name']}:")
+        logger.info(f"   {status} {scenario['name']}")  # type: ignore[reportUnknownVariableType]
         logger.info(f"      Result: {display_name}")
-        logger.info(f"      Expected: {scenario['expected']}")
+        logger.info(f"      Expected: {scenario['expected']}")  # type: ignore[reportUnknownVariableType]
 
 
 def demonstrate_specification_pattern_benefits() -> None:
@@ -441,9 +440,9 @@ def main() -> int:
         # 7. Domain Service patterns
         demonstrate_domain_service_patterns()
 
-        logger.info("\n" + "=" * 70)
+        logger.info(f"\n{'=' * 70}")
         logger.info("✅ Domain services demonstration completed!")
-        logger.info("=" * 70)
+        logger.info(f"{'=' * 70}")
 
         logger.info("\nKey Takeaways:")
         logger.info("  • FlextLdapDomain - Pure business logic layer")

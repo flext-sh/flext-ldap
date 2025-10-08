@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 logger = FlextLogger(__name__)

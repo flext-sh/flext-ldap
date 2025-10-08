@@ -532,8 +532,8 @@ def shared_ldap_client(
     # Disconnect when done
     try:
         client.disconnect()
-    except Exception:
-        pass  # Best effort cleanup
+    except Exception:  # noqa: S110 - Best effort cleanup
+        pass
 
 
 @pytest.fixture(scope="session")
