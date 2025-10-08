@@ -3,11 +3,11 @@
 .F
 =============================== warnings summary ===============================
 ../.venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952
-  /home/marlonsc/flext/.venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: tagMap is deprecated. Please use TAG_MAP instead.
+  ...venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: tagMap is deprecated. Please use TAG_MAP instead.
     warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
 
 ../.venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952
-  /home/marlonsc/flext/.venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: typeMap is deprecated. Please use TYPE_MAP instead.
+  ...venv/lib/python3.13/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: typeMap is deprecated. Please use TYPE_MAP instead.
     warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
 
 tests/unit/test_api_comprehensive.py::TestFlextLdapClientComprehensive::test_validate_filter_invalid
@@ -57,13 +57,13 @@ tests/unit/test_api_comprehensive.py::TestFlextLdapClientComprehensive::test_get
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:575: PydanticDeprecatedSince211: Accessing the 'model_computed_fields' attribute on the instance is deprecated. Instead, you should access this attribute from the model class. Deprecated in Pydantic V2.11 to be removed in V3.0.
+  ..flext-ldap/tests/unit/test_domain_functional.py:575: PydanticDeprecatedSince211: Accessing the 'model_computed_fields' attribute on the instance is deprecated. Instead, you should access this attribute from the model class. Deprecated in Pydantic V2.11 to be removed in V3.0.
     if not method.startswith("_") and callable(getattr(service, method))
 
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
 tests/unit/test_domain_functional.py::TestDomainFactoriesAndUtilities::test_domain_service_factory_patterns
-  /home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py:575: PydanticDeprecatedSince211: Accessing the 'model_fields' attribute on the instance is deprecated. Instead, you should access this attribute from the model class. Deprecated in Pydantic V2.11 to be removed in V3.0.
+  ..flext-ldap/tests/unit/test_domain_functional.py:575: PydanticDeprecatedSince211: Accessing the 'model_fields' attribute on the instance is deprecated. Instead, you should access this attribute from the model class. Deprecated in Pydantic V2.11 to be removed in V3.0.
     if not method.startswith("_") and callable(getattr(service, method))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

@@ -65,12 +65,13 @@ def setup_api() -> FlextLdap | None:
     )
     api = FlextLdap(config=config)
 
-    connect_result = api.connect()
-    if connect_result.is_failure:
-        logger.error(f"Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            return api
+    except Exception:
+        logger.exception("Connection failed")
         return None
-
-    return api
 
 
 def demonstrate_repository_pattern_basics() -> None:
@@ -99,13 +100,8 @@ def demonstrate_repository_pattern_basics() -> None:
     logger.info("   • exists(id) - Check entity existence")
 
 
-def demonstrate_user_repository(api: FlextLdap) -> None:  # noqa: ARG001
-    """Demonstrate UserRepository operations.
-
-    Args:
-        api: Connected FlextLdap instance
-
-    """
+def demonstrate_user_repository() -> None:
+    """Demonstrate UserRepository operations."""
     logger.info("\n=== UserRepository Operations ===")
 
     # Create UserRepository instance
@@ -143,13 +139,8 @@ def demonstrate_user_repository(api: FlextLdap) -> None:  # noqa: ARG001
     logger.info("   • Efficient for bulk operations")
 
 
-def demonstrate_group_repository(api: FlextLdap) -> None:  # noqa: ARG001
-    """Demonstrate GroupRepository operations.
-
-    Args:
-        api: Connected FlextLdap instance
-
-    """
+def demonstrate_group_repository() -> None:
+    """Demonstrate GroupRepository operations."""
     logger.info("\n=== GroupRepository Operations ===")
 
     # Create GroupRepository instance
@@ -385,11 +376,11 @@ def main() -> int:
         try:
             # 3. UserRepository
             if api:
-                demonstrate_user_repository(api)
+                demonstrate_user_repository()
 
             # 4. GroupRepository
             if api:
-                demonstrate_group_repository(api)
+                demonstrate_group_repository()
 
             # 5. Entity lifecycle
             demonstrate_repository_entity_lifecycle()

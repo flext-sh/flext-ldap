@@ -47,19 +47,23 @@ FLEXT_LDAP_LDAP_BASE_DN=dc=flext,dc=local
 The server is pre-loaded with test data from `tests/fixtures/ldap/01-initial-structure.ldif`:
 
 ### Organizational Units
+
 - `ou=users,dc=flext,dc=local` - User accounts
 - `ou=groups,dc=flext,dc=local` - Group definitions
 - `ou=services,dc=flext,dc=local` - Service accounts
 
 ### Test Users
+
 - `cn=test.user,ou=users,dc=flext,dc=local` - Standard test user
 - `cn=admin.user,ou=users,dc=flext,dc=local` - Admin test user
 
 ### Test Groups
+
 - `cn=developers,ou=groups,dc=flext,dc=local` - Developers group
 - `cn=admins,ou=groups,dc=flext,dc=local` - Administrators group
 
 ### Service Accounts
+
 - `cn=api-service,ou=services,dc=flext,dc=local` - API service account
 
 ## Testing with Real LDAP Server
@@ -146,6 +150,7 @@ make ldap-clean  # Removes volumes and containers
 ## Troubleshooting
 
 ### Server won't start
+
 ```bash
 # Check if port 3390 is in use
 lsof -i :3390
@@ -158,6 +163,7 @@ docker-compose ps
 ```
 
 ### Connection refused
+
 ```bash
 # Verify server is running
 make ldap-health
@@ -173,6 +179,7 @@ ldapsearch -x -H ldap://localhost:3390 \
 ```
 
 ### Data not loading
+
 ```bash
 # Check LDIF fixtures exist
 ls -la tests/fixtures/ldap/*.ldif

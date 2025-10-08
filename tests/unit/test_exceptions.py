@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextConstants
+
 from flext_ldap import FlextLdapExceptions
 from flext_ldap.constants import FlextLdapConstants
 
@@ -297,11 +299,11 @@ class TestFlextLdapExceptions:
         # Test with server URI
         error2 = exceptions.connection_failed(
             "Connection timeout",
-            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
         )
         assert isinstance(error2, Exception)
         assert (
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
             in str(error2)
         )
 

@@ -43,6 +43,7 @@ from flext_ldap import (
     FlextLdapConfig,
     FlextLdapConstants,
     FlextLdapExceptions,
+    FlextLdapModels,
 )
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -91,18 +92,13 @@ def ldap_connection(
     )
     api = FlextLdap(config=config)
 
-    # Connect
-    connect_result = api.connect()
-    if connect_result.is_failure:
-        msg = f"Connection failed: {connect_result.error}"
-        raise ConnectionError(msg)
-
+    # Use context manager for automatic connection/disconnection
     try:
-        yield api
-    finally:
-        # Always disconnect
-        if api.is_connected():
-            api.unbind()
+        with api:
+            yield api
+    except Exception as e:
+        msg = f"Connection failed: {e}"
+        raise ConnectionError(msg) from e
 
 
 def retry_with_backoff[T](
@@ -165,11 +161,12 @@ def demonstrate_context_manager() -> None:
             logger.info("✅ Connected via context manager")
 
             # Perform operations
-            result = api.search(
-                search_base=BASE_DN,
+            search_request = FlextLdapModels.SearchRequest.create(
+                base_dn=BASE_DN,
                 filter_str="(objectClass=*)",
                 attributes=["dn"],
             )
+            result = api.search(search_request)
 
             if result.is_success:
                 entries = result.unwrap()
@@ -275,11 +272,12 @@ def demonstrate_flext_result_patterns() -> None:
         with ldap_connection() as api:
             # Pattern 1: Check success before unwrap
             logger.info("\nPattern 1: Success check before unwrap")
-            result = api.search(
-                search_base=BASE_DN,
+            search_request = FlextLdapModels.SearchRequest.create(
+                base_dn=BASE_DN,
                 filter_str="(objectClass=*)",
                 attributes=["dn"],
             )
+            result = api.search(search_request)
 
             if result.is_success:
                 entries = result.unwrap()
@@ -293,11 +291,12 @@ def demonstrate_flext_result_patterns() -> None:
             def process_with_early_return() -> FlextResult[int]:
                 """Process with early return pattern."""
                 # Search for entries
-                search_result = api.search(
-                    search_base=BASE_DN,
+                search_request = FlextLdapModels.SearchRequest.create(
+                    base_dn=BASE_DN,
                     filter_str="(objectClass=organizationalUnit)",
                     attributes=["ou"],
                 )
+                search_result = api.search(search_request)
 
                 if search_result.is_failure:
                     err = search_result.error
@@ -320,11 +319,12 @@ def demonstrate_flext_result_patterns() -> None:
                     return FlextResult[str].fail("Not connected")
 
                 # Step 2: Search
-                search_result = api.search_one(
-                    search_base=BASE_DN,
+                search_request = FlextLdapModels.SearchRequest.create(
+                    base_dn=BASE_DN,
                     filter_str="(objectClass=*)",
                     attributes=["dn"],
                 )
+                search_result = api.search_one(search_request)
 
                 if search_result.is_failure:
                     err = search_result.error
@@ -368,12 +368,12 @@ def demonstrate_exception_handling() -> None:
         )
         api = FlextLdap(config=config)
 
-        result = api.connect()
-        if result.is_failure:
-            logger.info(f"   ✅ Error handled gracefully: {result.error}")
-        else:
-            logger.warning("   ⚠️  Unexpected success")
-            api.unbind()
+        # Test connection handling
+        try:
+            with api:
+                logger.warning("   ⚠️  Unexpected success")
+        except Exception as e:
+            logger.info(f"   ✅ Error handled gracefully: {e}")
 
     except Exception as e:
         logger.info(f"   ✅ Exception caught: {type(e).__name__}")
@@ -389,11 +389,12 @@ def demonstrate_performance_patterns() -> None:
             logger.info("\nPattern 1: Attribute filtering")
             start_time = time.time()
 
-            result = api.search(
-                search_base=BASE_DN,
+            search_request = FlextLdapModels.SearchRequest.create(
+                base_dn=BASE_DN,
                 filter_str="(objectClass=*)",
                 attributes=["dn"],  # Only DN, minimal data
             )
+            result = api.search(search_request)
 
             elapsed = time.time() - start_time
 

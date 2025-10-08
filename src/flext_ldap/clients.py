@@ -264,10 +264,6 @@ class FlextLdapClients(FlextService[None]):
             self.logger.exception("Unbind failed")
             return FlextResult[None].fail(f"Unbind failed: {e}")
 
-    def disconnect(self) -> FlextResult[None]:
-        """Disconnect from LDAP server (alias for unbind)."""
-        return self.unbind()
-
     def is_connected(self) -> bool:
         """Check if connected to LDAP server."""
         return self._connection is not None and self._connection.bound
@@ -281,17 +277,13 @@ class FlextLdapClients(FlextService[None]):
             if self._connection:
                 self._connection.search(
                     "",
-                    FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
+                    FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
                     self._search_scope,
                     attributes=["objectClass"],
                 )
             return FlextResult[bool].ok(True)
         except Exception as e:
             return FlextResult[bool].fail(f"Connection test failed: {e}")
-
-    def close_connection(self) -> FlextResult[None]:
-        """Close LDAP connection (alias for unbind)."""
-        return self.unbind()
 
     def get_connection_string(self) -> FlextResult[str]:
         """Get sanitized LDAP connection string."""
@@ -346,9 +338,10 @@ class FlextLdapClients(FlextService[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
+        scope: str = "subtree",
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform LDAP search - delegates to searcher."""
-        return self._get_searcher().search(base_dn, filter_str, attributes)
+        return self._get_searcher().search(base_dn, filter_str, attributes, scope)
 
     def search_one(
         self,
@@ -642,7 +635,8 @@ class FlextLdapClients(FlextService[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
-        _scope: str = "subtree",  # TODO @marlonsc: Implement scope support for LDAP search operations
+        scope: str = "subtree",
+        *,
         use_paging: bool = True,
     ) -> FlextResult[list]:
         """Universal search with automatic server-specific optimization."""
@@ -652,7 +646,7 @@ class FlextLdapClients(FlextService[None]):
 
             if not self.server_operations:
                 # Fall back to basic search
-                return self.search(base_dn, filter_str, attributes)
+                return self.search(base_dn, filter_str, attributes, scope)
 
             # Use server-specific search with paging if supported
             if use_paging and self.server_operations.supports_paged_results():
@@ -665,12 +659,12 @@ class FlextLdapClients(FlextService[None]):
                     base_dn=base_dn,
                     search_filter=filter_str,
                     attributes=attributes,
+                    scope=scope,
                     page_size=page_size,
                 )
 
             # Fall back to standard search
-            return self.search(base_dn, filter_str, attributes)
-
+            return self.search(base_dn, filter_str, attributes, scope)
         except Exception as e:
             return FlextResult[list].fail(f"Universal search failed: {e}")
 
@@ -678,9 +672,8 @@ class FlextLdapClients(FlextService[None]):
         self,
         base_dn: str,
         filter_str: str,
-        _controls: list | None = None,  # TODO: Implement LDAP controls support
         attributes: FlextTypes.StringList | None = None,
-        _scope: str = "subtree",  # TODO(@marlonsc): Implement scope support - https://github.com/flext-sh/flext-ldap/issues/TBD
+        scope: str = "subtree",
     ) -> FlextResult[list]:
         """Universal search with LDAP controls."""
         try:
@@ -688,7 +681,7 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[list].fail("LDAP connection not established")
 
             # For now, delegate to regular search - controls support can be added later
-            return self.search(base_dn, filter_str, attributes)
+            return self.search(base_dn, filter_str, attributes, scope)
 
         except Exception as e:
             return FlextResult[list].fail(f"Universal search with controls failed: {e}")
@@ -708,8 +701,6 @@ class FlextLdapClients(FlextService[None]):
     def delete_entry_universal(
         self,
         dn: str,
-        _controls: list
-        | None = None,  # TODO: Implement LDAP controls support for delete operations
     ) -> FlextResult[bool]:
         """Universal delete entry operation."""
         return self.delete_entry(dn)

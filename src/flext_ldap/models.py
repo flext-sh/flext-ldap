@@ -12,12 +12,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import ClassVar, override
 
-from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
+from flext_core import (
+    FlextConstants,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 from flext_ldif import FlextLdifModels
 from pydantic import (
     ConfigDict,
@@ -396,9 +401,10 @@ class FlextLdapModels(FlextModels):
         kind: str = Field(default="STRUCTURAL", description="Object class kind")
         is_obsolete: bool = Field(default=False, description="Obsolete flag")
 
-    @dataclass(frozen=True)
-    class ServerQuirks:
-        """LDAP server-specific quirks and behaviors."""
+    class ServerQuirks(FlextModels.Value):
+        """LDAP server-specific quirks and behaviors - Pydantic Value Object."""
+
+        model_config = ConfigDict(frozen=True)
 
         server_type: FlextLdapModels.LdapServerType
         case_sensitive_dns: bool = True
@@ -410,16 +416,17 @@ class FlextLdapModels(FlextModels):
         default_timeout: int = 30
         supports_start_tls: bool = True
         requires_explicit_bind: bool = False
-        attribute_name_mappings: FlextTypes.StringDict = field(default_factory=dict)
-        object_class_mappings: FlextTypes.StringDict = field(default_factory=dict)
-        dn_format_preferences: FlextTypes.StringList = field(default_factory=list)
-        search_scope_limitations: set[str] = field(default_factory=set)
-        filter_syntax_quirks: FlextTypes.StringList = field(default_factory=list)
-        modify_operation_quirks: FlextTypes.StringList = field(default_factory=list)
+        attribute_name_mappings: FlextTypes.StringDict = Field(default_factory=dict)
+        object_class_mappings: FlextTypes.StringDict = Field(default_factory=dict)
+        dn_format_preferences: FlextTypes.StringList = Field(default_factory=list)
+        search_scope_limitations: set[str] = Field(default_factory=set)
+        filter_syntax_quirks: FlextTypes.StringList = Field(default_factory=list)
+        modify_operation_quirks: FlextTypes.StringList = Field(default_factory=list)
 
-    @dataclass(frozen=True)
-    class SchemaDiscoveryResult:
-        """Result of LDAP schema discovery operation."""
+    class SchemaDiscoveryResult(FlextModels.Entity):
+        """Result of LDAP schema discovery operation - Pydantic Entity."""
+
+        # Note: Cannot use frozen=True with Entity (has default timestamp fields)
 
         server_info: FlextTypes.Dict
         server_type: FlextLdapModels.LdapServerType
@@ -478,16 +485,16 @@ class FlextLdapModels(FlextModels):
 
         @staticmethod
         def validate_email_field(value: str | None) -> str | None:
-            """Common email validation using centralized validation."""
-            validation_result: FlextResult[None] = FlextLdapValidations.validate_email(
-                str(value) if value is not None else ""
-            ).map(lambda _: None)
+            """Common email validation using flext-core FlextUtilities."""
+            if value is None:
+                return None
+
+            # Use flext-core validation directly (returns FlextResult[str])
+            validation_result = FlextUtilities.Validation.validate_email(value)
             if validation_result.is_failure:
                 exceptions = FlextLdapExceptions()
                 error_msg = validation_result.error or "Email validation failed"
-                raise exceptions.validation_error(
-                    error_msg, value=str(value) if value else "", field="email"
-                )
+                raise exceptions.validation_error(error_msg, value=value, field="email")
             return value
 
         @staticmethod
@@ -536,7 +543,7 @@ class FlextLdapModels(FlextModels):
     # CORE LDAP ENTITIES - Primary Domain Objects
     # =========================================================================
 
-    class LdapUser(EntityBase):
+    class LdapUser(FlextModels.Entity):
         """LDAP User entity with enterprise attributes and advanced Pydantic 2.11 features.
 
         **CENTRALIZED APPROACH**: All user operations follow centralized patterns:
@@ -564,15 +571,15 @@ class FlextLdapModels(FlextModels):
 
         # Organizational
         department: str | None = Field(
-            default=FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT,
+            default=FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT,
             description="Department",
         )
         title: str | None = Field(
-            default=FlextLdapConstants.LdapDefaults.DEFAULT_TITLE,
+            default=FlextLdapConstants.Defaults.DEFAULT_TITLE,
             description="Job title",
         )
         organization: str | None = Field(
-            default=FlextLdapConstants.LdapDefaults.DEFAULT_ORGANIZATION,
+            default=FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION,
             description="Organization",
         )
         organizational_unit: str | None = Field(
@@ -592,8 +599,12 @@ class FlextLdapModels(FlextModels):
 
         # Core enterprise fields
         status: str | None = Field(
-            default=FlextLdapConstants.LdapDefaults.DEFAULT_STATUS,
+            default=FlextLdapConstants.Defaults.DEFAULT_STATUS,
             description="User status",
+        )
+        additional_attributes: FlextTypes.Dict = Field(
+            default_factory=dict,
+            description="Additional LDAP attributes",
         )
         created_at: datetime | None = Field(
             default=None, description="Creation timestamp"
@@ -619,13 +630,13 @@ class FlextLdapModels(FlextModels):
             if v is None:
                 field_name = info.field_name
                 if field_name == "department":
-                    return FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT
+                    return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
                 if field_name == "title":
-                    return FlextLdapConstants.LdapDefaults.DEFAULT_TITLE
+                    return FlextLdapConstants.Defaults.DEFAULT_TITLE
                 if field_name == "organization":
-                    return FlextLdapConstants.LdapDefaults.DEFAULT_ORGANIZATION
+                    return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
                 if field_name == "status":
-                    return FlextLdapConstants.LdapDefaults.DEFAULT_STATUS
+                    return FlextLdapConstants.Defaults.DEFAULT_STATUS
             return v or ""
 
         @computed_field
@@ -678,6 +689,32 @@ class FlextLdapModels(FlextModels):
             """Validate email format using centralized validation."""
             return cls.validate_email_field(value)
 
+        @classmethod
+        def validate_dn_field(cls, v: str) -> str:
+            """Validate DN field using centralized validation."""
+            if not v or not v.strip():
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
+            return v
+
+        @classmethod
+        def validate_email_field(cls, v: str | None) -> str | None:
+            """Validate email field using centralized validation."""
+            if v is None:
+                return None
+            if not v or "@" not in v:
+                msg = "Invalid email format"
+                raise ValueError(msg)
+            return v
+
+        @classmethod
+        def validate_required_string_field(cls, v: str) -> str:
+            """Validate required string field."""
+            if not v or not v.strip():
+                msg = "Field cannot be empty"
+                raise ValueError(msg)
+            return v
+
         @field_validator("cn")
         @classmethod
         def validate_cn(cls, v: str) -> str:
@@ -720,8 +757,7 @@ class FlextLdapModels(FlextModels):
             # Validate organizational consistency
             if (
                 self.department
-                and self.department
-                != FlextLdapConstants.LdapDefaults.DEFAULT_DEPARTMENT
+                and self.department != FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
                 and not self.organizational_unit
             ):
                 msg = "Department requires organizational unit"
@@ -1024,7 +1060,7 @@ class FlextLdapModels(FlextModels):
                     f"User creation failed: {e}"
                 )
 
-    class Group(EntityBase):
+    class Group(FlextModels.Entity):
         """LDAP Group entity with membership management.
 
         **CENTRALIZED APPROACH**: All group operations follow centralized patterns:
@@ -1053,6 +1089,10 @@ class FlextLdapModels(FlextModels):
 
         # Core enterprise fields
         status: str | None = Field(default=None, description="Group status")
+        additional_attributes: FlextTypes.Dict = Field(
+            default_factory=dict,
+            description="Additional LDAP attributes",
+        )
         modified_at: str | None = Field(
             default=None,
             description="Last modification timestamp",
@@ -1249,14 +1289,6 @@ class FlextLdapModels(FlextModels):
         object_classes: FlextTypes.StringList = Field(
             default_factory=list,
             description="LDAP object classes",
-        )
-
-        # Test compatibility fields
-        created_timestamp: datetime | None = Field(
-            default=None, description="Creation timestamp (test compatibility)"
-        )
-        modified_timestamp: datetime | None = Field(
-            default=None, description="Modification timestamp (test compatibility)"
         )
 
         @field_validator("dn")
@@ -1469,7 +1501,7 @@ class FlextLdapModels(FlextModels):
 
         # Search limits - using centralized constants
         size_limit: int = Field(
-            default=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+            default=FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
             description="Maximum number of entries to return",
             ge=0,
         )
@@ -1479,7 +1511,7 @@ class FlextLdapModels(FlextModels):
             ge=0,
         )
 
-        # Paging - Optional for proper test compatibility
+        # Paging - Optional for paged LDAP search results
         page_size: int | None = Field(
             default=None,
             description="Page size for paged results",
@@ -1669,7 +1701,7 @@ class FlextLdapModels(FlextModels):
             cls,
             base_dn: str,
             filter_str: str | None = None,
-            scope: str = FlextLdapConstants.Scopes.SUBTREE,
+            scope: str = FlextConstants.Platform.LDAP_SCOPE_SUBTREE,
             attributes: FlextTypes.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Factory method with smart defaults from FlextLdapConstants.
@@ -1694,7 +1726,7 @@ class FlextLdapModels(FlextModels):
                     filter_str=filter_str,
                     scope=scope,
                     attributes=attributes or [],
-                    page_size=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+                    page_size=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                     paged_cookie=b"",
                 )
 
@@ -1708,12 +1740,12 @@ class FlextLdapModels(FlextModels):
 
             return cls.model_validate({
                 "base_dn": base_dn,
-                "search_filter": filter_str,
+                "filter_str": filter_str,
                 "scope": scope,
                 "attributes": attributes or [],
-                "page_size": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+                "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                 "paged_cookie": b"",
-                "size_limit": FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                "size_limit": FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
                 "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
             })
 
@@ -1745,13 +1777,17 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def set_entries_returned(cls, v: int, info: ValidationInfo) -> int:
             """Auto-calculate entries returned from entries list."""
-            if info.data and "entries" in info.data:
-                entries = info.data["entries"]
+            # Use proper Pydantic 2 ValidationInfo pattern - no .data access
+            try:
+                # Access through proper validation context
+                data = info.data or {}
+                entries = data.get("entries")
                 if isinstance(entries, list):
                     # Type-safe length calculation
                     return len(entries)
-                return 0
-            return v
+            except (AttributeError, KeyError):
+                pass
+            return v if isinstance(v, int) else 0
 
     class CreateUserRequest(Base, ValidationMixin):
         """LDAP User Creation Request entity."""
@@ -2088,10 +2124,10 @@ class FlextLdapModels(FlextModels):
         # Connection details
         server: str = Field(default="localhost", description="LDAP server hostname/IP")
         port: int = Field(
-            FlextLdapConstants.Protocol.DEFAULT_PORT,
+            FlextConstants.Platform.LDAP_DEFAULT_PORT,
             description="LDAP server port",
             ge=1,
-            le=FlextLdapConstants.Protocol.MAX_PORT,
+            le=FlextConstants.Network.MAX_PORT,
         )
         use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
         use_tls: bool = Field(default=False, description="Use StartTLS")
@@ -2109,7 +2145,7 @@ class FlextLdapModels(FlextModels):
             ge=1,
         )
         pool_size: int = Field(
-            FlextLdapConstants.Protocol.DEFAULT_POOL_SIZE,
+            FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
             description="Connection pool size",
             ge=1,
         )
@@ -2138,10 +2174,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_port(cls, v: int) -> int:
             """Validate port number."""
-            if v <= 0 or v > FlextLdapConstants.Protocol.MAX_PORT:
-                msg = (
-                    f"Port must be between 1 and {FlextLdapConstants.Protocol.MAX_PORT}"
-                )
+            if v <= 0 or v > FlextConstants.Network.MAX_PORT:
+                msg = f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}"
                 exceptions = FlextLdapExceptions()
                 raise exceptions.validation_error(msg, value=str(v), field="port")
             return v
@@ -2252,106 +2286,122 @@ class FlextLdapModels(FlextModels):
                 duration_ms=duration_ms,
             )
 
-    @dataclass(frozen=True)
-    class ConnectionConfig:
-        """LDAP connection configuration value object."""
+    class ConnectionConfig(FlextModels.Value):
+        """LDAP connection configuration value object - Pydantic Value Object."""
+
+        model_config = ConfigDict(frozen=True)
 
         server: str
-        port: int = FlextLdapConstants.Protocol.DEFAULT_PORT
+        port: int = FlextConstants.Platform.LDAP_DEFAULT_PORT
         use_ssl: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
         timeout: int = FlextConstants.Network.DEFAULT_TIMEOUT
 
+        @computed_field
         @property
         def server_uri(self) -> str:
             """Get server URI."""
             protocol = "ldaps://" if self.use_ssl else "ldap://"
             return f"{protocol}{self.server}:{self.port}"
 
+        @computed_field
         @property
         def password(self) -> str | None:
             """Get bind password."""
             return self.bind_password
 
+        @computed_field
         @property
         def base_dn(self) -> str:
             """Get base DN (default empty)."""
             return ""
 
-        def validate(self) -> FlextResult[None]:
-            """Validate connection configuration."""
-            # Explicit FlextResult error handling - NO try/except
+        @model_validator(mode="after")
+        def validate_config(self) -> FlextLdapModels.ConnectionConfig:
+            """Validate connection configuration using Pydantic validator."""
             if not self.server or not self.server.strip():
-                return FlextResult[None].fail("Server cannot be empty")
+                msg = "Server cannot be empty"
+                raise ValueError(msg)
             max_port = 65535
             if self.port <= 0 or self.port > max_port:
-                return FlextResult[None].fail("Invalid port number")
-            return FlextResult[None].ok(None)
+                msg = "Invalid port number"
+                raise ValueError(msg)
+            return self
 
-    @dataclass(frozen=True)
-    class ModifyConfig:
-        """LDAP modify operation configuration value object."""
+    class ModifyConfig(FlextModels.Command):
+        """LDAP modify operation configuration - Pydantic Command."""
+
+        model_config = ConfigDict(frozen=True)
 
         dn: str
         changes: dict[str, list[tuple[str, FlextTypes.StringList]]]
 
-        def validate(self) -> FlextResult[None]:
-            """Validate modify configuration."""
-            # Explicit FlextResult error handling - NO try/except
+        @model_validator(mode="after")
+        def validate_config(self) -> FlextLdapModels.ModifyConfig:
+            """Validate modify configuration using Pydantic validator."""
             if not self.dn or not self.dn.strip():
-                return FlextResult[None].fail("DN cannot be empty")
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
             if not self.changes:
-                return FlextResult[None].fail("Changes cannot be empty")
-            return FlextResult[None].ok(None)
+                msg = "Changes cannot be empty"
+                raise ValueError(msg)
+            return self
 
-    @dataclass(frozen=True)
-    class AddConfig:
-        """LDAP add operation configuration value object."""
+    class AddConfig(FlextModels.Command):
+        """LDAP add operation configuration - Pydantic Command."""
+
+        model_config = ConfigDict(frozen=True)
 
         dn: str
         attributes: dict[str, FlextTypes.StringList]
 
-        def validate(self) -> FlextResult[None]:
-            """Validate add configuration."""
-            # Explicit FlextResult error handling - NO try/except
+        @model_validator(mode="after")
+        def validate_config(self) -> FlextLdapModels.AddConfig:
+            """Validate add configuration using Pydantic validator."""
             if not self.dn or not self.dn.strip():
-                return FlextResult[None].fail("DN cannot be empty")
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
             if not self.attributes:
-                return FlextResult[None].fail("Attributes cannot be empty")
-            return FlextResult[None].ok(None)
+                msg = "Attributes cannot be empty"
+                raise ValueError(msg)
+            return self
 
-    @dataclass(frozen=True)
-    class DeleteConfig:
-        """LDAP delete operation configuration value object."""
+    class DeleteConfig(FlextModels.Command):
+        """LDAP delete operation configuration - Pydantic Command."""
+
+        model_config = ConfigDict(frozen=True)
 
         dn: str
 
-        def validate(self) -> FlextResult[None]:
-            """Validate delete configuration."""
-            # Explicit FlextResult error handling - NO try/except
+        @model_validator(mode="after")
+        def validate_config(self) -> FlextLdapModels.DeleteConfig:
+            """Validate delete configuration using Pydantic validator."""
             if not self.dn or not self.dn.strip():
-                return FlextResult[None].fail("DN cannot be empty")
-            return FlextResult[None].ok(None)
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
+            return self
 
-    @dataclass(frozen=True)
-    class SearchConfig:
-        """LDAP search operation configuration value object."""
+    class SearchConfig(FlextModels.Query):
+        """LDAP search operation configuration - Pydantic Query."""
+
+        model_config = ConfigDict(frozen=True)
 
         base_dn: str
         filter_str: str
         attributes: FlextTypes.StringList
 
-        def validate(self) -> FlextResult[None]:
-            """Validate search configuration."""
-            # Explicit FlextResult error handling - NO try/except
+        @model_validator(mode="after")
+        def validate_config(self) -> FlextLdapModels.SearchConfig:
+            """Validate search configuration using Pydantic validator."""
             if not self.base_dn or not self.base_dn.strip():
-                return FlextResult[None].fail("Base DN cannot be empty")
+                msg = "Base DN cannot be empty"
+                raise ValueError(msg)
             if not self.filter_str or not self.filter_str.strip():
-                return FlextResult[None].fail("Filter string cannot be empty")
-            if not self.attributes:
-                return FlextResult[None].fail("Attributes cannot be empty")
-            return FlextResult[None].ok(None)
+                msg = "Filter string cannot be empty"
+                raise ValueError(msg)
+            # Empty attributes list is valid in LDAP (returns only DN)
+            return self
 
     # =========================================================================
     # CQRS MESSAGE MODELS - Command Query Responsibility Segregation

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextTypes
+from flext_core import FlextConstants, FlextTypes
 
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
@@ -77,65 +77,7 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
-    def test_validate_email_success(
-        self, validations: FlextLdapValidations, sample_valid_email: str
-    ) -> None:
-        """Test successful email validation."""
-        result = validations.validate_email(sample_valid_email)
-
-        assert result.is_success
-        assert result.data is True
-
-    def test_validate_email_failure(
-        self, validations: FlextLdapValidations, sample_invalid_email: str
-    ) -> None:
-        """Test email validation failure."""
-        result = validations.validate_email(sample_invalid_email)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error and "email does not match required pattern" in result.error
-        ) or (result.error and "Invalid email format" in result.error)
-
-    def test_validate_email_empty(self, validations: FlextLdapValidations) -> None:
-        """Test email validation with empty string."""
-        result = validations.validate_email("")
-
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            (
-                result.error
-                and "email cannot be empty or whitespace only" in result.error
-            )
-            or (
-                result.error and "email does not match required pattern" in result.error
-            )
-            or (result.error and "Invalid email format" in result.error)
-        )
-
-    def test_validate_email_none(self, validations: FlextLdapValidations) -> None:
-        """Test email validation with None."""
-        result = validations.validate_email(None)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error and result.error and "Email cannot be None" in result.error
-
-    def test_validate_email_with_flext_models_error(
-        self, validations: FlextLdapValidations
-    ) -> None:
-        """Test email validation with FlextModels error."""
-        # Since FlextLdapValidations doesn't have _validate_with_flext_models,
-        # test the actual email validation behavior
-        result = validations.validate_email("invalid-email")
-
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error and "email does not match required pattern" in result.error
-        ) or (result.error and "Invalid email format" in result.error)
+    # validate_email tests removed - use flext-core FlextUtilities.Validation.validate_email directly
 
     def test_validate_filter_success(
         self, validations: FlextLdapValidations, sample_valid_filter: str
@@ -304,7 +246,7 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful server URI validation."""
         result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
 
         assert result.is_success
@@ -347,55 +289,11 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "URI cannot be None" in result.error
 
-    def test_validate_port_success(self, validations: FlextLdapValidations) -> None:
-        """Test successful port validation."""
-        result = validations.validate_port(FlextLdapConstants.Protocol.DEFAULT_PORT)
-
-        assert result.is_success
-        assert result.data is True
-
-    def test_validate_port_ldaps(self, validations: FlextLdapValidations) -> None:
-        """Test port validation with LDAPS port."""
-        result = validations.validate_port(636)
-
-        assert result.is_success
-        assert result.data is True
-
-    def test_validate_port_invalid(self, validations: FlextLdapValidations) -> None:
-        """Test port validation with invalid port."""
-        result = validations.validate_port(99999)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "Port must be between 1 and 65535" in result.error
-        )
-
-    def test_validate_port_negative(self, validations: FlextLdapValidations) -> None:
-        """Test port validation with negative port."""
-        result = validations.validate_port(-1)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "Port must be between 1 and 65535" in result.error
-        )
-
-    def test_validate_port_none(self, validations: FlextLdapValidations) -> None:
-        """Test port validation with None."""
-        result = validations.validate_port(None)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error and result.error and "Port cannot be None" in result.error
+    # validate_port tests removed - use flext-core FlextUtilities.Validation.validate_port directly
 
     def test_validate_timeout_success(self, validations: FlextLdapValidations) -> None:
         """Test successful timeout validation."""
-        result = validations.validate_timeout(FlextLdapConstants.DEFAULT_TIMEOUT)
+        result = validations.validate_timeout(FlextConstants.Network.DEFAULT_TIMEOUT)
 
         assert result.is_success
         assert result.data is True
@@ -683,8 +581,8 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful connection config validation."""
         config: FlextTypes.Dict = {
-            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -720,7 +618,7 @@ class TestFlextLdapValidations:
         """Test connection config validation with invalid fields."""
         config: FlextTypes.Dict = {
             "server": "invalid-uri",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -743,13 +641,12 @@ class TestFlextLdapValidations:
     def test_validations_integration_complete_workflow(
         self, validations: FlextLdapValidations
     ) -> None:
-        """Test complete validations workflow integration."""
-        # Test complete workflow
+        """Test complete validations workflow integration - LDAP-specific validations only."""
+        # Test complete workflow with LDAP-specific validations
         dn_result = validations.validate_dn("uid=testuser,ou=people,dc=example,dc=com")
         assert dn_result.is_success
 
-        email_result = validations.validate_email("testuser@example.com")
-        assert email_result.is_success
+        # Note: validate_email and validate_port removed - use flext-core FlextUtilities.Validation directly
 
         filter_result = validations.validate_filter("(objectClass=person)")
         assert filter_result.is_success
@@ -761,17 +658,12 @@ class TestFlextLdapValidations:
         assert attributes_result.is_success
 
         server_uri_result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
         assert server_uri_result.is_success
 
-        port_result = validations.validate_port(
-            FlextLdapConstants.Protocol.DEFAULT_PORT
-        )
-        assert port_result.is_success
-
         timeout_result = validations.validate_timeout(
-            FlextLdapConstants.DEFAULT_TIMEOUT
+            FlextConstants.Network.DEFAULT_TIMEOUT
         )
         assert timeout_result.is_success
 
@@ -788,16 +680,13 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test consistent error handling across validation methods."""
-        # Test consistent None handling
+        # Test consistent None handling - LDAP-specific validations only
         dn_result = validations.validate_dn(None)
         assert dn_result.is_failure
         assert dn_result.error is not None
         assert "None" in dn_result.error
 
-        email_result = validations.validate_email(None)
-        assert email_result.is_failure
-        assert email_result.error is not None
-        assert "None" in email_result.error
+        # email and port validation removed - use flext-core directly
 
         filter_result = validations.validate_filter(None)
         assert filter_result.is_failure
@@ -818,11 +707,6 @@ class TestFlextLdapValidations:
         assert server_uri_result.is_failure
         assert server_uri_result.error is not None
         assert "None" in server_uri_result.error
-
-        port_result = validations.validate_port(None)
-        assert port_result.is_failure
-        assert port_result.error is not None
-        assert "None" in port_result.error
 
         timeout_result = validations.validate_timeout(None)
         assert timeout_result.is_failure
@@ -850,20 +734,20 @@ class TestFlextLdapValidations:
         """Test validations performance with large datasets."""
         # Test large attributes list
         large_attributes = [
-            f"attr{i}" for i in range(FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE)
+            f"attr{i}"
+            for i in range(FlextLdapConstants.Connection.DEFAULT_SEARCH_PAGE_SIZE)
         ]
         attributes_result = validations.validate_attributes(large_attributes)
         assert attributes_result.is_success
 
-        # Test multiple validations
+        # Test multiple validations - LDAP-specific only
         for i in range(100):
             dn_result = validations.validate_dn(
                 f"uid=user{i},ou=people,dc=example,dc=com"
             )
             assert dn_result.is_success
 
-            email_result = validations.validate_email(f"user{i}@example.com")
-            assert email_result.is_success
+            # email validation removed - use flext-core directly
 
             filter_result = validations.validate_filter(f"(uid=user{i})")
             assert filter_result.is_success

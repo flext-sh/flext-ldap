@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
+from flext_core import FlextConstants, FlextTypes
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
@@ -38,11 +38,12 @@ class TestFlextLdapConfig:
 
         assert result.is_success
         assert isinstance(result.data, FlextLdapConfig)
-        assert (
-            result.data.get_effective_server_uri()
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
-        )
-        assert result.data.get_effective_bind_dn() == "cn=admin,dc=example,dc=com"
+        # Obsolete assertions - methods no longer exist in optimized API
+        # assert (
+        #     result.data.get_effective_server_uri()
+        #     == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+        # )
+        # assert result.data.get_effective_bind_dn() == "cn=admin,dc=example,dc=com"
 
     def test_create_connection_config_with_minimal_data(
         self,
@@ -53,7 +54,7 @@ class TestFlextLdapConfig:
         # Test with minimal config data - should succeed with defaults
         minimal_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
         }
@@ -64,7 +65,7 @@ class TestFlextLdapConfig:
         assert result.is_success
         assert isinstance(result.data, FlextLdapConfig)
         assert result.data.ldap_server_uri == "ldap://localhost"
-        assert result.data.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
+        assert result.data.ldap_port == FlextConstants.Platform.LDAP_DEFAULT_PORT
         assert result.data.ldap_bind_dn == "cn=admin,dc=example,dc=com"
 
     # Obsolete test - create_connection_config_from_env method no longer exists
@@ -78,7 +79,7 @@ class TestFlextLdapConfig:
     #     assert isinstance(result.data, dict)
     #     # The method uses the global instance with default values
     #     assert result.data["server"] == "ldap://localhost"
-    #     assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #     assert result.data["port"] == FlextConstants.Platform.LDAP_DEFAULT_PORT
     #     assert result.data["bind_dn"] is None  # Default value
     #     assert not result.data["base_dn"]  # Default value
 
@@ -95,7 +96,7 @@ class TestFlextLdapConfig:
     #         assert isinstance(result.data, dict)
     #         # Should have default values
     #         assert result.data["server"] == "ldap://localhost"
-    #         assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #         assert result.data["port"] == FlextConstants.Platform.LDAP_DEFAULT_PORT
     #         assert result.data["bind_dn"] is None
     #         assert not result.data["base_dn"]
 
@@ -250,7 +251,7 @@ class TestFlextLdapConfig:
         config = ldap_server_config.copy()
         config["server"] = config.pop(
             "server_uri",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
         )
 
         result = FlextLdapValidations.validate_connection_config(config)
@@ -426,7 +427,7 @@ class TestFlextLdapConfig:
 
         assert isinstance(config, FlextLdapConfig)
         assert config.ldap_server_uri == "ldap://localhost"
-        assert config.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
+        assert config.ldap_port == FlextConstants.Platform.LDAP_DEFAULT_PORT
 
     def test_get_default_search_config(self) -> None:
         """Test getting default search configuration."""
@@ -444,14 +445,14 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         base_config: FlextTypes.Dict = {
-            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "password": "admin123",
             "base_dn": "dc=example,dc=com",
         }
 
         override_config: FlextTypes.Dict = {
-            "server_uri": f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            "server_uri": f"ldap://newserver:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             "connection_timeout": 60,
         }
 
@@ -460,7 +461,7 @@ class TestFlextLdapConfig:
         assert result.is_success
         assert (
             result.data["server_uri"]
-            == f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"ldap://newserver:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
         assert result.data["bind_dn"] == "cn=admin,dc=example,dc=com"
         assert result.data["connection_timeout"] == 60
@@ -470,7 +471,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         base_config: FlextTypes.Dict = {
-            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
         }
 
@@ -546,7 +547,7 @@ class TestFlextLdapConfig:
         # Test consistent error handling with valid data
         conn_result = configs.create_from_connection_config_data({
             "server": "ldap://localhost",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "password",
         })
@@ -573,7 +574,7 @@ class TestFlextLdapConfig:
         # Test complete workflow with valid data
         conn_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -654,7 +655,12 @@ class TestFlextLdapConfig:
         """Test consistency validator - bind password required when bind DN specified."""
         import pytest
 
-        with pytest.raises(ValueError, match="Bind password is required"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapConfigurationError,
+            match="Bind password is required",
+        ):
             FlextLdapConfig(
                 ldap_bind_dn="cn=admin,dc=example,dc=com",
                 ldap_bind_password=None,  # Missing password
@@ -664,7 +670,12 @@ class TestFlextLdapConfig:
         """Test consistency validator - cache TTL must be positive."""
         import pytest
 
-        with pytest.raises(ValueError, match="Cache TTL must be positive"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapConfigurationError,
+            match="Cache TTL must be positive",
+        ):
             FlextLdapConfig(
                 ldap_enable_caching=True,
                 ldap_cache_ttl=0,  # Invalid TTL
@@ -704,58 +715,49 @@ class TestFlextLdapConfig:
         assert conn_config["use_ssl"] is True
         assert auth_config["bind_dn_configured"] is True
 
-    def test_get_pool_config(self) -> None:
-        """Test get_pool_config method."""
-        config = FlextLdapConfig(
-            ldap_pool_size=20,
-            ldap_pool_timeout=60,
-            ldap_retry_attempts=5,
-            ldap_retry_delay=3,  # Must be integer
-            ldap_bind_password="password",
-        )
+    # Obsolete test - get_pool_config method no longer exists in optimized API
+    # def test_get_pool_config(self) -> None:
+    #     """Test get_pool_config method."""
+    #     config = FlextLdapConfig(
+    #         ldap_pool_size=20,
+    #         ldap_pool_timeout=60,
+    #         ldap_retry_attempts=5,
+    #         ldap_retry_delay=3,  # Must be integer
+    #         ldap_bind_password="password",
+    #     )
 
-        pool_config = config.get_pool_config()
+    #     pool_config = config.get_pool_config()
 
-        assert pool_config["pool_size"] == 20
-        assert pool_config["pool_timeout"] == 60
-        assert pool_config["max_retries"] == 5
-        assert pool_config["retry_delay"] == 3
+    #     assert pool_config["pool_size"] == 20
+    #     assert pool_config["pool_timeout"] == 60
+    #     assert pool_config["max_retries"] == 5
+    #     assert pool_config["retry_delay"] == 3
 
-    def test_get_operation_config(self) -> None:
-        """Test get_operation_config method."""
-        config = FlextLdapConfig(
-            ldap_operation_timeout=45,
-            ldap_size_limit=500,
-            ldap_time_limit=20,
-            ldap_enable_caching=True,
-            ldap_cache_ttl=600,
-            ldap_bind_password="password",
-        )
+    # Obsolete test - get_operation_config method no longer exists in optimized API
+    # def test_get_operation_config(self) -> None:
+    #     """Test get_operation_config method."""
+    #     config = FlextLdapConfig(
+    #         ldap_operation_timeout=45,
+    #         ldap_size_limit=500,
+    #         ldap_time_limit=20,
+    #         ldap_enable_caching=True,
+    #         ldap_cache_ttl=600,
+    #         ldap_bind_password="password",
+    #     )
 
-        op_config = config.get_operation_config()
+    #     op_config = config.get_operation_config()
 
-        assert op_config["operation_timeout"] == 45
-        assert op_config["size_limit"] == 500
-        assert op_config["time_limit"] == 20
-        assert op_config["enable_caching"] is True
-        assert op_config["cache_ttl"] == 600
+    #     assert op_config["operation_timeout"] == 45
+    #     assert op_config["size_limit"] == 500
+    #     assert op_config["time_limit"] == 20
+    #     assert op_config["enable_caching"] is True
+    #     assert op_config["cache_ttl"] == 600
 
     def test_get_ldap_logging_config(self) -> None:
         """Test get_ldap_logging_config method."""
-        config = FlextLdapConfig(
-            ldap_enable_debug=True,
-            ldap_enable_trace=True,
-            ldap_log_queries=True,
-            ldap_mask_passwords=True,
-            ldap_bind_password="password",
-        )
+        import pytest
 
-        log_config = config.get_ldap_logging_config()
-
-        assert log_config["enable_debug"] is True
-        assert log_config["enable_trace"] is True
-        assert log_config["log_queries"] is True
-        assert log_config["mask_passwords"] is True
+        pytest.skip("Method get_ldap_logging_config removed during refactoring")
 
     def test_create_for_environment(self) -> None:
         """Test create_for_environment class method."""
@@ -842,11 +844,11 @@ class TestFlextLdapConfig:
 
     def test_create_connection_config_from_env_exception_coverage(self) -> None:
         """Test create_connection_config_from_env exception - covers lines 334-335."""
-        config = FlextLdapConfig()
-        result = config.create_connection_config_from_env()
-        # Should succeed with default values
-        assert result.is_success
-        assert isinstance(result.data, dict)
+        import pytest
+
+        pytest.skip(
+            "Method create_connection_config_from_env removed during refactoring"
+        )
 
     def test_get_effective_bind_password_none(self) -> None:
         """Test get_effective_bind_password when password is None - covers line 343."""
@@ -863,11 +865,11 @@ class TestFlextLdapConfig:
 
     def test_create_connection_config_from_env_exception(self) -> None:
         """Test create_connection_config_from_env exception - covers lines 385-386."""
-        # Test with valid minimal data
-        config = FlextLdapConfig()
-        result = config.create_connection_config_from_env()
-        # Should succeed or fail gracefully
-        assert isinstance(result.is_success, bool)
+        import pytest
+
+        pytest.skip(
+            "Method create_connection_config_from_env removed during refactoring"
+        )
 
     def test_create_search_config_exception(self) -> None:
         """Test create_search_config exception - covers lines 409-410."""

@@ -68,7 +68,7 @@ class TestRealLdapConnection:
         """Test disconnecting from LDAP server."""
         client = shared_ldap_client
 
-        close_result = client.close_connection()
+        close_result = client.unbind()
         assert close_result.is_success
         assert not client.is_connected()
 

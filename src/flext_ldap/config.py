@@ -15,10 +15,12 @@ Note: This file has type checking disabled due to limitations in the official ty
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from pathlib import Path
-from typing import Self
+from typing import ClassVar, Self
 
+from dependency_injector import providers
 from flext_core import (
     FlextConfig,
     FlextConstants,
@@ -48,6 +50,7 @@ class FlextLdapConfig(FlextConfig):
     - LDAP-specific handler configuration utilities
     - Enhanced singleton management for LDAP contexts
     - Comprehensive validation with business rules
+    - Dependency injection integration with providers.Configuration
 
     **Function**: Enterprise LDAP configuration management
         - LDAP connection, authentication, and operation settings
@@ -168,6 +171,14 @@ class FlextLdapConfig(FlextConfig):
         FlextLdapExceptions: LDAP-specific exceptions.
 
     """
+
+    # Dependency Injection integration (v1.1.0+)
+    _di_config_provider: ClassVar[providers.Configuration | None] = None
+    _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
+
+    # Singleton pattern with per-class support
+    _instances: ClassVar[dict[type, FlextConfig]] = {}
+    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     class LdapHandlerConfiguration:
         """LDAP-specific handler configuration utilities."""
@@ -315,9 +326,9 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_port: int = Field(
-        default=FlextLdapConstants.Protocol.DEFAULT_PORT,
+        default=FlextConstants.Platform.LDAP_DEFAULT_PORT,
         ge=1,
-        le=FlextLdapConstants.Protocol.MAX_PORT,
+        le=FlextConstants.Network.MAX_PORT,
         description="LDAP server port",
     )
 
@@ -343,20 +354,31 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_base_dn: str = Field(
-        default=FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_BASE,
+        default=FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
         description="LDAP base distinguished name for searches",
+    )
+
+    # LDAP Search Base Configuration
+    ldap_user_base_dn: str = Field(
+        default="ou=users",
+        description="LDAP base DN for user searches",
+    )
+
+    ldap_group_base_dn: str = Field(
+        default="ou=groups",
+        description="LDAP base DN for group searches",
     )
 
     # Connection Pooling Configuration using FlextLdapConstants for defaults
     ldap_pool_size: int = Field(
-        default=FlextLdapConstants.Protocol.DEFAULT_POOL_SIZE,
+        default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
         ge=1,
         le=50,
         description="LDAP connection pool size",
     )
 
     ldap_pool_timeout: int = Field(
-        default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
         ge=1,
         le=300,
         description="LDAP connection pool timeout in seconds",
@@ -364,7 +386,7 @@ class FlextLdapConfig(FlextConfig):
 
     # Operation Configuration using FlextLdapConstants for defaults
     ldap_connection_timeout: int = Field(
-        default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
         ge=1,
         le=300,
         description="LDAP connection timeout in seconds",
@@ -378,14 +400,14 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_size_limit: int = Field(
-        default=FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
+        default=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
         ge=1,
-        le=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+        le=FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
         description="LDAP search size limit",
     )
 
     ldap_time_limit: int = Field(
-        default=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
         ge=1,
         le=300,
         description="LDAP search time limit in seconds",
@@ -560,11 +582,11 @@ class FlextLdapConfig(FlextConfig):
         exceptions = FlextLdapExceptions()
 
         # Basic DN validation
-        if len(v) < FlextLdapConstants.LdapValidation.MIN_DN_LENGTH:
+        if len(v) < FlextLdapConstants.Validation.MIN_DN_LENGTH:
             msg = f"LDAP bind DN too short: {v}"
             raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
-        if len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
+        if len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP bind DN too long: {v}"
             raise exceptions.validation_error(msg, value=v, field="ldap_bind_dn")
 
@@ -580,7 +602,7 @@ class FlextLdapConfig(FlextConfig):
     @classmethod
     def validate_base_dn(cls, v: str) -> str:
         """Validate LDAP base DN format with length constraints."""
-        if v and len(v) > FlextLdapConstants.LdapValidation.MAX_DN_LENGTH:
+        if v and len(v) > FlextLdapConstants.Validation.MAX_DN_LENGTH:
             msg = f"LDAP base DN too long: {v}"
             exceptions = FlextLdapExceptions()
             raise exceptions.validation_error(msg, value=v, field="ldap_base_dn")
@@ -929,6 +951,23 @@ class FlextLdapConfig(FlextConfig):
         return None
 
     # =========================================================================
+    # DEPENDENCY INJECTION METHODS - Enhanced DI integration
+    # =========================================================================
+
+    @classmethod
+    def get_di_config_provider(cls) -> providers.Configuration:
+        """Get the dependency-injector Configuration provider for LDAP config."""
+        if cls._di_config_provider is None:
+            with cls._di_provider_lock:
+                if cls._di_config_provider is None:
+                    cls._di_config_provider = providers.Configuration()
+                    instance = cls._instances.get(cls)
+                    if instance is not None:
+                        config_dict = instance.model_dump()
+                        cls._di_config_provider.from_dict(config_dict)
+        return cls._di_config_provider
+
+    # =========================================================================
     # STATIC FACTORY METHODS - Enhanced configuration creation
     # =========================================================================
 
@@ -1002,7 +1041,7 @@ class FlextLdapConfig(FlextConfig):
                 filter_str=str(
                     data.get(
                         "filter_str",
-                        FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
+                        FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
                     )
                 ),
                 attributes=str_attributes,
@@ -1129,16 +1168,16 @@ class FlextLdapConfig(FlextConfig):
 
         """
         config: dict[str, str | int | FlextTypes.StringList] = {
-            "base_dn": FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_BASE,
-            "filter_str": FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
-            "scope": FlextLdapConstants.Scopes.SUBTREE,
+            "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
+            "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+            "scope": FlextConstants.Platform.LDAP_SCOPE_SUBTREE,
             "attributes": [
                 FlextLdapConstants.Attributes.COMMON_NAME,
                 FlextLdapConstants.Attributes.SURNAME,
                 FlextLdapConstants.Attributes.MAIL,
             ],
-            "size_limit": FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE,
-            "time_limit": FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
+            "size_limit": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+            "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
         }
         return FlextResult[dict[str, str | int | FlextTypes.StringList]].ok(config)
 
@@ -1191,147 +1230,6 @@ class FlextLdapConfig(FlextConfig):
             return FlextResult.fail(f"Invalid JSON: {e}")
         except Exception as e:
             return FlextResult.fail(f"Load failed: {e}")
-
-    # =========================================================================
-    # Enhanced flext-core Integration Methods
-    # =========================================================================
-
-    @staticmethod
-    def create_flext_ldap_config() -> FlextResult[FlextLdapConfig]:
-        """Create enhanced FlextLdapConfig with complete flext-core integration.
-
-        Demonstrates proper flext-core integration by creating an LDAP configuration
-        that integrates with FlextContainer, FlextBus, FlextDispatcher, and other
-        flext-core components for comprehensive LDAP management.
-
-        Returns:
-            FlextResult[FlextLdapConfig]: Configured FlextLdapConfig instance or error
-
-        Example:
-            >>> config_result = FlextLdapConfig.create_flext_ldap_config()
-            >>> if config_result.is_success:
-            ...     config = config_result.unwrap()
-            ...     # Use config with full flext-core integration
-            ...     connection_info = config.connection_info
-
-        """
-        try:
-            # Create base configuration with enhanced flext-core integration
-            config = FlextLdapConfig()
-
-            # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Add flext-core integration validation when method is implemented # noqa: FIX002
-
-            return FlextResult[FlextLdapConfig].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextLdapConfig].fail(
-                f"Failed to create flext-ldap config: {e}"
-            )
-
-    @staticmethod
-    def validate_flext_ldap_integration() -> FlextResult[FlextTypes.Dict]:
-        """Validate complete flext-ldap ecosystem setup with integration patterns.
-
-        Demonstrates comprehensive flext-ldap validation by checking that all
-        components are properly configured and integrated with each other.
-
-        Returns:
-            FlextResult[FlextTypes.Dict]: Validation results with detailed component status
-
-        Example:
-            >>> setup_result = FlextLdapConfig.validate_flext_ldap_integration()
-            >>> if setup_result.is_success:
-            ...     status = setup_result.unwrap()
-            ...     print(f"LDAP Client: {status['ldap_client']['status']}")
-            ...     print(f"Connection: {status['connection']['status']}")
-
-        """
-        validation_results = {
-            "config": {"status": "unknown", "details": ""},
-            "client": {"status": "unknown", "details": ""},
-            "connection": {"status": "unknown", "details": ""},
-            "authentication": {"status": "unknown", "details": ""},
-            "search": {"status": "unknown", "details": ""},
-        }
-
-        try:
-            # Validate configuration
-            config_result = FlextLdapConfig.create_flext_ldap_config()
-            if config_result.is_success:
-                config = config_result.unwrap()
-                validation_results["config"] = {
-                    "status": "valid",
-                    "details": f"LDAP Config: {config.__class__.__name__}, Environment: {config.environment}",
-                }
-            else:
-                validation_results["config"] = {
-                    "status": "invalid",
-                    "details": config_result.error or "Unknown error",
-                }
-
-            # Validate client integration
-            try:
-                validation_results["client"] = {
-                    "status": "available",
-                    "details": "LDAP client accessible",
-                }
-            except Exception as e:
-                validation_results["client"] = {"status": "error", "details": str(e)}
-
-            # Validate connection integration
-            try:
-                validation_results["connection"] = {
-                    "status": "available",
-                    "details": "LDAP connection accessible",
-                }
-            except Exception as e:
-                validation_results["connection"] = {
-                    "status": "error",
-                    "details": str(e),
-                }
-
-            # Validate authentication integration
-            try:
-                validation_results["authentication"] = {
-                    "status": "available",
-                    "details": "LDAP authentication accessible",
-                }
-            except Exception as e:
-                validation_results["authentication"] = {
-                    "status": "error",
-                    "details": str(e),
-                }
-
-            # Validate search integration
-            try:
-                validation_results["search"] = {
-                    "status": "available",
-                    "details": "LDAP search accessible",
-                }
-            except Exception as e:
-                validation_results["search"] = {"status": "error", "details": str(e)}
-
-            # Check overall health
-            all_valid = all(
-                result["status"] in {"valid", "available"}
-                for result in validation_results.values()
-            )
-            if all_valid:
-                return FlextResult[FlextTypes.Dict].ok({
-                    "overall_status": "healthy",
-                    "components": validation_results,
-                    "message": "All flext-ldap components are properly configured and accessible",
-                })
-            return FlextResult[FlextTypes.Dict].ok({
-                "overall_status": "degraded",
-                "components": validation_results,
-                "message": "Some flext-ldap components have issues - check details",
-            })
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
-                f"Flext-ldap setup validation failed: {e}"
-            )
 
 
 __all__ = [

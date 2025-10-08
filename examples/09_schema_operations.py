@@ -40,6 +40,7 @@ from pydantic import SecretStr
 from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
+    FlextLdapModels,
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
@@ -68,12 +69,13 @@ def setup_api() -> FlextLdap | None:
     )
     api = FlextLdap(config=config)
 
-    connect_result = api.connect()
-    if connect_result.is_failure:
-        logger.error(f"Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            return api
+    except Exception:
+        logger.exception("Connection failed")
         return None
-
-    return api
 
 
 def demonstrate_server_detection(api: FlextLdap) -> str | None:
@@ -278,11 +280,12 @@ def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
     logger.info(f"\n1. Searching schema subentry: {schema_dn}")
 
     # Search for schema subentry
-    result = api.search(
-        search_base=schema_dn,
+    search_request = FlextLdapModels.SearchRequest.create(
+        base_dn=schema_dn,
         filter_str="(objectClass=*)",
         attributes=["objectClasses", "attributeTypes", "ldapSyntaxes", "matchingRules"],
     )
+    result = api.search(search_request)
 
     if result.is_success:
         entries = result.unwrap()

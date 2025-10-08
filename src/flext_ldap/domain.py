@@ -10,10 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+import re
+
+from flext_core import FlextLogger, FlextResult, FlextUtilities
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.validations import FlextLdapValidations
 
 logger = FlextLogger(__name__)
 
@@ -31,40 +34,30 @@ class FlextLdapDomain:
         @staticmethod
         def is_valid_username(username: str) -> bool:
             """Check if username meets domain requirements."""
-            min_length = FlextLdapConstants.LdapDefaults.MIN_USERNAME_LENGTH
+            min_length = FlextLdapConstants.Defaults.MIN_USERNAME_LENGTH
             if not username or len(username.strip()) < min_length:
                 return False
 
             # Check for valid characters (alphanumeric, underscore, dash)
-            import re
 
             return bool(re.match(r"^[a-zA-Z0-9_-]+$", username))
 
         @staticmethod
         def is_valid_email(email: str) -> bool:
-            """Check if email format is valid."""
-            if not email or "@" not in email:
-                return False
-
-            # Basic email validation
-            import re
-
-            pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-            return bool(re.match(pattern, email))
+            """Check if email format is valid - delegates to flext-core."""
+            # Use flext-core validation (returns FlextResult[str])
+            validation_result = FlextUtilities.Validation.validate_email(email)
+            return validation_result.is_success
 
         @staticmethod
         def meets_password_policy(password: str) -> FlextResult[bool]:
-            """Check if password meets domain security requirements."""
-            if not password:
-                return FlextResult[bool].fail("Password cannot be empty")
+            """Check if password meets domain security requirements - delegates basic validation."""
+            # First check basic password validation (length) via FlextLdapValidations
+            basic_validation = FlextLdapValidations.validate_password(password)
+            if basic_validation.is_failure:
+                return basic_validation  # Return the validation error
 
-            min_length = FlextLdapConstants.LdapValidation.MIN_PASSWORD_LENGTH
-            if len(password) < min_length:
-                return FlextResult[bool].fail(
-                    f"Password must be at least {min_length} characters"
-                )
-
-            # Check for complexity
+            # Domain-specific complexity requirements (beyond basic validation)
             has_upper = any(c.isupper() for c in password)
             has_lower = any(c.islower() for c in password)
             has_digit = any(c.isdigit() for c in password)
@@ -103,11 +96,13 @@ class FlextLdapDomain:
         @staticmethod
         def is_valid_group_name(name: str) -> bool:
             """Check if group name is valid."""
-            if not name or len(name.strip()) < 2:
+            if (
+                not name
+                or len(name.strip()) < FlextLdapConstants.Defaults.MIN_GROUP_NAME_LENGTH
+            ):
                 return False
 
             # Check for valid characters
-            import re
 
             return bool(re.match(r"^[a-zA-Z0-9_-]+$", name))
 
@@ -125,8 +120,6 @@ class FlextLdapDomain:
                 r"\*[\*]*",  # Multiple consecutive asterisks
                 r"[\(\)]\s*[\(\)]",  # Nested parentheses without content
             ]
-
-            import re
 
             for pattern in dangerous_patterns:
                 if re.search(pattern, filter_str):
@@ -232,7 +225,6 @@ class FlextLdapDomain:
             username = base_name.lower().replace(" ", "_")
 
             # Remove invalid characters
-            import re
 
             username = re.sub(r"[^a-zA-Z0-9_-]", "", username)
 

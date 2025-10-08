@@ -115,16 +115,9 @@ class TestFlextLdapClientsComprehensive:
 
     def test_validate_connection_not_connected(self) -> None:
         """Test _validate_connection when not connected."""
-        client = FlextLdapClients()
+        import pytest
 
-        result = client._validate_connection()
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        pytest.skip("Method _validate_connection removed during refactoring")
 
     # Obsolete test removed - _search_user_by_username method no longer exists
     # Use search_users method instead
@@ -391,7 +384,7 @@ class TestFlextLdapClientsComprehensive:
         """Test close_connection when not connected."""
         client = FlextLdapClients()
 
-        result = client.close_connection()
+        result = client.unbind()
         assert result.is_success
         assert result.data is None
 
@@ -908,7 +901,7 @@ class TestFlextLdapClientsConnection:
     def test_disconnect_before_connect(self) -> None:
         """Test disconnect returns success even if not connected."""
         client = FlextLdapClients()
-        result = client.disconnect()
+        result = client.unbind()
         # Should succeed gracefully (idempotent)
         assert result.is_success
 
@@ -934,7 +927,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert client.is_connected()
 
         # Cleanup
-        client.disconnect()
+        client.unbind()
 
     def test_connect_invalid_credentials(
         self, clean_ldap_container: FlextTypes.Dict
@@ -987,7 +980,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert client.is_connected()
 
         # Disconnect
-        disconnect_result = client.disconnect()
+        disconnect_result = client.unbind()
         assert disconnect_result.is_success
         assert not client.is_connected()
 
@@ -1007,7 +1000,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert client.is_connected()
 
         # Disconnect
-        disconnect_result = client.disconnect()
+        disconnect_result = client.unbind()
         assert disconnect_result.is_success
         assert not client.is_connected()
 
@@ -1021,7 +1014,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert client.is_connected()
 
         # Cleanup
-        client.disconnect()
+        client.unbind()
 
     def test_test_connection_success(
         self, clean_ldap_container: FlextTypes.Dict
@@ -1042,7 +1035,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert result.value is True
 
         # Cleanup
-        client.disconnect()
+        client.unbind()
 
     def test_test_connection_not_connected(self) -> None:
         """Test test_connection fails when not connected."""
@@ -1071,7 +1064,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert bind_result.is_success
 
         # Cleanup
-        client.disconnect()
+        client.unbind()
 
     def test_unbind_after_connect(self, clean_ldap_container: FlextTypes.Dict) -> None:
         """Test unbind operation after connection."""
@@ -1111,7 +1104,7 @@ class TestFlextLdapClientsConnectionIntegration:
         assert session_id_1 == session_id_2
 
         # Disconnect
-        client.disconnect()
+        client.unbind()
 
         # Session ID should still be same
         session_id_3 = client.session_id
@@ -1138,13 +1131,13 @@ class TestFlextLdapClientsConnectionEdgeCases:
         )
 
         # Disconnect multiple times
-        result1 = client.disconnect()
+        result1 = client.unbind()
         assert result1.is_success
 
-        result2 = client.disconnect()
+        result2 = client.unbind()
         assert result2.is_success
 
-        result3 = client.disconnect()
+        result3 = client.unbind()
         assert result3.is_success
 
     def test_connect_overrides_config(
@@ -1171,7 +1164,7 @@ class TestFlextLdapClientsConnectionEdgeCases:
         assert client.is_connected()
 
         # Cleanup
-        client.disconnect()
+        client.unbind()
 
 
 @pytest.mark.unit
@@ -1256,7 +1249,7 @@ class TestFlextLdapClientsAuthenticationIntegration:
     ) -> None:
         """Test authentication handles disconnection gracefully."""
         # Disconnect the client
-        authenticated_client.disconnect()
+        authenticated_client.unbind()
 
         result = authenticated_client.authenticate_user(
             username="testuser", password="password123"
@@ -1583,7 +1576,7 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search handles disconnection gracefully."""
         # Disconnect the client
-        authenticated_client.disconnect()
+        authenticated_client.unbind()
 
         search_request = FlextLdapModels.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),

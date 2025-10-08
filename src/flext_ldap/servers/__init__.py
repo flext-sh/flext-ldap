@@ -183,7 +183,7 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         if not ops:
             return FlextResult[dict[str, object]].fail(
-                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
             )
         return ops.get_root_dse_attributes(connection)
 
@@ -201,7 +201,7 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         if not ops:
             return FlextResult[list[str]].fail(
-                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
             )
         return ops.get_supported_controls(connection)
 
@@ -223,7 +223,7 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         if not ops:
             return FlextResult[bool].fail(
-                FlextLdapConstants.LdapMessages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
             )
         return ops.validate_entry_for_server(entry, server_type)
 

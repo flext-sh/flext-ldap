@@ -21,11 +21,10 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
-from ldap3 import SUBTREE
+from ldap3 import BASE, LEVEL, SUBTREE
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 if TYPE_CHECKING:
@@ -113,6 +112,7 @@ class FlextLdapSearch(FlextService[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextTypes.StringList | None = None,
+        scope: str = "subtree",
         page_size: int = 0,
         paged_cookie: bytes | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
@@ -122,11 +122,9 @@ class FlextLdapSearch(FlextService[None]):
             base_dn: Base DN for search.
             filter_str: LDAP search filter.
             attributes: List of attributes to retrieve.
+            scope: Search scope ("base", "level", or "subtree").
             page_size: Page size for paged search.
             paged_cookie: Cookie for paged search.
-
-        Returns:
-            FlextResult containing Entry models or error.
 
         """
         try:
@@ -135,11 +133,14 @@ class FlextLdapSearch(FlextService[None]):
                     "LDAP connection not established",
                 )
 
+            # Convert scope string to ldap3 constant
+            ldap3_scope = self._get_ldap3_scope(scope)
+
             # Perform search
             success: bool = self._connection.search(
                 base_dn,
                 filter_str,
-                SUBTREE,
+                ldap3_scope,
                 attributes=attributes,
                 paged_size=page_size if page_size > 0 else None,
                 paged_cookie=paged_cookie,
@@ -292,8 +293,8 @@ class FlextLdapSearch(FlextService[None]):
 
             success: bool = self._connection.search(
                 dn,
-                FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
-                FlextLdapTypes.BASE,
+                FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                "BASE",
                 attributes=["*"],
             )
 
@@ -347,8 +348,8 @@ class FlextLdapSearch(FlextService[None]):
 
             success: bool = self._connection.search(
                 dn,
-                FlextLdapConstants.LdapDefaults.DEFAULT_SEARCH_FILTER,
-                FlextLdapTypes.BASE,
+                FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                "BASE",
                 attributes=["*"],
             )
 
@@ -399,14 +400,28 @@ class FlextLdapSearch(FlextService[None]):
             member_dns=getattr(entry, "member", []) if hasattr(entry, "member") else [],
         )
 
-    def _get_connection(self) -> Connection | None:
-        """Get the LDAP connection from parent or direct context."""
-        if self._parent and hasattr(self._parent, "_connection"):
-            parent_connection: Connection | None = getattr(
-                self._parent, "_connection", None
-            )
-            return parent_connection
-        return self._connection
+    def _get_ldap3_scope(self, scope: str) -> str:
+        """Convert scope string to ldap3 scope constant.
+
+        Args:
+            scope: Scope string ("base", "level", or "subtree").
+
+        Returns:
+            ldap3 scope constant.
+
+        Raises:
+            ValueError: If scope is invalid.
+
+        """
+        scope_map = {
+            "base": BASE,
+            "level": LEVEL,
+            "subtree": SUBTREE,
+        }
+        if scope not in scope_map:
+            msg = f"Invalid scope: {scope}. Must be one of: base, level, subtree"
+            raise ValueError(msg)
+        return scope_map[scope]
 
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""

@@ -54,14 +54,15 @@ def demonstrate_connection() -> FlextLdap | None:
 
     config = api.config
     logger.info(f"Connecting to {config.ldap_server_uri}:{config.ldap_port}...")
-    connect_result: FlextResult[bool] = api.connect()
 
-    if connect_result.is_failure:
-        logger.error(f"❌ Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            logger.info("✅ Connected successfully")
+            return api
+    except Exception:
+        logger.exception("❌ Connection failed")
         return None
-
-    logger.info("✅ Connected successfully")
-    return api
 
 
 def demonstrate_context_manager() -> None:

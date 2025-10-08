@@ -35,7 +35,7 @@ from typing import Final
 from flext_core import FlextLogger
 from pydantic import SecretStr
 
-from flext_ldap import FlextLdap, FlextLdapConfig
+from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -66,28 +66,24 @@ def demonstrate_basic_connection_lifecycle() -> None:
     api = FlextLdap(config=config)
 
     logger.info("\n1. Connecting to LDAP server...")
-    connect_result = api.connect()
-
-    if connect_result.is_failure:
-        logger.error(f"   ❌ Connection failed: {connect_result.error}")
-        return
-
-    logger.info("   ✅ Connected successfully")
-
-    # Use connection
-    logger.info("\n2. Using connection...")
     try:
+        logger.info("   ✅ Connected successfully")
+
+        # Use connection
+        logger.info("\n2. Using connection...")
         # Perform operation to verify connection
-        search_result = api.search(
-            search_base=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
+        search_request = FlextLdapModels.SearchRequest.create(
+            base_dn=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
         )
+        search_result = api.search(search_request)
 
         if search_result.is_success:
             entries = search_result.unwrap()
             logger.info(f"   ✅ Connection active - found {len(entries)} entries")
         else:
             logger.warning(f"   ⚠️  Search failed: {search_result.error}")
-
+    except Exception as e:
+        logger.exception(f"Connection test failed: {e}")
     finally:
         # Always disconnect (resource cleanup)
         logger.info("\n3. Disconnecting...")
@@ -114,17 +110,18 @@ def demonstrate_connection_state_monitoring() -> None:
     logger.info(f"   Is connected: {api.is_connected()}")
 
     logger.info("\n2. Connecting...")
-    connect_result = api.connect()
-
-    if connect_result.is_success:
+    try:
         logger.info("   ✅ Connection established")
         logger.info(f"   Is connected: {api.is_connected()}")
 
         logger.info("\n3. Performing health check...")
         # Simple health check - try to search root DSE
-        health_result = api.search(
-            search_base="", filter_str="(objectClass=*)", attributes=["*"]
+        health_request = FlextLdapModels.SearchRequest(
+            base_dn="",
+            filter_str="(objectClass=*)",
+            attributes=["*"],
         )
+        health_result = api.search(health_request)
 
         if health_result.is_success:
             logger.info("   ✅ Health check passed - connection is healthy")
@@ -135,8 +132,8 @@ def demonstrate_connection_state_monitoring() -> None:
         api.unbind()
         logger.info(f"   Is connected: {api.is_connected()}")
 
-    else:
-        logger.error(f"   ❌ Connection failed: {connect_result.error}")
+    except Exception as e:
+        logger.exception(f"   ❌ Connection failed: {e}")
 
 
 def demonstrate_connection_error_handling() -> None:

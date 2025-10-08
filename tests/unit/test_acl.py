@@ -192,7 +192,7 @@ class TestFlextLdapAclConverters:
         """Test unified to OpenLDAP conversion failure."""
         # Test the actual convert_acl method with invalid data
         result = acl_converters.convert_acl(
-            acl_content="invalid_acl_content",
+            _acl_content="invalid_acl_content",
             source_format="unified",
             target_format="openldap",
         )
@@ -208,7 +208,7 @@ class TestFlextLdapAclConverters:
         """Test successful unified to Oracle conversion."""
         # Test the actual convert_acl method
         result = acl_converters.convert_acl(
-            acl_content=str(sample_acl_data["unified_acl"]),
+            _acl_content=str(sample_acl_data["unified_acl"]),
             source_format="unified",
             target_format="oracle",
         )
@@ -223,7 +223,7 @@ class TestFlextLdapAclConverters:
         """Test unified to Oracle conversion failure."""
         # Test the actual convert_acl method with invalid data
         result = acl_converters.convert_acl(
-            acl_content="invalid_acl_content",
+            _acl_content="invalid_acl_content",
             source_format="unified",
             target_format="oracle",
         )
@@ -239,7 +239,7 @@ class TestFlextLdapAclConverters:
         """Test successful OpenLDAP to unified conversion."""
         # Test the actual convert_acl method
         result = acl_converters.convert_acl(
-            acl_content=str(sample_acl_data["openldap_aci"]),
+            _acl_content=str(sample_acl_data["openldap_aci"]),
             source_format="openldap",
             target_format="unified",
         )
@@ -254,7 +254,7 @@ class TestFlextLdapAclConverters:
         """Test OpenLDAP to unified conversion failure."""
         # Test the actual convert_acl method with invalid data
         result = acl_converters.convert_acl(
-            acl_content="invalid acl format",
+            _acl_content="invalid acl format",
             source_format="openldap",
             target_format="unified",
         )
@@ -312,7 +312,7 @@ class TestFlextLdapAclConverters:
     ) -> None:
         """Test conversion between unsupported formats."""
         result = acl_converters.convert_acl(
-            acl_content=str(sample_acl_data["unified_acl"]),
+            _acl_content=str(sample_acl_data["unified_acl"]),
             source_format="unsupported",
             target_format="openldap",
         )
@@ -326,7 +326,7 @@ class TestFlextLdapAclConverters:
         """Test validating valid ACL format."""
         # Test the actual convert_acl method with valid data
         result = acl_converters.convert_acl(
-            acl_content='{"target": "dc=example,dc=com"}',
+            _acl_content='{"target": "dc=example,dc=com"}',
             source_format="unified",
             target_format="openldap",
         )
@@ -340,7 +340,7 @@ class TestFlextLdapAclConverters:
         """Test validating invalid ACL format."""
         # Test the actual convert_acl method with invalid data
         result = acl_converters.convert_acl(
-            acl_content='{"invalid": "data"}',
+            _acl_content='{"invalid": "data"}',
             source_format="unified",
             target_format="openldap",
         )
@@ -2125,7 +2125,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
-        assert result.data.target.target_type == "entry"
+        assert result.data.target.target_type == "dn"  # dn.exact= target
         assert result.data.target.dn_pattern == "cn=test,dc=example,dc=com"
 
     def test_parse_default_target(self) -> None:

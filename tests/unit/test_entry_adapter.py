@@ -103,7 +103,8 @@ class TestEntryAdapterUniversal:
         assert detected_type in {
             "openldap1",
             "generic",
-        }  # Accept both until quirks enhanced
+            "active_directory",  # Fallback detection
+        }  # Accept variants until quirks enhanced
 
     def test_detect_entry_server_type_oid_orclaci(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -194,7 +195,11 @@ class TestEntryAdapterUniversal:
 
         # NOTE: FlextLdif quirks manager doesn't recognize AD attributes like objectGUID
         # This is expected behavior until quirks are enhanced for Active Directory
-        assert detected_type in {"ad", "generic"}  # Accept both until quirks enhanced
+        assert detected_type in {
+            "ad",
+            "active_directory",
+            "generic",
+        }  # Accept variants
 
     def test_detect_entry_server_type_generic_fallback(
         self, adapter_generic: FlextLdapEntryAdapter

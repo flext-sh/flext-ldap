@@ -73,12 +73,13 @@ def setup_api() -> FlextLdap | None:
     )
     api = FlextLdap(config=config)
 
-    connect_result = api.connect()
-    if connect_result.is_failure:
-        logger.error(f"Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            return api
+    except Exception:
+        logger.exception("Connection failed")
         return None
-
-    return api
 
 
 def create_sample_ldif_file() -> Path:
@@ -188,11 +189,12 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     # Search for entries to export
     logger.info("Searching for entries to export...")
-    search_result = api.search(
-        search_base=BASE_DN,
+    search_request = FlextLdapModels.SearchRequest.create(
+        base_dn=BASE_DN,
         filter_str="(objectClass=person)",
         attributes=["cn", "sn", "mail", "uid", "objectClass"],
     )
+    search_result = api.search(search_request)
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
