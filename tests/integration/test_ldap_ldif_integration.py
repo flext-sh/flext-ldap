@@ -52,7 +52,7 @@ def ldap_client() -> Generator[FlextLdapClients]:
 
     yield client
 
-    client.close_connection()
+    client.unbind()
 
 
 @pytest.fixture

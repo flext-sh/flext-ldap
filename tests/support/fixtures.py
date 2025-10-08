@@ -259,7 +259,7 @@ def shared_ldap_client(
     try:
         yield client
     finally:
-        client.close_connection()
+        client.unbind()
 
 
 @pytest.fixture

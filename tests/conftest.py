@@ -456,7 +456,7 @@ def clean_ldap_container(
 
     if status.is_failure or status.value.status.value != "running":
         # Container not running - start it via docker-compose
-        compose_file = "/home/marlonsc/flext/docker/docker-compose.openldap.yml"
+        compose_file = "..docker/docker-compose.openldap.yml"
         start_result = docker_control.compose_up(compose_file, "openldap")
 
         if start_result.is_failure:
@@ -531,7 +531,7 @@ def shared_ldap_client(
 
     # Disconnect when done
     try:
-        client.disconnect()
+        client.unbind()
     except Exception as e:
         # Log disconnection error but don't fail the test
         import logging

@@ -67,12 +67,13 @@ def setup_api() -> FlextLdap | None:
     )
     api = FlextLdap(config=config)
 
-    connect_result = api.connect()
-    if connect_result.is_failure:
-        logger.error(f"Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            return api
+    except Exception:
+        logger.exception("Connection failed")
         return None
-
-    return api
 
 
 def demonstrate_basic_search(api: FlextLdap) -> None:

@@ -3,7 +3,7 @@
   "time": "1758041044732",
   "generalDiagnostics": [
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -19,7 +19,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -35,7 +35,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -51,7 +51,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -67,7 +67,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -83,7 +83,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -99,7 +99,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -115,7 +115,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -131,7 +131,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {

@@ -9,7 +9,7 @@
 # Copyright (c) 2025 FLEXT Team. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-version: '3.8'
+version: "3.8"
 
 services:
   flext-openldap-test:
@@ -46,8 +46,8 @@ services:
 
     # Port mapping (non-standard port to avoid conflicts)
     ports:
-      - "3390:389"     # LDAP
-      - "3636:636"     # LDAPS (not used but available)
+      - "3390:389" # LDAP
+      - "3636:636" # LDAPS (not used but available)
 
     # Volume mounts for persistence
     volumes:
@@ -57,7 +57,11 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -D 'cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local' -w 'REDACTED_LDAP_BIND_PASSWORD123' -b 'dc=flext,dc=local' || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "ldapsearch -x -H ldap://localhost:389 -D 'cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local' -w 'REDACTED_LDAP_BIND_PASSWORD123' -b 'dc=flext,dc=local' || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -8,13 +8,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
+
+if TYPE_CHECKING:
+    from ldap3 import Connection
 
 
 class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
@@ -102,8 +106,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
                     # Split by " by " to get individual rules
                     for rule in by_rules.split(" by "):
-                        rule = rule.strip()
-                        if rule:
+                        rule_stripped = rule.strip()
+                        if rule_stripped:
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
                             if len(parts) == FlextLdapConstants.Parsing.ACL_RULE_PARTS:
@@ -114,7 +118,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                             else:
                                 # Handle rule without explicit access level
                                 rules.append({
-                                    "who": rule,
+                                    "who": rule_stripped,
                                     "access": "read",  # Default
                                 })
 
@@ -277,3 +281,161 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         """
         return False
+
+    @override
+    def get_root_dse_attributes(
+        self, connection: Connection
+    ) -> FlextResult[dict[str, object]]:
+        """Get Root DSE attributes for OpenLDAP 1.x server."""
+        try:
+            # Use standard Root DSE search
+            result = connection.search(
+                search_base="",
+                search_filter="(objectClass=*)",
+                search_scope="BASE",
+                attributes=["*"],
+                size_limit=1,
+            )
+
+            if result and connection.entries:
+                # Extract attributes from the first entry
+                entry = connection.entries[0]
+                attrs = {}
+                for attr in entry.entry_attributes:
+                    attrs[attr] = entry[attr].value
+                return FlextResult[dict[str, object]].ok(attrs)
+
+            return FlextResult[dict[str, object]].fail("No Root DSE found")
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Root DSE retrieval failed: {e}"
+            )
+
+    @override
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+        """Detect OpenLDAP version from Root DSE attributes."""
+        # Check for vendorName
+        if "vendorName" in root_dse:
+            vendor = str(root_dse["vendorName"]).lower()
+            if "openldap" in vendor:
+                # Check for version to distinguish 1.x from 2.x
+                if "vendorVersion" in root_dse:
+                    version = str(root_dse["vendorVersion"]).lower()
+                    if version.startswith("1."):
+                        return "openldap1"
+                    if version.startswith("2."):
+                        return "openldap2"
+                # Default to 2.x if version unclear
+                return "openldap2"
+
+        # Fallback: check for configContext (2.x feature)
+        if "configContext" in root_dse:
+            return "openldap2"
+
+        # Default to 1.x if no clear indicators
+        return "openldap1"
+
+    @override
+    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
+        """Get supported controls for OpenLDAP 1.x server."""
+        try:
+            if not connection or not connection.bound:
+                return FlextResult[list[str]].fail("Connection not bound")
+
+            # OpenLDAP 1.x standard controls
+            openldap1_controls = [
+                "1.2.840.113556.1.4.319",  # pagedResults (limited support)
+                "2.16.840.1.113730.3.4.2",  # ManageDsaIT
+                "1.3.6.1.4.1.1466.20037",  # StartTLS
+            ]
+
+            return FlextResult[list[str]].ok(openldap1_controls)
+
+        except Exception as e:
+            return FlextResult[list[str]].fail(f"Control retrieval failed: {e}")
+
+    @override
+    def normalize_entry_for_server(
+        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+    ) -> FlextResult[FlextLdapModels.Entry]:
+        """Normalize entry for OpenLDAP 1.x server specifics.
+
+        Applies OpenLDAP 1.x-specific transformations:
+        - Convert olcAccess to access ACLs
+        - Map 2.x objectClasses to 1.x equivalents
+        - Remove cn=config specific attributes
+
+        Args:
+            entry: Entry to normalize
+            target_server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
+
+        Returns:
+            FlextResult containing normalized entry
+
+        """
+        # Reuse existing normalize_entry method which handles OpenLDAP 1.x specifics
+        normalize_result = self.normalize_entry(entry)
+        if normalize_result.is_failure:
+            return FlextResult[FlextLdapModels.Entry].fail(normalize_result.error)
+
+        # Convert FlextLdifModels.Entry to FlextLdapModels.Entry
+        normalized_ldif_entry = normalize_result.unwrap()
+
+        # For now, return the LDIF entry as-is (type aliasing)
+        # In full implementation, would convert to FlextLdapModels.Entry
+        return FlextResult[FlextLdapModels.Entry].ok(normalized_ldif_entry)  # type: ignore[arg-type]
+
+    @override
+    def validate_entry_for_server(
+        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+    ) -> FlextResult[bool]:
+        """Validate entry for OpenLDAP 1.x server.
+
+        Checks:
+        - Entry has DN
+        - Entry has attributes
+        - Entry has objectClass
+        - No 2.x-specific objectClasses (olc*)
+        - No cn=config attributes
+
+        Args:
+            entry: Entry to validate
+            server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
+
+        Returns:
+            FlextResult[bool] indicating validation success
+
+        """
+        try:
+            # Basic validation
+            if not entry.dn:
+                return FlextResult[bool].fail("Entry must have a DN")
+
+            if not entry.attributes or not entry.attributes.attributes:
+                return FlextResult[bool].fail("Entry must have attributes")
+
+            # Check for objectClass
+            attrs = entry.attributes.attributes
+            if "objectClass" not in attrs:
+                return FlextResult[bool].fail("Entry must have objectClass attribute")
+
+            # OpenLDAP 1.x specific: reject olc* objectClasses
+            object_class_attr = attrs["objectClass"]
+            object_classes = object_class_attr.values
+            for oc in object_classes:
+                if oc.startswith("olc"):
+                    return FlextResult[bool].fail(
+                        f"OpenLDAP 2.x objectClass '{oc}' not supported in 1.x"
+                    )
+
+            # Warn about access ACL format
+            if "olcAccess" in attrs:
+                return FlextResult[bool].fail(
+                    "Use 'access' attribute for OpenLDAP 1.x ACLs, not 'olcAccess'"
+                )
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"Entry validation failed: {e}")

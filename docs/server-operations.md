@@ -217,7 +217,7 @@ ops = OracleOIDOperations()
 # Connection to Oracle OID
 connection = ldap3.Connection(
     ldap3.Server('ldap://oid-server:389'),
-    user='cn=orclREDACTED_LDAP_BIND_PASSWORD',
+    user='cn=invalid_user',
     password='password',
     auto_bind=True
 )

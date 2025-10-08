@@ -15,7 +15,7 @@ import pathlib
 from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
-from ldap3 import Entry as Ldap3Entry
+from ldap3 import MODIFY_REPLACE, Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -271,8 +271,6 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         """
         # Explicit FlextResult error handling - NO try/except
-        from ldap3 import MODIFY_REPLACE
-
         changes: dict[str, list[tuple[str, FlextTypes.List]]] = {}
         for attr_name, attr_value in modifications.items():
             # Default to REPLACE operation
@@ -489,7 +487,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Validate DN format
         dn_str = str(entry.dn)
-        if not dn_str or dn_str.strip() == "":
+        if not dn_str or not dn_str.strip():
             return FlextResult[bool].fail("Entry has invalid DN")
 
         # Validate has object classes

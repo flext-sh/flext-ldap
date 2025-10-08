@@ -3,7 +3,7 @@
   "time": "1758040794584",
   "generalDiagnostics": [
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -19,7 +19,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -35,7 +35,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -51,7 +51,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -67,7 +67,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"updates\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -83,7 +83,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -99,7 +99,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -115,7 +115,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -131,7 +131,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Argument of type \"dict[str, FlextTypes.StringList]\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"dict[str, FlextTypes.StringList]\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringList\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -147,7 +147,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -163,7 +163,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/integration/test_api.py",
+      "file": "..flext-ldap/tests/integration/test_api.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -179,7 +179,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/support/helpers.py",
+      "file": "..flext-ldap/tests/support/helpers.py",
       "severity": "error",
       "message": "Argument of type \"str\" cannot be assigned to parameter \"search_scope\" of type \"Literal['BASE', 'LEVEL', 'SUBTREE']\" in function \"search\"\n  Type \"str\" is not assignable to type \"Literal['BASE', 'LEVEL', 'SUBTREE']\"\n    \"str\" is not assignable to type \"Literal['BASE']\"\n    \"str\" is not assignable to type \"Literal['LEVEL']\"\n    \"str\" is not assignable to type \"Literal['SUBTREE']\"",
       "range": {
@@ -195,7 +195,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Operator \"in\" not supported for types \"Literal['uid']\" and \"FlextTypes.StringList | None\"\n  Operator \"in\" not supported for types \"Literal['uid']\" and \"None\"",
       "range": {
@@ -211,7 +211,7 @@
       "rule": "reportOperatorIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -227,7 +227,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -243,7 +243,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"Literal['not-a-dict']\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"__init__\"\n  \"Literal['not-a-dict']\" is not assignable to \"dict[str, AttributeValue]\"",
       "range": {
@@ -259,7 +259,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Cannot access attribute \"_process_search_results\" for class \"SearchService\"\n  Attribute \"_process_search_results\" is unknown",
       "range": {
@@ -275,7 +275,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Cannot access attribute \"process_results\" for class \"SearchService\"\n  Attribute \"process_results\" is unknown",
       "range": {
@@ -291,7 +291,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Cannot access attribute \"process_entry\" for class \"EntryService\"\n  Attribute \"process_entry\" is unknown",
       "range": {
@@ -307,7 +307,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"str\" cannot be assigned to parameter \"timeout\" of type \"int\" in function \"__init__\"\n  \"str\" is not assignable to \"int\"",
       "range": {
@@ -323,7 +323,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"str\" cannot be assigned to parameter \"use_tls\" of type \"bool\" in function \"__init__\"\n  \"str\" is not assignable to \"bool\"",
       "range": {
@@ -339,7 +339,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_adapters_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_adapters_comprehensive.py",
       "severity": "error",
       "message": "Cannot access attribute \"process_search_config\" for class \"SearchService\"\n  Attribute \"process_search_config\" is unknown",
       "range": {
@@ -355,7 +355,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -371,7 +371,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"size_limit\", \"time_limit\"",
       "range": {
@@ -387,7 +387,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -403,7 +403,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -419,7 +419,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -435,7 +435,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"given_name\", \"mail\", \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -451,7 +451,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -467,7 +467,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -483,7 +483,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -499,7 +499,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -515,7 +515,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -531,7 +531,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -547,7 +547,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -563,7 +563,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"Entry\" cannot be assigned to parameter \"dn_or_request\" of type \"CreateGroupRequest\" in function \"create_group\"\n  \"Entry\" is not assignable to \"CreateGroupRequest\"",
       "range": {
@@ -579,7 +579,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -595,7 +595,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -611,7 +611,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_group\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -627,7 +627,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -643,7 +643,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -659,7 +659,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -675,7 +675,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -691,7 +691,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -707,7 +707,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -723,7 +723,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -739,7 +739,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -755,7 +755,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"size_limit\", \"time_limit\"",
       "range": {
@@ -771,7 +771,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -787,7 +787,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"attributes\" of type \"LdapAttributeDict\" in function \"update_user\"\n  \"FlextTypes.StringDict\" is not assignable to \"dict[str, AttributeValue]\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"AttributeValue\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -803,7 +803,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -819,7 +819,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_api_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_api_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -835,7 +835,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_cli_coverage.py",
+      "file": "..flext-ldap/tests/unit/test_cli_coverage.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"data\" of type \"FlextTypes.Dict\" in function \"_format_data\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -851,7 +851,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -867,7 +867,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -883,7 +883,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"size_limit\", \"time_limit\"",
       "range": {
@@ -899,7 +899,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -915,7 +915,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -931,7 +931,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -947,7 +947,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -963,7 +963,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -979,7 +979,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"size_limit\", \"time_limit\"",
       "range": {
@@ -995,7 +995,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1011,7 +1011,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1027,7 +1027,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1043,7 +1043,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1059,7 +1059,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1075,7 +1075,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"attributes\", \"size_limit\", \"time_limit\"",
       "range": {
@@ -1091,7 +1091,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1107,7 +1107,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument of type \"None\" cannot be assigned to parameter \"connection\" of type \"Connection\" in function \"convert_entries\"\n  \"None\" is not assignable to \"Connection\"",
       "range": {
@@ -1123,7 +1123,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"attributes\", \"time_limit\"",
       "range": {
@@ -1139,7 +1139,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument of type \"list[FlextTypes.StringDict]\" cannot be assigned to parameter \"entries\" of type \"list[Dict]\" in function \"__init__\"\n  \"list[FlextTypes.StringDict]\" is not assignable to \"list[Dict]\"\n    Type parameter \"_T@list\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"Dict\"\n    Consider switching from \"list\" to \"Sequence\" which is covariant",
       "range": {
@@ -1155,7 +1155,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"size_limit\", \"time_limit\"",
       "range": {
@@ -1171,7 +1171,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1187,7 +1187,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1203,7 +1203,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"attributes\", \"size_limit\", \"time_limit\"",
       "range": {
@@ -1219,7 +1219,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1235,7 +1235,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1251,7 +1251,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1267,7 +1267,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1283,7 +1283,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1299,7 +1299,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument missing for parameter \"time_limit\"",
       "range": {
@@ -1315,7 +1315,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1331,7 +1331,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1347,7 +1347,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument missing for parameter \"time_limit\"",
       "range": {
@@ -1363,7 +1363,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1379,7 +1379,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1395,7 +1395,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Argument of type \"LdapAttributeDict\" cannot be assigned to parameter \"modifications\" of type \"Dict\" in function \"modify\"\n  \"dict[str, AttributeValue]\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"AttributeValue\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1411,7 +1411,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1427,7 +1427,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "\"lower\" is not a known attribute of \"None\"",
       "range": {
@@ -1443,7 +1443,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_clients_functional.py",
+      "file": "..flext-ldap/tests/unit/test_clients_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"attributes\", \"size_limit\", \"time_limit\"",
       "range": {
@@ -1459,7 +1459,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_comprehensive_flext_tests.py",
+      "file": "..flext-ldap/tests/unit/test_comprehensive_flext_tests.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1475,7 +1475,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_comprehensive_flext_tests.py",
+      "file": "..flext-ldap/tests/unit/test_comprehensive_flext_tests.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1491,7 +1491,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_config_singleton.py",
+      "file": "..flext-ldap/tests/unit/test_config_singleton.py",
       "severity": "error",
       "message": "\"server\" is not a known attribute of \"None\"",
       "range": {
@@ -1507,7 +1507,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_config_singleton.py",
+      "file": "..flext-ldap/tests/unit/test_config_singleton.py",
       "severity": "error",
       "message": "\"port\" is not a known attribute of \"None\"",
       "range": {
@@ -1523,7 +1523,7 @@
       "rule": "reportOptionalMemberAccess"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"user_password\"",
       "range": {
@@ -1539,7 +1539,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1555,7 +1555,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1571,7 +1571,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1587,7 +1587,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"user_password\"",
       "range": {
@@ -1603,7 +1603,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"user_password\"",
       "range": {
@@ -1619,7 +1619,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1635,7 +1635,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1651,7 +1651,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"group_data\" of type \"Dict\" in function \"validate_group_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1667,7 +1667,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"given_name\", \"mail\", \"user_password\"",
       "range": {
@@ -1683,7 +1683,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"GroupMembershipChangedEvent\" for class \"type[FlextLdapDomain]\"\n  Attribute \"GroupMembershipChangedEvent\" is unknown",
       "range": {
@@ -1699,7 +1699,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_domain_functional.py",
+      "file": "..flext-ldap/tests/unit/test_domain_functional.py",
       "severity": "error",
       "message": "Argument of type \"FlextTypes.StringDict\" cannot be assigned to parameter \"user_data\" of type \"Dict\" in function \"validate_user_creation\"\n  \"FlextTypes.StringDict\" is not assignable to \"FlextTypes.Dict\"\n    Type parameter \"_VT@dict\" is invariant, but \"str\" is not the same as \"object\"\n    Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1715,7 +1715,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1731,7 +1731,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1747,7 +1747,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1763,7 +1763,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -1779,7 +1779,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\"",
       "range": {
@@ -1795,7 +1795,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -1811,7 +1811,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -1827,7 +1827,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -1843,7 +1843,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1859,7 +1859,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1875,7 +1875,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -1891,7 +1891,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"user_password\"",
       "range": {
@@ -1907,7 +1907,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_models.py",
+      "file": "..flext-ldap/tests/unit/test_models.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1923,7 +1923,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Argument of type \"Literal['invalid_action']\" cannot be assigned to parameter \"action\" of type \"Literal['add', 'remove']\" in function \"__init__\"\n  Type \"Literal['invalid_action']\" is not assignable to type \"Literal['add', 'remove']\"\n    \"Literal['invalid_action']\" is not assignable to type \"Literal['add']\"\n    \"Literal['invalid_action']\" is not assignable to type \"Literal['remove']\"",
       "range": {
@@ -1939,7 +1939,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Argument of type \"str\" cannot be assigned to parameter \"module\" of type \"ModuleType\" in function \"reload\"\n  \"str\" is not assignable to \"ModuleType\"",
       "range": {
@@ -1955,7 +1955,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, FlextTypes.StringDict]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, FlextTypes.StringDict]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -1971,7 +1971,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -1987,7 +1987,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"add_entry\" for class \"EntryOperations\"\n  Attribute \"add_entry\" is unknown",
       "range": {
@@ -2003,7 +2003,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"update_entry\" for class \"EntryOperations\"\n  Attribute \"update_entry\" is unknown",
       "range": {
@@ -2019,7 +2019,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"remove_entry\" for class \"EntryOperations\"\n  Attribute \"remove_entry\" is unknown",
       "range": {
@@ -2035,7 +2035,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"_calculate_duration\" for class \"FlextLdapOperations\"\n  Attribute \"_calculate_duration\" is unknown",
       "range": {
@@ -2051,7 +2051,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"bind_connection\" for class \"ConnectionOperations\"\n  Attribute \"bind_connection\" is unknown",
       "range": {
@@ -2067,7 +2067,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"authenticate\" for class \"ConnectionOperations\"\n  Attribute \"authenticate\" is unknown",
       "range": {
@@ -2083,7 +2083,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot access attribute \"modify_password\" for class \"FlextLdapOperations\"\n  Attribute \"modify_password\" is unknown",
       "range": {
@@ -2099,7 +2099,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_operations_functional.py",
+      "file": "..flext-ldap/tests/unit/test_operations_functional.py",
       "severity": "error",
       "message": "Cannot assign to attribute \"_active_connections\" for class \"ConnectionOperations\"\n  Expression of type \"dict[str, FlextTypes.StringDict]\" cannot be assigned to attribute \"_active_connections\" of class \"ConnectionOperations\"\n    \"dict[str, FlextTypes.StringDict]\" is not assignable to \"dict[ConnectionId, ConnectionMetadata]\"\n      Type parameter \"_VT@dict\" is invariant, but \"FlextTypes.StringDict\" is not the same as \"ConnectionMetadata\"\n      Consider switching from \"dict\" to \"Mapping\" which is covariant in the value type",
       "range": {
@@ -2115,7 +2115,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_repositories_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2131,7 +2131,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_repositories_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2147,7 +2147,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/test_repositories_comprehensive.py",
+      "file": "..flext-ldap/tests/unit/test_repositories_comprehensive.py",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2163,7 +2163,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Arguments missing for parameters \"mail\", \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -2179,7 +2179,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -2195,7 +2195,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2211,7 +2211,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2227,7 +2227,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Arguments missing for parameters \"description\", \"telephone_number\", \"user_password\"",
       "range": {
@@ -2243,7 +2243,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Argument missing for parameter \"modified_at\"",
       "range": {
@@ -2259,7 +2259,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-ldap/tests/unit/",
+      "file": "..flext-ldap/tests/unit/",
       "severity": "error",
       "message": "Arguments missing for parameters \"modified_at\", \"sn\", \"given_name\", \"mail\", \"user_password\"",
       "range": {

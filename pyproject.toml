@@ -18,8 +18,8 @@
     ]
     dependencies = [
         "cryptography (>=45.0.5)",
-        "flext-core @ file:///home/marlonsc/flext/flext-core",
-        "flext-ldif @ file:///home/marlonsc/flext/flext-ldif",
+        "flext-core @ file:../flext-core",
+        "flext-ldif @ file:../flext-ldif",
         "ldap3 (>=2.9.1)",
         "pydantic (>=2.11.7)",
         "pydantic-settings (>=2.10.1)",
@@ -27,7 +27,6 @@
     ]
     description = "Enterprise LDAP Operations Library for FLEXT Framework"
     keywords = [
-        "",
         "adapter",
         "clean-architecture",
         "ddd",

@@ -187,7 +187,7 @@ class TestSharedSchemaDiscovery:
             assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
 
         finally:
-            client.close_connection()
+            client.unbind()
 
     def test_shared_ldap_schema_components(
         self,

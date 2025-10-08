@@ -279,20 +279,38 @@ def demonstrate_acl_with_ldap_api() -> None:
 
     logger.info("\n1. Detecting server type for ACL format selection:")
 
-    # Connect to determine server type
-    connect_result = api.connect()
+    # Initialize variables
+    server_type_result = None
+    server_type = None
 
-    if connect_result.is_failure:
-        logger.warning(f"   ⚠️  Connection failed: {connect_result.error}")
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            # Get detected server type
+            server_type_result = api.get_detected_server_type()
+
+            if server_type_result.is_success:
+                server_type = server_type_result.unwrap()
+                logger.info(f"   ✅ Server type detected: {server_type}")
+            else:
+                logger.warning(
+                    f"   ⚠️  Server type detection failed: {server_type_result.error}"
+                )
+                logger.info(
+                    "   INFO  ACL format selection depends on server type detection"
+                )
+                logger.info(
+                    "   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD"
+                )
+                return
+    except Exception as e:
+        logger.warning(f"   ⚠️  Connection failed: {e}")
         logger.info("   INFO  ACL format selection depends on server type detection")
         logger.info("   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD")
         return
 
-    # Get detected server type
-    server_type_result = api.get_detected_server_type()
-
-    if server_type_result.is_success:
-        server_type = server_type_result.unwrap()
+    # Continue with ACL operations...
+    if server_type_result and server_type_result.is_success:
         logger.info(f"   ✅ Detected server type: {server_type or 'Generic LDAP'}")
 
         # Map server type to ACL format
@@ -313,10 +331,7 @@ def demonstrate_acl_with_ldap_api() -> None:
     else:
         logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")
 
-    # Disconnect
-    if api.is_connected():
-        api.unbind()
-        logger.info("\n   Disconnected from LDAP server")
+    # Connection automatically closed by context manager
 
 
 def demonstrate_acl_migration_workflow() -> None:

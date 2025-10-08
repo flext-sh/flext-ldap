@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextConstants, FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextConstants, FlextResult, FlextTypes
 
 
 class FlextLdapValidations:
@@ -82,21 +82,8 @@ class FlextLdapValidations:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_port(port: int | None) -> FlextResult[bool]:
-        """Centralized port validation - delegates to flext-core FlextUtilities.Validation."""
-        if port is None:
-            return FlextResult[bool].fail("Port cannot be None")
-
-        # Use flext-core validation (returns FlextResult[int])
-        core_result = FlextUtilities.Validation.validate_port(port)
-        if core_result.is_failure:
-            return FlextResult[bool].fail(core_result.error or "Port validation failed")
-
-        return FlextResult[bool].ok(True)
-
-    @staticmethod
     def validate_timeout(timeout: int | None) -> FlextResult[bool]:
-        """Centralized timeout validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized timeout validation - LDAP-specific non-negative integer."""
         if timeout is None:
             return FlextResult[bool].fail("Timeout cannot be None")
 
@@ -107,7 +94,7 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_size_limit(size_limit: int | None) -> FlextResult[bool]:
-        """Centralized size limit validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized size limit validation - LDAP-specific non-negative integer."""
         if size_limit is None:
             return FlextResult[bool].fail("Size limit cannot be None")
 
@@ -118,7 +105,7 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_scope(scope: str | None) -> FlextResult[bool]:
-        """Centralized scope validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized LDAP scope validation - LDAP-specific."""
         if scope is None:
             return FlextResult[bool].fail("Scope cannot be None")
 
@@ -131,7 +118,7 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_modify_operation(operation: str | None) -> FlextResult[bool]:
-        """Centralized modify operation validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized LDAP modify operation validation - LDAP-specific."""
         if operation is None:
             return FlextResult[bool].fail("Operation cannot be None")
 
@@ -144,27 +131,12 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_object_class(object_class: str | None) -> FlextResult[bool]:
-        """Centralized object class validation - ELIMINATE ALL DUPLICATION."""
+        """Centralized LDAP object class validation - LDAP-specific."""
         if object_class is None:
             return FlextResult[bool].fail("Object class cannot be None")
 
         if not object_class or not object_class.strip():
             return FlextResult[bool].fail("Object class cannot be empty")
-
-        return FlextResult[bool].ok(True)
-
-    @staticmethod
-    def validate_email(email: str | None) -> FlextResult[bool]:
-        """Centralized email validation - delegates to flext-core FlextUtilities.Validation."""
-        if email is None:
-            return FlextResult[bool].fail("Email cannot be None")
-
-        # Use flext-core validation (returns FlextResult[str])
-        core_result = FlextUtilities.Validation.validate_email(email)
-        if core_result.is_failure:
-            return FlextResult[bool].fail(
-                core_result.error or "Email validation failed"
-            )
 
         return FlextResult[bool].ok(True)
 

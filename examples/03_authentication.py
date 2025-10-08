@@ -128,13 +128,14 @@ class DemoAuthScenarios:
         user = cls._USERS.get(username)
         if user is None:
             return None
-        return deepcopy(user["attributes"])  # type: ignore[arg-type]
+        return deepcopy(user["attributes"])  # type: ignore[index]
 
 
 class DemoLdapApi:
     """Fallback API used when real LDAP connectivity is unavailable."""
 
     def __init__(self) -> None:
+        """Initialize fallback API with demo configuration."""
         self.config = FlextLdapConfig(
             ldap_server_uri="ldap://demo-ldap",
             ldap_bind_dn=BIND_DN,
@@ -171,7 +172,7 @@ class DemoLdapApi:
             Success result
 
         """
-        return self.disconnect()
+        return self.unbind()
 
     def is_connected(self) -> bool:
         """Check if connected to the demo LDAP API.
@@ -254,17 +255,18 @@ def setup_api() -> FlextLdap | DemoLdapApi:
     )
     api = FlextLdap(config=config)
 
-    connect_result = api.connect()
-    if connect_result.is_failure:
+    # Use context manager for automatic connection/disconnection
+    try:
+        with api:
+            return api
+    except Exception as e:
         logger.warning(
             "Connection failed (%s). Switching to demo LDAP API.",
-            connect_result.error,
+            e,
         )
         demo_api = DemoLdapApi()
         demo_api.connect()
         return demo_api
-
-    return api
 
 
 def demonstrate_user_authentication(api: FlextLdap | DemoLdapApi) -> None:
@@ -510,16 +512,14 @@ def demonstrate_bind_authentication() -> None:
         test_api = FlextLdap(config=config)
 
         # Try to connect (which includes bind)
-        connect_result = test_api.connect()
-
-        if connect_result.is_success:
-            status = "✅" if should_succeed else "❌ Unexpected"
-            logger.info(f"   {status} Bind SUCCEEDED")
-            test_api.unbind()
-        else:
+        try:
+            with test_api:
+                status = "✅" if should_succeed else "❌ Unexpected"
+                logger.info(f"   {status} Bind SUCCEEDED")
+        except Exception as e:
             logger.warning(
                 "   ⚠️  Real bind failed (%s). Using demo validation.",
-                connect_result.error,
+                e,
             )
             success, error = DemoAuthScenarios.validate(bind_dn, bind_password)
             if success:
@@ -568,7 +568,7 @@ def main() -> int:
                 if hasattr(api, "unbind"):
                     api.unbind()
                 else:
-                    api.disconnect()
+                    api.unbind()
                 logger.info("Disconnected from LDAP server")
 
         return 0

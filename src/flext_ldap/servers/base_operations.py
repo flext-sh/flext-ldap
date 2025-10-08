@@ -279,12 +279,14 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Check if server supports Virtual List View control."""
 
     @abstractmethod
+    @abstractmethod
     def search_with_paging(
         self,
         connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
+        scope: str = "subtree",
         page_size: int = 100,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search.
@@ -294,6 +296,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             base_dn: Search base DN
             search_filter: LDAP search filter
             attributes: Attributes to retrieve
+            scope: Search scope ("base", "level", or "subtree")
             page_size: Page size for results
 
         Returns:

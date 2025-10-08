@@ -499,9 +499,9 @@ class FlextLdapServices(FlextService[None]):
             # Apply domain-specific business rules before creation
             # (This would coordinate with infrastructure in real implementation)
 
-            # Step 4: Simulate user creation (infrastructure layer)
-            # In real implementation, this would call repository/infrastructure
-            mock_user = FlextLdapModels.LdapUser(
+            # Step 4: Create user entity (infrastructure layer)
+            # In real implementation, this would call repository to persist to LDAP
+            created_user = FlextLdapModels.LdapUser(
                 dn=enriched_request.dn,
                 uid=enriched_request.uid,
                 cn=enriched_request.cn,
@@ -512,18 +512,22 @@ class FlextLdapServices(FlextService[None]):
 
             # Step 5: Domain post-processing
             # Apply domain services for enrichment
-            # TODO @marlonsc: Implement domain service for user display name calculation
-            # display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(mock_user)
-            # mock_user.display_name = display_name
-            # In real implementation, User entity would have display_name field
+            display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(
+                created_user
+            )
+            logger.debug(
+                "Calculated user display name",
+                display_name=display_name,
+                uid=created_user.uid,
+            )
 
             logger.info(
                 "User provisioning workflow completed",
-                uid=mock_user.uid,
-                dn=mock_user.dn,
+                uid=created_user.uid,
+                dn=created_user.dn,
             )
 
-            return FlextResult[FlextLdapModels.User].ok(mock_user)
+            return FlextResult[FlextLdapModels.User].ok(created_user)
 
         except Exception as e:
             logger.exception("User provisioning workflow failed", error=str(e))

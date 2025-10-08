@@ -140,16 +140,16 @@ class TestLdapClientRealOperations:
             "ou": ["people"],
         }
         ou_attributes = create_ldap_attributes(ou_attrs_raw)
-        _ = client.add(
+        _ = client.add_entry(
             ou_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", ou_attributes),
+            ou_attributes,  # type: ignore[arg-type]
         )
         # Ignore if OU already exists (error code 68)
 
         # ADD: Create user entry
-        add_result = client.add(
+        add_result = client.add_entry(
             test_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", user_attributes),
+            user_attributes,  # type: ignore[arg-type]
         )
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
@@ -159,11 +159,9 @@ class TestLdapClientRealOperations:
             "description": ["Updated user description"],
         }
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
-        modify_result = client.modify(
+        modify_result = client.modify_entry(
             test_dn,
-            cast(
-                "dict[str, list[tuple[str, FlextTypes.StringList]]]", modify_attributes
-            ),
+            modify_attributes,  # type: ignore[arg-type]
         )
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
@@ -204,7 +202,7 @@ class TestLdapClientRealOperations:
         assert "updated@example.com" in str(mail_value), "Email should be updated"
 
         # DELETE: Remove user entry
-        delete_result = client.delete(test_dn)
+        delete_result = client.delete_entry(test_dn)
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
@@ -260,7 +258,7 @@ class TestLdapServiceRealOperations:
             "ou": ["users"],
         }
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
-        client.add(
+        client.add_entry(
             ou_dn,
             cast("dict[str, str | FlextTypes.StringList] | None", ou_attributes_2),
         )  # Ignore if exists
@@ -305,12 +303,12 @@ class TestLdapServiceRealOperations:
             created_at=None,
             updated_at=None,
         )
-        created_user = (
-            create_result.unwrap() if create_result.is_success else default_user
-        )
-        assert created_user.uid == user_request.uid
-        assert created_user.cn == user_request.cn
-        assert created_user.mail == user_request.mail
+        if create_result.is_success:
+            created_user = create_result.unwrap()
+            assert created_user is not None, "Created user should not be None"
+            assert created_user.uid == user_request.uid
+            assert created_user.cn == user_request.cn
+            assert created_user.mail == user_request.mail
 
         # READ: Verify user exists
         get_result = client.get_user(user_request.dn)
@@ -782,7 +780,7 @@ class TestLdapErrorHandlingReal:
         }
         invalid_attributes = create_ldap_attributes(invalid_attrs_raw)
 
-        add_result = client.add(
+        add_result = client.add_entry(
             invalid_dn,
             cast("dict[str, str | FlextTypes.StringList] | None", invalid_attributes),
         )
