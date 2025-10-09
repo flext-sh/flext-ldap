@@ -15,7 +15,6 @@ from typing import override
 
 from flext_core import (
     FlextHandlers,
-    FlextLogger,
     FlextModels,
     FlextResult,
     FlextService,
@@ -76,7 +75,8 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             return FlextResult[object].ok({"detected": True, "type": "generic"})
 
         def detect_server_type(
-            self, server_info: object
+            self,
+            server_info: object,
         ) -> FlextLdapModels.LdapServerType | None:
             """Detect LDAP server type from server info.
 
@@ -94,7 +94,8 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             return FlextLdapModels.LdapServerType.GENERIC
 
         def get_server_quirks(
-            self, server_type: str | None
+            self,
+            server_type: str | None,
         ) -> FlextLdapModels.ServerQuirks | None:
             """Get server quirks for the specified server type.
 
@@ -116,7 +117,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
                 supports_paged_results=True,
                 supports_vlv=False,
                 supports_sync=False,
-                max_page_size=FlextLdapConstants.Connection.MAX_SIZE_LIMIT,
+                max_page_size=FlextLdapConstants.Connection.MAX_PAGE_SIZE_GENERIC,
                 default_timeout=FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS,
                 supports_start_tls=True,
                 requires_explicit_bind=False,
@@ -134,7 +135,8 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
         """
 
         def __init__(
-            self, quirks_adapter: FlextLdapQuirksIntegration | None = None
+            self,
+            quirks_adapter: FlextLdapQuirksIntegration | None = None,
         ) -> None:
             """Initialize schema discovery with optional quirks adapter.
 
@@ -149,7 +151,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
                 default_id="schema-discovery",
             )
             super().__init__(config=config)
-            self.logger = FlextLogger(__name__)
+            # Note: self.logger is provided by FlextService parent class
             self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override
@@ -165,14 +167,15 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
             """
             if not message:
                 return FlextResult[object].fail(
-                    "Schema discovery message cannot be empty"
+                    "Schema discovery message cannot be empty",
                 )
 
             # Return basic schema discovery result
             return FlextResult[object].ok({"schema_discovered": True})
 
         def get_schema_subentry_dn(
-            self, server_type: str | None = None
+            self,
+            server_type: str | None = None,
         ) -> FlextResult[str]:
             """Get schema subentry DN based on server type.
 

@@ -128,7 +128,10 @@ class DemoAuthScenarios:
         user = cls._USERS.get(username)
         if user is None:
             return None
-        return deepcopy(user["attributes"])  # type: ignore[index]
+        attributes = user["attributes"]
+        if isinstance(attributes, dict):
+            return deepcopy(attributes)
+        return None
 
 
 class DemoLdapApi:

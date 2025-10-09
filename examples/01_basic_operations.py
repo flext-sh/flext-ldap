@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
 
@@ -260,7 +260,7 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
         f"({FlextLdapConstants.LdapAttributeNames.UID}=john.doe)",
     ]
     logger.info(f"\nBulk search with {len(filters)} filters...")
-    bulk_result = api.search_entries_bulk(users_dn, filters)
+    bulk_result = api.search_entries_bulk([users_dn], filters)
 
     if bulk_result.is_success:
         results = bulk_result.unwrap()
@@ -359,10 +359,10 @@ def demonstrate_constants() -> None:
     logger.info(f"   ONELEVEL: {FlextLdapConstants.Scopes.ONELEVEL}")
     logger.info(f"   SUBTREE: {FlextLdapConstants.Scopes.SUBTREE}")
 
-    # Protocol constants
+    # Protocol constants (delegated to flext-core)
     logger.info("Protocol:")
-    logger.info(f"   Default Port: {FlextLdapConstants.Protocol.DEFAULT_PORT}")
-    logger.info(f"   SSL Port: {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}")
+    logger.info(f"   Default Port: {FlextConstants.Platform.LDAP_DEFAULT_PORT}")
+    logger.info(f"   SSL Port: {FlextConstants.Platform.LDAPS_DEFAULT_PORT}")
     logger.info(
         f"   Default Timeout: {FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS}s"
     )

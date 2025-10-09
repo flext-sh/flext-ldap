@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
+from typing import Literal
 
-from flext_ldap.constants import FlextLdapConstants
+from flext_core import FlextTypes
 
 
 class FlextLdapTypes(FlextTypes):
@@ -56,11 +56,7 @@ class FlextLdapTypes(FlextTypes):
 
         # LDAP search and filter types
         type SearchFilter = str
-        type SearchScope = (
-            FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE
-            | FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL
-            | FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE
-        )
+        type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
         type SearchResult = list[FlextTypes.Dict]
 
         # LDAP connection and server types
@@ -72,30 +68,12 @@ class FlextLdapTypes(FlextTypes):
         # LDAP protocol types
         type ObjectClass = str
         type AttributeName = str
-        type ConnectionState = (
-            FlextLdapConstants.LiteralTypes.CONNECTION_STATE_UNBOUND
-            | FlextLdapConstants.LiteralTypes.CONNECTION_STATE_BOUND
-            | FlextLdapConstants.LiteralTypes.CONNECTION_STATE_CLOSED
-            | FlextLdapConstants.LiteralTypes.CONNECTION_STATE_ERROR
-        )
-        type OperationType = (
-            FlextLdapConstants.LiteralTypes.OPERATION_SEARCH
-            | FlextLdapConstants.LiteralTypes.OPERATION_ADD
-            | FlextLdapConstants.LiteralTypes.OPERATION_MODIFY
-            | FlextLdapConstants.LiteralTypes.OPERATION_DELETE
-            | FlextLdapConstants.LiteralTypes.OPERATION_COMPARE
-            | FlextLdapConstants.LiteralTypes.OPERATION_EXTENDED
-        )
-        type SecurityLevel = (
-            FlextLdapConstants.LiteralTypes.SECURITY_NONE
-            | FlextLdapConstants.LiteralTypes.SECURITY_SIMPLE
-            | FlextLdapConstants.LiteralTypes.SECURITY_SASL
-        )
-        type AuthenticationMethod = (
-            FlextLdapConstants.LiteralTypes.AUTH_SIMPLE
-            | FlextLdapConstants.LiteralTypes.AUTH_SASL
-            | FlextLdapConstants.LiteralTypes.AUTH_EXTERNAL
-        )
+        type ConnectionState = Literal["unbound", "bound", "closed", "error"]
+        type OperationType = Literal[
+            "search", "add", "modify", "delete", "compare", "extended"
+        ]
+        type SecurityLevel = Literal["none", "simple", "sasl"]
+        type AuthenticationMethod = Literal["simple", "sasl", "external"]
 
         # Complex LDAP operation types
         type BulkOperation = list[dict[str, AttributeValue | OperationType]]
@@ -151,28 +129,29 @@ class FlextLdapTypes(FlextTypes):
         """
 
         # LDAP-specific project types extending the generic ones
-        type LdapProjectType = (
-            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_SERVICE
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SERVICE
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_CLIENT
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_PROVIDER
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_SYNC
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SYNC
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_PROVISIONING
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_GATEWAY
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_AUTHENTICATION_SERVICE
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_SSO_SERVICE
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_API
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_PROXY
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_MANAGEMENT
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_DIRECTORY
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_GROUP_MANAGEMENT
-            | FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_MIGRATION
-        )
+        type LdapProjectType = Literal[
+            "ldap-service",
+            "directory-service",
+            "ldap-client",
+            "identity-provider",
+            "ldap-sync",
+            "directory-sync",
+            "user-provisioning",
+            "ldap-gateway",
+            "authentication-service",
+            "sso-service",
+            "directory-api",
+            "ldap-proxy",
+            "identity-management",
+            "user-directory",
+            "group-management",
+            "ldap-migration",
+        ]
 
         # LDAP-specific project configurations
         type LdapProjectConfig = dict[
-            str, FlextLdapTypes.LdapCore.LdapConfigValue | object
+            str,
+            FlextLdapTypes.LdapCore.LdapConfigValue | object,
         ]
         type DirectoryConfig = dict[str, str | int | bool | FlextTypes.StringList]
         type AuthenticationConfig = dict[str, bool | str | FlextTypes.Dict]

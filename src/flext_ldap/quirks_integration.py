@@ -79,7 +79,8 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
         return self._quirks_manager
 
     def detect_server_type_from_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[str]:
         """Detect LDAP server type from entries using FlextLdif quirks.
 
@@ -122,7 +123,8 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[str].fail(f"Server detection failed: {e}")
 
     def get_server_quirks(
-        self, server_type: str | None = None
+        self,
+        server_type: str | None = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Get server-specific quirks configuration.
 
@@ -153,7 +155,8 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                     extra={"server_type": target_type},
                 )
                 quirks = self._quirks_manager.quirks_registry.get(
-                    FlextLdapConstants.DictKeys.GENERIC, {}
+                    FlextLdapConstants.DictKeys.GENERIC,
+                    {},
                 )
 
             # Cache the quirks
@@ -169,7 +172,8 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             return FlextResult[FlextTypes.Dict].fail(f"Failed to get quirks: {e}")
 
     def get_acl_attribute_name(
-        self, server_type: str | None = None
+        self,
+        server_type: str | None = None,
     ) -> FlextResult[str]:
         """Get ACL attribute name for server type.
 
@@ -224,13 +228,15 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         quirks = quirks_result.unwrap()
         schema_subentry = quirks.get(
-            FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY, "cn=subschema"
+            FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY,
+            "cn=subschema",
         )
 
         return FlextResult[str].ok(str(schema_subentry))
 
     def supports_operational_attributes(
-        self, server_type: str | None = None
+        self,
+        server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Check if server supports operational attributes.
 
@@ -247,7 +253,8 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         quirks = quirks_result.unwrap()
         supports = quirks.get(
-            FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS, True
+            FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS,
+            True,
         )
 
         return FlextResult[bool].ok(bool(supports))
@@ -330,11 +337,12 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Entry normalization failed: {e}"
+                f"Entry normalization failed: {e}",
             )
 
     def get_connection_defaults(
-        self, server_type: str | None = None
+        self,
+        server_type: str | None = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Get default connection parameters for server type.
 
@@ -369,5 +377,5 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(
-                f"Failed to get connection defaults: {e}"
+                f"Failed to get connection defaults: {e}",
             )

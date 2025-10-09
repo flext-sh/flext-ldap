@@ -16,7 +16,8 @@ class FlextLdapAclConverters:
     """ACL converters for bidirectional format conversion."""
 
     def handle(
-        self, message: object
+        self,
+        message: object,
     ) -> FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]]:
         """Handle ACL conversion request."""
         if isinstance(message, dict) and "acl_content" in message:
@@ -24,12 +25,13 @@ class FlextLdapAclConverters:
                 message["acl_content"],
                 message.get(FlextLdapConstants.DictKeys.SOURCE_FORMAT, "OPENLDAP"),
                 message.get(
-                    FlextLdapConstants.DictKeys.TARGET_FORMAT, "ACTIVE_DIRECTORY"
+                    FlextLdapConstants.DictKeys.TARGET_FORMAT,
+                    "ACTIVE_DIRECTORY",
                 ),
             )
             return FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]].ok(result)
         return FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]].fail(
-            "Invalid ACL conversion request"
+            "Invalid ACL conversion request",
         )
 
     def convert_acl(
@@ -50,7 +52,7 @@ class FlextLdapAclConverters:
 
         """
         return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-            f"ACL conversion from {source_format} to {target_format} is not implemented"
+            f"ACL conversion from {source_format} to {target_format} is not implemented",
         )
 
     class OpenLdapConverter:
@@ -63,7 +65,7 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires OpenLDAP ACL parser and AD ACL generator.
             """
             return FlextResult[str].fail(
-                "OpenLDAP to Microsoft AD ACL conversion is not implemented"
+                "OpenLDAP to Microsoft AD ACL conversion is not implemented",
             )
 
         @staticmethod
@@ -73,7 +75,7 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires OpenLDAP ACL parser and Oracle ACL generator.
             """
             return FlextResult[str].fail(
-                "OpenLDAP to Oracle ACL conversion is not implemented"
+                "OpenLDAP to Oracle ACL conversion is not implemented",
             )
 
     class MicrosoftAdConverter:
@@ -86,7 +88,7 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires AD ACL parser and OpenLDAP ACL generator.
             """
             return FlextResult[str].fail(
-                "Microsoft AD to OpenLDAP ACL conversion is not implemented"
+                "Microsoft AD to OpenLDAP ACL conversion is not implemented",
             )
 
         @staticmethod
@@ -96,7 +98,7 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires AD ACL parser and Oracle ACL generator.
             """
             return FlextResult[str].fail(
-                "Microsoft AD to Oracle ACL conversion is not implemented"
+                "Microsoft AD to Oracle ACL conversion is not implemented",
             )
 
     class OracleConverter:
@@ -109,7 +111,7 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires Oracle ACL parser and OpenLDAP ACL generator.
             """
             return FlextResult[str].fail(
-                "Oracle to OpenLDAP ACL conversion is not implemented"
+                "Oracle to OpenLDAP ACL conversion is not implemented",
             )
 
         @staticmethod
@@ -119,5 +121,5 @@ class FlextLdapAclConverters:
             Note: Not implemented. Requires Oracle ACL parser and AD ACL generator.
             """
             return FlextResult[str].fail(
-                "Oracle to Microsoft AD ACL conversion is not implemented"
+                "Oracle to Microsoft AD ACL conversion is not implemented",
             )

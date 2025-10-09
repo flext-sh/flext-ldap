@@ -207,16 +207,14 @@ class FlextLdapConfig(FlextConfig):
             if operation_config is not None:
                 # Try attribute access
                 if hasattr(operation_config, "operation_type"):
-                    config_mode: str | None = getattr(
-                        operation_config, "operation_type"
-                    )
+                    config_mode: str | None = operation_config.operation_type
                     if config_mode in valid_modes:
                         return str(config_mode)
 
                 # Try dict access
                 if isinstance(operation_config, dict):
                     config_mode_dict = operation_config.get(
-                        FlextLdapConstants.DictKeys.OPERATION_TYPE
+                        FlextLdapConstants.DictKeys.OPERATION_TYPE,
                     )
                     if (
                         isinstance(config_mode_dict, str)
@@ -393,7 +391,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     ldap_operation_timeout: int = Field(
-        default=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,
+        default=60,  # Must be > connection_timeout (30) for validation
         ge=1,
         le=600,
         description="LDAP operation timeout in seconds",
@@ -460,6 +458,17 @@ class FlextLdapConfig(FlextConfig):
     ldap_mask_passwords: bool = Field(
         default=True,
         description="Mask passwords in log messages",
+    )
+
+    # JSON serialization options
+    json_indent: int = Field(
+        default=2,
+        description="JSON indentation level for file serialization",
+        ge=0,
+    )
+    json_sort_keys: bool = Field(
+        default=True,
+        description="Sort JSON keys during serialization",
     )
 
     # =========================================================================
@@ -825,10 +834,11 @@ class FlextLdapConfig(FlextConfig):
 
             # Handle SecretStr fields - conditionally include based on kwargs
             include_credentials = kwargs.get(
-                FlextLdapConstants.DictKeys.INCLUDE_CREDENTIALS, False
+                FlextLdapConstants.DictKeys.INCLUDE_CREDENTIALS,
+                False,
             )
             if not include_credentials and config_data.get(
-                FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD
+                FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD,
             ):
                 # Redact sensitive LDAP data by default
                 config_data[FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD] = (
@@ -838,18 +848,24 @@ class FlextLdapConfig(FlextConfig):
             # Determine format from extension
             if path.suffix.lower() == ".json":
                 indent_raw = kwargs.get(
-                    FlextLdapConstants.DictKeys.INDENT, self.json_indent
+                    FlextLdapConstants.DictKeys.INDENT,
+                    self.json_indent,
                 )
                 indent = int(indent_raw) if indent_raw is not None else self.json_indent
                 sort_keys = bool(
                     kwargs.get(
-                        FlextLdapConstants.DictKeys.SORT_KEYS, self.json_sort_keys
-                    )
+                        FlextLdapConstants.DictKeys.SORT_KEYS,
+                        self.json_sort_keys,
+                    ),
                 )
 
                 with path.open("w", encoding="utf-8") as f:
                     json.dump(
-                        config_data, f, indent=indent, sort_keys=sort_keys, default=str
+                        config_data,
+                        f,
+                        indent=indent,
+                        sort_keys=sort_keys,
+                        default=str,
                     )
 
                 return FlextResult[None].ok(None)
@@ -884,7 +900,7 @@ class FlextLdapConfig(FlextConfig):
             and self.ldap_port == FlextConstants.Platform.LDAP_DEFAULT_PORT
         ):
             return FlextResult[None].fail(
-                f"Port {FlextConstants.Platform.LDAP_DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextConstants.Platform.LDAPS_DEFAULT_PORT} for LDAPS."
+                f"Port {FlextConstants.Platform.LDAP_DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextConstants.Platform.LDAPS_DEFAULT_PORT} for LDAPS.",
             )
 
         if (
@@ -892,13 +908,13 @@ class FlextLdapConfig(FlextConfig):
             and self.ldap_port == FlextConstants.Platform.LDAPS_DEFAULT_PORT
         ):
             return FlextResult[None].fail(
-                f"Port {FlextConstants.Platform.LDAPS_DEFAULT_PORT} is default for LDAPS, not LDAP. Use {FlextConstants.Platform.LDAP_DEFAULT_PORT} for LDAP."
+                f"Port {FlextConstants.Platform.LDAPS_DEFAULT_PORT} is default for LDAPS, not LDAP. Use {FlextConstants.Platform.LDAP_DEFAULT_PORT} for LDAP.",
             )
 
         # Validate timeout relationships
         if self.ldap_operation_timeout <= self.ldap_connection_timeout:
             return FlextResult[None].fail(
-                "Operation timeout must be greater than connection timeout"
+                "Operation timeout must be greater than connection timeout",
             )
 
         return FlextResult[None].ok(None)
@@ -992,9 +1008,10 @@ class FlextLdapConfig(FlextConfig):
                     data.get(
                         FlextLdapConstants.DictKeys.SERVER_URI,
                         data.get(
-                            FlextLdapConstants.DictKeys.SERVER, "ldap://localhost"
+                            FlextLdapConstants.DictKeys.SERVER,
+                            "ldap://localhost",
                         ),
-                    )
+                    ),
                 ),
                 ldap_port=int(str(data.get(FlextLdapConstants.DictKeys.PORT, 389))),
                 ldap_bind_dn=str(data.get(FlextLdapConstants.DictKeys.BIND_DN, ""))
@@ -1026,7 +1043,7 @@ class FlextLdapConfig(FlextConfig):
         try:
             if not isinstance(data, dict):
                 return FlextResult[FlextLdapModels.SearchConfig].fail(
-                    "Data must be a dictionary"
+                    "Data must be a dictionary",
                 )
 
             attributes_data = data.get(FlextLdapConstants.DictKeys.ATTRIBUTES, [])
@@ -1042,14 +1059,14 @@ class FlextLdapConfig(FlextConfig):
                     data.get(
                         "filter_str",
                         FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                    )
+                    ),
                 ),
                 attributes=str_attributes,
             )
             return FlextResult[FlextLdapModels.SearchConfig].ok(config)
         except Exception as e:
             return FlextResult[FlextLdapModels.SearchConfig].fail(
-                f"Search config creation failed: {e}"
+                f"Search config creation failed: {e}",
             )
 
     @classmethod
@@ -1077,20 +1094,20 @@ class FlextLdapConfig(FlextConfig):
                 str_values = []
             config: dict[str, str | FlextTypes.StringList] = {
                 FlextLdapConstants.DictKeys.DN: str(
-                    data.get(FlextLdapConstants.DictKeys.DN, "")
+                    data.get(FlextLdapConstants.DictKeys.DN, ""),
                 ),
                 FlextLdapConstants.DictKeys.OPERATION: str(
-                    data.get(FlextLdapConstants.DictKeys.OPERATION, "replace")
+                    data.get(FlextLdapConstants.DictKeys.OPERATION, "replace"),
                 ),
                 FlextLdapConstants.DictKeys.ATTRIBUTE: str(
-                    data.get(FlextLdapConstants.DictKeys.ATTRIBUTE, "")
+                    data.get(FlextLdapConstants.DictKeys.ATTRIBUTE, ""),
                 ),
                 FlextLdapConstants.DictKeys.VALUES: str_values,
             }
             return FlextResult[dict[str, str | FlextTypes.StringList]].ok(config)
         except Exception as e:
             return FlextResult[dict[str, str | FlextTypes.StringList]].fail(
-                f"Modify config creation failed: {e}"
+                f"Modify config creation failed: {e}",
             )
 
     @classmethod
@@ -1114,7 +1131,7 @@ class FlextLdapConfig(FlextConfig):
 
             config: dict[str, str | dict[str, FlextTypes.StringList]] = {
                 FlextLdapConstants.DictKeys.DN: str(
-                    data.get(FlextLdapConstants.DictKeys.DN, "")
+                    data.get(FlextLdapConstants.DictKeys.DN, ""),
                 ),
                 "attributes": {
                     str(k): [
@@ -1124,11 +1141,11 @@ class FlextLdapConfig(FlextConfig):
                 },
             }
             return FlextResult[dict[str, str | dict[str, FlextTypes.StringList]]].ok(
-                config
+                config,
             )
         except Exception as e:
             return FlextResult[dict[str, str | dict[str, FlextTypes.StringList]]].fail(
-                f"Add config creation failed: {e}"
+                f"Add config creation failed: {e}",
             )
 
     @classmethod
@@ -1148,13 +1165,13 @@ class FlextLdapConfig(FlextConfig):
         try:
             config: dict[str, str] = {
                 FlextLdapConstants.DictKeys.DN: str(
-                    data.get(FlextLdapConstants.DictKeys.DN, "")
-                )
+                    data.get(FlextLdapConstants.DictKeys.DN, ""),
+                ),
             }
             return FlextResult[dict[str, str]].ok(config)
         except Exception as e:
             return FlextResult[dict[str, str]].fail(
-                f"Delete config creation failed: {e}"
+                f"Delete config creation failed: {e}",
             )
 
     @classmethod
@@ -1183,7 +1200,9 @@ class FlextLdapConfig(FlextConfig):
 
     @classmethod
     def merge_configs(
-        cls, base_config: FlextTypes.Dict, override_config: FlextTypes.Dict
+        cls,
+        base_config: FlextTypes.Dict,
+        override_config: FlextTypes.Dict,
     ) -> FlextResult[FlextTypes.Dict]:
         """Merge two configuration dictionaries.
 

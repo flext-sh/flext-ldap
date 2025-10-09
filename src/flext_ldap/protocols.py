@@ -52,13 +52,17 @@ class FlextLdapProtocols(FlextProtocols):
             """Protocol for LDIF file operations."""
 
             def parse_ldif_file(
-                self, file_path: Path, server_type: str = "rfc"
+                self,
+                file_path: Path,
+                server_type: str = "rfc",
             ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Parse LDIF file and return entries."""
                 ...
 
             def write_file(
-                self, entries: list[FlextLdifModels.Entry], output_path: Path
+                self,
+                entries: list[FlextLdifModels.Entry],
+                output_path: Path,
             ) -> FlextResult[str]:
                 """Write entries to LDIF file."""
                 ...
@@ -141,7 +145,9 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
             def extended(
-                self, request_name: str, request_value: str | bytes | None = None
+                self,
+                request_name: str,
+                request_value: str | bytes | None = None,
             ) -> bool:
                 """Perform extended LDAP operation."""
                 ...
@@ -155,7 +161,10 @@ class FlextLdapProtocols(FlextProtocols):
             """Protocol for LDAP connection operations."""
 
             def connect(
-                self, server_uri: str, bind_dn: str, password: str
+                self,
+                server_uri: str,
+                bind_dn: str,
+                password: str,
             ) -> FlextResult[bool]:
                 """Establish LDAP connection.
 
@@ -235,7 +244,9 @@ class FlextLdapProtocols(FlextProtocols):
             """Protocol for LDAP modification operations."""
 
             def add_entry(
-                self, dn: str, attributes: dict[str, FlextTypes.StringList]
+                self,
+                dn: str,
+                attributes: dict[str, FlextTypes.StringList],
             ) -> FlextResult[bool]:
                 """Add new LDAP entry.
 
@@ -250,7 +261,9 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
             def modify_entry(
-                self, dn: str, changes: FlextTypes.Dict
+                self,
+                dn: str,
+                changes: FlextTypes.Dict,
             ) -> FlextResult[bool]:
                 """Modify existing LDAP entry.
 
@@ -281,7 +294,9 @@ class FlextLdapProtocols(FlextProtocols):
             """Protocol for LDAP authentication operations."""
 
             def authenticate_user(
-                self, username: str, password: str
+                self,
+                username: str,
+                password: str,
             ) -> FlextResult[FlextLdapModels.LdapUser]:
                 """Authenticate user against LDAP.
 

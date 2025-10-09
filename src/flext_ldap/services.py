@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from flext_core import (
     FlextConstants,
@@ -49,7 +50,8 @@ class FlextLdapServices(FlextService[None]):
     # =============================================================================
 
     def validate_user_creation_request(
-        self, request: FlextLdapModels.CreateUserRequest
+        self,
+        request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[bool]:
         """Validate user creation request against domain business rules.
 
@@ -67,20 +69,26 @@ class FlextLdapServices(FlextService[None]):
 
             # Domain validation: email format
             if request.mail and not FlextLdapDomain.UserSpecification.is_valid_email(
-                request.mail
+                request.mail,
             ):
                 return FlextResult[bool].fail("Invalid email format")
 
             # Domain validation: password policy
             if request.user_password:
+                # Convert SecretStr to str if needed
+                password_str = (
+                    str(request.user_password)
+                    if isinstance(request.user_password, object)
+                    else request.user_password
+                )
                 password_result = (
                     FlextLdapDomain.UserSpecification.meets_password_policy(
-                        request.user_password
+                        password_str,
                     )
                 )
                 if password_result.is_failure:
                     return FlextResult[bool].fail(
-                        password_result.error or "Password policy violation"
+                        password_result.error or "Password policy violation",
                     )
 
             # Domain validation: DN consistency
@@ -88,7 +96,9 @@ class FlextLdapServices(FlextService[None]):
                 return FlextResult[bool].fail("DN must contain the specified UID")
 
             logger.info(
-                "User creation request validated", uid=request.uid, dn=request.dn
+                "User creation request validated",
+                uid=request.uid,
+                dn=request.dn,
             )
 
             return FlextResult[bool].ok(True)
@@ -98,7 +108,8 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def enrich_user_for_creation(
-        self, request: FlextLdapModels.CreateUserRequest
+        self,
+        request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.CreateUserRequest]:
         """Enrich user creation request with domain defaults and business logic.
 
@@ -133,11 +144,12 @@ class FlextLdapServices(FlextService[None]):
         except Exception as e:
             logger.exception("User creation enrichment failed", error=str(e))
             return FlextResult[FlextLdapModels.CreateUserRequest].fail(
-                f"Enrichment failed: {e}"
+                f"Enrichment failed: {e}",
             )
 
     def validate_user_search_request(
-        self, request: FlextLdapModels.SearchRequest
+        self,
+        request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[bool]:
         """Validate user search request against domain rules.
 
@@ -151,28 +163,29 @@ class FlextLdapServices(FlextService[None]):
         try:
             # Domain validation: safe filter
             filter_check = FlextLdapDomain.SearchSpecification.is_safe_search_filter(
-                request.filter_str
+                request.filter_str,
             )
             if filter_check.is_failure:
                 return FlextResult[bool].fail(
-                    filter_check.error or "Unsafe search filter"
+                    filter_check.error or "Unsafe search filter",
                 )
 
             # Domain validation: search scope
             scope_result = FlextLdapModels.Scope.create(request.scope)
             if scope_result.is_failure:
                 return FlextResult[bool].fail(
-                    scope_result.error or "Invalid search scope creation"
+                    scope_result.error or "Invalid search scope creation",
                 )
             scope_obj = scope_result.unwrap()
             if not isinstance(scope_obj, FlextLdapModels.Scope):
                 return FlextResult[bool].fail("Invalid scope object type")
             scope_check = FlextLdapDomain.SearchSpecification.validate_search_scope(
-                request.base_dn, scope_obj
+                request.base_dn,
+                scope_obj,
             )
             if scope_check.is_failure:
                 return FlextResult[bool].fail(
-                    scope_check.error or "Invalid search scope"
+                    scope_check.error or "Invalid search scope",
                 )
 
             logger.info(
@@ -189,7 +202,8 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_user_search_results(
-        self, results: FlextLdapModels.SearchResponse
+        self,
+        results: FlextLdapModels.SearchResponse,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Process and enrich user search results with domain logic.
 
@@ -202,7 +216,8 @@ class FlextLdapServices(FlextService[None]):
         """
         try:
             # Domain processing: convert entries to User entities
-            user_entries = []
+            # Note: SearchResponse accepts mixed Entry/User/Group in entries list
+            user_entries: list[FlextLdapModels.Entry | FlextLdapModels.User] = []
             for entry in results.entries:
                 try:
                     # Try to create User entity from entry
@@ -218,18 +233,20 @@ class FlextLdapServices(FlextService[None]):
                     user_entries.append(entry)
 
             # Create enriched response
+
             enriched_results = FlextLdapModels.SearchResponse(
-                entries=user_entries,
+                entries=cast("list[FlextLdapModels.Entry]", user_entries),
                 total_count=len(user_entries),
-                search_time=results.search_time,
-                is_complete=results.is_complete,
-                next_page_cookie=results.next_page_cookie,
+                result_code=0,
+                time_elapsed=results.time_elapsed,
+                has_more_pages=results.has_more_pages,
+                next_cookie=results.next_cookie,
             )
 
             logger.info(
                 "User search results processed",
                 total_entries=len(user_entries),
-                search_time=results.search_time,
+                time_elapsed=results.time_elapsed,
             )
 
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
@@ -237,7 +254,7 @@ class FlextLdapServices(FlextService[None]):
         except Exception as e:
             logger.exception("User search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Processing failed: {e}"
+                f"Processing failed: {e}",
             )
 
     # =============================================================================
@@ -245,7 +262,8 @@ class FlextLdapServices(FlextService[None]):
     # =============================================================================
 
     def validate_group_creation_request(
-        self, group_data: dict
+        self,
+        group_data: dict,
     ) -> FlextResult[FlextTypes.Dict]:
         """Validate group creation data against domain business rules.
 
@@ -261,13 +279,20 @@ class FlextLdapServices(FlextService[None]):
             if not cn:
                 return FlextResult[FlextTypes.Dict].fail("Group CN is required")
 
+            dn = group_data.get(FlextLdapConstants.DictKeys.DN, "")
+            # Domain validation: DN must contain CN
+            if dn and f"cn={cn}" not in dn.lower():
+                return FlextResult[FlextTypes.Dict].fail(
+                    "DN must contain the specified CN",
+                )
+
             # Domain validation: group name format
             if not FlextLdapDomain.GroupSpecification.is_valid_group_name(cn):
                 return FlextResult[FlextTypes.Dict].fail("Invalid group name format")
 
-            # Domain validation: description
+            # Domain validation: description (basic check)
             description = group_data.get(FlextLdapConstants.DictKeys.DESCRIPTION, "")
-            if len(description) > FlextLdapConstants.Validation.MAX_DESCRIPTION_LENGTH:
+            if len(description) > FlextLdapConstants.Protocol.MAX_DESCRIPTION_LENGTH:
                 return FlextResult[FlextTypes.Dict].fail("Group description too long")
 
             logger.info("Group creation request validated", cn=cn)
@@ -279,7 +304,10 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def validate_group_membership_operation(
-        self, group: FlextLdapModels.Group, member_dn: str, operation: str
+        self,
+        group: FlextLdapModels.Group,
+        member_dn: str,
+        operation: str,
     ) -> FlextResult[bool]:
         """Validate group membership operations against domain rules.
 
@@ -299,11 +327,12 @@ class FlextLdapServices(FlextService[None]):
             if operation == FlextLdapConstants.LiteralTypes.OPERATION_ADD:
                 # Domain validation: can add member
                 add_check = FlextLdapDomain.GroupSpecification.can_add_member_to_group(
-                    group, member_dn
+                    group,
+                    member_dn,
                 )
                 if add_check.is_failure:
                     return FlextResult[bool].fail(
-                        add_check.error or "Cannot add member to group"
+                        add_check.error or "Cannot add member to group",
                     )
 
             elif operation == "remove":
@@ -325,7 +354,8 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
     def process_group_search_results(
-        self, results: FlextLdapModels.SearchResponse
+        self,
+        results: FlextLdapModels.SearchResponse,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Process and enrich group search results with domain logic.
 
@@ -338,7 +368,8 @@ class FlextLdapServices(FlextService[None]):
         """
         try:
             # Domain processing: convert entries to Group entities
-            group_entries = []
+            # Note: SearchResponse accepts mixed Entry/User/Group in entries list
+            group_entries: list[FlextLdapModels.Entry | FlextLdapModels.Group] = []
             for entry in results.entries:
                 try:
                     # Try to create Group entity from entry
@@ -354,18 +385,20 @@ class FlextLdapServices(FlextService[None]):
                     group_entries.append(entry)
 
             # Create enriched response
+
             enriched_results = FlextLdapModels.SearchResponse(
-                entries=group_entries,
+                entries=cast("list[FlextLdapModels.Entry]", group_entries),
                 total_count=len(group_entries),
-                search_time=results.search_time,
-                is_complete=results.is_complete,
-                next_page_cookie=results.next_page_cookie,
+                result_code=0,
+                time_elapsed=results.time_elapsed,
+                has_more_pages=results.has_more_pages,
+                next_cookie=results.next_cookie,
             )
 
             logger.info(
                 "Group search results processed",
                 total_entries=len(group_entries),
-                search_time=results.search_time,
+                time_elapsed=results.time_elapsed,
             )
 
             return FlextResult[FlextLdapModels.SearchResponse].ok(enriched_results)
@@ -373,7 +406,7 @@ class FlextLdapServices(FlextService[None]):
         except Exception as e:
             logger.exception("Group search results processing failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Processing failed: {e}"
+                f"Processing failed: {e}",
             )
 
     # =============================================================================
@@ -405,7 +438,7 @@ class FlextLdapServices(FlextService[None]):
             validation_result = self.validate_user_search_request(search_request)
             if validation_result.is_failure:
                 return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    validation_result.error or "Search validation failed"
+                    validation_result.error or "Search validation failed",
                 )
 
             # Step 2: Domain enrichment (could modify search parameters)
@@ -417,6 +450,7 @@ class FlextLdapServices(FlextService[None]):
             mock_results = FlextLdapModels.SearchResponse(
                 entries=[],  # Would be populated by infrastructure
                 total_count=0,
+                result_code=0,
                 time_elapsed=0.1,
                 has_more=False,
             )
@@ -431,12 +465,12 @@ class FlextLdapServices(FlextService[None]):
                 processed_results = self.process_group_search_results(mock_results)
             else:
                 processed_results = FlextResult[FlextLdapModels.SearchResponse].ok(
-                    mock_results
+                    mock_results,
                 )
 
             if processed_results.is_failure:
                 return FlextResult[FlextLdapModels.SearchResponse].fail(
-                    processed_results.error or "Result processing failed"
+                    processed_results.error or "Result processing failed",
                 )
 
             final_results = processed_results.unwrap()
@@ -453,7 +487,7 @@ class FlextLdapServices(FlextService[None]):
         except Exception as e:
             logger.exception("Search coordination failed", error=str(e))
             return FlextResult[FlextLdapModels.SearchResponse].fail(
-                f"Coordination failed: {e}"
+                f"Coordination failed: {e}",
             )
 
     # =============================================================================
@@ -461,7 +495,8 @@ class FlextLdapServices(FlextService[None]):
     # =============================================================================
 
     def execute_user_provisioning_workflow(
-        self, user_request: FlextLdapModels.CreateUserRequest
+        self,
+        user_request: FlextLdapModels.CreateUserRequest,
     ) -> FlextResult[FlextLdapModels.User]:
         """Execute complete user provisioning workflow with domain orchestration.
 
@@ -483,14 +518,14 @@ class FlextLdapServices(FlextService[None]):
             validation_result = self.validate_user_creation_request(user_request)
             if validation_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
-                    validation_result.error or "User validation failed"
+                    validation_result.error or "User validation failed",
                 )
 
             # Step 2: Domain enrichment
             enrichment_result = self.enrich_user_for_creation(user_request)
             if enrichment_result.is_failure:
                 return FlextResult[FlextLdapModels.User].fail(
-                    enrichment_result.error or "User enrichment failed"
+                    enrichment_result.error or "User enrichment failed",
                 )
 
             enriched_request = enrichment_result.unwrap()
@@ -513,7 +548,7 @@ class FlextLdapServices(FlextService[None]):
             # Step 5: Domain post-processing
             # Apply domain services for enrichment
             display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(
-                created_user
+                created_user,
             )
             logger.debug(
                 "Calculated user display name",
@@ -527,6 +562,8 @@ class FlextLdapServices(FlextService[None]):
                 dn=created_user.dn,
             )
 
+            # Return LdapUser as-is - it IS a User type
+
             return FlextResult[FlextLdapModels.User].ok(created_user)
 
         except Exception as e:
@@ -538,7 +575,8 @@ class FlextLdapServices(FlextService[None]):
     # =============================================================================
 
     def validate_ldap_configuration(
-        self, config_data: dict
+        self,
+        config_data: dict,
     ) -> FlextResult[FlextTypes.Dict]:
         """Validate LDAP configuration against domain requirements.
 
@@ -555,7 +593,7 @@ class FlextLdapServices(FlextService[None]):
             for field in required_fields:
                 if field not in config_data:
                     return FlextResult[FlextTypes.Dict].fail(
-                        f"Missing required field: {field}"
+                        f"Missing required field: {field}",
                     )
 
             # Domain validation: server format
@@ -590,7 +628,8 @@ class FlextLdapServices(FlextService[None]):
             return FlextResult[FlextTypes.Dict].fail(f"Validation failed: {e}")
 
     def generate_ldap_operation_report(
-        self, operations: list[FlextTypes.Dict]
+        self,
+        operations: list[FlextTypes.Dict],
     ) -> FlextResult[FlextTypes.Dict]:
         """Generate domain-level report for LDAP operations.
 
@@ -603,12 +642,13 @@ class FlextLdapServices(FlextService[None]):
         """
         try:
             # Domain analysis: categorize operations
-            operation_counts = {}
+            operation_counts: dict[str, int] = {}
             success_count = 0
             failure_count = 0
 
             for op in operations:
-                op_type = op.get(FlextLdapConstants.DictKeys.TYPE, "unknown")
+                op_type_raw = op.get(FlextLdapConstants.DictKeys.TYPE, "unknown")
+                op_type = str(op_type_raw) if op_type_raw is not None else "unknown"
                 operation_counts[op_type] = operation_counts.get(op_type, 0) + 1
 
                 if op.get(FlextLdapConstants.DictKeys.SUCCESS, False):

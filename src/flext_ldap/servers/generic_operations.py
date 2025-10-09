@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
@@ -18,7 +18,6 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
@@ -65,7 +64,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def discover_schema(
-        self, connection: FlextLdapTypes.Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from generic LDAP server."""
         try:
@@ -105,7 +105,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
         except Exception as e:
             self.logger.warning(
-                "Generic schema discovery error", extra={"error": str(e)}
+                "Generic schema discovery error",
+                extra={"error": str(e)},
             )
             return FlextResult[FlextTypes.Dict].ok({
                 "object_classes": [],
@@ -145,7 +146,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def get_acls(
-        self, connection: FlextLdapTypes.Connection, dn: str
+        self,
+        connection: Connection,
+        dn: str,
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs from generic LDAP server."""
         self.logger.warning("Generic ACL retrieval - may not work on all servers")
@@ -154,13 +157,13 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     @override
     def set_acls(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: Connection,
         dn: str,
         acls: list[FlextTypes.Dict],
     ) -> FlextResult[bool]:
         """Set ACLs on generic LDAP server."""
         return FlextResult[bool].fail(
-            "Generic LDAP ACL setting not supported - implement server-specific operations"
+            "Generic LDAP ACL setting not supported - implement server-specific operations",
         )
 
     @override
@@ -185,7 +188,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def add_entry(
-        self, connection: FlextLdapTypes.Connection, entry: FlextLdifModels.Entry
+        self,
+        connection: Connection,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Add entry to generic LDAP server."""
         try:
@@ -199,7 +204,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             if not success:
                 error_msg = connection.result.get(
-                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                    FlextLdapConstants.DictKeys.DESCRIPTION,
+                    "Unknown error",
                 )
                 return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
 
@@ -212,7 +218,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     @override
     def modify_entry(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: Connection,
         dn: str,
         modifications: FlextTypes.Dict,
     ) -> FlextResult[bool]:
@@ -230,7 +236,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             if not success:
                 error_msg = connection.result.get(
-                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                    FlextLdapConstants.DictKeys.DESCRIPTION,
+                    "Unknown error",
                 )
                 return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
 
@@ -242,7 +249,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def delete_entry(
-        self, connection: FlextLdapTypes.Connection, dn: str
+        self,
+        connection: Connection,
+        dn: str,
     ) -> FlextResult[bool]:
         """Delete entry from generic LDAP server."""
         try:
@@ -253,7 +262,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             if not success:
                 error_msg = connection.result.get(
-                    FlextLdapConstants.DictKeys.DESCRIPTION, "Unknown error"
+                    FlextLdapConstants.DictKeys.DESCRIPTION,
+                    "Unknown error",
                 )
                 return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
 
@@ -265,7 +275,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def normalize_entry(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for generic LDAP server."""
         return FlextResult[FlextLdifModels.Entry].ok(entry)
@@ -292,23 +303,46 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     @override
     def search_with_paging(
         self,
-        connection: FlextLdapTypes.Connection,
+        connection: Connection,
         base_dn: str,
         search_filter: str,
         attributes: FlextTypes.StringList | None = None,
+        scope: str = "subtree",
         page_size: int = 100,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Execute paged search on generic LDAP server."""
+        """Execute paged search on generic LDAP server.
+
+        Args:
+            connection: Active LDAP connection
+            base_dn: Search base DN
+            search_filter: LDAP search filter
+            attributes: Attributes to retrieve
+            scope: Search scope (base, level, or subtree)
+            page_size: Page size for results
+
+        Returns:
+            FlextResult containing list of entries
+
+        """
         try:
             if not connection or not connection.bound:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
-                    "Connection not bound"
+                    "Connection not bound",
                 )
+
+            # Convert scope string to ldap3 constant
+            from ldap3 import BASE, LEVEL
+            scope_map = {
+                "base": BASE,
+                "level": LEVEL,
+                "subtree": SUBTREE,
+            }
+            search_scope = scope_map.get(scope.lower(), SUBTREE)
 
             entry_generator = connection.extend.standard.paged_search(
                 search_base=base_dn,
                 search_filter=search_filter,
-                search_scope=SUBTREE,
+                search_scope=search_scope,
                 attributes=attributes or ["*"],
                 paged_size=page_size,
                 generator=True,
@@ -323,12 +357,15 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 
-            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
+            # Cast LDIF entries to LDAP entries - they have compatible structure
+            return FlextResult[list[FlextLdapModels.Entry]].ok(
+                cast("list[FlextLdapModels.Entry]", entries),
+            )
 
         except Exception as e:
             self.logger.exception("Paged search error", extra={"error": str(e)})
             return FlextResult[list[FlextLdapModels.Entry]].fail(
-                f"Paged search failed: {e}"
+                f"Paged search failed: {e}",
             )
 
     # =========================================================================
@@ -337,7 +374,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def get_root_dse_attributes(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes for generic server."""
         try:
@@ -363,7 +401,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         except Exception as e:
             self.logger.exception("Root DSE retrieval error", extra={"error": str(e)})
             return FlextResult[dict[str, object]].fail(
-                f"Root DSE retrieval failed: {e}"
+                f"Root DSE retrieval failed: {e}",
             )
 
     @override
@@ -396,7 +434,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def get_supported_controls(
-        self, connection: FlextLdapTypes.Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[list[str]]:
         """Get supported controls for generic server."""
         try:
@@ -419,23 +458,38 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def normalize_entry_for_server(
-        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+        self,
+        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        target_server_type: str | None = None,
     ) -> FlextResult[FlextLdapModels.Entry]:
-        """Normalize entry for generic server."""
+        """Normalize entry for generic server.
+
+        Args:
+            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
+            target_server_type: Target server type (unused for generic)
+
+        Returns:
+            FlextResult containing normalized entry
+
+        """
         try:
             # For generic server, just return the entry as-is
-            # In a real implementation, this would apply server-specific transformations
-            return FlextResult[FlextLdapModels.Entry].ok(entry)
+            # Cast to FlextLdapModels.Entry since both types have compatible structure
+            return FlextResult[FlextLdapModels.Entry].ok(
+                cast("FlextLdapModels.Entry", entry),
+            )
 
         except Exception as e:
             self.logger.exception("Entry normalization error", extra={"error": str(e)})
             return FlextResult[FlextLdapModels.Entry].fail(
-                f"Entry normalization failed: {e}"
+                f"Entry normalization failed: {e}",
             )
 
     @override
     def validate_entry_for_server(
-        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry for generic server."""
         try:

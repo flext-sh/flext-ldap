@@ -173,7 +173,7 @@ class FlextLdapUtilities(FlextUtilities):
                 error_msg = "DN must be a string"
                 raise exceptions.type_error(
                     error_msg,
-                    value=str(value),
+                    field="dn",
                     expected_type="str",
                     actual_type=type(value).__name__,
                 )
@@ -272,7 +272,7 @@ class FlextLdapUtilities(FlextUtilities):
             """Normalize LDAP attributes list by removing empty values and stripping whitespace."""
             if not attributes:
                 return FlextResult[FlextTypes.StringList].fail(
-                    "Attributes list cannot be empty"
+                    "Attributes list cannot be empty",
                 )
             # Strip whitespace and remove empty strings
             result = [attr.strip() for attr in attributes if attr.strip()]
@@ -287,12 +287,13 @@ class FlextLdapUtilities(FlextUtilities):
 
         @staticmethod
         def attributes_to_dict(
-            attribute_names: Sequence[str], attribute_values: FlextTypes.List
+            attribute_names: Sequence[str],
+            attribute_values: FlextTypes.List,
         ) -> FlextResult[FlextTypes.StringDict]:
             """Convert LDAP attributes to dictionary format."""
             if len(attribute_names) != len(attribute_values):
                 return FlextResult[FlextTypes.StringDict].fail(
-                    f"Attribute names and values length mismatch: {len(attribute_names)} vs {len(attribute_values)}"
+                    f"Attribute names and values length mismatch: {len(attribute_names)} vs {len(attribute_values)}",
                 )
 
             result: FlextTypes.StringDict = {}
@@ -349,7 +350,7 @@ class FlextLdapUtilities(FlextUtilities):
             return FlextResult[FlextTypes.StringList].ok(result)
         except Exception as e:
             return FlextResult[FlextTypes.StringList].fail(
-                f"String list conversion failed: {e}"
+                f"String list conversion failed: {e}",
             )
 
 

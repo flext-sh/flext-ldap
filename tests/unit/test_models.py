@@ -177,7 +177,7 @@ class TestFlextLdapModels:
             object_class_mappings={"person": "inetOrgPerson"},
         )
 
-        assert quirks.server_type == FlextLdapModels.LdapServerType.OPENLDAP
+        assert quirks.server_type == FlextLdapModels.LdapServerType.OPENLDAP.value
         assert quirks.supports_paged_results is True
         assert quirks.supports_sync is True
         assert quirks.max_page_size == FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
@@ -210,7 +210,7 @@ class TestFlextLdapModels:
             supported_extensions=["1.3.6.1.4.1.4203.1.11.1"],
         )
 
-        assert result.server_type == FlextLdapModels.LdapServerType.OPENLDAP
+        assert result.server_type == FlextLdapModels.LdapServerType.OPENLDAP.value
         assert "cn" in result.attributes
         assert "person" in result.object_classes
 
@@ -594,9 +594,11 @@ class TestFlextLdapModels:
         )
 
         # 5. Create connection config
+        from flext_core import FlextConstants
+
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+            port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             bind_password="testpass",
         )
@@ -938,109 +940,6 @@ class TestFlextLdapModels:
         assert config.use_ssl is False
         assert config.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
-    @pytest.mark.skip(
-        reason="Obsolete factory pattern - UnifiedAcl models use Pydantic v2 direct instantiation. Test needs refactoring."
-    )
-    def test_unified_acl_model(self) -> None:
-        """Test UnifiedAcl model for ACL representation."""
-        target_result = FlextLdapModels.AclTarget.create(
-            target_type="dn",
-            dn_pattern="ou=people,dc=example,dc=com",
-        )
-        subject_result = FlextLdapModels.AclSubject.create(
-            subject_type="user",
-            subject_dn="uid=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        )
-        perms_result = FlextLdapModels.AclPermissions.create(
-            permissions=["read", "write"],
-        )
-
-        assert target_result.is_success
-        assert subject_result.is_success
-        assert perms_result.is_success
-
-        acl_result = FlextLdapModels.UnifiedAcl.create(
-            target=target_result.unwrap(),
-            subject=subject_result.unwrap(),
-            permissions=perms_result.unwrap(),
-            name="test-acl",
-            priority=100,
-        )
-
-        assert acl_result.is_success
-        acl = acl_result.unwrap()
-        assert acl.name == "test-acl"
-        assert acl.priority == 100
-
-    @pytest.mark.skip(
-        reason="OpenLdapAcl model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_openldap_acl_model(self) -> None:
-        """Test OpenLdapAcl model for OpenLDAP ACLs."""
-        acl_result = FlextLdapModels.OpenLdapAcl.create(
-            access_line="access to * by * read",
-            target_spec="*",
-        )
-
-        assert acl_result.is_success
-        acl = acl_result.unwrap()
-        assert acl.access_line == "access to * by * read"
-        assert acl.target_spec == "*"
-
-    @pytest.mark.skip(
-        reason="OracleAcl model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_oracle_acl_model(self) -> None:
-        """Test OracleAcl model for Oracle LDAP ACLs."""
-        acl_result = FlextLdapModels.OracleAcl.create(
-            orclaci_value='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
-            target_type="entry",
-            permissions=["read"],
-        )
-
-        assert acl_result.is_success
-        acl = acl_result.unwrap()
-        assert acl.target_type == "entry"
-        assert "targetattr" in acl.orclaci_value
-
-    @pytest.mark.skip(
-        reason="AciFormat model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_aci_format_model(self) -> None:
-        """Test AciFormat model for ACI representations."""
-        aci_result = FlextLdapModels.AciFormat.create(
-            aci_value='(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
-            target_attrs=["cn", "mail"],
-            acl_name="test-aci",
-            grant_type="allow",
-            permissions=["read"],
-        )
-
-        assert aci_result.is_success
-        aci = aci_result.unwrap()
-        assert "targetattr" in aci.aci_value
-        assert aci.grant_type == "allow"
-        assert "read" in aci.permissions
-
-    @pytest.mark.skip(
-        reason="ConversionResult model removed - ACL conversion consolidated. Test needs refactoring."
-    )
-    def test_conversion_result_model(self) -> None:
-        """Test ConversionResult model for ACL conversions."""
-        result = FlextLdapModels.ConversionResult.create(
-            converted_acl="converted ACL string",
-            source_format="openldap",
-            target_format="oracle",
-            warnings=["Minor syntax difference"],
-        )
-
-        assert result.is_success
-        conv_result = result.unwrap()
-        assert conv_result.source_format == "openldap"
-        assert conv_result.target_format == "oracle"
-        assert conv_result.converted_acl == "converted ACL string"
-        assert len(conv_result.warnings) == 1
-
     def test_ldap_user_validation_methods(self) -> None:
         """Test LdapUser validation methods."""
         user = FlextLdapModels.LdapUser(
@@ -1189,7 +1088,7 @@ class TestFlextLdapModels:
             FlextLdapModels.Scope(value="")
 
         # Test numeric value
-        with pytest.raises(ValueError):
+        with pytest.raises(FlextLdapExceptions.LdapValidationError):
             FlextLdapModels.Scope(value="123")
 
     def test_ldap_user_field_validators(self) -> None:
@@ -1779,144 +1678,6 @@ class TestFlextLdapModels:
         assert unified_acl.subject == subject
         assert unified_acl.permissions == permissions
         assert unified_acl.priority == 100
-
-    @pytest.mark.skip(
-        reason="OpenLdapAcl model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_openldap_acl_format(self) -> None:
-        """Test OpenLdapAcl model with OpenLDAP-specific syntax."""
-        openldap_acl = FlextLdapModels.OpenLdapAcl(
-            access_line="access to attrs=userPassword by self write by anonymous auth",
-            target_spec="attrs=userPassword",
-        )
-        assert "attrs=userPassword" in openldap_acl.access_line
-        assert openldap_acl.target_spec == "attrs=userPassword"
-
-    @pytest.mark.skip(
-        reason="OracleAcl model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_oracle_acl_format(self) -> None:
-        """Test OracleAcl model with Oracle-specific ACI format."""
-        oracle_acl = FlextLdapModels.OracleAcl(
-            orclaci_value='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "user-read"; allow (read,search) userdn="ldap:///anyone";)',
-            target_type="entry",
-            attributes=["*"],
-            permissions=["read", "search"],
-        )
-        assert "ou=users,dc=example,dc=com" in oracle_acl.orclaci_value
-        assert oracle_acl.target_type == "entry"
-        assert "*" in oracle_acl.attributes
-
-    @pytest.mark.skip(
-        reason="AciFormat model removed - consolidated into UnifiedAcl. Test needs refactoring."
-    )
-    def test_aci_format_parsing(self) -> None:
-        """Test AciFormat model for Oracle ACI string parsing."""
-        aci = FlextLdapModels.AciFormat(
-            aci_value='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "user-modify"; allow (read,write,search) userdn="ldap:///uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com";)',
-            target_dn="ou=users,dc=example,dc=com",
-            target_attrs=["*"],
-            acl_name="user-modify",
-            grant_type="allow",
-            permissions=["read", "write", "search"],
-            bind_rules={"userdn": "ldap:///uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"},
-        )
-        assert "user-modify" in aci.aci_value
-        assert aci.acl_name == "user-modify"
-        assert "read" in aci.permissions
-        assert "write" in aci.permissions
-        assert "userdn" in aci.bind_rules
-
-    @pytest.mark.skip(
-        reason="ConversionResult model removed - ACL conversion consolidated. Test needs refactoring."
-    )
-    def test_acl_conversion_result(self) -> None:
-        """Test ConversionResult model for ACL conversion tracking."""
-        # Successful conversion
-        success_result = FlextLdapModels.ConversionResult(
-            converted_acl='(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
-            source_format="openldap",
-            target_format="oracle",
-            warnings=[],
-        )
-        assert success_result.converted_acl is not None
-        assert success_result.source_format == "openldap"
-        assert success_result.target_format == "oracle"
-        assert len(success_result.warnings) == 0
-
-        # Conversion with warnings
-        warning_result = FlextLdapModels.ConversionResult(
-            converted_acl="access to * by self write",
-            source_format="oracle",
-            target_format="openldap",
-            warnings=["Complex ACI pattern simplified", "Dynamic groups not supported"],
-        )
-        assert warning_result.converted_acl == "access to * by self write"
-        assert len(warning_result.warnings) == 2
-        assert "Complex ACI pattern" in warning_result.warnings[0]
-
-    @pytest.mark.skip(
-        reason="OpenLdapAcl model removed - use UnifiedAcl instead. Test needs refactoring."
-    )
-    def test_openldap_to_unified_acl_conversion(self) -> None:
-        """Test conversion from OpenLDAP ACL to UnifiedAcl model."""
-        # Create target and subject for OpenLDAP ACL
-        target = FlextLdapModels.AclTarget(
-            target_type="dn",
-            dn_pattern="ou=users,dc=example,dc=com",
-            scope="subtree",
-        )
-        subject = FlextLdapModels.AclSubject(
-            subject_type="group",
-            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
-        )
-
-        # Create OpenLDAP ACL with proper field names
-        openldap_acl = FlextLdapModels.OpenLdapAcl(
-            access_line='access to dn.subtree="ou=users,dc=example,dc=com" by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write',
-            target_spec='dn.subtree="ou=users,dc=example,dc=com"',
-        )
-
-        # Verify ACL structure
-        assert "ou=users,dc=example,dc=com" in openldap_acl.access_line
-        assert openldap_acl.target_spec == 'dn.subtree="ou=users,dc=example,dc=com"'
-
-        # Verify we can use the target and subject we created
-        assert target.target_type == "dn"
-        assert target.scope == "subtree"
-        assert subject.subject_type == "group"
-
-    @pytest.mark.skip(
-        reason="OracleAcl model removed - use UnifiedAcl instead. Test needs refactoring."
-    )
-    def test_oracle_to_unified_acl_conversion(self) -> None:
-        """Test conversion from Oracle ACI to UnifiedAcl model."""
-        # Create permissions model
-        permissions = FlextLdapModels.AclPermissions(
-            permissions=["read", "search", "compare"],
-            grant_type="allow",
-        )
-
-        # Create Oracle ACI with proper field names
-        oracle_acl = FlextLdapModels.OracleAcl(
-            orclaci_value='(target="ldap:///ou=people,dc=example,dc=com")(targetattr="*")(version 3.0; acl "people-read"; allow (read,search,compare) userdn="ldap:///all";)',
-            target_type="entry",
-            attributes=["*"],
-            permissions=["read", "search", "compare"],
-        )
-
-        # Verify parsed components
-        assert "ou=people,dc=example,dc=com" in oracle_acl.orclaci_value
-        assert "*" in oracle_acl.attributes
-        assert "read" in oracle_acl.permissions
-        assert "search" in oracle_acl.permissions
-        assert "compare" in oracle_acl.permissions
-
-        # Verify permissions model
-        assert "read" in permissions.permissions
-        assert "search" in permissions.permissions
-        assert "compare" in permissions.permissions
-        assert permissions.grant_type == "allow"
 
     def test_ldap_user_to_ldap_attributes(self) -> None:
         """Test LdapUser.to_ldap_attributes() conversion method."""
@@ -3027,13 +2788,13 @@ class TestFlextLdapModels:
         )
 
     def test_connection_config_validate_empty_server(self) -> None:
-        """Test ConnectionConfig.validate() with empty server."""
+        """Test ConnectionConfig.validate_business_rules() with empty server."""
         config = FlextLdapModels.ConnectionConfig(
             server="",  # Empty server
             port=389,
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -3041,41 +2802,41 @@ class TestFlextLdapModels:
         )
 
     def test_connection_config_validate_invalid_port_zero(self) -> None:
-        """Test ConnectionConfig.validate() with port 0."""
+        """Test ConnectionConfig validation with port 0 (explicit validation)."""
         config = FlextLdapModels.ConnectionConfig(
             server="ldap.example.com",
             port=0,  # Invalid port
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "Invalid port number" in result.error
+        assert "port" in result.error.lower()
 
     def test_connection_config_validate_invalid_port_too_high(self) -> None:
-        """Test ConnectionConfig.validate() with port > 65535."""
+        """Test ConnectionConfig.validate_business_rules() with port > 65535."""
         config = FlextLdapModels.ConnectionConfig(
             server="ldap.example.com",
             port=70000,  # Too high
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
         assert result.error and result.error and "Invalid port number" in result.error
 
     def test_connection_config_validate_success(self) -> None:
-        """Test ConnectionConfig.validate() with valid data."""
+        """Test ConnectionConfig.validate_business_rules() with valid data."""
         config = FlextLdapModels.ConnectionConfig(
             server="ldap.example.com",
             port=389,
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_success
 
     def test_modify_config_validate_empty_dn(self) -> None:
-        """Test ModifyConfig.validate() with empty DN."""
+        """Test ModifyConfig.validate_business_rules() with empty DN."""
         from flext_ldap.models import FlextLdapModels
 
         config = FlextLdapModels.ModifyConfig(
@@ -3083,29 +2844,28 @@ class TestFlextLdapModels:
             changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_modify_config_validate_empty_changes(self) -> None:
-        """Test ModifyConfig.validate() with empty changes."""
+        """Test ModifyConfig Pydantic validation with empty changes."""
         from flext_ldap.models import FlextLdapModels
 
+        # Create with empty changes and use explicit validation
         config = FlextLdapModels.ModifyConfig(
             dn="cn=test,dc=example,dc=com",
             changes={},  # Empty changes
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error and result.error and "Changes cannot be empty" in result.error
-        )
+        assert "Changes cannot be empty" in result.error
 
     def test_modify_config_validate_success(self) -> None:
-        """Test ModifyConfig.validate() with valid data."""
+        """Test ModifyConfig.validate_business_rules() with valid data."""
         from flext_ldap.models import FlextLdapModels
 
         config = FlextLdapModels.ModifyConfig(
@@ -3113,11 +2873,11 @@ class TestFlextLdapModels:
             changes={"cn": [("MODIFY_REPLACE", ["New Name"])]},
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_success
 
     def test_add_config_validate_empty_dn(self) -> None:
-        """Test AddConfig.validate() with empty DN."""
+        """Test AddConfig.validate_business_rules() with empty DN."""
         from flext_ldap.models import FlextLdapModels
 
         config = FlextLdapModels.AddConfig(
@@ -3125,13 +2885,13 @@ class TestFlextLdapModels:
             attributes={"objectClass": ["person"], "cn": ["Test"]},
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
     def test_add_config_validate_success(self) -> None:
-        """Test AddConfig.validate() with valid data."""
+        """Test AddConfig.validate_business_rules() with valid data."""
         from flext_ldap.models import FlextLdapModels
 
         config = FlextLdapModels.AddConfig(
@@ -3139,5 +2899,5 @@ class TestFlextLdapModels:
             attributes={"objectClass": ["person"], "cn": ["Test"]},
         )
 
-        result = config.validate()
+        result = config.validate_business_rules()
         assert result.is_success

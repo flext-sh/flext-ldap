@@ -25,6 +25,9 @@ class FlextLdapConstants(FlextConstants):
     # LDAP-SPECIFIC CONSTANTS ONLY - Essential domain constants
     # =========================================================================
 
+    # Convenience reference to FlextConstants timeout (for examples)
+    DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
+
     class Protocol:
         """LDAP protocol-specific constants.
 
@@ -44,16 +47,26 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
 
+        # Limits for LDAP data
+        MAX_DESCRIPTION_LENGTH: Final[int] = 1024
+
+        # Port constants (reference to FlextConstants)
+        DEFAULT_PORT: Final[int] = FlextConstants.Platform.LDAP_DEFAULT_PORT
+        DEFAULT_SSL_PORT: Final[int] = FlextConstants.Platform.LDAPS_DEFAULT_PORT
+
+        # Timeout constants (reference to FlextConstants)
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
+
     class Connection:
         """LDAP connection-specific constants.
 
         Note: Use FlextConstants directly for:
-        - DEFAULT_PAGE_SIZE → FlextConstants.Performance.DEFAULT_PAGE_SIZE
         - DEFAULT_TIMEOUT → FlextConstants.Network.DEFAULT_TIMEOUT
         - DEFAULT_POOL_SIZE → FlextConstants.Performance.DEFAULT_DB_POOL_SIZE
         """
 
-        # LDAP-specific page sizes
+        # LDAP-specific page sizes (convenience aliases)
+        DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.Performance.DEFAULT_PAGE_SIZE
         DEFAULT_SEARCH_PAGE_SIZE: Final[int] = 100
         MAX_PAGE_SIZE_GENERIC: Final[int] = 1000
         MAX_PAGE_SIZE_AD: Final[int] = 100000
@@ -61,11 +74,14 @@ class FlextLdapConstants(FlextConstants):
     class Scopes:
         """LDAP search scope constants.
 
-        Note: Use FlextConstants directly for scope constants:
-        - BASE → FlextConstants.Platform.LDAP_SCOPE_BASE
-        - ONELEVEL → FlextConstants.Platform.LDAP_SCOPE_LEVEL
-        - SUBTREE → FlextConstants.Platform.LDAP_SCOPE_SUBTREE
+        Provides direct access to LDAP scope constants for convenience.
+        These reference FlextConstants.Platform values.
         """
+
+        # Direct references to FlextConstants for convenience
+        BASE: Final[str] = FlextConstants.Platform.LDAP_SCOPE_BASE
+        ONELEVEL: Final[str] = FlextConstants.Platform.LDAP_SCOPE_LEVEL
+        SUBTREE: Final[str] = FlextConstants.Platform.LDAP_SCOPE_SUBTREE
 
         # LDAP-specific scope
         CHILDREN: Final[str] = "children"
@@ -118,12 +134,54 @@ class FlextLdapConstants(FlextConstants):
             "memberOf",
         ]
 
+        @classmethod
+        def get_group_attributes(cls) -> list[str]:
+            """Get all standard group attributes."""
+            return cls.ALL_GROUP_ATTRS.copy()
+
+    class LdapAttributeNames:
+        """LDAP attribute names for convenience access.
+
+        Provides direct access to commonly used LDAP attribute names.
+        These are aliases to the values in the Attributes class.
+        """
+
+        # Core attributes (aliases for convenience)
+        DN: Final[str] = "dn"
+        OBJECT_CLASS: Final[str] = "objectClass"
+        CN: Final[str] = "cn"
+        SN: Final[str] = "sn"
+        GIVEN_NAME: Final[str] = "givenName"
+        DISPLAY_NAME: Final[str] = "displayName"
+        UID: Final[str] = "uid"
+        MAIL: Final[str] = "mail"
+        USER_PASSWORD: Final[str] = "userPassword"
+
+        # Group attributes
+        MEMBER: Final[str] = "member"
+        UNIQUE_MEMBER: Final[str] = "uniqueMember"
+        MEMBER_OF: Final[str] = "memberOf"
+        OWNER: Final[str] = "owner"
+        GID_NUMBER: Final[str] = "gidNumber"
+
+        # Additional common attributes
+        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
+        MOBILE: Final[str] = "mobile"
+        DEPARTMENT: Final[str] = "department"
+        TITLE: Final[str] = "title"
+        OU: Final[str] = "ou"
+        DESCRIPTION: Final[str] = "description"
+        EMPLOYEE_NUMBER: Final[str] = "employeeNumber"
+        EMPLOYEE_TYPE: Final[str] = "employeeType"
+
     class ObjectClasses:
         """Standard LDAP object classes."""
 
         TOP: Final[str] = "top"
         PERSON: Final[str] = "person"
+        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+        ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
         GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
 
@@ -168,6 +226,9 @@ class FlextLdapConstants(FlextConstants):
         # LDAP password validation
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
+
+        # LDAP connection validation
+        MIN_CONNECTION_ARGS: Final[int] = 3  # server_uri, bind_dn, password
 
     # LDAP-specific error and validation messages
     class Messages(FlextConstants.Messages):
@@ -334,32 +395,6 @@ class FlextLdapConstants(FlextConstants):
 
         # Server type keys
         GENERIC: Final[str] = "generic"
-
-    class LdapAttributeNames:
-        """RFC-standard LDAP attribute names (not Python dict keys)."""
-
-        # Standard person attributes (RFC 4519)
-        DN: Final[str] = "dn"
-        CN: Final[str] = "cn"
-        SN: Final[str] = "sn"
-        GIVEN_NAME: Final[str] = "givenName"
-        UID: Final[str] = "uid"
-        MAIL: Final[str] = "mail"
-        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
-        MOBILE: Final[str] = "mobile"
-        TITLE: Final[str] = "title"
-        DESCRIPTION: Final[str] = "description"
-        DEPARTMENT: Final[str] = "department"
-        ORGANIZATION: Final[str] = "o"  # Organization
-        OU: Final[str] = "ou"  # Organizational Unit
-
-        # Group attributes
-        MEMBER: Final[str] = "member"
-        UNIQUE_MEMBER: Final[str] = "uniqueMember"
-        GID_NUMBER: Final[str] = "gidNumber"
-
-        # Object class
-        OBJECT_CLASS: Final[str] = "objectClass"
 
     class Permission:
         """Standard ACL permissions mapped across formats."""

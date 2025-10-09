@@ -33,20 +33,21 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
 
     @override
     def handle(
-        self, message: dict[str, Any]
+        self,
+        message: dict[str, Any],
     ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
         """Handle ACL operations with proper type safety."""
         try:
             # Type-safe request handling
             if not isinstance(message, dict):
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    "Request must be a dictionary"
+                    "Request must be a dictionary",
                 )
 
             operation: str | None = message.get(FlextLdapConstants.DictKeys.OPERATION)
             if not isinstance(operation, str):
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    "Operation must be a string"
+                    "Operation must be a string",
                 )
 
             # Route to appropriate handler based on operation
@@ -55,27 +56,29 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
             if operation == FlextLdapConstants.LiteralTypes.OPERATION_CONVERT:
                 return self._handle_convert(message)
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"Unknown operation: {operation}"
+                f"Unknown operation: {operation}",
             )
 
         except Exception as e:
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL operation failed: {e}"
+                f"ACL operation failed: {e}",
             )
 
     def _handle_parse(
-        self, message: dict[str, Any]
+        self,
+        message: dict[str, Any],
     ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
         """Handle ACL parsing operations."""
         try:
             acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
             if not isinstance(acl_string, str):
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    "ACL string must be provided"
+                    "ACL string must be provided",
                 )
 
             format_type = message.get(
-                FlextLdapConstants.DictKeys.FORMAT, FlextLdapConstants.AclFormat.AUTO
+                FlextLdapConstants.DictKeys.FORMAT,
+                FlextLdapConstants.AclFormat.AUTO,
             )
             if not isinstance(format_type, str):
                 format_type = FlextLdapConstants.AclFormat.AUTO
@@ -89,7 +92,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
                 result = self._parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    f"Unsupported ACL format: {format_type}"
+                    f"Unsupported ACL format: {format_type}",
                 )
 
             return (
@@ -98,29 +101,31 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
 
         except Exception as e:
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL parsing failed: {e}"
+                f"ACL parsing failed: {e}",
             )
 
     def _handle_convert(
-        self, message: dict[str, Any]
+        self,
+        message: dict[str, Any],
     ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
         """Handle ACL conversion operations."""
         try:
             acl_data = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
             if not isinstance(acl_data, str):
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    "ACL data must be a string"
+                    "ACL data must be a string",
                 )
 
             target_format = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
             if not isinstance(target_format, str):
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    "Target format must be specified"
+                    "Target format must be specified",
                 )
 
             # Use converter to convert ACL
             source_format = message.get(
-                "source_format", FlextLdapConstants.AclFormat.AUTO
+                "source_format",
+                FlextLdapConstants.AclFormat.AUTO,
             )
             if not isinstance(source_format, str):
                 source_format = FlextLdapConstants.AclFormat.AUTO
@@ -128,11 +133,13 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
 
         except Exception as e:
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL conversion failed: {e}"
+                f"ACL conversion failed: {e}",
             )
 
     def parse_acl(
-        self, acl_string: str, format_type: str
+        self,
+        acl_string: str,
+        format_type: str,
     ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
         """Parse ACL string using the specified format."""
         try:
@@ -145,39 +152,47 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
                 result = self._parsers.AciParser.parse(acl_string)
             else:
                 return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                    f"Unsupported ACL format: {format_type}"
+                    f"Unsupported ACL format: {format_type}",
                 )
 
             if result.is_success:
                 return FlextResult[FlextLdapModels.UnifiedAcl].ok(result.unwrap())
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL parsing failed: {result.error}"
+                f"ACL parsing failed: {result.error}",
             )
         except Exception as e:
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL parsing failed: {e}"
+                f"ACL parsing failed: {e}",
             )
 
     def convert_acl(
-        self, acl_data: str, source_format: str, target_format: str
+        self,
+        acl_data: str,
+        source_format: str,
+        target_format: str,
     ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
         """Convert ACL from one format to another."""
         try:
             result = self._converters.convert_acl(
-                acl_data, source_format, target_format
+                acl_data,
+                source_format,
+                target_format,
             )
             if result.is_success:
                 return FlextResult[FlextLdapModels.UnifiedAcl].ok(result.unwrap())
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL conversion failed: {result.error}"
+                f"ACL conversion failed: {result.error}",
             )
         except Exception as e:
             return FlextResult[FlextLdapModels.UnifiedAcl].fail(
-                f"ACL conversion failed: {e}"
+                f"ACL conversion failed: {e}",
             )
 
     def batch_convert(
-        self, acls: FlextTypes.StringList, source_format: str, target_format: str
+        self,
+        acls: FlextTypes.StringList,
+        source_format: str,
+        target_format: str,
     ) -> FlextResult[FlextTypes.List]:
         """Convert multiple ACLs from one format to another."""
         try:
@@ -190,18 +205,20 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
                 result = self._converters.convert_acl(acl, source_format, target_format)
                 if result.is_failure:
                     return FlextResult[FlextTypes.List].fail(
-                        f"Batch conversion failed for ACL '{acl}': {result.error}"
+                        f"Batch conversion failed for ACL '{acl}': {result.error}",
                     )
                 # Unwrap the FlextResult to get the ConversionResult object
                 results.append(result.unwrap())
             return FlextResult[FlextTypes.List].ok(results)
         except Exception as e:
             return FlextResult[FlextTypes.List].fail(
-                f"Batch ACL conversion failed: {e}"
+                f"Batch ACL conversion failed: {e}",
             )
 
     def validate_acl_syntax(
-        self, acl_string: str, format_type: str
+        self,
+        acl_string: str,
+        format_type: str,
     ) -> FlextResult[bool]:
         """Validate ACL syntax for the specified format."""
         try:

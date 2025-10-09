@@ -147,7 +147,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def get_acls(
-        self, connection: Connection, dn: str
+        self,
+        connection: Connection,
+        dn: str,
     ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs for a given DN.
 
@@ -162,7 +164,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def set_acls(
-        self, connection: Connection, dn: str, acls: list[FlextTypes.Dict]
+        self,
+        connection: Connection,
+        dn: str,
+        acls: list[FlextTypes.Dict],
     ) -> FlextResult[bool]:
         """Set ACLs for a given DN.
 
@@ -206,7 +211,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def add_entry(
-        self, connection: Connection, entry: FlextLdifModels.Entry
+        self,
+        connection: Connection,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Add entry to LDAP server.
 
@@ -221,7 +228,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def modify_entry(
-        self, connection: Connection, dn: str, modifications: FlextTypes.Dict
+        self,
+        connection: Connection,
+        dn: str,
+        modifications: FlextTypes.Dict,
     ) -> FlextResult[bool]:
         """Modify existing entry.
 
@@ -250,7 +260,8 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def normalize_entry(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for this server type.
 
@@ -306,7 +317,8 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def get_root_dse_attributes(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes.
 
@@ -344,7 +356,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def normalize_entry_for_server(
-        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+        self,
+        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        target_server_type: str | None = None,
     ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for this server type.
 
@@ -394,7 +408,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     @abstractmethod
     def validate_entry_for_server(
-        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry for this server type.
 
