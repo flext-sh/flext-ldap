@@ -12,7 +12,7 @@ from typing import cast, override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
-from ldap3 import MODIFY_REPLACE, SUBTREE, Connection
+from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -469,7 +469,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 )
 
             # Convert scope string to ldap3 constant
-            from ldap3 import BASE, LEVEL
             scope_map = {
                 "base": BASE,
                 "level": LEVEL,

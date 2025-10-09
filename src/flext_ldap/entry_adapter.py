@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pathlib
+from typing import cast
 
 from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -124,7 +125,6 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Convert attributes dict to FlextLdifModels.LdifAttributes
         # Explicit FlextResult error handling - NO try/except
-        from typing import cast
 
         attr_values_dict: dict[str, FlextLdifModels.AttributeValues] = {}
         # Cast attributes to proper type since we know it's a dict at this point

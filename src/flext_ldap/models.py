@@ -44,7 +44,7 @@ from __future__ import annotations
 import base64
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, override
+from typing import ClassVar, Literal, override
 
 from flext_core import (
     FlextConstants,
@@ -2318,6 +2318,305 @@ class FlextLdapModels(FlextModels):
                 else:
                     ldap_attrs[key] = [str(value)]
             return ldap_attrs
+
+    class UpdateEntryRequest(Base, ValidationMixin):
+        """Request model for updating LDAP entries.
+
+        Provides type-safe update operations with strategy support for
+        merge (default) or replace semantics.
+        """
+
+        dn: str = Field(..., description="Distinguished Name of entry to update")
+        attributes: dict[str, str | FlextTypes.StringList] = Field(
+            ...,
+            description="Attributes to update",
+        )
+        strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Update strategy: merge adds/updates, replace overwrites",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class UpsertEntryRequest(Base, ValidationMixin):
+        """Request model for upserting LDAP entries (create or update).
+
+        Upsert semantics: create if entry doesn't exist, update if it does.
+        """
+
+        dn: str = Field(..., description="Distinguished Name for entry")
+        attributes: dict[str, str | FlextTypes.StringList] = Field(
+            ...,
+            description="Entry attributes",
+        )
+        update_strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Strategy if entry exists: merge or replace",
+        )
+        object_classes: FlextTypes.StringList | None = Field(
+            default=None,
+            description="Object classes for new entries",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class SyncResult(Base):
+        """Result model for sync operations.
+
+        Tracks statistics and details of sync operations including
+        created, updated, and deleted entries.
+        """
+
+        created: int = Field(default=0, description="Number of entries created")
+        updated: int = Field(default=0, description="Number of entries updated")
+        deleted: int = Field(default=0, description="Number of entries deleted")
+        failed: int = Field(default=0, description="Number of failed operations")
+        errors: list[str] = Field(
+            default_factory=list,
+            description="Error messages from failed operations",
+        )
+        operations: list[dict[str, str]] = Field(
+            default_factory=list,
+            description="Detailed operation log",
+        )
+
+        @property
+        def total_operations(self) -> int:
+            """Total number of operations performed."""
+            return self.created + self.updated + self.deleted + self.failed
+
+        @property
+        def success_rate(self) -> float:
+            """Success rate as percentage."""
+            if self.total_operations == 0:
+                return 100.0
+            successful = self.created + self.updated + self.deleted
+            return (successful / self.total_operations) * 100.0
+
+    # =========================================================================
+    # ACL REQUEST MODELS - High-velocity ACL operations
+    # =========================================================================
+
+    class CreateAclRequest(Base, ValidationMixin):
+        """Request model for creating LDAP ACLs with quirks engine support.
+
+        Supports automatic server type detection and format conversion
+        via FlextLdif quirks engine integration.
+        """
+
+        dn: str = Field(..., description="Distinguished Name for ACL target")
+        acl_type: Literal["openldap", "oracle", "aci", "auto"] = Field(
+            default="auto",
+            description="ACL format type (auto-detect from server)",
+        )
+        acl_rules: list[str] = Field(
+            ...,
+            description="ACL rules in specified format",
+        )
+        server_type: str | None = Field(
+            default=None,
+            description="Explicit server type (auto-detected if None)",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class UpdateAclRequest(Base, ValidationMixin):
+        """Request model for updating existing LDAP ACLs."""
+
+        dn: str = Field(..., description="Distinguished Name of ACL target")
+        acl_rules: list[str] = Field(
+            ...,
+            description="ACL rules to apply",
+        )
+        strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Update strategy: merge adds rules, replace overwrites",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class UpsertAclRequest(Base, ValidationMixin):
+        """Request model for upserting LDAP ACLs (create or update)."""
+
+        dn: str = Field(..., description="Distinguished Name for ACL target")
+        acl_type: Literal["openldap", "oracle", "aci", "auto"] = Field(
+            default="auto",
+            description="ACL format type",
+        )
+        acl_rules: list[str] = Field(
+            ...,
+            description="ACL rules to apply",
+        )
+        update_strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Strategy if ACL exists: merge or replace",
+        )
+        server_type: str | None = Field(
+            default=None,
+            description="Explicit server type (auto-detected if None)",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class AclSyncResult(SyncResult):
+        """Result model for ACL sync operations.
+
+        Extends SyncResult with ACL-specific tracking and statistics.
+        """
+
+        acls_converted: int = Field(
+            default=0,
+            description="Number of ACLs converted between formats",
+        )
+        server_types_detected: list[str] = Field(
+            default_factory=list,
+            description="Server types detected during sync",
+        )
+
+    # =========================================================================
+    # SCHEMA REQUEST MODELS - High-velocity schema operations
+    # =========================================================================
+
+    class CreateSchemaAttributeRequest(Base, ValidationMixin):
+        """Request model for creating LDAP schema attributes with quirks support.
+
+        Supports automatic syntax detection and server-specific handling
+        via FlextLdif quirks engine integration.
+        """
+
+        name: str = Field(..., description="Attribute name (e.g., customAttr)")
+        syntax: str = Field(
+            ...,
+            description="LDAP syntax OID (e.g., 1.3.6.1.4.1.1466.115.121.1.15 for Directory String)",
+        )
+        description: str | None = Field(
+            default=None,
+            description="Human-readable attribute description",
+        )
+        single_value: bool = Field(
+            default=False,
+            description="Whether attribute is single-valued",
+        )
+        equality_match: str | None = Field(
+            default=None,
+            description="Equality matching rule OID",
+        )
+        ordering_match: str | None = Field(
+            default=None,
+            description="Ordering matching rule OID",
+        )
+        substr_match: str | None = Field(
+            default=None,
+            description="Substring matching rule OID",
+        )
+
+    class CreateObjectClassRequest(Base, ValidationMixin):
+        """Request model for creating LDAP object classes."""
+
+        name: str = Field(..., description="Object class name")
+        must_attributes: list[str] = Field(
+            default_factory=list,
+            description="Required attributes (MUST)",
+        )
+        may_attributes: list[str] = Field(
+            default_factory=list,
+            description="Optional attributes (MAY)",
+        )
+        parent: str | None = Field(
+            default="top",
+            description="Parent object class",
+        )
+        kind: Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"] = Field(
+            default="STRUCTURAL",
+            description="Object class type",
+        )
+        description: str | None = Field(
+            default=None,
+            description="Human-readable description",
+        )
+
+    class UpdateSchemaRequest(Base, ValidationMixin):
+        """Request model for updating LDAP schema elements."""
+
+        schema_dn: str = Field(
+            ...,
+            description="DN of schema subentry (e.g., cn=schema)",
+        )
+        changes: dict[str, str | FlextTypes.StringList] = Field(
+            ...,
+            description="Schema changes to apply",
+        )
+        strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Update strategy",
+        )
+
+        @field_validator("schema_dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class UpsertSchemaRequest(Base, ValidationMixin):
+        """Request model for upserting LDAP schema elements."""
+
+        schema_dn: str = Field(
+            ...,
+            description="DN of schema subentry",
+        )
+        schema_element: dict[str, str | FlextTypes.StringList] = Field(
+            ...,
+            description="Schema element definition",
+        )
+        update_strategy: Literal["merge", "replace"] = Field(
+            default="merge",
+            description="Strategy if schema element exists",
+        )
+
+        @field_validator("schema_dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate Distinguished Name format."""
+            return FlextLdapModels.ValidationMixin.validate_dn_field(v)
+
+    class SchemaSyncResult(SyncResult):
+        """Result model for schema sync operations.
+
+        Extends SyncResult with schema-specific tracking.
+        """
+
+        attributes_created: int = Field(
+            default=0,
+            description="Number of schema attributes created",
+        )
+        object_classes_created: int = Field(
+            default=0,
+            description="Number of object classes created",
+        )
+        schema_conflicts: list[str] = Field(
+            default_factory=list,
+            description="Schema conflicts encountered",
+        )
 
     # =========================================================================
     # CONNECTION AND CONFIGURATION ENTITIES

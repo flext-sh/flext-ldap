@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextLogger
-from flext_ldap import FlextLdap
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from pydantic import SecretStr
+
+from flext_ldap import FlextLdap, FlextLdapConfig
 
 # Setup logging
 logger = FlextLogger(__name__)
@@ -26,12 +26,12 @@ def parse_ldif_file(ldif_path: Path) -> list[tuple[str, dict[str, str | list[str
     current_dn: str | None = None
     current_attrs: dict[str, str | list[str]] = {}
 
-    with open(ldif_path) as f:
+    with Path(ldif_path).open(encoding="utf-8") as f:
         for line in f:
-            line = line.rstrip()
+            stripped_line = line.rstrip()
 
             # Skip empty lines and comments
-            if not line or line.startswith("#"):
+            if not stripped_line or stripped_line.startswith("#"):
                 if current_dn and current_attrs:
                     entries.append((current_dn, current_attrs))
                     current_dn = None
@@ -39,16 +39,16 @@ def parse_ldif_file(ldif_path: Path) -> list[tuple[str, dict[str, str | list[str
                 continue
 
             # Parse DN
-            if line.startswith("dn:"):
+            if stripped_line.startswith("dn:"):
                 if current_dn and current_attrs:
                     entries.append((current_dn, current_attrs))
-                current_dn = line.split(":", 1)[1].strip()
+                current_dn = stripped_line.split(":", 1)[1].strip()
                 current_attrs = {}
                 continue
 
             # Parse attribute: value
-            if ":" in line and current_dn:
-                attr, value = line.split(":", 1)
+            if ":" in stripped_line and current_dn:
+                attr, value = stripped_line.split(":", 1)
                 attr = attr.strip()
                 value = value.strip()
 
@@ -85,8 +85,6 @@ def load_test_data_openldap() -> bool:
     logger.info(f"Parsed {len(entries)} entries from LDIF")
 
     # Create flext-ldap API instance
-    from pydantic import SecretStr
-    from flext_ldap import FlextLdapConfig
 
     config = FlextLdapConfig(
         ldap_server_uri="ldap://localhost:3390",
@@ -165,8 +163,8 @@ def main() -> int:
     try:
         success = load_test_data_openldap()
         return 0 if success else 1
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+    except Exception:
+        logger.exception("Unexpected error")
         return 1
 
 
