@@ -306,6 +306,37 @@ def validate_crud_operations(
     test_dn = f"cn=test-crud-user,ou=users,{base_dn}"
     all_passed = True
 
+    # Test 0: Ensure parent OU exists (create if needed)
+    try:
+        start_time = time.time()
+        parent_ou_dn = f"ou=users,{base_dn}"
+
+        # Check if parent OU exists
+        search_result = api.search(
+            FlextLdapModels.SearchRequest(
+                base_dn=parent_ou_dn,
+                filter_str="(objectClass=*)",
+                scope=FlextLdapConstants.Scopes.BASE,
+            )
+        )
+
+        # Create parent OU if it doesn't exist
+        if search_result.is_failure or not search_result.unwrap():
+            ou_attributes: dict[str, str | FlextTypes.StringList] = {
+                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
+                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
+                    FlextLdapConstants.ObjectClasses.TOP,
+                ],
+                FlextLdapConstants.LdapAttributeNames.OU: "users",
+            }
+            create_ou_result = api.add_entry(parent_ou_dn, ou_attributes)
+            if create_ou_result.is_failure:
+                logger.warning(f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}")
+
+        duration = time.time() - start_time
+    except Exception as e:
+        logger.warning(f"Parent OU check failed: {e}")
+
     # Test 1: Create entry
     try:
         start_time = time.time()

@@ -202,21 +202,13 @@ class FlextLdapServersFactory(FlextService[None]):
                 return FlextResult[str].fail("Connection not bound")
 
             # Search for root DSE
+            # Use '*' and '+' to get all attributes (standard and operational)
+            # This avoids errors when requesting attributes that don't exist in specific LDAP servers
             success = connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
                 search_scope="BASE",
-                attributes=[
-                    "vendorName",
-                    "vendorVersion",
-                    "supportedExtension",
-                    "supportedControl",
-                    "namingContexts",
-                    "subschemaSubentry",
-                    "configContext",
-                    "rootDomainNamingContext",  # AD-specific
-                    "defaultNamingContext",  # AD-specific
-                ],
+                attributes=["*", "+"],  # Request all standard and operational attributes
             )
 
             if not success or not connection.entries:

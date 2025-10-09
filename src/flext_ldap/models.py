@@ -1740,14 +1740,9 @@ class FlextLdapModels(FlextModels):
                     field="time_limit",
                 )
 
-            # Validate scope and filter combination
-            if self.scope == "base" and ("*" in self.filter_str):
-                msg = "Base scope searches should not use wildcard filters"
-                raise exceptions.validation_error(
-                    msg,
-                    value=self.filter_str,
-                    field="filter_str",
-                )
+            # Note: Removed overly restrictive base scope filter validation
+            # (objectClass=*) is a valid and standard LDAP filter for BASE scope searches
+            # It retrieves the entry at the base DN, which is a common operation
 
             return self
 
