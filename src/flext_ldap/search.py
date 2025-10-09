@@ -14,7 +14,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from flext_core import (
     FlextResult,
@@ -98,7 +98,7 @@ class FlextLdapSearch(FlextService[None]):
         search_result = self.search(search_base, filter_str, attributes)
         if search_result.is_failure:
             return FlextResult[FlextLdapModels.Entry | None].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
         results = search_result.unwrap()
@@ -173,18 +173,19 @@ class FlextLdapSearch(FlextService[None]):
                     # Handle case where attributes is a list
                     # This might happen in error conditions or with certain LDAP servers
                     self.logger.warning(
-                        f"entry.attributes is a list instead of dict for DN {entry.dn}"
+                        f"entry.attributes is a list instead of dict for DN {entry.dn}",
                     )
                 else:
                     self.logger.warning(
-                        f"Unexpected type for entry.attributes: {type(entry_attrs)}"
+                        f"Unexpected type for entry.attributes: {type(entry_attrs)}",
                     )
 
                 # Get object classes safely
                 object_classes: FlextTypes.StringList = []
                 if isinstance(entry_attrs, dict):
                     object_classes_raw = entry_attrs.get(
-                        FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS, []
+                        FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
+                        [],
                     )
                     if isinstance(object_classes_raw, str):
                         object_classes = [object_classes_raw]
@@ -196,7 +197,8 @@ class FlextLdapSearch(FlextService[None]):
                     # Fallback for dict-like objects
                     try:
                         object_classes = entry.attributes.get(
-                            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS, []
+                            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
+                            [],
                         )
                         if isinstance(object_classes, str):
                             object_classes = [object_classes]
@@ -209,7 +211,8 @@ class FlextLdapSearch(FlextService[None]):
                 entry_model = FlextLdapModels.Entry(
                     dn=str(entry.dn),
                     attributes=cast(
-                        "dict[str, str | list[str]]", entry_attributes_dict
+                        "dict[str, str | list[str]]",
+                        entry_attributes_dict,
                     ),
                     object_classes=cast("FlextTypes.StringList", object_classes),
                 )
@@ -283,7 +286,7 @@ class FlextLdapSearch(FlextService[None]):
             dn_validation = FlextLdapValidations.validate_dn(dn)
             if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.LdapUser | None].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             if not self._connection:
@@ -318,7 +321,7 @@ class FlextLdapSearch(FlextService[None]):
             return FlextResult[FlextLdapModels.LdapUser | None].ok(user)
 
         except Exception as e:
-            self.logger.exception(f"Get user failed for DN {dn}")
+            self.logger.exception(f"Get user failed for DN {dn}", exception=e)
             return FlextResult[FlextLdapModels.LdapUser | None].fail(
                 f"Get user failed: {e}",
             )
@@ -338,7 +341,7 @@ class FlextLdapSearch(FlextService[None]):
             dn_validation = FlextLdapValidations.validate_dn(dn)
             if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.Group | None].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             if not self._connection:
@@ -400,20 +403,20 @@ class FlextLdapSearch(FlextService[None]):
             member_dns=getattr(entry, "member", []) if hasattr(entry, "member") else [],
         )
 
-    def _get_ldap3_scope(self, scope: str) -> str:
+    def _get_ldap3_scope(self, scope: str) -> Literal["BASE", "LEVEL", "SUBTREE"]:
         """Convert scope string to ldap3 scope constant.
 
         Args:
             scope: Scope string ("base", "level", or "subtree").
 
         Returns:
-            ldap3 scope constant.
+            ldap3 scope constant (Literal["BASE", "LEVEL", "SUBTREE"]).
 
         Raises:
             ValueError: If scope is invalid.
 
         """
-        scope_map = {
+        scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
             "base": BASE,
             "level": LEVEL,
             "subtree": SUBTREE,
@@ -428,7 +431,8 @@ class FlextLdapSearch(FlextService[None]):
         return FlextResult[None].ok(None)
 
     def execute_operation(
-        self, operation: FlextLdapModels.OperationExecutionRequest
+        self,
+        operation: FlextLdapModels.OperationExecutionRequest,
     ) -> FlextResult[None]:
         """Execute operation using OperationExecutionRequest model (Domain.Service protocol).
 

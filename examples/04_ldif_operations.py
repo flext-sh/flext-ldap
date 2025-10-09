@@ -384,9 +384,7 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
     if result.is_success:
         oud_entry = result.unwrap()
         logger.info("   ✅ Conversion successful")
-        logger.info(
-            f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}"
-        )
+        logger.info(f"      Target attributes: {list(oud_entry.attributes.keys())}")
         logger.info("      Note: Server-specific attributes adapted")
     else:
         logger.warning(f"   ⚠️  Conversion: {result.error}")
@@ -519,10 +517,8 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     if result.is_success:
         normalized = result.unwrap()
         logger.info("   ✅ Normalization successful")
-        logger.info(f"      Normalized DN: {normalized.dn.value}")
-        logger.info(
-            f"      Attributes: {list(normalized.attributes.attributes.keys())}"
-        )
+        logger.info(f"      Normalized DN: {normalized.dn}")
+        logger.info(f"      Attributes: {list(normalized.attributes.keys())}")
         logger.info("      Entry is ready for LDAP operations")
     else:
         logger.warning(f"   ⚠️  Normalization: {result.error}")

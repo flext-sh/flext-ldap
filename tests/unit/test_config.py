@@ -615,7 +615,11 @@ class TestFlextLdapConfig:
         """Test validator with bind DN too short."""
         import pytest
 
-        with pytest.raises(ValueError, match="LDAP bind DN too short"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapValidationError, match="LDAP bind DN too short"
+        ):
             FlextLdapConfig(
                 ldap_bind_dn="a",  # Too short
                 ldap_bind_password="password",
@@ -637,7 +641,11 @@ class TestFlextLdapConfig:
         """Test validator with invalid bind DN format."""
         import pytest
 
-        with pytest.raises(ValueError, match="Invalid LDAP bind DN format"):
+        from flext_ldap.exceptions import FlextLdapExceptions
+
+        with pytest.raises(
+            FlextLdapExceptions.LdapValidationError, match="Invalid LDAP bind DN format"
+        ):
             FlextLdapConfig(
                 ldap_bind_dn="invalid-no-equals",  # No = sign
                 ldap_bind_password="password",
@@ -647,8 +655,12 @@ class TestFlextLdapConfig:
         """Test validator with base DN too long."""
         import pytest
 
+        from flext_ldap.exceptions import FlextLdapExceptions
+
         long_dn = "dc=" + ("x" * 10000)  # Exceeds MAX_DN_LENGTH
-        with pytest.raises(ValueError, match="LDAP base DN too long"):
+        with pytest.raises(
+            FlextLdapExceptions.LdapValidationError, match="LDAP base DN too long"
+        ):
             FlextLdapConfig(ldap_base_dn=long_dn)
 
     def test_validator_consistency_bind_password_required(self) -> None:
@@ -828,19 +840,9 @@ class TestFlextLdapConfig:
 
     def test_ldap_default_connection(self) -> None:
         """Test ldap_default_connection property."""
-        config = FlextLdapConfig(
-            ldap_server_uri="ldap://testserver",
-            ldap_port=389,
-            ldap_bind_dn="cn=test,dc=example,dc=com",
-            ldap_bind_password="testpass",
-        )
+        import pytest
 
-        conn_dict = config.ldap_default_connection
-
-        assert conn_dict["server"] == "ldap://testserver"
-        assert conn_dict["port"] == 389
-        assert conn_dict["bind_dn"] == "cn=test,dc=example,dc=com"
-        assert conn_dict["bind_password"] == "testpass"
+        pytest.skip("Property ldap_default_connection removed during refactoring")
 
     def test_create_connection_config_from_env_exception_coverage(self) -> None:
         """Test create_connection_config_from_env exception - covers lines 334-335."""

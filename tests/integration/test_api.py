@@ -142,14 +142,14 @@ class TestLdapClientRealOperations:
         ou_attributes = create_ldap_attributes(ou_attrs_raw)
         _ = client.add_entry(
             ou_dn,
-            ou_attributes,  # type: ignore[arg-type]
+            ou_attributes,
         )
         # Ignore if OU already exists (error code 68)
 
         # ADD: Create user entry
         add_result = client.add_entry(
             test_dn,
-            user_attributes,  # type: ignore[arg-type]
+            user_attributes,
         )
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
@@ -161,7 +161,7 @@ class TestLdapClientRealOperations:
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
         modify_result = client.modify_entry(
             test_dn,
-            modify_attributes,  # type: ignore[arg-type]
+            modify_attributes,
         )
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 

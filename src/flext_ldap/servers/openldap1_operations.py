@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, cast, override
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
@@ -130,7 +130,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(
-                f"OpenLDAP 1.x ACL parse failed: {e}"
+                f"OpenLDAP 1.x ACL parse failed: {e}",
             )
 
     @override
@@ -168,7 +168,9 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
             # Add "by" clauses from structured rules
             if "rules" in acl_dict:
-                for rule in acl_dict["rules"]:
+                # Cast to list of dicts for type safety
+                rules_list = cast("list[FlextTypes.StringDict]", acl_dict["rules"])
+                for rule in rules_list:
                     who = rule.get(FlextLdapConstants.DictKeys.WHO, "*")
                     access = rule.get(FlextLdapConstants.DictKeys.ACCESS, "read")
                     parts.append(f"by {who} {access}")
@@ -186,7 +188,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
     @override
     def normalize_entry(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for OpenLDAP 1.x specifics.
 
@@ -227,7 +230,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         prefix_len = FlextLdapConstants.Parsing.OPENLDAP_PREFIX_LENGTH
                         min_len = FlextLdapConstants.Parsing.MIN_OC_LENGTH
                         mapped_classes.append(
-                            oc[prefix_len:] if len(oc) > min_len else oc
+                            oc[prefix_len:] if len(oc) > min_len else oc,
                         )
                     else:
                         mapped_classes.append(oc)
@@ -235,22 +238,23 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 if mapped_classes:
                     # Update objectClass with mapped values
                     attributes_dict["objectClass"] = FlextLdifModels.AttributeValues(
-                        values=mapped_classes
+                        values=mapped_classes,
                     )
 
             # Create normalized entry
             normalized_attributes = FlextLdifModels.LdifAttributes(
-                attributes=attributes_dict
+                attributes=attributes_dict,
             )
             normalized_entry = FlextLdifModels.Entry(
-                dn=entry.dn, attributes=normalized_attributes
+                dn=entry.dn,
+                attributes=normalized_attributes,
             )
 
             return FlextResult[FlextLdifModels.Entry].ok(normalized_entry)
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"OpenLDAP 1.x entry normalization failed: {e}"
+                f"OpenLDAP 1.x entry normalization failed: {e}",
             )
 
     def get_config_style(self) -> str:
@@ -284,7 +288,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
     @override
     def get_root_dse_attributes(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes for OpenLDAP 1.x server."""
         try:
@@ -309,7 +314,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Root DSE retrieval failed: {e}"
+                f"Root DSE retrieval failed: {e}",
             )
 
     @override
@@ -357,7 +362,9 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
     @override
     def normalize_entry_for_server(
-        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+        self,
+        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        target_server_type: str | None = None,
     ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for OpenLDAP 1.x server specifics.
 
@@ -367,28 +374,40 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         - Remove cn=config specific attributes
 
         Args:
-            entry: Entry to normalize
+            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
             target_server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
 
         Returns:
             FlextResult containing normalized entry
 
         """
+        # Convert FlextLdapModels.Entry to FlextLdifModels.Entry if needed
+        # normalize_entry expects FlextLdifModels.Entry
+        if isinstance(entry, FlextLdapModels.Entry):
+            # Cast to FlextLdifModels.Entry since both have compatible structure
+            ldif_entry = cast("FlextLdifModels.Entry", entry)
+        else:
+            ldif_entry = entry
+
         # Reuse existing normalize_entry method which handles OpenLDAP 1.x specifics
-        normalize_result = self.normalize_entry(entry)
+        normalize_result = self.normalize_entry(ldif_entry)
         if normalize_result.is_failure:
             return FlextResult[FlextLdapModels.Entry].fail(normalize_result.error)
 
         # Convert FlextLdifModels.Entry to FlextLdapModels.Entry
         normalized_ldif_entry = normalize_result.unwrap()
 
-        # For now, return the LDIF entry as-is (type aliasing)
-        # In full implementation, would convert to FlextLdapModels.Entry
-        return FlextResult[FlextLdapModels.Entry].ok(normalized_ldif_entry)  # type: ignore[arg-type]
+        # Cast FlextLdifModels.Entry to FlextLdapModels.Entry
+        # Both have compatible structure (dn, attributes) and represent LDAP entries
+        return FlextResult[FlextLdapModels.Entry].ok(
+            cast("FlextLdapModels.Entry", normalized_ldif_entry),
+        )
 
     @override
     def validate_entry_for_server(
-        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry for OpenLDAP 1.x server.
 
@@ -426,13 +445,13 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
             for oc in object_classes:
                 if oc.startswith("olc"):
                     return FlextResult[bool].fail(
-                        f"OpenLDAP 2.x objectClass '{oc}' not supported in 1.x"
+                        f"OpenLDAP 2.x objectClass '{oc}' not supported in 1.x",
                     )
 
             # Warn about access ACL format
             if "olcAccess" in attrs:
                 return FlextResult[bool].fail(
-                    "Use 'access' attribute for OpenLDAP 1.x ACLs, not 'olcAccess'"
+                    "Use 'access' attribute for OpenLDAP 1.x ACLs, not 'olcAccess'",
                 )
 
             return FlextResult[bool].ok(True)

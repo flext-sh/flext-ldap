@@ -455,6 +455,207 @@ python examples/12_domain_services.py
 
 ---
 
+## 🧪 Comprehensive Validation Examples
+
+### Test Data Generator (`test_data_generator.py`)
+
+**Purpose**: Generate ~1000 LDAP test entries for comprehensive validation
+
+**Demonstrates:**
+
+- Large-scale test data generation
+- Multiple organizational layers (5 departments, 50 groups, 150 containers)
+- Diverse schemas (person, group, service, computer)
+- Realistic attributes and relationships
+- LDIF export for both OpenLDAP and OUD
+
+**Run:**
+
+```bash
+# Generate OpenLDAP test data
+python examples/test_data_generator.py --server openldap --output test_data_openldap.ldif
+
+# Generate OUD test data
+python examples/test_data_generator.py --server oud --output test_data_oud.ldif
+```
+
+**Generated Structure:**
+- 500 users across 5 departments
+- 50 groups (departments, projects, roles)
+- 100 service accounts
+- 200 computer accounts
+- 150 additional containers
+
+---
+
+### Validation Helpers (`validation_helpers.py`)
+
+**Purpose**: Shared utilities for comprehensive LDAP validation
+
+**Provides:**
+
+- ValidationMetrics: Track test results and success rates
+- Connection validation
+- Search operations validation
+- CRUD operations validation
+- Batch operations validation
+- Server operations validation
+- Performance measurement utilities
+
+**Usage:** Imported by comprehensive validation examples
+
+---
+
+### 99. Comprehensive OpenLDAP Validation (`99_comprehensive_openldap_validation.py`)
+
+**Purpose**: Extensive testing of flext-ldap API against OpenLDAP with ~1000 entries
+
+**Validates 4 Critical Requirements:**
+
+1. **API Usability** - All connection and operation modes work
+   - Direct method calls
+   - Context manager pattern
+   - Parameter object pattern
+   - Convenience methods
+   - Batch operations
+
+2. **Complete Parameterization** - All parameter variations supported
+   - SearchRequest with all fields
+   - Config-based parameters
+   - Method parameter overrides
+   - Default values from constants
+
+3. **Universal Schema Support** - Works with multiple schemas
+   - Standard LDAP schemas (person, group, ou)
+   - Extended schemas (inetOrgPerson, groupOfNames)
+   - Service and computer schemas
+   - Custom attributes
+   - Multi-valued attributes
+
+4. **Server Information Accuracy** - Correct server detection
+   - Server type detection
+   - Server capabilities
+   - Supported operations
+   - Entry validation
+
+**Test Environment:**
+- Docker Container: flext-openldap-test (port 3390)
+- Base DN: dc=flext,dc=local
+- Admin: cn=admin,dc=flext,dc=local / admin123
+
+**Prerequisites:**
+
+```bash
+# 1. Generate test data
+python examples/test_data_generator.py --server openldap
+
+# 2. Start OpenLDAP
+docker-compose -f docker/docker-compose.openldap.yml up -d
+
+# 3. Load test data
+ldapadd -x -H ldap://localhost:3390 \
+  -D "cn=admin,dc=flext,dc=local" -w admin123 \
+  -f test_data_openldap.ldif
+```
+
+**Run:**
+
+```bash
+python examples/99_comprehensive_openldap_validation.py
+```
+
+**Expected Output:**
+- Connection validation
+- 4 requirement validation suites
+- Additional comprehensive tests
+- Detailed metrics and success rate
+- Pass/fail summary
+
+**Success Criteria:**
+- All 4 requirements pass
+- >90% overall success rate
+
+---
+
+### 99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)
+
+**Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with ~1000 entries
+
+**Validates Same 4 Requirements as OpenLDAP:**
+1. API Usability (OUD-specific tests)
+2. Complete Parameterization (OUD configurations)
+3. Universal Schema Support (OUD schemas)
+4. Server Information Accuracy (OUD detection)
+
+**Test Environment:**
+- Docker Container: flext-oud-test (port 3489)
+- Base DN: dc=flext,dc=local
+- Admin: cn=admin / admin123
+
+**Prerequisites:**
+
+```bash
+# 1. Generate test data
+python examples/test_data_generator.py --server oud
+
+# 2. Start OUD
+docker-compose -f docker/docker-compose.flext-oud-test.yml up -d
+
+# 3. Wait for OUD to be ready (check health)
+docker ps  # Wait for healthy status
+
+# 4. Load test data
+ldapadd -x -H ldap://localhost:3489 \
+  -D "cn=admin" -w admin123 \
+  -f test_data_oud.ldif
+```
+
+**Run:**
+
+```bash
+python examples/99_comprehensive_oud_validation.py
+```
+
+**Expected Output:**
+- OUD connection validation
+- 4 requirement validation suites (OUD-specific)
+- OUD-specific feature tests
+- Cross-server comparison metrics
+- Pass/fail summary
+
+**Success Criteria:**
+- All 4 requirements pass on OUD
+- >90% overall success rate
+- OUD-specific features validated
+
+---
+
+### Validation Best Practices
+
+**When to Run Comprehensive Validation:**
+
+1. **Before Release** - Validate all functionality works
+2. **After Major Changes** - Ensure no regressions
+3. **Cross-Server Testing** - Verify universal compatibility
+4. **Performance Testing** - Measure with realistic data volume
+5. **Integration Testing** - Validate with production-like data
+
+**Interpreting Results:**
+
+- **100% Pass Rate**: Exceptional - all features working perfectly
+- **90-99% Pass Rate**: Good - minor issues, acceptable for release
+- **80-89% Pass Rate**: Fair - significant issues, needs investigation
+- **<80% Pass Rate**: Critical - major issues, do not release
+
+**Common Issues:**
+
+1. **Connection Failures**: Check Docker containers are running
+2. **Data Not Loaded**: Ensure test data was imported successfully
+3. **Low Success Rate**: May indicate breaking changes or server issues
+4. **Timeout Errors**: Increase time limits for large datasets
+
+---
+
 ## 🎯 Module Coverage Matrix
 
 | Module                    | Examples               | Functionality Demonstrated                           |

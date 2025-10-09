@@ -193,11 +193,14 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Perform universal search (automatically uses server-specific optimizations)
     logger.info(f"Performing universal search on {BASE_DN}")
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_universal(
+    search_request = FlextLdapModels.SearchRequest(
         base_dn=BASE_DN,
         filter_str="(objectClass=*)",
         attributes=["dn", "objectClass"],
-        use_paging=True,  # Automatically uses paged results if supported
+        page_size=100 if api.client.supports_paged_results() else None,
+    )
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_universal(
+        search_request
     )
 
     if result.is_failure:
@@ -244,8 +247,8 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     if result.is_success:
         normalized_entry = result.unwrap()
         logger.info("✅ Entry normalized successfully")
-        logger.info(f"   DN: {normalized_entry.dn.value}")
-        attrs = list(normalized_entry.attributes.attributes.keys())
+        logger.info(f"   DN: {normalized_entry.dn}")
+        attrs = list(normalized_entry.attributes.keys())
         logger.info(f"   Attributes: {attrs}")
     else:
         logger.error(f"❌ Normalization failed: {result.error}")
@@ -287,7 +290,7 @@ def demonstrate_entry_conversion() -> None:
     if result.is_success:
         converted_entry = result.unwrap()
         logger.info("✅ Entry converted successfully")
-        tgt_attrs = list(converted_entry.attributes.attributes.keys())
+        tgt_attrs = list(converted_entry.attributes.keys())
         logger.info(f"   Target attributes: {tgt_attrs}")
         logger.info("   (ACL format converted: 'access' → 'olcAccess')")
     else:

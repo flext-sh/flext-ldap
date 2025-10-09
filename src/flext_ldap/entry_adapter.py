@@ -61,7 +61,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[None].ok(None)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: Ldap3Entry | dict[str, object]
+        self,
+        ldap3_entry: Ldap3Entry | dict[str, object],
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
@@ -81,18 +82,18 @@ class FlextLdapEntryAdapter(FlextService[None]):
             # Handle dict input (from search operations)
             if "dn" not in ldap3_entry:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry missing 'dn' key"
+                    "Dict entry missing 'dn' key",
                 )
             if "attributes" not in ldap3_entry:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry missing 'attributes' key"
+                    "Dict entry missing 'attributes' key",
                 )
 
             dn_str = str(ldap3_entry["dn"])
             attributes = ldap3_entry["attributes"]
             if not isinstance(attributes, dict):
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry 'attributes' must be a dictionary"
+                    "Dict entry 'attributes' must be a dictionary",
                 )
         else:
             # Handle ldap3 Entry object input
@@ -102,56 +103,62 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry missing DN")
 
             # Extract attributes from ldap3 entry
-            attributes: dict[str, FlextTypes.List] = {}
+            ldap3_attributes: dict[str, FlextTypes.List] = {}
             for attr_name in ldap3_entry.entry_attributes:
                 attr_value = ldap3_entry[attr_name]
 
                 # Handle multi-valued attributes
                 if isinstance(attr_value, list):
-                    attributes[attr_name] = attr_value
+                    ldap3_attributes[attr_name] = attr_value
                 elif attr_value.value is not None:
                     # Single value - convert to list for consistency
                     value = attr_value.value
-                    attributes[attr_name] = (
+                    ldap3_attributes[attr_name] = (
                         [value] if not isinstance(value, list) else value
                     )
                 else:
                     # Empty attribute
-                    attributes[attr_name] = []
+                    ldap3_attributes[attr_name] = []
+            # Assign to attributes variable for unified handling below
+            attributes = ldap3_attributes
 
         # Convert attributes dict to FlextLdifModels.LdifAttributes
         # Explicit FlextResult error handling - NO try/except
+        from typing import cast
+
         attr_values_dict: dict[str, FlextLdifModels.AttributeValues] = {}
-        for attr_name, attr_value_list in attributes.items():
+        # Cast attributes to proper type since we know it's a dict at this point
+        typed_attributes = cast("dict[str, FlextTypes.List]", attributes)
+        for attr_name, attr_value_list in typed_attributes.items():
             # Create AttributeValues using Pydantic model
             attr_values_result = FlextLdifModels.AttributeValues.create(
-                values=attr_value_list
+                values=attr_value_list,
             )
             if attr_values_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to create AttributeValues for {attr_name}: {attr_values_result.error}"
+                    f"Failed to create AttributeValues for {attr_name}: {attr_values_result.error}",
                 )
 
             attr_values = attr_values_result.unwrap()
             if not isinstance(attr_values, FlextLdifModels.AttributeValues):
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Invalid AttributeValues type for {attr_name}"
+                    f"Invalid AttributeValues type for {attr_name}",
                 )
             attr_values_dict[attr_name] = attr_values
 
         # Create LdifAttributes
         ldif_attributes_result = FlextLdifModels.LdifAttributes.create(
-            attributes=attr_values_dict
+            attributes=attr_values_dict,
         )
         if ldif_attributes_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create LdifAttributes: {ldif_attributes_result.error}"
+                f"Failed to create LdifAttributes: {ldif_attributes_result.error}",
             )
 
         ldif_attributes_raw = ldif_attributes_result.unwrap()
         if not isinstance(ldif_attributes_raw, FlextLdifModels.LdifAttributes):
             return FlextResult[FlextLdifModels.Entry].fail(
-                "Invalid LdifAttributes type"
+                "Invalid LdifAttributes type",
             )
         ldif_attributes: FlextLdifModels.LdifAttributes = ldif_attributes_raw
 
@@ -159,13 +166,13 @@ class FlextLdapEntryAdapter(FlextService[None]):
         dn_result = FlextLdifModels.DistinguishedName.create(value=dn_str)
         if dn_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create DistinguishedName: {dn_result.error}"
+                f"Failed to create DistinguishedName: {dn_result.error}",
             )
 
         dn_raw = dn_result.unwrap()
         if not isinstance(dn_raw, FlextLdifModels.DistinguishedName):
             return FlextResult[FlextLdifModels.Entry].fail(
-                "Invalid DistinguishedName type"
+                "Invalid DistinguishedName type",
             )
         dn: FlextLdifModels.DistinguishedName = dn_raw
 
@@ -173,14 +180,15 @@ class FlextLdapEntryAdapter(FlextService[None]):
         entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)
         if entry_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create FlextLdif entry: {entry_result.error}"
+                f"Failed to create FlextLdif entry: {entry_result.error}",
             )
 
         ldif_entry = entry_result.unwrap()
         return FlextResult[FlextLdifModels.Entry].ok(ldif_entry)
 
     def ldap3_entries_to_ldif_entries(
-        self, ldap3_entries: list[Ldap3Entry]
+        self,
+        ldap3_entries: list[Ldap3Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Convert multiple ldap3 entries to FlextLdif entries.
 
@@ -199,14 +207,15 @@ class FlextLdapEntryAdapter(FlextService[None]):
             result = self.ldap3_to_ldif_entry(ldap3_entry)
             if result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to convert entry: {result.error}"
+                    f"Failed to convert entry: {result.error}",
                 )
             ldif_entries.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(ldif_entries)
 
     def ldif_entry_to_ldap3_attributes(
-        self, ldif_entry: FlextLdifModels.Entry
+        self,
+        ldif_entry: FlextLdifModels.Entry,
     ) -> FlextResult[dict[str, FlextTypes.StringList]]:
         """Convert FlextLdifModels.Entry to ldap3 attributes dict.
 
@@ -220,7 +229,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         # Explicit FlextResult error handling - NO try/except
         if not ldif_entry:
             return FlextResult[dict[str, FlextTypes.StringList]].fail(
-                "FlextLdif entry cannot be None"
+                "FlextLdif entry cannot be None",
             )
 
         # Extract attributes from FlextLdif entry
@@ -232,7 +241,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[dict[str, FlextTypes.StringList]].ok(attributes)
 
     def normalize_attributes_for_add(
-        self, attributes: FlextTypes.Dict
+        self,
+        attributes: FlextTypes.Dict,
     ) -> FlextResult[dict[str, FlextTypes.List]]:
         """Normalize attributes for ldap3 add operation.
 
@@ -256,7 +266,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[dict[str, FlextTypes.List]].ok(normalized)
 
     def create_modify_changes(
-        self, modifications: FlextTypes.Dict
+        self,
+        modifications: FlextTypes.Dict,
     ) -> FlextResult[dict[str, list[tuple[str, FlextTypes.List]]]]:
         """Create ldap3 modify changes from simple modifications dict.
 
@@ -280,7 +291,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[dict[str, list[tuple[str, FlextTypes.List]]]].ok(changes)
 
     def convert_ldif_file_to_entries(
-        self, ldif_file_path: str
+        self,
+        ldif_file_path: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file and convert to FlextLdif entries using FlextLdif library.
 
@@ -300,14 +312,16 @@ class FlextLdapEntryAdapter(FlextService[None]):
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"LDIF parsing failed: {parse_result.error}"
+                f"LDIF parsing failed: {parse_result.error}",
             )
 
         entries = parse_result.unwrap()
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def write_entries_to_ldif_file(
-        self, entries: list[FlextLdifModels.Entry], output_path: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        output_path: str,
     ) -> FlextResult[str]:
         """Write FlextLdif entries to LDIF file using FlextLdif library.
 
@@ -338,7 +352,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
     # =========================================================================
 
     def detect_entry_server_type(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[str]:
         """Detect LDAP server type from entry attributes and object classes.
 
@@ -415,7 +430,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         if not target_server_type:
             return FlextResult[FlextLdifModels.Entry].fail(
-                "Target server type cannot be empty"
+                "Target server type cannot be empty",
             )
 
         # Get server-specific quirks
@@ -494,7 +509,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         object_classes = entry.get_attribute("objectClass")
         if not object_classes:
             return FlextResult[bool].fail(
-                "Entry missing required objectClass attribute"
+                "Entry missing required objectClass attribute",
             )
 
         # Validate has at least one structural object class
@@ -565,14 +580,15 @@ class FlextLdapEntryAdapter(FlextService[None]):
         normalize_result = self.normalize_entry_for_server(entry, target_server_type)
         if normalize_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Normalization failed: {normalize_result.error}"
+                f"Normalization failed: {normalize_result.error}",
             )
 
         converted_entry = normalize_result.unwrap()
 
         # Step 2: Validate converted entry
         validate_result = self.validate_entry_for_server(
-            converted_entry, target_server_type
+            converted_entry,
+            target_server_type,
         )
         if validate_result.is_failure:
             self.logger.warning(
@@ -593,7 +609,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         return FlextResult[FlextLdifModels.Entry].ok(converted_entry)
 
     def get_server_specific_attributes(
-        self, server_type: str
+        self,
+        server_type: str,
     ) -> FlextResult[FlextTypes.Dict]:
         """Get server-specific attribute information from quirks.
 
@@ -615,7 +632,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         quirks_result = self._quirks_manager.get_server_quirks(server_type)
         if quirks_result.is_failure:
             return FlextResult[FlextTypes.Dict].fail(
-                f"Failed to get server quirks: {quirks_result.error}"
+                f"Failed to get server quirks: {quirks_result.error}",
             )
 
         quirks = quirks_result.unwrap()
@@ -623,14 +640,17 @@ class FlextLdapEntryAdapter(FlextService[None]):
         # Extract commonly used attributes
         server_attrs: FlextTypes.Dict = {
             "acl_attribute": quirks.get(
-                FlextLdapConstants.DictKeys.ACL_ATTRIBUTE, "aci"
+                FlextLdapConstants.DictKeys.ACL_ATTRIBUTE,
+                "aci",
             ),
             "acl_format": quirks.get(FlextLdapConstants.DictKeys.ACL_FORMAT, "generic"),
             "schema_subentry": quirks.get(
-                FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY, "cn=subschema"
+                FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY,
+                "cn=subschema",
             ),
             "supports_operational_attrs": quirks.get(
-                "supports_operational_attrs", True
+                "supports_operational_attrs",
+                True,
             ),
             "server_type": server_type,
         }

@@ -64,7 +64,7 @@ class FlextLdapDomain:
 
             if not (has_upper and has_lower and has_digit):
                 return FlextResult[bool].fail(
-                    "Password must contain uppercase, lowercase, and numeric characters"
+                    "Password must contain uppercase, lowercase, and numeric characters",
                 )
 
             return FlextResult[bool].ok(True)
@@ -74,7 +74,9 @@ class FlextLdapDomain:
 
         @staticmethod
         def can_add_member_to_group(
-            group: FlextLdapModels.Group, member_dn: str, max_members: int = 1000
+            group: FlextLdapModels.Group,
+            member_dn: str,
+            max_members: int = 1000,
         ) -> FlextResult[bool]:
             """Check if a member can be added to a group."""
             if not member_dn or not member_dn.strip():
@@ -84,7 +86,7 @@ class FlextLdapDomain:
             member_count = len(group.member_dns) + len(group.unique_member_dns)
             if member_count >= max_members:
                 return FlextResult[bool].fail(
-                    f"Group exceeds maximum members ({max_members})"
+                    f"Group exceeds maximum members ({max_members})",
                 )
 
             # Check if already a member
@@ -124,14 +126,16 @@ class FlextLdapDomain:
             for pattern in dangerous_patterns:
                 if re.search(pattern, filter_str):
                     return FlextResult[bool].fail(
-                        f"Unsafe filter pattern detected: {pattern}"
+                        f"Unsafe filter pattern detected: {pattern}",
                     )
 
             return FlextResult[bool].ok(True)
 
         @staticmethod
         def validate_search_scope(
-            base_dn: str, scope: FlextLdapModels.Scope, max_depth: int = 5
+            base_dn: str,
+            scope: FlextLdapModels.Scope,
+            max_depth: int = 5,
         ) -> FlextResult[bool]:
             """Validate search scope against business rules."""
             if not base_dn:
@@ -142,7 +146,7 @@ class FlextLdapDomain:
                 dn_components = base_dn.count(",") + 1
                 if dn_components > max_depth:
                     return FlextResult[bool].fail(
-                        f"Search depth exceeds maximum ({max_depth})"
+                        f"Search depth exceeds maximum ({max_depth})",
                     )
 
             return FlextResult[bool].ok(True)
@@ -193,20 +197,21 @@ class FlextLdapDomain:
 
         @staticmethod
         def validate_group_membership_rules(
-            user: FlextLdapModels.LdapUser, group: FlextLdapModels.Group
+            user: FlextLdapModels.LdapUser,
+            group: FlextLdapModels.Group,
         ) -> FlextResult[bool]:
             """Validate if user can be member of group based on business rules."""
             # Example business rule: users must have email for certain groups
             if group.cn and "admin" in group.cn.lower() and not user.mail:
                 return FlextResult[bool].fail(
-                    "Admin group members must have email addresses"
+                    "Admin group members must have email addresses",
                 )
 
             # Example business rule: users must be active
             user_active = user.is_active
             if not user_active:
                 return FlextResult[bool].fail(
-                    "Inactive users cannot be added to groups"
+                    "Inactive users cannot be added to groups",
                 )
 
             return FlextResult[bool].ok(True)
@@ -243,7 +248,7 @@ class FlextLdapDomain:
                     return FlextResult[str].ok(candidate)
 
             return FlextResult[str].fail(
-                f"Could not generate unique username after {max_attempts} attempts"
+                f"Could not generate unique username after {max_attempts} attempts",
             )
 
 

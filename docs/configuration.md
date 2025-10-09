@@ -13,7 +13,8 @@ FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic Bas
 ### Configuration Hierarchy
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from flext_core import FlextConstants  # For platform constants
+from flext_ldap import FlextLdapConfig
 
 # 1. Default configuration
 config = FlextLdapConfig()
@@ -24,7 +25,7 @@ config = FlextLdapConfig.from_env()
 # 3. Explicit configuration
 config = FlextLdapConfig(
     host="ldap.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     bind_dn="cn=admin,dc=example,dc=com",
     bind_password="admin-password",
@@ -46,7 +47,7 @@ export FLEXT_LDAP_BIND_PASSWORD="your-password"
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
 # Optional settings
-export FLEXT_LDAP_PORT=${FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}
+export FLEXT_LDAP_PORT=${FlextConstants.Platform.LDAPS_DEFAULT_PORT}
 export FLEXT_LDAP_USE_SSL=true
 export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
 export FLEXT_LDAP_POOL_SIZE=5
@@ -91,7 +92,7 @@ from Flext_ldap import FlextLdapConfig
 # Production configuration
 PRODUCTION_CONFIG = FlextLdapConfig(
     host="ldap-prod.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     bind_dn="cn=service-account,ou=applications,dc=example,dc=com",
     bind_password="${LDAP_PROD_PASSWORD}",
@@ -103,7 +104,7 @@ PRODUCTION_CONFIG = FlextLdapConfig(
 # Development configuration
 DEVELOPMENT_CONFIG = FlextLdapConfig(
     host="ldap-dev.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+    port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=admin,dc=dev,dc=example,dc=com",
     bind_password="${LDAP_DEV_PASSWORD}",
@@ -197,7 +198,7 @@ from Flext_ldap import FlextLdapConfig
 
 TEST_CONFIG = FlextLdapConfig(
     host=FlextConstants["Platform.DEFAULT_HOST"],
-    port=FlextLdapConstants.Protocol.DEFAULT_PORT,
+    port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=admin,dc=test,dc=flext,dc=local",
     bind_password="admin",
@@ -273,7 +274,7 @@ from ssl import create_default_context
 
 config = FlextLdapConfig(
     host="ldap.example.com",
-    port=FlextLdapConstants.Protocol.DEFAULT_SSL_PORT,
+    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True

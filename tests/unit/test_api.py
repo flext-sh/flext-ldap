@@ -13,7 +13,7 @@ import threading
 import time
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextConstants, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -34,13 +34,13 @@ class TestFlextLdap:
 
         assert api is not None
         assert hasattr(api, "_client")
-        assert hasattr(api, "_acl_manager")
-        assert hasattr(api, "_ldap_config")  # Corrected from _config to _ldap_config
+        assert hasattr(api, "_services")
+        assert hasattr(api, "_config")
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
         config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -52,7 +52,7 @@ class TestFlextLdap:
         assert api.config is not None
         assert (
             api.config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
 
     def test_api_factory_method(self) -> None:
@@ -278,7 +278,7 @@ class TestFlextLdap:
     def test_api_configuration_persistence(self) -> None:
         """Test API configuration persistence."""
         config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -290,7 +290,7 @@ class TestFlextLdap:
         stored_config = api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=admin,dc=test,dc=com"
         assert stored_config.ldap_base_dn == "dc=test,dc=com"
@@ -301,7 +301,7 @@ class TestFlextLdap:
 
         # Test that API can be extended with custom configurations
         custom_config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -313,7 +313,7 @@ class TestFlextLdap:
         stored_config = custom_api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=admin,dc=test,dc=com"
 
@@ -360,7 +360,6 @@ class TestFlextLdapComprehensive:
         assert api is not None
         assert api._client is None  # Lazy initialization
         assert api.config is not None  # Initialized with global instance
-        assert api._acl_manager is None  # Lazy initialization
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""

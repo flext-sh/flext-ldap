@@ -151,12 +151,12 @@ class FlextLdapValidations:
 
         if len(password) < min_length:
             return FlextResult[bool].fail(
-                f"Password must be at least {min_length} characters"
+                f"Password must be at least {min_length} characters",
             )
 
         if len(password) > max_length:
             return FlextResult[bool].fail(
-                f"Password must be no more than {max_length} characters"
+                f"Password must be no more than {max_length} characters",
             )
 
         return FlextResult[bool].ok(True)

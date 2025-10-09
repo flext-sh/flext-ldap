@@ -72,7 +72,8 @@ class FlextLdapServers(FlextService[None]):
         return self._operations
 
     def _create_operations_for_server(
-        self, server_type: str
+        self,
+        server_type: str,
     ) -> FlextLdapServersBaseOperations | None:
         """Factory method to create operations instance for server type.
 
@@ -92,7 +93,8 @@ class FlextLdapServers(FlextService[None]):
         if result.is_failure:
             # Fallback to generic operations
             self.logger.warning(
-                f"Failed to create operations for server type {server_type}, using generic",
+                "Failed to create operations for server type %s, using generic",
+                server_type,
                 error=result.error,
             )
             result = factory.create_from_server_type(self.SERVER_GENERIC)
@@ -100,7 +102,8 @@ class FlextLdapServers(FlextService[None]):
         if result.is_failure:
             # Even generic operations failed - this shouldn't happen
             self.logger.error(
-                f"Failed to create even generic operations for server type {server_type}",
+                "Failed to create even generic operations for server type %s",
+                server_type,
                 error=result.error,
             )
             return None
@@ -170,20 +173,25 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         if not ops:
             return FlextResult[list[FlextLdapModels.Entry]].fail(
-                "No server operations available"
+                "No server operations available",
             )
         return ops.search_with_paging(
-            connection, base_dn, search_filter, attributes, page_size
+            connection,
+            base_dn,
+            search_filter,
+            attributes,
+            page_size,
         )
 
     def get_root_dse_attributes(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
             return FlextResult[dict[str, object]].fail(
-                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_root_dse_attributes(connection)
 
@@ -201,29 +209,33 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         if not ops:
             return FlextResult[list[str]].fail(
-                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_supported_controls(connection)
 
     def normalize_entry_for_server(
-        self, entry: FlextLdifModels.Entry, target_server_type: str | None = None
+        self,
+        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        target_server_type: str | None = None,
     ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for target server type."""
         ops = self.operations
         if not ops:
             return FlextResult[FlextLdapModels.Entry].fail(
-                "No server operations available"
+                "No server operations available",
             )
         return ops.normalize_entry_for_server(entry, target_server_type)
 
     def validate_entry_for_server(
-        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+        self,
+        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry compatibility with server."""
         ops = self.operations
         if not ops:
             return FlextResult[bool].fail(
-                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.validate_entry_for_server(entry, server_type)
 

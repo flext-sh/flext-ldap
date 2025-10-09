@@ -82,8 +82,8 @@ def demonstrate_basic_connection_lifecycle() -> None:
             logger.info(f"   ✅ Connection active - found {len(entries)} entries")
         else:
             logger.warning(f"   ⚠️  Search failed: {search_result.error}")
-    except Exception as e:
-        logger.exception(f"Connection test failed: {e}")
+    except Exception:
+        logger.exception("Connection test failed")
     finally:
         # Always disconnect (resource cleanup)
         logger.info("\n3. Disconnecting...")
@@ -132,8 +132,8 @@ def demonstrate_connection_state_monitoring() -> None:
         api.unbind()
         logger.info(f"   Is connected: {api.is_connected()}")
 
-    except Exception as e:
-        logger.exception(f"   ❌ Connection failed: {e}")
+    except Exception:
+        logger.exception("   ❌ Connection failed")
 
 
 def demonstrate_connection_error_handling() -> None:
@@ -218,9 +218,10 @@ def demonstrate_connection_context_manager() -> None:
         logger.info("   ✅ Connected (context entered)")
 
         # Perform operations
-        search_result = api.search(
-            search_base=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
         )
+        search_result = api.search(search_request)
 
         if search_result.is_success:
             entries = search_result.unwrap()
