@@ -197,7 +197,7 @@ class TestDataGenerator:
                     FlextLdapConstants.LdapAttributeNames.DISPLAY_NAME: cn,
                     FlextLdapConstants.LdapAttributeNames.EMPLOYEE_NUMBER: str(user_id),
                     FlextLdapConstants.LdapAttributeNames.DEPARTMENT: dept,
-                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice([
+                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice([  # noqa: S311
                         "Engineer", "Manager", "Analyst", "Specialist", "Coordinator",
                         "Director", "Lead", "Senior", "Junior", "Intern"
                     ]),

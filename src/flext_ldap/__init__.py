@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap.__version__ import __version__, __version_info__
-
 from flext_ldap.api import FlextLdap
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.clients import FlextLdapClients
@@ -34,9 +33,7 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.validations import FlextLdapValidations
 
-# Use centralized constants - no module-level constants
-__version__: str = FlextLdapConstants.Version.get_version()
-__version_info__: tuple[int | str, ...] = FlextLdapConstants.Version.get_version_info()
+# Version constants imported from __version__ module
 
 __all__ = [
     "FlextLdap",

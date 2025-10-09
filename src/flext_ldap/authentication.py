@@ -169,7 +169,12 @@ class FlextLdapAuthentication(FlextService[None]):
                 )
 
             search_filter = f"(|(uid={username})(cn={username}))"
-            search_base = "ou=users,dc=example,dc=com"  # Default base
+            # Use config base_dn instead of hardcoded value
+            if hasattr(self._ldap_config, "ldap_base_dn") and self._ldap_config:
+                search_base = self._ldap_config.ldap_base_dn  # type: ignore[attr-defined]
+            else:
+                # Fallback to default if config not available
+                search_base = "dc=flext,dc=local"
 
             self._connection.search(
                 search_base,
@@ -204,7 +209,8 @@ class FlextLdapAuthentication(FlextService[None]):
                     "No server connection established",
                 )
 
-            user_dn = str(user_entry.dn)
+            # ldap3 Entry uses entry_dn, not dn
+            user_dn = str(user_entry.entry_dn)
             # Use ldap3 Connection for proper typing
             test_connection: Connection = Connection(
                 self._server,
@@ -234,8 +240,9 @@ class FlextLdapAuthentication(FlextService[None]):
         """Create user from LDAP entry using railway pattern."""
         try:
             # Create user from entry - simplified for now
+            # ldap3 Entry uses entry_dn, not dn
             user = FlextLdapModels.LdapUser(
-                dn=str(user_entry.dn),
+                dn=str(user_entry.entry_dn),
                 uid=getattr(user_entry, "uid", [""])[0]
                 if hasattr(user_entry, "uid")
                 else "",
