@@ -344,23 +344,26 @@ class FlextLdap(FlextService[None]):
     def find_user(
         self,
         username: str,
-        base_dn: str,
+        base_dn: str | None = None,
         attributes: list[str] | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Find a specific user by username.
 
         Args:
             username: Username to search for
-            base_dn: Base DN for user search
+            base_dn: Base DN for user search (defaults to config base_dn)
             attributes: List of attributes to retrieve
 
         Returns:
             FlextResult containing user entry or None
 
         """
+        # Use config base_dn if not provided
+        search_base = base_dn if base_dn else self.config.ldap_base_dn
+
         filter_str = f"(uid={username})"
         return self.search_one(
-            base_dn,
+            search_base,
             filter_str=filter_str,
             scope="subtree",
             attributes=attributes,
@@ -405,25 +408,40 @@ class FlextLdap(FlextService[None]):
 
     def get_group(
         self,
-        dn: str,
+        group_identifier: str,
+        base_dn: str | None = None,
         attributes: list[str] | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Get a specific group by DN.
+        """Get a specific group by DN or group name.
 
         Args:
-            dn: Distinguished name of the group
+            group_identifier: Group DN or simple group name (cn)
+            base_dn: Base DN for group search (used when searching by name)
             attributes: List of attributes to retrieve
 
         Returns:
             FlextResult containing group entry or None
 
         """
-        return self.search_one(
-            dn,
-            filter_str="(objectClass=groupOfNames)",
-            scope="base",
-            attributes=attributes,
-        )
+        # Check if it's a full DN (contains '=' and ',')
+        if "=" in group_identifier and "," in group_identifier:
+            # It's a full DN, search with scope=base
+            return self.search_one(
+                group_identifier,
+                filter_str="(objectClass=groupOfNames)",
+                scope="base",
+                attributes=attributes,
+            )
+        else:
+            # It's a simple group name, search in base_dn
+            search_base = base_dn if base_dn else self.config.ldap_base_dn
+            filter_str = f"(&(objectClass=groupOfNames)(cn={group_identifier}))"
+            return self.search_one(
+                search_base,
+                filter_str=filter_str,
+                scope="subtree",
+                attributes=attributes,
+            )
 
     def update_user_attributes(
         self,
@@ -540,42 +558,63 @@ class FlextLdap(FlextService[None]):
     def add_entries_batch(
         self,
         entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]],
-    ) -> FlextResult[list[bool]]:
+    ) -> FlextResult[list[FlextResult[bool]]]:
         """Add multiple LDAP entries in batch.
 
         Args:
             entries: List of (dn, attributes) tuples
 
         Returns:
-            FlextResult containing list of success indicators
+            FlextResult containing list of FlextResult objects (one per entry)
 
         """
         results = []
         for dn, attributes in entries:
             result = self.add_entry(dn, attributes)
-            results.append(result.is_success)
+            results.append(result)
 
-        return FlextResult[list[bool]].ok(results)
+        return FlextResult[list[FlextResult[bool]]].ok(results)
 
     def search_entries_bulk(
         self,
-        base_dns: list[str],
-        filters: list[str],
+        base_dns: list[str] | list[FlextLdapModels.SearchRequest],
+        filters: list[str] | None = None,
         scope: str = "subtree",
         attributes: list[str] | None = None,
     ) -> FlextResult[list[list[FlextLdapModels.Entry]]]:
         """Perform bulk search across multiple base DNs.
 
         Args:
-            base_dns: List of base DNs to search
-            filters: List of filter strings (one per base DN)
-            scope: Search scope
-            attributes: List of attributes to retrieve
+            base_dns: List of base DNs to search OR list of SearchRequest objects
+            filters: List of filter strings (one per base DN, ignored if SearchRequests provided)
+            scope: Search scope (ignored if SearchRequests provided)
+            attributes: List of attributes to retrieve (ignored if SearchRequests provided)
 
         Returns:
             FlextResult containing list of entry lists (one per search)
 
         """
+        # Check if we received SearchRequest objects
+        if base_dns and isinstance(base_dns[0], FlextLdapModels.SearchRequest):
+            # Process SearchRequest list
+            search_requests = base_dns  # type: ignore
+            results = []
+            for search_request in search_requests:
+                result = self.search(search_request)
+                if result.is_failure:
+                    return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+                        f"Bulk search failed for {search_request.base_dn}: {result.error}",
+                    )
+                results.append(result.unwrap())
+
+            return FlextResult[list[list[FlextLdapModels.Entry]]].ok(results)
+
+        # Traditional base_dns + filters approach
+        if filters is None:
+            return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+                "filters parameter is required when passing base DNs as strings",
+            )
+
         if len(base_dns) != len(filters):
             return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
                 "base_dns and filters lists must have the same length",
@@ -584,7 +623,7 @@ class FlextLdap(FlextService[None]):
         results = []
         for base_dn, filter_str in zip(base_dns, filters, strict=False):
             search_request = FlextLdapModels.SearchRequest(
-                base_dn=base_dn,
+                base_dn=base_dn,  # type: ignore
                 filter_str=filter_str,
                 scope=scope,
                 attributes=attributes,
@@ -762,31 +801,60 @@ class FlextLdap(FlextService[None]):
 
     def search_universal(
         self,
-        search_request: FlextLdapModels.SearchRequest,
+        search_request: FlextLdapModels.SearchRequest | None = None,
+        base_dn: str | None = None,
+        filter_str: str | None = None,
+        scope: str = "subtree",
+        attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Perform universal search with automatic server adaptation.
 
         Args:
-            search_request: Search request parameters
+            search_request: Search request parameters (if provided, other args ignored)
+            base_dn: Base DN for search (used if search_request not provided)
+            filter_str: LDAP filter string (used if search_request not provided)
+            scope: Search scope (used if search_request not provided)
+            attributes: List of attributes to retrieve (used if search_request not provided)
 
         Returns:
             Search results
 
         """
-        return self.search(search_request)
+        # If SearchRequest provided, use it directly
+        if search_request is not None:
+            return self.search(search_request)
+
+        # Build SearchRequest from keyword arguments
+        if base_dn is None:
+            base_dn = self.config.ldap_base_dn
+
+        if filter_str is None:
+            filter_str = "(objectClass=*)"
+
+        request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn,
+            filter_str=filter_str,
+            scope=scope,
+            attributes=attributes,
+        )
+
+        return self.search(request)
 
     # =========================================================================
     # CONTEXT MANAGER SUPPORT
     # =========================================================================
 
     def __enter__(self) -> Self:
-        """Enter context manager - ensure connection is ready."""
-        # Test connection if possible
-        if hasattr(self.client, "test_connection"):
-            test_result = self.client.test_connection()
-            if test_result.is_failure:
-                error_msg = f"LDAP connection test failed: {test_result.error}"
-                raise RuntimeError(error_msg)
+        """Enter context manager - return self for use in context.
+
+        Note: Connection must be established via connect() method.
+        This method does not automatically connect to allow for
+        flexible connection configuration within the context.
+
+        Returns:
+            Self for use in context manager.
+
+        """
         return self
 
     def __exit__(

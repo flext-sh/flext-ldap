@@ -75,7 +75,7 @@ class FlextLdapConstants(FlextConstants):
         """LDAP search scope constants.
 
         Provides direct access to LDAP scope constants for convenience.
-        These reference FlextConstants.Platform values.
+        These reference FlextConstants.Platform values (RFC 4511 compliant).
         """
 
         # Direct references to FlextConstants for convenience

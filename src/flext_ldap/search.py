@@ -22,6 +22,7 @@ from flext_core import (
     FlextTypes,
 )
 from ldap3 import BASE, LEVEL, SUBTREE
+from ldap3.core.exceptions import LDAPAttributeError
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -128,6 +129,10 @@ class FlextLdapSearch(FlextService[None]):
 
         """
         try:
+            self.logger.trace(
+                f"Search called with base_dn={base_dn}, filter={filter_str}, attributes={attributes}"
+            )
+
             if not self._connection:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "LDAP connection not established",
@@ -136,15 +141,57 @@ class FlextLdapSearch(FlextService[None]):
             # Convert scope string to ldap3 constant
             ldap3_scope = self._get_ldap3_scope(scope)
 
-            # Perform search
-            success: bool = self._connection.search(
-                base_dn,
-                filter_str,
-                ldap3_scope,
-                attributes=attributes,
-                paged_size=page_size if page_size > 0 else None,
-                paged_cookie=paged_cookie,
-            )
+            # Perform search with attribute error handling
+            # If specific attributes are requested but don't exist in schema, retry with all attributes
+            success: bool = False
+            try:
+                success = self._connection.search(
+                    base_dn,
+                    filter_str,
+                    ldap3_scope,
+                    attributes=attributes,
+                    paged_size=page_size if page_size > 0 else None,
+                    paged_cookie=paged_cookie,
+                )
+            except LDAPAttributeError as e:
+                # If attribute error occurs, retry with all attributes (makes API extensible)
+                # This allows requesting any attributes, even if they don't exist in schema
+                self.logger.debug(
+                    f"Attribute error exception with {attributes}, retrying with all attributes: {e}"
+                )
+                success = self._connection.search(
+                    base_dn,
+                    filter_str,
+                    ldap3_scope,
+                    attributes=["*"],  # Request all user attributes
+                    paged_size=page_size if page_size > 0 else None,
+                    paged_cookie=paged_cookie,
+                )
+                self.logger.trace(f"Retry after exception: success={success}")
+
+            # Check if search failed due to invalid attribute type (ldap3 doesn't always raise exception)
+            # If so, retry with all attributes to make API extensible
+            if not success:
+                if self._connection.last_error:
+                    error_msg = str(self._connection.last_error).lower()
+                    self.logger.trace(
+                        f"Search failed, checking error: success={success}, error_msg='{error_msg}'"
+                    )
+                    if "invalid attribute" in error_msg or "no such attribute" in error_msg:
+                        self.logger.debug(
+                            f"Attribute validation failed with {attributes}, retrying with all attributes: {self._connection.last_error}"
+                        )
+                        success = self._connection.search(
+                            base_dn,
+                            filter_str,
+                            ldap3_scope,
+                            attributes=["*"],  # Request all user attributes
+                            paged_size=page_size if page_size > 0 else None,
+                            paged_cookie=paged_cookie,
+                        )
+                        self.logger.trace(f"Retry after error check: success={success}")
+                else:
+                    self.logger.trace("Search failed but no last_error available")
 
             if not success:
                 return FlextResult[list[FlextLdapModels.Entry]].fail(
@@ -157,30 +204,31 @@ class FlextLdapSearch(FlextService[None]):
                 # Build attributes dict from ldap3 entry
                 entry_attributes_dict: FlextTypes.Dict = {}
 
-                # Handle case where entry.attributes might be a list instead of dict
+                # FIXED: ldap3 Entry uses entry_attributes_as_dict, not .attributes
+                # https://ldap3.readthedocs.io/en/latest/entry.html
                 entry_attrs: object = (
-                    entry.attributes if hasattr(entry, "attributes") else {}
+                    entry.entry_attributes_as_dict
+                    if hasattr(entry, "entry_attributes_as_dict")
+                    else {}
                 )
 
                 if isinstance(entry_attrs, dict):
-                    for attr_name in entry_attrs:
-                        attr_value: object = entry[attr_name].value
-                        if isinstance(attr_value, list) and len(attr_value) == 1:
-                            entry_attributes_dict[attr_name] = attr_value[0]
+                    # ldap3 returns all values as lists, so we need to convert them
+                    for attr_name, attr_value_list in entry_attrs.items():
+                        # Convert list values to single values where appropriate
+                        if isinstance(attr_value_list, list):
+                            if len(attr_value_list) == 1:
+                                entry_attributes_dict[attr_name] = attr_value_list[0]
+                            else:
+                                entry_attributes_dict[attr_name] = attr_value_list
                         else:
-                            entry_attributes_dict[attr_name] = attr_value
-                elif isinstance(entry_attrs, list):
-                    # Handle case where attributes is a list
-                    # This might happen in error conditions or with certain LDAP servers
-                    self.logger.warning(
-                        f"entry.attributes is a list instead of dict for DN {entry.dn}",
-                    )
+                            entry_attributes_dict[attr_name] = attr_value_list
                 else:
                     self.logger.warning(
-                        f"Unexpected type for entry.attributes: {type(entry_attrs)}",
+                        f"Unexpected type for entry_attributes_as_dict: {type(entry_attrs)}",
                     )
 
-                # Get object classes safely
+                # Get object classes from attributes dict
                 object_classes: FlextTypes.StringList = []
                 if isinstance(entry_attrs, dict):
                     object_classes_raw = entry_attrs.get(
@@ -193,23 +241,10 @@ class FlextLdapSearch(FlextService[None]):
                         object_classes = object_classes_raw
                     else:
                         object_classes = []
-                elif hasattr(entry, "attributes") and hasattr(entry.attributes, "get"):
-                    # Fallback for dict-like objects
-                    try:
-                        object_classes = entry.attributes.get(
-                            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
-                            [],
-                        )
-                        if isinstance(object_classes, str):
-                            object_classes = [object_classes]
-                        elif not isinstance(object_classes, list):
-                            object_classes = []
-                    except AttributeError:
-                        pass
 
                 # Create Entry model instance
                 entry_model = FlextLdapModels.Entry(
-                    dn=str(entry.dn),
+                    dn=str(entry.entry_dn),  # Fixed: ldap3 uses entry_dn not dn
                     attributes=cast(
                         "dict[str, str | list[str]]",
                         entry_attributes_dict,

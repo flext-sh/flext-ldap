@@ -1,13 +1,91 @@
 # ============================================================================
-# FLEXT-LDAP - LDAP Client Library .gitignore
-# Python 3.13 | Poetry | LDAP | Directory Services | Authentication
+# AGGRESSIVE WHITELIST - Block everything by default, explicitly allow needed files
 # ============================================================================
 
+
+# Block everything at root level
+/*
+/*/
+
+
 # ============================================================================
-# JUNK FILES - NEVER COMMIT THESE
+# ALLOWED: Core Directories
+# ============================================================================
+!src/
+!tests/
+!docs/
+!examples/
+!scripts/
+!ansible/
+!docker/
+!dbt/
+!.github/
+!.vscode/
+
+# ============================================================================
+# ALLOWED: Root-Level Configuration Files
+# ============================================================================
+!pyproject.toml
+!poetry.lock
+!Makefile
+!README.md
+!CLAUDE.md
+!LICENSE
+!.python-version
+!.tool-versions
+!.gitignore
+!.gitattributes
+!.pre-commit-config.yaml
+
+# Environment templates (NOT .env - keep secrets out!)
+!.env.example
+!.env.test
+!.env.template
+!.env.*.example
+
+# Docker files
+!Dockerfile
+!Dockerfile.*
+!docker-compose.yml
+!docker-compose.*.yml
+!.dockerignore
+
+# ============================================================================
+# ALLOWED: Contents Inside Whitelisted Directories
+# ============================================================================
+!src/**
+!tests/**
+!docs/**
+!examples/**
+!scripts/**
+!ansible/**
+!docker/**
+!dbt/**
+!.github/**
+!.vscode/**
+
+
+# ============================================================================
+# SECURITY: Explicit Blocks (NEVER commit these)
+# ============================================================================
+.env
+.internal.invalid
+.env.production
+.env.development
+**/.env
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+secrets.yaml
+secrets.yml
+
+
+# ============================================================================
+# PROJECT-SPECIFIC RULES: flext-ldap
 # ============================================================================
 
-# Archive and backup directories
 archive/
 archives/
 backup/
@@ -15,8 +93,6 @@ backups/
 .backup/
 *_backup/
 *_backup_*/
-
-# AI-generated files and reports
 *_REPORT*.md
 *_ANALYSIS*.md
 *_SUMMARY*.md
@@ -28,15 +104,11 @@ DUPLICATION_REPORT*.md
 LINT_CORRECTIONS*.md
 *.ai.md
 *.ai.txt
-
-# Backup files with timestamps
 *_20250*.bak
 *_202507*.bak
 *_202506*.bak
 *.md_20250*
 README_20250*.bak
-
-# Generic backup patterns
 *.bak
 *.backup
 *.orig
@@ -45,8 +117,6 @@ README_20250*.bak
 *.tmp.bak
 *_temp.py
 *_temp.md
-
-# Fix scripts and validation files
 fix_*.py
 *_fix.py
 *_validation.py
@@ -54,8 +124,6 @@ validate_*.py
 investigate_*.py
 temp_*.py
 debug_*.py
-
-# Tool reports and analysis
 *_analysis.txt
 *_report.txt
 *_output.txt
@@ -64,69 +132,25 @@ report_*/
 reports/
 reports_*/
 temp_test_*/
-
-# ============================================================================
-# PYTHON ARTIFACTS
-# ============================================================================
-
-# Python artifacts
-__pycache__/
 *.py[cod]
-*.pyc
-*.pyo
 *.pyd
 *.so
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
 .installed.cfg
-*.egg
 MANIFEST
-
-# Testing and coverage
-htmlcov/
 .tox/
 .nox/
-.coverage
 .coverage.*
 coverage.xml
 coverage.json
 *.cover
-.hypothesis/
-.pytest_cache/
-
-# Development tools
-.mypy_cache/
-.ruff_cache/
 .pyre/
 .pytype/
-
-# Virtual environments
-.env
-.venv/
-env/
-venv/
 ENV/
-
-# IDEs and editors
 .vscode/
-.idea/
-*.swp
 *.swo
 *~
-
-# System files
-.DS_Store
 Thumbs.db
 Desktop.ini
-
-# ============================================================================
-# LDAP AND DIRECTORY SERVICES
-# ============================================================================
-
-# LDAP Data Interchange Format files
 *.ldif
 *.ldif.bak
 *.ldif.backup
@@ -135,122 +159,65 @@ Desktop.ini
 ldif_export/
 ldif_import/
 ldif_temp/
-
-# LDAP configuration backups
 slapd.conf.bak
 ldap.conf.bak
 *.ldap.conf.bak
-
-# LDAP database files
 *.db
 *.mdb
 *.ldbm
 *.bdb
-
-# LDAP schema files (backups only)
 *.schema.bak
 *.ldif.schema.bak
-
-# LDAP certificates (generated)
 ldap-server.pem
 ldap-client.pem
 ldap-ca.pem
-
-# LDAP logs
 ldap.log
 slapd.log
 *.ldap.log
-
-# LDAP test data
 test_users.ldif
 test_groups.ldif
 sample_data.ldif
-
-# ============================================================================
-# AUTHENTICATION AND SECURITY
-# ============================================================================
-
-# Authentication tokens
 *.token
 auth_token.txt
 ldap_token.json
-
-# Certificates and keys (sensitive)
 *.key
 *.pem
 *.crt
 *.csr
 *.p12
 *.pfx
-
-# Password files
 passwords.txt
 *.passwd
 userPassword.txt
-
-# Kerberos tickets
 *.ccache
 krb5cc_*
-
-# SASL authentication
 *.sasl
 sasl_passwd
-
-# Credentials
 credentials.json
 ldap_credentials.json
 bind_credentials.txt
-
-# ============================================================================
-# LOGS AND TEMPORARY FILES
-# ============================================================================
-
-# Logs
-*.log
 logs/
 log/
 ldap_operations.log
-
-# Temporary files
 *.tmp
 temp/
 tmp/
 ldap_temp/
-
-# ============================================================================
-# TESTING AND DEVELOPMENT
-# ============================================================================
-
-# Test LDAP data
 test_data/
 test_ldif/
 mock_ldap/
-
-# Development schemas
 dev_schema/
 test_schema/
-
-# Performance testing
 perf_test/
 load_test/
-
-# Documentation
 docs/_build/
 site/
-
-# Force include critical files
 !pyproject.toml
 !Makefile
 !README.md
 !*.schema
 !example.ldif
 !docker-compose.yml
-
-# ============================================================================
-# AI TOOLS AND ASSISTANT FILES
-# ============================================================================
-
-# AI assistant files and directories
 .cursor/
 .cursorrules
 .cursorignore
@@ -259,10 +226,8 @@ site/
 .claude/
 .copilot/
 .github/copilot-instructions.md
-
-# AI-generated files and reports
 *_REPORT*.md
-*_ANALYSIS*.md  
+*_ANALYSIS*.md
 *_SUMMARY*.md
 *_FINDINGS*.md
 CLAUDE*.md
@@ -275,62 +240,37 @@ LINT_CORRECTIONS*.md
 *.ai.txt
 *.ai.json
 *.ai.log
-
-# === FLEXT WORKSPACE CRUFT PATTERNS ===
-# Auto-generated by git_ultimate_cleanup.py
-
-# Python compiled
-*.pyc
-*.pyo
 *.py[cod]
 *$py.class
 *.so
 *.pyd
-
-# Virtual environments
-.env
-.venv
-venv/
 ENV/
 .Python
-
-# Testing & Coverage
 coverage.xml
 coverage.json
 *.cover
-.hypothesis/
 junit.xml
 .nox/
 .pyre/
 .pytype/
 .bandit/
-
-# Build & Distribution
 .installed.cfg
 MANIFEST
 *.manifest
 *.spec
-
-# Meltano/Singer state
 state.json
 *.state
 *.state.json
 catalog.json
 target_config.json
-
-# DBT
 dbt.log
 dbt_packages/
 target/
 profiles.yml.bak
 profiles/profiles.yml.backup
 **/.user.yml
-
-# Documentation builds
 docs/_build/
 site/
-
-# Temporary/Debug scripts
 temp_*.py
 *_temp.py
 *_temp.md
@@ -340,8 +280,6 @@ debug_*.py
 investigate_*.py
 validate_*.py
 *_validation.py
-
-# Analysis/Report files
 *_analysis.txt
 *_output.txt
 *_report.txt
@@ -349,8 +287,6 @@ temp_test_*
 analysis_temp/
 report_*/
 reports_*/
-
-# AI-generated documentation (frequently deleted)
 *_COMPLETE.md
 *_PLAN.md
 *_GUIDE.md
@@ -393,8 +329,6 @@ LINT_CORRECTIONS*.md
 *.ai.txt
 *.md_20250*
 CRUFT_DETECTION_REPORT.md
-
-# Backup patterns
 *.backup
 *.bak
 *.orig
@@ -406,14 +340,32 @@ CRUFT_DETECTION_REPORT.md
 *_backup
 *_backup_*
 temp_backup
-
-# Archive directories
 .archive/
 archive/
 archives/
 backups/
 *backup*/
-
-# System files
 Desktop.ini
 *.swo
+
+# ============================================================================
+# COMMON PATTERNS: Artifacts inside allowed directories
+# ============================================================================
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# ============================================================================
+# SAFETY: Keep .gitkeep files
+# ============================================================================
+!**/.gitkeep

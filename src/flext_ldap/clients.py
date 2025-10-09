@@ -97,6 +97,9 @@ class FlextLdapClients(FlextService[None]):
         """Get searcher with lazy initialization."""
         if self._searcher is None:
             searcher = FlextLdapSearch(parent=self)
+            # Set connection context if connection exists
+            if self._connection:
+                searcher.set_connection_context(self._connection)
             self._searcher = cast(
                 "FlextLdapProtocols.Ldap.LdapSearcherProtocol", searcher
             )
@@ -199,6 +202,15 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("Failed to bind to LDAP server")
 
             self.logger.info("Successfully connected to LDAP server")
+
+            # Update searcher and authenticator with new connection if they exist
+            if self._searcher is not None:
+                self._searcher.set_connection_context(self._connection)
+            if self._authenticator is not None:
+                self._authenticator.set_connection_context(
+                    self._connection,
+                    self._server,
+                )
 
             # Auto-detect server type
             detection_result = self._server_operations_factory.create_from_connection(
@@ -401,7 +413,11 @@ class FlextLdapClients(FlextService[None]):
         dn: str,
         attributes: dict[str, str | FlextTypes.StringList],
     ) -> FlextResult[bool]:
-        """Add new LDAP entry - implements LdapModifyProtocol."""
+        """Add new LDAP entry - implements LdapModifyProtocol.
+
+        Handles undefined attributes gracefully by filtering them out and retrying.
+        This makes the API extensible to work with any LDAP schema without limitations.
+        """
         try:
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
@@ -414,9 +430,71 @@ class FlextLdapClients(FlextService[None]):
                 else:
                     ldap3_attributes[key] = [str(value)]
 
-            success = self.connection.add(dn, attributes=ldap3_attributes)
-            if success:
-                return FlextResult[bool].ok(True)
+            # Try to add entry, handling undefined attributes gracefully
+            success = False
+            attempted_attributes = ldap3_attributes.copy()
+            removed_attributes = []
+            max_retries = 20  # Limit retries to avoid infinite loops
+            retry_count = 0
+
+            while not success and retry_count < max_retries:
+                try:
+                    success = self.connection.add(dn, attributes=attempted_attributes)
+                    if success:
+                        if removed_attributes:
+                            self.logger.debug(
+                                f"Entry added successfully after removing undefined attributes: {removed_attributes}"
+                            )
+                        return FlextResult[bool].ok(True)
+
+                    # Check if error is about undefined attribute
+                    error_msg = str(self.connection.last_error).lower()
+                    if "undefined attribute" in error_msg or "invalid attribute" in error_msg:
+                        # Extract attribute name from error message
+                        # Format: "Undefined attribute type department"
+                        error_parts = str(self.connection.last_error).split()
+                        if len(error_parts) > 0:
+                            # Get last word which is usually the attribute name
+                            problem_attr = error_parts[-1].strip()
+                            if problem_attr in attempted_attributes:
+                                self.logger.debug(
+                                    f"Removing undefined attribute '{problem_attr}' and retrying"
+                                )
+                                del attempted_attributes[problem_attr]
+                                removed_attributes.append(problem_attr)
+                                retry_count += 1
+                                continue
+
+                    # If we can't identify the problem attribute or other error, fail
+                    return FlextResult[bool].fail(
+                        f"Add entry failed: {self.connection.last_error}",
+                    )
+
+                except Exception as e:
+                    # Some LDAP servers raise exceptions for undefined attributes
+                    error_str = str(e).lower()
+                    if "undefined attribute" in error_str or "invalid attribute" in error_str:
+                        # Try to extract attribute name from exception message
+                        error_parts = str(e).split()
+                        if len(error_parts) > 0:
+                            problem_attr = error_parts[-1].strip()
+                            if problem_attr in attempted_attributes:
+                                self.logger.debug(
+                                    f"Exception on undefined attribute '{problem_attr}', removing and retrying"
+                                )
+                                del attempted_attributes[problem_attr]
+                                removed_attributes.append(problem_attr)
+                                retry_count += 1
+                                continue
+                    # Re-raise if not an attribute error
+                    raise
+
+            # If we exhausted retries
+            if retry_count >= max_retries:
+                return FlextResult[bool].fail(
+                    f"Add entry failed after {max_retries} retries removing attributes"
+                )
+
             return FlextResult[bool].fail(
                 f"Add entry failed: {self.connection.last_error}",
             )
@@ -432,14 +510,19 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Convert changes to ldap3 format
+            # ldap3 expects: {'attr': [(MODIFY_OP, [values])]}
             ldap3_changes: dict[str, object] = {}
             for attr, change_spec in changes.items():
-                if isinstance(change_spec, dict):
-                    # Handle complex modify operations
+                # Check if already in ldap3 tuple format: [(operation, values)]
+                if isinstance(change_spec, list) and change_spec and isinstance(change_spec[0], tuple):
+                    # Already in correct format
+                    ldap3_changes[attr] = change_spec
+                elif isinstance(change_spec, dict):
+                    # Handle dict format (complex operations)
                     ldap3_changes[attr] = change_spec
                 else:
-                    # Simple replace operation
-                    ldap3_changes[attr] = [("MODIFY_REPLACE", change_spec)]
+                    # Simple value - wrap as MODIFY_REPLACE
+                    ldap3_changes[attr] = [("MODIFY_REPLACE", change_spec if isinstance(change_spec, list) else [change_spec])]
 
             success = self.connection.modify(dn, changes=ldap3_changes)
             if success:
