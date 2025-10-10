@@ -16,8 +16,12 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
-import matplotlib.pyplot as plt
-import seaborn as sns
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    HAS_VISUALIZATION = True
+except ImportError:
+    HAS_VISUALIZATION = False
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -294,7 +298,11 @@ class ReportGenerator:
 
     def generate_dashboard(self, report_data: ReportData,
                           output_file: str = 'dashboard.html') -> str:
-        """Generate HTML dashboard."""
+        """Generate HTML dashboard (requires visualization libraries)."""
+        if not HAS_VISUALIZATION:
+            print("⚠️  Visualization libraries not available. Skipping dashboard generation.")
+            return ""
+
         template = self._get_dashboard_template()
 
         # Calculate quality metrics
@@ -319,6 +327,7 @@ class ReportGenerator:
         # Render template
         dashboard_html = template.format(**template_data)
 
+        os.makedirs(self.reports_dir, exist_ok=True)
         output_path = os.path.join(self.reports_dir, output_file)
         with open(output_path, 'w') as f:
             f.write(dashboard_html)
@@ -493,6 +502,7 @@ class ReportGenerator:
     def generate_weekly_summary(self, report_data: ReportData,
                                output_file: str = 'weekly-summary.md') -> str:
         """Generate markdown weekly summary."""
+        os.makedirs(self.reports_dir, exist_ok=True)
         metrics = self._calculate_quality_metrics(report_data)
 
         summary = f"""# 📊 Weekly Documentation Quality Summary
@@ -625,8 +635,8 @@ def main():
     print(f"📈 Trends: {metrics.trends_direction.title()}")
 
     if generated_files:
-        print("
-📁 Generated files:"        for name, path in generated_files:
+        print("\n📁 Generated files:")
+        for name, path in generated_files:
             print(f"  {name}: {path}")
 
 if __name__ == '__main__':

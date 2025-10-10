@@ -422,25 +422,27 @@ def main():
         print("="*60)
         print(f"🆔 Session ID: {report.session_id}")
         print(f"📅 Completed: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-        print(".1f"
+        print(f"⏱️  Duration: {report.total_duration:.1f}s")
         success_rate = report.summary['success_rate']
-        print(".1f"
+        print(f"✅ Success Rate: {success_rate:.1f}%")
         # Overall status
         if report.overall_success:
             print("✅ Overall Status: SUCCESS")
         else:
             print("❌ Overall Status: ISSUES DETECTED")
 
-        print("
-📊 Summary:"        print(f"  📁 Files Processed: {report.summary['files_processed']}")
+        print("\n📊 Summary:")
+        print(f"  📁 Files Processed: {report.summary['files_processed']}")
         print(f"  🚨 Total Issues: {report.summary['total_issues']}")
-        print(".1f"        print(f"  📈 Effectiveness: {report.summary['maintenance_effectiveness'].title()}")
+        print(f"  ⭐ Average Quality: {report.summary['average_quality_score']:.1f}/100")
+        print(f"  📈 Effectiveness: {report.summary['maintenance_effectiveness'].title()}")
 
         # Operation results
-        print("
-🔧 Operations Completed:"        for result in report.operations_run:
+        print("\n🔧 Operations Completed:")
+        for result in report.operations_run:
             status = "✅" if result.success else "❌"
-            duration = ".1f"            details = result.details
+            duration = f"{result.duration:.1f}"
+            details = result.details
 
             print(f"  {status} {result.operation.replace('_', ' ').title()} ({duration}s)")
 
@@ -452,17 +454,16 @@ def main():
         # Recommendations
         effectiveness = report.summary['maintenance_effectiveness']
         if effectiveness in ['needs_attention', 'fair']:
-            print("
-💡 Recommendations:"            if report.summary['total_issues'] > 10:
+            print("\n💡 Recommendations:")
+            if report.summary['total_issues'] > 10:
                 print("  - Address high number of issues across documentation")
             if report.summary['average_quality_score'] < 70:
                 print("  - Focus on improving content quality and structure")
             print("  - Consider running maintenance more frequently")
         elif effectiveness == 'good':
-            print("
-✅ Good maintenance results - continue regular upkeep"        else:
-            print("
-🎉 Excellent maintenance results - documentation is in great shape!"
+            print("\n✅ Good maintenance results - continue regular upkeep")
+        else:
+            print("\n🎉 Excellent maintenance results - documentation is in great shape!")
         # Save report if requested
         if args.output:
             maintainer._save_report(report)

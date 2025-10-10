@@ -488,7 +488,7 @@ def main():
                 print(f"  {os.path.basename(file_path)}")
 
     success_rate = (summary.files_modified / summary.total_files * 100) if summary.total_files > 0 else 0
-    print(".1f"
+    print(f"✅ Success Rate: {success_rate:.1f}%")
     if args.dry_run:
         print("\n💡 This was a dry run. Use without --dry-run to apply changes.")
 
@@ -501,8 +501,8 @@ def main():
         )
 
         if files_by_changes:
-            print("
-📋 Files with Most Changes:"            for file_path, changes in files_by_changes[:5]:
+            print("\n📋 Files with Most Changes:")
+            for file_path, changes in files_by_changes[:5]:
                 print(f"  {os.path.basename(file_path)}: {changes} optimizations")
 
 if __name__ == '__main__':
