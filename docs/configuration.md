@@ -4,6 +4,9 @@
 
 This guide covers all configuration aspects for integrating flext-ldap in your FLEXT ecosystem applications.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## Configuration Overview

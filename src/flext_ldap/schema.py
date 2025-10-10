@@ -51,7 +51,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
         def __init__(self) -> None:
             """Initialize generic quirks detector."""
             # Create a minimal handler config for the base class
-            config = FlextModels.CqrsConfig.Handler.create_handler_config(
+            config = FlextModels.Cqrs.Handler.create_handler_config(
                 handler_type="query",
                 default_name="GenericQuirksDetector",
                 default_id="generic-quirks-detector",
@@ -145,7 +145,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             """
             # Create handler config
-            config = FlextModels.CqrsConfig.Handler.create_handler_config(
+            config = FlextModels.Cqrs.Handler.create_handler_config(
                 handler_type="query",
                 default_name="SchemaDiscovery",
                 default_id="schema-discovery",

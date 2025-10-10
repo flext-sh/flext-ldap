@@ -4,6 +4,9 @@
 
 This guide covers integration patterns, FLEXT ecosystem usage, and third-party system integration.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## FLEXT Ecosystem Integration

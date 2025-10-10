@@ -4,6 +4,9 @@
 
 This guide covers installation, basic configuration, and first steps with flext-ldap.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## Prerequisites

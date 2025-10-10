@@ -102,7 +102,7 @@ def load_test_data_openldap() -> bool:
         port=3390,
         use_ssl=False,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        bind_password="REDACTED_LDAP_BIND_PASSWORD123"
+        bind_password="REDACTED_LDAP_BIND_PASSWORD123",
     )
     if connect_result.is_failure:
         logger.error(f"Failed to connect: {connect_result.error}")

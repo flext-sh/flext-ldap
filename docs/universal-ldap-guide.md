@@ -2,6 +2,9 @@
 
 **flext-ldap** now provides complete universal LDAP support, allowing you to work with any LDAP server type (OpenLDAP 1.x, OpenLDAP 2.x, Oracle OID, Oracle OUD, Active Directory) through a unified interface.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ## Table of Contents
 
 - [Overview](#overview)

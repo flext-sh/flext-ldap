@@ -185,7 +185,6 @@ class FlextLdapClients(FlextService[None]):
 
             # Apply connection options if provided
             if connection_options:
-
                 self._server = Server(server_uri, **connection_options)
             else:
                 self._server = Server(server_uri)
@@ -449,7 +448,10 @@ class FlextLdapClients(FlextService[None]):
 
                     # Check if error is about undefined attribute
                     error_msg = str(self.connection.last_error).lower()
-                    if "undefined attribute" in error_msg or "invalid attribute" in error_msg:
+                    if (
+                        "undefined attribute" in error_msg
+                        or "invalid attribute" in error_msg
+                    ):
                         # Extract attribute name from error message
                         # Format: "Undefined attribute type department"
                         error_parts = str(self.connection.last_error).split()
@@ -473,7 +475,10 @@ class FlextLdapClients(FlextService[None]):
                 except Exception as e:
                     # Some LDAP servers raise exceptions for undefined attributes
                     error_str = str(e).lower()
-                    if "undefined attribute" in error_str or "invalid attribute" in error_str:
+                    if (
+                        "undefined attribute" in error_str
+                        or "invalid attribute" in error_str
+                    ):
                         # Try to extract attribute name from exception message
                         error_parts = str(e).split()
                         if len(error_parts) > 0:
@@ -514,7 +519,11 @@ class FlextLdapClients(FlextService[None]):
             ldap3_changes: dict[str, object] = {}
             for attr, change_spec in changes.items():
                 # Check if already in ldap3 tuple format: [(operation, values)]
-                if isinstance(change_spec, list) and change_spec and isinstance(change_spec[0], tuple):
+                if (
+                    isinstance(change_spec, list)
+                    and change_spec
+                    and isinstance(change_spec[0], tuple)
+                ):
                     # Already in correct format
                     ldap3_changes[attr] = change_spec
                 elif isinstance(change_spec, dict):
@@ -522,7 +531,14 @@ class FlextLdapClients(FlextService[None]):
                     ldap3_changes[attr] = change_spec
                 else:
                     # Simple value - wrap as MODIFY_REPLACE
-                    ldap3_changes[attr] = [("MODIFY_REPLACE", change_spec if isinstance(change_spec, list) else [change_spec])]
+                    ldap3_changes[attr] = [
+                        (
+                            "MODIFY_REPLACE",
+                            change_spec
+                            if isinstance(change_spec, list)
+                            else [change_spec],
+                        )
+                    ]
 
             success = self.connection.modify(dn, changes=ldap3_changes)
             if success:

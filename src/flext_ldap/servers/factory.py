@@ -208,7 +208,10 @@ class FlextLdapServersFactory(FlextService[None]):
                 search_base="",
                 search_filter="(objectClass=*)",
                 search_scope="BASE",
-                attributes=["*", "+"],  # Request all standard and operational attributes
+                attributes=[
+                    "*",
+                    "+",
+                ],  # Request all standard and operational attributes
             )
 
             if not success or not connection.entries:

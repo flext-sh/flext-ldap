@@ -75,7 +75,9 @@ class ValidationMetrics:
         logger.info(f"Failed: {self.failed_tests} ❌")
         logger.info(f"Skipped: {self.skipped_tests} ⏭️")
 
-        success_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
+        success_rate = (
+            (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
+        )
         logger.info(f"Success Rate: {success_rate:.1f}%")
         logger.info("=" * 80)
 
@@ -98,7 +100,9 @@ class ValidationMetrics:
             "passed_tests": self.passed_tests,
             "failed_tests": self.failed_tests,
             "skipped_tests": self.skipped_tests,
-            "success_rate": (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0,
+            "success_rate": (self.passed_tests / self.total_tests * 100)
+            if self.total_tests > 0
+            else 0,
             "test_results": self.test_results,
         }
 
@@ -113,6 +117,7 @@ def measure_time(func: Callable[..., Any]) -> Callable[..., tuple[Any, float]]:
         Decorated function that returns (result, duration)
 
     """
+
     def wrapper(*args: Any, **kwargs: Any) -> tuple[Any, float]:
         start_time = time.time()
         result = func(*args, **kwargs)
@@ -144,17 +149,26 @@ def validate_connection(
 
         if not api.is_connected():
             duration = time.time() - start_time
-            metrics.add_result(test_name, "fail", "Not connected to LDAP server", duration)
+            metrics.add_result(
+                test_name, "fail", "Not connected to LDAP server", duration
+            )
             return False
 
         test_result = api.test_connection()
         duration = time.time() - start_time
 
         if test_result.is_failure:
-            metrics.add_result(test_name, "fail", f"Connection test failed: {test_result.error}", duration)
+            metrics.add_result(
+                test_name,
+                "fail",
+                f"Connection test failed: {test_result.error}",
+                duration,
+            )
             return False
 
-        metrics.add_result(test_name, "pass", "Connection validated successfully", duration)
+        metrics.add_result(
+            test_name, "pass", "Connection validated successfully", duration
+        )
         logger.info(f"✅ {test_name} passed ({duration:.2f}s)")
         return True
 
@@ -199,16 +213,28 @@ def validate_search_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Basic Search", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Basic Search",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             entries = result.unwrap()
-            metrics.add_result(f"{test_name} - Basic Search", "pass", f"Found {len(entries)} entries", duration)
+            metrics.add_result(
+                f"{test_name} - Basic Search",
+                "pass",
+                f"Found {len(entries)} entries",
+                duration,
+            )
             logger.info(f"✅ Basic search: {len(entries)} entries ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Basic Search", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Basic Search", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     # Test 2: Search with different scopes
@@ -229,16 +255,30 @@ def validate_search_operations(
             duration = time.time() - start_time
 
             if result.is_failure:
-                metrics.add_result(f"{test_name} - Scope {scope_name}", "fail", result.error or "Unknown error", duration)
+                metrics.add_result(
+                    f"{test_name} - Scope {scope_name}",
+                    "fail",
+                    result.error or "Unknown error",
+                    duration,
+                )
                 all_passed = False
             else:
                 entries = result.unwrap()
-                metrics.add_result(f"{test_name} - Scope {scope_name}", "pass", f"Found {len(entries)} entries", duration)
-                logger.info(f"✅ Search scope {scope_name}: {len(entries)} entries ({duration:.2f}s)")
+                metrics.add_result(
+                    f"{test_name} - Scope {scope_name}",
+                    "pass",
+                    f"Found {len(entries)} entries",
+                    duration,
+                )
+                logger.info(
+                    f"✅ Search scope {scope_name}: {len(entries)} entries ({duration:.2f}s)"
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            metrics.add_result(f"{test_name} - Scope {scope_name}", "fail", f"Exception: {e}", duration)
+            metrics.add_result(
+                f"{test_name} - Scope {scope_name}", "fail", f"Exception: {e}", duration
+            )
             all_passed = False
 
     # Test 3: Search users
@@ -249,16 +289,28 @@ def validate_search_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Search Users", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Search Users",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             users = result.unwrap()
-            metrics.add_result(f"{test_name} - Search Users", "pass", f"Found {len(users)} users", duration)
+            metrics.add_result(
+                f"{test_name} - Search Users",
+                "pass",
+                f"Found {len(users)} users",
+                duration,
+            )
             logger.info(f"✅ Search users: {len(users)} users ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Search Users", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Search Users", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     # Test 4: Search groups
@@ -269,16 +321,28 @@ def validate_search_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Search Groups", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Search Groups",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             groups = result.unwrap()
-            metrics.add_result(f"{test_name} - Search Groups", "pass", f"Found {len(groups)} groups", duration)
+            metrics.add_result(
+                f"{test_name} - Search Groups",
+                "pass",
+                f"Found {len(groups)} groups",
+                duration,
+            )
             logger.info(f"✅ Search groups: {len(groups)} groups ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Search Groups", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Search Groups", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     return all_passed
@@ -331,7 +395,9 @@ def validate_crud_operations(
             }
             create_ou_result = api.add_entry(parent_ou_dn, ou_attributes)
             if create_ou_result.is_failure:
-                logger.warning(f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}")
+                logger.warning(
+                    f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}"
+                )
 
         duration = time.time() - start_time
     except Exception as e:
@@ -358,14 +424,26 @@ def validate_crud_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Create Entry", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Create Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             return False  # Can't continue if create fails
-        metrics.add_result(f"{test_name} - Create Entry", "pass", "Entry created successfully", duration)
+        metrics.add_result(
+            f"{test_name} - Create Entry",
+            "pass",
+            "Entry created successfully",
+            duration,
+        )
         logger.info(f"✅ Create entry: {test_dn} ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Create Entry", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Create Entry", "fail", f"Exception: {e}", duration
+        )
         return False
 
     # Test 2: Read entry
@@ -382,20 +460,37 @@ def validate_crud_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Read Entry", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Read Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             entry = result.unwrap()
             if entry:
-                metrics.add_result(f"{test_name} - Read Entry", "pass", f"Entry read: {entry.dn}", duration)
+                metrics.add_result(
+                    f"{test_name} - Read Entry",
+                    "pass",
+                    f"Entry read: {entry.dn}",
+                    duration,
+                )
                 logger.info(f"✅ Read entry: {entry.dn} ({duration:.2f}s)")
             else:
-                metrics.add_result(f"{test_name} - Read Entry", "fail", "Entry not found after creation", duration)
+                metrics.add_result(
+                    f"{test_name} - Read Entry",
+                    "fail",
+                    "Entry not found after creation",
+                    duration,
+                )
                 all_passed = False
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Read Entry", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Read Entry", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     # Test 3: Update entry
@@ -410,15 +505,27 @@ def validate_crud_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Update Entry", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Update Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
-            metrics.add_result(f"{test_name} - Update Entry", "pass", "Entry updated successfully", duration)
+            metrics.add_result(
+                f"{test_name} - Update Entry",
+                "pass",
+                "Entry updated successfully",
+                duration,
+            )
             logger.info(f"✅ Update entry: {test_dn} ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Update Entry", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Update Entry", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     # Test 4: Delete entry
@@ -428,15 +535,27 @@ def validate_crud_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Delete Entry", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Delete Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
-            metrics.add_result(f"{test_name} - Delete Entry", "pass", "Entry deleted successfully", duration)
+            metrics.add_result(
+                f"{test_name} - Delete Entry",
+                "pass",
+                "Entry deleted successfully",
+                duration,
+            )
             logger.info(f"✅ Delete entry: {test_dn} ({duration:.2f}s)")
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Delete Entry", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Delete Entry", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     return all_passed
@@ -490,13 +609,25 @@ def validate_batch_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Batch Add", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Batch Add",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             results = result.unwrap()
             success_count = sum(1 for r in results if r)
-            metrics.add_result(f"{test_name} - Batch Add", "pass", f"{success_count}/{batch_size} entries created", duration)
-            logger.info(f"✅ Batch add: {success_count}/{batch_size} entries ({duration:.2f}s)")
+            metrics.add_result(
+                f"{test_name} - Batch Add",
+                "pass",
+                f"{success_count}/{batch_size} entries created",
+                duration,
+            )
+            logger.info(
+                f"✅ Batch add: {success_count}/{batch_size} entries ({duration:.2f}s)"
+            )
 
             # Clean up created entries
             for dn, _ in entries:
@@ -504,7 +635,9 @@ def validate_batch_operations(
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Batch Add", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Batch Add", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     return all_passed
@@ -536,16 +669,30 @@ def validate_server_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Get Capabilities", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Get Capabilities",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             capabilities = result.unwrap()
-            metrics.add_result(f"{test_name} - Get Capabilities", "pass", f"Got {len(capabilities)} capabilities", duration)
-            logger.info(f"✅ Server capabilities: {len(capabilities)} items ({duration:.2f}s)")
+            metrics.add_result(
+                f"{test_name} - Get Capabilities",
+                "pass",
+                f"Got {len(capabilities)} capabilities",
+                duration,
+            )
+            logger.info(
+                f"✅ Server capabilities: {len(capabilities)} items ({duration:.2f}s)"
+            )
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Get Capabilities", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Get Capabilities", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     # Test 2: Get supported operations
@@ -555,16 +702,30 @@ def validate_server_operations(
         duration = time.time() - start_time
 
         if result.is_failure:
-            metrics.add_result(f"{test_name} - Get Operations", "fail", result.error or "Unknown error", duration)
+            metrics.add_result(
+                f"{test_name} - Get Operations",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
             all_passed = False
         else:
             operations = result.unwrap()
-            metrics.add_result(f"{test_name} - Get Operations", "pass", f"Got {len(operations)} operations", duration)
-            logger.info(f"✅ Supported operations: {len(operations)} operations ({duration:.2f}s)")
+            metrics.add_result(
+                f"{test_name} - Get Operations",
+                "pass",
+                f"Got {len(operations)} operations",
+                duration,
+            )
+            logger.info(
+                f"✅ Supported operations: {len(operations)} operations ({duration:.2f}s)"
+            )
 
     except Exception as e:
         duration = time.time() - start_time
-        metrics.add_result(f"{test_name} - Get Operations", "fail", f"Exception: {e}", duration)
+        metrics.add_result(
+            f"{test_name} - Get Operations", "fail", f"Exception: {e}", duration
+        )
         all_passed = False
 
     return all_passed

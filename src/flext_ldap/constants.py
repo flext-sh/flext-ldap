@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, Literal
 
 from flext_core import FlextConstants
 
@@ -575,6 +575,36 @@ class FlextLdapConstants(FlextConstants):
         PROJECT_TYPE_USER_DIRECTORY: Final = "user-directory"
         PROJECT_TYPE_GROUP_MANAGEMENT: Final = "group-management"
         PROJECT_TYPE_LDAP_MIGRATION: Final = "ldap-migration"
+
+    # =========================================================================
+    # LITERAL TYPE DEFINITIONS - Centralized Literal types for ALL modules
+    # =========================================================================
+
+    # LDAP scope literals (CRITICAL: Use these instead of inline Literal types)
+    type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+    type ConnectionState = Literal["unbound", "bound", "closed", "error"]
+    type OperationType = Literal["search", "add", "modify", "delete", "compare", "extended"]
+    type SecurityLevel = Literal["none", "simple", "sasl"]
+    type AuthenticationMethod = Literal["simple", "sasl", "external"]
+
+    # LDAP modify operation literals
+    type ModifyOperation = Literal["MODIFY_ADD", "MODIFY_DELETE", "MODIFY_REPLACE"]
+    type UpdateStrategy = Literal["merge", "replace"]
+    type AclType = Literal["openldap", "oracle", "aci", "auto"]
+    type ObjectClassKind = Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
+
+    # LDAP connection and server literals
+    type ConnectionMode = Literal["sync", "async"]
+    type IpMode = Literal["IP_SYSTEM_DEFAULT", "IP_V4_ONLY", "IP_V4_PREFERRED", "IP_V6_ONLY", "IP_V6_PREFERRED"]
+    type ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+
+    # LDAP project type literals
+    type LdapProjectType = Literal[
+        "ldap-service", "directory-service", "ldap-client", "identity-provider",
+        "ldap-sync", "directory-sync", "user-provisioning", "ldap-gateway",
+        "authentication-service", "sso-service", "directory-api", "ldap-proxy",
+        "identity-management", "user-directory", "group-management", "ldap-migration"
+    ]
 
     class Version:
         """Version constants for flext-ldap."""

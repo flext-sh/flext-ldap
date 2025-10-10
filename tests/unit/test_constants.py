@@ -26,7 +26,7 @@ class TestFlextLdapConstants:
     def test_scopes_constants(self) -> None:
         """Test scopes constants."""
         assert FlextLdapConstants.Scopes.BASE == "base"
-        assert FlextLdapConstants.Scopes.ONELEVEL == "level"
+        assert FlextLdapConstants.Scopes.ONELEVEL == "onelevel"
         assert FlextLdapConstants.Scopes.SUBTREE == "subtree"
 
     def test_literal_types_constants(self) -> None:

@@ -21,7 +21,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, Any], FlextLdapModels.UnifiedA
 
     def __init__(self) -> None:
         """Initialize ACL Manager."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="flext_ldap_acl_manager",
             handler_name="FlextLdapAclManager",
             handler_type="command",

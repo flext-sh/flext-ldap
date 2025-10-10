@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
-
 from flext_core import FlextTypes
+
+from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapTypes(FlextTypes):
@@ -56,7 +56,7 @@ class FlextLdapTypes(FlextTypes):
 
         # LDAP search and filter types
         type SearchFilter = str
-        type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+        type SearchScope = FlextLdapConstants.SearchScope
         type SearchResult = list[FlextTypes.Dict]
 
         # LDAP connection and server types
@@ -68,12 +68,10 @@ class FlextLdapTypes(FlextTypes):
         # LDAP protocol types
         type ObjectClass = str
         type AttributeName = str
-        type ConnectionState = Literal["unbound", "bound", "closed", "error"]
-        type OperationType = Literal[
-            "search", "add", "modify", "delete", "compare", "extended"
-        ]
-        type SecurityLevel = Literal["none", "simple", "sasl"]
-        type AuthenticationMethod = Literal["simple", "sasl", "external"]
+        type ConnectionState = FlextLdapConstants.ConnectionState
+        type OperationType = FlextLdapConstants.OperationType
+        type SecurityLevel = FlextLdapConstants.SecurityLevel
+        type AuthenticationMethod = FlextLdapConstants.AuthenticationMethod
 
         # Complex LDAP operation types
         type BulkOperation = list[dict[str, AttributeValue | OperationType]]
@@ -129,24 +127,7 @@ class FlextLdapTypes(FlextTypes):
         """
 
         # LDAP-specific project types extending the generic ones
-        type LdapProjectType = Literal[
-            "ldap-service",
-            "directory-service",
-            "ldap-client",
-            "identity-provider",
-            "ldap-sync",
-            "directory-sync",
-            "user-provisioning",
-            "ldap-gateway",
-            "authentication-service",
-            "sso-service",
-            "directory-api",
-            "ldap-proxy",
-            "identity-management",
-            "user-directory",
-            "group-management",
-            "ldap-migration",
-        ]
+        type LdapProjectType = FlextLdapConstants.LdapProjectType
 
         # LDAP-specific project configurations
         type LdapProjectConfig = dict[

@@ -171,7 +171,7 @@ class FlextLdapAuthentication(FlextService[None]):
             search_filter = f"(|(uid={username})(cn={username}))"
             # Use config base_dn instead of hardcoded value
             if hasattr(self._ldap_config, "ldap_base_dn") and self._ldap_config:
-                search_base = self._ldap_config.ldap_base_dn  # type: ignore[attr-defined]
+                search_base = self._ldap_config.ldap_base_dn
             else:
                 # Fallback to default if config not available
                 search_base = "dc=flext,dc=local"

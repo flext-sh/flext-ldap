@@ -148,7 +148,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Create LdifAttributes
         ldif_attributes_result = FlextLdifModels.LdifAttributes.create(
-            attributes=attr_values_dict,
+            {"attributes": attr_values_dict},
         )
         if ldif_attributes_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
