@@ -14,7 +14,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextResult,
@@ -177,7 +177,10 @@ class FlextLdapSearch(FlextService[None]):
                     self.logger.trace(
                         f"Search failed, checking error: success={success}, error_msg='{error_msg}'"
                     )
-                    if "invalid attribute" in error_msg or "no such attribute" in error_msg:
+                    if (
+                        "invalid attribute" in error_msg
+                        or "no such attribute" in error_msg
+                    ):
                         self.logger.debug(
                             f"Attribute validation failed with {attributes}, retrying with all attributes: {self._connection.last_error}"
                         )
@@ -438,7 +441,7 @@ class FlextLdapSearch(FlextService[None]):
             member_dns=getattr(entry, "member", []) if hasattr(entry, "member") else [],
         )
 
-    def _get_ldap3_scope(self, scope: str) -> Literal["BASE", "LEVEL", "SUBTREE"]:
+    def _get_ldap3_scope(self, scope: str) -> FlextLdapConstants.SearchScope:
         """Convert scope string to ldap3 scope constant.
 
         Args:
@@ -451,7 +454,7 @@ class FlextLdapSearch(FlextService[None]):
             ValueError: If scope is invalid.
 
         """
-        scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+        scope_map: dict[str, FlextLdapConstants.SearchScope] = {
             "base": BASE,
             "level": LEVEL,
             "subtree": SUBTREE,

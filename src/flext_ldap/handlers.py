@@ -423,12 +423,16 @@ class FlextLdapHandlers:
             sn = cast("str", payload.get(FlextLdapConstants.DictKeys.SN))
             mail_raw = payload.get(FlextLdapConstants.DictKeys.MAIL)
             mail = cast("str", mail_raw) if mail_raw is not None else None
-            object_classes_raw = payload.get("object_classes", ["person", "organizationalPerson"])
+            object_classes_raw = payload.get(
+                "object_classes", ["person", "organizationalPerson"]
+            )
             object_classes = cast("list[str]", object_classes_raw)
 
             # Basic validation
             if not dn or not uid or not cn or not sn:
-                return FlextResult[object].fail("Required fields missing: dn, uid, cn, sn")
+                return FlextResult[object].fail(
+                    "Required fields missing: dn, uid, cn, sn"
+                )
 
             # Create user entity
             create_request = FlextLdapModels.CreateUserRequest(

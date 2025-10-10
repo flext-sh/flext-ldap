@@ -96,6 +96,10 @@
         "--tb=short",
         "-ra",
     ]
+    filterwarnings = [
+        "ignore::DeprecationWarning",
+        "ignore::PendingDeprecationWarning",
+    ] 
     markers = [
         "benchmark: Benchmark tests",
         "concurrency: Concurrency tests",

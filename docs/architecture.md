@@ -4,6 +4,9 @@
 
 This document describes the architectural patterns, design decisions, and implementation layers in flext-ldap's universal LDAP interface.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## 🏗️ Four-Layer Universal Architecture

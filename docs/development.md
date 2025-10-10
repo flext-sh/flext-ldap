@@ -4,6 +4,9 @@
 
 This guide covers development setup, coding standards, and contribution guidelines for flext-ldap.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## Development Environment Setup

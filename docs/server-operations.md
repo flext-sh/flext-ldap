@@ -4,6 +4,9 @@
 
 This document provides detailed information about server-specific implementations, their capabilities, and usage patterns.
 
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
+**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+
 ---
 
 ## 🎯 Overview

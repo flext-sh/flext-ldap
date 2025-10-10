@@ -30,39 +30,133 @@ from flext_ldap import FlextLdapConstants
 logger: FlextLogger = FlextLogger(__name__)
 
 # Test data configuration
-DEPARTMENTS: Final[list[str]] = ["engineering", "marketing", "sales", "support", "contractors"]
+DEPARTMENTS: Final[list[str]] = [
+    "engineering",
+    "marketing",
+    "sales",
+    "support",
+    "contractors",
+]
 PROJECTS: Final[list[str]] = [
-    "alpha", "beta", "gamma", "delta", "epsilon",
-    "zeta", "eta", "theta", "iota", "kappa",
-    "lambda", "mu", "nu", "xi", "omicron",
-    "pi", "rho", "sigma", "tau", "upsilon"
+    "alpha",
+    "beta",
+    "gamma",
+    "delta",
+    "epsilon",
+    "zeta",
+    "eta",
+    "theta",
+    "iota",
+    "kappa",
+    "lambda",
+    "mu",
+    "nu",
+    "xi",
+    "omicron",
+    "pi",
+    "rho",
+    "sigma",
+    "tau",
+    "upsilon",
 ]
 ROLES: Final[list[str]] = [
-    "admin", "developer", "manager", "analyst", "architect",
-    "designer", "tester", "operator", "auditor", "security",
-    "backup_admin", "network_admin", "db_admin", "app_admin", "sys_admin",
-    "devops", "sre", "consultant", "trainer", "support_l1"
+    "admin",
+    "developer",
+    "manager",
+    "analyst",
+    "architect",
+    "designer",
+    "tester",
+    "operator",
+    "auditor",
+    "security",
+    "backup_admin",
+    "network_admin",
+    "db_admin",
+    "app_admin",
+    "sys_admin",
+    "devops",
+    "sre",
+    "consultant",
+    "trainer",
+    "support_l1",
 ]
 
 FIRST_NAMES: Final[list[str]] = [
-    "John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Lisa",
-    "James", "Mary", "William", "Patricia", "Richard", "Jennifer", "Charles",
-    "Linda", "Thomas", "Barbara", "Christopher", "Elizabeth"
+    "John",
+    "Jane",
+    "Michael",
+    "Sarah",
+    "David",
+    "Emily",
+    "Robert",
+    "Lisa",
+    "James",
+    "Mary",
+    "William",
+    "Patricia",
+    "Richard",
+    "Jennifer",
+    "Charles",
+    "Linda",
+    "Thomas",
+    "Barbara",
+    "Christopher",
+    "Elizabeth",
 ]
 
 LAST_NAMES: Final[list[str]] = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
-    "Thomas", "Taylor", "Moore", "Jackson", "Martin"
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Gonzalez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
+    "Martin",
 ]
 
 SERVICE_NAMES: Final[list[str]] = [
-    "ldap", "database", "web", "api", "cache", "queue", "worker", "scheduler",
-    "monitor", "backup", "proxy", "gateway", "balancer", "firewall", "vpn"
+    "ldap",
+    "database",
+    "web",
+    "api",
+    "cache",
+    "queue",
+    "worker",
+    "scheduler",
+    "monitor",
+    "backup",
+    "proxy",
+    "gateway",
+    "balancer",
+    "firewall",
+    "vpn",
 ]
 
 COMPUTER_PREFIXES: Final[list[str]] = [
-    "srv", "ws", "db", "web", "app", "test", "dev", "prod", "staging", "backup"
+    "srv",
+    "ws",
+    "db",
+    "web",
+    "app",
+    "test",
+    "dev",
+    "prod",
+    "staging",
+    "backup",
 ]
 
 
@@ -83,14 +177,18 @@ class TestDataGenerator:
         self.user_dns: list[str] = []
         self.group_dns: list[str] = []
 
-    def generate_all_data(self) -> FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]]:
+    def generate_all_data(
+        self,
+    ) -> FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]]:
         """Generate all test data (~1000 entries).
 
         Returns:
             FlextResult containing list of (dn, attributes) tuples
 
         """
-        logger.info(f"Generating test data for {self.server_type} (base_dn={self.base_dn})")
+        logger.info(
+            f"Generating test data for {self.server_type} (base_dn={self.base_dn})"
+        )
 
         # Create organizational structure
         self._create_organizational_units()
@@ -113,9 +211,13 @@ class TestDataGenerator:
         logger.info(f"Generated {len(self.entries)} entries total")
         logger.info(f"  Users: {len(self.user_dns)}")
         logger.info(f"  Groups: {len(self.group_dns)}")
-        logger.info(f"  Others: {len(self.entries) - len(self.user_dns) - len(self.group_dns)}")
+        logger.info(
+            f"  Others: {len(self.entries) - len(self.user_dns) - len(self.group_dns)}"
+        )
 
-        return FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]].ok(self.entries)
+        return FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]].ok(
+            self.entries
+        )
 
     def _create_organizational_units(self) -> None:
         """Create top-level organizational units."""
@@ -176,8 +278,8 @@ class TestDataGenerator:
         user_id = 1
         for dept, count in users_per_dept.items():
             for _ in range(count):
-                first_name = random.choice(FIRST_NAMES)  # noqa: S311
-                last_name = random.choice(LAST_NAMES)  # noqa: S311
+                first_name = random.choice(FIRST_NAMES)
+                last_name = random.choice(LAST_NAMES)
                 uid = f"user{user_id:04d}"
                 cn = f"{first_name} {last_name}"
                 dn = f"uid={uid},ou={dept},ou=users,{self.base_dn}"
@@ -197,23 +299,40 @@ class TestDataGenerator:
                     FlextLdapConstants.LdapAttributeNames.DISPLAY_NAME: cn,
                     FlextLdapConstants.LdapAttributeNames.EMPLOYEE_NUMBER: str(user_id),
                     FlextLdapConstants.LdapAttributeNames.DEPARTMENT: dept,
-                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice([  # noqa: S311
-                        "Engineer", "Manager", "Analyst", "Specialist", "Coordinator",
-                        "Director", "Lead", "Senior", "Junior", "Intern"
+                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice([
+                        "Engineer",
+                        "Manager",
+                        "Analyst",
+                        "Specialist",
+                        "Coordinator",
+                        "Director",
+                        "Lead",
+                        "Senior",
+                        "Junior",
+                        "Intern",
                     ]),
                 }
 
                 # Add optional attributes for some users
-                if random.random() < 0.7:  # 70% have phone numbers  # noqa: S311
-                    attributes[FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER] = f"+1-555-{random.randint(1000, 9999)}"  # noqa: S311
+                if random.random() < 0.7:  # 70% have phone numbers
+                    attributes[
+                        FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER
+                    ] = f"+1-555-{random.randint(1000, 9999)}"
 
-                if random.random() < 0.5:  # 50% have mobile numbers  # noqa: S311
-                    attributes[FlextLdapConstants.LdapAttributeNames.MOBILE] = f"+1-555-{random.randint(1000, 9999)}"  # noqa: S311
+                if random.random() < 0.5:  # 50% have mobile numbers
+                    attributes[FlextLdapConstants.LdapAttributeNames.MOBILE] = (
+                        f"+1-555-{random.randint(1000, 9999)}"
+                    )
 
-                if random.random() < 0.3:  # 30% have employee type  # noqa: S311
-                    attributes[FlextLdapConstants.LdapAttributeNames.EMPLOYEE_TYPE] = random.choice([  # noqa: S311
-                        "full-time", "part-time", "contractor", "intern"
-                    ])
+                if random.random() < 0.3:  # 30% have employee type
+                    attributes[FlextLdapConstants.LdapAttributeNames.EMPLOYEE_TYPE] = (
+                        random.choice([
+                            "full-time",
+                            "part-time",
+                            "contractor",
+                            "intern",
+                        ])
+                    )
 
                 self.entries.append((dn, attributes))
                 self.user_dns.append(dn)
@@ -230,8 +349,7 @@ class TestDataGenerator:
 
             # Add random members from this department
             dept_users = [
-                user_dn for user_dn in self.user_dns
-                if f"ou={dept},ou=users" in user_dn
+                user_dn for user_dn in self.user_dns if f"ou={dept},ou=users" in user_dn
             ]
             members = random.sample(dept_users, min(10, len(dept_users)))
 
@@ -242,7 +360,8 @@ class TestDataGenerator:
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{dept.title()} department group",
-                FlextLdapConstants.LdapAttributeNames.MEMBER: members or [self.user_dns[0]],
+                FlextLdapConstants.LdapAttributeNames.MEMBER: members
+                or [self.user_dns[0]],
             }
             self.entries.append((dn, attributes))
             self.group_dns.append(dn)
@@ -253,7 +372,7 @@ class TestDataGenerator:
             dn = f"cn={cn},ou=projects,ou=groups,{self.base_dn}"
 
             # Add random members from any department
-            members = random.sample(self.user_dns, random.randint(5, 20))  # noqa: S311
+            members = random.sample(self.user_dns, random.randint(5, 20))
 
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
@@ -273,7 +392,7 @@ class TestDataGenerator:
             dn = f"cn={cn},ou=roles,ou=groups,{self.base_dn}"
 
             # Add random members
-            members = random.sample(self.user_dns, random.randint(3, 15))  # noqa: S311
+            members = random.sample(self.user_dns, random.randint(3, 15))
 
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
@@ -292,7 +411,7 @@ class TestDataGenerator:
         logger.info("Creating service account entries...")
 
         for i in range(100):
-            service_type = random.choice(SERVICE_NAMES)  # noqa: S311
+            service_type = random.choice(SERVICE_NAMES)
             instance = i % 10
             cn = f"{service_type}-{instance:02d}"
             dn = f"cn={cn},ou=services,{self.base_dn}"
@@ -314,7 +433,7 @@ class TestDataGenerator:
         logger.info("Creating computer account entries...")
 
         for i in range(200):
-            prefix = random.choice(COMPUTER_PREFIXES)  # noqa: S311
+            prefix = random.choice(COMPUTER_PREFIXES)
             cn = f"{prefix}{i:03d}"
             dn = f"cn={cn},ou=computers,{self.base_dn}"
 
@@ -329,8 +448,8 @@ class TestDataGenerator:
             }
 
             # Add MAC address for some computers
-            if random.random() < 0.8:  # 80% have MAC addresses  # noqa: S311
-                mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])  # noqa: S311
+            if random.random() < 0.8:  # 80% have MAC addresses
+                mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])
                 attributes["macAddress"] = mac
 
             self.entries.append((dn, attributes))
@@ -340,7 +459,13 @@ class TestDataGenerator:
         logger.info("Creating additional container entries...")
 
         # Create nested organizational structure under containers
-        container_types = ["locations", "applications", "resources", "policies", "roles"]
+        container_types = [
+            "locations",
+            "applications",
+            "resources",
+            "policies",
+            "roles",
+        ]
 
         for container_type in container_types:
             # Top level container
@@ -358,7 +483,9 @@ class TestDataGenerator:
             # Create sub-containers (30 per type)
             for i in range(30):
                 sub_name = f"{container_type}-sub-{i:02d}"
-                sub_dn = f"ou={sub_name},ou={container_type},ou=containers,{self.base_dn}"
+                sub_dn = (
+                    f"ou={sub_name},ou={container_type},ou=containers,{self.base_dn}"
+                )
                 sub_attributes: dict[str, str | FlextTypes.StringList] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                         FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
@@ -438,7 +565,9 @@ def main() -> int:
 
     # Set defaults based on server type
     if args.base_dn is None:
-        args.base_dn = "dc=flext,dc=local" if args.server == "openldap" else "dc=invaliddc"
+        args.base_dn = (
+            "dc=flext,dc=local" if args.server == "openldap" else "dc=invaliddc"
+        )
 
     if args.output is None:
         args.output = Path(f"test_data_{args.server}.ldif")

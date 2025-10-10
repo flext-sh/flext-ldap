@@ -44,7 +44,7 @@ from __future__ import annotations
 import base64
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Literal, override
+from typing import ClassVar, override
 
 from flext_core import (
     FlextConstants,
@@ -2331,7 +2331,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="Attributes to update",
         )
-        strategy: Literal["merge", "replace"] = Field(
+        strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Update strategy: merge adds/updates, replace overwrites",
         )
@@ -2353,7 +2353,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="Entry attributes",
         )
-        update_strategy: Literal["merge", "replace"] = Field(
+        update_strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Strategy if entry exists: merge or replace",
         )
@@ -2413,7 +2413,7 @@ class FlextLdapModels(FlextModels):
         """
 
         dn: str = Field(..., description="Distinguished Name for ACL target")
-        acl_type: Literal["openldap", "oracle", "aci", "auto"] = Field(
+        acl_type: FlextLdapConstants.AclType = Field(
             default="auto",
             description="ACL format type (auto-detect from server)",
         )
@@ -2440,7 +2440,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="ACL rules to apply",
         )
-        strategy: Literal["merge", "replace"] = Field(
+        strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Update strategy: merge adds rules, replace overwrites",
         )
@@ -2455,7 +2455,7 @@ class FlextLdapModels(FlextModels):
         """Request model for upserting LDAP ACLs (create or update)."""
 
         dn: str = Field(..., description="Distinguished Name for ACL target")
-        acl_type: Literal["openldap", "oracle", "aci", "auto"] = Field(
+        acl_type: FlextLdapConstants.AclType = Field(
             default="auto",
             description="ACL format type",
         )
@@ -2463,7 +2463,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="ACL rules to apply",
         )
-        update_strategy: Literal["merge", "replace"] = Field(
+        update_strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Strategy if ACL exists: merge or replace",
         )
@@ -2546,7 +2546,7 @@ class FlextLdapModels(FlextModels):
             default="top",
             description="Parent object class",
         )
-        kind: Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"] = Field(
+        kind: FlextLdapConstants.ObjectClassKind = Field(
             default="STRUCTURAL",
             description="Object class type",
         )
@@ -2566,7 +2566,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="Schema changes to apply",
         )
-        strategy: Literal["merge", "replace"] = Field(
+        strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Update strategy",
         )
@@ -2588,7 +2588,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="Schema element definition",
         )
-        update_strategy: Literal["merge", "replace"] = Field(
+        update_strategy: FlextLdapConstants.UpdateStrategy = Field(
             default="merge",
             description="Strategy if schema element exists",
         )
