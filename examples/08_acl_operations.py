@@ -33,7 +33,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextLogger
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
@@ -43,7 +43,7 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -269,13 +269,13 @@ def demonstrate_acl_with_ldap_api() -> None:
     logger.info("\n=== ACL Operations with LDAP API ===")
 
     # Create FlextLdap API
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     logger.info("\n1. Detecting server type for ACL format selection:")
 

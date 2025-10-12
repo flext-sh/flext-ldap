@@ -42,7 +42,7 @@ import tempfile
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
@@ -50,7 +50,7 @@ from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
 BIND_DN: Final[str] = os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
@@ -65,13 +65,13 @@ def setup_api() -> FlextLdap | None:
         Connected FlextLdap instance or None if connection failed.
 
     """
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=BIND_PASSWORD,
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Use context manager for automatic connection/disconnection
     try:
@@ -153,7 +153,9 @@ def demonstrate_ldif_import(
     logger.info(f"Importing entries from: {ldif_path}")
 
     # Import entries from LDIF
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.import_from_ldif(ldif_path)
+    result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.import_from_ldif(
+        ldif_path
+    )
 
     if result.is_failure:
         logger.error(f"❌ LDIF import failed: {result.error}")
@@ -213,7 +215,7 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     # Export entries to LDIF
     logger.info(f"Exporting to: {export_path}")
-    export_result: FlextResult[bool] = api.export_to_ldif(entries, export_path)
+    export_result: FlextCore.Result[bool] = api.export_to_ldif(entries, export_path)
 
     if export_result.is_failure:
         logger.error(f"❌ LDIF export failed: {export_result.error}")
@@ -376,7 +378,7 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
 
     # Use entry adapter to convert between server formats
     result = api.convert_entry_between_servers(
-        entry=openldap_entry,
+        entry=openldap_entry,  # type: ignore[assignment]
         source_server_type="openldap2",
         target_server_type="oud",
     )
@@ -464,7 +466,7 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             logger.warning(f"   ⚠️  Skipping string entry: {entry}")
             continue
         # entry is now guaranteed to be FlextLdifModels.Entry
-        result = api.detect_entry_server_type(entry)
+        result = api.detect_entry_server_type(entry)  # type: ignore[arg-type]
 
         if result.is_success:
             detected = result.unwrap()
@@ -512,7 +514,7 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
 
     logger.info("\n2. Normalizing for current server:")
-    result = api.normalize_entry_for_server(mixed_entry)
+    result = api.normalize_entry_for_server(mixed_entry)  # type: ignore[arg-type]
 
     if result.is_success:
         normalized = result.unwrap()
@@ -548,7 +550,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         ),
     )
 
-    result = api.validate_entry_for_server(valid_entry)
+    result = api.validate_entry_for_server(valid_entry)  # type: ignore[arg-type]
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -576,7 +578,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         ),
     )
 
-    result = api.validate_entry_for_server(specific_entry)
+    result = api.validate_entry_for_server(specific_entry)  # type: ignore[arg-type]
 
     if result.is_success:
         is_valid = result.unwrap()

@@ -11,20 +11,22 @@ This script demonstrates:
 import sys
 from pathlib import Path
 
-from flext_core import FlextLogger
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
 
 # Setup logging
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 
 
-def parse_ldif_file(ldif_path: Path) -> list[tuple[str, dict[str, str | list[str]]]]:
+def parse_ldif_file(
+    ldif_path: Path,
+) -> list[tuple[str, dict[str, str | FlextCore.Types.StringList]]]:
     """Parse LDIF file into list of (dn, attributes) tuples."""
-    entries: list[tuple[str, dict[str, str | list[str]]]] = []
+    entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = []
     current_dn: str | None = None
-    current_attrs: dict[str, str | list[str]] = {}
+    current_attrs: dict[str, str | FlextCore.Types.StringList] = {}
 
     with Path(ldif_path).open(encoding="utf-8") as f:
         for line in f:
@@ -86,14 +88,14 @@ def load_test_data_openldap() -> bool:
 
     # Create flext-ldap API instance
 
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri="ldap://localhost:3390",
         ldap_bind_dn="cn=admin,dc=flext,dc=local",
         ldap_bind_password=SecretStr("admin123"),
         ldap_base_dn="dc=flext,dc=local",
     )
 
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Connect to server
     logger.info("Connecting to OpenLDAP server...")

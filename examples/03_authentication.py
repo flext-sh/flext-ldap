@@ -31,12 +31,12 @@ import sys
 from copy import deepcopy
 from typing import ClassVar, Final
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
 BIND_DN: Final[str] = os.getenv("LDAP_BIND_DN", "cn=admin,dc=example,dc=com")
@@ -47,7 +47,7 @@ BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
 class DemoAuthScenarios:
     """Inline scenario data for authentication demonstrations."""
 
-    _USERS: ClassVar[dict[str, dict[str, object]]] = {
+    _USERS: ClassVar[dict[str, FlextCore.Types.Dict]] = {
         "admin": {
             "password": "admin",
             "dn": "cn=admin,dc=example,dc=com",
@@ -115,7 +115,9 @@ class DemoAuthScenarios:
         return False, f"DN '{dn}' not found"
 
     @classmethod
-    def get_attributes(cls, username: str) -> dict[str, list[str]] | None:
+    def get_attributes(
+        cls, username: str
+    ) -> dict[str, FlextCore.Types.StringList] | None:
         """Get user attributes by username.
 
         Args:
@@ -147,7 +149,7 @@ class DemoLdapApi:
         )
         self._connected = False
 
-    def connect(self) -> FlextResult[bool]:
+    def connect(self) -> FlextCore.Result[bool]:
         """Connect to the demo LDAP API.
 
         Returns:
@@ -156,9 +158,9 @@ class DemoLdapApi:
         """
         self._connected = True
         logger.info("🔁 Using in-memory demo LDAP API (no external server)")
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def disconnect(self) -> FlextResult[bool]:
+    def disconnect(self) -> FlextCore.Result[bool]:
         """Disconnect from the demo LDAP API.
 
         Returns:
@@ -166,9 +168,9 @@ class DemoLdapApi:
 
         """
         self._connected = False
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def unbind(self) -> FlextResult[bool]:
+    def unbind(self) -> FlextCore.Result[bool]:
         """Unbind from the demo LDAP API.
 
         Returns:
@@ -186,7 +188,7 @@ class DemoLdapApi:
         """
         return self._connected
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[bool]:
+    def authenticate_user(self, username: str, password: str) -> FlextCore.Result[bool]:
         """Authenticate user with username and password.
 
         Args:
@@ -199,10 +201,10 @@ class DemoLdapApi:
         """
         success, error = DemoAuthScenarios.authenticate(username, password)
         if success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(error or "Authentication failed")
+            return FlextCore.Result[bool].ok(True)
+        return FlextCore.Result[bool].fail(error or "Authentication failed")
 
-    def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+    def validate_credentials(self, dn: str, password: str) -> FlextCore.Result[bool]:
         """Validate credentials with DN and password.
 
         Args:
@@ -215,13 +217,13 @@ class DemoLdapApi:
         """
         success, error = DemoAuthScenarios.validate(dn, password)
         if success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(error or "Credential validation failed")
+            return FlextCore.Result[bool].ok(True)
+        return FlextCore.Result[bool].fail(error or "Credential validation failed")
 
     def search_one(
         self,
         request: FlextLdapModels.SearchRequest,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextCore.Result[FlextLdapModels.Entry | None]:
         """Search for a single entry in the demo LDAP.
 
         Args:
@@ -239,24 +241,24 @@ class DemoLdapApi:
                 username = inner.split("=", maxsplit=1)[1]
         attributes = DemoAuthScenarios.get_attributes(username)
         if attributes is None:
-            return FlextResult[FlextLdapModels.Entry | None].ok(None)
+            return FlextCore.Result[FlextLdapModels.Entry | None].ok(None)
         entry = FlextLdapModels.Entry(
             dn=f"cn={username},{BASE_DN}",
             attributes=attributes,
             object_classes=["inetOrgPerson", "top"],
         )
-        return FlextResult[FlextLdapModels.Entry | None].ok(entry)
+        return FlextCore.Result[FlextLdapModels.Entry | None].ok(entry)
 
 
 def setup_api() -> FlextLdap | DemoLdapApi:
     """Setup LDAP API, falling back to an in-memory demo implementation if needed."""
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Use context manager for automatic connection/disconnection
     try:
@@ -294,7 +296,7 @@ def demonstrate_user_authentication(api: FlextLdap | DemoLdapApi) -> None:
         logger.info(f"\nTest: {description}")
         logger.info(f"   Username: {username!r}")
 
-        result: FlextResult[bool] = api.authenticate_user(username, password)
+        result: FlextCore.Result[bool] = api.authenticate_user(username, password)
 
         if result.is_success:
             authenticated = result.unwrap()
@@ -346,7 +348,7 @@ def demonstrate_credential_validation(api: FlextLdap | DemoLdapApi) -> None:
         logger.info(f"\nTest: {description}")
         logger.info(f"   DN: {dn}")
 
-        result: FlextResult[bool] = api.validate_credentials(dn, password)
+        result: FlextCore.Result[bool] = api.validate_credentials(dn, password)
 
         if result.is_success:
             valid = result.unwrap()
@@ -378,7 +380,7 @@ def demonstrate_authentication_workflow(api: FlextLdap | DemoLdapApi) -> None:
 
     # Step 1: Authenticate user
     logger.info("Step 1: Authenticating user...")
-    auth_result: FlextResult[bool] = api.authenticate_user(username, password)
+    auth_result: FlextCore.Result[bool] = api.authenticate_user(username, password)
 
     if auth_result.is_failure:
         logger.error(f"   ❌ Authentication failed: {auth_result.error}")
@@ -394,7 +396,7 @@ def demonstrate_authentication_workflow(api: FlextLdap | DemoLdapApi) -> None:
 
     # Step 2: Search for user details (after successful authentication)
     logger.info("Step 2: Retrieving user details...")
-    search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
+    search_result: FlextCore.Result[FlextLdapModels.Entry | None] = api.search_one(
         FlextLdapModels.SearchRequest(
             base_dn=BASE_DN,
             filter_str=f"(cn={username})",
@@ -421,7 +423,7 @@ def demonstrate_authentication_workflow(api: FlextLdap | DemoLdapApi) -> None:
 
         # Step 3: Validate credentials with full DN (optional verification)
         logger.info("Step 3: Validating credentials with DN...")
-        validate_result: FlextResult[bool] = api.validate_credentials(
+        validate_result: FlextCore.Result[bool] = api.validate_credentials(
             user_entry.dn, password
         )
 
@@ -476,7 +478,7 @@ def demonstrate_authentication_error_handling(api: FlextLdap | DemoLdapApi) -> N
         logger.info(f"\nScenario: {scenario['name']}")
         logger.info(f"   Expected: {scenario['expected']}")
 
-        result: FlextResult[bool] = api.authenticate_user(
+        result: FlextCore.Result[bool] = api.authenticate_user(
             scenario["username"], scenario["password"]
         )
 
@@ -506,13 +508,13 @@ def demonstrate_bind_authentication() -> None:
         logger.info(f"   Bind DN: {bind_dn}")
 
         # Create new API instance with test credentials
-        config = FlextLdapConfig(
+        FlextLdapConfig(
             ldap_server_uri=LDAP_URI,
             ldap_bind_dn=bind_dn,
             ldap_bind_password=SecretStr(bind_password),
             ldap_base_dn=BASE_DN,
         )
-        test_api = FlextLdap(config=config)
+        test_api = FlextLdap()
 
         # Try to connect (which includes bind)
         try:

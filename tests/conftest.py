@@ -12,12 +12,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_core import (
-    FlextContainer,
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 # Import centralized FLEXT Docker infrastructure from flext-core
 # from flext_tests.docker import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import from flext-core when available
@@ -45,7 +40,7 @@ from flext_ldap.typings import FlextLdapTypes
 class FlextTestDocker:
     """Mock implementation of FlextTestDocker for testing."""
 
-    def get_container_status(self, container_name: str) -> FlextResult:
+    def get_container_status(self, container_name: str) -> FlextCore.Result:
         """Mock container status check."""
 
         # Mock implementation - assume container is not running
@@ -57,13 +52,13 @@ class FlextTestDocker:
             def __init__(self) -> None:
                 self.status = MockContainerStatus()
 
-        # Return as FlextResult.ok with mock value
-        return FlextResult.ok(MockValue())
+        # Return as FlextCore.Result.ok with mock value
+        return FlextCore.Result.ok(MockValue())
 
-    def compose_up(self, compose_file: str, service: str) -> FlextResult:
+    def compose_up(self, compose_file: str, service: str) -> FlextCore.Result:
         """Mock compose up."""
         # Mock implementation - assume failure
-        return FlextResult.fail("Mock implementation - Docker not available")
+        return FlextCore.Result.fail("Mock implementation - Docker not available")
 
 
 # FlextLdapFactory, FlextLdapAdvancedService, FlextLdapWorkflowOrchestrator removed - over-engineering
@@ -132,7 +127,7 @@ TEST_USERS = [
     },
 ]
 
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 
 
 # =============================================================================
@@ -141,15 +136,15 @@ logger = FlextLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-def flext_container() -> FlextContainer:
+def flext_container() -> FlextCore.Container:
     """Get global Flext container for dependency injection."""
-    return FlextContainer()
+    return FlextCore.Container()
 
 
 @pytest.fixture(scope="session")
-def flext_logger() -> FlextLogger:
+def flext_logger() -> FlextCore.Logger:
     """Get Flext logger instance."""
-    return FlextLogger(__name__)
+    return FlextCore.Logger(__name__)
 
 
 # =============================================================================
@@ -184,7 +179,7 @@ def ldap_config_invalid() -> FlextLdapConfig:
 
 
 @pytest.fixture
-def ldap_server_config() -> FlextTypes.Dict:
+def ldap_server_config() -> FlextCore.Types.Dict:
     """Get LDAP server configuration for testing."""
     return {
         "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
@@ -323,25 +318,25 @@ def sample_filter() -> FlextLdapModels.Filter:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Dict:
+def test_user_data() -> FlextCore.Types.Dict:
     """Get test user data dictionary."""
     return dict(SAMPLE_USER_ENTRY)
 
 
 @pytest.fixture
-def test_group_data() -> FlextTypes.Dict:
+def test_group_data() -> FlextCore.Types.Dict:
     """Get test group data dictionary."""
     return dict(SAMPLE_GROUP_ENTRY)
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Dict]:
+def multiple_test_users() -> list[FlextCore.Types.Dict]:
     """Get multiple test users."""
     return [dict(user) for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Dict]:
+def multiple_test_groups() -> list[FlextCore.Types.Dict]:
     """Get multiple test groups."""
     return [dict(group) for group in TEST_GROUPS]
 
@@ -401,15 +396,15 @@ def mock_ldap_server() -> Server:
 
 
 @pytest.fixture
-def mock_connection_result() -> FlextResult[bool]:
+def mock_connection_result() -> FlextCore.Result[bool]:
     """Get mock successful connection result."""
-    return FlextResult[bool].ok(True)
+    return FlextCore.Result[bool].ok(True)
 
 
 @pytest.fixture
-def mock_search_result() -> FlextResult[list[FlextTypes.Dict]]:
+def mock_search_result() -> FlextCore.Result[list[FlextCore.Types.Dict]]:
     """Get mock search result."""
-    return FlextResult[list[FlextTypes.Dict]].ok([
+    return FlextCore.Result[list[FlextCore.Types.Dict]].ok([
         {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
@@ -423,9 +418,9 @@ def mock_search_result() -> FlextResult[list[FlextTypes.Dict]]:
 
 
 @pytest.fixture
-def mock_error_result() -> FlextResult[None]:
+def mock_error_result() -> FlextCore.Result[None]:
     """Get mock error result."""
-    return FlextResult[None].fail("Test error message")
+    return FlextCore.Result[None].fail("Test error message")
 
 
 # =============================================================================
@@ -442,7 +437,7 @@ def docker_control() -> FlextTestDocker:
 @pytest.fixture(scope="session")
 def clean_ldap_container(
     docker_control: FlextTestDocker,
-) -> FlextTypes.Dict:
+) -> FlextCore.Types.Dict:
     """Session-scoped LDAP container using centralized FlextTestDocker.
 
     Uses ~/flext/docker/docker-compose.openldap.yml configuration.
@@ -463,7 +458,7 @@ def clean_ldap_container(
             pytest.skip(f"Failed to start LDAP container: {start_result.error}")
 
     # Provide connection info
-    container_info: FlextTypes.Dict = {
+    container_info: FlextCore.Types.Dict = {
         "server_url": "ldap://localhost:3390",
         "bind_dn": "cn=admin,dc=flext,dc=local",
         "password": "admin123",
@@ -484,7 +479,7 @@ def clean_ldap_container(
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_config() -> FlextTypes.StringDict:
+def shared_ldap_config() -> FlextCore.Types.StringDict:
     """Shared LDAP configuration for integration tests."""
     return {
         "server_url": "ldap://localhost:3390",
@@ -509,7 +504,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 @pytest.fixture(scope="session")
 def shared_ldap_client(
-    shared_ldap_config: FlextTypes.StringDict, shared_ldap_container: str
+    shared_ldap_config: FlextCore.Types.StringDict, shared_ldap_container: str
 ) -> Generator[FlextLdapClients]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container

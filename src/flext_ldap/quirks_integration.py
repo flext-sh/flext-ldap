@@ -10,14 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 
 from flext_ldap.constants import FlextLdapConstants
 
 
-class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
+class FlextLdapQuirksIntegration(FlextCore.Service[FlextCore.Types.Dict]):
     """Adapter for FlextLdif quirks system integration with flext-ldap.
 
     This adapter wraps FlextLdif's quirks management to provide:
@@ -49,20 +49,20 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
         """
         super().__init__()
-        # Logger and container inherited from FlextService via FlextMixins
+        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
         self._detected_server_type: str | None = server_type
-        self._quirks_cache: FlextTypes.Dict = {}
+        self._quirks_cache: FlextCore.Types.Dict = {}
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute method required by FlextService.
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+        """Execute method required by FlextCore.Service.
 
         Returns:
-            FlextResult containing quirks adapter status
+            FlextCore.Result containing quirks adapter status
 
         """
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextCore.Result[FlextCore.Types.Dict].ok({
             "service": "FlextLdapQuirksAdapter",
             "server_type": self._detected_server_type,
             "quirks_loaded": bool(self._quirks_cache),
@@ -81,20 +81,20 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
     def detect_server_type_from_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Detect LDAP server type from entries using FlextLdif quirks.
 
         Args:
             entries: List of FlextLdifModels.Entry to analyze
 
         Returns:
-            FlextResult containing detected server type string
+            FlextCore.Result containing detected server type string
 
         """
         try:
             if not entries:
                 self.logger.warning("No entries provided for server detection")
-                return FlextResult[str].ok("generic")
+                return FlextCore.Result[str].ok("generic")
 
             # Use FlextLdif quirks manager for detection
             detection_result = self._quirks_manager.detect_server_type(entries)
@@ -103,7 +103,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                     "Server detection failed, using generic",
                     extra={"error": detection_result.error},
                 )
-                return FlextResult[str].ok("generic")
+                return FlextCore.Result[str].ok("generic")
 
             detected_type = detection_result.unwrap()
             self._detected_server_type = detected_type
@@ -113,26 +113,26 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                 extra={"server_type": detected_type},
             )
 
-            return FlextResult[str].ok(detected_type)
+            return FlextCore.Result[str].ok(detected_type)
 
         except Exception as e:
             self.logger.exception(
                 "Server type detection error",
                 extra={"error": str(e)},
             )
-            return FlextResult[str].fail(f"Server detection failed: {e}")
+            return FlextCore.Result[str].fail(f"Server detection failed: {e}")
 
     def get_server_quirks(
         self,
         server_type: str | None = None,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get server-specific quirks configuration.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing quirks configuration dict
+            FlextCore.Result containing quirks configuration dict
 
         """
         target_type = server_type or self._detected_server_type or "generic"
@@ -142,7 +142,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             if target_type in self._quirks_cache:
                 cached_quirks = self._quirks_cache[target_type]
                 if isinstance(cached_quirks, dict):
-                    return FlextResult[FlextTypes.Dict].ok(cached_quirks)
+                    return FlextCore.Result[FlextCore.Types.Dict].ok(cached_quirks)
                 # Invalid cache entry, remove it
                 del self._quirks_cache[target_type]
 
@@ -162,69 +162,79 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             # Cache the quirks
             self._quirks_cache[target_type] = quirks
 
-            return FlextResult[FlextTypes.Dict].ok(quirks)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(quirks)
 
         except Exception as e:
             self.logger.exception(
                 "Failed to get server quirks",
                 extra={"server_type": target_type, "error": str(e)},
             )
-            return FlextResult[FlextTypes.Dict].fail(f"Failed to get quirks: {e}")
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                f"Failed to get quirks: {e}"
+            )
 
     def get_acl_attribute_name(
         self,
         server_type: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Get ACL attribute name for server type.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing ACL attribute name
+            FlextCore.Result containing ACL attribute name
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
+            return FlextCore.Result[str].fail(
+                quirks_result.error or "Failed to get quirks"
+            )
 
         quirks = quirks_result.unwrap()
         acl_attr = quirks.get(FlextLdapConstants.DictKeys.ACL_ATTRIBUTE, "aci")
 
-        return FlextResult[str].ok(str(acl_attr))
+        return FlextCore.Result[str].ok(str(acl_attr))
 
-    def get_acl_format(self, server_type: str | None = None) -> FlextResult[str]:
+    def get_acl_format(self, server_type: str | None = None) -> FlextCore.Result[str]:
         """Get ACL format for server type.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing ACL format string
+            FlextCore.Result containing ACL format string
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
+            return FlextCore.Result[str].fail(
+                quirks_result.error or "Failed to get quirks"
+            )
 
         quirks = quirks_result.unwrap()
         acl_format = quirks.get(FlextLdapConstants.DictKeys.ACL_FORMAT, "generic")
 
-        return FlextResult[str].ok(str(acl_format))
+        return FlextCore.Result[str].ok(str(acl_format))
 
-    def get_schema_subentry(self, server_type: str | None = None) -> FlextResult[str]:
+    def get_schema_subentry(
+        self, server_type: str | None = None
+    ) -> FlextCore.Result[str]:
         """Get schema subentry DN for server type.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing schema subentry DN
+            FlextCore.Result containing schema subentry DN
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
+            return FlextCore.Result[str].fail(
+                quirks_result.error or "Failed to get quirks"
+            )
 
         quirks = quirks_result.unwrap()
         schema_subentry = quirks.get(
@@ -232,24 +242,24 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             "cn=subschema",
         )
 
-        return FlextResult[str].ok(str(schema_subentry))
+        return FlextCore.Result[str].ok(str(schema_subentry))
 
     def supports_operational_attributes(
         self,
         server_type: str | None = None,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Check if server supports operational attributes.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing boolean support indicator
+            FlextCore.Result containing boolean support indicator
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[bool].ok(True)  # Assume support by default
+            return FlextCore.Result[bool].ok(True)  # Assume support by default
 
         quirks = quirks_result.unwrap()
         supports = quirks.get(
@@ -257,59 +267,63 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             True,
         )
 
-        return FlextResult[bool].ok(bool(supports))
+        return FlextCore.Result[bool].ok(bool(supports))
 
-    def get_max_page_size(self, server_type: str | None = None) -> FlextResult[int]:
+    def get_max_page_size(
+        self, server_type: str | None = None
+    ) -> FlextCore.Result[int]:
         """Get maximum page size for paged searches.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing max page size
+            FlextCore.Result containing max page size
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[int].ok(1000)  # Default page size
+            return FlextCore.Result[int].ok(1000)  # Default page size
 
         quirks = quirks_result.unwrap()
         max_page_raw = quirks.get(FlextLdapConstants.DictKeys.MAX_PAGE_SIZE, 1000)
 
         try:
             max_page = int(max_page_raw) if max_page_raw is not None else 1000
-            return FlextResult[int].ok(max_page)
+            return FlextCore.Result[int].ok(max_page)
         except (TypeError, ValueError):
-            return FlextResult[int].ok(1000)  # Default on conversion error
+            return FlextCore.Result[int].ok(1000)  # Default on conversion error
 
-    def get_default_timeout(self, server_type: str | None = None) -> FlextResult[int]:
+    def get_default_timeout(
+        self, server_type: str | None = None
+    ) -> FlextCore.Result[int]:
         """Get default timeout for server operations.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing default timeout in seconds
+            FlextCore.Result containing default timeout in seconds
 
         """
         quirks_result = self.get_server_quirks(server_type)
         if quirks_result.is_failure:
-            return FlextResult[int].ok(30)  # Default timeout
+            return FlextCore.Result[int].ok(30)  # Default timeout
 
         quirks = quirks_result.unwrap()
         timeout_raw = quirks.get(FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT, 30)
 
         try:
             timeout = int(timeout_raw) if timeout_raw is not None else 30
-            return FlextResult[int].ok(timeout)
+            return FlextCore.Result[int].ok(timeout)
         except (TypeError, ValueError):
-            return FlextResult[int].ok(30)  # Default on conversion error
+            return FlextCore.Result[int].ok(30)  # Default on conversion error
 
     def normalize_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
         target_server_type: str,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+    ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Normalize entry for target server type using FlextLdif entry quirks.
 
         Args:
@@ -317,7 +331,7 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             target_server_type: Target server type for normalization
 
         Returns:
-            FlextResult containing normalized entry
+            FlextCore.Result containing normalized entry
 
         """
         try:
@@ -333,31 +347,31 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
                 },
             )
 
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return FlextCore.Result[FlextLdifModels.Entry].ok(entry)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
                 f"Entry normalization failed: {e}",
             )
 
     def get_connection_defaults(
         self,
         server_type: str | None = None,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get default connection parameters for server type.
 
         Args:
             server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing connection defaults
+            FlextCore.Result containing connection defaults
 
         """
         try:
             target_type = server_type or self._detected_server_type or "generic"
 
             # Server-specific connection defaults
-            defaults: FlextTypes.Dict = {
+            defaults: FlextCore.Types.Dict = {
                 "openldap": {"port": 389, "use_ssl": False, "supports_starttls": True},
                 "openldap1": {"port": 389, "use_ssl": False, "supports_starttls": True},
                 "openldap2": {"port": 389, "use_ssl": False, "supports_starttls": True},
@@ -370,12 +384,12 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
 
             config_raw = defaults.get(target_type) or defaults["generic"]
             if isinstance(config_raw, dict):
-                config: FlextTypes.Dict = config_raw
+                config: FlextCore.Types.Dict = config_raw
             else:
                 config = defaults["generic"]
-            return FlextResult[FlextTypes.Dict].ok(config)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(config)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
                 f"Failed to get connection defaults: {e}",
             )

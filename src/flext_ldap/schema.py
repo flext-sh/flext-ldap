@@ -13,19 +13,14 @@ from __future__ import annotations
 from abc import ABC
 from typing import override
 
-from flext_core import (
-    FlextHandlers,
-    FlextModels,
-    FlextResult,
-    FlextService,
-)
+from flext_core import FlextCore
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 
 
-class FlextLdapSchema(FlextService[FlextResult[object]]):
+class FlextLdapSchema(FlextCore.Service[FlextCore.Result[object]]):
     """Unified LDAP schema class following FLEXT one-class-per-module standards.
 
     This class consolidates ALL schema-related functionality including:
@@ -41,7 +36,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
     # QUIRKS DETECTION - Server-specific behavior detection
     # =========================================================================
 
-    class QuirksDetector(FlextHandlers[object, object], ABC):
+    class QuirksDetector(FlextCore.Handlers[object, object], ABC):
         """Abstract base class for LDAP server quirks detection."""
 
     class GenericQuirksDetector(QuirksDetector):
@@ -51,28 +46,28 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
         def __init__(self) -> None:
             """Initialize generic quirks detector."""
             # Create a minimal handler config for the base class
-            config = FlextModels.Cqrs.Handler.create_handler_config(
+            config = FlextCore.Models.Cqrs.Handler.create_handler_config(
                 handler_type="query",
                 default_name="GenericQuirksDetector",
                 default_id="generic-quirks-detector",
             )
             super().__init__(config=config)
 
-        def handle(self, message: object) -> FlextResult[object]:
+        def handle(self, message: object) -> FlextCore.Result[object]:
             """Handle quirks detection message.
 
             Args:
                 message: The message to handle (typically server info)
 
             Returns:
-                FlextResult containing the detection result
+                FlextCore.Result containing the detection result
 
             """
             if not message:
-                return FlextResult[object].fail("Message cannot be empty")
+                return FlextCore.Result[object].fail("Message cannot be empty")
 
             # For generic detection, return a basic success result
-            return FlextResult[object].ok({"detected": True, "type": "generic"})
+            return FlextCore.Result[object].ok({"detected": True, "type": "generic"})
 
         def detect_server_type(
             self,
@@ -127,7 +122,7 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
     # SCHEMA DISCOVERY - Automatic LDAP schema discovery and analysis
     # =========================================================================
 
-    class Discovery(FlextHandlers[object, object]):
+    class Discovery(FlextCore.Handlers[object, object]):
         """Schema discovery operations with quirks-aware server detection.
 
         This class provides automatic schema discovery that adapts to different
@@ -145,38 +140,38 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
 
             """
             # Create handler config
-            config = FlextModels.Cqrs.Handler.create_handler_config(
+            config = FlextCore.Models.Cqrs.Handler.create_handler_config(
                 handler_type="query",
                 default_name="SchemaDiscovery",
                 default_id="schema-discovery",
             )
             super().__init__(config=config)
-            # Note: self.logger is provided by FlextService parent class
+            # Note: self.logger is provided by FlextCore.Service parent class
             self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override
-        def handle(self, message: object) -> FlextResult[object]:
+        def handle(self, message: object) -> FlextCore.Result[object]:
             """Handle schema discovery message.
 
             Args:
                 message: Schema discovery request
 
             Returns:
-                FlextResult containing schema information
+                FlextCore.Result containing schema information
 
             """
             if not message:
-                return FlextResult[object].fail(
+                return FlextCore.Result[object].fail(
                     "Schema discovery message cannot be empty",
                 )
 
             # Return basic schema discovery result
-            return FlextResult[object].ok({"schema_discovered": True})
+            return FlextCore.Result[object].ok({"schema_discovered": True})
 
         def get_schema_subentry_dn(
             self,
             server_type: str | None = None,
-        ) -> FlextResult[str]:
+        ) -> FlextCore.Result[str]:
             """Get schema subentry DN based on server type.
 
             Uses quirks adapter to determine the correct schema endpoint for
@@ -186,11 +181,11 @@ class FlextLdapSchema(FlextService[FlextResult[object]]):
                 server_type: LDAP server type (detected if not provided)
 
             Returns:
-                FlextResult containing schema subentry DN
+                FlextCore.Result containing schema subentry DN
 
             """
             return self._quirks_adapter.get_schema_subentry(server_type)
 
-    def execute(self) -> FlextResult[object]:
-        """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[object].ok(None)
+    def execute(self) -> FlextCore.Result[object]:
+        """Execute the main domain operation (required by FlextCore.Service)."""
+        return FlextCore.Result[object].ok(None)

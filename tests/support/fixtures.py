@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldap import (
     FlextLdap,
@@ -27,7 +27,7 @@ from .test_data import (
     TEST_USERS,
 )
 
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 
 
 @pytest.fixture(scope="session")
@@ -96,13 +96,13 @@ def test_group_data() -> dict:
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Dict]:
+def multiple_test_users() -> list[FlextCore.Types.Dict]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Dict]:
+def multiple_test_groups() -> list[FlextCore.Types.Dict]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
@@ -116,11 +116,11 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 def clean_ldap_container(
     real_ldap_server: LdapTestServer,
-) -> FlextTypes.Dict:
+) -> FlextCore.Types.Dict:
     """Get clean LDAP container configuration for testing."""
     real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
-    container_info: FlextTypes.Dict = {
+    container_info: FlextCore.Types.Dict = {
         "server_url": config.server,
         "bind_dn": config.bind_dn,
         "password": config.bind_password,
@@ -147,7 +147,7 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup: FlextTypes.StringList = [
+        dns_to_cleanup: FlextCore.Types.StringList = [
             str(entry["dn"]) for entry in search_result.value
         ]
         if dns_to_cleanup:
@@ -163,7 +163,7 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup_after: FlextTypes.StringList = [
+        dns_to_cleanup_after: FlextCore.Types.StringList = [
             str(entry["dn"]) for entry in search_result.value
         ]
         if dns_to_cleanup_after:

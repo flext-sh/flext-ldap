@@ -12,17 +12,17 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextExceptions, FlextTypes
+from flext_core import FlextCore
 
 
-class FlextLdapExceptions(FlextExceptions):
-    """LDAP-specific exceptions extending FlextExceptions from flext-core.
+class FlextLdapExceptions(FlextCore.Exceptions):
+    """LDAP-specific exceptions extending FlextCore.Exceptions from flext-core.
 
     Provides LDAP domain-specific exception classes for all LDAP operation
     error scenarios while maintaining compatibility with flext-core
     exception hierarchy.
 
-    All LDAP exceptions inherit from FlextExceptions specialized base classes
+    All LDAP exceptions inherit from FlextCore.Exceptions specialized base classes
     and include proper error codes, context, correlation tracking, and
     standardized helper methods for context management.
 
@@ -30,7 +30,7 @@ class FlextLdapExceptions(FlextExceptions):
     for proper error tracking and correlation ID generation.
     """
 
-    class LdapConnectionError(FlextExceptions.ConnectionError):
+    class LdapConnectionError(FlextCore.Exceptions.ConnectionError):
         """LDAP connection failure.
 
         Raised when LDAP server connection fails or is lost.
@@ -80,7 +80,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapAuthenticationError(FlextExceptions.AuthenticationError):
+    class LdapAuthenticationError(FlextCore.Exceptions.AuthenticationError):
         """LDAP authentication failure.
 
         Raised when LDAP bind or authentication fails.
@@ -120,7 +120,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} (bind_dn: {self.bind_dn})"
             return base_str
 
-    class LdapSearchError(FlextExceptions.OperationError):
+    class LdapSearchError(FlextCore.Exceptions.OperationError):
         """LDAP search operation failure.
 
         Raised when LDAP search operation fails.
@@ -186,7 +186,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapModifyError(FlextExceptions.OperationError):
+    class LdapModifyError(FlextCore.Exceptions.OperationError):
         """LDAP modify operation failure.
 
         Raised when LDAP modify operation fails.
@@ -237,7 +237,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapAddError(FlextExceptions.OperationError):
+    class LdapAddError(FlextCore.Exceptions.OperationError):
         """LDAP add operation failure.
 
         Raised when LDAP add operation fails.
@@ -249,7 +249,7 @@ class FlextLdapExceptions(FlextExceptions):
             message: str,
             *,
             dn: str | None = None,
-            object_classes: FlextTypes.StringList | None = None,
+            object_classes: FlextCore.Types.StringList | None = None,
             **kwargs: object,
         ) -> None:
             """Initialize LDAP add error.
@@ -272,7 +272,7 @@ class FlextLdapExceptions(FlextExceptions):
             # Call parent with enhanced message
             super().__init__(enhanced_message)
 
-    class LdapDeleteError(FlextExceptions.OperationError):
+    class LdapDeleteError(FlextCore.Exceptions.OperationError):
         """LDAP delete operation failure.
 
         Raised when LDAP delete operation fails.
@@ -304,7 +304,7 @@ class FlextLdapExceptions(FlextExceptions):
             # Call parent with enhanced message
             super().__init__(enhanced_message)
 
-    class LdapValidationError(FlextExceptions.ValidationError):
+    class LdapValidationError(FlextCore.Exceptions.ValidationError):
         """LDAP data validation failure.
 
         Raised when LDAP data validation fails.
@@ -358,7 +358,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapConfigurationError(FlextExceptions.ConfigurationError):
+    class LdapConfigurationError(FlextCore.Exceptions.ConfigurationError):
         """LDAP configuration error.
 
         Raised when LDAP configuration is invalid or missing.
@@ -408,7 +408,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapTimeoutError(FlextExceptions.TimeoutError):
+    class LdapTimeoutError(FlextCore.Exceptions.TimeoutError):
         """LDAP operation timeout.
 
         Raised when LDAP operation exceeds timeout limit.
@@ -445,7 +445,7 @@ class FlextLdapExceptions(FlextExceptions):
             # Call parent with enhanced message
             super().__init__(enhanced_message)
 
-    class LdapEntryNotFoundError(FlextExceptions.NotFoundError):
+    class LdapEntryNotFoundError(FlextCore.Exceptions.NotFoundError):
         """LDAP entry not found.
 
         Raised when requested LDAP entry does not exist.
@@ -500,7 +500,7 @@ class FlextLdapExceptions(FlextExceptions):
                 return f"{base_str} ({', '.join(details)})"
             return base_str
 
-    class LdapEntryAlreadyExistsError(FlextExceptions.ConflictError):
+    class LdapEntryAlreadyExistsError(FlextCore.Exceptions.ConflictError):
         """LDAP entry already exists.
 
         Raised when attempting to create an entry that already exists.
@@ -608,7 +608,7 @@ class FlextLdapExceptions(FlextExceptions):
     def add_error(
         message: str,
         dn: str | None = None,
-        object_classes: FlextTypes.StringList | None = None,
+        object_classes: FlextCore.Types.StringList | None = None,
         **kwargs: object,
     ) -> LdapAddError:
         """Create an add error."""

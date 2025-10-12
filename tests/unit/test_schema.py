@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.schema import FlextLdapSchema
@@ -34,7 +34,7 @@ class TestFlextLdapSchema:
         detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.handle(None)
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert not result.is_success
         assert result.error is not None
         assert (
@@ -46,7 +46,7 @@ class TestFlextLdapSchema:
         detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.handle({"server": "test"})
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert result.data is not None
 

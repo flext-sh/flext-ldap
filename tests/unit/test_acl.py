@@ -13,7 +13,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldap import (
     FlextLdapConstants,
@@ -172,7 +172,7 @@ class TestFlextLdapAclConverters:
     def test_convert_unified_to_openldap_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful unified to OpenLDAP conversion."""
         # Test the actual convert_acl method
@@ -183,7 +183,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_unified_to_openldap_failure(
         self,
@@ -198,12 +198,12 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_unified_to_oracle_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful unified to Oracle conversion."""
         # Test the actual convert_acl method
@@ -214,7 +214,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_unified_to_oracle_failure(
         self,
@@ -229,12 +229,12 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_openldap_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful OpenLDAP to unified conversion."""
         # Test the actual convert_acl method
@@ -245,7 +245,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_openldap_to_unified_failure(
         self,
@@ -260,12 +260,12 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_oracle_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful Oracle to unified conversion."""
         result = acl_converters.convert_acl(
@@ -273,7 +273,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_oracle_to_unified_failure(
         self,
@@ -303,12 +303,12 @@ class TestFlextLdapAclConverters:
         }
         result = acl_converters.handle(request)
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_convert_between_formats_unsupported(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test conversion between unsupported formats."""
         result = acl_converters.convert_acl(
@@ -318,7 +318,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not validate source format, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_format_valid(
         self, acl_converters: FlextLdapAclConverters
@@ -332,7 +332,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_format_invalid(
         self, acl_converters: FlextLdapAclConverters
@@ -346,7 +346,7 @@ class TestFlextLdapAclConverters:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
 
 class TestFlextLdapAclManager:
@@ -363,7 +363,7 @@ class TestFlextLdapAclManager:
     def test_create_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful ACL creation."""
         # Test the actual parse_acl method with valid data
@@ -373,7 +373,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_create_acl_validation_failure(
         self,
@@ -387,20 +387,22 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_create_acl_storage_failure(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test ACL creation with storage failure."""
         with (
             patch.object(acl_manager, "validate_acl_syntax") as mock_validate,
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
-            mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
+            mock_validate.return_value = FlextCore.Result[bool].ok(True)
+            mock_parse.return_value = FlextCore.Result[FlextCore.Types.Dict].ok({
+                "valid": True
+            })
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -408,20 +410,22 @@ class TestFlextLdapAclManager:
             )
 
             # The method may not be fully implemented, so we just test that it returns a result
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, FlextCore.Result)
 
     def test_update_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful ACL update."""
         with (
             patch.object(acl_manager, "validate_acl_syntax") as mock_validate,
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
-            mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
+            mock_validate.return_value = FlextCore.Result[bool].ok(True)
+            mock_parse.return_value = FlextCore.Result[FlextCore.Types.Dict].ok({
+                "valid": True
+            })
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -429,12 +433,12 @@ class TestFlextLdapAclManager:
             )
 
             # The method may not be fully implemented, so we just test that it returns a result
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, FlextCore.Result)
 
     def test_update_acl_not_found(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test ACL update when ACL not found."""
         # Test the actual parse_acl method with valid data
@@ -444,7 +448,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_delete_acl_success(self, acl_manager: FlextLdapAclManager) -> None:
         """Test successful ACL deletion."""
@@ -461,7 +465,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_get_acl_success(self, acl_manager: FlextLdapAclManager) -> None:
         """Test successful ACL retrieval."""
@@ -472,7 +476,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_get_acl_not_found(self, acl_manager: FlextLdapAclManager) -> None:
         """Test ACL retrieval when ACL not found."""
@@ -483,7 +487,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_list_acls_success(self, acl_manager: FlextLdapAclManager) -> None:
         """Test successful ACL listing."""
@@ -494,7 +498,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_list_acls_empty(self, acl_manager: FlextLdapAclManager) -> None:
         """Test ACL listing with empty results."""
@@ -511,7 +515,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_apply_acl_failure(self, acl_manager: FlextLdapAclManager) -> None:
         """Test ACL application failure."""
@@ -522,12 +526,12 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_data_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful ACL data validation."""
         # Test the actual parse_acl method with valid data
@@ -537,7 +541,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_data_failure(self, acl_manager: FlextLdapAclManager) -> None:
         """Test ACL data validation failure."""
@@ -548,7 +552,7 @@ class TestFlextLdapAclManager:
         )
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
 
 class TestFlextLdapAclParsers:
@@ -564,12 +568,12 @@ class TestFlextLdapAclParsers:
     def test_parse_openldap_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful OpenLDAP ACI parsing."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[FlextTypes.Dict].ok(
-                cast("FlextTypes.Dict", sample_acl_data["unified_acl"])
+            mock_handle.return_value = FlextCore.Result[FlextCore.Types.Dict].ok(
+                cast("FlextCore.Types.Dict", sample_acl_data["unified_acl"])
             )
 
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])
@@ -585,7 +589,7 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test OpenLDAP ACI parsing failure."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[FlextTypes.Dict].fail(
+            mock_handle.return_value = FlextCore.Result[FlextCore.Types.Dict].fail(
                 "Parsing failed"
             )
 
@@ -598,14 +602,14 @@ class TestFlextLdapAclParsers:
     def test_parse_oracle_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test successful Oracle ACI parsing."""
         # Test the actual OracleAclParser.parse method
         result = acl_parsers.OracleAclParser.parse(str(sample_acl_data["oracle_aci"]))
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_parse_oracle_aci_failure(
         self,
@@ -616,7 +620,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.OracleAclParser.parse("invalid aci format")
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_parse_unified_acl_success(
         self,
@@ -628,7 +632,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_parse_unified_acl_failure(
         self,
@@ -640,7 +644,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_syntax_valid(self, acl_parsers: FlextLdapAclParsers) -> None:
         """Test validating valid ACL syntax."""
@@ -649,7 +653,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_validate_acl_syntax_invalid(
         self, acl_parsers: FlextLdapAclParsers
@@ -660,7 +664,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_extract_acl_components_success(
         self, acl_parsers: FlextLdapAclParsers
@@ -671,7 +675,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_extract_acl_components_failure(
         self, acl_parsers: FlextLdapAclParsers
@@ -682,7 +686,7 @@ class TestFlextLdapAclParsers:
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
 
 class TestFlextLdapModels:
@@ -856,12 +860,12 @@ class TestAclIntegration:
             openldap_acl, "OPENLDAP", "ACTIVE_DIRECTORY"
         )
         # Note: This may fail due to missing dependencies, but tests the interface
-        assert isinstance(convert_result, FlextResult)
+        assert isinstance(convert_result, FlextCore.Result)
 
     def test_acl_management_complete_lifecycle(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: FlextCore.Types.Dict,
     ) -> None:
         """Test complete ACL management lifecycle."""
         # Test ACL parsing (may fail if parser not fully implemented)

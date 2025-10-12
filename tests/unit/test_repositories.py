@@ -189,7 +189,7 @@ class TestFlextLdapRepositories:
         repo = FlextLdapRepositories.UserRepository()
         result = repo.get_all()
 
-        # Method should return a FlextResult
+        # Method should return a FlextCore.Result
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -202,7 +202,7 @@ class TestFlextLdapRepositories:
         repo = FlextLdapRepositories.GroupRepository()
         result = repo.get_all()
 
-        # Method should return a FlextResult
+        # Method should return a FlextCore.Result
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -226,7 +226,7 @@ class TestFlextLdapRepositories:
         # This will fail without a real LDAP connection, but we're testing the flow
         result = repo.save(user)
 
-        # Should return a FlextResult (will be failure without real connection)
+        # Should return a FlextCore.Result (will be failure without real connection)
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -244,7 +244,7 @@ class TestFlextLdapRepositories:
         # save() should call exists() first
         result = repo.save(group)
 
-        # Should return a FlextResult (will be failure without real connection)
+        # Should return a FlextCore.Result (will be failure without real connection)
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -259,7 +259,7 @@ class TestFlextLdapRepositories:
         # Test exists check (will use get_by_id internally)
         result = repo.exists("uid=testuser,ou=users,dc=example,dc=com")
 
-        # Should return a FlextResult[bool]
+        # Should return a FlextCore.Result[bool]
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -270,6 +270,6 @@ class TestFlextLdapRepositories:
         # Test exists check (will use get_by_id internally)
         result = repo.exists("cn=testgroup,ou=groups,dc=example,dc=com")
 
-        # Should return a FlextResult[bool]
+        # Should return a FlextCore.Result[bool]
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
@@ -77,7 +77,7 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
-    # validate_email tests removed - use flext-core FlextUtilities.Validation.validate_email directly
+    # validate_email tests removed - use flext-core FlextCore.Utilities.Validation.validate_email directly
 
     def test_validate_filter_success(
         self, validations: FlextLdapValidations, sample_valid_filter: str
@@ -246,7 +246,7 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful server URI validation."""
         result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
         )
 
         assert result.is_success
@@ -289,11 +289,13 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "URI cannot be None" in result.error
 
-    # validate_port tests removed - use flext-core FlextUtilities.Validation.validate_port directly
+    # validate_port tests removed - use flext-core FlextCore.Utilities.Validation.validate_port directly
 
     def test_validate_timeout_success(self, validations: FlextLdapValidations) -> None:
         """Test successful timeout validation."""
-        result = validations.validate_timeout(FlextConstants.Network.DEFAULT_TIMEOUT)
+        result = validations.validate_timeout(
+            FlextCore.Constants.Network.DEFAULT_TIMEOUT
+        )
 
         assert result.is_success
         assert result.data is True
@@ -580,9 +582,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test successful connection config validation."""
-        config: FlextTypes.Dict = {
-            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
-            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
+        config: FlextCore.Types.Dict = {
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -597,7 +599,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with missing fields."""
-        config: FlextTypes.Dict = {
+        config: FlextCore.Types.Dict = {
             "server": "ldap://localhost:389"
             # Missing bind_dn, password, base_dn
         }
@@ -616,9 +618,9 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with invalid fields."""
-        config: FlextTypes.Dict = {
+        config: FlextCore.Types.Dict = {
             "server": "invalid-uri",
-            "port": FlextConstants.Platform.LDAP_DEFAULT_PORT,
+            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -646,7 +648,7 @@ class TestFlextLdapValidations:
         dn_result = validations.validate_dn("uid=testuser,ou=people,dc=example,dc=com")
         assert dn_result.is_success
 
-        # Note: validate_email and validate_port removed - use flext-core FlextUtilities.Validation directly
+        # Note: validate_email and validate_port removed - use flext-core FlextCore.Utilities.Validation directly
 
         filter_result = validations.validate_filter("(objectClass=person)")
         assert filter_result.is_success
@@ -658,12 +660,12 @@ class TestFlextLdapValidations:
         assert attributes_result.is_success
 
         server_uri_result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
         )
         assert server_uri_result.is_success
 
         timeout_result = validations.validate_timeout(
-            FlextConstants.Network.DEFAULT_TIMEOUT
+            FlextCore.Constants.Network.DEFAULT_TIMEOUT
         )
         assert timeout_result.is_success
 

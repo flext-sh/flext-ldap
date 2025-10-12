@@ -21,7 +21,7 @@ Building on Phase 1 (Foundation) and Phase 2 (Basic Protocols) success, Phase 3 
 **Expected Compliance**: 60-70% structural match (high)
 
 #### Target Classes
-- `FlextHandlers` classes in flext-core (handlers.py)
+- `FlextCore.Handlers` classes in flext-core (handlers.py)
 - CLI command handlers in flext-cli
 - API endpoint handlers in flext-api
 - Event handlers in observability systems
@@ -31,7 +31,7 @@ Building on Phase 1 (Foundation) and Phase 2 (Basic Protocols) success, Phase 3 
 class Handler(Protocol):
     """Handler protocol for command/event processing."""
 
-    def handle(self, command: object) -> FlextResult[object]:
+    def handle(self, command: object) -> FlextCore.Result[object]:
         """Handle command or event."""
         ...
 
@@ -41,7 +41,7 @@ class Handler(Protocol):
 ```
 
 #### Implementation Strategy
-1. **Week 2**: Implement in FlextHandlers base class
+1. **Week 2**: Implement in FlextCore.Handlers base class
 2. **Week 2**: Apply to CLI command handlers (flext-cli)
 3. **Week 2**: Apply to API endpoint handlers (flext-api)
 4. **Week 2**: Write comprehensive handler protocol tests
@@ -67,12 +67,12 @@ class Handler(Protocol):
 class Repository(Protocol[T_co]):
     """Repository protocol for data access."""
 
-    def get_by_id(self, id: object) -> FlextResult[T_co | None]: ...
-    def get_all(self) -> FlextResult[list[T_co]]: ...
-    def add(self, entity: T_co) -> FlextResult[T_co]: ...
-    def update(self, entity: T_co) -> FlextResult[T_co]: ...
-    def delete(self, id: object) -> FlextResult[bool]: ...
-    def exists(self, id: object) -> FlextResult[bool]: ...
+    def get_by_id(self, id: object) -> FlextCore.Result[T_co | None]: ...
+    def get_all(self) -> FlextCore.Result[list[T_co]]: ...
+    def add(self, entity: T_co) -> FlextCore.Result[T_co]: ...
+    def update(self, entity: T_co) -> FlextCore.Result[T_co]: ...
+    def delete(self, id: object) -> FlextCore.Result[bool]: ...
+    def exists(self, id: object) -> FlextCore.Result[bool]: ...
 ```
 
 #### Implementation Strategy
@@ -84,7 +84,7 @@ class Repository(Protocol[T_co]):
 #### Success Metrics
 - ✅ 3+ repository classes with Domain.Repository protocol
 - ✅ CRUD operations following protocol patterns
-- ✅ FlextResult error handling throughout
+- ✅ FlextCore.Result error handling throughout
 
 ### 3. Commands.Command & Queries.Query Protocols (MEDIUM PRIORITY)
 
@@ -102,14 +102,14 @@ class Repository(Protocol[T_co]):
 class Command(Protocol):
     """Command protocol for CQRS write operations."""
 
-    def execute(self) -> FlextResult[object]: ...
-    def validate(self) -> FlextResult[None]: ...
+    def execute(self) -> FlextCore.Result[object]: ...
+    def validate(self) -> FlextCore.Result[None]: ...
     def get_command_name(self) -> str: ...
 
 class Query(Protocol):
     """Query protocol for CQRS read operations."""
 
-    def execute(self) -> FlextResult[object]: ...
+    def execute(self) -> FlextCore.Result[object]: ...
     def get_query_name(self) -> str: ...
 ```
 
@@ -140,7 +140,7 @@ class Query(Protocol):
 class AggregateRoot(Protocol):
     """Aggregate root protocol for DDD."""
 
-    def get_domain_events(self) -> list[object]: ...
+    def get_domain_events(self) -> FlextCore.Types.List: ...
     def clear_domain_events(self) -> None: ...
     def add_domain_event(self, event: object) -> None: ...
 ```
@@ -159,7 +159,7 @@ class AggregateRoot(Protocol):
 
 ### Week 1: Discovery & Analysis (Current Week)
 **Focus**: Understanding current architectural patterns
-- ✅ Analyze FlextHandlers for Application.Handler compliance
+- ✅ Analyze FlextCore.Handlers for Application.Handler compliance
 - ✅ Analyze repository classes for Domain.Repository compliance
 - ✅ Identify CQRS command/query patterns
 - ✅ Document current architectural patterns
@@ -173,14 +173,14 @@ class AggregateRoot(Protocol):
 
 ### Week 2: Application.Handler Implementation
 **Focus**: Handler pattern standardization
-- ✅ Implement Application.Handler in FlextHandlers base
+- ✅ Implement Application.Handler in FlextCore.Handlers base
 - ✅ Apply to CLI command handlers
 - ✅ Apply to API endpoint handlers
 - ✅ Write handler protocol compliance tests
 - ✅ Update documentation with handler examples
 
 **Deliverables**:
-- Updated FlextHandlers base class
+- Updated FlextCore.Handlers base class
 - CLI handler implementations
 - API handler implementations
 - Handler protocol tests
@@ -262,16 +262,16 @@ make test-protocols   # Run protocol compliance tests
 ```python
 def test_application_handler_protocol():
     """Test Application.Handler protocol compliance."""
-    from flext_core import FlextProtocols
+    from flext_core import FlextCore
 
     handler = SomeHandler()
-    assert isinstance(handler, FlextProtocols.Application.Handler)
+    assert isinstance(handler, FlextCore.Protocols.Application.Handler)
     assert hasattr(handler, 'handle')
     assert hasattr(handler, 'can_handle')
 
     # Functional test
     result = handler.handle(some_command)
-    assert isinstance(result, FlextResult)
+    assert isinstance(result, FlextCore.Result)
 ```
 
 ## Risk Assessment & Mitigation
@@ -343,7 +343,7 @@ def test_application_handler_protocol():
 #### 2. Developer Productivity
 - IDE autocomplete for protocol methods
 - Type safety for architectural patterns
-- Consistent error handling (FlextResult)
+- Consistent error handling (FlextCore.Result)
 
 #### 3. Maintainability
 - Standardized interfaces across ecosystem

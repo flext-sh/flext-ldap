@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services import FlextLdapServices
@@ -464,7 +465,7 @@ class TestFlextLdapServices:
     def test_validate_ldap_configuration_basic(self) -> None:
         """Test LDAP configuration validation with minimal config."""
         services = FlextLdapServices()
-        config_data: dict[str, object] = {
+        config_data: FlextCore.Types.Dict = {
             "server": "ldap.example.com",
             "port": 389,
             "base_dn": "dc=example,dc=com",
@@ -478,7 +479,7 @@ class TestFlextLdapServices:
     def test_validate_ldap_configuration_with_ssl(self) -> None:
         """Test LDAP configuration validation with SSL settings."""
         services = FlextLdapServices()
-        config_data: dict[str, object] = {
+        config_data: FlextCore.Types.Dict = {
             "server": "ldap.example.com",
             "port": 636,
             "use_ssl": True,
@@ -497,7 +498,7 @@ class TestFlextLdapServices:
     def test_generate_ldap_operation_report_empty(self) -> None:
         """Test report generation with no operations."""
         services = FlextLdapServices()
-        operations: list[dict[str, object]] = []
+        operations: list[FlextCore.Types.Dict] = []
 
         result = services.generate_ldap_operation_report(operations)
 
@@ -509,7 +510,7 @@ class TestFlextLdapServices:
     def test_generate_ldap_operation_report_with_operations(self) -> None:
         """Test report generation with operation data."""
         services = FlextLdapServices()
-        operations: list[dict[str, object]] = [
+        operations: list[FlextCore.Types.Dict] = [
             {"type": "search", "status": "success", "count": 10},
             {"type": "add", "status": "success", "dn": "uid=test,dc=example,dc=com"},
         ]
@@ -527,7 +528,7 @@ class TestFlextLdapServices:
     # =========================================================================
 
     def test_execute_method(self) -> None:
-        """Test execute method from FlextService protocol."""
+        """Test execute method from FlextCore.Service protocol."""
         services = FlextLdapServices()
 
         result = services.execute()

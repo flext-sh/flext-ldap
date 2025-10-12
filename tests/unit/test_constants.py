@@ -13,11 +13,11 @@ class TestFlextLdapConstants:
 
     def test_protocol_constants(self) -> None:
         """Test protocol constants delegated to flext-core."""
-        from flext_core import FlextConstants
+        from flext_core import FlextCore
 
         # Protocol constants are now delegated to flext-core
-        assert FlextConstants.Platform.LDAP_DEFAULT_PORT == 389
-        assert FlextConstants.Platform.LDAPS_DEFAULT_PORT == 636
+        assert FlextCore.Constants.Platform.LDAP_DEFAULT_PORT == 389
+        assert FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT == 636
 
         # Verify domain-specific protocol constants still exist
         assert FlextLdapConstants.Protocol.LDAP == "ldap"

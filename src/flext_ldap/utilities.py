@@ -1,6 +1,6 @@
 """LDAP utilities for flext-ldap domain.
 
-This module provides LDAP-specific utility functions extending FlextUtilities
+This module provides LDAP-specific utility functions extending FlextCore.Utilities
 with domain-specific functionality. Following FLEXT standards, all utilities
 are organized under a single FlextLdapUtilities class.
 
@@ -17,19 +17,15 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import (
-    FlextResult,
-    FlextTypes,
-    FlextUtilities,
-)
+from flext_core import FlextCore
 
 from flext_ldap.exceptions import FlextLdapExceptions
 
 
-class FlextLdapUtilities(FlextUtilities):
-    """Unified LDAP utilities class extending FlextUtilities with LDAP-specific functionality.
+class FlextLdapUtilities(FlextCore.Utilities):
+    """Unified LDAP utilities class extending FlextCore.Utilities with LDAP-specific functionality.
 
-    This class extends the base FlextUtilities with LDAP-specific utility functions,
+    This class extends the base FlextCore.Utilities with LDAP-specific utility functions,
     type guards, and domain-specific processing following FLEXT domain separation patterns.
 
     **USAGE**: Access nested classes directly (e.g., FlextLdapUtilities.Processing.normalize_dn())
@@ -44,7 +40,7 @@ class FlextLdapUtilities(FlextUtilities):
         """LDAP type guard functions for runtime type checking."""
 
         @staticmethod
-        def ensure_string_list(value: object) -> FlextTypes.StringList:
+        def ensure_string_list(value: object) -> FlextCore.Types.StringList:
             """Ensure value is a list of strings, converting as needed."""
             if isinstance(value, str):
                 return [value]
@@ -232,22 +228,22 @@ class FlextLdapUtilities(FlextUtilities):
         """LDAP data processing utilities."""
 
         @staticmethod
-        def normalize_dn(dn: str) -> FlextResult[str]:
+        def normalize_dn(dn: str) -> FlextCore.Result[str]:
             """Normalize LDAP DN by removing extra spaces."""
             if not dn:
-                return FlextResult[str].fail("DN must be a non-empty string")
+                return FlextCore.Result[str].fail("DN must be a non-empty string")
             # Only remove leading/trailing spaces, preserve internal spacing
             normalized = dn.strip()
-            return FlextResult[str].ok(normalized)
+            return FlextCore.Result[str].ok(normalized)
 
         @staticmethod
-        def normalize_filter(filter_str: str) -> FlextResult[str]:
+        def normalize_filter(filter_str: str) -> FlextCore.Result[str]:
             """Normalize LDAP filter by removing extra spaces."""
             if not filter_str:
-                return FlextResult[str].fail("Filter must be a non-empty string")
+                return FlextCore.Result[str].fail("Filter must be a non-empty string")
             # Remove leading/trailing spaces
             normalized = filter_str.strip()
-            return FlextResult[str].ok(normalized)
+            return FlextCore.Result[str].ok(normalized)
 
         @staticmethod
         def normalize_attribute_name(attribute_name: str) -> str:
@@ -267,36 +263,36 @@ class FlextLdapUtilities(FlextUtilities):
 
         @staticmethod
         def normalize_attributes(
-            attributes: FlextTypes.StringList,
-        ) -> FlextResult[FlextTypes.StringList]:
+            attributes: FlextCore.Types.StringList,
+        ) -> FlextCore.Result[FlextCore.Types.StringList]:
             """Normalize LDAP attributes list by removing empty values and stripping whitespace."""
             if not attributes:
-                return FlextResult[FlextTypes.StringList].fail(
+                return FlextCore.Result[FlextCore.Types.StringList].fail(
                     "Attributes list cannot be empty",
                 )
             # Strip whitespace and remove empty strings
             result = [attr.strip() for attr in attributes if attr.strip()]
-            return FlextResult[FlextTypes.StringList].ok(result)
+            return FlextCore.Result[FlextCore.Types.StringList].ok(result)
 
     # =========================================================================
     # LDAP-SPECIFIC CONVERSION UTILITIES
     # =========================================================================
 
-    class Conversion(FlextUtilities.TypeConversions):
+    class Conversion(FlextCore.Utilities.TypeConversions):
         """LDAP data conversion utilities."""
 
         @staticmethod
         def attributes_to_dict(
             attribute_names: Sequence[str],
-            attribute_values: FlextTypes.List,
-        ) -> FlextResult[FlextTypes.StringDict]:
+            attribute_values: FlextCore.Types.List,
+        ) -> FlextCore.Result[FlextCore.Types.StringDict]:
             """Convert LDAP attributes to dictionary format."""
             if len(attribute_names) != len(attribute_values):
-                return FlextResult[FlextTypes.StringDict].fail(
+                return FlextCore.Result[FlextCore.Types.StringDict].fail(
                     f"Attribute names and values length mismatch: {len(attribute_names)} vs {len(attribute_values)}",
                 )
 
-            result: FlextTypes.StringDict = {}
+            result: FlextCore.Types.StringDict = {}
             for i in range(len(attribute_names)):
                 name = attribute_names[i]
                 values = attribute_values[i]
@@ -311,45 +307,49 @@ class FlextLdapUtilities(FlextUtilities):
                 else:
                     result[name] = str(values)
 
-            return FlextResult[FlextTypes.StringDict].ok(result)
+            return FlextCore.Result[FlextCore.Types.StringDict].ok(result)
 
         @staticmethod
         def dict_to_attributes(
-            attributes_dict: FlextTypes.Dict,
-        ) -> FlextResult[tuple[FlextTypes.StringList, FlextTypes.List]]:
+            attributes_dict: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[tuple[FlextCore.Types.StringList, FlextCore.Types.List]]:
             """Convert dictionary to LDAP attributes format."""
-            attribute_names: FlextTypes.StringList = []
-            attribute_values: FlextTypes.List = []
+            attribute_names: FlextCore.Types.StringList = []
+            attribute_values: FlextCore.Types.List = []
 
             for name, value in attributes_dict.items():
                 attribute_names.append(name)
                 # Keep the original value type for attributes_to_dict compatibility
                 attribute_values.append(value)
 
-            return FlextResult[tuple[FlextTypes.StringList, FlextTypes.List]].ok((
+            return FlextCore.Result[
+                tuple[FlextCore.Types.StringList, FlextCore.Types.List]
+            ].ok((
                 attribute_names,
                 attribute_values,
             ))
 
     @staticmethod
-    def ensure_ldap_dn(dn: str) -> FlextResult[str]:
+    def ensure_ldap_dn(dn: str) -> FlextCore.Result[str]:
         """Ensure value is a valid LDAP DN."""
         try:
             validated_dn = FlextLdapUtilities.LdapTypeGuards.ensure_ldap_dn(dn)
-            return FlextResult[str].ok(validated_dn)
+            return FlextCore.Result[str].ok(validated_dn)
         except (TypeError, ValueError) as e:
-            return FlextResult[str].fail(str(e))
+            return FlextCore.Result[str].fail(str(e))
         except Exception as e:
-            return FlextResult[str].fail(f"DN validation failed: {e}")
+            return FlextCore.Result[str].fail(f"DN validation failed: {e}")
 
     @staticmethod
-    def ensure_string_list(value: object) -> FlextResult[FlextTypes.StringList]:
+    def ensure_string_list(
+        value: object,
+    ) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Ensure value is a list of strings."""
         try:
             result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list(value)
-            return FlextResult[FlextTypes.StringList].ok(result)
+            return FlextCore.Result[FlextCore.Types.StringList].ok(result)
         except Exception as e:
-            return FlextResult[FlextTypes.StringList].fail(
+            return FlextCore.Result[FlextCore.Types.StringList].fail(
                 f"String list conversion failed: {e}",
             )
 

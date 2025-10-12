@@ -271,7 +271,7 @@ FlextLdapConstants.SubjectType.ANYONE       # Anyone
 ## Error Handling
 
 ```python
-# All operations return FlextResult for safe error handling
+# All operations return FlextCore.Result for safe error handling
 result = api.parse_acl(acl_string, format_type)
 
 if result.is_failure:

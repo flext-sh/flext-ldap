@@ -43,7 +43,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
@@ -51,7 +51,7 @@ from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -67,13 +67,13 @@ def setup_api() -> FlextLdap | None:
         Connected FlextLdap instance or None if connection failed.
 
     """
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Use context manager for automatic connection/disconnection
     try:
@@ -97,7 +97,7 @@ def demonstrate_server_detection(api: FlextLdap) -> str | None:
     logger.info("=== Server Type Detection ===")
 
     # Get detected server type
-    result: FlextResult[str | None] = api.get_detected_server_type()
+    result: FlextCore.Result[str | None] = api.get_detected_server_type()
 
     if result.is_failure:
         logger.error(f"❌ Server detection failed: {result.error}")
@@ -122,7 +122,7 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
     logger.info("\n=== Server Capabilities ===")
 
     # Get comprehensive server capabilities
-    result: FlextResult[FlextTypes.Dict] = api.get_server_capabilities()
+    result: FlextCore.Result[FlextCore.Types.Dict] = api.get_server_capabilities()
 
     if result.is_failure:
         logger.error(f"❌ Failed to get capabilities: {result.error}")
@@ -197,9 +197,9 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
         base_dn=BASE_DN,
         filter_str="(objectClass=*)",
         attributes=["dn", "objectClass"],
-        page_size=100 if api.client.supports_paged_results() else None,
+        page_size=100 if api.client.supports_paged_results() else None,  # type: ignore[attr-defined]
     )
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_universal(
+    result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search_universal(
         search_request
     )
 
@@ -386,7 +386,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
     )
 
     logger.info("Validating entry for current server...")
-    result: FlextResult[bool] = api.validate_entry_for_server(sample_entry)
+    result: FlextCore.Result[bool] = api.validate_entry_for_server(sample_entry)
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -408,7 +408,9 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
     logger.info("\n=== Server-Specific Attributes ===")
 
     # Get server-specific attributes
-    result: FlextResult[FlextTypes.Dict] = api.get_server_specific_attributes()
+    result: FlextCore.Result[FlextCore.Types.Dict] = (
+        api.get_server_specific_attributes()
+    )
 
     if result.is_failure:
         logger.error(f"❌ Failed to get attributes: {result.error}")

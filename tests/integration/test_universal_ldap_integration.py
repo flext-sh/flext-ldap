@@ -377,7 +377,7 @@ class TestUniversalLdapIntegration:
             assert result.is_success
         elapsed = time.time() - start
 
-        # Should be reasonable (< 5s for 30 creations - each operation creates FlextLogger, etc.)
+        # Should be reasonable (< 5s for 30 creations - each operation creates FlextCore.Logger, etc.)
         assert elapsed < 5.0, f"Factory creation too slow: {elapsed}s for 30 operations"
 
     def test_entry_adapter_converts_batch_efficiently(
@@ -411,5 +411,5 @@ class TestUniversalLdapIntegration:
             assert result.is_success
         elapsed = time.time() - start
 
-        # Should be reasonable (< 2s for 20 entries - accounts for FlextLogger overhead)
+        # Should be reasonable (< 2s for 20 entries - accounts for FlextCore.Logger overhead)
         assert elapsed < 2.0, f"Batch conversion too slow: {elapsed}s for 20 entries"

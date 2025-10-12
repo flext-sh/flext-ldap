@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
@@ -21,7 +21,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
 
-class FlextLdapServers(FlextService[None]):
+class FlextLdapServers(FlextCore.Service[None]):
     """Unified LDAP server operations class consolidating all server-specific implementations.
 
     This class provides a single interface for all LDAP server operations across
@@ -51,13 +51,13 @@ class FlextLdapServers(FlextService[None]):
 
         """
         super().__init__()
-        # Logger and container inherited from FlextService via FlextMixins
+        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
         self._server_type = server_type or self.SERVER_GENERIC
         self._operations: FlextLdapServersBaseOperations | None = None
 
-    def execute(self) -> FlextResult[None]:
-        """Execute method required by FlextService."""
-        return FlextResult[None].ok(None)
+    def execute(self) -> FlextCore.Result[None]:
+        """Execute method required by FlextCore.Service."""
+        return FlextCore.Result[None].ok(None)
 
     @property
     def server_type(self) -> str:
@@ -141,7 +141,7 @@ class FlextLdapServers(FlextService[None]):
         ops = self.operations
         return ops.supports_start_tls() if ops else False
 
-    def get_bind_mechanisms(self) -> list[str]:
+    def get_bind_mechanisms(self) -> FlextCore.Types.StringList:
         """Get supported bind mechanisms."""
         ops = self.operations
         return ops.get_bind_mechanisms() if ops else ["SIMPLE"]
@@ -166,13 +166,13 @@ class FlextLdapServers(FlextService[None]):
         connection: Connection,
         base_dn: str,
         search_filter: str,
-        attributes: list[str] | None = None,
+        attributes: FlextCore.Types.StringList | None = None,
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Perform paged search operation."""
         ops = self.operations
         if not ops:
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
+            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
                 "No server operations available",
             )
         return ops.search_with_paging(
@@ -186,16 +186,16 @@ class FlextLdapServers(FlextService[None]):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
-            return FlextResult[dict[str, object]].fail(
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_root_dse_attributes(connection)
 
-    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
         """Detect server type from Root DSE."""
         ops = self.operations
         return (
@@ -204,11 +204,13 @@ class FlextLdapServers(FlextService[None]):
             else self.SERVER_GENERIC
         )
 
-    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
+    def get_supported_controls(
+        self, connection: Connection
+    ) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get supported controls."""
         ops = self.operations
         if not ops:
-            return FlextResult[list[str]].fail(
+            return FlextCore.Result[FlextCore.Types.StringList].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_supported_controls(connection)
@@ -217,11 +219,11 @@ class FlextLdapServers(FlextService[None]):
         self,
         entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextCore.Result[FlextLdapModels.Entry]:
         """Normalize entry for target server type."""
         ops = self.operations
         if not ops:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextCore.Result[FlextLdapModels.Entry].fail(
                 "No server operations available",
             )
         return ops.normalize_entry_for_server(entry, target_server_type)
@@ -230,11 +232,11 @@ class FlextLdapServers(FlextService[None]):
         self,
         entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
         server_type: str | None = None,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Validate entry compatibility with server."""
         ops = self.operations
         if not ops:
-            return FlextResult[bool].fail(
+            return FlextCore.Result[bool].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.validate_entry_for_server(entry, server_type)

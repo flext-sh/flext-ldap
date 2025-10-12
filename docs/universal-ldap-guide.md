@@ -48,7 +48,7 @@ The universal LDAP system consists of:
 
 ```python
 from flext_ldap import ServerOperationsFactory
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 # Method 1: Explicit server type
 factory = ServerOperationsFactory()

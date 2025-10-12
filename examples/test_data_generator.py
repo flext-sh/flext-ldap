@@ -23,21 +23,21 @@ import sys
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldap import FlextLdapConstants
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Test data configuration
-DEPARTMENTS: Final[list[str]] = [
+DEPARTMENTS: Final[FlextCore.Types.StringList] = [
     "engineering",
     "marketing",
     "sales",
     "support",
     "contractors",
 ]
-PROJECTS: Final[list[str]] = [
+PROJECTS: Final[FlextCore.Types.StringList] = [
     "alpha",
     "beta",
     "gamma",
@@ -59,7 +59,7 @@ PROJECTS: Final[list[str]] = [
     "tau",
     "upsilon",
 ]
-ROLES: Final[list[str]] = [
+ROLES: Final[FlextCore.Types.StringList] = [
     "admin",
     "developer",
     "manager",
@@ -82,7 +82,7 @@ ROLES: Final[list[str]] = [
     "support_l1",
 ]
 
-FIRST_NAMES: Final[list[str]] = [
+FIRST_NAMES: Final[FlextCore.Types.StringList] = [
     "John",
     "Jane",
     "Michael",
@@ -105,7 +105,7 @@ FIRST_NAMES: Final[list[str]] = [
     "Elizabeth",
 ]
 
-LAST_NAMES: Final[list[str]] = [
+LAST_NAMES: Final[FlextCore.Types.StringList] = [
     "Smith",
     "Johnson",
     "Williams",
@@ -128,7 +128,7 @@ LAST_NAMES: Final[list[str]] = [
     "Martin",
 ]
 
-SERVICE_NAMES: Final[list[str]] = [
+SERVICE_NAMES: Final[FlextCore.Types.StringList] = [
     "ldap",
     "database",
     "web",
@@ -146,7 +146,7 @@ SERVICE_NAMES: Final[list[str]] = [
     "vpn",
 ]
 
-COMPUTER_PREFIXES: Final[list[str]] = [
+COMPUTER_PREFIXES: Final[FlextCore.Types.StringList] = [
     "srv",
     "ws",
     "db",
@@ -173,17 +173,19 @@ class TestDataGenerator:
         """
         self.server_type = server_type
         self.base_dn = base_dn
-        self.entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
-        self.user_dns: list[str] = []
-        self.group_dns: list[str] = []
+        self.entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = []
+        self.user_dns: FlextCore.Types.StringList = []
+        self.group_dns: FlextCore.Types.StringList = []
 
     def generate_all_data(
         self,
-    ) -> FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]]:
+    ) -> FlextCore.Result[
+        list[tuple[str, dict[str, str | FlextCore.Types.StringList]]]
+    ]:
         """Generate all test data (~1000 entries).
 
         Returns:
-            FlextResult containing list of (dn, attributes) tuples
+            FlextCore.Result containing list of (dn, attributes) tuples
 
         """
         logger.info(
@@ -215,9 +217,9 @@ class TestDataGenerator:
             f"  Others: {len(self.entries) - len(self.user_dns) - len(self.group_dns)}"
         )
 
-        return FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]].ok(
-            self.entries
-        )
+        return FlextCore.Result[
+            list[tuple[str, dict[str, str | FlextCore.Types.StringList]]]
+        ].ok(self.entries)
 
     def _create_organizational_units(self) -> None:
         """Create top-level organizational units."""
@@ -227,7 +229,7 @@ class TestDataGenerator:
         main_ous = ["users", "groups", "services", "computers", "containers"]
         for ou in main_ous:
             dn = f"ou={ou},{self.base_dn}"
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -284,7 +286,7 @@ class TestDataGenerator:
                 cn = f"{first_name} {last_name}"
                 dn = f"uid={uid},ou={dept},ou=users,{self.base_dn}"
 
-                attributes: dict[str, str | FlextTypes.StringList] = {
+                attributes: dict[str, str | FlextCore.Types.StringList] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                         FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
@@ -353,7 +355,7 @@ class TestDataGenerator:
             ]
             members = random.sample(dept_users, min(10, len(dept_users)))
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -416,7 +418,7 @@ class TestDataGenerator:
             cn = f"{service_type}-{instance:02d}"
             dn = f"cn={cn},ou=services,{self.base_dn}"
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "simpleSecurityObject",
                     "applicationProcess",
@@ -437,7 +439,7 @@ class TestDataGenerator:
             cn = f"{prefix}{i:03d}"
             dn = f"cn={cn},ou=computers,{self.base_dn}"
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "device",
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -470,7 +472,7 @@ class TestDataGenerator:
         for container_type in container_types:
             # Top level container
             dn = f"ou={container_type},ou=containers,{self.base_dn}"
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -486,7 +488,7 @@ class TestDataGenerator:
                 sub_dn = (
                     f"ou={sub_name},ou={container_type},ou=containers,{self.base_dn}"
                 )
-                sub_attributes: dict[str, str | FlextTypes.StringList] = {
+                sub_attributes: dict[str, str | FlextCore.Types.StringList] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                         FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                         FlextLdapConstants.ObjectClasses.TOP,
@@ -496,14 +498,14 @@ class TestDataGenerator:
                 }
                 self.entries.append((sub_dn, sub_attributes))
 
-    def export_to_ldif(self, output_path: Path) -> FlextResult[bool]:
+    def export_to_ldif(self, output_path: Path) -> FlextCore.Result[bool]:
         """Export generated entries to LDIF file.
 
         Args:
             output_path: Path to output LDIF file
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         logger.info(f"Exporting {len(self.entries)} entries to {output_path}")
@@ -526,11 +528,11 @@ class TestDataGenerator:
                     f.write("\n")
 
             logger.info(f"✅ Exported {len(self.entries)} entries to {output_path}")
-            return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
             logger.exception("Failed to export to LDIF")
-            return FlextResult[bool].fail(f"LDIF export failed: {e}")
+            return FlextCore.Result[bool].fail(f"LDIF export failed: {e}")
 
 
 def main() -> int:

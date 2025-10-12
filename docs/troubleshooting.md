@@ -591,13 +591,13 @@ make ldap-test-server
 | Timeout        | `Operation timed out`       | Slow server or network issues   |
 | SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
 
-### FlextResult Error Handling
+### FlextCore.Result Error Handling
 
 ```python
 from flext_ldap import get_flext_ldap_api
 
 def handle_errors_properly():
-    """Demonstrate proper error handling with FlextResult."""
+    """Demonstrate proper error handling with FlextCore.Result."""
     api = get_flext_ldap_api()
 
     # Always check result status
@@ -629,13 +629,13 @@ run(handle_errors_properly())
 ### Enable Debug Logging
 
 ```python
-from flext_core import FlextLogger
+from flext_core import FlextCore
 
 # Enable debug logging
 logging.basicConfig(level=logging.DEBUG)
 
 # FLEXT logger with debug level
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 logger.setLevel(logging.DEBUG)
 ```
 
