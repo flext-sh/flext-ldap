@@ -9,4 +9,4 @@ This diagram shows the package structure and implementation details.
 ---
 
 **C4 Model - Level 4: Code Architecture**
-*Package structure and implementation details*
+_Package structure and implementation details_

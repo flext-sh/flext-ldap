@@ -60,6 +60,7 @@ Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 ### **Primary Users**
 
 #### **System Administrators**
+
 - Manage enterprise directory services
 - Configure LDAP server connections
 - Monitor directory operations
@@ -67,6 +68,7 @@ Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 - Manage access controls and permissions
 
 #### **Application Developers**
+
 - Integrate LDAP authentication and authorization
 - Implement user management features
 - Build directory-aware applications
@@ -74,6 +76,7 @@ Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 - Implement SSO (Single Sign-On) solutions
 
 #### **DevOps Engineers**
+
 - Deploy LDAP-integrated applications
 - Configure monitoring and alerting
 - Manage infrastructure scaling
@@ -83,7 +86,9 @@ Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 ### **External Systems**
 
 #### **LDAP Directory Servers**
+
 FLEXT-LDAP provides universal support for major LDAP server implementations:
+
 - **OpenLDAP**: Open-source LDAP server (versions 1.x and 2.x)
 - **Oracle Internet Directory (OID)**: Oracle's enterprise LDAP solution
 - **Oracle Unified Directory (OUD)**: Oracle's next-generation directory server
@@ -91,6 +96,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 - **Generic LDAP**: RFC-compliant LDAP server implementations
 
 #### **FLEXT Ecosystem Components**
+
 - **FLEXT-Core**: Provides foundation patterns (FlextCore.Result, DI, domain models)
 - **FLEXT-LDIF**: Handles LDIF file processing and LDAP entry models
 - **FLEXT-API**: REST API framework using flext-ldap for user management
@@ -101,6 +107,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 ### **System Responsibilities**
 
 #### **Core Functionality**
+
 1. **Universal LDAP Interface**: Server-agnostic LDAP operations
 2. **Server-Specific Operations**: Optimized implementations per LDAP server
 3. **Entry Management**: CRUD operations on directory entries
@@ -109,6 +116,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 6. **ACL Management**: Server-specific access control list handling
 
 #### **Quality Attributes**
+
 1. **Reliability**: 99.9% success rate in enterprise environments
 2. **Performance**: Sub-100ms response times for typical operations
 3. **Security**: Zero credential exposure, SSL/TLS support
@@ -121,6 +129,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 ### **Primary Interaction Patterns**
 
 #### **User Management Flow**
+
 ```
 Application Developer → FLEXT-LDAP → LDAP Server
     ↓              ↓              ↓
@@ -130,6 +139,7 @@ Authorization  ACL Checking     Permission Evaluation
 ```
 
 #### **Data Integration Flow**
+
 ```
 DevOps Engineer → FLEXT-Meltano → FLEXT-LDAP → LDAP Server
        ↓               ↓              ↓              ↓
@@ -139,6 +149,7 @@ Scaling         Error Handling   Connection Mgmt  Data Export
 ```
 
 #### **Migration Flow**
+
 ```
 System Admin → ALGAR Migration → FLEXT-LDAP → Source LDAP → Target LDAP
      ↓              ↓              ↓              ↓              ↓
@@ -149,6 +160,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ## 🎯 System Qualities
 
 ### **Functional Requirements**
+
 - ✅ Universal LDAP server support (OpenLDAP, Oracle, Microsoft, Generic)
 - ✅ Complete CRUD operations on directory entries
 - ✅ Authentication and authorization workflows
@@ -157,6 +169,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 - ✅ LDIF integration and data exchange
 
 ### **Quality Requirements**
+
 - ✅ **Performance**: <100ms average response time
 - ✅ **Reliability**: 99.9% operation success rate
 - ✅ **Security**: Zero credential exposure, SSL/TLS support
@@ -167,18 +180,21 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ## 🚨 System Constraints
 
 ### **Technical Constraints**
+
 - **Python 3.13+**: Modern Python features required
 - **LDAP Protocol**: RFC 4510-4519 compliance
 - **Dependencies**: flext-core, ldap3, pydantic libraries
 - **Architecture**: Clean Architecture with domain-driven design
 
 ### **Business Constraints**
+
 - **Ecosystem Integration**: Must work with all FLEXT components
 - **Enterprise Ready**: Production-grade reliability and security
 - **Vendor Neutral**: Universal LDAP server support
 - **Open Source**: MIT license compliance
 
 ### **Operational Constraints**
+
 - **Zero Breaking Changes**: Backward compatibility maintenance
 - **Documentation**: Comprehensive API and architecture docs
 - **Testing**: 35% coverage with real LDAP server testing (target: 90%)
@@ -187,6 +203,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ## 📊 System Metrics
 
 ### **Current Status (Version 0.9.9)**
+
 - **Test Coverage**: 35% (Target: 90%)
 - **Lines of Code**: 21,222 across 51 test files
 - **Supported Servers**: 6 LDAP server types
@@ -194,6 +211,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 - **Integration Points**: 5+ FLEXT ecosystem components
 
 ### **Performance Benchmarks**
+
 - **Connection Time**: <50ms average
 - **Search Operations**: <100ms for typical queries
 - **Complex Search**: <500ms for advanced filters
@@ -202,6 +220,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 - **Memory Usage**: <50MB per connection pool
 
 ### **Quality Metrics**
+
 - **Code Quality**: Zero lint violations (ruff)
 - **Type Safety**: MyPy strict mode compliance
 - **Security**: No known vulnerabilities
@@ -218,4 +237,4 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ---
 
 **C4 Model - Level 1: System Context**
-*Understanding FLEXT-LDAP's role in the enterprise ecosystem*
+_Understanding FLEXT-LDAP's role in the enterprise ecosystem_

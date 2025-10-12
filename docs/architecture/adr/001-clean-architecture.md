@@ -15,12 +15,14 @@ FLEXT-LDAP needs a maintainable, testable, and scalable architecture that can ev
 
 **Current Situation**
 The initial implementation used a traditional layered architecture with tight coupling between components. This led to:
+
 - Difficult unit testing due to infrastructure dependencies
 - Tight coupling between business logic and LDAP protocol details
 - Challenges in supporting multiple LDAP server implementations
 - Difficulty in maintaining clear separation of concerns
 
 **Requirements**
+
 - **Testability**: Enable comprehensive unit testing without external dependencies
 - **Maintainability**: Clear separation of concerns and modular design
 - **Extensibility**: Easy addition of new LDAP server support
@@ -29,6 +31,7 @@ The initial implementation used a traditional layered architecture with tight co
 - **Developer Experience**: Intuitive APIs and clear code organization
 
 **Constraints**
+
 - Must support multiple LDAP server implementations (OpenLDAP, Oracle, Microsoft)
 - Python 3.13+ type system requirements
 - Integration with FLEXT ecosystem patterns
@@ -36,6 +39,7 @@ The initial implementation used a traditional layered architecture with tight co
 - Backward compatibility during transition
 
 **Assumptions**
+
 - Clean Architecture principles are well-established and proven
 - Development team has experience with layered architectures
 - FLEXT ecosystem provides compatible foundation patterns
@@ -66,6 +70,7 @@ src/flext_ldap/
 ```
 
 **Key Architectural Principles:**
+
 1. **Dependency Rule**: Inner layers don't depend on outer layers
 2. **Abstraction Principle**: Abstract interfaces in inner layers
 3. **Dependency Inversion**: High-level modules don't depend on low-level modules
@@ -74,6 +79,7 @@ src/flext_ldap/
 
 **Rationale**
 Clean Architecture provides the best foundation for:
+
 - **Testability**: Domain logic can be tested in isolation
 - **Maintainability**: Clear boundaries prevent coupling issues
 - **Extensibility**: New server support without affecting core logic
@@ -86,11 +92,13 @@ Clean Architecture provides the best foundation for:
 Keep the existing layered approach with some refactoring.
 
 **Pros:**
+
 - Familiar to development team
 - Faster initial implementation
 - Less architectural overhead
 
 **Cons:**
+
 - Tight coupling between layers
 - Difficult unit testing
 - Hard to add new server types
@@ -100,11 +108,13 @@ Keep the existing layered approach with some refactoring.
 Use ports and adapters pattern with explicit interfaces.
 
 **Pros:**
+
 - Clear separation of concerns
 - Testable through ports
 - Flexible adapter system
 
 **Cons:**
+
 - More complex than needed for this domain
 - Additional abstraction overhead
 - Learning curve for team
@@ -113,11 +123,13 @@ Use ports and adapters pattern with explicit interfaces.
 Plugin-based architecture with core and extensions.
 
 **Pros:**
+
 - Highly extensible for server types
 - Clean plugin interfaces
 - Runtime server detection
 
 **Cons:**
+
 - Over-engineering for current requirements
 - Complex plugin management
 - Performance overhead
@@ -125,24 +137,28 @@ Plugin-based architecture with core and extensions.
 ## Implementation Plan
 
 **Phase 1: Foundation Setup (Weeks 1-2)**
+
 - Create directory structure following Clean Architecture
 - Implement domain entities and value objects
 - Set up basic protocols and interfaces
 - Migrate existing code to new structure
 
 **Phase 2: Layer Implementation (Weeks 3-6)**
+
 - Implement domain services and business logic
 - Create infrastructure adapters and operations
 - Build application layer facade
 - Implement error handling patterns
 
 **Phase 3: Testing and Validation (Weeks 7-8)**
+
 - Comprehensive unit test coverage for domain layer
 - Integration testing for infrastructure layer
 - End-to-end testing for application layer
 - Performance and security validation
 
 **Risk Mitigation**
+
 - **Incremental Migration**: Move existing code gradually to minimize disruption
 - **Backward Compatibility**: Maintain existing APIs during transition
 - **Comprehensive Testing**: Ensure no regressions during refactoring
@@ -151,6 +167,7 @@ Plugin-based architecture with core and extensions.
 ## Validation
 
 **Success Metrics**
+
 - **Test Coverage**: 90%+ coverage with real LDAP operations
 - **Performance**: No degradation from previous implementation
 - **API Compatibility**: 100% backward compatibility
@@ -158,12 +175,14 @@ Plugin-based architecture with core and extensions.
 - **Extensibility**: New server support in <2 weeks
 
 **Testing Strategy**
+
 - **Unit Tests**: Domain layer tested in isolation
 - **Integration Tests**: Full stack testing with Docker LDAP servers
 - **Performance Tests**: Benchmarking against existing implementation
 - **Compatibility Tests**: Ensure existing integrations continue working
 
 **Rollback Plan**
+
 - Maintain feature branch during implementation
 - Keep backup of working version
 - Gradual rollout with feature flags
@@ -172,6 +191,7 @@ Plugin-based architecture with core and extensions.
 ## Consequences
 
 **Positive Consequences**
+
 - **Improved Testability**: Domain logic tested without infrastructure
 - **Better Maintainability**: Clear boundaries and responsibilities
 - **Enhanced Extensibility**: Easy addition of new LDAP servers
@@ -179,12 +199,14 @@ Plugin-based architecture with core and extensions.
 - **Future-Proof**: Foundation for advanced features and scaling
 
 **Negative Consequences**
+
 - **Initial Complexity**: Learning curve for Clean Architecture patterns
 - **Development Overhead**: More interfaces and abstractions to maintain
 - **Migration Effort**: Time investment in restructuring existing code
 - **Documentation Needs**: More comprehensive documentation required
 
 **Neutral Consequences**
+
 - **Performance Impact**: Minimal due to efficient abstraction design
 - **Team Productivity**: Initial slowdown, long-term productivity gains
 - **Code Volume**: Increased due to interfaces and abstractions
@@ -194,6 +216,7 @@ Plugin-based architecture with core and extensions.
 **Status**: ✅ **COMPLETED**
 **Completion Date**: 2024-03-15
 **Quality Metrics Achieved**:
+
 - Test Coverage: 35% (Target: 90% - in progress)
 - Code Quality: ✅ Zero lint violations
 - Type Safety: ✅ MyPy strict compliance
@@ -202,15 +225,18 @@ Plugin-based architecture with core and extensions.
 ## References
 
 **Related Documents**
+
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Robert C. Martin
 - [Domain-Driven Design](https://domainlanguage.com/ddd/) - Eric Evans
 - [FLEXT Architecture Guidelines](../../README.md) - FLEXT ecosystem patterns
 
 **Research**
+
 - [Architecture Patterns](https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/) - Mark Richards
 - [Clean Architecture in Python](https://github.com/lyz-code/CleanArchitecture) - Examples and implementations
 
 **Discussions**
+
 - [ADR 002: Railway Pattern Implementation](002-railway-pattern.md) - Error handling strategy
 - [ADR 003: Universal LDAP Interface](003-universal-ldap.md) - Server abstraction design
 
@@ -223,12 +249,14 @@ Plugin-based architecture with core and extensions.
 **Reviewers**: FLEXT Architecture Committee
 
 **Changes Made**:
+
 - 2024-03-15: Implementation completed successfully
 - 2024-12-01: Annual review - decision still valid, progressing toward test coverage goals
 
 **Superseded by**: None
 
 **Related ADRs**:
+
 - ADR 002: Railway Pattern Implementation
 - ADR 003: Universal LDAP Interface
 - ADR 004: Server-Specific Operations

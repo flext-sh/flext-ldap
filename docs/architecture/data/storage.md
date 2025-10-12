@@ -9,4 +9,4 @@ This document describes how data is stored, persisted, and managed within the FL
 ---
 
 **Storage Architecture**
-*Data persistence and management strategies*
+_Data persistence and management strategies_

@@ -9,4 +9,4 @@ This document describes the reliability characteristics and requirements for fle
 ---
 
 **Reliability and Availability**
-*Reliability characteristics and requirements*
+_Reliability characteristics and requirements_

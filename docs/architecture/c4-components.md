@@ -9,4 +9,4 @@ This diagram shows the detailed component structure and interfaces.
 ---
 
 **C4 Model - Level 3: Component Architecture**
-*Detailed component structure and interfaces*
+_Detailed component structure and interfaces_

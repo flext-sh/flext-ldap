@@ -9,4 +9,4 @@ This document describes how data flows through the system and key processing pip
 ---
 
 **Data Flow Architecture**
-*Data processing and transformation pipelines*
+_Data processing and transformation pipelines_

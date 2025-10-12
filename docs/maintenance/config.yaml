@@ -42,7 +42,7 @@ validation:
   user_agent: "DocMaintenance/1.0"
 
   # Cache settings
-  cache_ttl: 86400  # 24 hours
+  cache_ttl: 86400 # 24 hours
 
   # Domains to skip during link checking
   skip_domains:
@@ -148,5 +148,5 @@ notifications:
 logging:
   level: "INFO"
   file: "docs/maintenance/logs/maintenance.log"
-  max_file_size: 10485760  # 10MB
+  max_file_size: 10485760 # 10MB
   backup_count: 5

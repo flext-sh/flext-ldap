@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   flext-oud-test:
@@ -6,8 +6,8 @@ services:
     container_name: flext-oud-test
     hostname: flext-oud-test
     ports:
-      - "3489:1389"  # LDAP port
-      - "3637:1636"  # LDAPS port (changed from 3636 to avoid conflict)
+      - "3489:1389" # LDAP port
+      - "3637:1636" # LDAPS port (changed from 3636 to avoid conflict)
     environment:
       # OUD Configuration
       rootUserDN: "cn=admin"
@@ -28,7 +28,22 @@ services:
     volumes:
       - oud-data:/u01/oracle/user_projects
     healthcheck:
-      test: ["CMD", "ldapsearch", "-H", "ldap://localhost:1389", "-D", "cn=admin", "-w", "admin123", "-b", "dc=flext,dc=local", "-s", "base", "(objectClass=*)"]
+      test:
+        [
+          "CMD",
+          "ldapsearch",
+          "-H",
+          "ldap://localhost:1389",
+          "-D",
+          "cn=admin",
+          "-w",
+          "admin123",
+          "-b",
+          "dc=flext,dc=local",
+          "-s",
+          "base",
+          "(objectClass=*)",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5

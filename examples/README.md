@@ -480,6 +480,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 ```
 
 **Generated Structure:**
+
 - 500 users across 5 departments
 - 50 groups (departments, projects, roles)
 - 100 service accounts
@@ -539,6 +540,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
    - Entry validation
 
 **Test Environment:**
+
 - Docker Container: flext-openldap-test (port 3390)
 - Base DN: dc=flext,dc=local
 - Admin: cn=admin,dc=flext,dc=local / admin123
@@ -565,6 +567,7 @@ python examples/99_comprehensive_openldap_validation.py
 ```
 
 **Expected Output:**
+
 - Connection validation
 - 4 requirement validation suites
 - Additional comprehensive tests
@@ -572,8 +575,9 @@ python examples/99_comprehensive_openldap_validation.py
 - Pass/fail summary
 
 **Success Criteria:**
+
 - All 4 requirements pass
-- >90% overall success rate
+- > 90% overall success rate
 
 ---
 
@@ -582,12 +586,14 @@ python examples/99_comprehensive_openldap_validation.py
 **Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with ~1000 entries
 
 **Validates Same 4 Requirements as OpenLDAP:**
+
 1. API Usability (OUD-specific tests)
 2. Complete Parameterization (OUD configurations)
 3. Universal Schema Support (OUD schemas)
 4. Server Information Accuracy (OUD detection)
 
 **Test Environment:**
+
 - Docker Container: flext-oud-test (port 3489)
 - Base DN: dc=flext,dc=local
 - Admin: cn=admin / admin123
@@ -617,6 +623,7 @@ python examples/99_comprehensive_oud_validation.py
 ```
 
 **Expected Output:**
+
 - OUD connection validation
 - 4 requirement validation suites (OUD-specific)
 - OUD-specific feature tests
@@ -624,8 +631,9 @@ python examples/99_comprehensive_oud_validation.py
 - Pass/fail summary
 
 **Success Criteria:**
+
 - All 4 requirements pass on OUD
-- >90% overall success rate
+- > 90% overall success rate
 - OUD-specific features validated
 
 ---

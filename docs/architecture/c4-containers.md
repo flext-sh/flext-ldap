@@ -41,4 +41,4 @@ FLEXT-LDAP is implemented as a Python library with Clean Architecture patterns, 
 ---
 
 **C4 Model - Level 2: Container Architecture**
-*Technology choices and high-level system structure*
+_Technology choices and high-level system structure_

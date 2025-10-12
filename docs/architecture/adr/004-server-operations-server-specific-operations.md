@@ -35,6 +35,7 @@
 ## Implementation Plan
 
 **Phase 1: [Implementation steps]**
+
 - [Timeline and success criteria]
 
 ## Validation
@@ -53,9 +54,10 @@
 ## References
 
 **Related Documents**
+
 - [Links to related ADRs and documentation]
 
 ---
 
 **ADR 004-server-operations: Server-Specific Operations**
-*Accepted on 2025-10-10*
+_Accepted on 2025-10-10_
