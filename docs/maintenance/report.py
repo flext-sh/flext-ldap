@@ -1,44 +1,49 @@
 #!/usr/bin/env python3
-"""
-Documentation Quality Assurance Reporting System
+"""Documentation Quality Assurance Reporting System.
 
 Generates comprehensive reports, dashboards, and analytics for documentation maintenance.
 Provides visualization and tracking of quality metrics over time.
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import yaml
-import time
-import argparse
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from typing import Any
+
+import yaml
+
 try:
     import matplotlib.pyplot as plt
     import seaborn as sns
+
     HAS_VISUALIZATION = True
 except ImportError:
     HAS_VISUALIZATION = False
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
+
 
 @dataclass
 class ReportData:
     """Container for all report data."""
+
     timestamp: datetime
-    audit_summary: Dict[str, Any]
-    validation_summary: Dict[str, Any]
-    style_summary: Dict[str, Any]
-    trends: Dict[str, Any]
-    recommendations: List[Dict[str, Any]]
+    audit_summary: dict[str, Any]
+    validation_summary: dict[str, Any]
+    style_summary: dict[str, Any]
+    trends: dict[str, Any]
+    recommendations: list[dict[str, Any]]
+
 
 @dataclass
 class QualityMetrics:
     """Quality metrics for documentation health."""
+
     overall_score: float
     content_health: float
     link_health: float
@@ -46,34 +51,35 @@ class QualityMetrics:
     accessibility: float
     trends_direction: str  # 'improving', 'stable', 'declining'
 
+
 class ReportGenerator:
     """Main report generation class."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None) -> None:
         self.config = self._load_config(config_path)
-        self.reports_dir = os.path.join(os.path.dirname(__file__), 'reports')
-        os.makedirs(self.reports_dir, exist_ok=True)
+        self.reports_dir = os.path.join(Path(__file__).parent, "reports")
+        Path(self.reports_dir).mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
         """Load configuration."""
         default_config = {
-            'reporting': {
-                'output_formats': ['html', 'json', 'markdown'],
-                'include_charts': True,
-                'chart_style': 'seaborn',
-                'metrics_history_days': 30,
-                'dashboard_template': 'default'
+            "reporting": {
+                "output_formats": ["html", "json", "markdown"],
+                "include_charts": True,
+                "chart_style": "seaborn",
+                "metrics_history_days": 30,
+                "dashboard_template": "default",
             },
-            'thresholds': {
-                'excellent_score': 90,
-                'good_score': 70,
-                'fair_score': 50,
-                'critical_issues_threshold': 10
-            }
+            "thresholds": {
+                "excellent_score": 90,
+                "good_score": 70,
+                "fair_score": 50,
+                "critical_issues_threshold": 10,
+            },
         }
 
-        if config_path and os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+        if config_path and Path(config_path).exists():
+            with Path(config_path).open(encoding="utf-8") as f:
                 user_config = yaml.safe_load(f)
                 for key, value in user_config.items():
                     if key in default_config:
@@ -83,11 +89,13 @@ class ReportGenerator:
 
         return default_config
 
-    def generate_comprehensive_report(self, audit_file: Optional[str] = None,
-                                    validation_file: Optional[str] = None,
-                                    style_file: Optional[str] = None) -> ReportData:
+    def generate_comprehensive_report(
+        self,
+        audit_file: str | None = None,
+        validation_file: str | None = None,
+        style_file: str | None = None,
+    ) -> ReportData:
         """Generate comprehensive report from audit results."""
-
         # Load data from files or run fresh audits
         audit_data = self._load_audit_data(audit_file)
         validation_data = self._load_validation_data(validation_file)
@@ -102,100 +110,95 @@ class ReportGenerator:
         )
 
         return ReportData(
-            timestamp=datetime.now(),
-            audit_summary=audit_data.get('summary', {}),
-            validation_summary=validation_data.get('summary', {}),
-            style_summary=style_data.get('summary', {}),
+            timestamp=datetime.now(UTC),
+            audit_summary=audit_data.get("summary", {}),
+            validation_summary=validation_data.get("summary", {}),
+            style_summary=style_data.get("summary", {}),
             trends=trends,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
-    def _load_audit_data(self, audit_file: Optional[str]) -> Dict[str, Any]:
+    def _load_audit_data(self, audit_file: str | None) -> dict[str, Any]:
         """Load audit data."""
-        if audit_file and os.path.exists(audit_file):
-            with open(audit_file, 'r') as f:
+        if audit_file and Path(audit_file).exists():
+            with Path(audit_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_audit()
 
-    def _load_validation_data(self, validation_file: Optional[str]) -> Dict[str, Any]:
+    def _load_validation_data(self, validation_file: str | None) -> dict[str, Any]:
         """Load validation data."""
-        if validation_file and os.path.exists(validation_file):
-            with open(validation_file, 'r') as f:
+        if validation_file and Path(validation_file).exists():
+            with Path(validation_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_validation()
 
-    def _load_style_data(self, style_file: Optional[str]) -> Dict[str, Any]:
+    def _load_style_data(self, style_file: str | None) -> dict[str, Any]:
         """Load style data."""
-        if style_file and os.path.exists(style_file):
-            with open(style_file, 'r') as f:
+        if style_file and Path(style_file).exists():
+            with Path(style_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_style_check()
 
-    def _run_quick_audit(self) -> Dict[str, Any]:
+    def _run_quick_audit(self) -> dict[str, Any]:
         """Run a quick audit for basic metrics."""
         # Import here to avoid circular imports
-        sys.path.insert(0, os.path.dirname(__file__))
+        sys.path.insert(0, Path(__file__).parent)
         from audit import DocumentationAuditor
 
         auditor = DocumentationAuditor()
         results = auditor.audit_directory(
-            os.path.join(os.path.dirname(__file__), '..'),
-            recursive=False
+            os.path.join(Path(__file__).parent, ".."), recursive=False
         )
         summary = auditor.generate_summary()
 
         return {
-            'summary': asdict(summary),
-            'results': [asdict(r) for r in results[:10]]  # Limit for quick audit
+            "summary": asdict(summary),
+            "results": [asdict(r) for r in results[:10]],  # Limit for quick audit
         }
 
-    def _run_quick_validation(self) -> Dict[str, Any]:
+    def _run_quick_validation(self) -> dict[str, Any]:
         """Run quick link validation."""
         from validate_links import LinkValidator
 
         validator = LinkValidator()
         results = validator.validate_directory(
-            os.path.join(os.path.dirname(__file__), '..'),
-            check_external=False  # Quick mode
+            os.path.join(Path(__file__).parent, ".."),
+            check_external=False,  # Quick mode
         )
         summary = validator.generate_summary(results)
 
-        return {
-            'summary': asdict(summary),
-            'results': [asdict(r) for r in results[:5]]
-        }
+        return {"summary": asdict(summary), "results": [asdict(r) for r in results[:5]]}
 
-    def _run_quick_style_check(self) -> Dict[str, Any]:
+    def _run_quick_style_check(self) -> dict[str, Any]:
         """Run quick style validation."""
         from validate_style import StyleValidator
 
         validator = StyleValidator()
         results = validator.validate_directory(
-            os.path.join(os.path.dirname(__file__), '..')
+            os.path.join(Path(__file__).parent, "..")
         )
         summary = validator.generate_summary(results)
 
-        return {
-            'summary': asdict(summary),
-            'results': [asdict(r) for r in results[:5]]
-        }
+        return {"summary": asdict(summary), "results": [asdict(r) for r in results[:5]]}
 
-    def _calculate_trends(self) -> Dict[str, Any]:
+    def _calculate_trends(self) -> dict[str, Any]:
         """Calculate quality trends from historical data."""
         # Look for historical reports
-        history_dir = os.path.join(self.reports_dir, 'history')
-        if not os.path.exists(history_dir):
+        history_dir = os.path.join(self.reports_dir, "history")
+        if not Path(history_dir).exists():
             return {
-                'available': False,
-                'message': 'No historical data available for trend analysis'
+                "available": False,
+                "message": "No historical data available for trend analysis",
             }
 
         # Load recent reports
         recent_reports = []
         for file in sorted(os.listdir(history_dir))[-7:]:  # Last 7 reports
-            if file.endswith('.json'):
+            if file.endswith(".json"):
                 try:
-                    with open(os.path.join(history_dir, file), 'r') as f:
+                    with Path(os.path.join(history_dir, file)).open(
+                        encoding="utf-8"
+                    ) as f:
                         report = json.load(f)
                         recent_reports.append(report)
                 except:
@@ -203,104 +206,107 @@ class ReportGenerator:
 
         if len(recent_reports) < 2:
             return {
-                'available': False,
-                'message': f'Need at least 2 reports for trends, found {len(recent_reports)}'
+                "available": False,
+                "message": f"Need at least 2 reports for trends, found {len(recent_reports)}",
             }
 
         # Calculate trends
-        scores = [r.get('quality_metrics', {}).get('overall_score', 0) for r in recent_reports]
-        trend_direction = 'stable'
+        scores = [
+            r.get("quality_metrics", {}).get("overall_score", 0) for r in recent_reports
+        ]
+        trend_direction = "stable"
 
         if len(scores) >= 3:
             recent_avg = sum(scores[-3:]) / 3
             older_avg = sum(scores[:-3]) / max(1, len(scores[:-3]))
 
             if recent_avg > older_avg + 5:
-                trend_direction = 'improving'
+                trend_direction = "improving"
             elif recent_avg < older_avg - 5:
-                trend_direction = 'declining'
+                trend_direction = "declining"
 
         return {
-            'available': True,
-            'direction': trend_direction,
-            'recent_scores': scores[-5:],
-            'average_score': sum(scores) / len(scores),
-            'reports_analyzed': len(recent_reports)
+            "available": True,
+            "direction": trend_direction,
+            "recent_scores": scores[-5:],
+            "average_score": sum(scores) / len(scores),
+            "reports_analyzed": len(recent_reports),
         }
 
-    def _generate_recommendations(self, audit_data: Dict, validation_data: Dict,
-                                style_data: Dict) -> List[Dict[str, Any]]:
+    def _generate_recommendations(
+        self, audit_data: dict, validation_data: dict, style_data: dict
+    ) -> list[dict[str, Any]]:
         """Generate actionable recommendations."""
         recommendations = []
 
         # Audit-based recommendations
-        audit_summary = audit_data.get('summary', {})
-        if audit_summary.get('critical_issues', 0) > 0:
+        audit_summary = audit_data.get("summary", {})
+        if audit_summary.get("critical_issues", 0) > 0:
             recommendations.append({
-                'priority': 'high',
-                'category': 'content',
-                'title': 'Address Critical Content Issues',
-                'description': f'{audit_summary["critical_issues"]} critical content issues require immediate attention',
-                'actions': [
-                    'Review files with quality score < 50',
-                    'Update outdated content (>90 days old)',
-                    'Fix broken internal references'
-                ]
+                "priority": "high",
+                "category": "content",
+                "title": "Address Critical Content Issues",
+                "description": f"{audit_summary['critical_issues']} critical content issues require immediate attention",
+                "actions": [
+                    "Review files with quality score < 50",
+                    "Update outdated content (>90 days old)",
+                    "Fix broken internal references",
+                ],
             })
 
         # Link validation recommendations
-        validation_summary = validation_data.get('summary', {})
-        broken_links = validation_summary.get('broken_links', 0)
+        validation_summary = validation_data.get("summary", {})
+        broken_links = validation_summary.get("broken_links", 0)
         if broken_links > 10:
             recommendations.append({
-                'priority': 'medium',
-                'category': 'links',
-                'title': 'Fix Broken Links',
-                'description': f'{broken_links} broken links detected across documentation',
-                'actions': [
-                    'Update or remove broken external links',
-                    'Fix incorrect internal references',
-                    'Review most broken domains'
-                ]
+                "priority": "medium",
+                "category": "links",
+                "title": "Fix Broken Links",
+                "description": f"{broken_links} broken links detected across documentation",
+                "actions": [
+                    "Update or remove broken external links",
+                    "Fix incorrect internal references",
+                    "Review most broken domains",
+                ],
             })
 
         # Style recommendations
-        style_summary = style_data.get('summary', {})
-        style_score = style_summary.get('average_score', 100)
+        style_summary = style_data.get("summary", {})
+        style_score = style_summary.get("average_score", 100)
         if style_score < 80:
             recommendations.append({
-                'priority': 'low',
-                'category': 'style',
-                'title': 'Improve Style Consistency',
-                'description': f'Average style score of {style_score:.1f}/100 indicates formatting issues',
-                'actions': [
-                    'Fix heading hierarchy violations',
-                    'Add language specifications to code blocks',
-                    'Remove trailing whitespace'
-                ]
+                "priority": "low",
+                "category": "style",
+                "title": "Improve Style Consistency",
+                "description": f"Average style score of {style_score:.1f}/100 indicates formatting issues",
+                "actions": [
+                    "Fix heading hierarchy violations",
+                    "Add language specifications to code blocks",
+                    "Remove trailing whitespace",
+                ],
             })
 
         # Default recommendations
         if not recommendations:
             recommendations.append({
-                'priority': 'info',
-                'category': 'maintenance',
-                'title': 'Schedule Regular Maintenance',
-                'description': 'Documentation quality is good, continue regular maintenance',
-                'actions': [
-                    'Run weekly comprehensive audits',
-                    'Monitor link health monthly',
-                    'Review content freshness quarterly'
-                ]
+                "priority": "info",
+                "category": "maintenance",
+                "title": "Schedule Regular Maintenance",
+                "description": "Documentation quality is good, continue regular maintenance",
+                "actions": [
+                    "Run weekly comprehensive audits",
+                    "Monitor link health monthly",
+                    "Review content freshness quarterly",
+                ],
             })
 
         return recommendations
 
-    def generate_dashboard(self, report_data: ReportData,
-                          output_file: str = 'dashboard.html') -> str:
+    def generate_dashboard(
+        self, report_data: ReportData, output_file: str = "dashboard.html"
+    ) -> str:
         """Generate HTML dashboard (requires visualization libraries)."""
         if not HAS_VISUALIZATION:
-            print("⚠️  Visualization libraries not available. Skipping dashboard generation.")
             return ""
 
         template = self._get_dashboard_template()
@@ -310,42 +316,44 @@ class ReportGenerator:
 
         # Prepare data for template
         template_data = {
-            'timestamp': report_data.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            'overall_score': metrics.overall_score,
-            'content_health': metrics.content_health,
-            'link_health': metrics.link_health,
-            'style_consistency': metrics.style_consistency,
-            'accessibility': metrics.accessibility,
-            'trends_direction': metrics.trends_direction,
-            'audit_summary': report_data.audit_summary,
-            'validation_summary': report_data.validation_summary,
-            'style_summary': report_data.style_summary,
-            'recommendations': report_data.recommendations,
-            'trends': report_data.trends
+            "timestamp": report_data.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "overall_score": metrics.overall_score,
+            "content_health": metrics.content_health,
+            "link_health": metrics.link_health,
+            "style_consistency": metrics.style_consistency,
+            "accessibility": metrics.accessibility,
+            "trends_direction": metrics.trends_direction,
+            "audit_summary": report_data.audit_summary,
+            "validation_summary": report_data.validation_summary,
+            "style_summary": report_data.style_summary,
+            "recommendations": report_data.recommendations,
+            "trends": report_data.trends,
         }
 
         # Render template
         dashboard_html = template.format(**template_data)
 
-        os.makedirs(self.reports_dir, exist_ok=True)
+        Path(self.reports_dir).mkdir(exist_ok=True, parents=True)
         output_path = os.path.join(self.reports_dir, output_file)
-        with open(output_path, 'w') as f:
+        with Path(output_path).open("w", encoding="utf-8") as f:
             f.write(dashboard_html)
 
         return output_path
 
     def _calculate_quality_metrics(self, report_data: ReportData) -> QualityMetrics:
         """Calculate overall quality metrics."""
-        audit_score = report_data.audit_summary.get('average_quality', 100)
-        link_broken = report_data.validation_summary.get('broken_links', 0)
-        link_total = report_data.validation_summary.get('total_links', 1)
-        style_score = report_data.style_summary.get('average_score', 100)
+        audit_score = report_data.audit_summary.get("average_quality", 100)
+        link_broken = report_data.validation_summary.get("broken_links", 0)
+        link_total = report_data.validation_summary.get("total_links", 1)
+        style_score = report_data.style_summary.get("average_score", 100)
 
         # Content health (60% weight on audit)
         content_health = audit_score * 0.6
 
         # Link health (inverse of broken link ratio)
-        link_health = max(0, 100 - (link_broken / link_total * 100)) if link_total > 0 else 100
+        link_health = (
+            max(0, 100 - (link_broken / link_total * 100)) if link_total > 0 else 100
+        )
 
         # Style consistency (40% weight on style)
         style_consistency = style_score * 0.4
@@ -355,14 +363,14 @@ class ReportGenerator:
 
         # Overall score
         overall_score = (
-            content_health * 0.4 +
-            link_health * 0.3 +
-            style_consistency * 0.2 +
-            accessibility * 0.1
+            content_health * 0.4
+            + link_health * 0.3
+            + style_consistency * 0.2
+            + accessibility * 0.1
         )
 
         # Trends direction
-        trends_direction = report_data.trends.get('direction', 'stable')
+        trends_direction = report_data.trends.get("direction", "stable")
 
         return QualityMetrics(
             overall_score=round(overall_score, 1),
@@ -370,7 +378,7 @@ class ReportGenerator:
             link_health=round(link_health, 1),
             style_consistency=round(style_consistency, 1),
             accessibility=round(accessibility, 1),
-            trends_direction=trends_direction
+            trends_direction=trends_direction,
         )
 
     def _get_dashboard_template(self) -> str:
@@ -499,15 +507,16 @@ class ReportGenerator:
 </body>
 </html>"""
 
-    def generate_weekly_summary(self, report_data: ReportData,
-                               output_file: str = 'weekly-summary.md') -> str:
+    def generate_weekly_summary(
+        self, report_data: ReportData, output_file: str = "weekly-summary.md"
+    ) -> str:
         """Generate markdown weekly summary."""
-        os.makedirs(self.reports_dir, exist_ok=True)
+        Path(self.reports_dir).mkdir(exist_ok=True, parents=True)
         metrics = self._calculate_quality_metrics(report_data)
 
         summary = f"""# 📊 Weekly Documentation Quality Summary
 
-**Generated:** {report_data.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+**Generated:** {report_data.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 🎯 Overall Quality Score: {metrics.overall_score}/100
 
@@ -519,27 +528,27 @@ class ReportGenerator:
 
 ### Trends
 - **Direction:** {metrics.trends_direction.title()}
-- **Recent Scores:** {', '.join(map(str, report_data.trends.get('recent_scores', [])))}
+- **Recent Scores:** {", ".join(map(str, report_data.trends.get("recent_scores", [])))}
 
 ## 📈 Key Metrics
 
 ### Content Quality
-- **Files Audited:** {report_data.audit_summary.get('total_files', 0)}
-- **Total Words:** {report_data.audit_summary.get('total_words', 0):,}
-- **Average Age:** {report_data.audit_summary.get('average_age', 0):.1f} days
-- **Critical Issues:** {report_data.audit_summary.get('critical_issues', 0)}
+- **Files Audited:** {report_data.audit_summary.get("total_files", 0)}
+- **Total Words:** {report_data.audit_summary.get("total_words", 0):,}
+- **Average Age:** {report_data.audit_summary.get("average_age", 0):.1f} days
+- **Critical Issues:** {report_data.audit_summary.get("critical_issues", 0)}
 
 ### Link Health
-- **Total Links:** {report_data.validation_summary.get('total_links', 0)}
-- **Broken Links:** {report_data.validation_summary.get('broken_links', 0)}
-- **External Links:** {report_data.validation_summary.get('external_links', 0)}
-- **Internal Links:** {report_data.validation_summary.get('internal_links', 0)}
+- **Total Links:** {report_data.validation_summary.get("total_links", 0)}
+- **Broken Links:** {report_data.validation_summary.get("broken_links", 0)}
+- **External Links:** {report_data.validation_summary.get("external_links", 0)}
+- **Internal Links:** {report_data.validation_summary.get("internal_links", 0)}
 
 ### Style Consistency
-- **Files Checked:** {report_data.style_summary.get('total_files', 0)}
-- **Total Violations:** {report_data.style_summary.get('total_violations', 0)}
-- **Average Score:** {report_data.style_summary.get('average_score', 0):.1f}/100
-- **Files with Issues:** {report_data.style_summary.get('files_with_violations', 0)}
+- **Files Checked:** {report_data.style_summary.get("total_files", 0)}
+- **Total Violations:** {report_data.style_summary.get("total_violations", 0)}
+- **Average Score:** {report_data.style_summary.get("average_score", 0):.1f}/100
+- **Files with Issues:** {report_data.style_summary.get("files_with_violations", 0)}
 
 ## 🎯 Priority Actions
 
@@ -547,97 +556,89 @@ class ReportGenerator:
 
         # Add recommendations
         for rec in report_data.recommendations:
-            summary += f"""### {rec['title']} ({rec['priority'].title()} Priority)
-{rec['description']}
+            summary += f"""### {rec["title"]} ({rec["priority"].title()} Priority)
+{rec["description"]}
 
 **Actions:**
-{"".join([f"- {action}\\n" for action in rec['actions']])}
+{"".join([f"- {action}\\n" for action in rec["actions"]])}
 
 """
 
         output_path = os.path.join(self.reports_dir, output_file)
-        with open(output_path, 'w') as f:
+        with Path(output_path).open("w", encoding="utf-8") as f:
             f.write(summary)
 
         return output_path
 
-def main():
-    parser = argparse.ArgumentParser(description='Documentation Quality Assurance Reporting System')
-    parser.add_argument('--audit-file', help='Path to audit results JSON file')
-    parser.add_argument('--validation-file', help='Path to validation results JSON file')
-    parser.add_argument('--style-file', help='Path to style results JSON file')
-    parser.add_argument('--generate-dashboard', action='store_true',
-                       help='Generate HTML dashboard')
-    parser.add_argument('--weekly-summary', action='store_true',
-                       help='Generate weekly markdown summary')
-    parser.add_argument('--monthly-report', action='store_true',
-                       help='Generate detailed monthly report')
-    parser.add_argument('--output-dir', default='reports',
-                       help='Output directory for reports')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Verbose output')
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Documentation Quality Assurance Reporting System"
+    )
+    parser.add_argument("--audit-file", help="Path to audit results JSON file")
+    parser.add_argument(
+        "--validation-file", help="Path to validation results JSON file"
+    )
+    parser.add_argument("--style-file", help="Path to style results JSON file")
+    parser.add_argument(
+        "--generate-dashboard", action="store_true", help="Generate HTML dashboard"
+    )
+    parser.add_argument(
+        "--weekly-summary", action="store_true", help="Generate weekly markdown summary"
+    )
+    parser.add_argument(
+        "--monthly-report", action="store_true", help="Generate detailed monthly report"
+    )
+    parser.add_argument(
+        "--output-dir", default="reports", help="Output directory for reports"
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     generator = ReportGenerator()
     generator.reports_dir = args.output_dir
-    os.makedirs(generator.reports_dir, exist_ok=True)
+    Path(generator.reports_dir).mkdir(exist_ok=True, parents=True)
 
     if args.verbose:
-        print("📊 Generating documentation quality report...")
+        pass
 
     # Generate comprehensive report
     report_data = generator.generate_comprehensive_report(
-        args.audit_file,
-        args.validation_file,
-        args.style_file
+        args.audit_file, args.validation_file, args.style_file
     )
 
     generated_files = []
 
     if args.generate_dashboard:
         dashboard_file = generator.generate_dashboard(report_data)
-        generated_files.append(('Dashboard', dashboard_file))
-        print(f"📊 Dashboard generated: {dashboard_file}")
+        generated_files.append(("Dashboard", dashboard_file))
 
     if args.weekly_summary:
         summary_file = generator.generate_weekly_summary(report_data)
-        generated_files.append(('Weekly Summary', summary_file))
-        print(f"📋 Weekly summary generated: {summary_file}")
+        generated_files.append(("Weekly Summary", summary_file))
 
     if args.monthly_report:
         # Monthly report would be more detailed
-        monthly_file = generator.generate_dashboard(
-            report_data, 'monthly-report.html'
-        )
-        generated_files.append(('Monthly Report', monthly_file))
-        print(f"📈 Monthly report generated: {monthly_file}")
+        monthly_file = generator.generate_dashboard(report_data, "monthly-report.html")
+        generated_files.append(("Monthly Report", monthly_file))
 
     # If no specific report requested, generate dashboard
     if not any([args.generate_dashboard, args.weekly_summary, args.monthly_report]):
         dashboard_file = generator.generate_dashboard(report_data)
         summary_file = generator.generate_weekly_summary(report_data)
         generated_files.extend([
-            ('Dashboard', dashboard_file),
-            ('Weekly Summary', summary_file)
+            ("Dashboard", dashboard_file),
+            ("Weekly Summary", summary_file),
         ])
-        print("📊 Generated default reports:")
-        print(f"  - Dashboard: {dashboard_file}")
-        print(f"  - Summary: {summary_file}")
 
     # Calculate and display quality score
-    metrics = generator._calculate_quality_metrics(report_data)
-    health_status = "🟢 Excellent" if metrics.overall_score >= 90 else \
-                   "🟡 Good" if metrics.overall_score >= 70 else \
-                   "🟠 Fair" if metrics.overall_score >= 50 else "🔴 Poor"
-
-    print(f"\n💚 Overall Quality Score: {metrics.overall_score}/100 - {health_status}")
-    print(f"📈 Trends: {metrics.trends_direction.title()}")
+    generator._calculate_quality_metrics(report_data)
 
     if generated_files:
-        print("\n📁 Generated files:")
-        for name, path in generated_files:
-            print(f"  {name}: {path}")
+        for _name, _path in generated_files:
+            pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

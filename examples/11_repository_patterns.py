@@ -31,7 +31,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextLogger
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -41,7 +41,7 @@ from flext_ldap import (
     FlextLdapRepositories,
 )
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -57,13 +57,13 @@ def setup_api() -> FlextLdap | None:
         Connected FlextLdap instance or None if connection failed.
 
     """
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD) if BIND_PASSWORD else None,
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Use context manager for automatic connection/disconnection
     try:
@@ -121,21 +121,21 @@ def demonstrate_user_repository() -> None:
 
     logger.info("\n2. Repository CRUD Operations:")
     logger.info("   Available methods (Domain.Repository protocol):")
-    logger.info("   • get_by_id(id) -> FlextResult[User | None]")
-    logger.info("   • get_all() -> FlextResult[list[User]]")
-    logger.info("   • add(user) -> FlextResult[User]")
-    logger.info("   • update(user) -> FlextResult[User]")
-    logger.info("   • delete(id) -> FlextResult[bool]")
-    logger.info("   • exists(id) -> FlextResult[bool]")
+    logger.info("   • get_by_id(id) -> FlextCore.Result[User | None]")
+    logger.info("   • get_all() -> FlextCore.Result[list[User]]")
+    logger.info("   • add(user) -> FlextCore.Result[User]")
+    logger.info("   • update(user) -> FlextCore.Result[User]")
+    logger.info("   • delete(id) -> FlextCore.Result[bool]")
+    logger.info("   • exists(id) -> FlextCore.Result[bool]")
 
     logger.info("\n3. User Lookup by ID (DN or UID):")
     logger.info("   • Supports both DN and UID lookup")
     logger.info("   • Automatic fallback from DN to UID search")
-    logger.info("   • Returns FlextResult[User | None]")
+    logger.info("   • Returns FlextCore.Result[User | None]")
 
     logger.info("\n4. Get All Users:")
     logger.info("   • Retrieves all users from user base DN")
-    logger.info("   • Returns FlextResult[list[User]]")
+    logger.info("   • Returns FlextCore.Result[list[User]]")
     logger.info("   • Efficient for bulk operations")
 
 
@@ -160,17 +160,17 @@ def demonstrate_group_repository() -> None:
 
     logger.info("\n2. Repository CRUD Operations:")
     logger.info("   Available methods (Domain.Repository protocol):")
-    logger.info("   • get_by_id(id) -> FlextResult[Group | None]")
-    logger.info("   • get_all() -> FlextResult[list[Group]]")
-    logger.info("   • add(group) -> FlextResult[Group]")
-    logger.info("   • update(group) -> FlextResult[Group]")
-    logger.info("   • delete(id) -> FlextResult[bool]")
-    logger.info("   • exists(id) -> FlextResult[bool]")
+    logger.info("   • get_by_id(id) -> FlextCore.Result[Group | None]")
+    logger.info("   • get_all() -> FlextCore.Result[list[Group]]")
+    logger.info("   • add(group) -> FlextCore.Result[Group]")
+    logger.info("   • update(group) -> FlextCore.Result[Group]")
+    logger.info("   • delete(id) -> FlextCore.Result[bool]")
+    logger.info("   • exists(id) -> FlextCore.Result[bool]")
 
     logger.info("\n3. Group Lookup by ID:")
     logger.info("   • Supports DN lookup")
     logger.info("   • Group-specific search capabilities")
-    logger.info("   • Returns FlextResult[Group | None]")
+    logger.info("   • Returns FlextCore.Result[Group | None]")
 
     logger.info("\n4. Group Management:")
     logger.info("   • Create new groups")
@@ -188,31 +188,31 @@ def demonstrate_repository_entity_lifecycle() -> None:
     logger.info("   • Validate entity using Pydantic models")
     logger.info("   • Call repository.add(entity)")
     logger.info("   • Repository converts entity to LDAP entry")
-    logger.info("   • Returns FlextResult[Entity] with created entity")
+    logger.info("   • Returns FlextCore.Result[Entity] with created entity")
 
     logger.info("\n2. Read Phase:")
     logger.info("   • Call repository.get_by_id(id)")
     logger.info("   • Repository queries LDAP server")
     logger.info("   • Converts LDAP entry to domain entity")
-    logger.info("   • Returns FlextResult[Entity | None]")
+    logger.info("   • Returns FlextCore.Result[Entity | None]")
 
     logger.info("\n3. Update Phase:")
     logger.info("   • Modify entity attributes")
     logger.info("   • Call repository.update(entity)")
     logger.info("   • Repository calculates LDAP modifications")
     logger.info("   • Applies changes to LDAP server")
-    logger.info("   • Returns FlextResult[Entity] with updated entity")
+    logger.info("   • Returns FlextCore.Result[Entity] with updated entity")
 
     logger.info("\n4. Delete Phase:")
     logger.info("   • Call repository.delete(id)")
     logger.info("   • Repository removes LDAP entry")
-    logger.info("   • Returns FlextResult[bool]")
+    logger.info("   • Returns FlextCore.Result[bool]")
     logger.info("   • True if deleted, False if not found")
 
 
 def demonstrate_repository_with_flextresult() -> None:
-    """Demonstrate repository error handling with FlextResult pattern."""
-    logger.info("\n=== Repository Error Handling with FlextResult ===")
+    """Demonstrate repository error handling with FlextCore.Result pattern."""
+    logger.info("\n=== Repository Error Handling with FlextCore.Result ===")
 
     logger.info("\n1. Successful Operation:")
     logger.info("   Example code:")
@@ -243,7 +243,7 @@ def demonstrate_repository_with_flextresult() -> None:
     logger.info("   ```")
 
     logger.info("\n4. Railway-Oriented Programming:")
-    logger.info("   • All repository methods return FlextResult")
+    logger.info("   • All repository methods return FlextCore.Result")
     logger.info("   • Chain operations safely")
     logger.info("   • NO try/except fallbacks needed")
     logger.info("   • Explicit error handling flow")
@@ -295,8 +295,8 @@ def demonstrate_repository_testing_benefits() -> None:
     logger.info("   ```python")
     logger.info("   # Create mock repository")
     logger.info("   class MockUserRepository(LdapRepository[User]):")
-    logger.info("       def get_by_id(self, id: str) -> FlextResult[User | None]:")
-    logger.info("           return FlextResult[User | None].ok(mock_user)")
+    logger.info("       def get_by_id(self, id: str) -> FlextCore.Result[User | None]:")
+    logger.info("           return FlextCore.Result[User | None].ok(mock_user)")
     logger.info("   ")
     logger.info("   # Test business logic without LDAP")
     logger.info("   user_service = UserService(MockUserRepository())")
@@ -385,7 +385,7 @@ def main() -> int:
             # 5. Entity lifecycle
             demonstrate_repository_entity_lifecycle()
 
-            # 6. FlextResult error handling
+            # 6. FlextCore.Result error handling
             demonstrate_repository_with_flextresult()
 
             # 7. Clean Architecture
@@ -405,7 +405,9 @@ def main() -> int:
             logger.info("  • FlextLdapRepositories - Domain-Driven Design pattern")
             logger.info("  • UserRepository & GroupRepository - Entity management")
             logger.info("  • Domain.Repository protocol - Standard interface")
-            logger.info("  • FlextResult integration - Railway-oriented programming")
+            logger.info(
+                "  • FlextCore.Result integration - Railway-oriented programming"
+            )
             logger.info("  • Clean Architecture - Infrastructure abstraction")
 
             logger.info("\nRepository Pattern Benefits:")

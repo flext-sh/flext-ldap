@@ -14,7 +14,7 @@ import time
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -59,7 +59,7 @@ class TestFlextLdapModels:
         """Test DistinguishedName create method."""
         # Test valid DN creation
         result = FlextLdapModels.DistinguishedName.create("cn=testuser,dc=test,dc=com")
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         # Use unwrap() to get the actual DistinguishedName object
         dn_obj = result.unwrap()
@@ -68,7 +68,7 @@ class TestFlextLdapModels:
 
         # Test invalid DN creation
         result = FlextLdapModels.DistinguishedName.create("")
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_failure
 
     def test_filter_creation(self) -> None:
@@ -260,7 +260,7 @@ class TestFlextLdapModels:
         )
 
         result = valid_user.validate_business_rules()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
         # Test invalid user - validation happens at field level
@@ -313,7 +313,7 @@ class TestFlextLdapModels:
         )
 
         result = valid_group.validate_business_rules()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
         # Test invalid group - validation happens at field level
@@ -594,11 +594,11 @@ class TestFlextLdapModels:
         )
 
         # 5. Create connection config
-        from flext_core import FlextConstants
+        from flext_core import FlextCore
 
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
+            port=FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             bind_password="testpass",
         )

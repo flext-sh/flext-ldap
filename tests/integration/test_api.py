@@ -13,7 +13,7 @@ from typing import cast
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -28,8 +28,8 @@ pytestmark = pytest.mark.integration
 
 # Helper function to replace create_ldap_attributes
 def create_ldap_attributes(
-    attrs: dict[str, FlextTypes.StringList],
-) -> dict[str, FlextTypes.StringList]:
+    attrs: dict[str, FlextCore.Types.StringList],
+) -> dict[str, FlextCore.Types.StringList]:
     """Convert attributes to LDAP format using Python standard conversion."""
     return {k: [str(item) for item in v] for k, v in attrs.items()}
 
@@ -40,7 +40,7 @@ class TestLdapClientRealOperations:
 
     def test_client_connection_real_server(
         self,
-        shared_ldap_config: FlextTypes.StringDict,
+        shared_ldap_config: FlextCore.Types.StringDict,
     ) -> None:
         """Test real LDAP server connection."""
         client = FlextLdapClients()
@@ -63,7 +63,7 @@ class TestLdapClientRealOperations:
     def test_client_search_real_entries(
         self,
         shared_ldap_client: FlextLdapClients,
-        shared_ldap_config: FlextTypes.StringDict,
+        shared_ldap_config: FlextCore.Types.StringDict,
     ) -> None:
         """Test searching real LDAP entries."""
         # Use already connected client
@@ -81,7 +81,7 @@ class TestLdapClientRealOperations:
             paged_cookie=None,
         )
 
-        result: FlextResult[FlextLdapModels.SearchResponse] = (
+        result: FlextCore.Result[FlextLdapModels.SearchResponse] = (
             client.search_with_request(search_request)
         )
 
@@ -109,7 +109,7 @@ class TestLdapClientRealOperations:
     def test_client_add_modify_delete_real_entry(
         self,
         ldap_api: FlextLdapClients,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test complete CRUD operations with real LDAP entries."""
         # Setup: Connect to LDAP server
@@ -176,7 +176,7 @@ class TestLdapClientRealOperations:
             page_size=None,
             paged_cookie=None,
         )
-        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+        search_result: FlextCore.Result[FlextLdapModels.SearchResponse] = (
             client.search_with_request(search_request)
         )
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
@@ -195,8 +195,8 @@ class TestLdapClientRealOperations:
         )
         assert search_data.entries, "User entry should exist"
 
-        entry_data: FlextTypes.Dict = cast(
-            "FlextTypes.Dict", search_data.entries[0].attributes
+        entry_data: FlextCore.Types.Dict = cast(
+            "FlextCore.Types.Dict", search_data.entries[0].attributes
         )
         mail_value: object = entry_data.get("mail", "")
         assert "updated@example.com" in str(mail_value), "Email should be updated"
@@ -206,7 +206,7 @@ class TestLdapClientRealOperations:
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # VERIFY: Confirm deletion
-        verify_search: FlextResult[FlextLdapModels.SearchResponse] = (
+        verify_search: FlextCore.Result[FlextLdapModels.SearchResponse] = (
             client.search_with_request(search_request)
         )
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
@@ -239,7 +239,7 @@ class TestLdapServiceRealOperations:
     def test_service_user_lifecycle_real_operations(
         self,
         ldap_client: FlextLdapClients,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
         # Setup: Create OU for users
@@ -260,7 +260,7 @@ class TestLdapServiceRealOperations:
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         client.add_entry(
             ou_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", ou_attributes_2),
+            cast("dict[str, str | FlextCore.Types.StringList] | None", ou_attributes_2),
         )  # Ignore if exists
 
         # Test user creation
@@ -343,8 +343,8 @@ class TestLdapServiceRealOperations:
             "description": ["Updated via service"],
         }
         update_attributes_raw = create_ldap_attributes(update_attrs_raw)
-        update_attributes: FlextTypes.Dict = cast(
-            "FlextTypes.Dict", update_attributes_raw
+        update_attributes: FlextCore.Types.Dict = cast(
+            "FlextCore.Types.Dict", update_attributes_raw
         )
         update_result = client.update_user_attributes(
             user_request.dn,
@@ -415,7 +415,7 @@ class TestLdapServiceRealOperations:
     def test_service_group_lifecycle_real_operations(
         self,
         ldap_api: FlextLdapClients,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
         # Setup: Connect and create OUs
@@ -436,7 +436,10 @@ class TestLdapServiceRealOperations:
             ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
             client.add(
                 ou_dn,
-                cast("dict[str, str | FlextTypes.StringList] | None", ou_attributes_3),
+                cast(
+                    "dict[str, str | FlextCore.Types.StringList] | None",
+                    ou_attributes_3,
+                ),
             )  # Ignore if exists
 
         # Create test user for group membership
@@ -452,7 +455,9 @@ class TestLdapServiceRealOperations:
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
         client.add(
             user_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", user_attributes_4),
+            cast(
+                "dict[str, str | FlextCore.Types.StringList] | None", user_attributes_4
+            ),
         )
 
         # Test group creation
@@ -498,7 +503,7 @@ class TestLdapServiceRealOperations:
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
         update_result = client.update_group_attributes(
             group_request.dn,
-            cast("FlextTypes.Dict", update_attributes_5),
+            cast("FlextCore.Types.Dict", update_attributes_5),
         )
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
@@ -516,7 +521,9 @@ class TestLdapServiceRealOperations:
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
         client.add(
             user2_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", user2_attributes_6),
+            cast(
+                "dict[str, str | FlextCore.Types.StringList] | None", user2_attributes_6
+            ),
         )
 
         # Add member
@@ -530,7 +537,7 @@ class TestLdapServiceRealOperations:
         assert members_result.is_success, (
             f"Failed to get members: {members_result.error}"
         )
-        default_members: FlextTypes.StringList = []
+        default_members: FlextCore.Types.StringList = []
         members_list = (
             members_result.unwrap() if members_result.is_success else default_members
         )
@@ -546,7 +553,7 @@ class TestLdapServiceRealOperations:
         # Verify member was removed
         members_after_remove = client.get_members(group_request.dn)
         assert members_after_remove.is_success
-        default_members_after: FlextTypes.StringList = []
+        default_members_after: FlextCore.Types.StringList = []
         remaining_members = (
             members_after_remove.unwrap()
             if members_after_remove.is_success
@@ -581,7 +588,7 @@ class TestLdapValidationRealOperations:
 
     def test_dn_validation_real_ldap(
         self,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
@@ -608,7 +615,7 @@ class TestLdapValidationRealOperations:
     def test_business_rules_validation_real_ldap(
         self,
         ldap_client: FlextLdapClients,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""
         # Setup connection
@@ -629,7 +636,7 @@ class TestLdapValidationRealOperations:
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
         client.add(
             ou_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", ou_attributes_7),
+            cast("dict[str, str | FlextCore.Types.StringList] | None", ou_attributes_7),
         )
 
         # Test user with valid business rules
@@ -698,7 +705,7 @@ class TestLdapErrorHandlingReal:
 
     def test_connection_failure_handling(
         self,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test handling of real connection failures."""
         client = FlextLdapClients()
@@ -737,7 +744,7 @@ class TestLdapErrorHandlingReal:
     def test_ldap_operation_error_handling(
         self,
         ldap_api: FlextLdapClients,
-        clean_ldap_container: FlextTypes.Dict,
+        clean_ldap_container: FlextCore.Types.Dict,
     ) -> None:
         """Test error handling for LDAP operations."""
         # Setup: Connect to LDAP server
@@ -760,7 +767,7 @@ class TestLdapErrorHandlingReal:
             paged_cookie=None,
         )
 
-        search_result: FlextResult[FlextLdapModels.SearchResponse] = (
+        search_result: FlextCore.Result[FlextLdapModels.SearchResponse] = (
             client.search_with_request(invalid_search)
         )
         # Should handle gracefully - either return empty results or proper error
@@ -782,7 +789,9 @@ class TestLdapErrorHandlingReal:
 
         add_result = client.add_entry(
             invalid_dn,
-            cast("dict[str, str | FlextTypes.StringList] | None", invalid_attributes),
+            cast(
+                "dict[str, str | FlextCore.Types.StringList] | None", invalid_attributes
+            ),
         )
         # Should fail with appropriate error
         assert not add_result.is_success

@@ -12,8 +12,8 @@ TYPE CHECKER KNOWN ISSUES (Isolated until flext-core patterns stabilize):
 ===========================================================================
 
 1. DistinguishedName.create() return type (Lines 243, 255, 257, 261):
-   - Pyrefly reports: FlextResult[DistinguishedName] not assignable to FlextResult[object]
-   - Reason: Generic type inference limitation with nested FlextModels classes
+   - Pyrefly reports: FlextCore.Result[DistinguishedName] not assignable to FlextCore.Result[object]
+   - Reason: Generic type inference limitation with nested FlextCore.Models classes
    - Impact: None - runtime behavior is correct, type is properly constrained
    - Resolution: Waiting for flext-core TypeVar propagation improvements
 
@@ -24,16 +24,16 @@ TYPE CHECKER KNOWN ISSUES (Isolated until flext-core patterns stabilize):
    - Resolution: Architectural decision - LDAP users may not have creation timestamps
 
 3. Entry.additional_attributes access (Line 951):
-   - Pyrefly reports: object | None not assignable to list[str] | str | None
+   - Pyrefly reports: object | None not assignable to FlextCore.Types.StringList | str | None
    - Reason: Dict.get() returns object | None, but LDAP attributes are strongly typed
-   - Impact: None - LDAP protocol guarantees attribute values are str or list[str]
+   - Impact: None - LDAP protocol guarantees attribute values are str or FlextCore.Types.StringList
    - Resolution: Runtime type narrowing via LDAP protocol constraints
 
 4. Config.validate() method override (Lines 2406, 2430, 2453, 2475):
    - Pyrefly reports: Instance method incompatible with classmethod signature
    - Reason: Changed from Pydantic @model_validator to explicit validate() pattern
    - Impact: None - Explicit validation allows object creation without auto-validation
-   - Resolution: Pattern change for FlextResult compatibility (see validation tests)
+   - Resolution: Pattern change for FlextCore.Result compatibility (see validation tests)
 
 All other type errors have been fixed. These remaining issues are architectural decisions
 or generic type limitations that do not affect runtime correctness.
@@ -46,13 +46,7 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, override
 
-from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextResult,
-    FlextTypes,
-    FlextUtilities,
-)
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from pydantic import (
     ConfigDict,
@@ -71,7 +65,7 @@ from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 
-class FlextLdapModels(FlextModels):
+class FlextLdapModels(FlextCore.Models):
     """Unified LDAP models class consolidating ALL models, entities, and value objects.
 
     This class consolidates:
@@ -111,10 +105,10 @@ class FlextLdapModels(FlextModels):
     # VALUE OBJECTS - Immutable LDAP value objects
     # =========================================================================
 
-    class DistinguishedName(FlextModels.Value):
+    class DistinguishedName(FlextCore.Models.Value):
         """LDAP Distinguished Name value object with RFC 2253 compliance.
 
-        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
         Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation.
         """
 
@@ -259,7 +253,7 @@ class FlextLdapModels(FlextModels):
         def serialize_dn(self, value: str) -> str:
             """Custom serializer for DN normalization."""
             # Normalize DN format for consistent serialization
-            components: FlextTypes.StringList = []
+            components: FlextCore.Types.StringList = []
             for comp in value.split(","):
                 component = comp.strip()
                 if "=" in component:
@@ -271,39 +265,39 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         @override
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
+        def create(cls, *args: object, **kwargs: object) -> FlextCore.Result[object]:
             """Create DN with validation - compatible with base class signature."""
             try:
                 # Handle single argument case for DN string
                 if len(args) == 1 and not kwargs:
                     dn_string = str(args[0])
                     dn_obj = cls(value=dn_string.strip())
-                    return FlextResult[object].ok(dn_obj)
+                    return FlextCore.Result[object].ok(dn_obj)
 
                 # Handle kwargs case - ensure value is string
                 if "value" in kwargs:
                     kwargs["value"] = str(kwargs["value"])
 
                 # Convert all kwargs to proper types for Pydantic validation
-                typed_kwargs: FlextTypes.StringDict = {}
+                typed_kwargs: FlextCore.Types.StringDict = {}
                 for k, v in kwargs.items():
                     typed_kwargs[k] = str(v)
 
                 dn_obj = cls(**typed_kwargs)
-                return FlextResult[object].ok(dn_obj)
+                return FlextCore.Result[object].ok(dn_obj)
             except FlextLdapExceptions.LdapValidationError as e:
-                return FlextResult[object].fail(
+                return FlextCore.Result[object].fail(
                     f"DN creation failed: {e}",
                 )
             except Exception as e:
-                return FlextResult[object].fail(
+                return FlextCore.Result[object].fail(
                     f"DN creation failed: {e}",
                 )
 
-    class Filter(FlextModels.Value):
+    class Filter(FlextCore.Models.Value):
         """LDAP filter value object with RFC 4515 compliance.
 
-        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
         """
 
         expression: str = Field(..., min_length=1, description="LDAP filter expression")
@@ -342,10 +336,10 @@ class FlextLdapModels(FlextModels):
             """Create objectClass filter."""
             return cls(expression=f"(objectClass={object_class})")
 
-    class Scope(FlextModels.Value):
+    class Scope(FlextCore.Models.Value):
         """LDAP search scope value object.
 
-        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
         """
 
         value: str = Field(..., description="LDAP search scope value")
@@ -398,10 +392,10 @@ class FlextLdapModels(FlextModels):
         IBM_DIRECTORY = "ibm_directory"
         GENERIC = "generic"
 
-    class SchemaAttribute(FlextModels.Value):
+    class SchemaAttribute(FlextCore.Models.Value):
         """LDAP schema attribute definition.
 
-        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
         """
 
         name: str = Field(..., description="Attribute name")
@@ -420,30 +414,30 @@ class FlextLdapModels(FlextModels):
         substr: str | None = Field(default=None, description="Substring matching rule")
         superior: str | None = Field(default=None, description="Superior attribute")
 
-    class SchemaObjectClass(FlextModels.Value):
+    class SchemaObjectClass(FlextCore.Models.Value):
         """LDAP schema object class definition.
 
-        Extends FlextModels.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
         """
 
         name: str = Field(..., description="Object class name")
         oid: str = Field(..., description="Object identifier")
-        superior: FlextTypes.StringList = Field(
+        superior: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Superior classes",
         )
-        must: FlextTypes.StringList = Field(
+        must: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Required attributes",
         )
-        may: FlextTypes.StringList = Field(
+        may: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Optional attributes",
         )
         kind: str = Field(default="STRUCTURAL", description="Object class kind")
         is_obsolete: bool = Field(default=False, description="Obsolete flag")
 
-    class ServerQuirks(FlextModels.Value):
+    class ServerQuirks(FlextCore.Models.Value):
         """LDAP server-specific quirks and behaviors - Pydantic Value Object."""
 
         model_config = ConfigDict(frozen=True)
@@ -458,32 +452,36 @@ class FlextLdapModels(FlextModels):
         default_timeout: int = 30
         supports_start_tls: bool = True
         requires_explicit_bind: bool = False
-        attribute_name_mappings: FlextTypes.StringDict = Field(default_factory=dict)
-        object_class_mappings: FlextTypes.StringDict = Field(default_factory=dict)
-        dn_format_preferences: FlextTypes.StringList = Field(default_factory=list)
+        attribute_name_mappings: FlextCore.Types.StringDict = Field(
+            default_factory=dict
+        )
+        object_class_mappings: FlextCore.Types.StringDict = Field(default_factory=dict)
+        dn_format_preferences: FlextCore.Types.StringList = Field(default_factory=list)
         search_scope_limitations: set[str] = Field(default_factory=set)
-        filter_syntax_quirks: FlextTypes.StringList = Field(default_factory=list)
-        modify_operation_quirks: FlextTypes.StringList = Field(default_factory=list)
+        filter_syntax_quirks: FlextCore.Types.StringList = Field(default_factory=list)
+        modify_operation_quirks: FlextCore.Types.StringList = Field(
+            default_factory=list
+        )
 
-    class SchemaDiscoveryResult(FlextModels.Entity):
+    class SchemaDiscoveryResult(FlextCore.Models.Entity):
         """Result of LDAP schema discovery operation - Pydantic Entity."""
 
         # Note: Cannot use frozen=True with Entity (has default timestamp fields)
 
-        server_info: FlextTypes.Dict
+        server_info: FlextCore.Types.Dict
         server_type: FlextLdapModels.LdapServerType
         server_quirks: FlextLdapModels.ServerQuirks
         attributes: dict[str, FlextLdapModels.SchemaAttribute]
         object_classes: dict[str, FlextLdapModels.SchemaObjectClass]
-        naming_contexts: FlextTypes.StringList
-        supported_controls: FlextTypes.StringList
-        supported_extensions: FlextTypes.StringList
+        naming_contexts: FlextCore.Types.StringList
+        supported_controls: FlextCore.Types.StringList
+        supported_extensions: FlextCore.Types.StringList
 
     # =========================================================================
     # BASE CLASSES - Common functionality for LDAP entities
     # =========================================================================
 
-    class Base(FlextModels.ArbitraryTypesModel):
+    class Base(FlextCore.Models.ArbitraryTypesModel):
         """Base model class with dynamic LDAP entity support.
 
         **DYNAMIC LDAP SCHEMA**: Allows arbitrary attributes to support varying LDAP server schemas
@@ -518,9 +516,11 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_dn_field(v: str) -> str:
             """Common DN validation using centralized validation."""
-            validation_result: FlextResult[None] = FlextLdapValidations.validate_dn(
-                v,
-            ).map(lambda _: None)
+            validation_result: FlextCore.Result[None] = (
+                FlextLdapValidations.validate_dn(
+                    v,
+                ).map(lambda _: None)
+            )
             if validation_result.is_failure:
                 exceptions = FlextLdapExceptions()
                 error_msg = validation_result.error or "DN validation failed"
@@ -529,12 +529,12 @@ class FlextLdapModels(FlextModels):
 
         @staticmethod
         def validate_email_field(value: str | None) -> str | None:
-            """Common email validation using flext-core FlextUtilities."""
+            """Common email validation using flext-core FlextCore.Utilities."""
             if value is None:
                 return None
 
-            # Use flext-core validation directly (returns FlextResult[str])
-            validation_result = FlextUtilities.Validation.validate_email(value)
+            # Use flext-core validation directly (returns FlextCore.Result[str])
+            validation_result = FlextCore.Utilities.Validation.validate_email(value)
             if validation_result.is_failure:
                 exceptions = FlextLdapExceptions()
                 error_msg = validation_result.error or "Email validation failed"
@@ -544,7 +544,7 @@ class FlextLdapModels(FlextModels):
         @staticmethod
         def validate_password_field(value: str | None) -> str | None:
             """Common password validation using centralized validation."""
-            validation_result: FlextResult[None] = (
+            validation_result: FlextCore.Result[None] = (
                 FlextLdapValidations.validate_password(
                     str(value) if value is not None else "",
                 ).map(lambda _: None)
@@ -590,7 +590,7 @@ class FlextLdapModels(FlextModels):
     # CORE LDAP ENTITIES - Primary Domain Objects
     # =========================================================================
 
-    class LdapUser(FlextModels.Entity):
+    class LdapUser(FlextCore.Models.Entity):
         """LDAP User entity with enterprise attributes and advanced Pydantic 2.11 features.
 
         **CENTRALIZED APPROACH**: All user operations follow centralized patterns:
@@ -642,7 +642,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # LDAP metadata
-        object_classes: FlextTypes.StringList = Field(
+        object_classes: FlextCore.Types.StringList = Field(
             default_factory=lambda: ["person", "organizationalPerson", "inetOrgPerson"],
             description="LDAP object classes",
         )
@@ -652,7 +652,7 @@ class FlextLdapModels(FlextModels):
             default=FlextLdapConstants.Defaults.DEFAULT_STATUS,
             description="User status",
         )
-        additional_attributes: FlextTypes.Dict = Field(
+        additional_attributes: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Additional LDAP attributes",
         )
@@ -782,8 +782,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_object_classes(
             cls,
-            v: FlextTypes.StringList,
-        ) -> FlextTypes.StringList:
+            v: FlextCore.Types.StringList,
+        ) -> FlextCore.Types.StringList:
             """Validate object classes."""
             if not v:
                 msg = "At least one object class is required"
@@ -847,22 +847,24 @@ class FlextLdapModels(FlextModels):
             components = [component.strip() for component in value.split(",")]
             return ",".join(components)
 
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextCore.Result[None]:
             """Validate user business rules with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
 
             # User-specific validations
             if "person" not in self.object_classes:
-                return FlextResult[None].fail("User must have 'person' object class")
+                return FlextCore.Result[None].fail(
+                    "User must have 'person' object class"
+                )
 
             if not self.cn:
-                return FlextResult[None].fail("User must have a Common Name")
+                return FlextCore.Result[None].fail("User must have a Common Name")
 
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
 
-        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
+        def to_ldap_attributes(self) -> dict[str, FlextCore.Types.StringList]:
             """Convert user to LDAP attributes format."""
-            attributes: dict[str, FlextTypes.StringList] = {}
+            attributes: dict[str, FlextCore.Types.StringList] = {}
 
             # Core attributes
             if self.dn:
@@ -904,10 +906,10 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def from_ldap_attributes(
             cls,
-            ldap_attributes: dict[str, FlextTypes.StringList],
-        ) -> FlextResult[FlextLdapModels.LdapUser]:
+            ldap_attributes: dict[str, FlextCore.Types.StringList],
+        ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
             """Create user from LDAP attributes."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
 
             # Extract DN
             dn_values = ldap_attributes.get(
@@ -915,7 +917,7 @@ class FlextLdapModels(FlextModels):
                 [],
             )
             if not dn_values:
-                return FlextResult[FlextLdapModels.LdapUser].fail("DN is required")
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail("DN is required")
             dn = dn_values[0]
 
             # Extract core attributes
@@ -1016,17 +1018,17 @@ class FlextLdapModels(FlextModels):
                 modified_timestamp=None,
             )
 
-            return FlextResult[FlextLdapModels.LdapUser].ok(user)
+            return FlextCore.Result[FlextLdapModels.LdapUser].ok(user)
 
         def get_attribute(
             self,
             name: str,
         ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
             """Get attribute value by name with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             from typing import cast
 
-            # LDAP protocol guarantees attribute values are str or list[str]
+            # LDAP protocol guarantees attribute values are str or FlextCore.Types.StringList
             return cast(
                 "FlextLdapTypes.LdapEntries.EntryAttributeValue | None",
                 self.additional_attributes.get(name),
@@ -1038,17 +1040,17 @@ class FlextLdapModels(FlextModels):
             value: FlextLdapTypes.LdapEntries.EntryAttributeValue,
         ) -> None:
             """Set attribute value by name with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             self.additional_attributes[name] = value
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name (first component) with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         def get_parent_dn(self) -> str | None:
             """Extract parent DN with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             parts = self.dn.split(",", 1)
             return parts[1] if len(parts) > 1 else None
 
@@ -1059,7 +1061,7 @@ class FlextLdapModels(FlextModels):
             cn: str,
             uid: str | None = None,
             **kwargs: object,
-        ) -> FlextResult[FlextLdapModels.LdapUser]:
+        ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
             """Create minimal user with required fields only and enhanced error handling."""
             try:
                 # Extract specific known optional parameters with proper typing
@@ -1132,17 +1134,17 @@ class FlextLdapModels(FlextModels):
                     status="active",
                     display_name=cn,  # Use cn as display name by default
                 )
-                return FlextResult[FlextLdapModels.LdapUser].ok(user)
+                return FlextCore.Result[FlextLdapModels.LdapUser].ok(user)
             except FlextLdapExceptions.LdapValidationError as e:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     f"User creation failed: {e}",
                 )
             except Exception as e:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     f"User creation failed: {e}",
                 )
 
-    class Group(FlextModels.Entity):
+    class Group(FlextCore.Models.Entity):
         """LDAP Group entity with membership management.
 
         **CENTRALIZED APPROACH**: All group operations follow centralized patterns:
@@ -1160,18 +1162,18 @@ class FlextLdapModels(FlextModels):
         gid_number: int | None = Field(default=None, description="Group ID Number")
 
         # Group membership
-        member_dns: FlextTypes.StringList = Field(
+        member_dns: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Member Distinguished Names",
         )
-        unique_member_dns: FlextTypes.StringList = Field(
+        unique_member_dns: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Unique Member Distinguished Names",
         )
 
         # Core enterprise fields
         status: str | None = Field(default=None, description="Group status")
-        additional_attributes: FlextTypes.Dict = Field(
+        additional_attributes: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Additional LDAP attributes",
         )
@@ -1190,7 +1192,7 @@ class FlextLdapModels(FlextModels):
 
         # Metadata
         description: str | None = Field(default=None, description="Group description")
-        object_classes: FlextTypes.StringList = Field(
+        object_classes: FlextCore.Types.StringList = Field(
             default_factory=lambda: ["groupOfNames", "top"],
             description="LDAP object classes",
         )
@@ -1201,21 +1203,21 @@ class FlextLdapModels(FlextModels):
             """Validate Distinguished Name format using centralized validation."""
             return FlextLdapModels.ValidationMixin.validate_dn_field(v)
 
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextCore.Result[None]:
             """Validate group business rules with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
 
             # Group-specific validations
             if "groupOfNames" not in self.object_classes:
-                return FlextResult[None].fail(
+                return FlextCore.Result[None].fail(
                     "Group must have 'groupOfNames' object class",
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
 
-        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
+        def to_ldap_attributes(self) -> dict[str, FlextCore.Types.StringList]:
             """Convert group to LDAP attributes format."""
-            attributes: dict[str, FlextTypes.StringList] = {}
+            attributes: dict[str, FlextCore.Types.StringList] = {}
 
             # Core attributes
             if self.dn:
@@ -1245,10 +1247,10 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def from_ldap_attributes(
             cls,
-            ldap_attributes: dict[str, FlextTypes.StringList],
-        ) -> FlextResult[FlextLdapModels.Group]:
+            ldap_attributes: dict[str, FlextCore.Types.StringList],
+        ) -> FlextCore.Result[FlextLdapModels.Group]:
             """Create group from LDAP attributes."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
 
             # Extract DN
             dn_values = ldap_attributes.get(
@@ -1256,7 +1258,7 @@ class FlextLdapModels(FlextModels):
                 [],
             )
             if not dn_values:
-                return FlextResult[FlextLdapModels.Group].fail("DN is required")
+                return FlextCore.Result[FlextLdapModels.Group].fail("DN is required")
             dn = dn_values[0]
 
             # Extract core attributes
@@ -1307,27 +1309,27 @@ class FlextLdapModels(FlextModels):
                 modified_timestamp=None,
             )
 
-            return FlextResult[FlextLdapModels.Group].ok(group)
+            return FlextCore.Result[FlextLdapModels.Group].ok(group)
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             return member_dn in self.member_dns or member_dn in self.unique_member_dns
 
-        def add_member(self, member_dn: str) -> FlextResult[None]:
+        def add_member(self, member_dn: str) -> FlextCore.Result[None]:
             """Add member to group with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             if member_dn not in self.member_dns:
                 self.member_dns.append(member_dn)
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
 
-        def remove_member(self, member_dn: str) -> FlextResult[None]:
+        def remove_member(self, member_dn: str) -> FlextCore.Result[None]:
             """Remove member from group with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             if member_dn in self.member_dns:
                 self.member_dns.remove(member_dn)
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail(f"Member {member_dn} not found in group")
+                return FlextCore.Result[None].ok(None)
+            return FlextCore.Result[None].fail(f"Member {member_dn} not found in group")
 
         @classmethod
         def create_minimal(
@@ -1337,9 +1339,9 @@ class FlextLdapModels(FlextModels):
             gid_number: int | None = None,
             description: str | None = None,
             **_kwargs: object,
-        ) -> FlextResult[FlextLdapModels.Group]:
+        ) -> FlextCore.Result[FlextLdapModels.Group]:
             """Create minimal group with required fields only and enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
 
             # Create group with explicit arguments to avoid **kwargs typing issues
             group = cls(
@@ -1353,7 +1355,7 @@ class FlextLdapModels(FlextModels):
                 status="active",
                 object_classes=["groupOfNames", "top"],
             )
-            return FlextResult[FlextLdapModels.Group].ok(group)
+            return FlextCore.Result[FlextLdapModels.Group].ok(group)
 
     class Entry(EntityBase):
         """Generic LDAP Entry entity.
@@ -1377,7 +1379,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # LDAP metadata
-        object_classes: FlextTypes.StringList = Field(
+        object_classes: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -1401,7 +1403,7 @@ class FlextLdapModels(FlextModels):
                 Attribute value or None if not found.
 
             """
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             attribute_value = self.attributes.get(name)
             if attribute_value is None:
                 return None
@@ -1409,7 +1411,7 @@ class FlextLdapModels(FlextModels):
             # Convert different types to string list for consistent access
             if isinstance(attribute_value, str):
                 return [attribute_value]
-            # attribute_value is FlextTypes.StringList at this point due to type narrowing
+            # attribute_value is FlextCore.Types.StringList at this point due to type narrowing
             if attribute_value:  # Check if list is not empty
                 # Convert all items to strings
                 return [
@@ -1425,17 +1427,17 @@ class FlextLdapModels(FlextModels):
             value: FlextLdapTypes.LdapEntries.EntryAttributeValue,
         ) -> None:
             """Set attribute value by name with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             self.attributes[name] = value
 
         def has_attribute(self, name: str) -> bool:
             """Check if attribute exists with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             return name in self.attributes
 
         def get_rdn(self) -> str:
             """Extract Relative Distinguished Name with enhanced error handling."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         # Dict-like interface for compatibility
@@ -1589,19 +1591,19 @@ class FlextLdapModels(FlextModels):
         )
 
         # Attribute selection
-        attributes: FlextTypes.StringList | None = Field(
+        attributes: FlextCore.Types.StringList | None = Field(
             default=None,
             description="Attributes to return (None = all)",
         )
 
         # Search limits - using centralized constants
         size_limit: int = Field(
-            default=FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
+            default=FlextCore.Constants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
             description="Maximum number of entries to return",
             ge=0,
         )
         time_limit: int = Field(
-            default=FlextConstants.Network.DEFAULT_TIMEOUT,
+            default=FlextCore.Constants.Network.DEFAULT_TIMEOUT,
             description="Search timeout in seconds",
             ge=0,
         )
@@ -1675,9 +1677,11 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_filter_str(cls, v: str) -> str:
             """Validate LDAP filter format using centralized validation."""
-            validation_result: FlextResult[None] = FlextLdapValidations.validate_filter(
-                v,
-            ).map(lambda _: None)
+            validation_result: FlextCore.Result[None] = (
+                FlextLdapValidations.validate_filter(
+                    v,
+                ).map(lambda _: None)
+            )
             if validation_result.is_failure:
                 exceptions = FlextLdapExceptions()
                 error_msg = validation_result.error or "Filter validation failed"
@@ -1692,8 +1696,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_attributes(
             cls,
-            v: FlextTypes.StringList | None,
-        ) -> FlextTypes.StringList | None:
+            v: FlextCore.Types.StringList | None,
+        ) -> FlextCore.Types.StringList | None:
             """Validate attribute list."""
             if v is not None:
                 # Remove duplicates and empty strings using set comprehension
@@ -1765,7 +1769,7 @@ class FlextLdapModels(FlextModels):
             cls,
             uid: str,
             base_dn: str = "ou=users,dc=example,dc=com",
-            attributes: FlextTypes.StringList | None = None,
+            attributes: FlextCore.Types.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request for user."""
             return cls.model_validate(
@@ -1783,7 +1787,7 @@ class FlextLdapModels(FlextModels):
             cls,
             cn: str,
             base_dn: str = "ou=groups,dc=example,dc=com",
-            attributes: FlextTypes.StringList | None = None,
+            attributes: FlextCore.Types.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Create search request for group."""
             return cls.model_validate(
@@ -1801,8 +1805,8 @@ class FlextLdapModels(FlextModels):
             cls,
             base_dn: str,
             filter_str: str | None = None,
-            scope: str = FlextConstants.Platform.LDAP_SCOPE_SUBTREE,
-            attributes: FlextTypes.StringList | None = None,
+            scope: str = FlextCore.Constants.Platform.LDAP_SCOPE_SUBTREE,
+            attributes: FlextCore.Types.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Factory method with smart defaults from FlextLdapConstants.
 
@@ -1826,7 +1830,7 @@ class FlextLdapModels(FlextModels):
                     filter_str=filter_str,
                     scope=scope,
                     attributes=attributes or [],
-                    page_size=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+                    page_size=FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE,
                     paged_cookie=b"",
                 )
 
@@ -1843,10 +1847,10 @@ class FlextLdapModels(FlextModels):
                 "filter_str": filter_str,
                 "scope": scope,
                 "attributes": attributes or [],
-                "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+                "page_size": FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE,
                 "paged_cookie": b"",
-                "size_limit": FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
-                "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
+                "size_limit": FlextCore.Constants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
+                "time_limit": FlextCore.Constants.Network.DEFAULT_TIMEOUT,
             })
 
         @staticmethod
@@ -1878,7 +1882,7 @@ class FlextLdapModels(FlextModels):
             return base_filter
 
         @staticmethod
-        def get_user_attributes() -> list[str]:
+        def get_user_attributes() -> FlextCore.Types.StringList:
             """Get default user attributes to retrieve.
 
             Returns the standard set of LDAP user attributes commonly needed
@@ -1923,7 +1927,7 @@ class FlextLdapModels(FlextModels):
             return base_filter
 
         @staticmethod
-        def get_group_attributes() -> list[str]:
+        def get_group_attributes() -> FlextCore.Types.StringList:
             """Get default group attributes to retrieve.
 
             Returns the standard set of LDAP group attributes commonly needed
@@ -2009,7 +2013,7 @@ class FlextLdapModels(FlextModels):
         organization: str | None = Field(default=None, description="Organization")
 
         # LDAP metadata
-        object_classes: FlextTypes.StringList = Field(
+        object_classes: FlextCore.Types.StringList = Field(
             default_factory=lambda: [
                 FlextLdapConstants.ObjectClasses.TOP,
                 FlextLdapConstants.ObjectClasses.PERSON,
@@ -2072,19 +2076,19 @@ class FlextLdapModels(FlextModels):
                 return None
             return cls.validate_required_string_field(v)
 
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextCore.Result[None]:
             """Validate create user request business rules."""
             if not self.dn:
-                return FlextResult[None].fail("DN cannot be empty")
+                return FlextCore.Result[None].fail("DN cannot be empty")
             if not self.uid:
-                return FlextResult[None].fail("UID cannot be empty")
+                return FlextCore.Result[None].fail("UID cannot be empty")
             if not self.cn:
-                return FlextResult[None].fail("Common Name cannot be empty")
+                return FlextCore.Result[None].fail("Common Name cannot be empty")
             if not self.mail:
-                return FlextResult[None].fail("Email cannot be empty")
+                return FlextCore.Result[None].fail("Email cannot be empty")
             if not self.user_password:
-                return FlextResult[None].fail("Password cannot be empty")
-            return FlextResult[None].ok(None)
+                return FlextCore.Result[None].fail("Password cannot be empty")
+            return FlextCore.Result[None].ok(None)
 
         def to_user_entity(self) -> FlextLdapModels.LdapUser:
             """Convert request to user entity."""
@@ -2105,9 +2109,9 @@ class FlextLdapModels(FlextModels):
                 organizational_unit=self.organizational_unit,
                 user_password=self.user_password,
                 object_classes=self.object_classes,
-                # Dict variance: str|list[str] is compatible with object
+                # Dict variance: str|FlextCore.Types.StringList is compatible with object
                 additional_attributes=cast(
-                    "dict[str, object]",
+                    "FlextCore.Types.Dict",
                     self.additional_attributes,
                 ),
                 created_at=None,
@@ -2164,10 +2168,12 @@ class FlextLdapModels(FlextModels):
 
         # Required group attributes
         description: str = Field(..., description="Group description")
-        members: FlextTypes.StringList = Field(..., description="Initial group members")
+        members: FlextCore.Types.StringList = Field(
+            ..., description="Initial group members"
+        )
 
         # LDAP metadata
-        object_classes: FlextTypes.StringList = Field(
+        object_classes: FlextCore.Types.StringList = Field(
             default_factory=lambda: ["groupOfNames", "top"],
             description="LDAP object classes",
         )
@@ -2186,7 +2192,9 @@ class FlextLdapModels(FlextModels):
 
         @field_validator("members")
         @classmethod
-        def validate_members(cls, v: FlextTypes.StringList) -> FlextTypes.StringList:
+        def validate_members(
+            cls, v: FlextCore.Types.StringList
+        ) -> FlextCore.Types.StringList:
             """Validate members list."""
             if not v:
                 error_msg = "Members list cannot be empty"
@@ -2214,19 +2222,19 @@ class FlextLdapModels(FlextModels):
     class AddEntryRequest(Base, ValidationMixin):
         """LDAP Add Entry Request entity for general entry creation.
 
-        Uses FlextModels patterns for centralized validation and parameter management.
+        Uses FlextCore.Models patterns for centralized validation and parameter management.
         Supports any LDAP object class with flexible attribute handling.
         """
 
         # Required fields
         dn: str = Field(..., description="Distinguished Name for new entry")
-        attributes: dict[str, str | FlextTypes.StringList] = Field(
+        attributes: dict[str, str | FlextCore.Types.StringList] = Field(
             ...,
             description="Entry attributes as key-value pairs",
         )
 
         # Optional object classes - defaults will be determined by attributes if not specified
-        object_classes: FlextTypes.StringList | None = Field(
+        object_classes: FlextCore.Types.StringList | None = Field(
             default=None,
             description="LDAP object classes (auto-detected from attributes if not specified)",
         )
@@ -2241,8 +2249,8 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_attributes(
             cls,
-            v: dict[str, str | FlextTypes.StringList],
-        ) -> dict[str, str | FlextTypes.StringList]:
+            v: dict[str, str | FlextCore.Types.StringList],
+        ) -> dict[str, str | FlextCore.Types.StringList]:
             """Validate entry attributes."""
             if not v:
                 msg = "Attributes cannot be empty"
@@ -2269,7 +2277,7 @@ class FlextLdapModels(FlextModels):
 
             return self
 
-        def _detect_object_classes_from_attributes(self) -> FlextTypes.StringList:
+        def _detect_object_classes_from_attributes(self) -> FlextCore.Types.StringList:
             """Auto-detect object classes based on common attribute patterns."""
             classes = []
 
@@ -2309,7 +2317,7 @@ class FlextLdapModels(FlextModels):
 
             return classes
 
-        def to_ldap_attributes(self) -> dict[str, FlextTypes.StringList]:
+        def to_ldap_attributes(self) -> dict[str, FlextCore.Types.StringList]:
             """Convert attributes to LDAP format (all values as lists)."""
             ldap_attrs = {}
             for key, value in self.attributes.items():
@@ -2327,7 +2335,7 @@ class FlextLdapModels(FlextModels):
         """
 
         dn: str = Field(..., description="Distinguished Name of entry to update")
-        attributes: dict[str, str | FlextTypes.StringList] = Field(
+        attributes: dict[str, str | FlextCore.Types.StringList] = Field(
             ...,
             description="Attributes to update",
         )
@@ -2349,7 +2357,7 @@ class FlextLdapModels(FlextModels):
         """
 
         dn: str = Field(..., description="Distinguished Name for entry")
-        attributes: dict[str, str | FlextTypes.StringList] = Field(
+        attributes: dict[str, str | FlextCore.Types.StringList] = Field(
             ...,
             description="Entry attributes",
         )
@@ -2357,7 +2365,7 @@ class FlextLdapModels(FlextModels):
             default="merge",
             description="Strategy if entry exists: merge or replace",
         )
-        object_classes: FlextTypes.StringList | None = Field(
+        object_classes: FlextCore.Types.StringList | None = Field(
             default=None,
             description="Object classes for new entries",
         )
@@ -2379,7 +2387,7 @@ class FlextLdapModels(FlextModels):
         updated: int = Field(default=0, description="Number of entries updated")
         deleted: int = Field(default=0, description="Number of entries deleted")
         failed: int = Field(default=0, description="Number of failed operations")
-        errors: list[str] = Field(
+        errors: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Error messages from failed operations",
         )
@@ -2417,7 +2425,7 @@ class FlextLdapModels(FlextModels):
             default="auto",
             description="ACL format type (auto-detect from server)",
         )
-        acl_rules: list[str] = Field(
+        acl_rules: FlextCore.Types.StringList = Field(
             ...,
             description="ACL rules in specified format",
         )
@@ -2436,7 +2444,7 @@ class FlextLdapModels(FlextModels):
         """Request model for updating existing LDAP ACLs."""
 
         dn: str = Field(..., description="Distinguished Name of ACL target")
-        acl_rules: list[str] = Field(
+        acl_rules: FlextCore.Types.StringList = Field(
             ...,
             description="ACL rules to apply",
         )
@@ -2459,7 +2467,7 @@ class FlextLdapModels(FlextModels):
             default="auto",
             description="ACL format type",
         )
-        acl_rules: list[str] = Field(
+        acl_rules: FlextCore.Types.StringList = Field(
             ...,
             description="ACL rules to apply",
         )
@@ -2488,7 +2496,7 @@ class FlextLdapModels(FlextModels):
             default=0,
             description="Number of ACLs converted between formats",
         )
-        server_types_detected: list[str] = Field(
+        server_types_detected: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Server types detected during sync",
         )
@@ -2534,11 +2542,11 @@ class FlextLdapModels(FlextModels):
         """Request model for creating LDAP object classes."""
 
         name: str = Field(..., description="Object class name")
-        must_attributes: list[str] = Field(
+        must_attributes: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Required attributes (MUST)",
         )
-        may_attributes: list[str] = Field(
+        may_attributes: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Optional attributes (MAY)",
         )
@@ -2562,7 +2570,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="DN of schema subentry (e.g., cn=schema)",
         )
-        changes: dict[str, str | FlextTypes.StringList] = Field(
+        changes: dict[str, str | FlextCore.Types.StringList] = Field(
             ...,
             description="Schema changes to apply",
         )
@@ -2584,7 +2592,7 @@ class FlextLdapModels(FlextModels):
             ...,
             description="DN of schema subentry",
         )
-        schema_element: dict[str, str | FlextTypes.StringList] = Field(
+        schema_element: dict[str, str | FlextCore.Types.StringList] = Field(
             ...,
             description="Schema element definition",
         )
@@ -2613,7 +2621,7 @@ class FlextLdapModels(FlextModels):
             default=0,
             description="Number of object classes created",
         )
-        schema_conflicts: list[str] = Field(
+        schema_conflicts: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Schema conflicts encountered",
         )
@@ -2628,10 +2636,10 @@ class FlextLdapModels(FlextModels):
         # Connection details
         server: str = Field(default="localhost", description="LDAP server hostname/IP")
         port: int = Field(
-            FlextConstants.Platform.LDAP_DEFAULT_PORT,
+            FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
             description="LDAP server port",
             ge=1,
-            le=FlextConstants.Network.MAX_PORT,
+            le=FlextCore.Constants.Network.MAX_PORT,
         )
         use_ssl: bool = Field(default=False, description="Use SSL/TLS encryption")
         use_tls: bool = Field(default=False, description="Use StartTLS")
@@ -2645,17 +2653,17 @@ class FlextLdapModels(FlextModels):
 
         # Connection options - using centralized constants
         timeout: int = Field(
-            FlextConstants.Network.DEFAULT_TIMEOUT,
+            FlextCore.Constants.Network.DEFAULT_TIMEOUT,
             description="Connection timeout in seconds",
             ge=1,
         )
         pool_size: int = Field(
-            FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
+            FlextCore.Constants.Performance.DEFAULT_DB_POOL_SIZE,
             description="Connection pool size",
             ge=1,
         )
         pool_keepalive: int = Field(
-            FlextConstants.Performance.DEFAULT_TTL_SECONDS,
+            FlextCore.Constants.Performance.DEFAULT_TTL_SECONDS,
             description="Pool keepalive in seconds",
             ge=0,
         )
@@ -2680,8 +2688,10 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def validate_port(cls, v: int) -> int:
             """Validate port number."""
-            if v <= 0 or v > FlextConstants.Network.MAX_PORT:
-                msg = f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}"
+            if v <= 0 or v > FlextCore.Constants.Network.MAX_PORT:
+                msg = (
+                    f"Port must be between 1 and {FlextCore.Constants.Network.MAX_PORT}"
+                )
                 exceptions = FlextLdapExceptions()
                 raise exceptions.validation_error(msg, value=str(v), field="port")
             return v
@@ -2703,7 +2713,7 @@ class FlextLdapModels(FlextModels):
         target_dn: str = Field(default="", description="Target DN")
 
         # Additional details
-        server_info: FlextTypes.Dict = Field(
+        server_info: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Server information",
         )
@@ -2743,7 +2753,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # Additional data
-        data: FlextTypes.Dict = Field(
+        data: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Additional result data",
         )
@@ -2759,7 +2769,7 @@ class FlextLdapModels(FlextModels):
             cls,
             operation_type: str,
             target_dn: str = "",
-            data: FlextTypes.Dict | None = None,
+            data: FlextCore.Types.Dict | None = None,
             duration_ms: float = 0.0,
         ) -> FlextLdapModels.OperationResult:
             """Create success result."""
@@ -2792,17 +2802,17 @@ class FlextLdapModels(FlextModels):
                 duration_ms=duration_ms,
             )
 
-    class ConnectionConfig(FlextModels.Value):
+    class ConnectionConfig(FlextCore.Models.Value):
         """LDAP connection configuration value object - Pydantic Value Object."""
 
         model_config = ConfigDict(frozen=True)
 
         server: str
-        port: int = FlextConstants.Platform.LDAP_DEFAULT_PORT
+        port: int = FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
         use_ssl: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
-        timeout: int = FlextConstants.Network.DEFAULT_TIMEOUT
+        timeout: int = FlextCore.Constants.Network.DEFAULT_TIMEOUT
 
         @computed_field  # Pydantic v2 computed field - no @property needed
         def server_uri(self) -> str:
@@ -2820,100 +2830,100 @@ class FlextLdapModels(FlextModels):
             """Get base DN (default empty)."""
             return ""
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate the configuration business rules and return FlextResult.
+        def validate_business_rules(self) -> FlextCore.Result[None]:
+            """Validate the configuration business rules and return FlextCore.Result.
 
             Returns:
-                FlextResult[None] indicating validation success or failure
+                FlextCore.Result[None] indicating validation success or failure
 
             """
             try:
                 if not self.server or not self.server.strip():
-                    return FlextResult[None].fail("Server cannot be empty")
+                    return FlextCore.Result[None].fail("Server cannot be empty")
                 max_port = 65535
                 if self.port <= 0 or self.port > max_port:
-                    return FlextResult[None].fail("Invalid port number")
-                return FlextResult[None].ok(None)
+                    return FlextCore.Result[None].fail("Invalid port number")
+                return FlextCore.Result[None].ok(None)
             except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+                return FlextCore.Result[None].fail(f"Validation failed: {e}")
 
-    class ModifyConfig(FlextModels.Command):
+    class ModifyConfig(FlextCore.Models.Command):
         """LDAP modify operation configuration - Pydantic Command."""
 
         model_config = ConfigDict(frozen=True)
 
         dn: str
-        changes: dict[str, list[tuple[str, FlextTypes.StringList]]]
+        changes: dict[str, list[tuple[str, FlextCore.Types.StringList]]]
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate the configuration business rules and return FlextResult.
+        def validate_business_rules(self) -> FlextCore.Result[None]:
+            """Validate the configuration business rules and return FlextCore.Result.
 
             Returns:
-                FlextResult[None] indicating validation success or failure
+                FlextCore.Result[None] indicating validation success or failure
 
             """
             try:
                 if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
+                    return FlextCore.Result[None].fail("DN cannot be empty")
                 if not self.changes:
-                    return FlextResult[None].fail("Changes cannot be empty")
-                return FlextResult[None].ok(None)
+                    return FlextCore.Result[None].fail("Changes cannot be empty")
+                return FlextCore.Result[None].ok(None)
             except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+                return FlextCore.Result[None].fail(f"Validation failed: {e}")
 
-    class AddConfig(FlextModels.Command):
+    class AddConfig(FlextCore.Models.Command):
         """LDAP add operation configuration - Pydantic Command."""
 
         model_config = ConfigDict(frozen=True)
 
         dn: str
-        attributes: dict[str, FlextTypes.StringList]
+        attributes: dict[str, FlextCore.Types.StringList]
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate the configuration business rules and return FlextResult.
+        def validate_business_rules(self) -> FlextCore.Result[None]:
+            """Validate the configuration business rules and return FlextCore.Result.
 
             Returns:
-                FlextResult[None] indicating validation success or failure
+                FlextCore.Result[None] indicating validation success or failure
 
             """
             try:
                 if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
+                    return FlextCore.Result[None].fail("DN cannot be empty")
                 if not self.attributes:
-                    return FlextResult[None].fail("Attributes cannot be empty")
-                return FlextResult[None].ok(None)
+                    return FlextCore.Result[None].fail("Attributes cannot be empty")
+                return FlextCore.Result[None].ok(None)
             except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+                return FlextCore.Result[None].fail(f"Validation failed: {e}")
 
-    class DeleteConfig(FlextModels.Command):
+    class DeleteConfig(FlextCore.Models.Command):
         """LDAP delete operation configuration - Pydantic Command."""
 
         model_config = ConfigDict(frozen=True)
 
         dn: str
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate the configuration business rules and return FlextResult.
+        def validate_business_rules(self) -> FlextCore.Result[None]:
+            """Validate the configuration business rules and return FlextCore.Result.
 
             Returns:
-                FlextResult[None] indicating validation success or failure
+                FlextCore.Result[None] indicating validation success or failure
 
             """
             try:
                 if not self.dn or not self.dn.strip():
-                    return FlextResult[None].fail("DN cannot be empty")
-                return FlextResult[None].ok(None)
+                    return FlextCore.Result[None].fail("DN cannot be empty")
+                return FlextCore.Result[None].ok(None)
             except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+                return FlextCore.Result[None].fail(f"Validation failed: {e}")
 
-    class SearchConfig(FlextModels.Query):
+    class SearchConfig(FlextCore.Models.Query):
         """LDAP search operation configuration - Pydantic Query."""
 
         model_config = ConfigDict(frozen=True)
 
         base_dn: str
         filter_str: str
-        attributes: FlextTypes.StringList
+        attributes: FlextCore.Types.StringList
 
         @model_validator(mode="after")
         def validate_config(self) -> FlextLdapModels.SearchConfig:
@@ -2936,11 +2946,11 @@ class FlextLdapModels(FlextModels):
 
         command_type: str = Field(default="", description="Command type identifier")
         command_id: str = Field(default="", description="Unique command identifier")
-        payload: FlextTypes.Dict = Field(
+        payload: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Command payload data",
         )
-        metadata: FlextTypes.Dict = Field(
+        metadata: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Command metadata",
         )
@@ -2951,12 +2961,12 @@ class FlextLdapModels(FlextModels):
             cls,
             command_type: str,
             command_id: str,
-            payload: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            payload: FlextCore.Types.Dict | None = None,
+            metadata: FlextCore.Types.Dict | None = None,
             timestamp: int | None = None,
-        ) -> FlextResult[FlextLdapModels.CqrsCommand]:
+        ) -> FlextCore.Result[FlextLdapModels.CqrsCommand]:
             """Create CQRS command message."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             instance = cls(
                 command_type=command_type,
                 command_id=command_id,
@@ -2964,18 +2974,18 @@ class FlextLdapModels(FlextModels):
                 metadata=metadata or {},
                 timestamp=timestamp,
             )
-            return FlextResult[FlextLdapModels.CqrsCommand].ok(instance)
+            return FlextCore.Result[FlextLdapModels.CqrsCommand].ok(instance)
 
     class CqrsQuery(Base):
         """CQRS Query message envelope."""
 
         query_type: str = Field(default="", description="Query type identifier")
         query_id: str = Field(default="", description="Unique query identifier")
-        parameters: FlextTypes.Dict = Field(
+        parameters: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Query parameters",
         )
-        metadata: FlextTypes.Dict = Field(
+        metadata: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Query metadata",
         )
@@ -2986,12 +2996,12 @@ class FlextLdapModels(FlextModels):
             cls,
             query_type: str,
             query_id: str,
-            parameters: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            parameters: FlextCore.Types.Dict | None = None,
+            metadata: FlextCore.Types.Dict | None = None,
             timestamp: int | None = None,
-        ) -> FlextResult[FlextLdapModels.CqrsQuery]:
+        ) -> FlextCore.Result[FlextLdapModels.CqrsQuery]:
             """Create CQRS query message."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             instance = cls(
                 query_type=query_type,
                 query_id=query_id,
@@ -2999,7 +3009,7 @@ class FlextLdapModels(FlextModels):
                 metadata=metadata or {},
                 timestamp=timestamp,
             )
-            return FlextResult[FlextLdapModels.CqrsQuery].ok(instance)
+            return FlextCore.Result[FlextLdapModels.CqrsQuery].ok(instance)
 
     class CqrsEvent(Base):
         """CQRS Event message envelope for domain events."""
@@ -3007,11 +3017,11 @@ class FlextLdapModels(FlextModels):
         event_type: str = Field(default="", description="Event type identifier")
         event_id: str = Field(default="", description="Unique event identifier")
         aggregate_id: str = Field(default="", description="Aggregate root identifier")
-        payload: FlextTypes.Dict = Field(
+        payload: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Event payload data",
         )
-        metadata: FlextTypes.Dict = Field(
+        metadata: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Event metadata",
         )
@@ -3025,12 +3035,12 @@ class FlextLdapModels(FlextModels):
             event_id: str,
             aggregate_id: str,
             timestamp: int,
-            payload: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            payload: FlextCore.Types.Dict | None = None,
+            metadata: FlextCore.Types.Dict | None = None,
             version: int = 1,
-        ) -> FlextResult[FlextLdapModels.CqrsEvent]:
+        ) -> FlextCore.Result[FlextLdapModels.CqrsEvent]:
             """Create CQRS event message."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             instance = cls(
                 event_type=event_type,
                 event_id=event_id,
@@ -3040,15 +3050,17 @@ class FlextLdapModels(FlextModels):
                 timestamp=timestamp,
                 version=version,
             )
-            return FlextResult[FlextLdapModels.CqrsEvent].ok(instance)
+            return FlextCore.Result[FlextLdapModels.CqrsEvent].ok(instance)
 
     class DomainMessage(Base):
         """Generic domain message envelope for CQRS infrastructure."""
 
         message_type: str = Field(..., description="Message type identifier")
         message_id: str = Field(..., description="Unique message identifier")
-        data: FlextTypes.Dict = Field(default_factory=dict, description="Message data")
-        metadata: FlextTypes.Dict = Field(
+        data: FlextCore.Types.Dict = Field(
+            default_factory=dict, description="Message data"
+        )
+        metadata: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Message metadata",
         )
@@ -3060,14 +3072,14 @@ class FlextLdapModels(FlextModels):
             cls,
             message_type: str,
             message_id: str,
-            data: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            data: FlextCore.Types.Dict | None = None,
+            metadata: FlextCore.Types.Dict | None = None,
             timestamp: int | None = None,
             *,
             processed: bool = False,
-        ) -> FlextResult[FlextLdapModels.DomainMessage]:
+        ) -> FlextCore.Result[FlextLdapModels.DomainMessage]:
             """Create domain message."""
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextCore.Result error handling - NO try/except
             instance = cls(
                 message_type=message_type,
                 message_id=message_id,
@@ -3076,7 +3088,7 @@ class FlextLdapModels(FlextModels):
                 timestamp=timestamp,
                 processed=processed,
             )
-            return FlextResult[FlextLdapModels.DomainMessage].ok(instance)
+            return FlextCore.Result[FlextLdapModels.DomainMessage].ok(instance)
 
     class AclTarget(Base):
         """ACL target specification for access control rules."""
@@ -3089,7 +3101,7 @@ class FlextLdapModels(FlextModels):
             default="*",
             description="DN pattern for target matching",
         )
-        attributes: FlextTypes.StringList = Field(
+        attributes: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Target attributes (empty means all)",
         )
@@ -3104,13 +3116,13 @@ class FlextLdapModels(FlextModels):
             cls,
             target_type: str = "entry",
             dn_pattern: str = "*",
-            attributes: FlextTypes.StringList | None = None,
+            attributes: FlextCore.Types.StringList | None = None,
             filter_expression: str = "",
             scope: str = "subtree",
-        ) -> FlextResult[FlextLdapModels.AclTarget]:
+        ) -> FlextCore.Result[FlextLdapModels.AclTarget]:
             """Create AclTarget instance.
 
-            Factory method for creating AclTarget with FlextResult error handling.
+            Factory method for creating AclTarget with FlextCore.Result error handling.
 
             Args:
                 target_type: Target type (entry, attr, etc.)
@@ -3120,11 +3132,11 @@ class FlextLdapModels(FlextModels):
                 scope: Search scope for target
 
             Returns:
-                FlextResult[AclTarget] containing the created instance
+                FlextCore.Result[AclTarget] containing the created instance
 
             """
-            # Explicit FlextResult error handling - NO try/except
-            return FlextResult.ok(
+            # Explicit FlextCore.Result error handling - NO try/except
+            return FlextCore.Result.ok(
                 cls(
                     target_type=target_type,
                     dn_pattern=dn_pattern,
@@ -3150,10 +3162,10 @@ class FlextLdapModels(FlextModels):
             subject_type: str,
             subject_dn: str,
             authentication_level: str | None = None,
-        ) -> FlextResult[FlextLdapModels.AclSubject]:
+        ) -> FlextCore.Result[FlextLdapModels.AclSubject]:
             """Create AclSubject instance."""
-            # Explicit FlextResult error handling - NO try/except
-            return FlextResult.ok(
+            # Explicit FlextCore.Result error handling - NO try/except
+            return FlextCore.Result.ok(
                 cls(
                     subject_type=subject_type,
                     subject_dn=subject_dn,
@@ -3168,11 +3180,11 @@ class FlextLdapModels(FlextModels):
             default="allow",
             description="Grant type: allow or deny",
         )
-        granted_permissions: FlextTypes.StringList = Field(
+        granted_permissions: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Granted permissions (read, write, etc.)",
         )
-        denied_permissions: FlextTypes.StringList = Field(
+        denied_permissions: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Denied permissions (read, write, etc.)",
         )
@@ -3191,7 +3203,7 @@ class FlextLdapModels(FlextModels):
             return data
 
         @property
-        def permissions(self) -> FlextTypes.StringList:
+        def permissions(self) -> FlextCore.Types.StringList:
             """Get permissions based on grant type."""
             return (
                 self.granted_permissions
@@ -3207,13 +3219,13 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def create(
             cls,
-            permissions: FlextTypes.StringList,
-            denied_permissions: FlextTypes.StringList | None = None,
+            permissions: FlextCore.Types.StringList,
+            denied_permissions: FlextCore.Types.StringList | None = None,
             grant_type: str = "allow",
-        ) -> FlextResult[FlextLdapModels.AclPermissions]:
+        ) -> FlextCore.Result[FlextLdapModels.AclPermissions]:
             """Create AclPermissions instance."""
-            # Explicit FlextResult error handling - NO try/except
-            return FlextResult.ok(
+            # Explicit FlextCore.Result error handling - NO try/except
+            return FlextCore.Result.ok(
                 cls(
                     granted_permissions=permissions,
                     denied_permissions=denied_permissions or [],
@@ -3244,10 +3256,10 @@ class FlextLdapModels(FlextModels):
             name: str,
             priority: int = 100,
             server_type: str = "generic",
-        ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+        ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
             """Create UnifiedAcl instance."""
-            # Explicit FlextResult error handling - NO try/except
-            return FlextResult.ok(
+            # Explicit FlextCore.Result error handling - NO try/except
+            return FlextCore.Result.ok(
                 cls(
                     name=name,
                     target=target,
@@ -3265,7 +3277,7 @@ class FlextLdapModels(FlextModels):
         target: FlextLdapModels.AclTarget
         subject: FlextLdapModels.AclSubject
         permissions: FlextLdapModels.AclPermissions
-        conditions: FlextTypes.Dict = Field(
+        conditions: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Additional conditions",
         )
@@ -3297,7 +3309,7 @@ class FlextLdapModels(FlextModels):
             target_spec: str,
             subject_spec: str | None = None,
             permissions: str | None = None,
-        ) -> FlextResult[FlextLdapModels.OpenLdapAcl]:
+        ) -> FlextCore.Result[FlextLdapModels.OpenLdapAcl]:
             """Create OpenLdapAcl from access line components."""
             # Constants for ACL parsing (reference FlextLdapConstants.Parsing.MIN_ACL_PARTS)
             min_acl_parts = 2  # Minimum parts required for valid ACL
@@ -3318,7 +3330,7 @@ class FlextLdapModels(FlextModels):
                                 subject_perm_split[1:]
                             )
 
-                return FlextResult["FlextLdapModels.OpenLdapAcl"].ok(
+                return FlextCore.Result["FlextLdapModels.OpenLdapAcl"].ok(
                     cls(
                         access_line=access_line,
                         target_spec=target_spec,
@@ -3327,7 +3339,7 @@ class FlextLdapModels(FlextModels):
                     )
                 )
             except Exception as e:
-                return FlextResult["FlextLdapModels.OpenLdapAcl"].fail(
+                return FlextCore.Result["FlextLdapModels.OpenLdapAcl"].fail(
                     f"Failed to create OpenLdapAcl: {e}"
                 )
 
@@ -3347,10 +3359,10 @@ class FlextLdapModels(FlextModels):
             target_dn: str,
             subject_spec: str | None = None,
             permissions: str | None = None,
-        ) -> FlextResult[FlextLdapModels.OracleAcl]:
+        ) -> FlextCore.Result[FlextLdapModels.OracleAcl]:
             """Create OracleAcl from ACI components."""
             try:
-                return FlextResult["FlextLdapModels.OracleAcl"].ok(
+                return FlextCore.Result["FlextLdapModels.OracleAcl"].ok(
                     cls(
                         aci_value=aci_value,
                         target_dn=target_dn,
@@ -3359,7 +3371,7 @@ class FlextLdapModels(FlextModels):
                     )
                 )
             except Exception as e:
-                return FlextResult["FlextLdapModels.OracleAcl"].fail(
+                return FlextCore.Result["FlextLdapModels.OracleAcl"].fail(
                     f"Failed to create OracleAcl: {e}"
                 )
 
@@ -3379,10 +3391,10 @@ class FlextLdapModels(FlextModels):
             target: str | None = None,
             subject: str | None = None,
             permissions: str | None = None,
-        ) -> FlextResult[FlextLdapModels.AciFormat]:
+        ) -> FlextCore.Result[FlextLdapModels.AciFormat]:
             """Create AciFormat from ACI string components."""
             try:
-                return FlextResult["FlextLdapModels.AciFormat"].ok(
+                return FlextCore.Result["FlextLdapModels.AciFormat"].ok(
                     cls(
                         aci_string=aci_string,
                         target=target or "*",
@@ -3391,7 +3403,7 @@ class FlextLdapModels(FlextModels):
                     )
                 )
             except Exception as e:
-                return FlextResult["FlextLdapModels.AciFormat"].fail(
+                return FlextCore.Result["FlextLdapModels.AciFormat"].fail(
                     f"Failed to create AciFormat: {e}"
                 )
 
@@ -3401,15 +3413,15 @@ class FlextLdapModels(FlextModels):
         success: bool = Field(..., description="Whether conversion succeeded")
         original_format: str = Field(..., description="Original format type")
         target_format: str = Field(..., description="Target format type")
-        converted_data: FlextTypes.Dict = Field(
+        converted_data: FlextCore.Types.Dict = Field(
             default_factory=dict,
             description="Converted data structure",
         )
-        errors: list[str] = Field(
+        errors: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Conversion errors/warnings",
         )
-        warnings: list[str] = Field(
+        warnings: FlextCore.Types.StringList = Field(
             default_factory=list,
             description="Conversion warnings",
         )
@@ -3420,13 +3432,13 @@ class FlextLdapModels(FlextModels):
             success: bool,
             original_format: str,
             target_format: str,
-            converted_data: FlextTypes.Dict | None = None,
-            errors: list[str] | None = None,
-            warnings: list[str] | None = None,
-        ) -> FlextResult[FlextLdapModels.ConversionResult]:
+            converted_data: FlextCore.Types.Dict | None = None,
+            errors: FlextCore.Types.StringList | None = None,
+            warnings: FlextCore.Types.StringList | None = None,
+        ) -> FlextCore.Result[FlextLdapModels.ConversionResult]:
             """Create ConversionResult from conversion operation."""
             try:
-                return FlextResult["FlextLdapModels.ConversionResult"].ok(
+                return FlextCore.Result["FlextLdapModels.ConversionResult"].ok(
                     cls(
                         success=success,
                         original_format=original_format,
@@ -3437,7 +3449,7 @@ class FlextLdapModels(FlextModels):
                     )
                 )
             except Exception as e:
-                return FlextResult["FlextLdapModels.ConversionResult"].fail(
+                return FlextCore.Result["FlextLdapModels.ConversionResult"].fail(
                     f"Failed to create ConversionResult: {e}"
                 )
 

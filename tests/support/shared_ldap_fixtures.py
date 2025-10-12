@@ -12,21 +12,21 @@ from typing import Protocol, cast
 import pytest
 
 # from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 
 # Temporary placeholder until FlextTestDocker is available
 class FlextTestDocker:
     """Placeholder for FlextTestDocker until it's available in flext_tests."""
 
-    def get_docker_version(self) -> FlextResult[str]:
-        return FlextResult[str].fail("FlextTestDocker not available")
+    def get_docker_version(self) -> FlextCore.Result[str]:
+        return FlextCore.Result[str].fail("FlextTestDocker not available")
 
 
 class DockerManagerProtocol(Protocol):
     """Protocol for Docker manager with required methods."""
 
-    def get_docker_version(self) -> FlextResult[str]: ...
+    def get_docker_version(self) -> FlextCore.Result[str]: ...
 
 
 def check_docker_available() -> bool:

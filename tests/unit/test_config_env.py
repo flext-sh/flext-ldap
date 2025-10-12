@@ -20,7 +20,7 @@ class TestFlextLdapConfigEnvironment:
     """Test suite for FlextLdapConfig environment variable configuration."""
 
     def test_env_prefix_configuration(self) -> None:
-        """Test env_prefix is correctly inherited from FlextConfig."""
+        """Test env_prefix is correctly inherited from FlextCore.Config."""
         config = FlextLdapConfig()
         model_config = config.model_config
 
@@ -152,13 +152,6 @@ class TestFlextLdapConfigEnvironment:
             assert config.ldap_log_queries is True
             assert config.ldap_mask_passwords is False
 
-            # Validate computed field for logging_info
-            logging_info = config.logging_info
-            assert logging_info["debug_enabled"] is True
-            assert logging_info["trace_enabled"] is True
-            assert logging_info["query_logging"] is True
-            assert logging_info["password_masking"] is False
-            assert logging_info["effective_log_level"] == "DEBUG"
         finally:
             # Cleanup
             del os.environ["FLEXT_LOG_LEVEL"]

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -18,7 +18,7 @@ class FlextLdapAclConverters:
     def handle(
         self,
         message: object,
-    ) -> FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]]:
+    ) -> FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]]:
         """Handle ACL conversion request."""
         if isinstance(message, dict) and "acl_content" in message:
             result = self.convert_acl(
@@ -29,8 +29,10 @@ class FlextLdapAclConverters:
                     "ACTIVE_DIRECTORY",
                 ),
             )
-            return FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]].ok(result)
-        return FlextResult[FlextResult[FlextLdapModels.UnifiedAcl]].fail(
+            return FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]].ok(
+                result
+            )
+        return FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]].fail(
             "Invalid ACL conversion request",
         )
 
@@ -39,7 +41,7 @@ class FlextLdapAclConverters:
         _acl_content: str | None,
         source_format: str | None,
         target_format: str | None,
-    ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
         """Convert ACL between different formats.
 
         Note: ACL format conversion is not yet implemented.
@@ -51,7 +53,7 @@ class FlextLdapAclConverters:
             target_format: Target ACL format
 
         """
-        return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+        return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
             f"ACL conversion from {source_format} to {target_format} is not implemented",
         )
 
@@ -59,22 +61,22 @@ class FlextLdapAclConverters:
         """Convert OpenLDAP ACLs to other formats."""
 
         @staticmethod
-        def to_microsoft_ad(_acl_content: str | None) -> FlextResult[str]:
+        def to_microsoft_ad(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert OpenLDAP ACL to Microsoft Active Directory format.
 
             Note: Not implemented. Requires OpenLDAP ACL parser and AD ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "OpenLDAP to Microsoft AD ACL conversion is not implemented",
             )
 
         @staticmethod
-        def to_oracle(_acl_content: str | None) -> FlextResult[str]:
+        def to_oracle(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert OpenLDAP ACL to Oracle format.
 
             Note: Not implemented. Requires OpenLDAP ACL parser and Oracle ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "OpenLDAP to Oracle ACL conversion is not implemented",
             )
 
@@ -82,22 +84,22 @@ class FlextLdapAclConverters:
         """Convert Microsoft Active Directory ACLs to other formats."""
 
         @staticmethod
-        def to_openldap(_acl_content: str | None) -> FlextResult[str]:
+        def to_openldap(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert Microsoft AD ACL to OpenLDAP format.
 
             Note: Not implemented. Requires AD ACL parser and OpenLDAP ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "Microsoft AD to OpenLDAP ACL conversion is not implemented",
             )
 
         @staticmethod
-        def to_oracle(_acl_content: str | None) -> FlextResult[str]:
+        def to_oracle(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert Microsoft AD ACL to Oracle format.
 
             Note: Not implemented. Requires AD ACL parser and Oracle ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "Microsoft AD to Oracle ACL conversion is not implemented",
             )
 
@@ -105,21 +107,21 @@ class FlextLdapAclConverters:
         """Convert Oracle ACLs to other formats."""
 
         @staticmethod
-        def to_openldap(_acl_content: str | None) -> FlextResult[str]:
+        def to_openldap(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert Oracle ACL to OpenLDAP format.
 
             Note: Not implemented. Requires Oracle ACL parser and OpenLDAP ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "Oracle to OpenLDAP ACL conversion is not implemented",
             )
 
         @staticmethod
-        def to_microsoft_ad(_acl_content: str | None) -> FlextResult[str]:
+        def to_microsoft_ad(_acl_content: str | None) -> FlextCore.Result[str]:
             """Convert Oracle ACL to Microsoft AD format.
 
             Note: Not implemented. Requires Oracle ACL parser and AD ACL generator.
             """
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "Oracle to Microsoft AD ACL conversion is not implemented",
             )

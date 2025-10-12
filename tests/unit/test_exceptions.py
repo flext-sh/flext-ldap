@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants
+from flext_core import FlextCore
 
 from flext_ldap import FlextLdapExceptions
 from flext_ldap.constants import FlextLdapConstants
@@ -34,13 +34,13 @@ class TestFlextLdapExceptions:
 
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
         )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
         assert (
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
             in str(error)
         )
 
@@ -50,14 +50,14 @@ class TestFlextLdapExceptions:
 
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
             ldap_code=49,
         )
 
         assert isinstance(error, Exception)
         assert "Connection failed" in str(error)
         assert (
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
             in str(error)
         )
         assert "49" in str(error)
@@ -302,11 +302,11 @@ class TestFlextLdapExceptions:
         # Test with server URI
         error2 = exceptions.connection_failed(
             "Connection timeout",
-            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
         )
         assert isinstance(error2, Exception)
         assert (
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
             in str(error2)
         )
 
@@ -357,7 +357,7 @@ class TestFlextLdapExceptions:
         # Test that all exceptions have meaningful string representations
         error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
         )
         error_str = str(error)
 
@@ -365,7 +365,7 @@ class TestFlextLdapExceptions:
         assert len(error_str) > 0
         assert "Connection failed" in error_str
         assert (
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
             in error_str
         )
 
@@ -511,7 +511,7 @@ class TestFlextLdapExceptions:
         # Test complete workflow with different exception types
         connection_error = exceptions.connection_error(
             "Connection failed",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
         )
         assert isinstance(connection_error, Exception)
 
@@ -587,7 +587,7 @@ class TestFlextLdapExceptions:
         for i in range(100):
             error = exceptions.connection_error(
                 f"Connection failed {i}",
-                f"ldap://server{i}:{FlextConstants.Platform.LDAP_DEFAULT_PORT}",
+                f"ldap://server{i}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
             )
             assert isinstance(error, Exception)
             assert str(i) in str(error)

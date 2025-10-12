@@ -189,26 +189,26 @@ class FlextLdapUserService:
 
     def __init__(self) -> None:
         self._client = get_ldap_client()
-        self.logger = FlextLogger(__name__)
+        self.logger = FlextCore.Logger(__name__)
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> FlextCore.Result[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
 
-**2. FlextResult Pattern**
+**2. FlextCore.Result Pattern**
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> FlextCore.Result[FlextLdapUser]:
     if not request.is_valid():
-        return FlextResult[FlextLdapUser].fail("Invalid user data")
+        return FlextCore.Result[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
-        return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
+        return FlextCore.Result[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
-    return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
+    return FlextCore.Result[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
 
 # ❌ WRONG - Try/catch fallbacks
 def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
@@ -228,16 +228,16 @@ class SearchRequest:
     base_dn: str
     filter_str: str
     scope: str
-    attributes: List[str]
+    attributes: FlextCore.Types.StringList
     size_limit: int = 100
     time_limit: int = 30
 
-def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> FlextCore.Result[List[LdapEntry]]:
     # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
-                        attributes: List[str], size_limit: int, time_limit: int):
+                        attributes: FlextCore.Types.StringList, size_limit: int, time_limit: int):
     # FORBIDDEN - use parameter objects
 ```
 
@@ -270,10 +270,10 @@ def authenticate_user(
     self,
     username: str,
     password: str
-) -> FlextResult[FlextLdapUser]:
+) -> FlextCore.Result[FlextLdapUser]:
     """Complete type signature required."""
 
-# Generic types for FlextResult patterns
+# Generic types for FlextCore.Result patterns
 T = TypeVar('T')
 
 class FlextLdapService(Generic[T]):
@@ -292,7 +292,7 @@ import pydantic
 from ldap3 import Connection, Server
 
 # FLEXT imports
-from flext_core import FlextResult, FlextLogger
+from flext_core import FlextCore
 
 # Local imports
 from flext_ldap.entities import FlextLdapUser
@@ -411,7 +411,7 @@ class TestLdapOperations:
 # tests/conftest.py
 import pytest
 from flext_tests import FlextTestDocker
-from flext_core import FlextResult
+from flext_core import FlextCore
 from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
@@ -517,7 +517,7 @@ class FlextLdapClients:
         self,
         username: str,
         password: str
-    ) -> FlextResult[FlextLdapUser]:
+    ) -> FlextCore.Result[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:
@@ -525,11 +525,11 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            FlextResult containing authenticated user object on success,
+            FlextCore.Result containing authenticated user object on success,
             or error message on failure.
 
         Raises:
-            No exceptions raised - all errors returned via FlextResult.
+            No exceptions raised - all errors returned via FlextCore.Result.
 
         Examples:
             >>> result = api.authenticate_user("john.doe", "secret123")
@@ -548,7 +548,7 @@ All public APIs require comprehensive documentation including:
 - Purpose and responsibility
 - Parameter descriptions with types
 - Return value descriptions
-- FlextResult usage patterns
+- FlextCore.Result usage patterns
 - Complete working examples
 - Integration with Clean Architecture layers
 
@@ -636,7 +636,7 @@ results = gather(*[
 ### Code Review Checklist
 
 - [ ] Follows Clean Architecture patterns
-- [ ] Uses FlextResult for error handling
+- [ ] Uses FlextCore.Result for error handling
 - [ ] Includes comprehensive tests
 - [ ] Type annotations complete
 - [ ] Documentation updated

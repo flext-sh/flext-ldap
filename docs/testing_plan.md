@@ -257,7 +257,7 @@ def test_service_logic_with_mocked_dependencies():
     """Test service logic in isolation."""
     # Mock infrastructure dependencies
     mock_client = Mock(spec=FlextLdapClient)
-    mock_client.authenticate.return_value = FlextResult.ok(user)
+    mock_client.authenticate.return_value = FlextCore.Result.ok(user)
 
     # Inject mock into service
     service = SomeService(mock_client)

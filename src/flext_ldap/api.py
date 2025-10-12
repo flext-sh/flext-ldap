@@ -19,21 +19,15 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Self, override
 
-from flext_core import (
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 from flext_ldif import FlextLdif
 
 from flext_ldap.clients import FlextLdapClients
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers import FlextLdapServers
-from flext_ldap.services import FlextLdapServices
 
 
-class FlextLdap(FlextService[None]):
+class FlextLdap(FlextCore.Service[None]):
     """Thin facade for LDAP operations with FLEXT ecosystem integration.
 
     Provides unified access to LDAP domain functionality through proper delegation
@@ -51,51 +45,32 @@ class FlextLdap(FlextService[None]):
     """
 
     @override
-    def __init__(self, config: FlextLdapConfig | None = None) -> None:
+    def __init__(self) -> None:
         """Initialize LDAP facade with configuration."""
         super().__init__()
-        self._config: FlextLdapConfig = config or FlextLdapConfig()
-        self._services: FlextLdapServices | None = None
-        self._client: FlextLdapClients | None = None
         self._ldif: FlextLdif | None = None
+        self._client: FlextLdapClients | None = None
 
     @classmethod
-    def create(cls, config: FlextLdapConfig | None = None) -> Self:
+    def create(cls) -> Self:
         """Factory method to create FlextLdap instance."""
-        return cls(config=config)
-
-    @override
-    def execute(self) -> FlextResult[None]:
-        """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[None].ok(None)
-
-    # =========================================================================
-    # CORE FACADE METHODS - Thin delegation layer
-    # =========================================================================
-
-    @property
-    def services(self) -> FlextLdapServices:
-        """Get the LDAP services instance."""
-        if self._services is None:
-            self._services = FlextLdapServices()
-        return self._services
+        return cls()
 
     @property
     def client(self) -> FlextLdapClients:
-        """Get the LDAP client instance."""
+        """Get the LDAP client instance, creating it if necessary."""
         if self._client is None:
             self._client = FlextLdapClients()
         return self._client
 
-    @property
-    def config(self) -> FlextLdapConfig:
-        """Get the LDAP configuration."""
-        return self._config
+    @override
+    def execute(self) -> FlextCore.Result[None]:
+        """Execute the main domain operation (required by FlextCore.Service)."""
+        return FlextCore.Result[None].ok(None)
 
-    @property
-    def servers(self) -> FlextLdapServers:
-        """Get LDAP server operations."""
-        return FlextLdapServers()
+    # =========================================================================
+    # CORE FACADE METHODS - Thin delegation layer
+    # =========================================================================
 
     # =========================================================================
     # CONNECTION MANAGEMENT - Delegate to client
@@ -113,7 +88,7 @@ class FlextLdap(FlextService[None]):
         use_ssl: bool = False,
         bind_dn: str | None = None,
         bind_password: str | None = None,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Connect to LDAP server."""
         # Construct server URI from components
         if server is None:
@@ -126,15 +101,15 @@ class FlextLdap(FlextService[None]):
 
         # Validate required parameters
         if bind_dn is None or bind_password is None:
-            return FlextResult[bool].fail("bind_dn and bind_password are required")
+            return FlextCore.Result[bool].fail("bind_dn and bind_password are required")
 
         return self.client.connect(server_uri, bind_dn, bind_password)
 
-    def test_connection(self) -> FlextResult[bool]:
+    def test_connection(self) -> FlextCore.Result[bool]:
         """Test LDAP connection."""
         return self.client.test_connection()
 
-    def unbind(self) -> FlextResult[None]:
+    def unbind(self) -> FlextCore.Result[None]:
         """Unbind from LDAP server."""
         return self.client.unbind()
 
@@ -145,14 +120,14 @@ class FlextLdap(FlextService[None]):
     def search(
         self,
         search_request: FlextLdapModels.SearchRequest,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Perform LDAP search operation.
 
         Args:
             search_request: Search request model with parameters
 
         Returns:
-            FlextResult containing list of entries
+            FlextCore.Result containing list of entries
 
         """
         return self.client.search_with_request(search_request).map(
@@ -162,8 +137,8 @@ class FlextLdap(FlextService[None]):
     def create_entry(
         self,
         dn: str,
-        attributes: dict[str, str | FlextTypes.StringList],
-    ) -> FlextResult[bool]:
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
         """Create new LDAP entry.
 
         Args:
@@ -171,7 +146,7 @@ class FlextLdap(FlextService[None]):
             attributes: Entry attributes
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         Example:
             >>> result = api.create_entry(
@@ -185,8 +160,8 @@ class FlextLdap(FlextService[None]):
     def add_entry(
         self,
         dn: str,
-        attributes: dict[str, str | FlextTypes.StringList],
-    ) -> FlextResult[bool]:
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
         """Add new LDAP entry.
 
         .. deprecated:: 0.10.0
@@ -197,7 +172,7 @@ class FlextLdap(FlextService[None]):
             attributes: Entry attributes
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         warnings.warn(
@@ -207,7 +182,9 @@ class FlextLdap(FlextService[None]):
         )
         return self.create_entry(dn, attributes)
 
-    def update_entry(self, dn: str, changes: FlextTypes.Dict) -> FlextResult[bool]:
+    def update_entry(
+        self, dn: str, changes: FlextCore.Types.Dict
+    ) -> FlextCore.Result[bool]:
         """Update existing LDAP entry.
 
         Args:
@@ -215,7 +192,7 @@ class FlextLdap(FlextService[None]):
             changes: Attribute changes to apply
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         Example:
             >>> result = api.update_entry(
@@ -226,7 +203,9 @@ class FlextLdap(FlextService[None]):
         """
         return self.client.modify_entry(dn, changes)
 
-    def modify_entry(self, dn: str, changes: FlextTypes.Dict) -> FlextResult[bool]:
+    def modify_entry(
+        self, dn: str, changes: FlextCore.Types.Dict
+    ) -> FlextCore.Result[bool]:
         """Modify existing LDAP entry.
 
         .. deprecated:: 0.10.0
@@ -237,7 +216,7 @@ class FlextLdap(FlextService[None]):
             changes: Attribute changes to apply
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         warnings.warn(
@@ -247,14 +226,14 @@ class FlextLdap(FlextService[None]):
         )
         return self.update_entry(dn, changes)
 
-    def delete_entry(self, dn: str) -> FlextResult[bool]:
+    def delete_entry(self, dn: str) -> FlextCore.Result[bool]:
         """Delete LDAP entry.
 
         Args:
             dn: Distinguished name of entry to delete
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         return self.client.delete_entry(dn)
@@ -262,14 +241,14 @@ class FlextLdap(FlextService[None]):
     def create_user(
         self,
         user_request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
+    ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
         """Create new LDAP user with type-safe request model.
 
         Args:
             user_request: User creation request with all required fields
 
         Returns:
-            FlextResult containing created LdapUser
+            FlextCore.Result containing created LdapUser
 
         Example:
             >>> user_req = FlextLdapModels.CreateUserRequest(
@@ -283,7 +262,7 @@ class FlextLdap(FlextService[None]):
 
         """
         # Convert CreateUserRequest to attributes dict
-        attributes: dict[str, str | FlextTypes.StringList] = {
+        attributes: dict[str, str | FlextCore.Types.StringList] = {
             "uid": user_request.uid,
             "cn": user_request.cn,
             "sn": user_request.sn,
@@ -319,7 +298,7 @@ class FlextLdap(FlextService[None]):
         # Create the entry
         create_result = self.create_entry(user_request.dn, attributes)
         if create_result.is_failure:
-            return FlextResult[FlextLdapModels.LdapUser].fail(
+            return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                 create_result.error or "User creation failed",
             )
 
@@ -334,7 +313,7 @@ class FlextLdap(FlextService[None]):
                 sn=user_request.sn,
                 mail=user_request.mail or "",
             )
-            return FlextResult[FlextLdapModels.LdapUser].ok(minimal_user)
+            return FlextCore.Result[FlextLdapModels.LdapUser].ok(minimal_user)
 
         # Handle None result from get_user
         user = user_result.unwrap()
@@ -347,21 +326,21 @@ class FlextLdap(FlextService[None]):
                 sn=user_request.sn,
                 mail=user_request.mail or "",
             )
-            return FlextResult[FlextLdapModels.LdapUser].ok(minimal_user)
+            return FlextCore.Result[FlextLdapModels.LdapUser].ok(minimal_user)
 
-        return FlextResult[FlextLdapModels.LdapUser].ok(user)
+        return FlextCore.Result[FlextLdapModels.LdapUser].ok(user)
 
     def create_group(
         self,
         group_request: FlextLdapModels.CreateGroupRequest,
-    ) -> FlextResult[FlextLdapModels.Group]:
+    ) -> FlextCore.Result[FlextLdapModels.Group]:
         """Create new LDAP group with type-safe request model.
 
         Args:
             group_request: Group creation request with all required fields
 
         Returns:
-            FlextResult containing created Group
+            FlextCore.Result containing created Group
 
         Example:
             >>> group_req = FlextLdapModels.CreateGroupRequest(
@@ -374,7 +353,7 @@ class FlextLdap(FlextService[None]):
 
         """
         # Convert CreateGroupRequest to attributes dict
-        attributes: dict[str, str | FlextTypes.StringList] = {
+        attributes: dict[str, str | FlextCore.Types.StringList] = {
             "cn": group_request.cn,
             "description": group_request.description,
             "member": group_request.members,
@@ -384,7 +363,7 @@ class FlextLdap(FlextService[None]):
         # Create the entry
         create_result = self.create_entry(group_request.dn, attributes)
         if create_result.is_failure:
-            return FlextResult[FlextLdapModels.Group].fail(
+            return FlextCore.Result[FlextLdapModels.Group].fail(
                 create_result.error or "Group creation failed",
             )
 
@@ -398,7 +377,7 @@ class FlextLdap(FlextService[None]):
                 description=group_request.description,
                 member=group_request.members,
             )
-            return FlextResult[FlextLdapModels.Group].ok(minimal_group)
+            return FlextCore.Result[FlextLdapModels.Group].ok(minimal_group)
 
         # Handle None result from get_group
         group = group_result.unwrap()
@@ -410,14 +389,14 @@ class FlextLdap(FlextService[None]):
                 description=group_request.description,
                 member=group_request.members,
             )
-            return FlextResult[FlextLdapModels.Group].ok(minimal_group)
+            return FlextCore.Result[FlextLdapModels.Group].ok(minimal_group)
 
-        return FlextResult[FlextLdapModels.Group].ok(group)
+        return FlextCore.Result[FlextLdapModels.Group].ok(group)
 
     def upsert_entry(
         self,
         upsert_request: FlextLdapModels.UpsertEntryRequest,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Create or update LDAP entry (upsert operation).
 
         High-velocity operation that creates entry if it doesn't exist,
@@ -427,7 +406,7 @@ class FlextLdap(FlextService[None]):
             upsert_request: Upsert request with DN, attributes, and strategy
 
         Returns:
-            FlextResult containing operation details:
+            FlextCore.Result containing operation details:
                 - operation: "created" or "updated"
                 - dn: Distinguished name of the entry
 
@@ -457,7 +436,7 @@ class FlextLdap(FlextService[None]):
                 # Replace strategy: delete and recreate with new attributes
                 delete_result = self.delete_entry(upsert_request.dn)
                 if delete_result.is_failure:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextCore.Result[dict[str, str]].fail(
                         f"Failed to delete entry for replace: {delete_result.error}",
                     )
 
@@ -468,28 +447,28 @@ class FlextLdap(FlextService[None]):
 
                 create_result = self.create_entry(upsert_request.dn, create_attrs)
                 if create_result.is_failure:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextCore.Result[dict[str, str]].fail(
                         f"Failed to recreate entry: {create_result.error}",
                     )
 
-                return FlextResult[dict[str, str]].ok(
+                return FlextCore.Result[dict[str, str]].ok(
                     {"operation": "updated", "dn": upsert_request.dn},
                 )
 
             # merge strategy (default)
             # Merge strategy: update existing attributes
-            # Type cast: dict[str, list[str] | str] is compatible with dict[str, object]
-            attrs_as_dict: FlextTypes.Dict = dict(upsert_request.attributes)
+            # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
+            attrs_as_dict: FlextCore.Types.Dict = dict(upsert_request.attributes)
             update_result = self.update_entry(
                 upsert_request.dn,
                 attrs_as_dict,
             )
             if update_result.is_failure:
-                return FlextResult[dict[str, str]].fail(
+                return FlextCore.Result[dict[str, str]].fail(
                     f"Failed to update entry: {update_result.error}",
                 )
 
-            return FlextResult[dict[str, str]].ok(
+            return FlextCore.Result[dict[str, str]].ok(
                 {"operation": "updated", "dn": upsert_request.dn},
             )
 
@@ -500,18 +479,18 @@ class FlextLdap(FlextService[None]):
 
         create_result = self.create_entry(upsert_request.dn, create_attrs)
         if create_result.is_failure:
-            return FlextResult[dict[str, str]].fail(
+            return FlextCore.Result[dict[str, str]].fail(
                 f"Failed to create entry: {create_result.error}",
             )
 
-        return FlextResult[dict[str, str]].ok(
+        return FlextCore.Result[dict[str, str]].ok(
             {"operation": "created", "dn": upsert_request.dn},
         )
 
     def upsert_user(
         self,
         user_request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
+    ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
         """Create or update LDAP user (upsert operation).
 
         High-velocity operation that creates user if they don't exist,
@@ -521,7 +500,7 @@ class FlextLdap(FlextService[None]):
             user_request: User creation/update request with all fields
 
         Returns:
-            FlextResult containing the LdapUser
+            FlextCore.Result containing the LdapUser
 
         Example:
             >>> user_req = FlextLdapModels.CreateUserRequest(
@@ -539,7 +518,7 @@ class FlextLdap(FlextService[None]):
 
         if user_exists_result.is_success:
             # User exists - update attributes
-            update_attrs: dict[str, str | FlextTypes.StringList] = {}
+            update_attrs: dict[str, str | FlextCore.Types.StringList] = {}
 
             # Update all provided fields
             if user_request.cn:
@@ -572,28 +551,28 @@ class FlextLdap(FlextService[None]):
 
             # Update the entry
             if update_attrs:
-                # Type cast: dict[str, str] is compatible with dict[str, object]
-                attrs_as_dict: FlextTypes.Dict = dict(update_attrs)
+                # Type cast: dict[str, str] is compatible with FlextCore.Types.Dict
+                attrs_as_dict: FlextCore.Types.Dict = dict(update_attrs)
                 update_result = self.update_entry(user_request.dn, attrs_as_dict)
                 if update_result.is_failure:
-                    return FlextResult[FlextLdapModels.LdapUser].fail(
+                    return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                         f"Failed to update user: {update_result.error}",
                     )
 
             # Return updated user
             user_result = self.client.get_user(user_request.dn)
             if user_result.is_failure:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     user_result.error or "Failed to retrieve user"
                 )
 
             user = user_result.unwrap()
             if user is None:
-                return FlextResult[FlextLdapModels.LdapUser].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     "User not found after update"
                 )
 
-            return FlextResult[FlextLdapModels.LdapUser].ok(user)
+            return FlextCore.Result[FlextLdapModels.LdapUser].ok(user)
 
         # User doesn't exist - create it
         return self.create_user(user_request)
@@ -601,7 +580,7 @@ class FlextLdap(FlextService[None]):
     def upsert_group(
         self,
         group_request: FlextLdapModels.CreateGroupRequest,
-    ) -> FlextResult[FlextLdapModels.Group]:
+    ) -> FlextCore.Result[FlextLdapModels.Group]:
         """Create or update LDAP group (upsert operation).
 
         High-velocity operation that creates group if it doesn't exist,
@@ -611,7 +590,7 @@ class FlextLdap(FlextService[None]):
             group_request: Group creation/update request with all fields
 
         Returns:
-            FlextResult containing the Group
+            FlextCore.Result containing the Group
 
         Example:
             >>> group_req = FlextLdapModels.CreateGroupRequest(
@@ -628,7 +607,7 @@ class FlextLdap(FlextService[None]):
 
         if group_exists_result.is_success:
             # Group exists - update attributes
-            update_attrs: dict[str, str | FlextTypes.StringList] = {}
+            update_attrs: dict[str, str | FlextCore.Types.StringList] = {}
 
             # Update all provided fields
             if group_request.cn:
@@ -640,28 +619,28 @@ class FlextLdap(FlextService[None]):
 
             # Update the entry
             if update_attrs:
-                # Type cast: dict[str, str | list[str]] is compatible with dict[str, object]
-                attrs_as_dict: FlextTypes.Dict = dict(update_attrs)
+                # Type cast: dict[str, str | FlextCore.Types.StringList] is compatible with FlextCore.Types.Dict
+                attrs_as_dict: FlextCore.Types.Dict = dict(update_attrs)
                 update_result = self.update_entry(group_request.dn, attrs_as_dict)
                 if update_result.is_failure:
-                    return FlextResult[FlextLdapModels.Group].fail(
+                    return FlextCore.Result[FlextLdapModels.Group].fail(
                         f"Failed to update group: {update_result.error}",
                     )
 
             # Return updated group
             group_result = self.client.get_group(group_request.dn)
             if group_result.is_failure:
-                return FlextResult[FlextLdapModels.Group].fail(
+                return FlextCore.Result[FlextLdapModels.Group].fail(
                     group_result.error or "Failed to retrieve group"
                 )
 
             group = group_result.unwrap()
             if group is None:
-                return FlextResult[FlextLdapModels.Group].fail(
+                return FlextCore.Result[FlextLdapModels.Group].fail(
                     "Group not found after update"
                 )
 
-            return FlextResult[FlextLdapModels.Group].ok(group)
+            return FlextCore.Result[FlextLdapModels.Group].ok(group)
 
         # Group doesn't exist - create it
         return self.create_group(group_request)
@@ -671,7 +650,7 @@ class FlextLdap(FlextService[None]):
         upsert_requests: list[FlextLdapModels.UpsertEntryRequest],
         *,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.SyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.SyncResult]:
         """Batch upsert operation for high-velocity LDAP writes.
 
         Processes multiple upsert requests efficiently, optionally in parallel.
@@ -682,7 +661,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process requests in parallel (default: False)
 
         Returns:
-            FlextResult containing SyncResult with operation statistics
+            FlextCore.Result containing SyncResult with operation statistics
 
         Example:
             >>> requests = [
@@ -784,7 +763,7 @@ class FlextLdap(FlextService[None]):
                         },
                     )
 
-        return FlextResult[FlextLdapModels.SyncResult].ok(sync_result)
+        return FlextCore.Result[FlextLdapModels.SyncResult].ok(sync_result)
 
     def sync_entries(
         self,
@@ -793,7 +772,7 @@ class FlextLdap(FlextService[None]):
         *,
         delete_missing: bool = False,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.SyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.SyncResult]:
         """Synchronize LDAP entries with desired state.
 
         High-velocity operation that synchronizes LDAP directory with a source list.
@@ -807,7 +786,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process in parallel (default: False)
 
         Returns:
-            FlextResult containing SyncResult with operation statistics
+            FlextCore.Result containing SyncResult with operation statistics
 
         Example:
             >>> desired = [
@@ -838,7 +817,7 @@ class FlextLdap(FlextService[None]):
         # First, upsert all desired entries
         upsert_result = self.upsert_entries_batch(desired_entries, parallel=parallel)
         if upsert_result.is_failure:
-            return FlextResult[FlextLdapModels.SyncResult].fail(
+            return FlextCore.Result[FlextLdapModels.SyncResult].fail(
                 f"Upsert phase failed: {upsert_result.error}",
             )
 
@@ -898,7 +877,7 @@ class FlextLdap(FlextService[None]):
                                 },
                             )
 
-        return FlextResult[FlextLdapModels.SyncResult].ok(sync_result)
+        return FlextCore.Result[FlextLdapModels.SyncResult].ok(sync_result)
 
     def sync_users(
         self,
@@ -907,7 +886,7 @@ class FlextLdap(FlextService[None]):
         *,
         delete_missing: bool = False,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.SyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.SyncResult]:
         """Synchronize LDAP users with desired state.
 
         High-velocity operation that synchronizes users in LDAP directory with a source list.
@@ -920,7 +899,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process in parallel (default: False)
 
         Returns:
-            FlextResult containing SyncResult with operation statistics
+            FlextCore.Result containing SyncResult with operation statistics
 
         Example:
             >>> desired = [
@@ -943,7 +922,7 @@ class FlextLdap(FlextService[None]):
         upsert_requests = []
         for user_req in desired_users:
             # Build attributes dict from user request
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 "uid": user_req.uid,
                 "cn": user_req.cn,
                 "sn": user_req.sn,
@@ -996,7 +975,7 @@ class FlextLdap(FlextService[None]):
         *,
         delete_missing: bool = False,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.SyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.SyncResult]:
         """Synchronize LDAP groups with desired state.
 
         High-velocity operation that synchronizes groups in LDAP directory with a source list.
@@ -1009,7 +988,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process in parallel (default: False)
 
         Returns:
-            FlextResult containing SyncResult with operation statistics
+            FlextCore.Result containing SyncResult with operation statistics
 
         Example:
             >>> desired = [
@@ -1031,7 +1010,7 @@ class FlextLdap(FlextService[None]):
         upsert_requests = []
         for group_req in desired_groups:
             # Build attributes dict from group request
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | FlextCore.Types.StringList] = {
                 "cn": group_req.cn,
                 "objectClass": group_req.object_classes,
             }
@@ -1063,7 +1042,7 @@ class FlextLdap(FlextService[None]):
     def create_acl(
         self,
         acl_request: FlextLdapModels.CreateAclRequest,
-    ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
         """Create LDAP ACL with automatic server type detection and quirks handling.
 
         Uses FlextLdif quirks engine to detect server type and convert ACL
@@ -1073,7 +1052,7 @@ class FlextLdap(FlextService[None]):
             acl_request: ACL creation request with rules and target DN
 
         Returns:
-            FlextResult containing created UnifiedAcl
+            FlextCore.Result containing created UnifiedAcl
 
         Example:
             >>> from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
@@ -1135,24 +1114,24 @@ class FlextLdap(FlextService[None]):
             # This requires determining the correct attribute based on server type
             # and applying the ACL rules
 
-            return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                 f"ACL creation failed: {e}",
             )
 
     def update_acl(
         self,
         acl_request: FlextLdapModels.UpdateAclRequest,
-    ) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
         """Update existing LDAP ACL with merge or replace strategy.
 
         Args:
             acl_request: ACL update request with DN, rules, and strategy
 
         Returns:
-            FlextResult containing updated UnifiedAcl
+            FlextCore.Result containing updated UnifiedAcl
 
         Example:
             >>> acl_req = FlextLdapModels.UpdateAclRequest(
@@ -1170,7 +1149,7 @@ class FlextLdap(FlextService[None]):
             # Get current ACL from entry
             entry_result = self.client.search_one(acl_request.dn, "(objectClass=*)")
             if entry_result.is_failure:
-                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                     f"Entry not found: {acl_request.dn}",
                 )
 
@@ -1210,14 +1189,14 @@ class FlextLdap(FlextService[None]):
                 ),
             )
 
-            return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                 f"ACL update failed: {e}",
             )
 
-    def get_acl(self, dn: str) -> FlextResult[FlextLdapModels.UnifiedAcl]:
+    def get_acl(self, dn: str) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
         """Retrieve and parse ACL from LDAP entry.
 
         Uses quirks engine to detect server type and parse ACL
@@ -1227,7 +1206,7 @@ class FlextLdap(FlextService[None]):
             dn: Distinguished Name of entry with ACL
 
         Returns:
-            FlextResult containing UnifiedAcl
+            FlextCore.Result containing UnifiedAcl
 
         Example:
             >>> result = api.get_acl("cn=config")
@@ -1242,13 +1221,13 @@ class FlextLdap(FlextService[None]):
             # Get entry
             entry_result = self.client.search_one(dn, "(objectClass=*)")
             if entry_result.is_failure:
-                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                     f"Entry not found: {dn}",
                 )
 
             entry = entry_result.unwrap()
             if not entry:
-                return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                     f"Entry not found: {dn}",
                 )
 
@@ -1286,21 +1265,21 @@ class FlextLdap(FlextService[None]):
                 ),
             )
 
-            return FlextResult[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
                 f"ACL retrieval failed: {e}"
             )
 
-    def delete_acl(self, dn: str) -> FlextResult[bool]:
+    def delete_acl(self, dn: str) -> FlextCore.Result[bool]:
         """Delete ACL from LDAP entry.
 
         Args:
             dn: Distinguished Name of entry with ACL to delete
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         Example:
             >>> result = api.delete_acl("cn=config")
@@ -1312,15 +1291,15 @@ class FlextLdap(FlextService[None]):
             # TODO(@flext-team): Remove ACL attribute from entry
             # Issue: https://github.com/flext/flext-ldap/issues/TBD
             # For now, return success placeholder
-            return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
-            return FlextResult[bool].fail(f"ACL deletion failed: {e}")
+            return FlextCore.Result[bool].fail(f"ACL deletion failed: {e}")
 
     def upsert_acl(
         self,
         acl_request: FlextLdapModels.UpsertAclRequest,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Create or update LDAP ACL (upsert operation) with quirks handling.
 
         High-velocity operation that creates ACL if it doesn't exist,
@@ -1330,7 +1309,7 @@ class FlextLdap(FlextService[None]):
             acl_request: ACL upsert request with DN, rules, and strategy
 
         Returns:
-            FlextResult containing operation details (created/updated)
+            FlextCore.Result containing operation details (created/updated)
 
         Example:
             >>> acl_req = FlextLdapModels.UpsertAclRequest(
@@ -1355,10 +1334,10 @@ class FlextLdap(FlextService[None]):
                 )
                 update_result = self.update_acl(update_req)
                 if update_result.is_failure:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextCore.Result[dict[str, str]].fail(
                         f"Failed to update ACL: {update_result.error}",
                     )
-                return FlextResult[dict[str, str]].ok(
+                return FlextCore.Result[dict[str, str]].ok(
                     {"operation": "updated", "dn": acl_request.dn},
                 )
 
@@ -1371,22 +1350,22 @@ class FlextLdap(FlextService[None]):
             )
             create_result = self.create_acl(create_req)
             if create_result.is_failure:
-                return FlextResult[dict[str, str]].fail(
+                return FlextCore.Result[dict[str, str]].fail(
                     f"Failed to create ACL: {create_result.error}",
                 )
-            return FlextResult[dict[str, str]].ok(
+            return FlextCore.Result[dict[str, str]].ok(
                 {"operation": "created", "dn": acl_request.dn},
             )
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(f"ACL upsert failed: {e}")
+            return FlextCore.Result[dict[str, str]].fail(f"ACL upsert failed: {e}")
 
     def upsert_acls_batch(
         self,
         acl_requests: list[FlextLdapModels.UpsertAclRequest],
         *,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.AclSyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.AclSyncResult]:
         """Batch upsert operation for high-velocity ACL writes.
 
         Processes multiple ACL upsert requests efficiently, optionally in parallel.
@@ -1397,7 +1376,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process requests in parallel (default: False)
 
         Returns:
-            FlextResult containing AclSyncResult with operation statistics
+            FlextCore.Result containing AclSyncResult with operation statistics
 
         Example:
             >>> requests = [
@@ -1490,7 +1469,7 @@ class FlextLdap(FlextService[None]):
                         },
                     )
 
-        return FlextResult[FlextLdapModels.AclSyncResult].ok(sync_result)
+        return FlextCore.Result[FlextLdapModels.AclSyncResult].ok(sync_result)
 
     def sync_acls(
         self,
@@ -1499,7 +1478,7 @@ class FlextLdap(FlextService[None]):
         *,
         delete_missing: bool = False,
         parallel: bool = False,
-    ) -> FlextResult[FlextLdapModels.AclSyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.AclSyncResult]:
         """Synchronize LDAP ACLs with desired state using quirks engine.
 
         High-velocity operation that synchronizes ACLs in LDAP with a source list.
@@ -1512,7 +1491,7 @@ class FlextLdap(FlextService[None]):
             parallel: Whether to process in parallel (default: False)
 
         Returns:
-            FlextResult containing AclSyncResult with operation statistics
+            FlextCore.Result containing AclSyncResult with operation statistics
 
         Example:
             >>> desired = [
@@ -1533,7 +1512,7 @@ class FlextLdap(FlextService[None]):
         # First, upsert all desired ACLs
         upsert_result = self.upsert_acls_batch(desired_acls, parallel=parallel)
         if upsert_result.is_failure:
-            return FlextResult[FlextLdapModels.AclSyncResult].fail(
+            return FlextCore.Result[FlextLdapModels.AclSyncResult].fail(
                 f"ACL upsert phase failed: {upsert_result.error}",
             )
 
@@ -1595,7 +1574,7 @@ class FlextLdap(FlextService[None]):
                                 },
                             )
 
-        return FlextResult[FlextLdapModels.AclSyncResult].ok(sync_result)
+        return FlextCore.Result[FlextLdapModels.AclSyncResult].ok(sync_result)
 
     # =========================================================================
     # SCHEMA HIGH-VELOCITY OPERATIONS - With FlextLdif quirks engine
@@ -1604,7 +1583,7 @@ class FlextLdap(FlextService[None]):
     def create_schema_attribute(
         self,
         attr_request: FlextLdapModels.CreateSchemaAttributeRequest,
-    ) -> FlextResult[FlextLdapModels.SchemaAttribute]:
+    ) -> FlextCore.Result[FlextLdapModels.SchemaAttribute]:
         """Create LDAP schema attribute with quirks-aware server handling.
 
         Uses FlextLdif quirks engine to detect server type and apply
@@ -1614,7 +1593,7 @@ class FlextLdap(FlextService[None]):
             attr_request: Schema attribute creation request
 
         Returns:
-            FlextResult containing created SchemaAttribute
+            FlextCore.Result containing created SchemaAttribute
 
         Example:
             >>> attr_req = FlextLdapModels.CreateSchemaAttributeRequest(
@@ -1657,24 +1636,24 @@ class FlextLdap(FlextService[None]):
             #
             # Implementation would use update_entry() with appropriate attributes
 
-            return FlextResult[FlextLdapModels.SchemaAttribute].ok(schema_attr)
+            return FlextCore.Result[FlextLdapModels.SchemaAttribute].ok(schema_attr)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.SchemaAttribute].fail(
+            return FlextCore.Result[FlextLdapModels.SchemaAttribute].fail(
                 f"Schema attribute creation failed: {e}",
             )
 
     def create_object_class(
         self,
         class_request: FlextLdapModels.CreateObjectClassRequest,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Create LDAP object class with quirks-aware handling.
 
         Args:
             class_request: Object class creation request
 
         Returns:
-            FlextResult containing creation status
+            FlextCore.Result containing creation status
 
         Example:
             >>> class_req = FlextLdapModels.CreateObjectClassRequest(
@@ -1696,7 +1675,7 @@ class FlextLdap(FlextService[None]):
             # 2. Construct object class definition
             # 3. Add to schema using appropriate attribute
 
-            return FlextResult[dict[str, str]].ok(
+            return FlextCore.Result[dict[str, str]].ok(
                 {
                     "operation": "created",
                     "object_class": class_request.name,
@@ -1704,21 +1683,21 @@ class FlextLdap(FlextService[None]):
             )
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(
+            return FlextCore.Result[dict[str, str]].fail(
                 f"Object class creation failed: {e}",
             )
 
     def update_schema(
         self,
         schema_request: FlextLdapModels.UpdateSchemaRequest,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Update LDAP schema with merge or replace strategy.
 
         Args:
             schema_request: Schema update request
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         Example:
             >>> schema_req = FlextLdapModels.UpdateSchemaRequest(
@@ -1731,24 +1710,26 @@ class FlextLdap(FlextService[None]):
         """
         try:
             # Use standard update_entry for schema modifications
-            # Type cast: dict[str, list[str] | str] is compatible with dict[str, object]
-            changes_as_dict: FlextTypes.Dict = dict(schema_request.changes)
+            # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
+            changes_as_dict: FlextCore.Types.Dict = dict(schema_request.changes)
             return self.update_entry(
                 schema_request.schema_dn,
                 changes_as_dict,
             )
 
         except Exception as e:
-            return FlextResult[bool].fail(f"Schema update failed: {e}")
+            return FlextCore.Result[bool].fail(f"Schema update failed: {e}")
 
-    def get_schema(self, schema_dn: str = "cn=schema") -> FlextResult[dict[str, str]]:
+    def get_schema(
+        self, schema_dn: str = "cn=schema"
+    ) -> FlextCore.Result[dict[str, str]]:
         """Retrieve LDAP schema information with quirks-aware detection.
 
         Args:
             schema_dn: DN of schema subentry (default: cn=schema)
 
         Returns:
-            FlextResult containing schema information
+            FlextCore.Result containing schema information
 
         Example:
             >>> result = api.get_schema()
@@ -1773,18 +1754,20 @@ class FlextLdap(FlextService[None]):
             for dn in schema_dns:
                 schema_result = self.client.search_one(dn, "(objectClass=*)")
                 if schema_result.is_success and schema_result.unwrap():
-                    return FlextResult[dict[str, str]].ok(
+                    return FlextCore.Result[dict[str, str]].ok(
                         {"schema_dn": dn, "found": "true"},
                     )
 
-            return FlextResult[dict[str, str]].fail("Schema not found")
+            return FlextCore.Result[dict[str, str]].fail("Schema not found")
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(f"Schema retrieval failed: {e}")
+            return FlextCore.Result[dict[str, str]].fail(
+                f"Schema retrieval failed: {e}"
+            )
 
     def delete_schema_element(
         self, schema_dn: str, element_name: str
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Delete schema element (attribute or object class).
 
         Args:
@@ -1792,7 +1775,7 @@ class FlextLdap(FlextService[None]):
             element_name: Name of element to delete
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         Example:
             >>> result = api.delete_schema_element("cn=schema", "customAttr")
@@ -1801,16 +1784,16 @@ class FlextLdap(FlextService[None]):
         try:
             # Note: Schema deletion is complex and server-specific
             # Would require careful handling of dependencies
-            return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
-            return FlextResult[bool].fail(f"Schema element deletion failed: {e}")
+            return FlextCore.Result[bool].fail(f"Schema element deletion failed: {e}")
 
     def upsert_schema_attribute(
         self,
         attr_request: FlextLdapModels.CreateSchemaAttributeRequest,
         schema_dn: str = "cn=schema",
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Create or update schema attribute (upsert operation).
 
         High-velocity operation that creates attribute if it doesn't exist,
@@ -1821,7 +1804,7 @@ class FlextLdap(FlextService[None]):
             schema_dn: DN of schema subentry (auto-detected if using default)
 
         Returns:
-            FlextResult containing operation details
+            FlextCore.Result containing operation details
 
         Example:
             >>> attr_req = FlextLdapModels.CreateSchemaAttributeRequest(
@@ -1837,23 +1820,23 @@ class FlextLdap(FlextService[None]):
             if schema_result.is_success:
                 # Schema exists - check if attribute exists and update if needed
                 # Note: Actual implementation would check for attribute existence
-                return FlextResult[dict[str, str]].ok(
+                return FlextCore.Result[dict[str, str]].ok(
                     {"operation": "updated", "attribute": attr_request.name},
                 )
 
             # Schema or attribute doesn't exist - create it
             create_result = self.create_schema_attribute(attr_request)
             if create_result.is_failure:
-                return FlextResult[dict[str, str]].fail(
+                return FlextCore.Result[dict[str, str]].fail(
                     f"Failed to create schema attribute: {create_result.error}",
                 )
 
-            return FlextResult[dict[str, str]].ok(
+            return FlextCore.Result[dict[str, str]].ok(
                 {"operation": "created", "attribute": attr_request.name},
             )
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(
+            return FlextCore.Result[dict[str, str]].fail(
                 f"Schema attribute upsert failed: {e}",
             )
 
@@ -1861,7 +1844,7 @@ class FlextLdap(FlextService[None]):
         self,
         class_request: FlextLdapModels.CreateObjectClassRequest,
         schema_dn: str = "cn=schema",
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Create or update object class (upsert operation).
 
         Args:
@@ -1869,7 +1852,7 @@ class FlextLdap(FlextService[None]):
             schema_dn: DN of schema subentry
 
         Returns:
-            FlextResult containing operation details
+            FlextCore.Result containing operation details
 
         Example:
             >>> class_req = FlextLdapModels.CreateObjectClassRequest(
@@ -1884,30 +1867,32 @@ class FlextLdap(FlextService[None]):
 
             if schema_result.is_success:
                 # Schema exists - update
-                return FlextResult[dict[str, str]].ok(
+                return FlextCore.Result[dict[str, str]].ok(
                     {"operation": "updated", "object_class": class_request.name},
                 )
 
             # Create new
             create_result = self.create_object_class(class_request)
             if create_result.is_failure:
-                return FlextResult[dict[str, str]].fail(
+                return FlextCore.Result[dict[str, str]].fail(
                     f"Failed to create object class: {create_result.error}",
                 )
 
-            return FlextResult[dict[str, str]].ok(
+            return FlextCore.Result[dict[str, str]].ok(
                 {"operation": "created", "object_class": class_request.name},
             )
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(f"Object class upsert failed: {e}")
+            return FlextCore.Result[dict[str, str]].fail(
+                f"Object class upsert failed: {e}"
+            )
 
     def sync_schema(
         self,
         schema_dn: str,
         desired_attributes: list[FlextLdapModels.CreateSchemaAttributeRequest],
         desired_classes: list[FlextLdapModels.CreateObjectClassRequest],
-    ) -> FlextResult[FlextLdapModels.SchemaSyncResult]:
+    ) -> FlextCore.Result[FlextLdapModels.SchemaSyncResult]:
         """Synchronize LDAP schema with desired state using quirks engine.
 
         High-velocity operation that synchronizes schema attributes and
@@ -1919,7 +1904,7 @@ class FlextLdap(FlextService[None]):
             desired_classes: List of object classes that should exist
 
         Returns:
-            FlextResult containing SchemaSyncResult with statistics
+            FlextCore.Result containing SchemaSyncResult with statistics
 
         Example:
             >>> attrs = [FlextLdapModels.CreateSchemaAttributeRequest(...)]
@@ -1996,10 +1981,10 @@ class FlextLdap(FlextService[None]):
                         },
                     )
 
-            return FlextResult[FlextLdapModels.SchemaSyncResult].ok(sync_result)
+            return FlextCore.Result[FlextLdapModels.SchemaSyncResult].ok(sync_result)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.SchemaSyncResult].fail(
+            return FlextCore.Result[FlextLdapModels.SchemaSyncResult].fail(
                 f"Schema sync failed: {e}",
             )
 
@@ -2007,13 +1992,13 @@ class FlextLdap(FlextService[None]):
     # QUIRKS HELPER METHODS - FlextLdif quirks engine utilities
     # =========================================================================
 
-    def detect_server_type(self) -> FlextResult[str]:
+    def detect_server_type(self) -> FlextCore.Result[str]:
         """Detect LDAP server type using FlextLdif quirks engine.
 
         Queries root DSE and uses quirks engine for automatic detection.
 
         Returns:
-            FlextResult containing detected server type
+            FlextCore.Result containing detected server type
 
         Example:
             >>> result = api.detect_server_type()
@@ -2027,7 +2012,7 @@ class FlextLdap(FlextService[None]):
             # Get root DSE
             root_dse_result = self.client.search_one("", "(objectClass=*)")
             if root_dse_result.is_failure or not root_dse_result.unwrap():
-                return FlextResult[str].fail("Failed to query root DSE")
+                return FlextCore.Result[str].fail("Failed to query root DSE")
 
             # Use quirks engine for detection
             quirks = FlextLdapQuirksIntegration()
@@ -2038,18 +2023,18 @@ class FlextLdap(FlextService[None]):
             )
 
         except Exception as e:
-            return FlextResult[str].fail(f"Server type detection failed: {e}")
+            return FlextCore.Result[str].fail(f"Server type detection failed: {e}")
 
     def get_server_quirks(
         self, server_type: str | None = None
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextCore.Result[dict[str, str]]:
         """Get server quirks configuration for current or specified server.
 
         Args:
             server_type: Optional server type (auto-detected if None)
 
         Returns:
-            FlextResult containing server quirks information
+            FlextCore.Result containing server quirks information
 
         Example:
             >>> result = api.get_server_quirks()
@@ -2065,7 +2050,7 @@ class FlextLdap(FlextService[None]):
             if server_type is None:
                 detection_result = self.detect_server_type()
                 if detection_result.is_failure:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextCore.Result[dict[str, str]].fail(
                         "Failed to detect server type",
                     )
                 server_type = detection_result.unwrap()
@@ -2079,16 +2064,18 @@ class FlextLdap(FlextService[None]):
                 "quirks_available": "true",
             }
 
-            return FlextResult[dict[str, str]].ok(quirks_info)
+            return FlextCore.Result[dict[str, str]].ok(quirks_info)
 
         except Exception as e:
-            return FlextResult[dict[str, str]].fail(f"Failed to get server quirks: {e}")
+            return FlextCore.Result[dict[str, str]].fail(
+                f"Failed to get server quirks: {e}"
+            )
 
     def normalize_entry_with_quirks(
         self,
         entry: FlextLdapModels.Entry,
         server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextCore.Result[FlextLdapModels.Entry]:
         """Normalize LDAP entry using FlextLdif quirks engine.
 
         Applies server-specific normalization rules to entry attributes.
@@ -2098,7 +2085,7 @@ class FlextLdap(FlextService[None]):
             server_type: Optional server type (auto-detected if None)
 
         Returns:
-            FlextResult containing normalized entry
+            FlextCore.Result containing normalized entry
 
         Example:
             >>> entry = api.client.search_one("cn=user,dc=example,dc=com").unwrap()
@@ -2123,10 +2110,10 @@ class FlextLdap(FlextService[None]):
             # to apply server-specific transformations
             # For now, return the entry as-is with quirks context
 
-            return FlextResult[FlextLdapModels.Entry].ok(entry)
+            return FlextCore.Result[FlextLdapModels.Entry].ok(entry)
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextCore.Result[FlextLdapModels.Entry].fail(
                 f"Entry normalization failed: {e}",
             )
 
@@ -2134,7 +2121,7 @@ class FlextLdap(FlextService[None]):
         self,
         entry: FlextLdapModels.Entry,
         server_type: str | None = None,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Validate entry against server-specific quirks and requirements.
 
         Args:
@@ -2142,7 +2129,7 @@ class FlextLdap(FlextService[None]):
             server_type: Optional server type (auto-detected if None)
 
         Returns:
-            FlextResult indicating whether entry is valid
+            FlextCore.Result indicating whether entry is valid
 
         Example:
             >>> entry = FlextLdapModels.Entry(...)
@@ -2164,12 +2151,12 @@ class FlextLdap(FlextService[None]):
             # - Object class requirements
             # - Server-specific constraints
 
-            return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+            return FlextCore.Result[bool].fail(f"Entry validation failed: {e}")
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[bool]:
+    def authenticate_user(self, username: str, password: str) -> FlextCore.Result[bool]:
         """Authenticate user against LDAP.
 
         Args:
@@ -2177,13 +2164,15 @@ class FlextLdap(FlextService[None]):
             password: Password for authentication
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         auth_result = self.client.authenticate_user(username, password)
         if auth_result.is_failure:
-            return FlextResult[bool].fail(auth_result.error or "Authentication failed")
-        return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].fail(
+                auth_result.error or "Authentication failed"
+            )
+        return FlextCore.Result[bool].ok(True)
 
     # =========================================================================
     # LDIF INTEGRATION - Delegate to flext-ldif
@@ -2196,19 +2185,21 @@ class FlextLdap(FlextService[None]):
             self._ldif = FlextLdif()
         return self._ldif
 
-    def import_from_ldif(self, path: Path) -> FlextResult[list[FlextLdapModels.Entry]]:
+    def import_from_ldif(
+        self, path: Path
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Import entries from LDIF file.
 
         Args:
             path: Path to LDIF file
 
         Returns:
-            FlextResult containing list of entries
+            FlextCore.Result containing list of entries
 
         """
         result = self.ldif.parse(path)
         if result.is_failure:
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
+            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
                 f"LDIF parsing failed: {result.error}",
             )
 
@@ -2217,13 +2208,13 @@ class FlextLdap(FlextService[None]):
             FlextLdapModels.Entry.from_ldif(ldif_entry) for ldif_entry in ldif_entries
         ]
 
-        return FlextResult[list[FlextLdapModels.Entry]].ok(ldap_entries)
+        return FlextCore.Result[list[FlextLdapModels.Entry]].ok(ldap_entries)
 
     def export_to_ldif(
         self,
         entries: list[FlextLdapModels.Entry],
         path: Path,
-    ) -> FlextResult[bool]:
+    ) -> FlextCore.Result[bool]:
         """Export entries to LDIF file.
 
         Args:
@@ -2231,15 +2222,15 @@ class FlextLdap(FlextService[None]):
             path: Path to output LDIF file
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         ldif_entries = [entry.to_ldif() for entry in entries]
         result = self.ldif.write(ldif_entries, path)
         if result.is_failure:
-            return FlextResult[bool].fail(f"LDIF writing failed: {result.error}")
+            return FlextCore.Result[bool].fail(f"LDIF writing failed: {result.error}")
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
     # =========================================================================
     # ADDITIONAL FACADE METHODS - Complete API surface
@@ -2250,8 +2241,8 @@ class FlextLdap(FlextService[None]):
         base_dn_or_request: str | FlextLdapModels.SearchRequest,
         filter_str: str | None = None,
         scope: str = "subtree",
-        attributes: list[str] | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[FlextLdapModels.Entry | None]:
         """Search for a single LDAP entry.
 
         Args:
@@ -2261,7 +2252,7 @@ class FlextLdap(FlextService[None]):
             attributes: List of attributes to retrieve (ignored if SearchRequest provided)
 
         Returns:
-            FlextResult containing single entry or None
+            FlextCore.Result containing single entry or None
 
         """
         if isinstance(base_dn_or_request, FlextLdapModels.SearchRequest):
@@ -2280,10 +2271,10 @@ class FlextLdap(FlextService[None]):
 
         result = self.search(search_request)
         if result.is_failure:
-            return FlextResult[FlextLdapModels.Entry | None].fail(result.error)
+            return FlextCore.Result[FlextLdapModels.Entry | None].fail(result.error)
 
         entries = result.unwrap()
-        return FlextResult[FlextLdapModels.Entry | None].ok(
+        return FlextCore.Result[FlextLdapModels.Entry | None].ok(
             entries[0] if entries else None,
         )
 
@@ -2291,8 +2282,8 @@ class FlextLdap(FlextService[None]):
         self,
         base_dn: str,
         filter_str: str | None = None,
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Search for user entries.
 
         Args:
@@ -2301,7 +2292,7 @@ class FlextLdap(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult containing list of user entries
+            FlextCore.Result containing list of user entries
 
         """
         user_filter = FlextLdapModels.SearchRequest.create_user_filter(filter_str)
@@ -2319,8 +2310,8 @@ class FlextLdap(FlextService[None]):
         self,
         username: str,
         base_dn: str | None = None,
-        attributes: list[str] | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[FlextLdapModels.Entry | None]:
         """Find a specific user by username.
 
         Args:
@@ -2329,11 +2320,12 @@ class FlextLdap(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult containing user entry or None
+            FlextCore.Result containing user entry or None
 
         """
+        config = FlextLdapConfig()
         # Use config base_dn if not provided
-        search_base = base_dn or self.config.ldap_base_dn
+        search_base = base_dn or config.ldap_base_dn
 
         filter_str = f"(uid={username})"
         return self.search_one(
@@ -2347,9 +2339,9 @@ class FlextLdap(FlextService[None]):
         self,
         base_dn: str | None = None,
         filter_str: str | None = None,
-        attributes: list[str] | None = None,
+        attributes: FlextCore.Types.StringList | None = None,
         search_base: str | None = None,  # Alias for base_dn
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Search for group entries.
 
         Args:
@@ -2359,13 +2351,13 @@ class FlextLdap(FlextService[None]):
             search_base: Alias for base_dn (for backward compatibility)
 
         Returns:
-            FlextResult containing list of group entries
+            FlextCore.Result containing list of group entries
 
         """
         # Handle parameter aliases
         effective_base_dn = base_dn or search_base
         if not effective_base_dn:
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
+            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
                 "base_dn or search_base must be provided",
             )
 
@@ -2384,8 +2376,8 @@ class FlextLdap(FlextService[None]):
         self,
         group_identifier: str,
         base_dn: str | None = None,
-        attributes: list[str] | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[FlextLdapModels.Entry | None]:
         """Get a specific group by DN or group name.
 
         Args:
@@ -2394,7 +2386,7 @@ class FlextLdap(FlextService[None]):
             attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult containing group entry or None
+            FlextCore.Result containing group entry or None
 
         """
         # Check if it's a full DN (contains '=' and ',')
@@ -2419,8 +2411,8 @@ class FlextLdap(FlextService[None]):
     def update_user_attributes(
         self,
         dn: str,
-        attributes: dict[str, str | FlextTypes.StringList],
-    ) -> FlextResult[bool]:
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
         """Update user attributes.
 
         Args:
@@ -2428,10 +2420,10 @@ class FlextLdap(FlextService[None]):
             attributes: Dictionary of attributes to update
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
-        changes: FlextTypes.Dict = {}
+        changes: FlextCore.Types.Dict = {}
         for attr_name, attr_value in attributes.items():
             changes[attr_name] = [
                 (
@@ -2445,8 +2437,8 @@ class FlextLdap(FlextService[None]):
     def update_group_attributes(
         self,
         dn: str,
-        attributes: dict[str, str | FlextTypes.StringList],
-    ) -> FlextResult[bool]:
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
         """Update group attributes.
 
         Args:
@@ -2454,10 +2446,10 @@ class FlextLdap(FlextService[None]):
             attributes: Dictionary of attributes to update
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
-        changes: FlextTypes.Dict = {}
+        changes: FlextCore.Types.Dict = {}
         for attr_name, attr_value in attributes.items():
             changes[attr_name] = [
                 (
@@ -2468,14 +2460,14 @@ class FlextLdap(FlextService[None]):
 
         return self.modify_entry(dn, changes)
 
-    def delete_user(self, dn: str) -> FlextResult[bool]:
+    def delete_user(self, dn: str) -> FlextCore.Result[bool]:
         """Delete a user entry.
 
         Args:
             dn: User distinguished name
 
         Returns:
-            FlextResult indicating success
+            FlextCore.Result indicating success
 
         """
         return self.delete_entry(dn)
@@ -2485,10 +2477,10 @@ class FlextLdap(FlextService[None]):
         base_dn: str,
         filter_str: str = "(objectClass=*)",
         scope: str = "subtree",
-        attributes: list[str] | None = None,
+        attributes: FlextCore.Types.StringList | None = None,
         size_limit: int | None = None,
         time_limit: int | None = None,
-    ) -> FlextResult[FlextLdapModels.SearchResponse]:
+    ) -> FlextCore.Result[FlextLdapModels.SearchResponse]:
         """Perform comprehensive LDAP search returning SearchResponse.
 
         Args:
@@ -2500,7 +2492,7 @@ class FlextLdap(FlextService[None]):
             time_limit: Time limit for search in seconds (None uses model default)
 
         Returns:
-            FlextResult containing SearchResponse with entries and metadata
+            FlextCore.Result containing SearchResponse with entries and metadata
 
         """
         # Build search request with explicit parameters to satisfy type checker
@@ -2515,7 +2507,7 @@ class FlextLdap(FlextService[None]):
 
         return self.client.search_with_request(search_request)
 
-    def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
+    def validate_credentials(self, dn: str, password: str) -> FlextCore.Result[bool]:
         """Validate user credentials against LDAP.
 
         Args:
@@ -2523,22 +2515,22 @@ class FlextLdap(FlextService[None]):
             password: User password
 
         Returns:
-            FlextResult indicating credential validity
+            FlextCore.Result indicating credential validity
 
         """
         return self.client.validate_credentials(dn, password)
 
     def add_entries_batch(
         self,
-        entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]],
-    ) -> FlextResult[list[FlextResult[bool]]]:
+        entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]],
+    ) -> FlextCore.Result[list[FlextCore.Result[bool]]]:
         """Add multiple LDAP entries in batch.
 
         Args:
             entries: List of (dn, attributes) tuples
 
         Returns:
-            FlextResult containing list of FlextResult objects (one per entry)
+            FlextCore.Result containing list of FlextCore.Result objects (one per entry)
 
         """
         results = []
@@ -2546,15 +2538,15 @@ class FlextLdap(FlextService[None]):
             result = self.add_entry(dn, attributes)
             results.append(result)
 
-        return FlextResult[list[FlextResult[bool]]].ok(results)
+        return FlextCore.Result[list[FlextCore.Result[bool]]].ok(results)
 
     def search_entries_bulk(
         self,
-        base_dns: list[str] | list[FlextLdapModels.SearchRequest],
-        filters: list[str] | None = None,
+        base_dns: FlextCore.Types.StringList | list[FlextLdapModels.SearchRequest],
+        filters: FlextCore.Types.StringList | None = None,
         scope: str = "subtree",
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[list[FlextLdapModels.Entry]]]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[list[list[FlextLdapModels.Entry]]]:
         """Perform bulk search across multiple base DNs.
 
         Args:
@@ -2564,7 +2556,7 @@ class FlextLdap(FlextService[None]):
             attributes: List of attributes to retrieve (ignored if SearchRequests provided)
 
         Returns:
-            FlextResult containing list of entry lists (one per search)
+            FlextCore.Result containing list of entry lists (one per search)
 
         """
         # Check if we received SearchRequest objects
@@ -2575,21 +2567,21 @@ class FlextLdap(FlextService[None]):
             for search_request in search_requests:
                 result = self.search(search_request)
                 if result.is_failure:
-                    return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+                    return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
                         f"Bulk search failed for {search_request.base_dn}: {result.error}",
                     )
                 results.append(result.unwrap())
 
-            return FlextResult[list[list[FlextLdapModels.Entry]]].ok(results)
+            return FlextCore.Result[list[list[FlextLdapModels.Entry]]].ok(results)
 
         # Traditional base_dns + filters approach
         if filters is None:
-            return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+            return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
                 "filters parameter is required when passing base DNs as strings",
             )
 
         if len(base_dns) != len(filters):
-            return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+            return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
                 "base_dns and filters lists must have the same length",
             )
 
@@ -2605,23 +2597,23 @@ class FlextLdap(FlextService[None]):
 
             result = self.search(search_request)
             if result.is_failure:
-                return FlextResult[list[list[FlextLdapModels.Entry]]].fail(
+                return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
                     f"Bulk search failed for {base_dn}: {result.error}",
                 )
 
             results.append(result.unwrap())
 
-        return FlextResult[list[list[FlextLdapModels.Entry]]].ok(results)
+        return FlextCore.Result[list[list[FlextLdapModels.Entry]]].ok(results)
 
-    def validate_configuration_consistency(self) -> FlextResult[bool]:
+    def validate_configuration_consistency(self) -> FlextCore.Result[bool]:
         """Validate LDAP configuration consistency.
 
         Returns:
-            FlextResult indicating configuration validity
+            FlextCore.Result indicating configuration validity
 
         """
         validation_result = self.config.validate_ldap_requirements()
-        # Convert FlextResult[None] to FlextResult[bool]
+        # Convert FlextCore.Result[None] to FlextCore.Result[bool]
         return validation_result.map(lambda _: True)
 
     # =========================================================================
@@ -2633,7 +2625,7 @@ class FlextLdap(FlextService[None]):
         entry: FlextLdapModels.Entry,
         source_server_type: str,
         target_server_type: str,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextCore.Result[FlextLdapModels.Entry]:
         """Convert LDAP entry between different server types.
 
         Args:
@@ -2651,7 +2643,7 @@ class FlextLdap(FlextService[None]):
 
     def detect_entry_server_type(
         self, entry: FlextLdapModels.Entry
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Detect the server type an entry is compatible with.
 
         Args:
@@ -2675,15 +2667,15 @@ class FlextLdap(FlextService[None]):
             # FlextLdapModels.Entry and FlextLdifModels.Entry are structurally compatible
             validation_result = servers.validate_entry_for_server(entry, server_type)
             if validation_result.is_success and validation_result.unwrap():
-                return FlextResult[str].ok(server_type)
+                return FlextCore.Result[str].ok(server_type)
 
-        return FlextResult[str].ok(FlextLdapServers.SERVER_GENERIC)
+        return FlextCore.Result[str].ok(FlextLdapServers.SERVER_GENERIC)
 
     def normalize_entry_for_server(
         self,
         entry: FlextLdapModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextCore.Result[FlextLdapModels.Entry]:
         """Normalize LDAP entry for target server type.
 
         Args:
@@ -2697,7 +2689,7 @@ class FlextLdap(FlextService[None]):
         # FlextLdapModels.Entry and FlextLdifModels.Entry are structurally compatible
         return self.servers.normalize_entry_for_server(entry, target_server_type)
 
-    def get_server_specific_attributes(self) -> FlextResult[FlextTypes.Dict]:
+    def get_server_specific_attributes(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get server-specific attributes for current server type.
 
         Returns:
@@ -2706,9 +2698,9 @@ class FlextLdap(FlextService[None]):
         """
         # This would need to be implemented in the servers module
         # For now, return empty dict
-        return FlextResult[FlextTypes.Dict].ok({})
+        return FlextCore.Result[FlextCore.Types.Dict].ok({})
 
-    def get_detected_server_type(self) -> FlextResult[str | None]:
+    def get_detected_server_type(self) -> FlextCore.Result[str | None]:
         """Get the detected server type from current connection.
 
         Returns:
@@ -2717,9 +2709,9 @@ class FlextLdap(FlextService[None]):
         """
         # This would require inspecting the current connection
         # For now, return None
-        return FlextResult[str | None].ok(None)
+        return FlextCore.Result[str | None].ok(None)
 
-    def get_server_capabilities(self) -> FlextResult[FlextTypes.Dict]:
+    def get_server_capabilities(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get server capabilities and supported features.
 
         Returns:
@@ -2728,15 +2720,15 @@ class FlextLdap(FlextService[None]):
         """
         # This would need to query the server
         # For now, return basic capabilities
-        capabilities: dict[str, object] = {
+        capabilities: FlextCore.Types.Dict = {
             "supports_ssl": True,
             "supports_starttls": True,
             "supports_paged_results": True,
             "max_page_size": 1000,
         }
-        return FlextResult[FlextTypes.Dict].ok(capabilities)
+        return FlextCore.Result[FlextCore.Types.Dict].ok(capabilities)
 
-    def get_server_operations(self) -> FlextResult[list[str]]:
+    def get_server_operations(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get list of supported server operations.
 
         Returns:
@@ -2753,7 +2745,7 @@ class FlextLdap(FlextService[None]):
             "compare",
             "extended",
         ]
-        return FlextResult[list[str]].ok(operations)
+        return FlextCore.Result[FlextCore.Types.StringList].ok(operations)
 
     def search_universal(
         self,
@@ -2761,8 +2753,8 @@ class FlextLdap(FlextService[None]):
         base_dn: str | None = None,
         filter_str: str | None = None,
         scope: str = "subtree",
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+        attributes: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Perform universal search with automatic server adaptation.
 
         Args:

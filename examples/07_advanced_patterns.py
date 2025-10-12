@@ -5,7 +5,7 @@ This example demonstrates enterprise-grade LDAP patterns:
 - Context managers for automatic connection management
 - Retry patterns with exponential backoff
 - Bulk operations with batching
-- FlextResult error handling patterns
+- FlextCore.Result error handling patterns
 - Performance optimization techniques
 - Connection pooling concepts
 - Transaction-like operations
@@ -35,7 +35,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Final, TypeVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -46,7 +46,7 @@ from flext_ldap import (
     FlextLdapModels,
 )
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -84,13 +84,13 @@ def ldap_connection(
             result = api.search(...)
 
     """
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=server_uri,
         ldap_bind_dn=bind_dn,
         ldap_bind_password=SecretStr(password),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     # Use context manager for automatic connection/disconnection
     try:
@@ -102,21 +102,21 @@ def ldap_connection(
 
 
 def retry_with_backoff[T](
-    operation: Callable[[], FlextResult[T]],
+    operation: Callable[[], FlextCore.Result[T]],
     max_retries: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 60.0,
-) -> FlextResult[T]:
+) -> FlextCore.Result[T]:
     """Retry operation with exponential backoff.
 
     Args:
-        operation: Function to retry (must return FlextResult)
+        operation: Function to retry (must return FlextCore.Result)
         max_retries: Maximum number of retry attempts
         base_delay: Initial delay in seconds
         max_delay: Maximum delay in seconds
 
     Returns:
-        FlextResult from successful operation or final failure
+        FlextCore.Result from successful operation or final failure
 
     Example:
         result = retry_with_backoff(
@@ -148,7 +148,7 @@ def retry_with_backoff[T](
 
     # All retries exhausted
     error_msg = f"All {max_retries} attempts failed. Last error: {last_error}"
-    return FlextResult[T].fail(error_msg)
+    return FlextCore.Result[T].fail(error_msg)
 
 
 def demonstrate_context_manager() -> None:
@@ -190,17 +190,17 @@ def demonstrate_retry_pattern() -> None:
     # Simulate unreliable operation
     attempt_count = 0
 
-    def unreliable_operation() -> FlextResult[str]:
+    def unreliable_operation() -> FlextCore.Result[str]:
         """Simulate operation that fails first few attempts."""
         nonlocal attempt_count
         attempt_count += 1
 
         if attempt_count < 3:
             # Simulate failure
-            return FlextResult[str].fail(f"Simulated failure #{attempt_count}")
+            return FlextCore.Result[str].fail(f"Simulated failure #{attempt_count}")
 
         # Success on 3rd attempt
-        return FlextResult[str].ok(f"Success after {attempt_count} attempts")
+        return FlextCore.Result[str].ok(f"Success after {attempt_count} attempts")
 
     logger.info("Starting unreliable operation with retry...")
     result = retry_with_backoff(
@@ -222,7 +222,9 @@ def demonstrate_bulk_operations() -> None:
     try:
         with ldap_connection() as api:
             # Create multiple entries in bulk
-            users_to_create: list[tuple[str, dict[str, str | list[str]]]] = [
+            users_to_create: list[
+                tuple[str, dict[str, str | FlextCore.Types.StringList]]
+            ] = [
                 (
                     f"cn=user{i},ou=users,{BASE_DN}",
                     {
@@ -265,8 +267,8 @@ def demonstrate_bulk_operations() -> None:
 
 
 def demonstrate_flext_result_patterns() -> None:
-    """Demonstrate FlextResult error handling patterns."""
-    logger.info("\n=== FlextResult Error Handling Patterns ===")
+    """Demonstrate FlextCore.Result error handling patterns."""
+    logger.info("\n=== FlextCore.Result Error Handling Patterns ===")
 
     try:
         with ldap_connection() as api:
@@ -288,7 +290,7 @@ def demonstrate_flext_result_patterns() -> None:
             # Pattern 2: Early return on failure
             logger.info("\nPattern 2: Early return on failure")
 
-            def process_with_early_return() -> FlextResult[int]:
+            def process_with_early_return() -> FlextCore.Result[int]:
                 """Process with early return pattern."""
                 # Search for entries
                 search_request = FlextLdapModels.SearchRequest.create(
@@ -300,10 +302,10 @@ def demonstrate_flext_result_patterns() -> None:
 
                 if search_result.is_failure:
                     err = search_result.error
-                    return FlextResult[int].fail(f"Search failed: {err}")
+                    return FlextCore.Result[int].fail(f"Search failed: {err}")
 
                 entries = search_result.unwrap()
-                return FlextResult[int].ok(len(entries))
+                return FlextCore.Result[int].ok(len(entries))
 
             count_result = process_with_early_return()
             if count_result.is_success:
@@ -312,11 +314,11 @@ def demonstrate_flext_result_patterns() -> None:
             # Pattern 3: Chaining operations
             logger.info("\nPattern 3: Chaining operations")
 
-            def chain_operations() -> FlextResult[str]:
+            def chain_operations() -> FlextCore.Result[str]:
                 """Chain multiple operations."""
                 # Step 1: Connect check
                 if not api.is_connected():
-                    return FlextResult[str].fail("Not connected")
+                    return FlextCore.Result[str].fail("Not connected")
 
                 # Step 2: Search
                 search_request = FlextLdapModels.SearchRequest.create(
@@ -328,14 +330,14 @@ def demonstrate_flext_result_patterns() -> None:
 
                 if search_result.is_failure:
                     err = search_result.error
-                    return FlextResult[str].fail(f"Search failed: {err}")
+                    return FlextCore.Result[str].fail(f"Search failed: {err}")
 
                 entry = search_result.unwrap()
                 if not entry:
-                    return FlextResult[str].fail("No entry found")
+                    return FlextCore.Result[str].fail("No entry found")
 
                 # Step 3: Process
-                return FlextResult[str].ok(f"Processed entry: {entry.dn}")
+                return FlextCore.Result[str].ok(f"Processed entry: {entry.dn}")
 
             chain_result = chain_operations()
             if chain_result.is_success:
@@ -361,12 +363,12 @@ def demonstrate_exception_handling() -> None:
     # Demonstrate proper error handling
     logger.info("\nHandling connection errors:")
     try:
-        config = FlextLdapConfig(
+        FlextLdapConfig(
             ldap_server_uri="ldap://invalid-server:389",
             ldap_bind_dn=BIND_DN,
             ldap_bind_password=SecretStr(BIND_PASSWORD),
         )
-        api = FlextLdap(config=config)
+        api = FlextLdap()
 
         # Test connection handling
         try:
@@ -452,7 +454,7 @@ def main() -> int:
         logger.info("- Context managers for resource management")
         logger.info("- Retry with exponential backoff for resilience")
         logger.info("- Bulk operations with batching for efficiency")
-        logger.info("- FlextResult patterns for error handling")
+        logger.info("- FlextCore.Result patterns for error handling")
         logger.info("- Performance optimizations (filtering, scope limitation)")
         logger.info(f"{'=' * 60}")
 

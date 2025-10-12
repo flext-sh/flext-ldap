@@ -4,7 +4,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextTypes
+from flext_core import FlextCore
 
 # Sample LDAP entries for testing
 SAMPLE_USER_ENTRY: dict = {
@@ -31,7 +31,7 @@ SAMPLE_GROUP_ENTRY: dict = {
 }
 
 # Multiple test users for comprehensive testing
-TEST_USERS: list[FlextTypes.Dict] = [
+TEST_USERS: list[FlextCore.Types.Dict] = [
     {
         "dn": "cn=alice,ou=people,dc=flext,dc=local",
         "attributes": {
@@ -70,7 +70,7 @@ TEST_USERS: list[FlextTypes.Dict] = [
     },
 ]
 
-TEST_GROUPS: list[FlextTypes.Dict] = [
+TEST_GROUPS: list[FlextCore.Types.Dict] = [
     {
         "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
         "attributes": {
@@ -95,7 +95,7 @@ TEST_GROUPS: list[FlextTypes.Dict] = [
 ]
 
 # Test organizational units
-TEST_OUS: list[FlextTypes.Dict] = [
+TEST_OUS: list[FlextCore.Types.Dict] = [
     {
         "dn": "ou=people,dc=flext,dc=local",
         "attributes": {
@@ -115,7 +115,7 @@ TEST_OUS: list[FlextTypes.Dict] = [
 ]
 
 # Invalid test data for error handling tests
-INVALID_ENTRIES: list[FlextTypes.Dict] = [
+INVALID_ENTRIES: list[FlextCore.Types.Dict] = [
     {
         "dn": "",  # Empty DN
         "attributes": {"cn": ["invalid"]},
@@ -131,7 +131,7 @@ INVALID_ENTRIES: list[FlextTypes.Dict] = [
 ]
 
 # Search filter test data
-TEST_FILTERS: FlextTypes.StringDict = {
+TEST_FILTERS: FlextCore.Types.StringDict = {
     "all_users": "(objectClass=person)",
     "all_groups": "(objectClass=groupOfNames)",
     "specific_user": "(uid=testuser)",
@@ -142,7 +142,7 @@ TEST_FILTERS: FlextTypes.StringDict = {
 }
 
 # Expected search results
-EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.StringList] = {
+EXPECTED_SEARCH_RESULTS: dict[str, FlextCore.Types.StringList] = {
     "all_users": [
         "cn=alice,ou=people,dc=flext,dc=local",
         "cn=bob,ou=people,dc=flext,dc=local",
@@ -180,7 +180,7 @@ SAMPLE_ACL_DATA: dict = {
 }
 
 # ACL test cases for comprehensive testing
-ACL_TEST_CASES: list[FlextTypes.Dict] = [
+ACL_TEST_CASES: list[FlextCore.Types.Dict] = [
     {
         "name": "user_read_access",
         "unified": {
@@ -232,7 +232,7 @@ ACL_TEST_CASES: list[FlextTypes.Dict] = [
 ]
 
 # Invalid ACL test cases
-INVALID_ACL_CASES: list[FlextTypes.Dict] = [
+INVALID_ACL_CASES: list[FlextCore.Types.Dict] = [
     {
         "name": "missing_target",
         "unified": {

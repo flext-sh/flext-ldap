@@ -17,7 +17,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from flext_core import FlextTypes
+from flext_core import FlextCore
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
 
@@ -65,9 +65,9 @@ def ldif_api() -> FlextLdif:
 @pytest.fixture
 def test_entries(
     ldap_client: FlextLdapClients,
-) -> Generator[FlextTypes.StringList]:
+) -> Generator[FlextCore.Types.StringList]:
     """Create test LDAP entries and clean up after."""
-    test_dns: FlextTypes.StringList = []
+    test_dns: FlextCore.Types.StringList = []
 
     # Create test organizational unit
     ou_dn = "ou=testusers,dc=flext,dc=local"
@@ -370,9 +370,9 @@ class TestEntryConversion:
         assert ldif_entry_result.is_success
         ldif_entry = ldif_entry_result.unwrap()
 
-        # Convert LdifAttributes to dict[str, str | FlextTypes.StringList]
-        ldap_attributes: dict[str, str | FlextTypes.StringList] = {}
-        object_classes_value: FlextTypes.StringList = []
+        # Convert LdifAttributes to dict[str, str | FlextCore.Types.StringList]
+        ldap_attributes: dict[str, str | FlextCore.Types.StringList] = {}
+        object_classes_value: FlextCore.Types.StringList = []
         for attr_name, attr_values in ldif_entry.attributes.data.items():
             if len(attr_values.values) == 1:
                 ldap_attributes[attr_name] = attr_values.values[0]

@@ -90,7 +90,7 @@ class TestFlextLdapAuthenticationUserAuth:
         assert "connection not established" in result.error.lower()
 
     def test_authenticate_user_empty_username(
-        self, auth_with_context, mock_connection
+        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
     ) -> None:
         """Test authenticate_user with empty username."""
         mock_connection.entries = []
@@ -105,7 +105,7 @@ class TestFlextLdapAuthenticationUserAuth:
         )
 
     def test_authenticate_user_user_not_found(
-        self, auth_with_context, mock_connection
+        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
     ) -> None:
         """Test authenticate_user fails when user not found."""
         mock_connection.entries = []
@@ -116,7 +116,7 @@ class TestFlextLdapAuthenticationUserAuth:
         assert "user not found" in result.error.lower()
 
     def test_authenticate_user_search_fails(
-        self, auth_with_context, mock_connection
+        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
     ) -> None:
         """Test authenticate_user handles search failures."""
         mock_connection.search.side_effect = Exception("LDAP search error")
@@ -126,7 +126,10 @@ class TestFlextLdapAuthenticationUserAuth:
         assert "search failed" in result.error.lower()
 
     def test_authenticate_user_bind_fails(
-        self, auth_with_context, mock_connection, mock_server
+        self,
+        auth_with_context: FlextLdapAuthentication,
+        mock_connection: Mock,
+        mock_server: Mock,
     ) -> None:
         """Test authenticate_user fails on bind error."""
         # Setup mock user entry
@@ -150,7 +153,10 @@ class TestFlextLdapAuthenticationUserAuth:
             assert "authentication failed" in result.error.lower()
 
     def test_authenticate_user_success(
-        self, auth_with_context, mock_connection, mock_server
+        self,
+        auth_with_context: FlextLdapAuthentication,
+        mock_connection: Mock,
+        mock_server: Mock,
     ) -> None:
         """Test successful user authentication."""
         # Setup mock user entry
@@ -181,7 +187,9 @@ class TestFlextLdapAuthenticationUserAuth:
 class TestFlextLdapAuthenticationCredentials:
     """Test credential validation functionality."""
 
-    def test_validate_credentials_no_connection(self, auth_service) -> None:
+    def test_validate_credentials_no_connection(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test validate_credentials fails without connection context."""
         result = auth_service.validate_credentials(
             "cn=test,dc=example,dc=com", "password"
@@ -190,7 +198,7 @@ class TestFlextLdapAuthenticationCredentials:
         assert "no connection context" in result.error.lower()
 
     def test_validate_credentials_bind_failure(
-        self, auth_with_context, mock_server
+        self, auth_with_context: FlextLdapAuthentication, mock_server: Mock
     ) -> None:
         """Test validate_credentials with bind failure."""
         with patch("flext_ldap.authentication.Connection") as mock_conn_class:
@@ -206,7 +214,9 @@ class TestFlextLdapAuthenticationCredentials:
             assert result.is_success
             assert result.unwrap() is False
 
-    def test_validate_credentials_success(self, auth_with_context, mock_server) -> None:
+    def test_validate_credentials_success(
+        self, auth_with_context: FlextLdapAuthentication, mock_server: Mock
+    ) -> None:
         """Test successful credential validation."""
         with patch("flext_ldap.authentication.Connection") as mock_conn_class:
             mock_test_conn = Mock(spec=Connection)
@@ -225,18 +235,24 @@ class TestFlextLdapAuthenticationCredentials:
 class TestFlextLdapAuthenticationHelpers:
     """Test helper methods."""
 
-    def test_validate_connection_no_connection(self, auth_service) -> None:
+    def test_validate_connection_no_connection(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test connection validation fails without connection."""
         result = auth_service._validate_connection()
         assert result.is_failure
         assert "connection not established" in result.error.lower()
 
-    def test_validate_connection_with_connection(self, auth_with_context) -> None:
+    def test_validate_connection_with_connection(
+        self, auth_with_context: FlextLdapAuthentication
+    ) -> None:
         """Test connection validation succeeds with connection."""
         result = auth_with_context._validate_connection()
         assert result.is_success
 
-    def test_search_user_by_username_no_connection(self, auth_service) -> None:
+    def test_search_user_by_username_no_connection(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test user search fails without connection."""
         result = auth_service._search_user_by_username("testuser")
         assert result.is_failure
@@ -266,7 +282,9 @@ class TestFlextLdapAuthenticationHelpers:
         assert result.is_success
         assert result.unwrap() is mock_entry
 
-    def test_create_user_from_entry_result(self, auth_service) -> None:
+    def test_create_user_from_entry_result(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test creating user from entry result."""
         mock_entry = Mock()
         mock_entry.entry_dn = "uid=testuser,ou=users,dc=test,dc=local"
@@ -283,7 +301,9 @@ class TestFlextLdapAuthenticationHelpers:
         assert user.sn == "User"
         assert user.mail == "test@example.com"
 
-    def test_create_user_from_entry_error_handling(self, auth_service) -> None:
+    def test_create_user_from_entry_error_handling(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test error handling when entry conversion fails."""
         # Create a mock entry that will cause an error during user creation
         mock_entry = Mock()
@@ -299,19 +319,21 @@ class TestFlextLdapAuthenticationHelpers:
 class TestFlextLdapAuthenticationExecute:
     """Test service execute methods."""
 
-    def test_execute_returns_success(self, auth_service) -> None:
+    def test_execute_returns_success(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test execute method returns success."""
         result = auth_service.execute()
         assert result.is_success
 
-    def test_execute_operation(self, auth_service) -> None:
+    def test_execute_operation(self, auth_service: FlextLdapAuthentication) -> None:
         """Test execute_operation method."""
-        from flext_core import FlextModels
+        from flext_core import FlextCore
 
         def test_op() -> None:
             return None
 
-        operation = FlextModels.OperationExecutionRequest(
+        operation = FlextCore.Models.OperationExecutionRequest(
             operation_name="test",
             operation_type="test",
             operation_callable=test_op,

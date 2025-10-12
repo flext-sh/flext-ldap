@@ -12,9 +12,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextCore
 
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 
 FIXTURES_DIR = Path(__file__).parent
 
@@ -23,12 +23,12 @@ class TestFixtures:
     """Centralized test fixtures loader following FLEXT patterns."""
 
     @staticmethod
-    def load_json(filename: str) -> FlextResult[list[FlextTypes.Dict]]:
+    def load_json(filename: str) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
         """Load JSON test data from fixtures directory."""
         try:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
-                return FlextResult[list[FlextTypes.Dict]].fail(
+                return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                     f"Fixture file not found: {filename}"
                 )
 
@@ -36,56 +36,60 @@ class TestFixtures:
                 data = json.load(f)
 
             if not isinstance(data, list):
-                return FlextResult[list[FlextTypes.Dict]].fail(
+                return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                     f"Expected list in {filename}, got {type(data)}"
                 )
 
-            return FlextResult[list[FlextTypes.Dict]].ok(data)
+            return FlextCore.Result[list[FlextCore.Types.Dict]].ok(data)
         except Exception as e:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 f"Failed to load JSON fixture {filename}: {e}"
             )
 
     @staticmethod
-    def load_ldif(filename: str) -> FlextResult[str]:
+    def load_ldif(filename: str) -> FlextCore.Result[str]:
         """Load LDIF test data from fixtures directory."""
         try:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
-                return FlextResult[str].fail(f"Fixture file not found: {filename}")
+                return FlextCore.Result[str].fail(f"Fixture file not found: {filename}")
 
             with Path(filepath).open(encoding="utf-8") as f:
                 content = f.read()
 
-            return FlextResult[str].ok(content)
+            return FlextCore.Result[str].ok(content)
         except Exception as e:
-            return FlextResult[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
+            return FlextCore.Result[str].fail(
+                f"Failed to load LDIF fixture {filename}: {e}"
+            )
 
     @staticmethod
-    def load_docker_config() -> FlextResult[FlextTypes.Dict]:
+    def load_docker_config() -> FlextCore.Result[FlextCore.Types.Dict]:
         """Load Docker configuration for test container."""
         try:
             filepath = FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return FlextResult[FlextTypes.Dict].fail("Docker config file not found")
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "Docker config file not found"
+                )
 
             with Path(filepath).open(encoding="utf-8") as f:
                 config = json.load(f)
 
-            return FlextResult[FlextTypes.Dict].ok(config)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(config)
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
                 f"Failed to load Docker config: {e}"
             )
 
     @classmethod
-    def get_test_users(cls) -> list[FlextTypes.Dict]:
+    def get_test_users(cls) -> list[FlextCore.Types.Dict]:
         """Get test users list (convenience method)."""
         result = cls.load_json("test_users.json")
         return result.value if result.is_success else []
 
     @classmethod
-    def get_test_groups(cls) -> list[FlextTypes.Dict]:
+    def get_test_groups(cls) -> list[FlextCore.Types.Dict]:
         """Get test groups list (convenience method)."""
         result = cls.load_json("test_groups.json")
         return result.value if result.is_success else []
@@ -97,7 +101,7 @@ class TestFixtures:
         return result.value if result.is_success else ""
 
     @classmethod
-    def get_docker_config(cls) -> FlextTypes.Dict:
+    def get_docker_config(cls) -> FlextCore.Types.Dict:
         """Get Docker configuration (convenience method)."""
         result = cls.load_docker_config()
         return result.value if result.is_success else {}

@@ -32,12 +32,12 @@ import sys
 import time
 from typing import Final
 
-from flext_core import FlextLogger
+from flext_core import FlextCore
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -55,7 +55,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
     logger.info("=== Basic Connection Lifecycle ===")
 
     # Create configuration
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
@@ -63,7 +63,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
     )
 
     # Create API instance
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     logger.info("\n1. Connecting to LDAP server...")
     try:
@@ -98,13 +98,13 @@ def demonstrate_connection_state_monitoring() -> None:
     """Demonstrate connection state monitoring and validation."""
     logger.info("\n=== Connection State Monitoring ===")
 
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     logger.info("\n1. Initial state (before connection):")
     logger.info(f"   Is connected: {api.is_connected()}")
@@ -196,7 +196,7 @@ def demonstrate_connection_context_manager() -> None:
 
     logger.info("\n1. Using connection as context manager (recommended):")
 
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
@@ -205,7 +205,7 @@ def demonstrate_connection_context_manager() -> None:
 
     # Note: FlextLdap doesn't implement __enter__/__exit__ yet,
     # so we demonstrate the pattern manually
-    api = FlextLdap(config=config)
+    api = FlextLdap()
 
     try:
         logger.info("   Connecting...")
@@ -238,7 +238,7 @@ def demonstrate_connection_retry_pattern() -> None:
     """Demonstrate connection retry pattern with exponential backoff."""
     logger.info("\n=== Connection Retry Pattern ===")
 
-    config = FlextLdapConfig(
+    FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
@@ -250,7 +250,7 @@ def demonstrate_connection_retry_pattern() -> None:
 
     logger.info(f"\n1. Attempting connection with retry (max {max_retries} attempts):")
 
-    api = FlextLdap(config=config)
+    api = FlextLdap()
     connected = False
 
     for attempt in range(1, max_retries + 1):
@@ -421,14 +421,14 @@ def main() -> int:
         logger.info("\nKey Takeaways:")
         logger.info("  • Always disconnect connections (resource cleanup)")
         logger.info("  • Use is_connected() to monitor connection state")
-        logger.info("  • Handle connection errors explicitly with FlextResult")
+        logger.info("  • Handle connection errors explicitly with FlextCore.Result")
         logger.info("  • Implement retry logic for resilient connections")
         logger.info("  • Proper lifecycle management prevents resource leaks")
 
         logger.info("\nConnection Lifecycle Best Practices:")
         logger.info("  1. Create FlextLdapConfig with connection parameters")
         logger.info("  2. Initialize FlextLdap with config")
-        logger.info("  3. Call connect() and check FlextResult")
+        logger.info("  3. Call connect() and check FlextCore.Result")
         logger.info("  4. Perform LDAP operations")
         logger.info("  5. Always call unbind() in finally block")
 

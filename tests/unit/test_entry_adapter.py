@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -627,7 +628,7 @@ class TestEntryAdapterCoreConversions:
         return FlextLdapEntryAdapter()
 
     @pytest.fixture
-    def sample_ldap3_entry(self) -> dict[str, object]:
+    def sample_ldap3_entry(self) -> FlextCore.Types.Dict:
         """Create a sample ldap3 entry as dict."""
         return {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -660,7 +661,7 @@ class TestEntryAdapterCoreConversions:
     # =========================================================================
 
     def test_ldap3_to_ldif_entry_dict_input(
-        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: dict[str, object]
+        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: FlextCore.Types.Dict
     ) -> None:
         """Test converting ldap3 dict to FlextLdif Entry."""
         # Act

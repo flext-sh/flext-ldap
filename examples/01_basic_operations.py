@@ -8,7 +8,7 @@ This example demonstrates basic LDAP CRUD operations using the FlextLdap facade:
 - Update entries (modify_entry)
 - Delete entries (delete_entry)
 - Configuration setup with FlextLdapConfig
-- Error handling with FlextResult patterns
+- Error handling with FlextCore.Result patterns
 
 Uses ONLY api.py (FlextLdap) as the primary interface.
 
@@ -30,11 +30,11 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextConstants, FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 
 # Create LDAP configuration using default settings
@@ -52,7 +52,7 @@ def demonstrate_connection() -> FlextLdap | None:
 
     api = FlextLdap()
 
-    config = api.config
+    config = FlextLdapConfig()
     logger.info(f"Connecting to {config.ldap_server_uri}:{config.ldap_port}...")
 
     # Use context manager for automatic connection/disconnection
@@ -71,13 +71,12 @@ def demonstrate_context_manager() -> None:
 
     # OPTIMIZED: Zero configuration - auto-loads from environment!
     # Automatic connection and cleanup - no manual connect/unbind needed!
+    config = FlextLdapConfig()
     try:
         with FlextLdap() as api:
             logger.info("✅ Automatically connected via context manager")
             logger.info(f"   Connected: {api.is_connected()}")
-            logger.info(
-                f"   Server: {api.config.ldap_server_uri}:{api.config.ldap_port}"
-            )
+            logger.info(f"   Server: {config.ldap_server_uri}:{config.ldap_port}")
             # Connection automatically closed on exit
     except RuntimeError:
         logger.exception("❌ Connection failed")
@@ -97,11 +96,12 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     """
     logger.info("\n=== Create Entry Operations ===")
 
-    base_dn = api.config.ldap_base_dn
+    config = FlextLdapConfig()
+    base_dn = config.ldap_base_dn
     users_dn = f"ou=users,{base_dn}"
     user_dn = f"cn=john.doe,{users_dn}"
 
-    attributes: dict[str, str | list[str]] = {
+    attributes: dict[str, str | FlextCore.Types.StringList] = {
         FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
             FlextLdapConstants.ObjectClasses.PERSON,
             FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
@@ -114,7 +114,7 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     }
 
     logger.info(f"Creating entry: {user_dn}")
-    create_result: FlextResult[bool] = api.add_entry(user_dn, attributes)
+    create_result: FlextCore.Result[bool] = api.add_entry(user_dn, attributes)
 
     if create_result.is_failure:
         logger.error(f"❌ Create failed: {create_result.error}")
@@ -134,14 +134,15 @@ def demonstrate_read_entry(api: FlextLdap, user_dn: str) -> None:
     """
     logger.info("\n=== Read Entry Operations ===")
 
-    base_dn = api.config.ldap_base_dn
+    config = FlextLdapConfig()
+    base_dn = config.ldap_base_dn
     users_dn = f"ou=users,{base_dn}"
 
     # Extract CN value from DN (simple split is acceptable here)
     cn_value = user_dn.split(",", maxsplit=1)[0].split("=")[1]
 
     logger.info(f"Searching for entry: {user_dn}")
-    search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
+    search_result: FlextCore.Result[FlextLdapModels.Entry | None] = api.search_one(
         FlextLdapModels.SearchRequest(
             base_dn=users_dn,
             filter_str=f"({FlextLdapConstants.LdapAttributeNames.CN}={cn_value})",
@@ -171,11 +172,14 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     """Demonstrate convenience methods - smart defaults eliminate boilerplate."""
     logger.info("\n=== Convenience Methods (NEW) ===")
 
-    base_dn = api.config.ldap_base_dn
+    config = FlextLdapConfig()
+    base_dn = config.ldap_base_dn
     users_dn = f"ou=users,{base_dn}"
 
     logger.info(f"Searching users in: {users_dn}")
-    search_result: FlextResult[list[FlextLdapModels.Entry]] = api.search_users(users_dn)
+    search_result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search_users(
+        users_dn
+    )
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
@@ -212,17 +216,18 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
     logger.info("\n=== Batch Operations (NEW) ===")
 
     # OPTIMIZED: Use config for base DN
-    base_dn = api.config.ldap_base_dn
+    config = FlextLdapConfig()
+    base_dn = config.ldap_base_dn
     users_dn = f"ou=users,{base_dn}"
 
     # OPTIMIZED: Use FlextLdapConstants for object classes and attributes
-    object_classes: FlextTypes.StringList = [
+    object_classes: FlextCore.Types.StringList = [
         FlextLdapConstants.ObjectClasses.PERSON,
         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
     ]
 
     # NEW: Batch add multiple users
-    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = [
+    entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = [
         (
             f"cn=batch.user1,{users_dn}",
             {
@@ -283,14 +288,14 @@ def demonstrate_update_entry(api: FlextLdap, user_dn: str) -> None:
     logger.info("\n=== Update Entry Operations ===")
 
     # OPTIMIZED: Use LdapAttributeNames constants for attribute names
-    changes: dict[str, object] = {
+    changes: FlextCore.Types.Dict = {
         FlextLdapConstants.LdapAttributeNames.MAIL: ["john.doe.updated@example.com"],
         FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER: ["+1-555-1234"],
     }
 
     logger.info(f"Updating entry: {user_dn}")
     logger.info(f"Changes: {changes}")
-    update_result: FlextResult[bool] = api.modify_entry(user_dn, changes)
+    update_result: FlextCore.Result[bool] = api.modify_entry(user_dn, changes)
 
     if update_result.is_failure:
         logger.error(f"❌ Update failed: {update_result.error}")
@@ -310,7 +315,7 @@ def demonstrate_delete_entry(api: FlextLdap, user_dn: str) -> None:
     logger.info("\n=== Delete Entry Operations ===")
 
     logger.info(f"Deleting entry: {user_dn}")
-    delete_result: FlextResult[bool] = api.delete_entry(user_dn)
+    delete_result: FlextCore.Result[bool] = api.delete_entry(user_dn)
 
     if delete_result.is_failure:
         logger.error(f"❌ Delete failed: {delete_result.error}")
@@ -322,19 +327,19 @@ def demonstrate_delete_entry(api: FlextLdap, user_dn: str) -> None:
 def demonstrate_configuration() -> None:
     """Demonstrate FlextLdapConfig usage and validation.
 
-    OPTIMIZATION: Shows ONLY from_env() pattern with FlextConfig smart defaults.
-    ZERO CODE BLOAT: No manual configuration - FlextConstants provide all defaults!
+    OPTIMIZATION: Shows ONLY from_env() pattern with FlextCore.Config smart defaults.
+    ZERO CODE BLOAT: No manual configuration - FlextCore.Constants provide all defaults!
     """
     logger.info("\n=== Configuration Operations ===")
 
-    # OPTIMIZED: Use from_env() with automatic smart defaults from FlextConstants
+    # OPTIMIZED: Use from_env() with automatic smart defaults from FlextCore.Constants
     logger.info("Using FlextLdapConfig.from_env() - automatic environment loading:")
     logger.info(f"   Server URI: {config_env.ldap_server_uri}")
     logger.info(f"   Bind DN: {config_env.ldap_bind_dn}")
     logger.info(f"   Base DN: {config_env.ldap_base_dn}")
     logger.info(f"   Port: {config_env.ldap_port} (auto-detected from URI)")
     logger.info(
-        f"   Timeout: {FlextLdapConstants.DEFAULT_TIMEOUT}s (from FlextConstants)"
+        f"   Timeout: {FlextLdapConstants.DEFAULT_TIMEOUT}s (from FlextCore.Constants)"
     )
     logger.info(f"   Use SSL: {config_env.ldap_use_ssl} (auto-detected from URI)")
 
@@ -342,7 +347,7 @@ def demonstrate_configuration() -> None:
     api = FlextLdap()  # Auto-loads config from environment
 
     # Validate configuration consistency
-    validation_result: FlextResult[bool] = api.validate_configuration_consistency()
+    validation_result: FlextCore.Result[bool] = api.validate_configuration_consistency()
     if validation_result.is_success:
         logger.info("✅ Configuration validation passed")
     else:
@@ -361,8 +366,8 @@ def demonstrate_constants() -> None:
 
     # Protocol constants (delegated to flext-core)
     logger.info("Protocol:")
-    logger.info(f"   Default Port: {FlextConstants.Platform.LDAP_DEFAULT_PORT}")
-    logger.info(f"   SSL Port: {FlextConstants.Platform.LDAPS_DEFAULT_PORT}")
+    logger.info(f"   Default Port: {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}")
+    logger.info(f"   SSL Port: {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT}")
     logger.info(
         f"   Default Timeout: {FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS}s"
     )
@@ -376,7 +381,7 @@ def demonstrate_constants() -> None:
 def main() -> int:
     """Run basic LDAP operations demonstration.
 
-    OPTIMIZATION: Uses FlextConfig for all configuration - ZERO manual extraction!
+    OPTIMIZATION: Uses FlextCore.Config for all configuration - ZERO manual extraction!
 
     Returns:
         Exit code (0 for success, 1 for failure).
@@ -432,7 +437,9 @@ def main() -> int:
             logger.info("✅ All operations completed successfully!")
             logger.info("📊 OPTIMIZATION RESULTS:")
             logger.info("   • ZERO hardcoded strings (all FlextLdapConstants)")
-            logger.info("   • ZERO manual config extraction (FlextConfig.from_env())")
+            logger.info(
+                "   • ZERO manual config extraction (FlextCore.Config.from_env())"
+            )
             logger.info("   • Minimal .env (5 variables vs 15+ manual)")
             logger.info("   • ~60% code reduction via library patterns!")
             logger.info("=" * 60)
