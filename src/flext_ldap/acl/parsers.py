@@ -21,7 +21,7 @@ class FlextLdapAclParsers:
         """Parse OpenLDAP ACL format."""
 
         @classmethod
-        def parse(cls, acl: str | None) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+        def parse(cls, acl: str | None) -> FlextCore.Result[FlextLdapModels.Acl]:
             """Parse OpenLDAP ACL string to unified ACL format.
 
             Args:
@@ -32,7 +32,7 @@ class FlextLdapAclParsers:
 
             """
             if not acl or not acl.strip():
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACL string cannot be empty",
                 )
 
@@ -46,13 +46,13 @@ class FlextLdapAclParsers:
                     or parts[0] != "access"
                     or parts[1] != "to"
                 ):
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid OpenLDAP ACL format",
                     )
 
                 # Find "by" keyword to split target and subject/permissions
                 if "by" not in parts:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid OpenLDAP ACL format",
                     )
 
@@ -65,7 +65,7 @@ class FlextLdapAclParsers:
                 # Extract subject and permissions (after "by")
                 subject_perms_parts = parts[by_idx + 1 :]
                 if not subject_perms_parts:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid OpenLDAP ACL format",
                     )
 
@@ -85,7 +85,7 @@ class FlextLdapAclParsers:
                 permissions = cls._parse_openldap_permissions(perms_str)
 
                 # Create unified ACL
-                unified_acl = FlextLdapModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.Acl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -94,10 +94,10 @@ class FlextLdapAclParsers:
                     priority=100,
                 )
 
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+                return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
             except Exception as e:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Failed to parse OpenLDAP ACL: {e}",
                 )
 
@@ -189,11 +189,11 @@ class FlextLdapAclParsers:
         @staticmethod
         def parse(
             acl_string: str | None,
-        ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+        ) -> FlextCore.Result[FlextLdapModels.Acl]:
             """Parse Oracle ACL string to unified representation."""
             try:
                 if not acl_string or not acl_string.strip():
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "ACL string cannot be empty",
                     )
 
@@ -202,7 +202,7 @@ class FlextLdapAclParsers:
                 parts = acl_string.strip().split()
 
                 if len(parts) < FlextLdapConstants.Parsing.MIN_ACL_PARTS:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid Oracle ACL format",
                     )
 
@@ -212,7 +212,7 @@ class FlextLdapAclParsers:
                 by_idx = parts.index("by") if "by" in parts else -1
 
                 if access_idx == -1 or to_idx == -1 or by_idx == -1:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Missing required keywords in Oracle ACL",
                     )
 
@@ -236,7 +236,7 @@ class FlextLdapAclParsers:
                 )
 
                 # Create unified ACL
-                unified_acl = FlextLdapModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.Acl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -245,10 +245,10 @@ class FlextLdapAclParsers:
                     priority=100,
                 )
 
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+                return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
             except Exception as e:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Failed to parse Oracle ACL: {e}",
                 )
 
@@ -378,7 +378,7 @@ class FlextLdapAclParsers:
         """Parse 389 DS/Apache DS ACI format."""
 
         @classmethod
-        def parse(cls, aci: str) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+        def parse(cls, aci: str) -> FlextCore.Result[FlextLdapModels.Acl]:
             """Parse ACI string to unified ACL format.
 
             Args:
@@ -389,7 +389,7 @@ class FlextLdapAclParsers:
 
             """
             if not aci or not aci.strip():
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACI string cannot be empty",
                 )
 
@@ -401,7 +401,7 @@ class FlextLdapAclParsers:
                 # Extract target
                 target_match = re.search(r'\(target="([^"]+)"\)', aci)
                 if not target_match:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid ACI format: missing target",
                     )
 
@@ -410,7 +410,7 @@ class FlextLdapAclParsers:
                 # Extract ACL name
                 name_match = re.search(r'acl\s+"([^"]+)"', aci)
                 if not name_match:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid ACI format: missing ACL name",
                     )
 
@@ -419,7 +419,7 @@ class FlextLdapAclParsers:
                 # Extract grant type (allow or deny)
                 grant_type_match = re.search(r";\s*(allow|deny)\s+", aci)
                 if not grant_type_match:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid ACI format: missing grant type",
                     )
 
@@ -428,7 +428,7 @@ class FlextLdapAclParsers:
                 # Extract permissions
                 perms_match = re.search(r"(allow|deny)\s+\(([^)]+)\)", aci)
                 if not perms_match:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid ACI format: missing permissions",
                     )
 
@@ -438,7 +438,7 @@ class FlextLdapAclParsers:
                 # Extract subject
                 subject_match = re.search(r'(userdn|groupdn)="([^"]+)"', aci)
                 if not subject_match:
-                    return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                    return FlextCore.Result[FlextLdapModels.Acl].fail(
                         "Invalid ACI format: missing subject",
                     )
 
@@ -481,7 +481,7 @@ class FlextLdapAclParsers:
                     )
 
                 # Create unified ACL
-                unified_acl = FlextLdapModels.UnifiedAcl(
+                unified_acl = FlextLdapModels.Acl(
                     target=target,
                     subject=subject,
                     permissions=permissions,
@@ -490,10 +490,10 @@ class FlextLdapAclParsers:
                     priority=100,
                 )
 
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+                return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
             except Exception as e:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Failed to parse ACI: {e}",
                 )
 
@@ -502,7 +502,7 @@ class FlextLdapAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLdapModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.Acl,
         ) -> FlextCore.Result[str]:
             """Convert unified ACL to Microsoft AD format.
 
@@ -572,7 +572,7 @@ class FlextLdapAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLdapModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.Acl,
         ) -> FlextCore.Result[str]:
             """Convert unified ACL to OpenLDAP format.
 
@@ -648,7 +648,7 @@ class FlextLdapAclParsers:
 
         @staticmethod
         def from_unified(
-            unified_acl: FlextLdapModels.UnifiedAcl,
+            unified_acl: FlextLdapModels.Acl,
         ) -> FlextCore.Result[str]:
             """Convert unified ACL to ACI format.
 

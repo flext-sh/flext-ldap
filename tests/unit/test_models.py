@@ -1647,7 +1647,7 @@ class TestFlextLdapModels:
         assert "delete" in full_perms.permissions
 
     def test_unified_acl_direct_creation(self) -> None:
-        """Test UnifiedAcl model direct creation with complete ACL definition."""
+        """Test Acl model direct creation with complete ACL definition."""
         target = FlextLdapModels.AclTarget(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
@@ -1665,7 +1665,7 @@ class TestFlextLdapModels:
             search=True,
         )
 
-        unified_acl = FlextLdapModels.UnifiedAcl(
+        unified_acl = FlextLdapModels.Acl(
             name="admin_users_acl",
             target=target,
             subject=subject,

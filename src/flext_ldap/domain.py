@@ -180,7 +180,7 @@ class FlextLdapDomain:
             ]
 
             for attr in lock_attrs:
-                value = user.get_attribute(attr)
+                value = user[attr]
                 if value:
                     if isinstance(value, str) and value.lower() in {"true", "1", "yes"}:
                         return "locked"
@@ -188,7 +188,7 @@ class FlextLdapDomain:
                         return "disabled"
 
             # Check password expiry
-            pwd_expiry = user.get_attribute("pwdChangedTime")
+            pwd_expiry = user["pwdChangedTime"]
             if pwd_expiry:
                 # Simplified check - in real implementation would compare with policy
                 return "active"

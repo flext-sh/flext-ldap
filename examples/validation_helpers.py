@@ -144,9 +144,8 @@ def validate_connection(
     test_name = "Connection Validation"
     logger.info(f"\n=== {test_name} ===")
 
+    start_time = time.time()
     try:
-        start_time = time.time()
-
         if not api.is_connected():
             duration = time.time() - start_time
             metrics.add_result(
@@ -199,10 +198,10 @@ def validate_search_operations(
     logger.info(f"\n=== {test_name} ===")
 
     all_passed = True
+    start_time = time.time()
 
     # Test 1: Basic search with filter
     try:
-        start_time = time.time()
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
             filter_str="(objectClass=*)",
@@ -583,10 +582,10 @@ def validate_batch_operations(
     logger.info(f"\n=== {test_name} ===")
 
     all_passed = True
+    start_time = time.time()
 
     # Test 1: Batch add entries
     try:
-        start_time = time.time()
         entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = []
 
         for i in range(batch_size):
@@ -661,10 +660,10 @@ def validate_server_operations(
     logger.info(f"\n=== {test_name} ===")
 
     all_passed = True
+    start_time = time.time()
 
     # Test 1: Get server capabilities
     try:
-        start_time = time.time()
         result = api.get_server_capabilities()
         duration = time.time() - start_time
 

@@ -973,9 +973,9 @@ class FlextLdapClients(FlextCore.Service[None]):
         """
         # Extract group information from entry
         dn = entry.dn
-        cn_attr = entry.get_attribute("cn")
+        cn_attr = entry["cn"]
         cn = str(cn_attr) if cn_attr else ""
-        members_attr = entry.get_attribute("member")
+        members_attr = entry["member"]
         # Ensure members is a list
         members = (
             members_attr

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Architecture Documentation Generator.
 
 Comprehensive tool for generating architecture documentation including:
@@ -11,8 +10,10 @@ Comprehensive tool for generating architecture documentation including:
 """
 
 import argparse
+import shutil
 import subprocess
 import sys
+import traceback
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -159,8 +160,6 @@ class ArchitectureGenerator:
             error_msg = f"Generation failed: {e}"
             results["errors"].append(error_msg)
             if self.verbose:
-                import traceback
-
                 traceback.print_exc()
 
         return results
@@ -844,26 +843,25 @@ This document describes the {attribute.lower()} characteristics and requirements
 
         return results
 
+    def _get_plantuml_command(self) -> str | None:
+        """Get the full path to plantuml command."""
+        return shutil.which("plantuml")
+
     def _has_plantuml_command(self) -> bool:
         """Check if plantuml command is available."""
-        try:
-            subprocess.run(
-                ["plantuml", "--version"], capture_output=True, check=True, shell=False
-            )
-            return True
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
+        return self._get_plantuml_command() is not None
 
     def _generate_diagram_from_puml(self, puml_file: str) -> None:
         """Generate diagram from PlantUML file."""
         try:
-            if self._has_plantuml_command():
+            plantuml_cmd = self._get_plantuml_command()
+            if plantuml_cmd:
                 # Use plantuml command
                 formats = self.config["generation"].get("diagram_formats", ["png"])
                 for fmt in formats:
                     subprocess.run(
                         [
-                            "plantuml",
+                            plantuml_cmd,
                             puml_file,
                             f"-t{fmt}",
                             "-o",

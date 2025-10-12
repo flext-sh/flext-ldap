@@ -18,7 +18,7 @@ class FlextLdapAclConverters:
     def handle(
         self,
         message: object,
-    ) -> FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]]:
+    ) -> FlextCore.Result[FlextCore.Result[FlextLdapModels.Acl]]:
         """Handle ACL conversion request."""
         if isinstance(message, dict) and "acl_content" in message:
             result = self.convert_acl(
@@ -29,10 +29,8 @@ class FlextLdapAclConverters:
                     "ACTIVE_DIRECTORY",
                 ),
             )
-            return FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]].ok(
-                result
-            )
-        return FlextCore.Result[FlextCore.Result[FlextLdapModels.UnifiedAcl]].fail(
+            return FlextCore.Result[FlextCore.Result[FlextLdapModels.Acl]].ok(result)
+        return FlextCore.Result[FlextCore.Result[FlextLdapModels.Acl]].fail(
             "Invalid ACL conversion request",
         )
 
@@ -41,7 +39,7 @@ class FlextLdapAclConverters:
         _acl_content: str | None,
         source_format: str | None,
         target_format: str | None,
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Convert ACL between different formats.
 
         Note: ACL format conversion is not yet implemented.
@@ -53,7 +51,7 @@ class FlextLdapAclConverters:
             target_format: Target ACL format
 
         """
-        return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+        return FlextCore.Result[FlextLdapModels.Acl].fail(
             f"ACL conversion from {source_format} to {target_format} is not implemented",
         )
 
