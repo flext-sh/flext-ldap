@@ -1042,7 +1042,7 @@ class FlextLdap(FlextCore.Service[None]):
     def create_acl(
         self,
         acl_request: FlextLdapModels.CreateAclRequest,
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Create LDAP ACL with automatic server type detection and quirks handling.
 
         Uses FlextLdif quirks engine to detect server type and convert ACL
@@ -1052,7 +1052,7 @@ class FlextLdap(FlextCore.Service[None]):
             acl_request: ACL creation request with rules and target DN
 
         Returns:
-            FlextCore.Result containing created UnifiedAcl
+            FlextCore.Result containing created Acl
 
         Example:
             >>> from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
@@ -1092,8 +1092,8 @@ class FlextLdap(FlextCore.Service[None]):
                 else:
                     pass  # Default fallback
 
-            # Create UnifiedAcl from rules
-            unified_acl = FlextLdapModels.UnifiedAcl(
+            # Create Acl from rules
+            unified_acl = FlextLdapModels.Acl(
                 name=f"acl_{acl_request.dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
@@ -1114,24 +1114,24 @@ class FlextLdap(FlextCore.Service[None]):
             # This requires determining the correct attribute based on server type
             # and applying the ACL rules
 
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL creation failed: {e}",
             )
 
     def update_acl(
         self,
         acl_request: FlextLdapModels.UpdateAclRequest,
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Update existing LDAP ACL with merge or replace strategy.
 
         Args:
             acl_request: ACL update request with DN, rules, and strategy
 
         Returns:
-            FlextCore.Result containing updated UnifiedAcl
+            FlextCore.Result containing updated Acl
 
         Example:
             >>> acl_req = FlextLdapModels.UpdateAclRequest(
@@ -1149,7 +1149,7 @@ class FlextLdap(FlextCore.Service[None]):
             # Get current ACL from entry
             entry_result = self.client.search_one(acl_request.dn, "(objectClass=*)")
             if entry_result.is_failure:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Entry not found: {acl_request.dn}",
                 )
 
@@ -1173,7 +1173,7 @@ class FlextLdap(FlextCore.Service[None]):
             # Issue: https://github.com/flext/flext-ldap/issues/TBD
 
             # Create unified ACL response
-            unified_acl = FlextLdapModels.UnifiedAcl(
+            unified_acl = FlextLdapModels.Acl(
                 name=f"acl_{acl_request.dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
@@ -1189,14 +1189,14 @@ class FlextLdap(FlextCore.Service[None]):
                 ),
             )
 
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL update failed: {e}",
             )
 
-    def get_acl(self, dn: str) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    def get_acl(self, dn: str) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Retrieve and parse ACL from LDAP entry.
 
         Uses quirks engine to detect server type and parse ACL
@@ -1206,7 +1206,7 @@ class FlextLdap(FlextCore.Service[None]):
             dn: Distinguished Name of entry with ACL
 
         Returns:
-            FlextCore.Result containing UnifiedAcl
+            FlextCore.Result containing Acl
 
         Example:
             >>> result = api.get_acl("cn=config")
@@ -1221,13 +1221,13 @@ class FlextLdap(FlextCore.Service[None]):
             # Get entry
             entry_result = self.client.search_one(dn, "(objectClass=*)")
             if entry_result.is_failure:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Entry not found: {dn}",
                 )
 
             entry = entry_result.unwrap()
             if not entry:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Entry not found: {dn}",
                 )
 
@@ -1249,7 +1249,7 @@ class FlextLdap(FlextCore.Service[None]):
             # Generic: aci attribute
 
             # Create unified ACL response
-            unified_acl = FlextLdapModels.UnifiedAcl(
+            unified_acl = FlextLdapModels.Acl(
                 name=f"acl_{dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
@@ -1265,10 +1265,10 @@ class FlextLdap(FlextCore.Service[None]):
                 ),
             )
 
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(unified_acl)
+            return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL retrieval failed: {e}"
             )
 

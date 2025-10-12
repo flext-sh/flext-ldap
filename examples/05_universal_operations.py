@@ -242,7 +242,7 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     )
 
     logger.info("Normalizing entry for current server...")
-    result = api.normalize_entry_for_server(sample_entry)
+    result = api.normalize_entry_for_server(sample_entry)  # type: ignore[arg-type]
 
     if result.is_success:
         normalized_entry = result.unwrap()
@@ -282,7 +282,7 @@ def demonstrate_entry_conversion() -> None:
     logger.info(f"   Source attributes: {src_attrs}")
 
     result = api.convert_entry_between_servers(
-        entry=sample_entry,
+        entry=sample_entry,  # type: ignore[arg-type]
         source_server_type="openldap1",
         target_server_type="openldap2",
     )
@@ -349,7 +349,7 @@ def demonstrate_server_detection_from_entry() -> None:
         logger.info(f"\nDetecting server type for: {test_case['name']}")
         entry = test_case["entry"]
         if isinstance(entry, FlextLdifModels.Entry):
-            result = api.detect_entry_server_type(entry)
+            result = api.detect_entry_server_type(entry)  # type: ignore[arg-type]
         else:
             logger.warning(f"   ⚠️  Skipping invalid entry type: {type(entry)}")
             continue
@@ -386,7 +386,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
     )
 
     logger.info("Validating entry for current server...")
-    result: FlextCore.Result[bool] = api.validate_entry_for_server(sample_entry)
+    result: FlextCore.Result[bool] = api.validate_entry_for_server(sample_entry)  # type: ignore[arg-type]
 
     if result.is_success:
         is_valid = result.unwrap()

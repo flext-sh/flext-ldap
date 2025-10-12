@@ -696,7 +696,7 @@ class TestFlextLdapModels:
         """Test ACL models initialization."""
         assert acl_models is not None
         # FlextLdapModels is just an alias for FlextLdapModels (Pydantic models)
-        assert hasattr(acl_models, "UnifiedAcl")
+        assert hasattr(acl_models, "Acl")
         assert hasattr(acl_models, "AclTarget")
         assert hasattr(acl_models, "AclSubject")
         assert hasattr(acl_models, "AclPermissions")
@@ -706,7 +706,7 @@ class TestFlextLdapModels:
         acl_models: FlextLdapModels,
     ) -> None:
         """Test successful unified ACL creation."""
-        # Test creating a UnifiedAcl instance with proper model objects
+        # Test creating a Acl instance with proper model objects
         # Create AclTarget
         target = acl_models.AclTarget(
             target_type="entry",
@@ -727,8 +727,8 @@ class TestFlextLdapModels:
             grant_type="allow",
         )
 
-        # Create UnifiedAcl
-        unified_acl = acl_models.UnifiedAcl(
+        # Create Acl
+        unified_acl = acl_models.Acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -737,7 +737,7 @@ class TestFlextLdapModels:
         )
 
         # Test that the instance was created successfully
-        assert isinstance(unified_acl, acl_models.UnifiedAcl)
+        assert isinstance(unified_acl, acl_models.Acl)
         assert hasattr(unified_acl, "target")
         assert hasattr(unified_acl, "subject")
         assert hasattr(unified_acl, "permissions")
@@ -747,7 +747,7 @@ class TestFlextLdapModels:
         acl_models: FlextLdapModels,
     ) -> None:
         """Test unified ACL creation failure."""
-        # Test creating a UnifiedAcl instance with invalid data
+        # Test creating a Acl instance with invalid data
         # Try to create with invalid target type
         invalid_target = acl_models.AclTarget(
             target_type="invalid_type",
@@ -784,7 +784,7 @@ class TestFlextLdapModels:
         acl_models: FlextLdapModels,
     ) -> None:
         """Test successful unified data validation."""
-        # Test creating a UnifiedAcl instance with valid data
+        # Test creating a Acl instance with valid data
         # Create AclTarget
         target = acl_models.AclTarget(
             target_type="entry",
@@ -805,8 +805,8 @@ class TestFlextLdapModels:
             grant_type="allow",
         )
 
-        # Create UnifiedAcl
-        unified_acl = acl_models.UnifiedAcl(
+        # Create Acl
+        unified_acl = acl_models.Acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -815,13 +815,13 @@ class TestFlextLdapModels:
         )
 
         # Test that the instance was created successfully
-        assert isinstance(unified_acl, acl_models.UnifiedAcl)
+        assert isinstance(unified_acl, acl_models.Acl)
         assert unified_acl is not None
 
     def test_validate_unified_data_failure(self, acl_models: FlextLdapModels) -> None:
         """Test unified data validation failure."""
-        # Skip this test as UnifiedAcl validation is not implemented yet
-        pytest.skip("UnifiedAcl validation test not yet implemented")
+        # Skip this test as Acl validation is not implemented yet
+        pytest.skip("Acl validation test not yet implemented")
 
     def test_validate_permission_data_success(
         self, acl_models: FlextLdapModels
@@ -2040,7 +2040,7 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.UnifiedAcl)
+        assert isinstance(result.data, FlextLdapModels.Acl)
 
     def test_parse_empty_acl_string(self) -> None:
         """Test parsing empty ACL string."""
@@ -2261,7 +2261,7 @@ class TestFlextLdapAclParsersOracleAclParser:
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
         assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.UnifiedAcl)
+        assert isinstance(result.data, FlextLdapModels.Acl)
 
     def test_parse_empty_acl_string(self) -> None:
         """Test parsing empty ACL string."""
@@ -2487,7 +2487,7 @@ class TestFlextLdapAclParsersAciParser:
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
         assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.UnifiedAcl)
+        assert isinstance(result.data, FlextLdapModels.Acl)
 
     def test_parse_empty_aci_string(self) -> None:
         """Test parsing empty ACI string."""

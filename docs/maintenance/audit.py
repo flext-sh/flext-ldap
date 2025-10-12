@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Documentation Content Quality Audit System.
 
 Comprehensive auditing tool for documentation quality, freshness, and completeness.
@@ -127,7 +126,8 @@ class DocumentationAuditor:
             )
 
         # Get file metadata
-        stat = os.stat(file_path)
+        path_obj = Path(file_path)
+        stat = path_obj.stat()
         last_modified = datetime.fromtimestamp(stat.st_mtime, tz=UTC)
         age_days = (datetime.now(UTC) - last_modified).days
         file_size = stat.st_size
@@ -306,7 +306,7 @@ class DocumentationAuditor:
                 })
 
     def audit_directory(
-        self, directory: str, recursive: bool = True
+        self, directory: str, *, recursive: bool = True
     ) -> list[AuditResult]:
         """Audit all documentation files in a directory."""
         results = []

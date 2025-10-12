@@ -514,7 +514,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
             return FlextCore.Result[bool].fail("Entry has invalid DN")
 
         # Validate has object classes
-        object_classes = entry.get_attribute("objectClass")
+        object_classes = entry["objectClass"]
         if not object_classes:
             return FlextCore.Result[bool].fail(
                 "Entry missing required objectClass attribute",

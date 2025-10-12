@@ -16,9 +16,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
-class FlextLdapAclManager(
-    FlextCore.Handlers[dict[str, Any], FlextLdapModels.UnifiedAcl]
-):
+class FlextLdapAclManager(FlextCore.Handlers[dict[str, Any], FlextLdapModels.Acl]):
     """ACL Manager for comprehensive ACL operations."""
 
     def __init__(self) -> None:
@@ -37,18 +35,18 @@ class FlextLdapAclManager(
     def handle(
         self,
         message: dict[str, Any],
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL operations with proper type safety."""
         try:
             # Type-safe request handling
             if not isinstance(message, dict):
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "Request must be a dictionary",
                 )
 
             operation: str | None = message.get(FlextLdapConstants.DictKeys.OPERATION)
             if not isinstance(operation, str):
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "Operation must be a string",
                 )
 
@@ -57,24 +55,24 @@ class FlextLdapAclManager(
                 return self._handle_parse(message)
             if operation == FlextLdapConstants.LiteralTypes.OPERATION_CONVERT:
                 return self._handle_convert(message)
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"Unknown operation: {operation}",
             )
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL operation failed: {e}",
             )
 
     def _handle_parse(
         self,
         message: dict[str, Any],
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL parsing operations."""
         try:
             acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
             if not isinstance(acl_string, str):
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACL string must be provided",
                 )
 
@@ -93,32 +91,34 @@ class FlextLdapAclManager(
             elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self._parsers.AciParser.parse(acl_string)
             else:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Unsupported ACL format: {format_type}",
                 )
 
-            return result  # Parser already returns FlextCore.Result[FlextLdapModels.UnifiedAcl]
+            return (
+                result  # Parser already returns FlextCore.Result[FlextLdapModels.Acl]
+            )
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL parsing failed: {e}",
             )
 
     def _handle_convert(
         self,
         message: dict[str, Any],
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL conversion operations."""
         try:
             acl_data = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
             if not isinstance(acl_data, str):
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACL data must be a string",
                 )
 
             target_format = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
             if not isinstance(target_format, str):
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "Target format must be specified",
                 )
 
@@ -132,7 +132,7 @@ class FlextLdapAclManager(
             return self._converters.convert_acl(acl_data, source_format, target_format)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL conversion failed: {e}",
             )
 
@@ -140,7 +140,7 @@ class FlextLdapAclManager(
         self,
         acl_string: str,
         format_type: str,
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Parse ACL string using the specified format."""
         try:
             # Use parser to parse ACL based on format type
@@ -151,17 +151,17 @@ class FlextLdapAclManager(
             elif format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self._parsers.AciParser.parse(acl_string)
             else:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].fail(
                     f"Unsupported ACL format: {format_type}",
                 )
 
             if result.is_success:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(result.unwrap())
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].ok(result.unwrap())
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL parsing failed: {result.error}",
             )
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL parsing failed: {e}",
             )
 
@@ -170,7 +170,7 @@ class FlextLdapAclManager(
         acl_data: str,
         source_format: str,
         target_format: str,
-    ) -> FlextCore.Result[FlextLdapModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Convert ACL from one format to another."""
         try:
             result = self._converters.convert_acl(
@@ -179,12 +179,12 @@ class FlextLdapAclManager(
                 target_format,
             )
             if result.is_success:
-                return FlextCore.Result[FlextLdapModels.UnifiedAcl].ok(result.unwrap())
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+                return FlextCore.Result[FlextLdapModels.Acl].ok(result.unwrap())
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL conversion failed: {result.error}",
             )
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.UnifiedAcl].fail(
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
                 f"ACL conversion failed: {e}",
             )
 

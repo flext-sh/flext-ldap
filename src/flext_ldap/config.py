@@ -993,9 +993,9 @@ class FlextLdapConfig(FlextCore.Config):
         """
         try:
             if not isinstance(data, dict):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Data must be a dictionary"
-                )
+                return FlextCore.Result[
+                    dict[str, str | FlextCore.Types.StringList]
+                ].fail("Data must be a dictionary")
 
             values = data.get(FlextLdapConstants.DictKeys.VALUES, [])
             if isinstance(values, list):

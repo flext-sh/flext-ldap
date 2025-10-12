@@ -724,7 +724,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 return FlextCore.Result[bool].fail("Entry must have attributes")
 
             # Check for required object classes
-            object_classes = entry.attributes.get_attribute("objectClass")
+            object_classes = entry.attributes.get("objectClass")
             if not object_classes or not object_classes.values:
                 return FlextCore.Result[bool].fail(
                     "Entry must have objectClass attribute"

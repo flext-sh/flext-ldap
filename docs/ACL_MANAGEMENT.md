@@ -143,7 +143,7 @@ permissions_result = FlextLdapModels.AclPermissions.create(
 )
 
 # Create unified ACL
-unified_result = FlextLdapModels.UnifiedAcl.create(
+unified_result = FlextLdapModels.Acl.create(
     name="Allow self password write",
     target=target_result.unwrap(),
     subject=subject_result.unwrap(),
@@ -229,7 +229,7 @@ for acl in openldap_acls:
 
 ```python
 # Create ACL with time and IP restrictions
-unified_result = FlextLdapModels.UnifiedAcl.create(
+unified_result = FlextLdapModels.Acl.create(
     name="Time and IP restricted access",
     target=target,
     subject=subject,
