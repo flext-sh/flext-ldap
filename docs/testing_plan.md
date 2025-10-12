@@ -12,6 +12,7 @@
 ### Docker LDAP Test Server
 
 **Configuration**:
+
 - **Image**: `osixia/openldap:1.5.0`
 - **Port**: 3390 (non-standard to avoid conflicts)
 - **Domain**: `internal.invalid`
@@ -21,6 +22,7 @@
 - **Container Name**: `flext-ldap-test-server`
 
 **Management Commands**:
+
 ```bash
 # Start test server
 make ldap-test-server
@@ -39,21 +41,25 @@ docker exec -it flext-ldap-test-server ldapsearch \
 ### Test Categories
 
 #### 1. Unit Tests (`tests/unit/`)
+
 **Purpose**: Individual component testing without external dependencies
 **Current Status**: 31 test files, primary test category
 **Coverage Focus**: Domain logic, value objects, entities
 
 #### 2. Integration Tests (`tests/integration/`)
+
 **Purpose**: Real LDAP server testing with Docker container
 **Current Status**: 9 test files, requires Docker
 **Coverage Focus**: End-to-end LDAP operations, server-specific behaviors
 
 #### 3. E2E Tests (`tests/e2e/`)
+
 **Purpose**: Complete workflow testing
 **Current Status**: 2 test files
 **Coverage Focus**: User journeys, complex interactions
 
 #### 4. Infrastructure Tests (`tests/infrastructure/`)
+
 **Purpose**: Low-level component testing
 **Current Status**: 6 test files
 **Coverage Focus**: LDAP client, adapters, operations
@@ -62,21 +68,21 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 ### Coverage by Module (Priority Order)
 
-| Module | Lines | Coverage | Status | Priority |
-|--------|-------|----------|--------|----------|
-| **operations.py** | 1,396 | 0% | 🚧 Critical Gap | **P1** |
-| **api.py** | 739 | 9% | 🚧 Major Gap | **P1** |
-| **services.py** | 692 | Low | 🚧 Major Gap | **P1** |
-| **adapters.py** | 801 | Low | 🚧 Major Gap | **P1** |
-| **entry_adapter.py** | 180 | 9% | 🚧 Conversion Logic | **P2** |
-| **authentication.py** | 85 | 18% | 🚧 Auth Logic | **P2** |
-| **clients.py** | 455 | 26% | 🚧 Infrastructure | **P2** |
-| **config.py** | 344 | 22% | 🚧 Configuration | **P2** |
-| **domain.py** | 114 | 21% | 🚧 Business Rules | **P2** |
-| **acl/parsers.py** | 283 | 15% | 🚧 ACL Parsing | **P3** |
-| **acl/manager.py** | 110 | 11% | 🚧 ACL Management | **P3** |
-| **constants.py** | 338 | 99% | ✅ Excellent | Complete |
-| **exceptions.py** | 244 | 24% | ⚠️ Needs Work | **P3** |
+| Module                | Lines | Coverage | Status              | Priority |
+| --------------------- | ----- | -------- | ------------------- | -------- |
+| **operations.py**     | 1,396 | 0%       | 🚧 Critical Gap     | **P1**   |
+| **api.py**            | 739   | 9%       | 🚧 Major Gap        | **P1**   |
+| **services.py**       | 692   | Low      | 🚧 Major Gap        | **P1**   |
+| **adapters.py**       | 801   | Low      | 🚧 Major Gap        | **P1**   |
+| **entry_adapter.py**  | 180   | 9%       | 🚧 Conversion Logic | **P2**   |
+| **authentication.py** | 85    | 18%      | 🚧 Auth Logic       | **P2**   |
+| **clients.py**        | 455   | 26%      | 🚧 Infrastructure   | **P2**   |
+| **config.py**         | 344   | 22%      | 🚧 Configuration    | **P2**   |
+| **domain.py**         | 114   | 21%      | 🚧 Business Rules   | **P2**   |
+| **acl/parsers.py**    | 283   | 15%      | 🚧 ACL Parsing      | **P3**   |
+| **acl/manager.py**    | 110   | 11%      | 🚧 ACL Management   | **P3**   |
+| **constants.py**      | 338   | 99%      | ✅ Excellent        | Complete |
+| **exceptions.py**     | 244   | 24%      | ⚠️ Needs Work       | **P3**   |
 
 ### Coverage Trend Analysis
 
@@ -85,6 +91,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 **Gap**: 55% coverage needed
 
 **Largest Coverage Gaps**:
+
 1. **operations.py** (1,396 lines): 0% coverage - highest impact
 2. **api.py** (739 lines): 9% coverage - application layer
 3. **services.py** (692 lines): Low coverage - business logic
@@ -95,11 +102,13 @@ docker exec -it flext-ldap-test-server ldapsearch \
 ### Current Failures
 
 #### 1. LDAP LDIF Integration Test Failure
+
 **Test**: `tests/integration/test_ldap_ldif_integration.py::TestLdapLdifExport::test_export_ldap_entries_to_ldif_string`
 **Status**: ❌ **FAILING**
 **Impact**: Integration test failure affecting stability
 
 **Failure Analysis Needed**:
+
 - Check LDIF export functionality
 - Verify ldap3 ↔ FlextLdif conversion
 - Test with real LDAP server data
@@ -108,10 +117,12 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 **Cause**: Docker LDAP server not available in test environment
 **Tests**:
+
 - `tests/integration/test_api.py`: 6 authentication tests
 - `tests/integration/test_ldap_operations.py`: Basic connectivity test
 
 **Resolution Strategy**:
+
 - Ensure Docker is available in CI/CD
 - Add container startup checks
 - Implement mock fallbacks for development
@@ -165,16 +176,19 @@ docker exec -it flext-ldap-test-server ldapsearch \
 ### Test Quality Standards
 
 #### 1. Real LDAP Functionality (MANDATORY)
+
 - **NO Mock-Heavy Tests**: Tests must validate actual LDAP operations
 - **Docker Integration**: Real server testing for integration tests
 - **Server-Specific Validation**: Test all supported LDAP servers
 
 #### 2. Coverage Quality Over Quantity
+
 - **Business Logic Focus**: Test domain logic, not just code execution
 - **Edge Cases**: Error conditions, boundary values, invalid inputs
 - **Integration Scenarios**: End-to-end workflow validation
 
 #### 3. Test Organization
+
 - **Descriptive Names**: `test_should_authenticate_user_with_valid_credentials`
 - **Given-When-Then**: Clear test structure and assertions
 - **Independent Tests**: No test interdependencies
@@ -182,6 +196,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 ### CI/CD Integration
 
 #### Quality Gates
+
 ```bash
 # Coverage requirements
 pytest --cov=src/flext_ldap --cov-fail-under=35  # Current minimum
@@ -195,6 +210,7 @@ pytest --maxfail=1 --tb=short  # Fail fast on errors
 ```
 
 #### Automated Testing Pipeline
+
 ```yaml
 # .github/workflows/test.yml
 - name: Start LDAP Test Server
@@ -220,6 +236,7 @@ pytest --maxfail=1 --tb=short  # Fail fast on errors
 ### Writing Effective Tests
 
 #### 1. Test Structure Pattern
+
 ```python
 def test_should_perform_operation_under_conditions():
     """Given: specific preconditions
@@ -236,6 +253,7 @@ def test_should_perform_operation_under_conditions():
 ```
 
 #### 2. LDAP Integration Test Pattern
+
 ```python
 @pytest.mark.integration
 def test_ldap_operation_with_real_server():
@@ -252,6 +270,7 @@ def test_ldap_operation_with_real_server():
 ```
 
 #### 3. Mock Testing Pattern
+
 ```python
 def test_service_logic_with_mocked_dependencies():
     """Test service logic in isolation."""
@@ -270,12 +289,14 @@ def test_service_logic_with_mocked_dependencies():
 ### Test Data Management
 
 #### LDAP Test Data
+
 - **LDIF Files**: `test_data_openldap.ldif`, `test_data_oud.ldif`
 - **Test Domain**: `dc=flext,dc=local`
 - **Test Users**: Pre-populated test accounts
 - **Server-Specific**: Different data for OpenLDAP vs Oracle OUD
 
 #### Test Fixtures
+
 ```python
 @pytest.fixture
 def ldap_client():
@@ -298,11 +319,13 @@ def test_user():
 ## Risk Assessment
 
 ### High Risk
+
 - **Docker Dependency**: Tests fail when LDAP container unavailable
 - **Server Compatibility**: Different LDAP servers behave differently
 - **Network Issues**: LDAP connectivity problems in CI/CD
 
 ### Medium Risk
+
 - **Test Flakiness**: Async operations may have timing issues
 - **Data Consistency**: Test data changes between runs
 - **Resource Cleanup**: LDAP connections not properly closed
@@ -310,11 +333,13 @@ def test_user():
 ### Mitigation Strategies
 
 #### Docker Reliability
+
 - **Health Checks**: Verify container is ready before tests
 - **Retry Logic**: Reconnect on connection failures
 - **Fallback Mode**: Skip integration tests when Docker unavailable
 
 #### Test Stability
+
 - **Isolation**: Each test starts with clean state
 - **Timeouts**: Prevent hanging tests
 - **Cleanup**: Ensure proper resource disposal
@@ -322,18 +347,21 @@ def test_user():
 ## Success Metrics
 
 ### Coverage Targets
+
 - **Immediate**: Maintain 35% minimum coverage
 - **Phase 1**: 60% coverage after critical modules
 - **Phase 2**: 80% coverage after supporting modules
 - **Final**: 90%+ coverage with real LDAP functionality
 
 ### Quality Metrics
+
 - **Zero Test Failures**: All tests passing in CI/CD
 - **Test Execution Time**: < 5 minutes for full suite
 - **Flakiness Rate**: < 1% test failures due to environment
 - **Documentation**: All test scenarios documented
 
 ### Business Impact
+
 - **Confidence**: Real LDAP testing validates production readiness
 - **Regression Prevention**: Comprehensive test suite catches breaking changes
 - **Documentation**: Tests serve as executable specifications
@@ -342,16 +370,19 @@ def test_user():
 ## Implementation Timeline
 
 ### Month 1: Critical Gap Coverage
+
 - Focus: operations.py, api.py, services.py
 - Target: 60% overall coverage
 - Deliverable: Core functionality fully tested
 
 ### Month 2: Integration & E2E
+
 - Focus: Integration tests, E2E workflows
 - Target: 80% overall coverage
 - Deliverable: Complete workflow validation
 
 ### Month 3: Advanced Scenarios
+
 - Focus: Edge cases, error conditions, performance
 - Target: 90%+ overall coverage
 - Deliverable: Production-ready test suite

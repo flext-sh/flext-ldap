@@ -7,4 +7,4 @@
 ---
 
 **Arc42 Section 04-solution-strategy: Solution Strategy**
-*Part of the comprehensive Arc42 architecture documentation*
+_Part of the comprehensive Arc42 architecture documentation_

@@ -9,4 +9,4 @@ This document describes the scalability characteristics and requirements for fle
 ---
 
 **Scalability Patterns**
-*Scalability characteristics and requirements*
+_Scalability characteristics and requirements_

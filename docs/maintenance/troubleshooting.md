@@ -60,11 +60,13 @@ except ImportError as e:
 ### Import Errors
 
 **Symptom:**
+
 ```
 ModuleNotFoundError: No module named 'yaml'
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check if dependencies are installed
 pip list | grep -E "(PyYAML|requests|beautifulsoup4)"
@@ -74,17 +76,20 @@ pip install -r docs/maintenance/requirements.txt
 ```
 
 **Prevention:**
+
 - Always install dependencies before running maintenance
 - Use virtual environments to avoid conflicts
 
 ### Permission Errors
 
 **Symptom:**
+
 ```
 PermissionError: [Errno 13] Permission denied: 'docs/README.md'
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check file permissions
 ls -la docs/README.md
@@ -94,6 +99,7 @@ ls -ld docs/
 ```
 
 **Solutions:**
+
 ```bash
 # Fix file permissions
 chmod 644 docs/README.md
@@ -106,11 +112,13 @@ sudo -u docsuser python maintenance/audit.py
 ### Configuration File Errors
 
 **Symptom:**
+
 ```
 yaml.YAMLError: mapping values are not allowed here
 ```
 
 **Diagnosis:**
+
 ```bash
 # Validate YAML syntax
 python -c "
@@ -125,6 +133,7 @@ except yaml.YAMLError as e:
 ```
 
 **Solutions:**
+
 - Check indentation (YAML is indentation-sensitive)
 - Use spaces, not tabs
 - Validate quotes and special characters
@@ -133,11 +142,13 @@ except yaml.YAMLError as e:
 ### Path Resolution Issues
 
 **Symptom:**
+
 ```
 FileNotFoundError: [Errno 2] No such file or directory: 'docs/README.md'
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check current working directory
 pwd
@@ -150,6 +161,7 @@ python -c "import os; print(os.path.abspath('docs'))"
 ```
 
 **Solutions:**
+
 - Run commands from the project root directory
 - Use absolute paths in scripts
 - Verify directory structure matches expectations
@@ -163,11 +175,12 @@ python -c "import os; print(os.path.abspath('docs'))"
 **Symptom:** Audit takes too long on large documentation sets
 
 **Solutions:**
+
 ```yaml
 # config.yaml - Optimize audit settings
 audit:
   include_patterns:
-    - "*.md"  # Limit to markdown only
+    - "*.md" # Limit to markdown only
   exclude_patterns:
     - "**/node_modules/**"
     - "**/.git/**"
@@ -179,6 +192,7 @@ audit:
 **Symptom:** Out of memory errors with large files
 
 **Solutions:**
+
 ```python
 # Process files individually
 for file_path in file_list:
@@ -194,6 +208,7 @@ for file_path in file_list:
 **Symptom:** Valid links reported as broken
 
 **Diagnosis:**
+
 ```bash
 # Debug specific link
 python maintenance/validate_links.py --debug-link "https://example.com"
@@ -203,6 +218,7 @@ curl -I https://example.com
 ```
 
 **Solutions:**
+
 - Add domains to skip list in config
 - Increase timeout values
 - Check firewall/proxy settings
@@ -212,6 +228,7 @@ curl -I https://example.com
 **Symptom:** Getting 429 Too Many Requests errors
 
 **Solutions:**
+
 ```yaml
 # config.yaml - Reduce request frequency
 validation:
@@ -225,6 +242,7 @@ validation:
 **Symptom:** SSL verification errors
 
 **Solutions:**
+
 ```bash
 # Disable SSL verification (not recommended for production)
 export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
@@ -241,12 +259,14 @@ skip_domains:
 **Symptom:** Legitimate heading structures flagged as invalid
 
 **Diagnosis:**
+
 ```bash
 # Check specific file
 python maintenance/validate_style.py --file docs/example.md --verbose
 ```
 
 **Solutions:**
+
 - Adjust heading hierarchy rules in config
 - Use proper markdown heading syntax
 - Document intentional deviations
@@ -256,13 +276,15 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 **Symptom:** Language not detected correctly
 
 **Solutions:**
-```python
+
+````python
 # Manually specify language
 ```python
 def example():
     pass
-```
-```
+````
+
+````
 
 ### Content Optimization Issues
 
@@ -280,17 +302,18 @@ cp docs/maintenance/backups/example.md.backup docs/example.md
 
 # Or rollback
 python maintenance/sync.py --rollback docs/example.md
-```
+````
 
 #### Over-Aggressive Fixes
 
 **Solutions:**
+
 ```yaml
 # config.yaml - Be more conservative
 optimization:
-  auto_fix: false  # Manual review required
+  auto_fix: false # Manual review required
   fix_common_typos: true
-  enhance_code_blocks: false  # Skip complex changes
+  enhance_code_blocks: false # Skip complex changes
 ```
 
 ### Reporting System Problems
@@ -300,6 +323,7 @@ optimization:
 **Symptom:** Reports generated but missing visualizations
 
 **Diagnosis:**
+
 ```bash
 # Check matplotlib/seaborn installation
 python -c "import matplotlib, seaborn; print('✅ Chart libraries available')"
@@ -309,6 +333,7 @@ ls -la docs/maintenance/reports/
 ```
 
 **Solutions:**
+
 - Install visualization dependencies
 - Ensure audit data is available before generating reports
 - Check file permissions for report output directory
@@ -320,6 +345,7 @@ ls -la docs/maintenance/reports/
 **Symptom:** Sync operations fail with git errors
 
 **Diagnosis:**
+
 ```bash
 # Check git status
 python maintenance/sync.py --status
@@ -330,6 +356,7 @@ git remote -v
 ```
 
 **Solutions:**
+
 - Ensure git repository is properly initialized
 - Check remote repository access
 - Verify branch permissions
@@ -342,6 +369,7 @@ git remote -v
 **Symptom:** High memory consumption with large documentation sets
 
 **Solutions:**
+
 ```python
 # Process files in batches
 batch_size = 10
@@ -361,6 +389,7 @@ validation:
 **Symptom:** Operations take too long to complete
 
 **Solutions:**
+
 - Enable caching for link validation
 - Reduce external link checking frequency
 - Use parallel processing where appropriate
@@ -371,6 +400,7 @@ validation:
 **Symptom:** Running out of disk space due to backups/logs
 
 **Solutions:**
+
 ```bash
 # Clean old backups
 find docs/maintenance/backups/ -type f -mtime +30 -delete
@@ -389,6 +419,7 @@ logrotate -f /etc/logrotate.d/docs-maintenance
 **Symptom:** Components fail with configuration-related errors
 
 **Validation:**
+
 ```python
 # Validate configuration
 python -c "
@@ -420,6 +451,7 @@ else:
 **Symptom:** Configuration works in development but fails in production
 
 **Solutions:**
+
 - Use environment variables for sensitive data
 - Create environment-specific config files
 - Use config inheritance (base + environment overrides)
@@ -439,6 +471,7 @@ sync:
 **Symptom:** Maintenance jobs fail in automated pipelines
 
 **Diagnosis:**
+
 ```bash
 # Test in isolated environment
 docker run --rm -v $(pwd):/workspace \
@@ -447,6 +480,7 @@ docker run --rm -v $(pwd):/workspace \
 ```
 
 **Solutions:**
+
 - Use specific Python versions in pipelines
 - Install dependencies in correct order
 - Handle network timeouts gracefully
@@ -457,6 +491,7 @@ docker run --rm -v $(pwd):/workspace \
 **Symptom:** Maintenance scripts don't work in IDE environments
 
 **Solutions:**
+
 - Set working directory in IDE run configurations
 - Use absolute paths in scripts
 - Configure PYTHONPATH correctly
@@ -467,6 +502,7 @@ docker run --rm -v $(pwd):/workspace \
 **Symptom:** Merge conflicts in maintenance-generated files
 
 **Solutions:**
+
 - Don't commit generated files to version control
 - Use .gitignore for reports and cache files
 - Regenerate reports after merges
@@ -495,6 +531,7 @@ python docs/maintenance/audit.py --rebuild-db
 ### Component-Specific Recovery
 
 #### Audit System Recovery
+
 ```bash
 # Clear audit cache
 rm -rf docs/maintenance/.audit_cache/
@@ -504,6 +541,7 @@ python docs/maintenance/audit.py --rebuild-db
 ```
 
 #### Link Validation Recovery
+
 ```bash
 # Clear link cache
 rm docs/maintenance/.link_cache.json
@@ -513,6 +551,7 @@ python docs/maintenance/validate_links.py --clear-cache
 ```
 
 #### Git Repository Recovery
+
 ```bash
 # Check repository state
 git status
@@ -526,6 +565,7 @@ git clean -fd
 ### Data Recovery
 
 #### Restore from Backups
+
 ```bash
 # List available backups
 ls docs/maintenance/backups/
@@ -535,6 +575,7 @@ cp docs/maintenance/backups/README.md.20241201_120000.backup docs/README.md
 ```
 
 #### Regenerate Reports
+
 ```bash
 # Regenerate all reports
 python docs/maintenance/report.py --generate-dashboard --weekly-summary
@@ -662,6 +703,7 @@ chmod +x docs/maintenance/health_check.sh
 **Documentation Maintenance System Troubleshooting Guide**
 
 **Key Recovery Steps:**
+
 1. **Diagnose**: Run health checks and gather diagnostic information
 2. **Isolate**: Identify which component is failing
 3. **Fix**: Apply appropriate solution from this guide
@@ -669,12 +711,14 @@ chmod +x docs/maintenance/health_check.sh
 5. **Prevent**: Update configurations or procedures to prevent recurrence
 
 **Support Resources:**
+
 - **GitHub Issues**: Bug reports and feature requests
 - **Documentation**: Comprehensive user guide and API reference
 - **Community**: Forums and discussion channels
 - **Professional Services**: Enterprise support and consulting
 
 **Prevention Best Practices:**
+
 - Regular health checks and maintenance
 - Automated monitoring and alerting
 - Comprehensive testing before deployments

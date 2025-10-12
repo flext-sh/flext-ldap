@@ -7,4 +7,4 @@
 ---
 
 **Arc42 Section 03-system-scope: System Scope and Context**
-*Part of the comprehensive Arc42 architecture documentation*
+_Part of the comprehensive Arc42 architecture documentation_

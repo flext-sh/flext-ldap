@@ -7,4 +7,4 @@
 ---
 
 **Arc42 Section 07-deployment: Deployment View**
-*Part of the comprehensive Arc42 architecture documentation*
+_Part of the comprehensive Arc42 architecture documentation_

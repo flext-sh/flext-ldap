@@ -9,4 +9,4 @@ This document describes the maintainability characteristics and requirements for
 ---
 
 **Code Quality and Evolution**
-*Maintainability characteristics and requirements*
+_Maintainability characteristics and requirements_

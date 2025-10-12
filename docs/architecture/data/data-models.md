@@ -13,4 +13,4 @@ FLEXT-LDAP implements a rich domain model based on LDAP standards while providin
 ---
 
 **Domain Data Models**
-*Enterprise-grade LDAP entities with business logic and validation*
+_Enterprise-grade LDAP entities with business logic and validation_
