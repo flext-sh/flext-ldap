@@ -1508,6 +1508,21 @@ class FlextLdapModels(FlextCore.Models):
     class SearchRequest(Base, ValidationMixin):
         """LDAP Search Request entity with comprehensive parameters and advanced Pydantic 2.11 features."""
 
+        # Default attribute constants
+        DEFAULT_USER_ATTRIBUTES: ClassVar[FlextCore.Types.StringList] = [
+            "uid",
+            "cn",
+            "sn",
+            "mail",
+            "objectClass",
+        ]
+        DEFAULT_GROUP_ATTRIBUTES: ClassVar[FlextCore.Types.StringList] = [
+            "cn",
+            "member",
+            "description",
+            "objectClass",
+        ]
+
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
         filter_str: str = Field(..., description="LDAP search filter")
@@ -1732,7 +1747,7 @@ class FlextLdapModels(FlextCore.Models):
             cls,
             base_dn: str,
             filter_str: str | None = None,
-            scope: str = FlextCore.Constants.Platform.LDAP_SCOPE_SUBTREE,
+            scope: str = FlextLdapConstants.Scopes.SUBTREE,
             attributes: FlextCore.Types.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
             """Factory method with smart defaults from FlextLdapConstants.
@@ -1809,23 +1824,6 @@ class FlextLdapModels(FlextCore.Models):
             return base_filter
 
         @staticmethod
-        def get_user_attributes() -> FlextCore.Types.StringList:
-            """Get default user attributes to retrieve.
-
-            Returns the standard set of LDAP user attributes commonly needed
-            for user operations.
-
-            Returns:
-                List of default user attribute names
-
-            Example:
-                attrs = SearchRequest.get_user_attributes()
-                # ["uid", "cn", "sn", "mail", "objectClass"]
-
-            """
-            return ["uid", "cn", "sn", "mail", "objectClass"]
-
-        @staticmethod
         def create_group_filter(group_filter: str | None = None) -> str:
             """Create LDAP filter for group search.
 
@@ -1852,23 +1850,6 @@ class FlextLdapModels(FlextCore.Models):
             if group_filter:
                 return f"(&{base_filter}{group_filter})"
             return base_filter
-
-        @staticmethod
-        def get_group_attributes() -> FlextCore.Types.StringList:
-            """Get default group attributes to retrieve.
-
-            Returns the standard set of LDAP group attributes commonly needed
-            for group operations.
-
-            Returns:
-                List of default group attribute names
-
-            Example:
-                attrs = SearchRequest.get_group_attributes()
-                # ["cn", "member", "description", "objectClass"]
-
-            """
-            return ["cn", "member", "description", "objectClass"]
 
     class SearchResponse(Base):
         """LDAP Search Response entity."""
@@ -2563,7 +2544,7 @@ class FlextLdapModels(FlextCore.Models):
         # Connection details
         server: str = Field(default="localhost", description="LDAP server hostname/IP")
         port: int = Field(
-            FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            FlextLdapConstants.Protocol.DEFAULT_PORT,
             description="LDAP server port",
             ge=1,
             le=FlextCore.Constants.Network.MAX_PORT,
@@ -2735,7 +2716,7 @@ class FlextLdapModels(FlextCore.Models):
         model_config = ConfigDict(frozen=True)
 
         server: str
-        port: int = FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+        port: int = FlextLdapConstants.Protocol.DEFAULT_PORT
         use_ssl: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
@@ -3257,7 +3238,7 @@ class FlextLdapModels(FlextCore.Models):
                                 subject_perm_split[1:]
                             )
 
-                return FlextCore.Result[FlextLdapModels.OpenLdapAcl].ok(
+                return FlextCore.Result["OpenLdapAcl"].ok(
                     cls(
                         access_line=access_line,
                         target_spec=target_spec,
@@ -3266,7 +3247,7 @@ class FlextLdapModels(FlextCore.Models):
                     )
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdapModels.OpenLdapAcl].fail(
+                return FlextCore.Result["OpenLdapAcl"].fail(
                     f"Failed to create OpenLdapAcl: {e}"
                 )
 
@@ -3668,7 +3649,7 @@ class FlextLdapModels(FlextCore.Models):
         )
 
         ldap_port: int = Field(
-            default=FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            default=FlextLdapConstants.Protocol.DEFAULT_PORT,
             ge=1,
             le=FlextCore.Constants.Network.MAX_PORT,
             description="LDAP server port",
@@ -4163,18 +4144,18 @@ class FlextLdapModels(FlextCore.Models):
             # Validate LDAP URI and port consistency
             if (
                 self.ldap_server_uri.startswith("ldaps://")
-                and self.ldap_port == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+                and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
             ):
                 return FlextCore.Result[None].fail(
-                    f"Port {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT} for LDAPS.",
+                    f"Port {FlextLdapConstants.Protocol.DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT} for LDAPS.",
                 )
 
             if (
                 self.ldap_server_uri.startswith("ldap://")
-                and self.ldap_port == FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT
+                and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
             ):
                 return FlextCore.Result[None].fail(
-                    f"Port {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT} is default for LDAPS, not LDAP. Use {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT} for LDAP.",
+                    f"Port {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT} is default for LDAPS, not LDAP. Use {FlextLdapConstants.Protocol.DEFAULT_PORT} for LDAP.",
                 )
 
             # Validate timeout relationships
@@ -4467,7 +4448,7 @@ class FlextLdapModels(FlextCore.Models):
             config: dict[str, str | int | FlextCore.Types.StringList] = {
                 "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
                 "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                "scope": FlextCore.Constants.Platform.LDAP_SCOPE_SUBTREE,
+                "scope": FlextLdapConstants.Scopes.SUBTREE,
                 "attributes": [
                     FlextLdapConstants.Attributes.COMMON_NAME,
                     FlextLdapConstants.Attributes.SURNAME,

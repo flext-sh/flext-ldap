@@ -17,10 +17,12 @@ from typing import Any
 import yaml
 
 try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    import importlib.util
 
-    HAS_VISUALIZATION = True
+    HAS_VISUALIZATION = (
+        importlib.util.find_spec("matplotlib") is not None
+        and importlib.util.find_spec("seaborn") is not None
+    )
 except ImportError:
     HAS_VISUALIZATION = False
 

@@ -235,7 +235,7 @@ class DocumentationAuditor:
             if not url or url.startswith("#") or "http" in url:
                 continue
             # Check if relative link exists
-            if not Path(os.path.join(Path().parent, url)).exists():
+            if not (Path().parent / url).exists():
                 broken_count += 1
 
         score -= min(50, broken_count * 15)
@@ -274,7 +274,7 @@ class DocumentationAuditor:
         for text, url in internal_links:
             if url.startswith(("http", "#")):
                 continue
-            full_path = os.path.join(Path(file_path).parent, url)
+            full_path = Path(file_path).parent / url
             if not Path(full_path).exists():
                 issues.append({
                     "type": "broken_link",
@@ -313,10 +313,10 @@ class DocumentationAuditor:
 
         for root, dirs, files in os.walk(directory):
             # Skip excluded directories
-            dirs[:] = [d for d in dirs if not self._is_excluded(os.path.join(root, d))]
+            dirs[:] = [d for d in dirs if not self._is_excluded(Path(root) / d)]
 
             for file in files:
-                file_path = os.path.join(root, file)
+                file_path = Path(root) / file
                 if self._should_audit_file(file_path):
                     result = self.audit_file(file_path)
                     results.append(result)

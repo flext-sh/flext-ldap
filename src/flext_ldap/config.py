@@ -19,7 +19,7 @@ import uuid
 from typing import ClassVar
 
 from dependency_injector import providers
-from flext_core import FlextCore
+from flext_core import FlextConfig, FlextCore
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -164,7 +164,7 @@ class FlextLdapConfig(FlextCore.Config):
     _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
     # Singleton pattern with per-class support
-    _instances: ClassVar[dict[type, FlextCore.Config]] = {}
+    _instances: ClassVar[dict[type, FlextConfig]] = {}
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
     class LdapHandlerConfiguration:
@@ -311,7 +311,7 @@ class FlextLdapConfig(FlextCore.Config):
     )
 
     ldap_port: int = Field(
-        default=FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+        default=FlextLdapConstants.Protocol.DEFAULT_PORT,
         ge=1,
         le=FlextCore.Constants.Network.MAX_PORT,
         description="LDAP server port",
@@ -668,7 +668,7 @@ class FlextLdapConfig(FlextCore.Config):
                 if prop == "bind_dn":
                     return self.ldap_bind_dn
                 if prop == "bind_password":
-                    return self.get_effective_bind_password()
+                    return self.effective_bind_password
                 if prop == "base_dn":
                     return self.ldap_base_dn
 
@@ -803,18 +803,18 @@ class FlextLdapConfig(FlextCore.Config):
         # Validate LDAP URI and port consistency
         if (
             self.ldap_server_uri.startswith("ldaps://")
-            and self.ldap_port == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+            and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
         ):
             return FlextCore.Result[None].fail(
-                f"Port {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT} for LDAPS.",
+                f"Port {FlextLdapConstants.Protocol.DEFAULT_PORT} is default for LDAP, not LDAPS. Use {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT} for LDAPS.",
             )
 
         if (
             self.ldap_server_uri.startswith("ldap://")
-            and self.ldap_port == FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT
+            and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
         ):
             return FlextCore.Result[None].fail(
-                f"Port {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT} is default for LDAPS, not LDAP. Use {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT} for LDAP.",
+                f"Port {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT} is default for LDAPS, not LDAP. Use {FlextLdapConstants.Protocol.DEFAULT_PORT} for LDAP.",
             )
 
         # Validate timeout relationships
@@ -825,48 +825,8 @@ class FlextLdapConfig(FlextCore.Config):
 
         return FlextCore.Result[None].ok(None)
 
-    def create_ldap_handler_config(
-        self,
-        operation_mode: str | None = None,
-        ldap_operation: str | None = None,
-        handler_name: str | None = None,
-        handler_id: str | None = None,
-        **kwargs: object,
-    ) -> FlextCore.Types.Dict:
-        """Create LDAP handler configuration using LDAP-specific utilities.
-
-        Convenience method that uses LdapHandlerConfiguration utilities
-        to create properly configured handler settings for LDAP operations.
-
-        Args:
-            operation_mode: LDAP operation mode (search, modify, etc.)
-            ldap_operation: Specific LDAP operation name
-            handler_name: Handler name override
-            handler_id: Handler ID override
-            **kwargs: Additional configuration parameters
-
-        Returns:
-            dict: Complete LDAP handler configuration
-
-        """
-        return self.LdapHandlerConfiguration.create_ldap_handler_config(
-            operation_mode=operation_mode,
-            ldap_operation=ldap_operation,
-            handler_name=handler_name,
-            handler_id=handler_id,
-            ldap_config=kwargs,
-        )
-
-    def get_ldap_connection_string(self) -> str:
-        """Get complete LDAP connection string.
-
-        Returns:
-            str: Full LDAP connection string (URI:port)
-
-        """
-        return f"{self.ldap_server_uri}:{self.ldap_port}"
-
-    def get_effective_bind_password(self) -> str | None:
+    @property
+    def effective_bind_password(self) -> str | None:
         """Get the effective bind password (safely extract from SecretStr)."""
         if self.ldap_bind_password is not None:
             return self.ldap_bind_password.get_secret_value()
@@ -1103,7 +1063,7 @@ class FlextLdapConfig(FlextCore.Config):
         config: dict[str, str | int | FlextCore.Types.StringList] = {
             "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
             "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-            "scope": FlextCore.Constants.Platform.LDAP_SCOPE_SUBTREE,
+            "scope": FlextLdapConstants.Scopes.SUBTREE,
             "attributes": [
                 FlextLdapConstants.Attributes.COMMON_NAME,
                 FlextLdapConstants.Attributes.SURNAME,

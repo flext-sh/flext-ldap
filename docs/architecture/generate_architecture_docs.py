@@ -856,9 +856,22 @@ This document describes the {attribute.lower()} characteristics and requirements
         try:
             plantuml_cmd = self._get_plantuml_command()
             if plantuml_cmd:
-                # Use plantuml command
+                # Use plantuml command with input validation
                 formats = self.config["generation"].get("diagram_formats", ["png"])
+                # Validate formats to prevent command injection
+                allowed_formats = {
+                    "png",
+                    "svg",
+                    "eps",
+                    "pdf",
+                    "vdx",
+                    "xmi",
+                    "scxml",
+                    "html",
+                }
                 for fmt in formats:
+                    if fmt not in allowed_formats:
+                        continue  # Skip invalid formats
                     subprocess.run(
                         [
                             plantuml_cmd,

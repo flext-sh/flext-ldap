@@ -25,23 +25,20 @@ class FlextLdapConstants(FlextCore.Constants):
     # LDAP-SPECIFIC CONSTANTS ONLY - Essential domain constants
     # =========================================================================
 
-    # Convenience reference to FlextCore.Constants timeout (for examples)
-    DEFAULT_TIMEOUT: Final[int] = FlextCore.Constants.Network.DEFAULT_TIMEOUT
-
     class Protocol:
         """LDAP protocol-specific constants.
 
-        Note: Use FlextCore.Constants directly for:
-        - DEFAULT_PORT → FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
-        - DEFAULT_SSL_PORT → FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT
-        - MAX_PORT → FlextCore.Constants.Network.MAX_PORT
-        - PROTOCOL_PREFIX_LDAP → FlextCore.Constants.Platform.PROTOCOL_LDAP
-        - PROTOCOL_PREFIX_LDAPS → FlextCore.Constants.Platform.PROTOCOL_LDAPS
+        Standard LDAP protocol constants. These are LDAP-specific and not
+        available in flext-core Platform constants.
         """
 
         # LDAP protocols (domain-specific string values)
         LDAP: Final[str] = "ldap"
         LDAPS: Final[str] = "ldaps"
+
+        # LDAP standard ports (RFC 4511)
+        DEFAULT_PORT: Final[int] = 389
+        DEFAULT_SSL_PORT: Final[int] = 636
 
         # LDAP URIs (domain-specific defaults)
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
@@ -50,27 +47,16 @@ class FlextLdapConstants(FlextCore.Constants):
         # Limits for LDAP data
         MAX_DESCRIPTION_LENGTH: Final[int] = 1024
 
-        # Port constants (reference to FlextCore.Constants)
-        DEFAULT_PORT: Final[int] = FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
-        DEFAULT_SSL_PORT: Final[int] = FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT
-
-        # Timeout constants (reference to FlextCore.Constants)
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = (
-            FlextCore.Constants.Network.DEFAULT_TIMEOUT
-        )
-
     class Connection:
         """LDAP connection-specific constants.
 
         Note: Use FlextCore.Constants directly for:
         - DEFAULT_TIMEOUT → FlextCore.Constants.Network.DEFAULT_TIMEOUT
         - DEFAULT_POOL_SIZE → FlextCore.Constants.Performance.DEFAULT_DB_POOL_SIZE
+        - DEFAULT_PAGE_SIZE → FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE
         """
 
-        # LDAP-specific page sizes (convenience aliases)
-        DEFAULT_PAGE_SIZE: Final[int] = (
-            FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE
-        )
+        # LDAP-specific page sizes
         DEFAULT_SEARCH_PAGE_SIZE: Final[int] = 100
         MAX_PAGE_SIZE_GENERIC: Final[int] = 1000
         MAX_PAGE_SIZE_AD: Final[int] = 100000
@@ -78,16 +64,16 @@ class FlextLdapConstants(FlextCore.Constants):
     class Scopes:
         """LDAP search scope constants.
 
-        Provides direct access to LDAP scope constants for convenience.
-        These reference FlextCore.Constants.Platform values (RFC 4511 compliant).
+        Standard RFC 4511 scope constants. These are LDAP-specific and not
+        available in flext-core Platform constants.
         """
 
-        # Direct references to FlextCore.Constants for convenience
-        BASE: Final[str] = FlextCore.Constants.Platform.LDAP_SCOPE_BASE
-        ONELEVEL: Final[str] = FlextCore.Constants.Platform.LDAP_SCOPE_LEVEL
-        SUBTREE: Final[str] = FlextCore.Constants.Platform.LDAP_SCOPE_SUBTREE
+        # RFC 4511 standard search scopes
+        BASE: Final[str] = "base"
+        ONELEVEL: Final[str] = "onelevel"
+        SUBTREE: Final[str] = "subtree"
 
-        # LDAP-specific scope
+        # LDAP-specific scope (not in RFC 4511)
         CHILDREN: Final[str] = "children"
 
     class Attributes:

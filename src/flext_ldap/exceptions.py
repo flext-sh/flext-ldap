@@ -149,9 +149,15 @@ class FlextLdapExceptions(FlextCore.Exceptions):
             self.base_dn = base_dn
             self.filter_str = filter_str
             # Use search_context if provided, otherwise check kwargs for context
-            self.search_context = search_context or kwargs.get("context")
-            # Extract error_code from kwargs
-            self.error_code = kwargs.get("error_code")
+            context_value = kwargs.get("context")
+            self.search_context = search_context or (
+                str(context_value) if context_value is not None else None
+            )
+            # Extract error_code from kwargs (convert to str per BaseError type)
+            error_code_value = kwargs.get("error_code")
+            self.error_code = (
+                str(error_code_value) if error_code_value is not None else None
+            )
 
             # Build error message with LDAP context
             enhanced_message = message
@@ -471,7 +477,9 @@ class FlextLdapExceptions(FlextCore.Exceptions):
             """
             self.dn = dn
             self.operation = operation
-            self.reason = kwargs.get("reason")  # Extract reason from kwargs
+            # Extract reason from kwargs with proper type casting
+            reason_value = kwargs.get("reason")
+            self.reason = str(reason_value) if reason_value is not None else None
 
             # Build error message with LDAP context
             enhanced_message = message
