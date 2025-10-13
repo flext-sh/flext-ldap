@@ -357,9 +357,15 @@ class FlextLdapProtocols(FlextCore.Protocols):
 
         @runtime_checkable
         class LdapConnectionManagerProtocol(
-            FlextCore.Protocols.Domain.Service, Protocol
+            FlextCore.Protocols.Domain.Service,
+            FlextCore.Protocols.Infrastructure.Connection,
+            Protocol,
         ):
-            """Protocol for LDAP connection management operations."""
+            """Protocol for LDAP connection management operations.
+
+            Extends both Domain.Service and Infrastructure.Connection protocols,
+            providing LDAP-specific connection management capabilities.
+            """
 
             def connect(
                 self,

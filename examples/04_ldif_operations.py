@@ -367,6 +367,9 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
                 "olcLogLevel": FlextLdifModels.AttributeValues(values=["stats"]),
             }
         ),
+        version="1",
+        created_at=None,
+        updated_at=None,
     )
 
     logger.info("   ✅ OpenLDAP 2.x entry created")
@@ -378,7 +381,7 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
 
     # Use entry adapter to convert between server formats
     result = api.convert_entry_between_servers(
-        entry=openldap_entry,  # type: ignore[assignment]
+        entry=openldap_entry,
         source_server_type="openldap2",
         target_server_type="oud",
     )
@@ -417,6 +420,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
                         ),
                     }
                 ),
+                version="1",
+                created_at=None,
+                updated_at=None,
             ),
             "expected": "openldap2",
         },
@@ -434,6 +440,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
                         ),
                     }
                 ),
+                version="1",
+                created_at=None,
+                updated_at=None,
             ),
             "expected": "oid",
         },
@@ -451,6 +460,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
                         ),
                     }
                 ),
+                version="1",
+                created_at=None,
+                updated_at=None,
             ),
             "expected": "389ds",
         },
@@ -466,7 +478,7 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             logger.warning(f"   ⚠️  Skipping string entry: {entry}")
             continue
         # entry is now guaranteed to be FlextLdifModels.Entry
-        result = api.detect_entry_server_type(entry)  # type: ignore[arg-type]
+        result = api.detect_entry_server_type(entry)
 
         if result.is_success:
             detected = result.unwrap()
@@ -508,13 +520,16 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
                 ),
             }
         ),
+        version="1",
+        created_at=None,
+        updated_at=None,
     )
 
     logger.info("   ✅ Entry created with attributes:")
     logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
 
     logger.info("\n2. Normalizing for current server:")
-    result = api.normalize_entry_for_server(mixed_entry)  # type: ignore[arg-type]
+    result = api.normalize_entry_for_server(mixed_entry)
 
     if result.is_success:
         normalized = result.unwrap()
@@ -548,9 +563,12 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
                 "sn": FlextLdifModels.AttributeValues(values=["User"]),
             }
         ),
+        version="1",
+        created_at=None,
+        updated_at=None,
     )
 
-    result = api.validate_entry_for_server(valid_entry)  # type: ignore[arg-type]
+    result = api.validate_entry_for_server(valid_entry)
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -576,9 +594,12 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
                 ),  # OpenLDAP-specific
             }
         ),
+        version="1",
+        created_at=None,
+        updated_at=None,
     )
 
-    result = api.validate_entry_for_server(specific_entry)  # type: ignore[arg-type]
+    result = api.validate_entry_for_server(specific_entry)
 
     if result.is_success:
         is_valid = result.unwrap()

@@ -18,7 +18,7 @@ from flext_ldap.models import FlextLdapModels
 
 
 @pytest.fixture
-def mock_connection():
+def mock_connection() -> Mock:
     """Create a mock LDAP connection."""
     conn = Mock(spec=Connection)
     conn.bound = True
@@ -27,13 +27,13 @@ def mock_connection():
 
 
 @pytest.fixture
-def mock_server():
+def mock_server() -> Mock:
     """Create a mock LDAP server."""
     return Mock(spec=Server)
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> Mock:
     """Create a mock LDAP configuration."""
     config = Mock()
     config.ldap_base_dn = "dc=test,dc=local"
@@ -41,13 +41,18 @@ def mock_config():
 
 
 @pytest.fixture
-def auth_service():
+def auth_service() -> FlextLdapAuthentication:
     """Create an authentication service instance."""
     return FlextLdapAuthentication()
 
 
 @pytest.fixture
-def auth_with_context(auth_service, mock_connection, mock_server, mock_config):
+def auth_with_context(
+    auth_service: FlextLdapAuthentication,
+    mock_connection: Mock,
+    mock_server: Mock,
+    mock_config: Mock,
+) -> FlextLdapAuthentication:
     """Create authentication service with connection context."""
     auth_service.set_connection_context(mock_connection, mock_server, mock_config)
     return auth_service
@@ -71,7 +76,11 @@ class TestFlextLdapAuthenticationInitialization:
         assert auth._connection is None
 
     def test_set_connection_context(
-        self, auth_service, mock_connection, mock_server, mock_config
+        self,
+        auth_service: FlextLdapAuthentication,
+        mock_connection: Mock,
+        mock_server: Mock,
+        mock_config: Mock,
     ) -> None:
         """Test setting connection context."""
         auth_service.set_connection_context(mock_connection, mock_server, mock_config)
@@ -83,7 +92,9 @@ class TestFlextLdapAuthenticationInitialization:
 class TestFlextLdapAuthenticationUserAuth:
     """Test user authentication functionality."""
 
-    def test_authenticate_user_no_connection(self, auth_service) -> None:
+    def test_authenticate_user_no_connection(
+        self, auth_service: FlextLdapAuthentication
+    ) -> None:
         """Test authenticate_user fails without connection."""
         result = auth_service.authenticate_user("testuser", "testpass")
         assert result.is_failure
@@ -259,7 +270,7 @@ class TestFlextLdapAuthenticationHelpers:
         assert "connection not established" in result.error.lower()
 
     def test_search_user_by_username_not_found(
-        self, auth_with_context, mock_connection
+        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
     ) -> None:
         """Test user search returns failure when user not found."""
         mock_connection.entries = []
@@ -270,7 +281,7 @@ class TestFlextLdapAuthenticationHelpers:
         assert "user not found" in result.error.lower()
 
     def test_search_user_by_username_found(
-        self, auth_with_context, mock_connection
+        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
     ) -> None:
         """Test user search succeeds when user found."""
         mock_entry = Mock()

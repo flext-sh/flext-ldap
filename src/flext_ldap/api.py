@@ -2301,7 +2301,7 @@ class FlextLdap(FlextCore.Service[None]):
             filter_str=user_filter,
             scope="subtree",
             attributes=attributes
-            or FlextLdapModels.SearchRequest.get_user_attributes(),
+            or FlextLdapModels.SearchRequest.DEFAULT_USER_ATTRIBUTES,
         )
 
         return self.search(search_request)
@@ -2367,7 +2367,7 @@ class FlextLdap(FlextCore.Service[None]):
             filter_str=group_filter,
             scope="subtree",
             attributes=attributes
-            or FlextLdapModels.SearchRequest.get_group_attributes(),
+            or FlextLdapModels.SearchRequest.DEFAULT_GROUP_ATTRIBUTES,
         )
 
         return self.search(search_request)
