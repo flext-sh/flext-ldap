@@ -1229,7 +1229,7 @@ class TestFlextLdapModels:
                 attributes=None,  # None attributes
             )
 
-        # Test empty attributes dict (should be valid)
+        # Test empty attributes dict[str, object] (should be valid)
         entry = FlextLdapModels.Entry(
             dn="cn=test,dc=example,dc=com",
             attributes={},  # Empty but valid
@@ -2597,7 +2597,7 @@ class TestFlextLdapModels:
             mail="test@example.com",
             user_password=None,  # None password
         )
-        # Serialize to dict to trigger serializer
+        # Serialize to dict[str, object] to trigger serializer
         user_dict = user.model_dump()
         assert user_dict["user_password"] is None
 
@@ -2611,7 +2611,7 @@ class TestFlextLdapModels:
             mail="test@example.com",
             user_password="secret123",  # Will be converted to SecretStr
         )
-        # Serialize to dict to trigger serializer
+        # Serialize to dict[str, object] to trigger serializer
         user_dict = user.model_dump()
         assert user_dict["user_password"] == "[PROTECTED]"
 

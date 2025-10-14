@@ -84,13 +84,13 @@ def ldap_api() -> FlextLdapClients:
 
 
 @pytest.fixture
-def test_user_data() -> dict:
+def test_user_data() -> dict[str, object]:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> dict:
+def test_group_data() -> dict[str, object]:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 

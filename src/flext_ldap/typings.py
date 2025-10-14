@@ -201,7 +201,7 @@ class FlextLdapTypes(FlextCore.Types):
                 search_filter: str,
                 search_scope: str | int,
                 attributes: list[str] | None = None,
-                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+                **kwargs: Any,
             ) -> bool:
                 """Execute LDAP search. Returns True if successful."""
                 ...
@@ -211,7 +211,7 @@ class FlextLdapTypes(FlextCore.Types):
                 dn: str,
                 object_class: str | list[str] | None = None,
                 attributes: dict[str, Any] | None = None,
-                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+                **kwargs: Any,
             ) -> bool:
                 """Add LDAP entry. Returns True if successful."""
                 ...
@@ -220,12 +220,12 @@ class FlextLdapTypes(FlextCore.Types):
                 self,
                 dn: str,
                 changes: dict[str, Any],
-                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+                **kwargs: Any,
             ) -> bool:
                 """Modify LDAP entry. Returns True if successful."""
                 ...
 
-            def delete(self, dn: str, **kwargs: Any) -> bool:  # noqa: ANN401  # ldap3 library has no type stubs
+            def delete(self, dn: str, **kwargs: Any) -> bool:
                 """Delete LDAP entry. Returns True if successful."""
                 ...
 
@@ -250,7 +250,7 @@ class FlextLdapTypes(FlextCore.Types):
                 """Convert entry to JSON string."""
                 ...
 
-            def __getattr__(self, name: str) -> Any:  # noqa: ANN401  # ldap3 library has no type stubs
+            def __getattr__(self, name: str) -> Any:
                 """Dynamic attribute access for LDAP attributes (uid, cn, mail, etc.)."""
                 ...
 

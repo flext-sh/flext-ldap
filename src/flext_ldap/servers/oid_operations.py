@@ -316,7 +316,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
     @override
     def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
-        """Format ACL dict to orclaci string for Oracle OID.
+        """Format ACL dict[str, object] to orclaci string for Oracle OID.
 
         Args:
             acl_dict: ACL dictionary with structure:

@@ -320,7 +320,7 @@ class FlextLdapSchemaSync(FlextCore.Service[FlextCore.Types.Dict]):
             if definition_type == "attributeType":
                 existing_attrs_raw = existing_schema.get("attributeTypes", {})
                 existing_attrs: FlextCore.Types.Dict = (
-                    dict(existing_attrs_raw)
+                    dict[str, object](existing_attrs_raw)
                     if isinstance(existing_attrs_raw, dict)
                     else {}
                 )
@@ -337,7 +337,9 @@ class FlextLdapSchemaSync(FlextCore.Service[FlextCore.Types.Dict]):
             elif definition_type == "objectClass":
                 existing_ocs_raw = existing_schema.get("objectClasses", {})
                 existing_ocs: FlextCore.Types.Dict = (
-                    dict(existing_ocs_raw) if isinstance(existing_ocs_raw, dict) else {}
+                    dict[str, object](existing_ocs_raw)
+                    if isinstance(existing_ocs_raw, dict)
+                    else {}
                 )
                 # Check by name and OID with type-safe str conversion
                 name_exists = (

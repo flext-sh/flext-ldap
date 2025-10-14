@@ -11,7 +11,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import Literal, cast, override
 
 from flext_core import FlextCore
 from ldap3 import SUBTREE, Connection, Server
@@ -20,8 +20,6 @@ from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-# Use protocols to avoid circular imports
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers.base_operations import (
@@ -81,7 +79,7 @@ class FlextLdapClients(FlextCore.Service[None]):
         self._detected_server_type: str | None = None
 
         # Search scope constant
-        self._search_scope = SUBTREE
+        self._search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = SUBTREE
 
         # Lazy-loaded components for search and authentication (substantial logic modules)
         self._searcher: FlextLdapProtocols.Ldap.LdapSearcherProtocol | None = None
@@ -99,8 +97,8 @@ class FlextLdapClients(FlextCore.Service[None]):
             self._searcher = cast(
                 "FlextLdapProtocols.Ldap.LdapSearcherProtocol", searcher
             )
-        # Cast for type checker - we know it's not None after the check above
-        return cast("FlextLdapProtocols.Ldap.LdapSearcherProtocol", self._searcher)
+        # Type checker knows it's not None after the check above
+        return self._searcher
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
         """Get authenticator with lazy initialization."""
@@ -109,15 +107,13 @@ class FlextLdapClients(FlextCore.Service[None]):
             auth.set_connection_context(
                 self._connection,
                 self._server,
-                self._ldap_config,
+                cast("FlextLdapModels.Config", self._ldap_config),
             )
             self._authenticator = cast(
                 "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol", auth
             )
-        # Cast for type checker - we know it's not None after the check above
-        return cast(
-            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol", self._authenticator
-        )
+        # Type checker knows it's not None after the check above
+        return self._authenticator
 
     @property
     def connection(self) -> Connection | None:
@@ -140,7 +136,7 @@ class FlextLdapClients(FlextCore.Service[None]):
         password: str,
         *,
         auto_discover_schema: bool = True,
-        connection_options: FlextCore.Types.Dict | None = None,
+        connection_options: dict[str, object] | None = None,
     ) -> FlextCore.Result[bool]:
         """Connect and bind to LDAP server with universal compatibility.
 
@@ -181,7 +177,20 @@ class FlextLdapClients(FlextCore.Service[None]):
 
             # Apply connection options if provided
             if connection_options:
-                self._server = Server(server_uri, **connection_options)
+                # Cast connection options to proper types for Server constructor
+                server_kwargs = {}
+                for key, value in connection_options.items():
+                    if key == "port" and value is not None:
+                        server_kwargs[key] = int(str(value))
+                    elif key == "use_ssl" and value is not None:
+                        server_kwargs[key] = bool(value)
+                    elif (key == "get_info" and value is not None) or (
+                        key == "mode" and value is not None
+                    ):
+                        server_kwargs[key] = str(value)
+                    else:
+                        server_kwargs[key] = value
+                self._server = Server(server_uri, **server_kwargs)
             else:
                 self._server = Server(server_uri)
 
@@ -205,6 +214,7 @@ class FlextLdapClients(FlextCore.Service[None]):
                 self._authenticator.set_connection_context(
                     self._connection,
                     self._server,
+                    cast("FlextLdapModels.Config", self._ldap_config),
                 )
 
             # Auto-detect server type
@@ -331,11 +341,20 @@ class FlextLdapClients(FlextCore.Service[None]):
         if len(args) >= FlextLdapConstants.Validation.MIN_CONNECTION_ARGS:
             server_uri, bind_dn, password = str(args[0]), str(args[1]), str(args[2])
 
+            # Extract known parameters from kwargs to avoid type issues
+            connect_kwargs = {}
+            if "auto_discover_schema" in kwargs:
+                connect_kwargs["auto_discover_schema"] = bool(
+                    kwargs["auto_discover_schema"]
+                )
+            if "connection_options" in kwargs:
+                connect_kwargs["connection_options"] = kwargs["connection_options"]
+
             return self.connect(
                 server_uri=server_uri,
                 bind_dn=bind_dn,
                 password=password,
-                **kwargs,
+                **connect_kwargs,
             )
 
         return FlextCore.Result[bool].fail(
@@ -367,7 +386,7 @@ class FlextLdapClients(FlextCore.Service[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextCore.Types.StringList | None = None,
-        scope: str = "subtree",
+        scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
         page_size: int = 0,
         paged_cookie: bytes | None = None,
     ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
@@ -527,7 +546,7 @@ class FlextLdapClients(FlextCore.Service[None]):
                     # Already in correct format
                     ldap3_changes[attr] = change_spec
                 elif isinstance(change_spec, dict):
-                    # Handle dict format (complex operations)
+                    # Handle dict[str, object] format (complex operations)
                     ldap3_changes[attr] = change_spec
                 else:
                     # Simple value - wrap as MODIFY_REPLACE
@@ -776,14 +795,16 @@ class FlextLdapClients(FlextCore.Service[None]):
         base_dn: str,
         filter_str: str,
         attributes: FlextCore.Types.StringList | None = None,
-        scope: str = "subtree",
+        scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
         *,
         use_paging: bool = True,
-    ) -> FlextCore.Result[list]:
+    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Universal search with automatic server-specific optimization."""
         try:
             if not self.connection:
-                return FlextCore.Result[list].fail("LDAP connection not established")
+                return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+                    "LDAP connection not established"
+                )
 
             if not self.server_operations:
                 # Fall back to basic search
@@ -807,7 +828,9 @@ class FlextLdapClients(FlextCore.Service[None]):
             # Fall back to standard search
             return self.search(base_dn, filter_str, attributes, scope)
         except Exception as e:
-            return FlextCore.Result[list].fail(f"Universal search failed: {e}")
+            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+                f"Universal search failed: {e}"
+            )
 
     def compare_universal(
         self,
@@ -996,7 +1019,7 @@ class FlextLdapClients(FlextCore.Service[None]):
                     dn_validation.error or "Invalid DN",
                 )
 
-            # Validate attributes dict is not empty
+            # Validate attributes dict[str, object] is not empty
             if not attributes:
                 return FlextCore.Result[bool].fail("No attributes provided for update")
 
@@ -1035,7 +1058,7 @@ class FlextLdapClients(FlextCore.Service[None]):
                     dn_validation.error or "Invalid DN",
                 )
 
-            # Validate attributes dict is not empty
+            # Validate attributes dict[str, object] is not empty
             if not attributes:
                 return FlextCore.Result[bool].fail("No attributes provided for update")
 
@@ -1150,7 +1173,7 @@ class FlextLdapClients(FlextCore.Service[None]):
         if not group or not hasattr(group, "member_dns"):
             return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
-        members = (
+        members: FlextCore.Types.StringList = (
             group.member_dns
             if isinstance(group.member_dns, list)
             else [group.member_dns]

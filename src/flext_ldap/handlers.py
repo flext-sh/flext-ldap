@@ -23,6 +23,7 @@ logger = FlextCore.Logger(__name__)
 
 TCommand = TypeVar("TCommand", bound=FlextLdapModels.CqrsCommand)
 TQuery = TypeVar("TQuery", bound=FlextLdapModels.CqrsQuery)
+TResult = TypeVar("TResult")
 
 
 class FlextLdapHandlers:
@@ -33,8 +34,8 @@ class FlextLdapHandlers:
     """
 
     class FlextLdapLdapCommandHandler(
-        FlextCore.Protocols.Application.Handler,
-        Generic[TCommand],
+        FlextCore.Protocols.Application.Handler[TCommand, TResult],
+        Generic[TCommand, TResult],
     ):
         """Base class for LDAP command handlers implementing Application.Handler protocol.
 
@@ -44,9 +45,10 @@ class FlextLdapHandlers:
 
         def __init__(self) -> None:
             """Initialize command handler."""
+            super().__init__()
             self.logger = FlextCore.Logger(__name__)
 
-        def __call__(self, message: object) -> FlextCore.Result[object]:
+        def __call__(self, message: TCommand) -> FlextCore.Result[TResult]:
             """Make handler callable - implements Application.Handler protocol.
 
             Args:
@@ -57,10 +59,10 @@ class FlextLdapHandlers:
 
             """
             if not isinstance(message, FlextLdapModels.CqrsCommand):
-                return FlextCore.Result[object].fail("Message must be a CqrsCommand")
+                return FlextCore.Result[TResult].fail("Message must be a CqrsCommand")
             return self.handle(cast("TCommand", message))
 
-        def execute(self, message: object) -> FlextCore.Result[object]:
+        def execute(self, message: TCommand) -> FlextCore.Result[TResult]:
             """Execute handler - implements Application.Handler protocol.
 
             Args:
@@ -86,7 +88,7 @@ class FlextLdapHandlers:
                 return FlextCore.Result[None].fail("Message must be a CqrsCommand")
             return self._validate_command(cast("TCommand", message))
 
-        def validate_command(self, command: object) -> FlextCore.Result[None]:
+        def validate_command(self, command: TCommand) -> FlextCore.Result[None]:
             """Validate command - implements Application.Handler protocol.
 
             Args:
@@ -125,11 +127,11 @@ class FlextLdapHandlers:
             """Get handler mode - implements Application.Handler protocol."""
             return "command"
 
-        def handle(self, command: TCommand) -> FlextCore.Result[object]:
+        def handle(self, message: TCommand) -> FlextCore.Result[TResult]:
             """Handle command - implements Application.Handler protocol.
 
             Args:
-                command: Command to handle
+                message: Command to handle
 
             Returns:
                 FlextCore.Result with command result
@@ -137,33 +139,32 @@ class FlextLdapHandlers:
             """
             try:
                 # Validate command
-                validation_result = self._validate_command(command)
+                validation_result = self._validate_command(message)
                 if validation_result.is_failure:
-                    return FlextCore.Result[object].fail(
+                    return FlextCore.Result[TResult].fail(
                         validation_result.error or "Command validation failed",
                     )
 
                 # Execute command
-                return self._execute_command(command)
+                return self._execute_command(message)
 
             except Exception as e:
                 self.logger.exception("Command handling failed", exception=e)
-                return FlextCore.Result[object].fail(f"Command execution failed: {e}")
+                return FlextCore.Result[TResult].fail(f"Command execution failed: {e}")
 
-        def can_handle(self, command: object) -> bool:
+        def can_handle(self, message_type: object) -> bool:
             """Check if handler can process command - implements Application.Handler protocol.
 
             Args:
-                command: Command to check
+                message_type: Command to check
 
             Returns:
                 True if handler can process the command
 
             """
-            return isinstance(
-                command,
-                FlextLdapModels.CqrsCommand,
-            ) and self._can_handle_command(command)
+            if not isinstance(message_type, FlextLdapModels.CqrsCommand):
+                return False
+            return self._can_handle_command(cast("TCommand", message_type))
 
         def _validate_command(self, command: TCommand) -> FlextCore.Result[None]:
             """Validate command before execution.
@@ -186,7 +187,7 @@ class FlextLdapHandlers:
             return FlextCore.Result[None].ok(None)
 
         @abstractmethod
-        def _can_handle_command(self, command: object) -> bool:
+        def _can_handle_command(self, command: TCommand) -> bool:
             """Check if this handler can process the specific command type.
 
             Args:
@@ -199,7 +200,7 @@ class FlextLdapHandlers:
             ...
 
         @abstractmethod
-        def _execute_command(self, command: TCommand) -> FlextCore.Result[object]:
+        def _execute_command(self, command: TCommand) -> FlextCore.Result[TResult]:
             """Execute the command logic.
 
             Args:
@@ -212,8 +213,8 @@ class FlextLdapHandlers:
             ...
 
     class FlextLdapLdapQueryHandler(
-        FlextCore.Protocols.Application.Handler,
-        Generic[TQuery],
+        FlextCore.Protocols.Application.Handler[TQuery, TResult],
+        Generic[TQuery, TResult],
     ):
         """Base class for LDAP query handlers implementing Application.Handler protocol.
 
@@ -223,9 +224,10 @@ class FlextLdapHandlers:
 
         def __init__(self) -> None:
             """Initialize query handler."""
+            super().__init__()
             self.logger = FlextCore.Logger(__name__)
 
-        def __call__(self, message: object) -> FlextCore.Result[object]:
+        def __call__(self, message: TQuery) -> FlextCore.Result[TResult]:
             """Make handler callable - implements Application.Handler protocol.
 
             Args:
@@ -236,10 +238,12 @@ class FlextLdapHandlers:
 
             """
             if not isinstance(message, FlextLdapModels.CqrsQuery):
-                return FlextCore.Result[object].fail("Message must be a CqrsQuery")
+                return FlextCore.Result[dict[str, object]].fail(
+                    "Message must be a CqrsQuery"
+                )
             return self.handle(cast("TQuery", message))
 
-        def execute(self, message: object) -> FlextCore.Result[object]:
+        def execute(self, message: TQuery) -> FlextCore.Result[TResult]:
             """Execute handler - implements Application.Handler protocol.
 
             Args:
@@ -278,7 +282,7 @@ class FlextLdapHandlers:
             _ = command  # Unused in query handlers
             return FlextCore.Result[None].fail("Query handler cannot validate commands")
 
-        def validate_query(self, query: object) -> FlextCore.Result[None]:
+        def validate_query(self, query: TQuery) -> FlextCore.Result[None]:
             """Validate query - implements Application.Handler protocol.
 
             Args:
@@ -302,11 +306,11 @@ class FlextLdapHandlers:
             """Get handler mode - implements Application.Handler protocol."""
             return "query"
 
-        def handle(self, query: TQuery) -> FlextCore.Result[object]:
+        def handle(self, message: TQuery) -> FlextCore.Result[TResult]:
             """Handle query - implements Application.Handler protocol.
 
             Args:
-                query: Query to handle
+                message: Query to handle
 
             Returns:
                 FlextCore.Result with query result
@@ -314,20 +318,20 @@ class FlextLdapHandlers:
             """
             try:
                 # Validate query
-                validation_result = self._validate_query(query)
+                validation_result = self._validate_query(message)
                 if validation_result.is_failure:
-                    return FlextCore.Result[object].fail(
+                    return FlextCore.Result[TResult].fail(
                         validation_result.error or "Query validation failed",
                     )
 
                 # Execute query
-                return self._execute_query(query)
+                return self._execute_query(message)
 
             except Exception as e:
                 self.logger.exception("Query handling failed", exception=e)
-                return FlextCore.Result[object].fail(f"Query execution failed: {e}")
+                return FlextCore.Result[TResult].fail(f"Query execution failed: {e}")
 
-        def can_handle(self, query: object) -> bool:
+        def can_handle(self, message_type: object) -> bool:
             """Check if handler can process query - implements Application.Handler protocol.
 
             Args:
@@ -337,10 +341,9 @@ class FlextLdapHandlers:
                 True if handler can process the query
 
             """
-            return isinstance(
-                query,
-                FlextLdapModels.CqrsQuery,
-            ) and self._can_handle_query(query)
+            if not isinstance(message_type, FlextLdapModels.CqrsQuery):
+                return False
+            return self._can_handle_query(cast("TQuery", message_type))
 
         def _validate_query(self, query: TQuery) -> FlextCore.Result[None]:
             """Validate query before execution.
@@ -363,7 +366,7 @@ class FlextLdapHandlers:
             return FlextCore.Result[None].ok(None)
 
         @abstractmethod
-        def _can_handle_query(self, query: object) -> bool:
+        def _can_handle_query(self, query: TQuery) -> bool:
             """Check if this handler can process the specific query type.
 
             Args:
@@ -376,7 +379,7 @@ class FlextLdapHandlers:
             ...
 
         @abstractmethod
-        def _execute_query(self, query: TQuery) -> FlextCore.Result[object]:
+        def _execute_query(self, query: TQuery) -> FlextCore.Result[TResult]:
             """Execute the query logic.
 
             Args:
@@ -389,7 +392,7 @@ class FlextLdapHandlers:
             ...
 
     class FlextLdapCreateUserCommandHandler(
-        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand],
+        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand, dict[str, object]],
     ):
         """Handler for CreateUser commands implementing Application.Handler protocol."""
 
@@ -398,7 +401,7 @@ class FlextLdapHandlers:
             super().__init__()
             self._user_repository = FlextLdapRepositories.UserRepository()
 
-        def _can_handle_command(self, command: object) -> bool:
+        def _can_handle_command(self, command: FlextLdapModels.CqrsCommand) -> bool:
             """Check if this handler can process CreateUser commands."""
             return (
                 isinstance(command, FlextLdapModels.CqrsCommand)
@@ -408,7 +411,7 @@ class FlextLdapHandlers:
         def _execute_command(
             self,
             command: FlextLdapModels.CqrsCommand,
-        ) -> FlextCore.Result[object]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Execute CreateUser command.
 
             Expected payload:
@@ -436,7 +439,7 @@ class FlextLdapHandlers:
 
             # Basic validation
             if not dn or not uid or not cn or not sn:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     "Required fields missing: dn, uid, cn, sn"
                 )
 
@@ -462,7 +465,7 @@ class FlextLdapHandlers:
             # Execute via repository
             result = self._user_repository.add(user)
             if result.is_failure:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     result.error or "User creation failed"
                 )
 
@@ -473,10 +476,13 @@ class FlextLdapHandlers:
                 user_uid=user.uid,
             )
 
-            return FlextCore.Result[object].ok({"user": user, "status": "created"})
+            return FlextCore.Result[dict[str, object]].ok({
+                "user": user,
+                "status": "created",
+            })
 
     class FlextLdapUpdateUserCommandHandler(
-        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand],
+        FlextLdapLdapCommandHandler[FlextLdapModels.CqrsCommand, dict[str, object]],
     ):
         """Handler for UpdateUser commands implementing Application.Handler protocol."""
 
@@ -495,7 +501,7 @@ class FlextLdapHandlers:
         def _execute_command(
             self,
             command: FlextLdapModels.CqrsCommand,
-        ) -> FlextCore.Result[object]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Execute UpdateUser command.
 
             Expected payload:
@@ -513,41 +519,41 @@ class FlextLdapHandlers:
             attributes = payload.get(FlextLdapConstants.DictKeys.ATTRIBUTES, {})
 
             if not dn:
-                return FlextCore.Result[object].fail("User DN is required")
+                return FlextCore.Result[dict[str, object]].fail("User DN is required")
 
             if not attributes:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     "Attributes to update are required"
                 )
 
             # Get existing user
             get_result = self._user_repository.get_by_id(dn)
             if get_result.is_failure:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     get_result.error or "User lookup failed",
                 )
 
             user = get_result.unwrap()
             if user is None:
-                return FlextCore.Result[object].fail("User not found")
+                return FlextCore.Result[dict[str, object]].fail("User not found")
 
             # Update user attributes
             update_result = self._user_repository.update(user)
             if update_result.is_failure:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     update_result.error or "User update failed",
                 )
 
             updated_user = update_result.unwrap()
             self.logger.info("User updated successfully", user_dn=updated_user.dn)
 
-            return FlextCore.Result[object].ok({
+            return FlextCore.Result[dict[str, object]].ok({
                 "user": updated_user,
                 "status": "updated",
             })
 
     class FlextLdapGetUserQueryHandler(
-        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery],
+        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery, dict[str, object]],
     ):
         """Handler for GetUser queries implementing Application.Handler protocol."""
 
@@ -566,7 +572,7 @@ class FlextLdapHandlers:
         def _execute_query(
             self,
             query: FlextLdapModels.CqrsQuery,
-        ) -> FlextCore.Result[object]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Execute GetUser query.
 
             Expected parameters:
@@ -586,7 +592,7 @@ class FlextLdapHandlers:
             uid = cast("str", uid_raw) if uid_raw is not None else None
 
             if not dn and not uid:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     "Either user DN or UID is required"
                 )
 
@@ -595,18 +601,22 @@ class FlextLdapHandlers:
             # Get user
             get_result = self._user_repository.get_by_id(user_id)
             if get_result.is_failure:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     get_result.error or "User lookup failed",
                 )
 
             user = get_result.unwrap()
             if user is None:
-                return FlextCore.Result[object].ok(None)  # Not found, but not an error
+                # Not found, but not an error - return empty dict
+                empty_result: dict[str, object] = {}
+                return FlextCore.Result[dict[str, object]].ok(empty_result)
 
-            return FlextCore.Result[object].ok(user)
+            # Return user wrapped in dict
+            user_result: dict[str, object] = {"user": user}
+            return FlextCore.Result[dict[str, object]].ok(user_result)
 
     class FlextLdapListUsersQueryHandler(
-        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery],
+        FlextLdapLdapQueryHandler[FlextLdapModels.CqrsQuery, dict[str, object]],
     ):
         """Handler for ListUsers queries implementing Application.Handler protocol."""
 
@@ -625,7 +635,7 @@ class FlextLdapHandlers:
         def _execute_query(
             self,
             query: FlextLdapModels.CqrsQuery,
-        ) -> FlextCore.Result[object]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Execute ListUsers query.
 
             Expected parameters:
@@ -639,7 +649,7 @@ class FlextLdapHandlers:
             # Get all users (repository handles filtering)
             get_result = self._user_repository.get_all()
             if get_result.is_failure:
-                return FlextCore.Result[object].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     get_result.error or "User listing failed",
                 )
 
@@ -654,14 +664,19 @@ class FlextLdapHandlers:
                 # Could be enhanced with more sophisticated filtering
                 pass
 
-            return FlextCore.Result[object].ok({"users": users, "count": len(users)})
+            return FlextCore.Result[dict[str, object]].ok({
+                "users": users,
+                "count": len(users),
+            })
 
     class FlextLdapLdapHandlerRegistry:
         """Registry of all LDAP command and query handlers."""
 
         @staticmethod
         def get_command_handlers() -> list[
-            FlextLdapHandlers.FlextLdapLdapCommandHandler
+            FlextLdapHandlers.FlextLdapLdapCommandHandler[
+                FlextLdapModels.CqrsCommand, dict[str, object]
+            ]
         ]:
             """Get all available command handlers."""
             return [
@@ -670,7 +685,11 @@ class FlextLdapHandlers:
             ]
 
         @staticmethod
-        def get_query_handlers() -> list[FlextLdapHandlers.FlextLdapLdapQueryHandler]:
+        def get_query_handlers() -> list[
+            FlextLdapHandlers.FlextLdapLdapQueryHandler[
+                FlextLdapModels.CqrsQuery, dict[str, object]
+            ]
+        ]:
             """Get all available query handlers."""
             return [
                 FlextLdapHandlers.FlextLdapGetUserQueryHandler(),
@@ -679,8 +698,12 @@ class FlextLdapHandlers:
 
         @staticmethod
         def get_all_handlers() -> list[
-            FlextLdapHandlers.FlextLdapLdapCommandHandler
-            | FlextLdapHandlers.FlextLdapLdapQueryHandler
+            FlextLdapHandlers.FlextLdapLdapCommandHandler[
+                FlextLdapModels.CqrsCommand, dict[str, object]
+            ]
+            | FlextLdapHandlers.FlextLdapLdapQueryHandler[
+                FlextLdapModels.CqrsQuery, dict[str, object]
+            ]
         ]:
             """Get all available handlers."""
             return [

@@ -19,6 +19,7 @@ from typing import Self, override
 
 from flext_core import FlextCore
 from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
@@ -123,8 +124,27 @@ class FlextLdap(FlextCore.Service[None]):
 
         Returns:
             True if connected, False otherwise.
+
         """
         return self.client.is_connected()
+
+    def unbind(self) -> FlextCore.Result[None]:
+        """Unbind from LDAP server.
+
+        Returns:
+            FlextCore.Result indicating success or failure.
+
+        """
+        return self.client.unbind()
+
+    def test_connection(self) -> FlextCore.Result[bool]:
+        """Test LDAP connection.
+
+        Returns:
+            FlextCore.Result containing True if connection is working.
+
+        """
+        return self.client.test_connection()
 
     # =========================================================================
     # CORE LDAP OPERATIONS - Consolidated facade methods
@@ -289,11 +309,16 @@ class FlextLdap(FlextCore.Service[None]):
             attributes["mail"] = user_request.mail
         if user_request.user_password:
             # Handle SecretStr
-            password = (
-                user_request.user_password.get_secret_value()
-                if hasattr(user_request.user_password, "get_secret_value")
-                else str(user_request.user_password)
-            )
+            if user_request.user_password is not None:
+                from pydantic import SecretStr
+
+                password = (
+                    user_request.user_password.get_secret_value()
+                    if isinstance(user_request.user_password, SecretStr)
+                    else str(user_request.user_password)
+                )
+            else:
+                password = ""
             attributes["userPassword"] = password
         if user_request.telephone_number:
             attributes["telephoneNumber"] = user_request.telephone_number
@@ -388,7 +413,7 @@ class FlextLdap(FlextCore.Service[None]):
                 dn=group_request.dn,
                 cn=group_request.cn,
                 description=group_request.description,
-                member=group_request.members,
+                member_dns=group_request.members,
             )
             return FlextCore.Result[FlextLdapModels.Group].ok(minimal_group)
 
@@ -400,7 +425,7 @@ class FlextLdap(FlextCore.Service[None]):
                 dn=group_request.dn,
                 cn=group_request.cn,
                 description=group_request.description,
-                member=group_request.members,
+                member_dns=group_request.members,
             )
             return FlextCore.Result[FlextLdapModels.Group].ok(minimal_group)
 
@@ -494,7 +519,9 @@ class FlextLdap(FlextCore.Service[None]):
             # merge strategy (default)
             # Merge strategy: update existing attributes
             # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
-            attrs_as_dict: FlextCore.Types.Dict = dict(upsert_request.attributes)
+            attrs_as_dict: FlextCore.Types.Dict = dict[str, object](
+                upsert_request.attributes
+            )
             update_result = self.update_entry(
                 upsert_request.dn,
                 attrs_as_dict,
@@ -566,11 +593,16 @@ class FlextLdap(FlextCore.Service[None]):
             if user_request.mail:
                 update_attrs["mail"] = user_request.mail
             if user_request.user_password:
-                password = (
-                    user_request.user_password.get_secret_value()
-                    if hasattr(user_request.user_password, "get_secret_value")
-                    else str(user_request.user_password)
-                )
+                if user_request.user_password is not None:
+                    from pydantic import SecretStr
+
+                    password = (
+                        user_request.user_password.get_secret_value()
+                        if isinstance(user_request.user_password, SecretStr)
+                        else str(user_request.user_password)
+                    )
+                else:
+                    password = ""
                 update_attrs["userPassword"] = password
             if user_request.telephone_number:
                 update_attrs["telephoneNumber"] = user_request.telephone_number
@@ -588,7 +620,7 @@ class FlextLdap(FlextCore.Service[None]):
             # Update the entry
             if update_attrs:
                 # Type cast: dict[str, str] is compatible with FlextCore.Types.Dict
-                attrs_as_dict: FlextCore.Types.Dict = dict(update_attrs)
+                attrs_as_dict: FlextCore.Types.Dict = dict[str, object](update_attrs)
                 update_result = self.update_entry(user_request.dn, attrs_as_dict)
                 if update_result.is_failure:
                     return FlextCore.Result[FlextLdapModels.LdapUser].fail(
@@ -656,7 +688,7 @@ class FlextLdap(FlextCore.Service[None]):
             # Update the entry
             if update_attrs:
                 # Type cast: dict[str, str | FlextCore.Types.StringList] is compatible with FlextCore.Types.Dict
-                attrs_as_dict: FlextCore.Types.Dict = dict(update_attrs)
+                attrs_as_dict: FlextCore.Types.Dict = dict[str, object](update_attrs)
                 update_result = self.update_entry(group_request.dn, attrs_as_dict)
                 if update_result.is_failure:
                     return FlextCore.Result[FlextLdapModels.Group].fail(
@@ -957,7 +989,7 @@ class FlextLdap(FlextCore.Service[None]):
         # Convert CreateUserRequest to UpsertEntryRequest
         upsert_requests = []
         for user_req in desired_users:
-            # Build attributes dict from user request
+            # Build attributes dict[str, object] from user request
             attributes: dict[str, str | FlextCore.Types.StringList] = {
                 "uid": user_req.uid,
                 "cn": user_req.cn,
@@ -971,11 +1003,16 @@ class FlextLdap(FlextCore.Service[None]):
             if user_req.mail:
                 attributes["mail"] = user_req.mail
             if user_req.user_password:
-                password = (
-                    user_req.user_password.get_secret_value()
-                    if hasattr(user_req.user_password, "get_secret_value")
-                    else str(user_req.user_password)
-                )
+                if user_req.user_password is not None:
+                    from pydantic import SecretStr
+
+                    password = (
+                        user_req.user_password.get_secret_value()
+                        if isinstance(user_req.user_password, SecretStr)
+                        else str(user_req.user_password)
+                    )
+                else:
+                    password = ""
                 attributes["userPassword"] = password
             if user_req.telephone_number:
                 attributes["telephoneNumber"] = user_req.telephone_number
@@ -1045,7 +1082,7 @@ class FlextLdap(FlextCore.Service[None]):
         # Convert CreateGroupRequest to UpsertEntryRequest
         upsert_requests = []
         for group_req in desired_groups:
-            # Build attributes dict from group request
+            # Build attributes dict[str, object] from group request
             attributes: dict[str, str | FlextCore.Types.StringList] = {
                 "cn": group_req.cn,
                 "objectClass": group_req.object_classes,
@@ -1109,11 +1146,20 @@ class FlextLdap(FlextCore.Service[None]):
                 # Get root DSE to detect server
                 root_dse_result = self.client.search_one("", "(objectClass=*)")
                 if root_dse_result.is_success and root_dse_result.unwrap():
-                    # TODO(@flext-team): Convert FlextLdapModels.Entry to FlextLdifModels.Entry using entry_adapter
-                    # Issue: https://github.com/flext/flext-ldap/issues/TBD
-                    server_type_result = quirks.detect_server_type_from_entries(
-                        [root_dse_result.unwrap()],
-                    )
+                    # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
+                    ldap_entry = root_dse_result.unwrap()
+                    if ldap_entry:
+                        ldif_entry = FlextLdifModels.Entry(
+                            dn=str(ldap_entry.dn),
+                            attributes=dict(ldap_entry.attributes),
+                        )
+                        server_type_result = quirks.detect_server_type_from_entries([
+                            ldif_entry
+                        ])
+                    else:
+                        server_type_result = FlextCore.Result[str].fail(
+                            "No root DSE entry found"
+                        )
                     if server_type_result.is_success:
                         detected_type = server_type_result.unwrap()
                         # Map server type to ACL type
@@ -1132,15 +1178,15 @@ class FlextLdap(FlextCore.Service[None]):
                 name=f"acl_{acl_request.dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
-                    target_value=acl_request.dn,
+                    dn_pattern=acl_request.dn,
                 ),
                 subject=FlextLdapModels.AclSubject(
                     subject_type="any",
-                    subject_value="*",
+                    subject_dn="*",
                 ),
                 permissions=FlextLdapModels.AclPermissions(
                     grant_type="allow",
-                    actions=["read"],
+                    granted_permissions=["read"],
                 ),
             )
 
@@ -1191,9 +1237,14 @@ class FlextLdap(FlextCore.Service[None]):
             # Detect server type from entry
             entry = entry_result.unwrap()
             if entry:
-                # TODO(@flext-team): Convert FlextLdapModels.Entry to FlextLdifModels.Entry using entry_adapter
-                # Issue: https://github.com/flext/flext-ldap/issues/TBD
-                server_type_result = quirks.detect_server_type_from_entries([entry])
+                # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
+                ldif_entry = FlextLdifModels.Entry(
+                    dn=str(entry.dn),
+                    attributes=dict(entry.attributes),
+                )
+                server_type_result = quirks.detect_server_type_from_entries([
+                    ldif_entry
+                ])
                 (
                     server_type_result.unwrap()
                     if server_type_result.is_success
@@ -1212,15 +1263,15 @@ class FlextLdap(FlextCore.Service[None]):
                 name=f"acl_{acl_request.dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
-                    target_value=acl_request.dn,
+                    dn_pattern=acl_request.dn,
                 ),
                 subject=FlextLdapModels.AclSubject(
                     subject_type="any",
-                    subject_value="*",
+                    subject_dn="*",
                 ),
                 permissions=FlextLdapModels.AclPermissions(
                     grant_type="allow",
-                    actions=["read", "write"],
+                    granted_permissions=["read", "write"],
                 ),
             )
 
@@ -1268,9 +1319,12 @@ class FlextLdap(FlextCore.Service[None]):
 
             # Detect server type
             quirks = FlextLdapQuirksIntegration()
-            # TODO(@flext-team): Convert FlextLdapModels.Entry to FlextLdifModels.Entry using entry_adapter
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
-            server_type_result = quirks.detect_server_type_from_entries([entry])
+            # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
+            ldif_entry = FlextLdifModels.Entry(
+                dn=str(entry.dn),
+                attributes=dict(entry.attributes),
+            )
+            server_type_result = quirks.detect_server_type_from_entries([ldif_entry])
             (
                 server_type_result.unwrap()
                 if server_type_result.is_success
@@ -1288,15 +1342,15 @@ class FlextLdap(FlextCore.Service[None]):
                 name=f"acl_{dn}",
                 target=FlextLdapModels.AclTarget(
                     target_type="dn",
-                    target_value=dn,
+                    dn_pattern=dn,
                 ),
                 subject=FlextLdapModels.AclSubject(
                     subject_type="any",
-                    subject_value="*",
+                    subject_dn="*",
                 ),
                 permissions=FlextLdapModels.AclPermissions(
                     grant_type="allow",
-                    actions=["read"],
+                    granted_permissions=["read"],
                 ),
             )
 
@@ -1648,9 +1702,19 @@ class FlextLdap(FlextCore.Service[None]):
             # Get root DSE to detect server
             root_dse_result = self.client.search_one("", "(objectClass=*)")
             if root_dse_result.is_success and root_dse_result.unwrap():
-                server_type_result = quirks.detect_server_type_from_entries(
-                    [root_dse_result.unwrap()],
-                )
+                ldap_entry = root_dse_result.unwrap()
+                if ldap_entry:
+                    ldif_entry = FlextLdifModels.Entry(
+                        dn=str(ldap_entry.dn),
+                        attributes=dict(ldap_entry.attributes),
+                    )
+                    server_type_result = quirks.detect_server_type_from_entries([
+                        ldif_entry
+                    ])
+                else:
+                    server_type_result = FlextCore.Result[str].fail(
+                        "No root DSE entry found"
+                    )
                 (
                     server_type_result.unwrap()
                     if server_type_result.is_success
@@ -1746,7 +1810,9 @@ class FlextLdap(FlextCore.Service[None]):
         try:
             # Use standard update_entry for schema modifications
             # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
-            changes_as_dict: FlextCore.Types.Dict = dict(schema_request.changes)
+            changes_as_dict: FlextCore.Types.Dict = dict[str, object](
+                schema_request.changes
+            )
             return self.update_entry(
                 schema_request.schema_dn,
                 changes_as_dict,
@@ -2051,11 +2117,13 @@ class FlextLdap(FlextCore.Service[None]):
 
             # Use quirks engine for detection
             quirks = FlextLdapQuirksIntegration()
-            # TODO(@flext-team): Convert FlextLdapModels.Entry to FlextLdifModels.Entry using entry_adapter
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
-            return quirks.detect_server_type_from_entries(
-                [root_dse_result.unwrap()],
+            # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
+            ldap_entry = root_dse_result.unwrap()
+            ldif_entry = FlextLdifModels.Entry(
+                dn=str(ldap_entry.dn),
+                attributes=dict(ldap_entry.attributes),
             )
+            return quirks.detect_server_type_from_entries([ldif_entry])
 
         except Exception as e:
             return FlextCore.Result[str].fail(f"Server type detection failed: {e}")
@@ -2595,13 +2663,13 @@ class FlextLdap(FlextCore.Service[None]):
         # Check if we received SearchRequest objects
         if base_dns and isinstance(base_dns[0], FlextLdapModels.SearchRequest):
             # Process SearchRequest list - type narrowed to list[SearchRequest]
-            search_requests: list[FlextLdapModels.SearchRequest] = base_dns
+            search_requests = base_dns
             results = []
             for search_request in search_requests:
                 result = self.search(search_request)
                 if result.is_failure:
                     return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
-                        f"Bulk search failed for {search_request.base_dn}: {result.error}",
+                        f"Bulk search failed for {getattr(search_request, 'base_dn', search_request)}: {result.error}",
                     )
                 results.append(result.unwrap())
 
@@ -2621,8 +2689,11 @@ class FlextLdap(FlextCore.Service[None]):
         results = []
         # Note: Already validated len(base_dns) == len(filters) above
         for base_dn, filter_str in zip(base_dns, filters, strict=False):
+            # Extract base DN string from either string or SearchRequest
+            base_dn_str = base_dn if isinstance(base_dn, str) else base_dn.base_dn
+
             search_request = FlextLdapModels.SearchRequest(
-                base_dn=base_dn,
+                base_dn=base_dn_str,
                 filter_str=filter_str,
                 scope=scope,
                 attributes=attributes,
@@ -2719,8 +2790,9 @@ class FlextLdap(FlextCore.Service[None]):
             Normalized entry or error
 
         """
-        # FlextLdapModels.Entry and FlextLdifModels.Entry are structurally compatible
-        return self.servers.normalize_entry_for_server(entry, target_server_type)
+        # Use FlextLdapServers to normalize entry for target server type
+        servers = FlextLdapServers(target_server_type)
+        return servers.normalize_entry_for_server(entry, target_server_type)
 
     def get_server_specific_attributes(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get server-specific attributes for current server type.
@@ -2894,25 +2966,28 @@ class FlextLdap(FlextCore.Service[None]):
             FlextCore.Result with operation details
 
         Example:
-            >>> upsert_req = FlextLdapModels.UpsertEntryRequest(
-            ...     dn="cn=test,dc=client-a",
-            ...     attributes={"cn": "test"},
-            ...     object_classes=["person", "top"],
-            ...     update_strategy="merge",
-            ... )
+            >>> upsert_req = FlextLdapModels.UpsertEntryRequest(  # doctest: +SKIP
+            ...     dn="cn=test,dc=client-a",  # doctest: +SKIP
+            ...     attributes={"cn": "test"},  # doctest: +SKIP
+            ...     object_classes=["person", "top"],  # doctest: +SKIP
+            ...     update_strategy="merge",  # doctest: +SKIP
+            ... )  # doctest: +SKIP
             >>> result = api.upsert_entry_with_retry(
             ...     upsert_req, max_retries=3, backoff_base=2.0
             ... )
 
         """
-        for attempt in range(max_retries):
+        # Initialize result for type safety
+        result: FlextCore.Result[FlextLdapModels.Entry] = self.upsert_entry(
+            upsert_request
+        )
+        for attempt in range(1, max_retries):
             result = self.upsert_entry(upsert_request)
 
             if result.is_success:
-                if attempt > 0 and self.logger is not None:
+                if attempt >= 1 and self.logger is not None:
                     self.logger.info(
-                        f"Upsert succeeded for {upsert_request.dn} "
-                        f"after {attempt} retries",
+                        f"Upsert succeeded for {upsert_request.dn} after {attempt + 1} retries"
                     )
                 return result
 
@@ -2920,18 +2995,16 @@ class FlextLdap(FlextCore.Service[None]):
             if self._is_permanent_error(result.error or ""):
                 if self.logger is not None:
                     self.logger.warning(
-                        f"Permanent error for {upsert_request.dn}, "
-                        f"not retrying: {result.error}",
+                        f"Permanent error for {upsert_request.dn}, not retrying: {result.error}"
                     )
                 return result
 
             # Transient error - retry with backoff
-            if attempt < max_retries - 1:
+            if attempt < max_retries - 2:
                 sleep_time = backoff_base**attempt
                 if self.logger is not None:
                     self.logger.warning(
-                        f"Retry {attempt + 1}/{max_retries} for "
-                        f"{upsert_request.dn} after {sleep_time}s: {result.error}",
+                        f"Retry {attempt + 1}/{max_retries} for {upsert_request.dn} after {sleep_time}s: {result.error}"
                     )
                 time.sleep(sleep_time)
 

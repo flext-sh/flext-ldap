@@ -17,14 +17,18 @@ import traceback
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 # Add parent directory to path for imports
-sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
+sys.path.insert(0, str(Path(Path(Path(__file__).resolve()).parent).parent))
 
 # Constants
 MAX_DISPLAY_ITEMS = 10
+
+# Type aliases
+GenerationResults = dict[str, Any]
 
 
 @dataclass
@@ -44,7 +48,7 @@ class ArchitectureGenerator:
         Path(f"{self.diagrams_dir}/generated").mkdir(exist_ok=True, parents=True)
         Path(f"{self.diagrams_dir}/mermaid").mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self) -> dict[str, object]:
+    def _load_config(self) -> dict[str, Any]:
         """Load configuration."""
         default_config = {
             "generation": {
@@ -78,7 +82,7 @@ class ArchitectureGenerator:
 
         return default_config
 
-    def _deep_merge(self, base: dict, update: dict) -> None:
+    def _deep_merge(self, base: dict[str, Any], update: dict[str, Any]) -> None:
         """Deep merge two dictionaries."""
         for key, value in update.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -86,7 +90,7 @@ class ArchitectureGenerator:
             else:
                 base[key] = value
 
-    def generate_full_suite(self) -> dict[str, object]:
+    def generate_full_suite(self) -> GenerationResults:
         """Generate the complete architecture documentation suite."""
         results = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -100,8 +104,12 @@ class ArchitectureGenerator:
             # 1. Generate C4 Model documentation
             if self.config["generation"]["include_c4_model"]:
                 c4_results = self.generate_c4_model()
-                results["files_generated"].extend(c4_results.get("files", []))
-                results["diagrams_generated"].extend(c4_results.get("diagrams", []))
+                files_list = c4_results.get("files", [])
+                diagrams_list = c4_results.get("diagrams", [])
+                assert isinstance(files_list, list)
+                assert isinstance(diagrams_list, list)
+                results["files_generated"].extend(files_list)
+                results["diagrams_generated"].extend(diagrams_list)
 
             # 2. Generate Arc42 documentation
             if self.config["generation"]["include_arc42"]:
@@ -163,7 +171,7 @@ class ArchitectureGenerator:
 
         return results
 
-    def generate_c4_model(self) -> dict[str, object]:
+    def generate_c4_model(self) -> dict[str, list[str]]:
         """Generate C4 Model documentation."""
         results = {"files": [], "diagrams": []}
 

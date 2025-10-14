@@ -87,23 +87,83 @@ class FlextLdapModels(FlextCore.Models):
     # Enhanced base configuration for all LDAP models
     model_config = ConfigDict(
         validate_assignment=True,
+        validate_return=True,
+        validate_default=True,
+        strict=True,  # Strict type coercion
+        str_strip_whitespace=True,
         use_enum_values=True,
         arbitrary_types_allowed=True,
-        validate_return=True,
+        extra="forbid",  # Strict LDAP attribute validation
+        frozen=False,  # Allow mutable LDAP models for attribute updates
         ser_json_timedelta="iso8601",
         ser_json_bytes="base64",
         serialize_by_alias=True,
         populate_by_name=True,
-        str_strip_whitespace=True,
-        validate_default=True,
-        # LDAP-specific configurations
-        frozen=False,  # Allow mutable LDAP models for attribute updates
-        extra="forbid",  # Strict LDAP attribute validation
+        hide_input_in_errors=True,  # Security
         # LDAP serialization features
         json_encoders={
             datetime: lambda v: v.isoformat() if v else None,
         },
+        json_schema_extra={
+            "title": "FlextLdapModels",
+            "description": "Unified LDAP models with comprehensive validation",
+        },
     )
+
+    # =========================================================================
+    # EXTENDED MODEL CONFIGURATIONS - Using FlextCore extended models
+    # =========================================================================
+
+    class StrictModel(FlextCore.Models.ArbitraryTypesModel):
+        """Strict LDAP model with enhanced validation.
+
+        Extends FlextCore.ArbitraryTypesModel with additional strict settings.
+        Used for models requiring maximum validation security.
+        """
+
+        model_config = ConfigDict(
+            # Inherit from ArbitraryTypesModel
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            serialize_by_alias=True,
+            populate_by_name=True,
+            str_strip_whitespace=True,
+            # Additional strict settings
+            strict=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+    class FlexibleModel(FlextCore.Models.ArbitraryTypesModel):
+        """Flexible LDAP model for dynamic attributes.
+
+        Extends FlextCore.ArbitraryTypesModel with extra="allow" for LDAP schemas.
+        Used for models that accept arbitrary LDAP attributes from different servers.
+        """
+
+        model_config = ConfigDict(
+            # Inherit from ArbitraryTypesModel
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            serialize_by_alias=True,
+            populate_by_name=True,
+            str_strip_whitespace=True,
+            # Allow extra fields for LDAP dynamic schemas
+            extra="allow",
+            # Additional strict settings
+            strict=True,
+            hide_input_in_errors=True,
+        )
 
     # =========================================================================
     # VALUE OBJECTS - Immutable LDAP value objects
@@ -112,17 +172,9 @@ class FlextLdapModels(FlextCore.Models):
     class DistinguishedName(FlextCore.Models.Value):
         """LDAP Distinguished Name value object with RFC 2253 compliance.
 
-        Extends FlextCore.Models.Value for proper Pydantic 2 validation and composition.
+        Extends FlextCore.Value for immutable value object behavior with strict validation.
         Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation.
         """
-
-        model_config = ConfigDict(
-            validate_assignment=True,
-            str_strip_whitespace=True,
-            frozen=True,  # DN is immutable value object
-            extra="forbid",
-            # LDAP-specific serialization
-        )
 
         value: str = Field(
             ...,
@@ -443,8 +495,6 @@ class FlextLdapModels(FlextCore.Models):
     class ServerQuirks(FlextCore.Models.Value):
         """LDAP server-specific quirks and behaviors - Pydantic Value Object."""
 
-        model_config = ConfigDict(frozen=True)
-
         server_type: FlextLdapModels.LdapServerType
         case_sensitive_dns: bool = True
         case_sensitive_attributes: bool = True
@@ -484,21 +534,14 @@ class FlextLdapModels(FlextCore.Models):
     # BASE CLASSES - Common functionality for LDAP entities
     # =========================================================================
 
-    class Base(FlextCore.Models.ArbitraryTypesModel):
+    class Base(FlexibleModel):
         """Base model class with dynamic LDAP entity support.
 
         **DYNAMIC LDAP SCHEMA**: Allows arbitrary attributes to support varying LDAP server schemas
         (OpenLDAP, Active Directory, Oracle OID/OUD, 389 DS, etc.) with different custom attributes.
 
-        Uses ArbitraryTypesModel with extra="allow" to accept any LDAP attribute from any server type.
+        Extends FlexibleModel to accept any LDAP attribute from any server type.
         """
-
-        model_config = ConfigDict(
-            extra="allow",  # CRITICAL: Allow arbitrary LDAP attributes from any server schema
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
-            str_strip_whitespace=True,
-        )
 
         # LDAP-specific timestamp fields (nullable)
         created_at: datetime | None = Field(
@@ -752,16 +795,16 @@ class FlextLdapModels(FlextCore.Models):
             """Validate email format using centralized validation."""
             return cls.validate_email_field(value)
 
-        @classmethod
-        def validate_dn_field(cls, v: str) -> str:
+        @staticmethod
+        def validate_dn_field(v: str) -> str:
             """Validate DN field using centralized validation."""
             if not v or not v.strip():
                 msg = "DN cannot be empty"
                 raise ValueError(msg)
             return v
 
-        @classmethod
-        def validate_email_field(cls, value: str | None) -> str | None:
+        @staticmethod
+        def validate_email_field(value: str | None) -> str | None:
             """Validate email field using centralized validation."""
             if value is None:
                 return None
@@ -770,8 +813,8 @@ class FlextLdapModels(FlextCore.Models):
                 raise ValueError(msg)
             return value
 
-        @classmethod
-        def validate_required_string_field(cls, v: str) -> str:
+        @staticmethod
+        def validate_required_string_field(v: str) -> str:
             """Validate required string field."""
             if not v or not v.strip():
                 msg = "Field cannot be empty"
@@ -1563,6 +1606,16 @@ class FlextLdapModels(FlextCore.Models):
             "objectClass",
         ]
 
+        @classmethod
+        def get_user_attributes(cls) -> FlextCore.Types.StringList:
+            """Get default user attributes for search requests.
+
+            Returns:
+                List of default user attributes.
+
+            """
+            return cls.DEFAULT_USER_ATTRIBUTES.copy()
+
         # Search scope
         base_dn: str = Field(..., description="Search base Distinguished Name")
         filter_str: str = Field(..., description="LDAP search filter")
@@ -2040,8 +2093,6 @@ class FlextLdapModels(FlextCore.Models):
 
         def to_user_entity(self) -> FlextLdapModels.LdapUser:
             """Convert request to user entity."""
-            from typing import cast
-
             return FlextLdapModels.LdapUser(
                 dn=self.dn,
                 uid=self.uid,
@@ -2057,11 +2108,8 @@ class FlextLdapModels(FlextCore.Models):
                 organizational_unit=self.organizational_unit,
                 user_password=self.user_password,
                 object_classes=self.object_classes,
-                # Dict variance: str|FlextCore.Types.StringList is compatible with object
-                additional_attributes=cast(
-                    "FlextCore.Types.Dict",
-                    self.additional_attributes,
-                ),
+                # Dict variance: EntryAttributeValue is compatible with object
+                additional_attributes=self.additional_attributes,
                 created_at=None,
                 modified_at=None,
             )
@@ -2753,8 +2801,6 @@ class FlextLdapModels(FlextCore.Models):
     class ConnectionConfig(FlextCore.Models.Value):
         """LDAP connection configuration value object - Pydantic Value Object."""
 
-        model_config = ConfigDict(frozen=True)
-
         server: str
         port: int = FlextLdapConstants.Protocol.DEFAULT_PORT
         use_ssl: bool = False
@@ -2798,8 +2844,6 @@ class FlextLdapModels(FlextCore.Models):
     class ModifyConfig(FlextCore.Models.Command):
         """LDAP modify operation configuration - Pydantic Command."""
 
-        model_config = ConfigDict(frozen=True)
-
         dn: str
         changes: dict[str, list[tuple[str, FlextCore.Types.StringList]]]
 
@@ -2822,8 +2866,6 @@ class FlextLdapModels(FlextCore.Models):
     class AddConfig(FlextCore.Models.Command):
         """LDAP add operation configuration - Pydantic Command."""
 
-        model_config = ConfigDict(frozen=True)
-
         dn: str
         attributes: dict[str, FlextCore.Types.StringList]
 
@@ -2845,8 +2887,6 @@ class FlextLdapModels(FlextCore.Models):
 
     class DeleteConfig(FlextCore.Models.Command):
         """LDAP delete operation configuration - Pydantic Command."""
-
-        model_config = ConfigDict(frozen=True)
 
         dn: str
 
@@ -3401,6 +3441,44 @@ class FlextLdapModels(FlextCore.Models):
                     f"Failed to create ConversionResult: {e}"
                 )
 
+    class LdapConfigValidation(StrictModel):
+        """Simple model for LDAP configuration validation.
+
+        Used by services to validate raw LDAP configuration data before
+        creating full FlextLdapConfig instances.
+        """
+
+        ldap_server: str = Field(..., description="LDAP server address")
+        ldap_port: int = Field(..., ge=1, le=65535, description="LDAP server port")
+        base_dn: str = Field(..., description="LDAP base DN")
+
+    class OperationRecord(StrictModel):
+        """Model for LDAP operation records used in reporting."""
+
+        type: str = Field(..., description="Operation type")
+        success: bool = Field(..., description="Whether operation succeeded")
+        # Additional fields can be added as needed
+
+    class OperationReport(StrictModel):
+        """Model for LDAP operation reports."""
+
+        total_operations: int = Field(
+            ..., ge=0, description="Total number of operations"
+        )
+        successful_operations: int = Field(
+            ..., ge=0, description="Number of successful operations"
+        )
+        failed_operations: int = Field(
+            ..., ge=0, description="Number of failed operations"
+        )
+        success_rate: float = Field(
+            ..., ge=0, le=100, description="Success rate percentage"
+        )
+        operation_breakdown: dict[str, int] = Field(
+            ..., description="Breakdown by operation type"
+        )
+        generated_at: str = Field(..., description="Report generation timestamp")
+
     class Config(FlextCore.Config):
         """Enterprise LDAP configuration with advanced FlextCore.Config features.
 
@@ -3537,7 +3615,7 @@ class FlextLdapModels(FlextCore.Models):
         _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
         # Singleton pattern with per-class support
-        _instances: ClassVar[dict[type, FlextCore.Config]] = {}
+        _instances: ClassVar[dict[type, Config]] = {}
         _lock: ClassVar[threading.Lock] = threading.Lock()
 
         class LdapHandlerConfiguration:
@@ -3574,11 +3652,13 @@ class FlextLdapModels(FlextCore.Models):
                 if operation_config is not None:
                     # Try attribute access
                     if hasattr(operation_config, "operation_type"):
-                        config_mode: str | None = operation_config.operation_type
+                        config_mode: str | None = getattr(
+                            operation_config, "operation_type", None
+                        )
                         if config_mode in valid_modes:
                             return str(config_mode)
 
-                    # Try dict access
+                    # Try dict[str, object] access
                     if isinstance(operation_config, dict):
                         config_mode_dict = operation_config.get(
                             FlextLdapConstants.DictKeys.OPERATION_TYPE,
@@ -3616,7 +3696,7 @@ class FlextLdapModels(FlextCore.Models):
                     max_retries: Maximum retry attempts
 
                 Returns:
-                    dict: LDAP handler configuration dictionary
+                    dict[str, object]: LDAP handler configuration dictionary
 
                 """
                 # Resolve operation mode
@@ -4002,7 +4082,7 @@ class FlextLdapModels(FlextCore.Models):
         # ENHANCED DIRECT ACCESS - Dot notation support for LDAP config
         # =========================================================================
 
-        def __call__(self, key: str) -> object:
+        def __call__(self, key: str) -> FlextCore.Types.ConfigValue:
             """Enhanced direct value access with LDAP-specific dot notation support.
 
             Extends FlextCore.Config.__call__ with LDAP-specific nested access patterns.
@@ -4100,7 +4180,7 @@ class FlextLdapModels(FlextCore.Models):
                         return self.ldap_mask_passwords
 
             # Fall back to standard FlextCore.Config access
-            return super().__call__(key)
+            return cast(FlextCore.Types.ConfigValue, super().__call__(key))
 
         # =========================================================================
         # INFRASTRUCTURE PROTOCOL IMPLEMENTATIONS
@@ -4227,7 +4307,7 @@ class FlextLdapModels(FlextCore.Models):
                 **kwargs: Additional configuration parameters
 
             Returns:
-                dict: Complete LDAP handler configuration
+                dict[str, object]: Complete LDAP handler configuration
 
             """
             return self.LdapHandlerConfiguration.create_ldap_handler_config(

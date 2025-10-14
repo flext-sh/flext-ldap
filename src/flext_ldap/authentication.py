@@ -256,19 +256,19 @@ class FlextLdapAuthentication(FlextCore.Service[None]):
 
     def execute_operation(
         self,
-        operation: FlextCore.Models.OperationExecutionRequest,
+        request: FlextCore.Models.OperationExecutionRequest,
     ) -> FlextCore.Result[None]:
         """Execute operation using OperationExecutionRequest model (Domain.Service protocol).
 
         Args:
-            operation: OperationExecutionRequest containing operation settings
+            request: OperationExecutionRequest containing operation settings
 
         Returns:
             FlextCore.Result[object]: Success with result or failure with error
 
         """
-        # Use operation parameter to satisfy protocol requirements
-        _ = operation
+        # Use request parameter to satisfy protocol requirements
+        _ = request
         return self.execute()
 
 

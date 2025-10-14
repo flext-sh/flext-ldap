@@ -168,6 +168,39 @@ class FlextLdapSchema(FlextCore.Service[object]):
             # Return basic schema discovery result
             return FlextCore.Result[object].ok({"schema_discovered": True})
 
+        def get_schema_subentry_dn(
+            self, server_type: str | None
+        ) -> FlextCore.Result[str]:
+            """Get schema subentry DN based on server type.
+
+            Args:
+                server_type: LDAP server type (openldap, oracle, etc.)
+
+            Returns:
+                FlextCore.Result containing schema subentry DN
+
+            """
+            try:
+                # Handle None server_type
+                if server_type is None:
+                    server_type = "generic"
+
+                # Server-specific schema subentry DNs
+                schema_dns = {
+                    "openldap": "cn=schema,cn=config",
+                    "openldap2": "cn=schema,cn=config",
+                    "oracle": "cn=subschemasubentry",
+                    "generic": "cn=schema",
+                }
+
+                schema_dn = schema_dns.get(server_type.lower(), schema_dns["generic"])
+                return FlextCore.Result[str].ok(schema_dn)
+
+            except Exception as e:
+                return FlextCore.Result[str].fail(
+                    f"Failed to get schema subentry DN: {e}"
+                )
+
     def execute(self) -> FlextCore.Result[object]:
         """Execute the main domain operation (required by FlextCore.Service)."""
         return FlextCore.Result[object].ok(None)

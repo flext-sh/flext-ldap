@@ -939,7 +939,7 @@ class TestLdapHandlerConfiguration:
         assert result == "authenticate"
 
     def test_resolve_ldap_operation_mode_from_dict(self) -> None:
-        """Test resolve_ldap_operation_mode from dict config - covers lines 202-210."""
+        """Test resolve_ldap_operation_mode from dict[str, object] config - covers lines 202-210."""
         config_dict = {FlextLdapConstants.DictKeys.OPERATION_TYPE: "delete"}
         result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
             operation_mode=None, operation_config=config_dict

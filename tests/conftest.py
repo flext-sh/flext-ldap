@@ -320,13 +320,13 @@ def sample_filter() -> FlextLdapModels.Filter:
 @pytest.fixture
 def test_user_data() -> FlextCore.Types.Dict:
     """Get test user data dictionary."""
-    return dict(SAMPLE_USER_ENTRY)
+    return dict[str, object](SAMPLE_USER_ENTRY)
 
 
 @pytest.fixture
 def test_group_data() -> FlextCore.Types.Dict:
     """Get test group data dictionary."""
-    return dict(SAMPLE_GROUP_ENTRY)
+    return dict[str, object](SAMPLE_GROUP_ENTRY)
 
 
 @pytest.fixture

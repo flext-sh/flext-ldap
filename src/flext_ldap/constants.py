@@ -25,6 +25,10 @@ class FlextLdapConstants(FlextCore.Constants):
     DEFAULT_TIMEOUT: Final[int] = 30
     DEFAULT_PAGE_SIZE: Final[int] = 100
 
+    # LDAP port constants for compatibility
+    LDAP_DEFAULT_PORT: Final[int] = 389
+    LDAPS_DEFAULT_PORT: Final[int] = 636
+
     # =========================================================================
     # LDAP-SPECIFIC CONSTANTS ONLY - Essential domain constants
     # =========================================================================

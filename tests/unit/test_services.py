@@ -255,7 +255,7 @@ class TestFlextLdapServices:
         """Test group creation fails when DN doesn't match CN."""
         services = FlextLdapServices()
 
-        # Create dict instead of Request object since method expects dict
+        # Create dict[str, object] instead of Request object since method expects dict
         group_data = {
             "dn": "cn=wronggroup,ou=groups,dc=example,dc=com",
             "cn": "testgroup",  # Doesn't match DN

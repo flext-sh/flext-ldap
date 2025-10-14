@@ -15,8 +15,8 @@ from typing import Literal, Protocol, runtime_checkable
 
 from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
+from ldap3 import Connection, Server
 
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
@@ -107,11 +107,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 search_base: str,
                 search_filter: str,
-                _search_scope: Literal[
-                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE,
-                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
-                    FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
-                ],
+                _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
                 attributes: FlextCore.Types.StringList | None = None,
                 _paged_size: int | None = None,
                 paged_cookie: str | bytes | None = None,
@@ -157,7 +153,9 @@ class FlextLdapProtocols(FlextCore.Protocols):
         # =====================================================================
 
         @runtime_checkable
-        class LdapConnectionProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapConnectionProtocol(
+            FlextCore.Protocols.Domain.Service[None], Protocol
+        ):
             """Protocol for LDAP connection operations."""
 
             def connect(
@@ -198,7 +196,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
-        class LdapSearchProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapSearchProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search(
@@ -240,7 +238,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
-        class LdapModifyProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapModifyProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
             """Protocol for LDAP modification operations."""
 
             def add_entry(
@@ -290,7 +288,9 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
-        class LdapAuthenticationProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapAuthenticationProtocol(
+            FlextCore.Protocols.Domain.Service[None], Protocol
+        ):
             """Protocol for LDAP authentication operations."""
 
             def authenticate_user(
@@ -325,8 +325,26 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 """
                 ...
 
+            def set_connection_context(
+                self,
+                connection: Connection | None,
+                server: Server | None,
+                config: FlextLdapModels.Config | None,
+            ) -> None:
+                """Set the connection context for authentication operations.
+
+                Args:
+                    connection: LDAP connection object
+                    server: LDAP server object
+                    config: LDAP configuration object
+
+                """
+                ...
+
         @runtime_checkable
-        class LdapValidationProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapValidationProtocol(
+            FlextCore.Protocols.Domain.Service[None], Protocol
+        ):
             """Protocol for LDAP validation operations."""
 
             def validate_dn(self, dn: str) -> FlextCore.Result[bool]:
@@ -357,7 +375,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
 
         @runtime_checkable
         class LdapConnectionManagerProtocol(
-            FlextCore.Protocols.Domain.Service,
+            FlextCore.Protocols.Domain.Service[None],
             FlextCore.Protocols.Infrastructure.Connection,
             Protocol,
         ):
@@ -444,17 +462,17 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 """
                 ...
 
-            def get_connection_string(self) -> FlextCore.Result[str]:
+            def get_connection_string(self) -> str:
                 """Get connection string.
 
                 Returns:
-                    FlextCore.Result[str]: Connection string
+                    str: Connection string
 
                 """
                 ...
 
         @runtime_checkable
-        class LdapSearcherProtocol(FlextCore.Protocols.Domain.Service, Protocol):
+        class LdapSearcherProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search_one(
@@ -481,6 +499,9 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 base_dn: str,
                 filter_str: str,
                 attributes: FlextCore.Types.StringList | None = None,
+                scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
+                page_size: int = 0,
+                paged_cookie: bytes | None = None,
             ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
                 """Search for LDAP entries.
 
@@ -488,6 +509,9 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     base_dn: LDAP search base DN
                     filter_str: LDAP search filter
                     attributes: List of attributes to retrieve
+                    scope: Search scope (BASE, LEVEL, SUBTREE)
+                    page_size: Page size for paged results
+                    paged_cookie: Cookie for paged results continuation
 
                 Returns:
                     FlextCore.Result[list[FlextLdapModels.Entry]]: Search results
@@ -505,6 +529,15 @@ class FlextLdapProtocols(FlextCore.Protocols):
 
                 Returns:
                     FlextCore.Result[FlextLdapModels.LdapUser | None]: User object or None
+
+                """
+                ...
+
+            def set_connection_context(self, connection: Connection) -> None:
+                """Set the connection context for search operations.
+
+                Args:
+                    connection: LDAP connection object
 
                 """
                 ...

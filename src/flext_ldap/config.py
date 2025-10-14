@@ -194,11 +194,13 @@ class FlextLdapConfig(FlextCore.Config):
             if operation_config is not None:
                 # Try attribute access
                 if hasattr(operation_config, "operation_type"):
-                    config_mode: str | None = operation_config.operation_type
+                    config_mode: str | None = getattr(
+                        operation_config, "operation_type", None
+                    )
                     if config_mode in valid_modes:
                         return str(config_mode)
 
-                # Try dict access
+                # Try dict[str, object] access
                 if isinstance(operation_config, dict):
                     config_mode_dict = operation_config.get(
                         FlextLdapConstants.DictKeys.OPERATION_TYPE,
@@ -236,7 +238,7 @@ class FlextLdapConfig(FlextCore.Config):
                 max_retries: Maximum retry attempts
 
             Returns:
-                dict: LDAP handler configuration dictionary
+                dict[str, object]: LDAP handler configuration dictionary
 
             """
             # Resolve operation mode
@@ -291,6 +293,9 @@ class FlextLdapConfig(FlextCore.Config):
         arbitrary_types_allowed=True,  # For LDAP-specific objects
         validate_return=True,
         validate_assignment=True,  # Validate on assignment for LDAP config changes
+        # Additional strict validation settings
+        strict=True,  # Strict type coercion
+        hide_input_in_errors=True,  # Security - hide input in error messages
         # Enhanced settings features
         cli_parse_args=False,  # Disable CLI parsing by default for LDAP
         cli_avoid_json=True,  # Avoid JSON CLI options for LDAP configs

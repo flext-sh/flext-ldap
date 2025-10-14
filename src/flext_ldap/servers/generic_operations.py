@@ -183,7 +183,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     @override
     def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
-        """Format ACL dict to generic string."""
+        """Format ACL dict[str, object] to generic string."""
         if "raw" in acl_dict:
             return FlextCore.Result[str].ok(str(acl_dict["raw"]))
         return FlextCore.Result[str].fail(
@@ -398,7 +398,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             if result:
                 # Extract attributes from the single result
                 if hasattr(result[0], "entry_attributes"):
-                    attrs = dict(result[0].entry_attributes)
+                    attrs = dict[str, object](result[0].entry_attributes)
                 else:
                     attrs = {}
 

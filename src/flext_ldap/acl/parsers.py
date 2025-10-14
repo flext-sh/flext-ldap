@@ -711,13 +711,25 @@ class FlextLdapAclParsers:
                     "Message must be a dictionary",
                 )
 
-            format_type: str | None = message.get(
+            format_type_raw = message.get(
                 FlextLdapConstants.DictKeys.FORMAT,
                 FlextLdapConstants.AclFormat.AUTO,
             )
-            acl_string: str | None = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
+            acl_string_raw = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
 
-            if not isinstance(acl_string, str):
+            format_type: str = (
+                FlextLdapConstants.AclFormat.AUTO
+                if not isinstance(format_type_raw, str)
+                else format_type_raw
+            )
+
+            if not isinstance(acl_string_raw, str):
+                return FlextCore.Result[FlextCore.Result[object]].fail(
+                    "ACL string must be provided",
+                )
+            acl_string: str = acl_string_raw
+
+            if not acl_string:
                 return FlextCore.Result[FlextCore.Result[object]].fail(
                     "ACL string must be provided",
                 )

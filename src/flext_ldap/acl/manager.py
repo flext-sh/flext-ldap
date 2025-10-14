@@ -44,11 +44,12 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.
                     "Request must be a dictionary",
                 )
 
-            operation: str | None = message.get(FlextLdapConstants.DictKeys.OPERATION)
-            if not isinstance(operation, str):
+            operation_raw = message.get(FlextLdapConstants.DictKeys.OPERATION)
+            if not isinstance(operation_raw, str):
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "Operation must be a string",
                 )
+            operation: str = operation_raw
 
             # Route to appropriate handler based on operation
             if operation == FlextLdapConstants.LiteralTypes.OPERATION_PARSE:
@@ -70,29 +71,33 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.
     ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL parsing operations."""
         try:
-            acl_string = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
-            if not isinstance(acl_string, str):
+            acl_string_raw = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
+            if not isinstance(acl_string_raw, str):
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACL string must be provided",
                 )
+            acl_string: str = acl_string_raw
 
-            format_type = message.get(
+            format_type_raw = message.get(
                 FlextLdapConstants.DictKeys.FORMAT,
                 FlextLdapConstants.AclFormat.AUTO,
             )
-            if not isinstance(format_type, str):
-                format_type = FlextLdapConstants.AclFormat.AUTO
+            final_format_type: str = (
+                FlextLdapConstants.AclFormat.AUTO
+                if not isinstance(format_type_raw, str)
+                else format_type_raw
+            )
 
             # Use parser to parse ACL based on format type
-            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
+            if final_format_type == FlextLdapConstants.AclFormat.OPENLDAP:
                 result = self._parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
+            elif final_format_type == FlextLdapConstants.AclFormat.ORACLE:
                 result = self._parsers.OracleAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ACI:
+            elif final_format_type == FlextLdapConstants.AclFormat.ACI:
                 result = self._parsers.AciParser.parse(acl_string)
             else:
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
-                    f"Unsupported ACL format: {format_type}",
+                    f"Unsupported ACL format: {final_format_type}",
                 )
 
             return (
@@ -110,26 +115,33 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.
     ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL conversion operations."""
         try:
-            acl_data = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
-            if not isinstance(acl_data, str):
+            acl_data_raw = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
+            if not isinstance(acl_data_raw, str):
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "ACL data must be a string",
                 )
+            acl_data: str = acl_data_raw
 
-            target_format = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
-            if not isinstance(target_format, str):
+            target_format_raw = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
+            if not isinstance(target_format_raw, str):
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
                     "Target format must be specified",
                 )
+            target_format: str = target_format_raw
 
             # Use converter to convert ACL
-            source_format = message.get(
+            source_format_raw = message.get(
                 "source_format",
                 FlextLdapConstants.AclFormat.AUTO,
             )
-            if not isinstance(source_format, str):
-                source_format = FlextLdapConstants.AclFormat.AUTO
-            return self._converters.convert_acl(acl_data, source_format, target_format)
+            final_source_format: str = (
+                FlextLdapConstants.AclFormat.AUTO
+                if not isinstance(source_format_raw, str)
+                else source_format_raw
+            )
+            return self._converters.convert_acl(
+                acl_data, final_source_format, target_format
+            )
 
         except Exception as e:
             return FlextCore.Result[FlextLdapModels.Acl].fail(
