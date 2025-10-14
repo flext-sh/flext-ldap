@@ -480,7 +480,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** FlextCore.Result containing attributes dict for ldap3 operations
+**Returns:** FlextCore.Result containing attributes dict[str, object] for ldap3 operations
 
 **Example:**
 

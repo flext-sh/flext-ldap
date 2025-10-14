@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from flext_core import FlextCore
 
 # Sample LDAP entries for testing
-SAMPLE_USER_ENTRY: dict = {
+SAMPLE_USER_ENTRY: dict[str, object] = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
     "attributes": {
         "cn": ["testuser"],
@@ -20,7 +20,7 @@ SAMPLE_USER_ENTRY: dict = {
     },
 }
 
-SAMPLE_GROUP_ENTRY: dict = {
+SAMPLE_GROUP_ENTRY: dict[str, object] = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
         "cn": ["testgroup"],
@@ -155,7 +155,7 @@ EXPECTED_SEARCH_RESULTS: dict[str, FlextCore.Types.StringList] = {
 }
 
 # ACL test data
-SAMPLE_ACL_DATA: dict = {
+SAMPLE_ACL_DATA: dict[str, object] = {
     "unified_acl": {
         "target": "dc=example,dc=com",
         "permissions": [

@@ -200,7 +200,7 @@ class FlextLdapSearch(FlextCore.Service[None]):
             # Convert entries to Entry models
             entries: list[FlextLdapModels.Entry] = []
             for entry in self._connection.entries:  # ldap3 Entry objects
-                # Build attributes dict from ldap3 entry
+                # Build attributes dict[str, object] from ldap3 entry
                 entry_attributes_dict: FlextCore.Types.Dict = {}
 
                 # FIXED: ldap3 Entry uses entry_attributes_as_dict, not .attributes

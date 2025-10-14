@@ -1484,7 +1484,7 @@ class TestFlextLdapClientsSearchIntegration:
         assert hasattr(response, "entries")
         assert isinstance(response.entries, list)
         # Note: entries list may be empty or have entries with attribute parsing issues
-        # due to ldap3 entry_attributes being list instead of dict in some cases
+        # due to ldap3 entry_attributes being list instead of dict[str, object] in some cases
 
     def test_search_users_all_users(
         self,

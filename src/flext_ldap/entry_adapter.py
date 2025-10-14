@@ -26,7 +26,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
 
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → FlextLdifModels.Entry (for result processing)
-    - FlextLdifModels.Entry → dict (for ldap3 operations)
+    - FlextLdifModels.Entry → dict[str, object] (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -65,10 +65,10 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
         self,
         ldap3_entry: Ldap3Entry | FlextCore.Types.Dict,
     ) -> FlextCore.Result[FlextLdifModels.Entry]:
-        """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
+        """Convert ldap3.Entry or dict[str, object] to FlextLdifModels.Entry.
 
         Args:
-            ldap3_entry: ldap3 Entry object from search results or dict with 'dn' and 'attributes' keys
+            ldap3_entry: ldap3 Entry object from search results or dict[str, object] with 'dn' and 'attributes' keys
 
         Returns:
             FlextCore.Result containing FlextLdifModels.Entry or error
@@ -80,9 +80,9 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
                 "ldap3 entry cannot be None"
             )
 
-        # Handle both ldap3 Entry objects and dict objects
+        # Handle both ldap3 Entry objects and dict[str, object] objects
         if isinstance(ldap3_entry, dict):
-            # Handle dict input (from search operations)
+            # Handle dict[str, object] input (from search operations)
             if "dn" not in ldap3_entry:
                 return FlextCore.Result[FlextLdifModels.Entry].fail(
                     "Dict entry missing 'dn' key",
@@ -127,27 +127,19 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
             # Assign to attributes variable for unified handling below
             attributes = ldap3_attributes
 
-        # Convert attributes dict to FlextLdifModels.LdifAttributes
+        # Convert attributes dict[str, object] to FlextLdifModels.LdifAttributes
         # Explicit FlextCore.Result error handling - NO try/except
 
         attr_values_dict: dict[str, FlextLdifModels.AttributeValues] = {}
-        # Cast attributes to proper type since we know it's a dict at this point
+        # Cast attributes to proper type since we know it's a dict[str, object] at this point
         typed_attributes = cast("dict[str, FlextCore.Types.List]", attributes)
         for attr_name, attr_value_list in typed_attributes.items():
-            # Create AttributeValues using Pydantic model
-            attr_values_result = FlextLdifModels.AttributeValues.create(
-                values=attr_value_list,
-            )
-            if attr_values_result.is_failure:
-                return FlextCore.Result[FlextLdifModels.Entry].fail(
-                    f"Failed to create AttributeValues for {attr_name}: {attr_values_result.error}",
-                )
-
-            attr_values = attr_values_result.unwrap()
-            if not isinstance(attr_values, FlextLdifModels.AttributeValues):
-                return FlextCore.Result[FlextLdifModels.Entry].fail(
-                    f"Invalid AttributeValues type for {attr_name}",
-                )
+            # Convert object list to string list for AttributeValues
+            str_values: FlextCore.Types.StringList = [
+                str(value) for value in attr_value_list
+            ]
+            # Create AttributeValues using Pydantic model direct instantiation
+            attr_values = FlextLdifModels.AttributeValues(values=str_values)
             attr_values_dict[attr_name] = attr_values
 
         # Create LdifAttributes
@@ -167,7 +159,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
         ldif_attributes: FlextLdifModels.LdifAttributes = ldif_attributes_raw
 
         # Create DistinguishedName
-        dn_result = FlextLdifModels.DistinguishedName.create(value=dn_str)
+        dn_result = FlextLdifModels.DistinguishedName.create(dn_str)
         if dn_result.is_failure:
             return FlextCore.Result[FlextLdifModels.Entry].fail(
                 f"Failed to create DistinguishedName: {dn_result.error}",
@@ -227,7 +219,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
             ldif_entry: FlextLdif Entry model
 
         Returns:
-            FlextCore.Result containing attributes dict for ldap3 operations
+            FlextCore.Result containing attributes dict[str, object] for ldap3 operations
 
         """
         # Explicit FlextCore.Result error handling - NO try/except
@@ -275,7 +267,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
     ) -> FlextCore.Result[dict[str, list[tuple[str, FlextCore.Types.List]]]]:
         """Create ldap3 modify changes from simple modifications dict.
 
-        Converts a simple dict of attribute modifications into ldap3's
+        Converts a simple dict[str, object] of attribute modifications into ldap3's
         expected format: {attr: [(operation, [values])]}
 
         Args:
@@ -514,7 +506,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
             return FlextCore.Result[bool].fail("Entry has invalid DN")
 
         # Validate has object classes
-        object_classes = entry["objectClass"]
+        object_classes = entry.get_attribute_values("objectClass")
         if not object_classes:
             return FlextCore.Result[bool].fail(
                 "Entry missing required objectClass attribute",

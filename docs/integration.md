@@ -107,7 +107,7 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     return credentials.credentials
 
 @app.post("/auth/login")
-def login(username: str, password: str) -> dict:
+def login(username: str, password: str) -> dict[str, object]:
     """User login endpoint with LDAP authentication."""
     ldap_api = get_flext_ldap_api()
 
@@ -128,7 +128,7 @@ def search_users(
     filter_str: str = "(objectClass=person)",
     limit: int = 100,
     token: str = Depends(authenticate_token)
-) -> dict:
+) -> dict[str, object]:
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
@@ -162,7 +162,7 @@ def search_users(
 def create_user(
     user_data: dict,
     token: str = Depends(authenticate_token)
-) -> dict:
+) -> dict[str, object]:
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 

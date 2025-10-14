@@ -663,7 +663,7 @@ class TestEntryAdapterCoreConversions:
     def test_ldap3_to_ldif_entry_dict_input(
         self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: FlextCore.Types.Dict
     ) -> None:
-        """Test converting ldap3 dict to FlextLdif Entry."""
+        """Test converting ldap3 dict[str, object] to FlextLdif Entry."""
         # Act
         result = adapter.ldap3_to_ldif_entry(sample_ldap3_entry)
 
@@ -690,7 +690,7 @@ class TestEntryAdapterCoreConversions:
     def test_ldap3_to_ldif_entry_missing_dn(
         self, adapter: FlextLdapEntryAdapter
     ) -> None:
-        """Test converting ldap3 dict without DN fails."""
+        """Test converting ldap3 dict[str, object] without DN fails."""
         # Arrange
         invalid_entry = {
             "attributes": {"cn": ["John Doe"]},
@@ -706,7 +706,7 @@ class TestEntryAdapterCoreConversions:
     def test_ldap3_to_ldif_entry_missing_attributes(
         self, adapter: FlextLdapEntryAdapter
     ) -> None:
-        """Test converting ldap3 dict without attributes fails."""
+        """Test converting ldap3 dict[str, object] without attributes fails."""
         # Arrange
         invalid_entry = {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -722,7 +722,7 @@ class TestEntryAdapterCoreConversions:
     def test_ldap3_to_ldif_entry_invalid_attributes_type(
         self, adapter: FlextLdapEntryAdapter
     ) -> None:
-        """Test converting ldap3 dict with invalid attributes type fails."""
+        """Test converting ldap3 dict[str, object] with invalid attributes type fails."""
         # Arrange
         invalid_entry = {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",

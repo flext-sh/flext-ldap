@@ -366,8 +366,8 @@ def demonstrate_constants() -> None:
 
     # Protocol constants (delegated to flext-core)
     logger.info("Protocol:")
-    logger.info(f"   Default Port: {FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}")
-    logger.info(f"   SSL Port: {FlextCore.Constants.Platform.LDAPS_DEFAULT_PORT}")
+    logger.info(f"   Default Port: {FlextLdapConstants.LDAP_DEFAULT_PORT}")
+    logger.info(f"   SSL Port: {FlextLdapConstants.LDAPS_DEFAULT_PORT}")
     logger.info(
         f"   Default Timeout: {FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS}s"
     )

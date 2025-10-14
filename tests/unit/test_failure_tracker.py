@@ -120,7 +120,7 @@ class TestGetFailuresByPhase:
         """Should return empty list when no failures file exists."""
         tracker = FlextLdapFailureTracker(tmp_path)
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
 
         assert failures == []
 
@@ -132,8 +132,8 @@ class TestGetFailuresByPhase:
         tracker.log_failure("cn=group1,dc=algar", "groups", "create", "Error 2")
         tracker.log_failure("cn=user2,dc=algar", "users", "create", "Error 3")
 
-        users_failures = tracker.get_failures_by_phase("users")
-        groups_failures = tracker.get_failures_by_phase("groups")
+        users_failures = tracker.get_failures_by_phase("users").unwrap()
+        groups_failures = tracker.get_failures_by_phase("groups").unwrap()
 
         assert len(users_failures) == 2
         assert len(groups_failures) == 1
@@ -150,7 +150,7 @@ class TestGetFailuresByPhase:
         # Mark one as resolved
         tracker.mark_resolved("cn=test1,dc=algar", "users")
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
 
         assert len(failures) == 1
         assert failures[0]["dn"] == "cn=test2,dc=algar"
@@ -163,7 +163,7 @@ class TestGetAllFailures:
         """Should return empty list when no failures exist."""
         tracker = FlextLdapFailureTracker(tmp_path)
 
-        failures = tracker.get_all_failures()
+        failures = tracker.get_all_failures().unwrap()
 
         assert failures == []
 
@@ -175,7 +175,7 @@ class TestGetAllFailures:
         tracker.log_failure("cn=group1,dc=algar", "groups", "create", "Error 2")
         tracker.log_failure("cn=acl1,dc=algar", "acl", "create", "Error 3")
 
-        failures = tracker.get_all_failures()
+        failures = tracker.get_all_failures().unwrap()
 
         assert len(failures) == 3
         phases = {f["phase"] for f in failures}
@@ -190,7 +190,7 @@ class TestGetAllFailures:
 
         tracker.mark_resolved("cn=test1,dc=algar", "users")
 
-        failures = tracker.get_all_failures()
+        failures = tracker.get_all_failures().unwrap()
 
         assert len(failures) == 1
         assert failures[0]["dn"] == "cn=test2,dc=algar"
@@ -229,7 +229,7 @@ class TestMarkResolved:
         tracker.log_failure("cn=test,dc=algar", "users", "create", "Error")
         tracker.mark_resolved("cn=test,dc=algar", "users")
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
 
         assert len(failures) == 0
 
@@ -274,7 +274,7 @@ class TestIncrementRetryCount:
         tracker.log_failure("cn=test,dc=algar", "users", "create", "Error")
         tracker.increment_retry_count("cn=test,dc=algar", "users")
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
         assert failures[0]["retry_count"] == 1
 
     def test_increment_retry_count_multiple_times(self, tmp_path: Path) -> None:
@@ -286,7 +286,7 @@ class TestIncrementRetryCount:
         tracker.increment_retry_count("cn=test,dc=algar", "users")
         tracker.increment_retry_count("cn=test,dc=algar", "users")
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
         assert failures[0]["retry_count"] == 3
 
     def test_increment_retry_count_adds_timestamp(self, tmp_path: Path) -> None:
@@ -296,7 +296,7 @@ class TestIncrementRetryCount:
         tracker.log_failure("cn=test,dc=algar", "users", "create", "Error")
         tracker.increment_retry_count("cn=test,dc=algar", "users")
 
-        failures = tracker.get_failures_by_phase("users")
+        failures = tracker.get_failures_by_phase("users").unwrap()
         assert "last_retry" in failures[0]
 
     def test_increment_retry_count_no_file_fails(self, tmp_path: Path) -> None:
@@ -455,7 +455,7 @@ class TestClearResolved:
         assert result.is_success
         assert result.unwrap() == 0
 
-        failures = tracker.get_all_failures()
+        failures = tracker.get_all_failures().unwrap()
         assert len(failures) == 2
 
 

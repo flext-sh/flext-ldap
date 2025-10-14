@@ -297,7 +297,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
     @override
     def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
-        """Format ACL dict to ds-privilege-name string for Oracle OUD.
+        """Format ACL dict[str, object] to ds-privilege-name string for Oracle OUD.
 
         Args:
             acl_dict: ACL dictionary with structure:

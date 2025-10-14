@@ -257,51 +257,50 @@ class FlextLdapServices(FlextCore.Service[None]):
 
     def validate_group_creation_request(
         self,
-        group_data: dict,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        group_request: FlextLdapModels.CreateGroupRequest,
+    ) -> FlextCore.Result[FlextLdapModels.CreateGroupRequest]:
         """Validate group creation data against domain business rules.
 
         Args:
-            group_data: Group creation data dictionary
+            group_request: Group creation request model
 
         Returns:
-            FlextCore.Result with validated group data
+            FlextCore.Result with validated group creation request
 
         """
         try:
-            cn = group_data.get(FlextLdapConstants.DictKeys.CN)
-            if not cn:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Group CN is required"
-                )
-
-            dn = group_data.get(FlextLdapConstants.DictKeys.DN, "")
             # Domain validation: DN must contain CN
-            if dn and f"cn={cn}" not in dn.lower():
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+            if f"cn={group_request.cn}" not in group_request.dn.lower():
+                return FlextCore.Result[FlextLdapModels.CreateGroupRequest].fail(
                     "DN must contain the specified CN",
                 )
 
             # Domain validation: group name format
-            if not FlextLdapDomain.GroupSpecification.is_valid_group_name(cn):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+            if not FlextLdapDomain.GroupSpecification.is_valid_group_name(
+                group_request.cn
+            ):
+                return FlextCore.Result[FlextLdapModels.CreateGroupRequest].fail(
                     "Invalid group name format"
                 )
 
             # Domain validation: description (basic check)
-            description = group_data.get(FlextLdapConstants.DictKeys.DESCRIPTION, "")
-            if len(description) > FlextLdapConstants.Protocol.MAX_DESCRIPTION_LENGTH:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+            if (
+                len(group_request.description)
+                > FlextLdapConstants.Protocol.MAX_DESCRIPTION_LENGTH
+            ):
+                return FlextCore.Result[FlextLdapModels.CreateGroupRequest].fail(
                     "Group description too long"
                 )
 
-            logger.info("Group creation request validated", cn=cn)
+            logger.info("Group creation request validated", cn=group_request.cn)
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(group_data)
+            return FlextCore.Result[FlextLdapModels.CreateGroupRequest].ok(
+                group_request
+            )
 
         except Exception as e:
             logger.exception("Group creation validation failed", error=str(e))
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextCore.Result[FlextLdapModels.CreateGroupRequest].fail(
                 f"Validation failed: {e}"
             )
 
@@ -418,7 +417,11 @@ class FlextLdapServices(FlextCore.Service[None]):
     def coordinate_search_operation(
         self,
         search_request: FlextLdapModels.SearchRequest,
-        result_processor: Callable | None = None,
+        result_processor: Callable[
+            [FlextLdapModels.SearchResponse],
+            FlextCore.Result[FlextLdapModels.SearchResponse],
+        ]
+        | None = None,
     ) -> FlextCore.Result[FlextLdapModels.SearchResponse]:
         """Coordinate search operation with domain validation and processing.
 
@@ -580,69 +583,46 @@ class FlextLdapServices(FlextCore.Service[None]):
 
     def validate_ldap_configuration(
         self,
-        config_data: dict,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        config_data: FlextLdapModels.LdapConfigValidation,
+    ) -> FlextCore.Result[FlextLdapModels.LdapConfigValidation]:
         """Validate LDAP configuration against domain requirements.
 
         Args:
-            config_data: Configuration data to validate
+            config_data: Configuration model to validate
 
         Returns:
             FlextCore.Result with validated configuration
 
         """
         try:
-            # Domain validation: required fields
-            required_fields = ["ldap_server", "ldap_port", "base_dn"]
-            for field in required_fields:
-                if field not in config_data:
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        f"Missing required field: {field}",
-                    )
-
-            # Domain validation: server format
-            server = config_data.get(FlextLdapConstants.DictKeys.LDAP_SERVER)
-            if not server or not isinstance(server, str):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Invalid LDAP server"
-                )
-
-            # Domain validation: port range
-            port = config_data.get(FlextLdapConstants.DictKeys.LDAP_PORT)
-            if not isinstance(port, int) or not (
-                1 <= port <= FlextCore.Constants.Network.MAX_PORT
-            ):
-                return FlextCore.Result[FlextCore.Types.Dict].fail("Invalid LDAP port")
-
-            # Domain validation: base DN format
-            base_dn = config_data.get(FlextLdapConstants.DictKeys.BASE_DN)
-            if not base_dn:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Base DN cannot be empty"
-                )
-
             # Try to create DN value object for validation
             try:
-                FlextLdapModels.DistinguishedName.from_string(base_dn)
+                FlextLdapModels.DistinguishedName.from_string(config_data.base_dn)
             except Exception as e:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextCore.Result[FlextLdapModels.LdapConfigValidation].fail(
                     f"Invalid base DN format: {e}"
                 )
 
-            logger.info("LDAP configuration validated", server=server, port=port)
+            logger.info(
+                "LDAP configuration validated",
+                server=config_data.ldap_server,
+                port=config_data.ldap_port,
+            )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(config_data)
+            return FlextCore.Result[FlextLdapModels.LdapConfigValidation].ok(
+                config_data
+            )
 
         except Exception as e:
             logger.exception("LDAP configuration validation failed", error=str(e))
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextCore.Result[FlextLdapModels.LdapConfigValidation].fail(
                 f"Validation failed: {e}"
             )
 
     def generate_ldap_operation_report(
         self,
-        operations: list[FlextCore.Types.Dict],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        operations: list[FlextLdapModels.OperationRecord],
+    ) -> FlextCore.Result[FlextLdapModels.OperationReport]:
         """Generate domain-level report for LDAP operations.
 
         Args:
@@ -659,11 +639,9 @@ class FlextLdapServices(FlextCore.Service[None]):
             failure_count = 0
 
             for op in operations:
-                op_type_raw = op.get(FlextLdapConstants.DictKeys.TYPE, "unknown")
-                op_type = str(op_type_raw) if op_type_raw is not None else "unknown"
-                operation_counts[op_type] = operation_counts.get(op_type, 0) + 1
+                operation_counts[op.type] = operation_counts.get(op.type, 0) + 1
 
-                if op.get(FlextLdapConstants.DictKeys.SUCCESS, False):
+                if op.success:
                     success_count += 1
                 else:
                     failure_count += 1
@@ -672,14 +650,14 @@ class FlextLdapServices(FlextCore.Service[None]):
             total_ops = len(operations)
             success_rate = (success_count / total_ops * 100) if total_ops > 0 else 0
 
-            report = {
-                "total_operations": total_ops,
-                "successful_operations": success_count,
-                "failed_operations": failure_count,
-                "success_rate": round(float(success_rate), 2),
-                "operation_breakdown": operation_counts,
-                "generated_at": "2025-01-08T00:00:00Z",  # Would use datetime.utcnow()
-            }
+            report = FlextLdapModels.OperationReport(
+                total_operations=total_ops,
+                successful_operations=success_count,
+                failed_operations=failure_count,
+                success_rate=round(float(success_rate), 2),
+                operation_breakdown=operation_counts,
+                generated_at="2025-01-08T00:00:00Z",  # Would use datetime.utcnow()
+            )
 
             logger.info(
                 "LDAP operation report generated",
@@ -687,11 +665,11 @@ class FlextLdapServices(FlextCore.Service[None]):
                 success_rate=success_rate,
             )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(report)
+            return FlextCore.Result[FlextLdapModels.OperationReport].ok(report)
 
         except Exception as e:
             logger.exception("LDAP operation report generation failed", error=str(e))
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextCore.Result[FlextLdapModels.OperationReport].fail(
                 f"Report generation failed: {e}"
             )
 

@@ -135,7 +135,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
     @override
     def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
-        """Format ACL dict to access string for OpenLDAP 1.x.
+        """Format ACL dict[str, object] to access string for OpenLDAP 1.x.
 
         Args:
             acl_dict: ACL dictionary with structure:

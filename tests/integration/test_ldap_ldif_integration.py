@@ -479,7 +479,7 @@ class TestRoundTripConversion:
         if hasattr(parsed_entry.attributes, "get_attribute"):
             cn_values = parsed_entry.attributes.get_attribute("cn")
             sn_values = parsed_entry.attributes.get_attribute("sn")
-            # Cast original_entry to dict for safe access
+            # Cast original_entry to dict[str, object] for safe access
             original_dict = original_entry
             original_attrs = original_dict["attributes"]
             if isinstance(original_attrs, dict):

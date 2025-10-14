@@ -140,12 +140,12 @@ class TestFlextLdapUtilities:
         assert FlextLdapUtilities.LdapTypeGuards.is_ldap_attribute_value(None) is False
 
     def test_is_ldap_attributes_dict_valid(self) -> None:
-        """Test LDAP attributes dict validation."""
+        """Test LDAP attributes dict[str, object] validation."""
         attrs = {"cn": ["John Doe"], "mail": ["john@example.com"]}
         assert FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict(attrs) is True
 
     def test_is_ldap_attributes_dict_invalid(self) -> None:
-        """Test LDAP attributes dict validation with invalid dict."""
+        """Test LDAP attributes dict[str, object] validation with invalid dict."""
         assert (
             FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict({"key": 123})
             is False
@@ -156,7 +156,7 @@ class TestFlextLdapUtilities:
         )
 
     def test_dict_to_attributes_valid(self) -> None:
-        """Test dict to LDAP attributes conversion."""
+        """Test dict[str, object] to LDAP attributes conversion."""
         data: FlextCore.Types.Dict = {"cn": "John Doe", "mail": "john@example.com"}
         result = FlextLdapUtilities.Conversion.dict_to_attributes(data)
         assert result.is_success
@@ -168,7 +168,7 @@ class TestFlextLdapUtilities:
         assert "john@example.com" in values
 
     def test_dict_to_attributes_empty(self) -> None:
-        """Test dict to LDAP attributes conversion with empty dict."""
+        """Test dict[str, object] to LDAP attributes conversion with empty dict."""
         result = FlextLdapUtilities.Conversion.dict_to_attributes({})
         assert result.is_success
         names, values = result.data
@@ -176,7 +176,7 @@ class TestFlextLdapUtilities:
         assert values == []
 
     def test_attributes_to_dict_valid(self) -> None:
-        """Test LDAP attributes to dict conversion."""
+        """Test LDAP attributes to dict[str, object] conversion."""
         names: FlextCore.Types.StringList = ["cn", "mail"]
         values: FlextCore.Types.List = ["John Doe", "john@example.com"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
@@ -186,7 +186,7 @@ class TestFlextLdapUtilities:
         assert result.data["mail"] == "john@example.com"
 
     def test_attributes_to_dict_empty(self) -> None:
-        """Test LDAP attributes to dict conversion with empty lists."""
+        """Test LDAP attributes to dict[str, object] conversion with empty lists."""
         result = FlextLdapUtilities.Conversion.attributes_to_dict([], [])
         assert result.is_success
         assert result.data == {}
@@ -386,24 +386,24 @@ class TestFlextLdapUtilitiesLdapTypeGuards:
         )
 
     def test_is_ldap_attributes_dict_with_bytes(self) -> None:
-        """Test LDAP attributes dict validation with bytes values."""
+        """Test LDAP attributes dict[str, object] validation with bytes values."""
         attrs = {"cn": b"John Doe", "photo": b"\x89PNG"}
         assert FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict(attrs) is True
 
     def test_is_ldap_attributes_dict_with_string_values(self) -> None:
-        """Test LDAP attributes dict validation with string values."""
+        """Test LDAP attributes dict[str, object] validation with string values."""
         attrs = {"cn": "John Doe", "mail": "john@example.com"}
         assert FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict(attrs) is True
 
     def test_is_ldap_attributes_dict_invalid_key_type(self) -> None:
-        """Test LDAP attributes dict validation with invalid key type."""
+        """Test LDAP attributes dict[str, object] validation with invalid key type."""
         assert (
             FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict({123: "value"})
             is False
         )
 
     def test_is_ldap_attributes_dict_invalid_value_type(self) -> None:
-        """Test LDAP attributes dict validation with invalid value type."""
+        """Test LDAP attributes dict[str, object] validation with invalid value type."""
         assert (
             FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict({"key": 123})
             is False
@@ -416,7 +416,7 @@ class TestFlextLdapUtilitiesLdapTypeGuards:
         )
 
     def test_is_ldap_attributes_dict_invalid_list_items(self) -> None:
-        """Test LDAP attributes dict validation with invalid list items."""
+        """Test LDAP attributes dict[str, object] validation with invalid list items."""
         assert (
             FlextLdapUtilities.LdapTypeGuards.is_ldap_attributes_dict({
                 "key": [123, 456]
@@ -610,7 +610,7 @@ class TestFlextLdapUtilitiesLdapProcessing:
         assert result.error is not None
 
     def test_attributes_to_dict_success(self) -> None:
-        """Test attributes to dict conversion success case."""
+        """Test attributes to dict[str, object] conversion success case."""
         names: FlextCore.Types.StringList = ["cn", "mail"]
         values: FlextCore.Types.List = ["John", "john@example.com"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
@@ -619,7 +619,7 @@ class TestFlextLdapUtilitiesLdapProcessing:
         assert result.data["mail"] == "john@example.com"
 
     def test_attributes_to_dict_mismatch(self) -> None:
-        """Test attributes to dict conversion with mismatched lengths."""
+        """Test attributes to dict[str, object] conversion with mismatched lengths."""
         names: FlextCore.Types.StringList = ["cn", "mail"]
         values: FlextCore.Types.List = ["John"]  # Missing one value
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
@@ -662,7 +662,7 @@ class TestFlextLdapUtilitiesConversion:
     """Tests for FlextLdapUtilities.Conversion nested class."""
 
     def test_dict_to_attributes_success(self) -> None:
-        """Test dict to attributes conversion success case."""
+        """Test dict[str, object] to attributes conversion success case."""
         data: FlextCore.Types.Dict = {"cn": "John Doe", "mail": "john@example.com"}
         result = FlextLdapUtilities.Conversion.dict_to_attributes(data)
         assert result.is_success
@@ -674,7 +674,7 @@ class TestFlextLdapUtilitiesConversion:
         assert "mail" in names
 
     def test_dict_to_attributes_empty(self) -> None:
-        """Test dict to attributes conversion with empty dict."""
+        """Test dict[str, object] to attributes conversion with empty dict."""
         result = FlextLdapUtilities.Conversion.dict_to_attributes({})
         assert result.is_success
         names, values = result.data
@@ -682,7 +682,7 @@ class TestFlextLdapUtilitiesConversion:
         assert values == []
 
     def test_dict_to_attributes_list_values(self) -> None:
-        """Test dict to attributes conversion with list values."""
+        """Test dict[str, object] to attributes conversion with list values."""
         data: FlextCore.Types.Dict = {
             "cn": ["John Doe", "J. Doe"],
             "mail": ["john@example.com"],
@@ -695,13 +695,13 @@ class TestFlextLdapUtilitiesConversion:
         assert "mail" in names
 
     def test_attributes_to_dict_empty(self) -> None:
-        """Test attributes to dict conversion with empty lists."""
+        """Test attributes to dict[str, object] conversion with empty lists."""
         result = FlextLdapUtilities.Conversion.attributes_to_dict([], [])
         assert result.is_success
         assert result.data == {}
 
     def test_attributes_to_dict_single_value(self) -> None:
-        """Test attributes to dict conversion with single values."""
+        """Test attributes to dict[str, object] conversion with single values."""
         names: FlextCore.Types.StringList = ["cn"]
         values: FlextCore.Types.List = ["John Doe"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)
@@ -709,7 +709,7 @@ class TestFlextLdapUtilitiesConversion:
         assert result.data == {"cn": "John Doe"}
 
     def test_attributes_to_dict_multiple_values(self) -> None:
-        """Test attributes to dict conversion with multiple values."""
+        """Test attributes to dict[str, object] conversion with multiple values."""
         names: FlextCore.Types.StringList = ["cn", "mail", "sn"]
         values: FlextCore.Types.List = ["John Doe", "john@example.com", "Doe"]
         result = FlextLdapUtilities.Conversion.attributes_to_dict(names, values)

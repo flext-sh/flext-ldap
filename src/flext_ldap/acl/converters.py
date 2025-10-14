@@ -21,10 +21,11 @@ class FlextLdapAclConverters:
     ) -> FlextCore.Result[FlextCore.Result[FlextLdapModels.Acl]]:
         """Handle ACL conversion request."""
         if isinstance(message, dict) and "acl_content" in message:
+            message_dict = message
             result = self.convert_acl(
-                message["acl_content"],
-                message.get(FlextLdapConstants.DictKeys.SOURCE_FORMAT, "OPENLDAP"),
-                message.get(
+                message_dict["acl_content"],
+                message_dict.get(FlextLdapConstants.DictKeys.SOURCE_FORMAT, "OPENLDAP"),
+                message_dict.get(
                     FlextLdapConstants.DictKeys.TARGET_FORMAT,
                     "ACTIVE_DIRECTORY",
                 ),
