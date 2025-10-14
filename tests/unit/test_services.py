@@ -4,6 +4,7 @@ Tests application service layer with real functionality and domain logic validat
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -240,14 +241,14 @@ class TestFlextLdapServices:
     def test_validate_group_creation_request_valid(self) -> None:
         """Test group creation request validation with valid data."""
         services = FlextLdapServices()
-        group_data = {
-            "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-            "cn": "testgroup",
-            "description": "Test group",
-            "members": ["uid=user1,ou=users,dc=example,dc=com"],
-        }
+        group_request = FlextLdapModels.CreateGroupRequest(
+            dn="cn=testgroup,ou=groups,dc=example,dc=com",
+            cn="testgroup",
+            description="Test group",
+            members=["uid=user1,ou=users,dc=example,dc=com"],
+        )
 
-        result = services.validate_group_creation_request(group_data)
+        result = services.validate_group_creation_request(group_request)
 
         assert result.is_success
 
@@ -255,15 +256,14 @@ class TestFlextLdapServices:
         """Test group creation fails when DN doesn't match CN."""
         services = FlextLdapServices()
 
-        # Create dict[str, object] instead of Request object since method expects dict
-        group_data = {
-            "dn": "cn=wronggroup,ou=groups,dc=example,dc=com",
-            "cn": "testgroup",  # Doesn't match DN
-            "description": "Test group",
-            "members": ["uid=user1,ou=users,dc=example,dc=com"],
-        }
+        group_request = FlextLdapModels.CreateGroupRequest(
+            dn="cn=wronggroup,ou=groups,dc=example,dc=com",
+            cn="testgroup",  # Doesn't match DN
+            description="Test group",
+            members=["uid=user1,ou=users,dc=example,dc=com"],
+        )
 
-        result = services.validate_group_creation_request(group_data)
+        result = services.validate_group_creation_request(group_request)
 
         assert result.is_failure
         assert "DN must contain the specified CN" in (result.error or "")
@@ -498,30 +498,36 @@ class TestFlextLdapServices:
     def test_generate_ldap_operation_report_empty(self) -> None:
         """Test report generation with no operations."""
         services = FlextLdapServices()
-        operations: list[FlextCore.Types.Dict] = []
+        operations: list[FlextLdapModels.OperationRecord] = []
 
         result = services.generate_ldap_operation_report(operations)
 
         assert result.is_success
         report = result.unwrap()
         assert report is not None
-        assert isinstance(report, dict)
+        assert isinstance(report, FlextLdapModels.OperationReport)
+        assert report.total_operations == 0
+        assert report.success_rate == 0.0
 
     def test_generate_ldap_operation_report_with_operations(self) -> None:
         """Test report generation with operation data."""
         services = FlextLdapServices()
-        operations: list[FlextCore.Types.Dict] = [
-            {"type": "search", "status": "success", "count": 10},
-            {"type": "add", "status": "success", "dn": "uid=test,dc=example,dc=com"},
+        operations: list[FlextLdapModels.OperationRecord] = [
+            FlextLdapModels.OperationRecord(type="search", success=True),
+            FlextLdapModels.OperationRecord(type="add", success=True),
+            FlextLdapModels.OperationRecord(type="modify", success=False),
         ]
 
         result = services.generate_ldap_operation_report(operations)
 
         assert result.is_success
         report = result.unwrap()
-        assert isinstance(report, dict)
-        # Should contain some analysis of operations
-        assert len(report) > 0
+        assert isinstance(report, FlextLdapModels.OperationReport)
+        # Should contain operation breakdown
+        assert report.total_operations == 3
+        assert report.successful_operations == 2
+        assert report.failed_operations == 1
+        assert report.success_rate > 0
 
     # =========================================================================
     # FLEXTSERVICE PROTOCOL TESTS

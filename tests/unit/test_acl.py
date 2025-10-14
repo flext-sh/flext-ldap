@@ -5,6 +5,7 @@ following FLEXT standards with proper domain separation and centralized fixtures
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -829,7 +830,7 @@ class TestFlextLdapModels:
         """Test successful permission data validation."""
         # Test that we can access the ACL models
         assert acl_models is not None
-        assert hasattr(acl_models, "Permission")
+        assert hasattr(acl_models, "AclPermissions")
 
     def test_validate_permission_data_failure(
         self, acl_models: FlextLdapModels

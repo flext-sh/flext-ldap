@@ -4,6 +4,7 @@ Tests the complete universal LDAP workflow from factory to API to actual operati
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

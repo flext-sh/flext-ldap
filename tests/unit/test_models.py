@@ -5,6 +5,7 @@ following FLEXT standards with real functionality testing and no mocks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -594,11 +595,11 @@ class TestFlextLdapModels:
         )
 
         # 5. Create connection config
-        from flext_core import FlextCore
+        from flext_ldap.constants import FlextLdapConstants
 
         config = FlextLdapModels.ConnectionConfig(
             server="localhost",
-            port=FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            port=FlextLdapConstants.Protocol.DEFAULT_PORT,
             bind_dn="cn=admin,dc=test,dc=com",
             bind_password="testpass",
         )

@@ -4,6 +4,7 @@ Tests idempotent schema synchronization logic for ALGAR OID → OUD migration Ph
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

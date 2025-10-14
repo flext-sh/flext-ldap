@@ -4,6 +4,7 @@ Complete implementation for Oracle OID with orclaci ACLs.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -826,12 +827,12 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             if not dn_str or not dn_str.strip():
                 return FlextCore.Result[bool].fail("Entry DN cannot be empty")
 
-            if not entry.attributes or not entry.attributes.attributes:
+            if not entry.attributes:
                 return FlextCore.Result[bool].fail("Entry must have attributes")
 
             # Check for required object classes
             object_classes = entry.attributes.get("objectClass")
-            if not object_classes or not object_classes.values:
+            if not object_classes:
                 return FlextCore.Result[bool].fail(
                     "Entry must have objectClass attribute"
                 )
