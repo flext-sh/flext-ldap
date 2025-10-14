@@ -6,6 +6,7 @@ single-class-per-module pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from ldap3 import Connection
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.servers.factory import FlextLdapServersFactory
 
 
 class FlextLdapServers(FlextCore.Service[None]):
@@ -84,9 +86,6 @@ class FlextLdapServers(FlextCore.Service[None]):
             Server operations instance
 
         """
-        # Import here to avoid circular imports
-        from flext_ldap.servers.factory import FlextLdapServersFactory
-
         factory = FlextLdapServersFactory()
         result = factory.create_from_server_type(server_type)
 

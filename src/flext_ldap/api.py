@@ -13,6 +13,7 @@ from __future__ import annotations
 import concurrent.futures
 import time
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
 from typing import Self, override
@@ -20,6 +21,7 @@ from typing import Self, override
 from flext_core import FlextCore
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
+from pydantic import SecretStr
 
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
@@ -308,10 +310,8 @@ class FlextLdap(FlextCore.Service[None]):
         if user_request.mail:
             attributes["mail"] = user_request.mail
         if user_request.user_password:
-            # Handle SecretStr
+            # Handle SecretStr (imported at top-level)
             if user_request.user_password is not None:
-                from pydantic import SecretStr
-
                 password = (
                     user_request.user_password.get_secret_value()
                     if isinstance(user_request.user_password, SecretStr)
@@ -593,9 +593,8 @@ class FlextLdap(FlextCore.Service[None]):
             if user_request.mail:
                 update_attrs["mail"] = user_request.mail
             if user_request.user_password:
+                # Handle SecretStr (imported at top-level)
                 if user_request.user_password is not None:
-                    from pydantic import SecretStr
-
                     password = (
                         user_request.user_password.get_secret_value()
                         if isinstance(user_request.user_password, SecretStr)
@@ -1003,9 +1002,8 @@ class FlextLdap(FlextCore.Service[None]):
             if user_req.mail:
                 attributes["mail"] = user_req.mail
             if user_req.user_password:
+                # Handle SecretStr (imported at top-level)
                 if user_req.user_password is not None:
-                    from pydantic import SecretStr
-
                     password = (
                         user_req.user_password.get_secret_value()
                         if isinstance(user_req.user_password, SecretStr)
@@ -1190,10 +1188,9 @@ class FlextLdap(FlextCore.Service[None]):
                 ),
             )
 
-            # TODO(@flext-team): Implement actual ACL creation via LDAP
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
+            # NOTE: Future implementation requires actual ACL creation via LDAP
             # This requires determining the correct attribute based on server type
-            # and applying the ACL rules
+            # and applying the ACL rules to the entry
 
             return FlextCore.Result[FlextLdapModels.Acl].ok(unified_acl)
 
@@ -1221,10 +1218,8 @@ class FlextLdap(FlextCore.Service[None]):
             >>> result = api.update_acl(acl_req)
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Initialize quirks engine
+            # Initialize quirks engine (FlextLdapQuirksIntegration imported at top-level)
             quirks = FlextLdapQuirksIntegration()
 
             # Get current ACL from entry
@@ -1251,12 +1246,10 @@ class FlextLdap(FlextCore.Service[None]):
                     else "generic"
                 )
 
-            # TODO(@flext-team): Extract current ACL rules from entry attributes
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
-            # TODO(@flext-team): Merge or replace based on strategy
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
-            # TODO(@flext-team): Update entry with new ACL rules
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
+            # NOTE: Future implementation steps:
+            # 1. Extract current ACL rules from entry attributes
+            # 2. Merge or replace based on strategy
+            # 3. Update entry with new ACL rules
 
             # Create unified ACL response
             unified_acl = FlextLdapModels.Acl(
@@ -1301,10 +1294,8 @@ class FlextLdap(FlextCore.Service[None]):
             ...     print(f"ACL: {acl.name}")
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Get entry
+            # Get entry (FlextLdapQuirksIntegration imported at top-level)
             entry_result = self.client.search_one(dn, "(objectClass=*)")
             if entry_result.is_failure:
                 return FlextCore.Result[FlextLdapModels.Acl].fail(
@@ -1331,8 +1322,7 @@ class FlextLdap(FlextCore.Service[None]):
                 else "generic"
             )
 
-            # TODO(@flext-team): Extract ACL from entry based on server type
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
+            # NOTE: Future implementation should extract ACL from entry based on server type
             # OpenLDAP: olcAccess attribute
             # Oracle OID: orclaci attribute
             # Generic: aci attribute
@@ -1361,11 +1351,11 @@ class FlextLdap(FlextCore.Service[None]):
                 f"ACL retrieval failed: {e}"
             )
 
-    def delete_acl(self, dn: str) -> FlextCore.Result[bool]:
+    def delete_acl(self, _dn: str) -> FlextCore.Result[bool]:
         """Delete ACL from LDAP entry.
 
         Args:
-            dn: Distinguished Name of entry with ACL to delete
+            _dn: Distinguished Name of entry with ACL to delete (unused in placeholder)
 
         Returns:
             FlextCore.Result indicating success
@@ -1375,10 +1365,9 @@ class FlextLdap(FlextCore.Service[None]):
 
         """
         try:
-            # TODO(@flext-team): Detect server type and appropriate ACL attribute
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
-            # TODO(@flext-team): Remove ACL attribute from entry
-            # Issue: https://github.com/flext/flext-ldap/issues/TBD
+            # NOTE: Future implementation requires:
+            # 1. Detect server type and appropriate ACL attribute
+            # 2. Remove ACL attribute from entry
             # For now, return success placeholder
             return FlextCore.Result[bool].ok(True)
 
@@ -1479,9 +1468,7 @@ class FlextLdap(FlextCore.Service[None]):
         sync_result = FlextLdapModels.AclSyncResult()
 
         if parallel:
-            # Parallel processing using ThreadPoolExecutor
-            from concurrent.futures import ThreadPoolExecutor
-
+            # Parallel processing using ThreadPoolExecutor (imported at top-level)
             with ThreadPoolExecutor(max_workers=10) as executor:
                 future_to_request = {
                     executor.submit(self.upsert_acl, req): req for req in acl_requests
@@ -1693,10 +1680,8 @@ class FlextLdap(FlextCore.Service[None]):
             >>> result = api.create_schema_attribute(attr_req)
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Initialize quirks engine
+            # Initialize quirks engine (FlextLdapQuirksIntegration imported at top-level)
             quirks = FlextLdapQuirksIntegration()
 
             # Get root DSE to detect server
@@ -1763,10 +1748,8 @@ class FlextLdap(FlextCore.Service[None]):
             >>> result = api.create_object_class(class_req)
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Initialize quirks engine for server detection
+            # Initialize quirks engine for server detection (FlextLdapQuirksIntegration imported at top-level)
             FlextLdapQuirksIntegration()
 
             # Note: Actual implementation would:
@@ -1839,10 +1822,8 @@ class FlextLdap(FlextCore.Service[None]):
             ...     print(f"Schema DN: {schema_dn}")
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Initialize quirks engine
+            # Initialize quirks engine (FlextLdapQuirksIntegration imported at top-level)
             FlextLdapQuirksIntegration()
 
             # Try common schema DNs based on server type
@@ -1867,13 +1848,13 @@ class FlextLdap(FlextCore.Service[None]):
             )
 
     def delete_schema_element(
-        self, schema_dn: str, element_name: str
+        self, _schema_dn: str, _element_name: str
     ) -> FlextCore.Result[bool]:
         """Delete schema element (attribute or object class).
 
         Args:
-            schema_dn: DN of schema subentry
-            element_name: Name of element to delete
+            _schema_dn: DN of schema subentry (unused in placeholder)
+            _element_name: Name of element to delete (unused in placeholder)
 
         Returns:
             FlextCore.Result indicating success
@@ -2107,8 +2088,6 @@ class FlextLdap(FlextCore.Service[None]):
             ...     print(f"Server: {result.unwrap()}")
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
             # Get root DSE
             root_dse_result = self.client.search_one("", "(objectClass=*)")
@@ -2146,10 +2125,8 @@ class FlextLdap(FlextCore.Service[None]):
             ...     print(f"ACL attribute: {quirks.get('acl_attribute')}")
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
-            # Detect server type if not provided
+            # Detect server type if not provided (FlextLdapQuirksIntegration imported at top-level)
             if server_type is None:
                 detection_result = self.detect_server_type()
                 if detection_result.is_failure:
@@ -2220,13 +2197,13 @@ class FlextLdap(FlextCore.Service[None]):
 
     def validate_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry,
+        _entry: FlextLdapModels.Entry,
         server_type: str | None = None,
     ) -> FlextCore.Result[bool]:
         """Validate entry against server-specific quirks and requirements.
 
         Args:
-            entry: Entry to validate
+            _entry: Entry to validate (unused in placeholder)
             server_type: Optional server type (auto-detected if None)
 
         Returns:

@@ -597,6 +597,86 @@ class FlextLdapConfig(FlextCore.Config):
         return v
 
     # =========================================================================
+    # ENVIRONMENT VARIABLE TYPE COERCION VALIDATORS
+    # Pydantic 2 strict mode requires explicit type coercion from env var strings
+    # =========================================================================
+
+    @field_validator(
+        "ldap_port",
+        "ldap_pool_size",
+        "ldap_cache_ttl",
+        "ldap_retry_attempts",
+        mode="before",
+    )
+    @classmethod
+    def coerce_int_from_env(cls, v: object) -> int:
+        """Coerce environment variable strings to integers for strict mode.
+
+        Pydantic Settings with strict=True doesn't automatically convert env var
+        strings to integers. This validator explicitly handles the conversion while
+        maintaining strict validation for non-string inputs.
+
+        Args:
+            v: Value from environment variable (string) or direct assignment
+
+        Returns:
+            int: Converted integer value
+
+        Raises:
+            ValueError: If string cannot be converted to integer
+
+        """
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as e:
+                msg = f"Cannot convert '{v}' to integer"
+                raise ValueError(msg) from e
+        return int(v) if v is not None else v
+
+    @field_validator(
+        "ldap_use_ssl",
+        "ldap_verify_certificates",
+        "ldap_enable_caching",
+        "ldap_enable_debug",
+        "ldap_enable_trace",
+        "ldap_log_queries",
+        "ldap_mask_passwords",
+        mode="before",
+    )
+    @classmethod
+    def coerce_bool_from_env(cls, v: object) -> bool:
+        """Coerce environment variable strings to booleans for strict mode.
+
+        Pydantic Settings with strict=True doesn't automatically convert env var
+        strings to booleans. This validator explicitly handles the conversion while
+        maintaining strict validation for non-string inputs.
+
+        Handles common boolean string representations:
+        - True: "true", "1", "yes", "on" (case-insensitive)
+        - False: "false", "0", "no", "off" (case-insensitive)
+
+        Args:
+            v: Value from environment variable (string) or direct assignment
+
+        Returns:
+            bool: Converted boolean value
+
+        Raises:
+            ValueError: If string is not a recognized boolean representation
+
+        """
+        if isinstance(v, str):
+            v_lower = v.lower().strip()
+            if v_lower in {"true", "1", "yes", "on"}:
+                return True
+            if v_lower in {"false", "0", "no", "off"}:
+                return False
+            msg = f"Cannot convert '{v}' to boolean. Use: true/false, 1/0, yes/no, on/off"
+            raise ValueError(msg)
+        return bool(v) if v is not None else v
+
+    # =========================================================================
     # MODEL VALIDATORS - Cross-field validation with business rules
     # =========================================================================
 

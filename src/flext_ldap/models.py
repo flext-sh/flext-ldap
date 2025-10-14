@@ -3318,7 +3318,7 @@ class FlextLdapModels(FlextCore.Models):
                                 subject_perm_split[1:]
                             )
 
-                return FlextCore.Result["OpenLdapAcl"].ok(
+                return FlextCore.Result[FlextLdapModels.OpenLdapAcl].ok(
                     cls(
                         access_line=access_line,
                         target_spec=target_spec,
@@ -3327,7 +3327,7 @@ class FlextLdapModels(FlextCore.Models):
                     )
                 )
             except Exception as e:
-                return FlextCore.Result["OpenLdapAcl"].fail(
+                return FlextCore.Result[FlextLdapModels.OpenLdapAcl].fail(
                     f"Failed to create OpenLdapAcl: {e}"
                 )
 
@@ -4451,14 +4451,14 @@ class FlextLdapModels(FlextCore.Models):
                 data: Modify configuration data
 
             Returns:
-                FlextCore.Result[FlextCore.Types.Dict]: Created modify config or error
+                FlextCore.Result[dict[str, str | FlextCore.Types.StringList]]: Created modify config or error
 
             """
             try:
                 if not isinstance(data, dict):
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        "Data must be a dictionary"
-                    )
+                    return FlextCore.Result[
+                        dict[str, str | FlextCore.Types.StringList]
+                    ].fail("Data must be a dictionary")
 
                 values = data.get(FlextLdapConstants.DictKeys.VALUES, [])
                 if isinstance(values, list):

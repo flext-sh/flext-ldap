@@ -7,6 +7,7 @@ OPTIMIZED: Reduced from 49 exports to 13 core facade classes for cleaner API.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

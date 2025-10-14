@@ -5,6 +5,7 @@ instances based on server type detection from connections or entries.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

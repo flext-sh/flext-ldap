@@ -5,6 +5,7 @@ consolidating all client-related tests into a single file per flext standards.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

@@ -4,6 +4,7 @@ Tests idempotent schema synchronization logic for client-a OID → OUD migration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
