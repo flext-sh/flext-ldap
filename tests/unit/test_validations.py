@@ -246,7 +246,7 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful server URI validation."""
         result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
         )
 
         assert result.is_success
@@ -583,8 +583,8 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful connection config validation."""
         config: FlextCore.Types.Dict = {
-            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
-            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
+            "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
             "base_dn": "dc=example,dc=com",
@@ -620,7 +620,7 @@ class TestFlextLdapValidations:
         """Test connection config validation with invalid fields."""
         config: FlextCore.Types.Dict = {
             "server": "invalid-uri",
-            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
             "base_dn": "dc=example,dc=com",
@@ -660,7 +660,7 @@ class TestFlextLdapValidations:
         assert attributes_result.is_success
 
         server_uri_result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
         )
         assert server_uri_result.is_success
 

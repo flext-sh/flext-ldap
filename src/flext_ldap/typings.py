@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any, Protocol
+
 from flext_core import FlextCore
 
 from flext_ldap.constants import FlextLdapConstants
@@ -142,11 +144,139 @@ class FlextLdapTypes(FlextCore.Types):
         type AuthenticationConfig = dict[str, bool | str | FlextCore.Types.Dict]
         type SyncConfig = dict[str, FlextLdapTypes.LdapCore.LdapConfigValue | object]
 
+    # =========================================================================
+    # LDAP3 TYPE STUBS - Protocol definitions for ldap3 library types
+    # =========================================================================
+
+    class Ldap3Protocols:
+        """Protocol definitions for ldap3 library types.
+
+        The ldap3 library has incomplete type stubs. These Protocol classes provide
+        proper typing for ldap3.Connection, ldap3.Entry, and ldap3.Server classes
+        used throughout flext-ldap.
+
+        Use these instead of type: ignore comments for proper type safety.
+        """
+
+        class Connection(Protocol):
+            """Protocol for ldap3.Connection with proper type hints.
+
+            Provides type hints for all ldap3.Connection methods and properties
+            used in flext-ldap codebase.
+            """
+
+            # Properties
+            @property
+            def entries(self) -> list[Any]:
+                """List of Entry objects from last search operation."""
+                ...
+
+            @property
+            def bound(self) -> bool:
+                """Whether connection is currently bound."""
+                ...
+
+            @property
+            def result(self) -> dict[str, Any]:
+                """Result of last LDAP operation."""
+                ...
+
+            @property
+            def response(self) -> list[dict[str, Any]]:
+                """Response from last LDAP operation."""
+                ...
+
+            # Methods
+            def bind(self) -> bool:
+                """Bind to LDAP server. Returns True if successful."""
+                ...
+
+            def unbind(self) -> bool:
+                """Unbind from LDAP server. Returns True if successful."""
+                ...
+
+            def search(
+                self,
+                search_base: str,
+                search_filter: str,
+                search_scope: str | int,
+                attributes: list[str] | None = None,
+                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+            ) -> bool:
+                """Execute LDAP search. Returns True if successful."""
+                ...
+
+            def add(
+                self,
+                dn: str,
+                object_class: str | list[str] | None = None,
+                attributes: dict[str, Any] | None = None,
+                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+            ) -> bool:
+                """Add LDAP entry. Returns True if successful."""
+                ...
+
+            def modify(
+                self,
+                dn: str,
+                changes: dict[str, Any],
+                **kwargs: Any,  # noqa: ANN401  # ldap3 library has no type stubs
+            ) -> bool:
+                """Modify LDAP entry. Returns True if successful."""
+                ...
+
+            def delete(self, dn: str, **kwargs: Any) -> bool:  # noqa: ANN401  # ldap3 library has no type stubs
+                """Delete LDAP entry. Returns True if successful."""
+                ...
+
+        class Entry(Protocol):
+            """Protocol for ldap3.Entry with proper type hints.
+
+            Provides type hints for ldap3.Entry properties and methods
+            used in flext-ldap codebase.
+            """
+
+            @property
+            def entry_dn(self) -> str:
+                """Distinguished Name of the entry."""
+                ...
+
+            @property
+            def entry_attributes_as_dict(self) -> dict[str, Any]:
+                """Entry attributes as dictionary."""
+                ...
+
+            def entry_to_json(self) -> str:
+                """Convert entry to JSON string."""
+                ...
+
+            def __getattr__(self, name: str) -> Any:  # noqa: ANN401  # ldap3 library has no type stubs
+                """Dynamic attribute access for LDAP attributes (uid, cn, mail, etc.)."""
+                ...
+
+        class Server(Protocol):
+            """Protocol for ldap3.Server with proper type hints.
+
+            Provides type hints for ldap3.Server used in flext-ldap codebase.
+            """
+
+            @property
+            def host(self) -> str:
+                """LDAP server host."""
+                ...
+
+            @property
+            def port(self) -> int:
+                """LDAP server port."""
+                ...
+
 
 # =========================================================================
 # PUBLIC API EXPORTS - FlextLdapTypes and flext-core TypeVars
 # =========================================================================
 
 __all__: FlextCore.Types.StringList = [
+    "Any",  # Re-export for type stub usage
     "FlextLdapTypes",
+    "Protocol",  # Re-export for type stub usage
 ]

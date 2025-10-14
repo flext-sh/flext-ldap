@@ -13,7 +13,6 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -22,6 +21,11 @@ sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
 
 # Constants
 MAX_AGE_DAYS = 30
+EXCELLENT_QUALITY_SCORE = 90
+GOOD_QUALITY_SCORE = 70
+FAIR_QUALITY_SCORE = 50
+EXCELLENT_FRESHNESS_DAYS = 30
+LONG_PARAGRAPH_WORD_LIMIT = 150
 
 
 @dataclass
@@ -37,9 +41,9 @@ class AuditResult:
     completeness_score: int
     structure_score: int
     quality_score: int
-    issues: list[dict[str, Any]]
-    warnings: list[dict[str, Any]]
-    suggestions: list[dict[str, Any]]
+    issues: list[dict[str, object]]
+    warnings: list[dict[str, object]]
+    suggestions: list[dict[str, object]]
 
 
 @dataclass
@@ -73,7 +77,7 @@ class DocumentationAuditor:
         self.results: list[AuditResult] = []
         self.summary: AuditSummary | None = None
 
-    def _load_config(self, config_path: str | None) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> dict[str, object]:
         """Load configuration from YAML file."""
         default_config = {
             "audit": {
@@ -173,10 +177,17 @@ class DocumentationAuditor:
     def _calculate_freshness_score(self, age_days: int) -> int:
         """Calculate freshness score based on file age."""
         max_age = self.config["audit"]["thresholds"]["max_age_days"]
-        if age_days <= 30:
+        if age_days <= EXCELLENT_FRESHNESS_DAYS:
             return 100
         if age_days <= max_age:
-            return int(100 * (1 - (age_days - 30) / (max_age - 30)))
+            return int(
+                100
+                * (
+                    1
+                    - (age_days - EXCELLENT_FRESHNESS_DAYS)
+                    / (max_age - EXCELLENT_FRESHNESS_DAYS)
+                )
+            )
         return max(0, int(50 * (1 - (age_days - max_age) / max_age)))
 
     def _calculate_completeness_score(self, content: str, word_count: int) -> int:
@@ -297,7 +308,7 @@ class DocumentationAuditor:
         paragraphs = re.split(r"\n\s*\n", content)
         for i, para in enumerate(paragraphs):
             words = len(para.split())
-            if words > 150:  # Very long paragraph
+            if words > LONG_PARAGRAPH_WORD_LIMIT:  # Very long paragraph
                 suggestions.append({
                     "type": "long_paragraph",
                     "paragraph_index": i,
@@ -370,16 +381,18 @@ class DocumentationAuditor:
 
         total_issues = sum(len(r.issues) for r in self.results)
         total_warnings = sum(len(r.warnings) for r in self.results)
-        critical_issues = sum(1 for r in self.results if r.quality_score < 50)
+        critical_issues = sum(
+            1 for r in self.results if r.quality_score < FAIR_QUALITY_SCORE
+        )
 
         # Quality distribution
         quality_ranges = {"excellent": 0, "good": 0, "fair": 0, "poor": 0}
         for result in self.results:
-            if result.quality_score >= 90:
+            if result.quality_score >= EXCELLENT_QUALITY_SCORE:
                 quality_ranges["excellent"] += 1
-            elif result.quality_score >= 70:
+            elif result.quality_score >= GOOD_QUALITY_SCORE:
                 quality_ranges["good"] += 1
-            elif result.quality_score >= 50:
+            elif result.quality_score >= FAIR_QUALITY_SCORE:
                 quality_ranges["fair"] += 1
             else:
                 quality_ranges["poor"] += 1
@@ -412,9 +425,9 @@ class DocumentationAuditor:
 
         return self.summary
 
-    def save_results(self, output_file: str, format: str = "json") -> None:
+    def save_results(self, output_file: str, output_format: str = "json") -> None:
         """Save audit results to file."""
-        if format == "json":
+        if output_format == "json":
             data = {
                 "timestamp": datetime.now(UTC).isoformat(),
                 "summary": asdict(self.summary) if self.summary else None,
@@ -433,6 +446,7 @@ class DocumentationAuditor:
 
 
 def main() -> None:
+    """Main entry point for the documentation audit system."""
     parser = argparse.ArgumentParser(
         description="Documentation Content Quality Audit System"
     )

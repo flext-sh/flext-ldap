@@ -13,12 +13,14 @@ Usage:
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
+# ruff: noqa: S311 - Random used for test data generation only, not cryptographic purposes
 
 from __future__ import annotations
 
 import argparse
-import random
+import random  # nosec S311 - random used for test data generation only, not security
 import sys
 from pathlib import Path
 from typing import Final

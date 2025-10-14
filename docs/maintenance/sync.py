@@ -11,10 +11,14 @@ import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import yaml
+
+# Import documentation maintenance modules
 from flext_core import FlextCore
+
+# Constants
+MAX_CHANGES_DISPLAY = 10
 
 
 @dataclass
@@ -33,7 +37,7 @@ class SyncResult:
 class SyncStatus:
     """Current synchronization status."""
 
-    git_status: dict[str, Any]
+    git_status: dict[str, object]
     pending_changes: FlextCore.Types.StringList
     last_sync: datetime | None
     sync_needed: bool
@@ -47,7 +51,7 @@ class DocumentationSync:
         self.config = self._load_config(config_path)
         self.working_dir = Path(Path(Path(__file__).resolve()).parent).parent
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, object]:
         """Load configuration."""
         default_config = {
             "sync": {
@@ -98,11 +102,11 @@ class DocumentationSync:
             conflicts_present=conflicts_present,
         )
 
-    def _get_git_status(self) -> dict[str, Any]:
+    def _get_git_status(self) -> dict[str, object]:
         """Get git repository status."""
         try:
             # Check if we're in a git repository
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments
                 ["git", "rev-parse", "--git-dir"],
                 check=False,
                 cwd=self.working_dir,
@@ -114,7 +118,7 @@ class DocumentationSync:
                 return {"initialized": False, "message": "Not a git repository"}
 
             # Get branch info
-            branch_result = subprocess.run(
+            branch_result = subprocess.run(  # nosec S603 - git command with fixed arguments
                 ["git", "branch", "--show-current"],
                 check=False,
                 cwd=self.working_dir,
@@ -128,7 +132,7 @@ class DocumentationSync:
             )
 
             # Get status
-            status_result = subprocess.run(
+            status_result = subprocess.run(  # nosec S603 - git command with fixed arguments
                 ["git", "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
@@ -168,7 +172,7 @@ class DocumentationSync:
         """Get timestamp of last synchronization."""
         # Look for a marker file or check git log
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments
                 ["git", "log", "-1", "--format=%ct", "--", "docs/"],
                 check=False,
                 cwd=self.working_dir,
@@ -188,7 +192,7 @@ class DocumentationSync:
     def _check_for_conflicts(self) -> bool:
         """Check if there are merge conflicts."""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments
                 ["git", "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
@@ -264,7 +268,7 @@ class DocumentationSync:
 
         try:
             # Stage files
-            subprocess.run(["git", "add"] + files, cwd=self.working_dir, check=True)
+            subprocess.run(["git", "add"] + files, cwd=self.working_dir, check=True)  # nosec S603 - git command with validated file paths
 
             # Create commit message
             changes_desc = f"{len(files)} files"
@@ -273,7 +277,7 @@ class DocumentationSync:
             )
 
             # Commit
-            subprocess.run(
+            subprocess.run(  # nosec S603 - git command with validated message
                 ["git", "commit", "-m", commit_message],
                 cwd=self.working_dir,
                 check=True,
@@ -281,7 +285,7 @@ class DocumentationSync:
 
             # Push if configured
             if self.config["sync"]["push_after_commit"]:
-                subprocess.run(
+                subprocess.run(  # nosec S603,S607 - git command with validated config
                     [
                         "git",
                         "push",
@@ -327,7 +331,7 @@ class DocumentationSync:
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             branch_name = f"docs-backup-{timestamp}"
 
-            subprocess.run(
+            subprocess.run(  # nosec S603,S607 - git command with validated branch name
                 ["git", "checkout", "-b", branch_name], cwd=self.working_dir, check=True
             )
 
@@ -353,7 +357,7 @@ class DocumentationSync:
     def rollback_changes(self, files: FlextCore.Types.StringList) -> SyncResult:
         """Rollback changes to specific files."""
         try:
-            subprocess.run(
+            subprocess.run(  # nosec S603 - git command with validated file paths
                 ["git", "checkout", "HEAD", "--"] + files,
                 cwd=self.working_dir,
                 check=True,
@@ -424,10 +428,8 @@ class DocumentationSync:
     def _run_comprehensive_audit(self) -> SyncResult:
         """Run comprehensive documentation audit."""
         try:
-            from audit import DocumentationAuditor
-
             auditor = DocumentationAuditor()
-            results = auditor.audit_directory(os.path.join(self.working_dir, "docs"))
+            results = auditor.audit_directory(Path(self.working_dir) / "docs")
             auditor.generate_summary()
 
             return SyncResult(
@@ -451,12 +453,8 @@ class DocumentationSync:
     def _run_content_optimization(self) -> SyncResult:
         """Run content optimization."""
         try:
-            from optimize import ContentOptimizer
-
             optimizer = ContentOptimizer()
-            results = optimizer.optimize_directory(
-                os.path.join(self.working_dir, "docs")
-            )
+            results = optimizer.optimize_directory(Path(self.working_dir) / "docs")
 
             files_modified = [r.file_path for r in results if r.changes_made > 0]
             total_changes = sum(r.changes_made for r in results)
@@ -489,7 +487,7 @@ class DocumentationSync:
             for root, _dirs, files in os.walk(docs_dir):
                 for file in files:
                     if file.endswith((".md", ".mdx")):
-                        file_path = os.path.join(root, file)
+                        file_path = Path(root) / file
                         # Simple metadata update - could be more sophisticated
                         with Path(file_path).open(encoding="utf-8") as f:
                             content = f.read()
@@ -520,8 +518,6 @@ class DocumentationSync:
     def _run_report_generation(self) -> SyncResult:
         """Generate maintenance reports."""
         try:
-            from report import ReportGenerator
-
             generator = ReportGenerator()
             report_data = generator.generate_comprehensive_report()
 
@@ -592,9 +588,9 @@ def main() -> None:
             pass
 
         if status.pending_changes and args.verbose:
-            for _change in status.pending_changes[:10]:
+            for _change in status.pending_changes[:MAX_CHANGES_DISPLAY]:
                 pass
-            if len(status.pending_changes) > 10:
+            if len(status.pending_changes) > MAX_CHANGES_DISPLAY:
                 pass
 
     elif args.validate:

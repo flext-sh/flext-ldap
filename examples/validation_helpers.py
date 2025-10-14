@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Any
 
 from flext_core import FlextCore
 
@@ -30,7 +29,7 @@ class ValidationMetrics:
         self.passed_tests = 0
         self.failed_tests = 0
         self.skipped_tests = 0
-        self.test_results: list[dict[str, Any]] = []
+        self.test_results: list[dict[str, object]] = []
 
     def add_result(
         self,
@@ -88,7 +87,7 @@ class ValidationMetrics:
             for result in failed:
                 logger.info(f"  ❌ {result['test_name']}: {result['message']}")
 
-    def get_summary(self) -> dict[str, Any]:
+    def get_summary(self) -> dict[str, object]:
         """Get validation summary as dictionary.
 
         Returns:
@@ -107,7 +106,7 @@ class ValidationMetrics:
         }
 
 
-def measure_time(func: Callable[..., Any]) -> Callable[..., tuple[Any, float]]:
+def measure_time(func: Callable[..., object]) -> Callable[..., tuple[object, float]]:
     """Decorator to measure function execution time.
 
     Args:
@@ -118,7 +117,7 @@ def measure_time(func: Callable[..., Any]) -> Callable[..., tuple[Any, float]]:
 
     """
 
-    def wrapper(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+    def wrapper(*args: object, **kwargs: object) -> tuple[object, float]:
         start_time = time.time()
         result = func(*args, **kwargs)
         duration = time.time() - start_time

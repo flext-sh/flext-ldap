@@ -69,12 +69,6 @@ class TestFlextLdapAuthenticationInitialization:
         assert auth._server is None
         assert auth._ldap_config is None
 
-    def test_factory_method(self) -> None:
-        """Test factory method creates valid instance."""
-        auth = FlextLdapAuthentication.create()
-        assert isinstance(auth, FlextLdapAuthentication)
-        assert auth._connection is None
-
     def test_set_connection_context(
         self,
         auth_service: FlextLdapAuthentication,
