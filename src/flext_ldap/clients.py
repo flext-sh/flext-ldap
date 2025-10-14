@@ -526,7 +526,7 @@ class FlextLdapClients(FlextCore.Service[None]):
             return FlextCore.Result[bool].fail(f"Add entry failed: {e}")
 
     def modify_entry(
-        self, dn: str, changes: FlextCore.Types.Dict
+        self, dn: str, changes: FlextLdapModels.EntryChanges
     ) -> FlextCore.Result[bool]:
         """Modify existing LDAP entry - implements LdapModifyProtocol."""
         try:
@@ -536,7 +536,12 @@ class FlextLdapClients(FlextCore.Service[None]):
             # Convert changes to ldap3 format
             # ldap3 expects: {'attr': [(MODIFY_OP, [values])]}
             ldap3_changes: FlextCore.Types.Dict = {}
-            for attr, change_spec in changes.items():
+            changes_dict = (
+                changes.model_dump()
+                if hasattr(changes, "model_dump")
+                else dict(changes)
+            )
+            for attr, change_spec in changes_dict.items():
                 # Check if already in ldap3 tuple format: [(operation, values)]
                 if (
                     isinstance(change_spec, list)
@@ -586,6 +591,86 @@ class FlextLdapClients(FlextCore.Service[None]):
         except Exception as e:
             self.logger.exception("Delete entry failed")
             return FlextCore.Result[bool].fail(f"Delete entry failed: {e}")
+
+    # =========================================================================
+    # CONVENIENCE METHODS - Alias to main methods for backward compatibility
+    # =========================================================================
+
+    def add(
+        self,
+        dn: str,
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
+        """Add new LDAP entry (convenience alias for add_entry).
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+
+        Returns:
+            FlextCore.Result indicating success
+        """
+        return self.add_entry(dn, attributes)
+
+    def delete(self, dn: str) -> FlextCore.Result[bool]:
+        """Delete LDAP entry (convenience alias for delete_entry).
+
+        Args:
+            dn: Distinguished name of entry to delete
+
+        Returns:
+            FlextCore.Result indicating success
+        """
+        return self.delete_entry(dn)
+
+    def add_entry_universal(
+        self,
+        dn: str,
+        attributes: dict[str, str | FlextCore.Types.StringList],
+    ) -> FlextCore.Result[bool]:
+        """Add new LDAP entry with universal format support (alias for add_entry).
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+
+        Returns:
+            FlextCore.Result indicating success
+        """
+        return self.add_entry(dn, attributes)
+
+    def delete_entry_universal(self, dn: str) -> FlextCore.Result[bool]:
+        """Delete LDAP entry with universal format support (alias for delete_entry).
+
+        Args:
+            dn: Distinguished name of entry to delete
+
+        Returns:
+            FlextCore.Result indicating success
+        """
+        return self.delete_entry(dn)
+
+    def get_server_type(self) -> str | None:
+        """Get the detected server type.
+
+        Returns:
+            Server type string or None if not detected
+        """
+        return self._detected_server_type
+
+    def modify_entry_universal(
+        self, dn: str, changes: FlextLdapModels.EntryChanges
+    ) -> FlextCore.Result[bool]:
+        """Modify LDAP entry with universal format support (alias for modify_entry).
+
+        Args:
+            dn: Distinguished name of entry to modify
+            changes: Attribute changes to apply
+
+        Returns:
+            FlextCore.Result indicating success
+        """
+        return self.modify_entry(dn, changes)
 
     # =========================================================================
     # VALIDATION OPERATIONS - Direct implementation
@@ -1024,9 +1109,12 @@ class FlextLdapClients(FlextCore.Service[None]):
                 return FlextCore.Result[bool].fail("No attributes provided for update")
 
             # Convert to modify changes format (MODIFY_REPLACE for all)
-            changes: FlextCore.Types.Dict = {}
+            changes_dict: FlextCore.Types.Dict = {}
             for attr_name, attr_value in attributes.items():
-                changes[attr_name] = [("MODIFY_REPLACE", attr_value)]
+                changes_dict[attr_name] = [("MODIFY_REPLACE", attr_value)]
+
+            # Convert dict to EntryChanges model
+            changes = FlextLdapModels.EntryChanges(**changes_dict)
 
             # Use existing modify_entry method
             return self.modify_entry(dn, changes)
@@ -1063,9 +1151,12 @@ class FlextLdapClients(FlextCore.Service[None]):
                 return FlextCore.Result[bool].fail("No attributes provided for update")
 
             # Convert to modify changes format (MODIFY_REPLACE for all)
-            changes: FlextCore.Types.Dict = {}
+            changes_dict: FlextCore.Types.Dict = {}
             for attr_name, attr_value in attributes.items():
-                changes[attr_name] = [("MODIFY_REPLACE", attr_value)]
+                changes_dict[attr_name] = [("MODIFY_REPLACE", attr_value)]
+
+            # Convert dict to EntryChanges model
+            changes = FlextLdapModels.EntryChanges(**changes_dict)
 
             # Use existing modify_entry method
             return self.modify_entry(dn, changes)
@@ -1145,17 +1236,19 @@ class FlextLdapClients(FlextCore.Service[None]):
     def add_member(self, group_dn: str, member_dn: str) -> FlextCore.Result[bool]:
         """Add a member to a group."""
         # Use modify_entry to add member
-        changes: FlextCore.Types.Dict = {
+        changes_dict: FlextCore.Types.Dict = {
             "member": [(2, member_dn)]
         }  # 2 = ADD operation in ldap3
+        changes = FlextLdapModels.EntryChanges(**changes_dict)
         return self.modify_entry(group_dn, changes)
 
     def remove_member(self, group_dn: str, member_dn: str) -> FlextCore.Result[bool]:
         """Remove a member from a group."""
         # Use modify_entry to remove member
-        changes: FlextCore.Types.Dict = {
+        changes_dict: FlextCore.Types.Dict = {
             "member": [(1, member_dn)]
         }  # 1 = DELETE operation in ldap3
+        changes = FlextLdapModels.EntryChanges(**changes_dict)
         return self.modify_entry(group_dn, changes)
 
     def get_members(

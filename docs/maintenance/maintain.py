@@ -7,7 +7,6 @@ Provides automated workflows and comprehensive reporting.
 
 import argparse
 import json
-import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -15,16 +14,12 @@ from pathlib import Path
 
 import yaml
 
-# Add parent directory to path for imports
-sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
-
-# Import documentation quality tools
-from audit import DocumentationAuditor
-from optimize import ContentOptimizer
-from report import ReportGenerator
-from sync import DocumentationSync
-from validate_links import LinkValidator
-from validate_style import StyleValidator
+from .audit import DocumentationAuditor
+from .optimize import ContentOptimizer
+from .report import ReportGenerator
+from .sync import DocumentationSync
+from .validate_links import LinkValidator
+from .validate_style import StyleValidator
 
 # Constants for maintenance effectiveness calculation
 EXCELLENT_QUALITY_THRESHOLD = 90

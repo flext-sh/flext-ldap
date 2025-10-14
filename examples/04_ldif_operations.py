@@ -639,15 +639,22 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
         attributes = result.unwrap()
         logger.info("   ✅ Server-specific attributes retrieved:")
 
-        # Display attribute information
-        for key, value in list(attributes.items())[:5]:  # Show first 5
+        # Display attribute information - ServerAttributes is a Pydantic model
+        attrs_dict = (
+            attributes.model_dump()
+            if hasattr(attributes, "model_dump")
+            else dict(attributes)
+        )
+        attr_items = list(attrs_dict.items())[:5]  # Show first 5
+
+        for key, value in attr_items:
             if isinstance(value, list):
                 logger.info(f"      • {key}: {len(value)} items")
             else:
                 logger.info(f"      • {key}: {value}")
 
-        if len(attributes) > 5:
-            logger.info(f"      ... and {len(attributes) - 5} more")
+        if len(attrs_dict) > 5:
+            logger.info(f"      ... and {len(attrs_dict) - 5} more")
 
     else:
         logger.warning(f"   ⚠️  Failed to get attributes: {result.error}")

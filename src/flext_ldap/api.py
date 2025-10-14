@@ -16,15 +16,15 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
-from typing import Self, override
+from typing import Self, cast, override
 
 from flext_core import FlextCore
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers import FlextLdapServers
@@ -218,7 +218,7 @@ class FlextLdap(FlextCore.Service[None]):
         return self.create_entry(dn, attributes)
 
     def update_entry(
-        self, dn: str, changes: FlextCore.Types.Dict
+        self, dn: str, changes: FlextLdapModels.EntryChanges
     ) -> FlextCore.Result[bool]:
         """Update existing LDAP entry.
 
@@ -239,7 +239,7 @@ class FlextLdap(FlextCore.Service[None]):
         return self.client.modify_entry(dn, changes)
 
     def modify_entry(
-        self, dn: str, changes: FlextCore.Types.Dict
+        self, dn: str, changes: FlextLdapModels.EntryChanges
     ) -> FlextCore.Result[bool]:
         """Modify existing LDAP entry.
 
@@ -518,13 +518,10 @@ class FlextLdap(FlextCore.Service[None]):
 
             # merge strategy (default)
             # Merge strategy: update existing attributes
-            # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
-            attrs_as_dict: FlextCore.Types.Dict = dict[str, object](
-                upsert_request.attributes
-            )
+            changes = FlextLdapModels.EntryChanges(**upsert_request.attributes)
             update_result = self.update_entry(
                 upsert_request.dn,
-                attrs_as_dict,
+                changes,
             )
             if update_result.is_failure:
                 return FlextCore.Result[dict[str, str]].fail(
@@ -618,9 +615,8 @@ class FlextLdap(FlextCore.Service[None]):
 
             # Update the entry
             if update_attrs:
-                # Type cast: dict[str, str] is compatible with FlextCore.Types.Dict
-                attrs_as_dict: FlextCore.Types.Dict = dict[str, object](update_attrs)
-                update_result = self.update_entry(user_request.dn, attrs_as_dict)
+                changes = FlextLdapModels.EntryChanges(**update_attrs)
+                update_result = self.update_entry(user_request.dn, changes)
                 if update_result.is_failure:
                     return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                         f"Failed to update user: {update_result.error}",
@@ -686,9 +682,8 @@ class FlextLdap(FlextCore.Service[None]):
 
             # Update the entry
             if update_attrs:
-                # Type cast: dict[str, str | FlextCore.Types.StringList] is compatible with FlextCore.Types.Dict
-                attrs_as_dict: FlextCore.Types.Dict = dict[str, object](update_attrs)
-                update_result = self.update_entry(group_request.dn, attrs_as_dict)
+                changes = FlextLdapModels.EntryChanges(**update_attrs)
+                update_result = self.update_entry(group_request.dn, changes)
                 if update_result.is_failure:
                     return FlextCore.Result[FlextLdapModels.Group].fail(
                         f"Failed to update group: {update_result.error}",
@@ -1147,13 +1142,21 @@ class FlextLdap(FlextCore.Service[None]):
                     # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
                     ldap_entry = root_dse_result.unwrap()
                     if ldap_entry:
-                        ldif_entry = FlextLdifModels.Entry(
-                            dn=str(ldap_entry.dn),
-                            attributes=dict(ldap_entry.attributes),
-                        )
-                        server_type_result = quirks.detect_server_type_from_entries([
-                            ldif_entry
-                        ])
+                        adapter = FlextLdapEntryAdapter()
+                        entry_dict = {
+                            "dn": str(ldap_entry.dn),
+                            "attributes": dict(ldap_entry.attributes),
+                        }
+                        ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+                        if ldif_entry_result.is_failure:
+                            server_type_result = FlextCore.Result[str].fail(
+                                f"Failed to convert entry: {ldif_entry_result.error}"
+                            )
+                        else:
+                            ldif_entry = ldif_entry_result.unwrap()
+                            server_type_result = quirks.detect_server_type_from_entries([
+                                ldif_entry
+                            ])
                     else:
                         server_type_result = FlextCore.Result[str].fail(
                             "No root DSE entry found"
@@ -1233,13 +1236,18 @@ class FlextLdap(FlextCore.Service[None]):
             entry = entry_result.unwrap()
             if entry:
                 # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
-                ldif_entry = FlextLdifModels.Entry(
-                    dn=str(entry.dn),
-                    attributes=dict(entry.attributes),
-                )
-                server_type_result = quirks.detect_server_type_from_entries([
-                    ldif_entry
-                ])
+                adapter = FlextLdapEntryAdapter()
+                entry_dict = {"dn": str(entry.dn), "attributes": dict(entry.attributes)}
+                ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+                if ldif_entry_result.is_success:
+                    ldif_entry = ldif_entry_result.unwrap()
+                    server_type_result = quirks.detect_server_type_from_entries([
+                        ldif_entry
+                    ])
+                else:
+                    server_type_result = FlextCore.Result[str].fail(
+                        f"Entry conversion failed: {ldif_entry_result.error}"
+                    )
                 (
                     server_type_result.unwrap()
                     if server_type_result.is_success
@@ -1311,11 +1319,18 @@ class FlextLdap(FlextCore.Service[None]):
             # Detect server type
             quirks = FlextLdapQuirksIntegration()
             # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
-            ldif_entry = FlextLdifModels.Entry(
-                dn=str(entry.dn),
-                attributes=dict(entry.attributes),
-            )
-            server_type_result = quirks.detect_server_type_from_entries([ldif_entry])
+            adapter = FlextLdapEntryAdapter()
+            entry_dict = {"dn": str(entry.dn), "attributes": dict(entry.attributes)}
+            ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+            if ldif_entry_result.is_success:
+                ldif_entry = ldif_entry_result.unwrap()
+                server_type_result = quirks.detect_server_type_from_entries([
+                    ldif_entry
+                ])
+            else:
+                server_type_result = FlextCore.Result[str].fail(
+                    f"Entry conversion failed: {ldif_entry_result.error}"
+                )
             (
                 server_type_result.unwrap()
                 if server_type_result.is_success
@@ -1689,13 +1704,21 @@ class FlextLdap(FlextCore.Service[None]):
             if root_dse_result.is_success and root_dse_result.unwrap():
                 ldap_entry = root_dse_result.unwrap()
                 if ldap_entry:
-                    ldif_entry = FlextLdifModels.Entry(
-                        dn=str(ldap_entry.dn),
-                        attributes=dict(ldap_entry.attributes),
-                    )
-                    server_type_result = quirks.detect_server_type_from_entries([
-                        ldif_entry
-                    ])
+                    adapter = FlextLdapEntryAdapter()
+                    entry_dict = {
+                        "dn": str(ldap_entry.dn),
+                        "attributes": dict(ldap_entry.attributes),
+                    }
+                    ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+                    if ldif_entry_result.is_success:
+                        ldif_entry = ldif_entry_result.unwrap()
+                        server_type_result = quirks.detect_server_type_from_entries([
+                            ldif_entry
+                        ])
+                    else:
+                        server_type_result = FlextCore.Result[str].fail(
+                            f"Entry conversion failed: {ldif_entry_result.error}"
+                        )
                 else:
                     server_type_result = FlextCore.Result[str].fail(
                         "No root DSE entry found"
@@ -1792,13 +1815,10 @@ class FlextLdap(FlextCore.Service[None]):
         """
         try:
             # Use standard update_entry for schema modifications
-            # Type cast: dict[str, FlextCore.Types.StringList | str] is compatible with FlextCore.Types.Dict
-            changes_as_dict: FlextCore.Types.Dict = dict[str, object](
-                schema_request.changes
-            )
+            changes = FlextLdapModels.EntryChanges(**schema_request.changes)
             return self.update_entry(
                 schema_request.schema_dn,
-                changes_as_dict,
+                changes,
             )
 
         except Exception as e:
@@ -2098,10 +2118,21 @@ class FlextLdap(FlextCore.Service[None]):
             quirks = FlextLdapQuirksIntegration()
             # Convert FlextLdapModels.Entry to FlextLdifModels.Entry for server detection
             ldap_entry = root_dse_result.unwrap()
-            ldif_entry = FlextLdifModels.Entry(
-                dn=str(ldap_entry.dn),
-                attributes=dict(ldap_entry.attributes),
-            )
+            if not ldap_entry:
+                return FlextCore.Result[str].fail("Empty root DSE entry")
+
+            adapter = FlextLdapEntryAdapter()
+            entry_dict = {
+                "dn": str(ldap_entry.dn),
+                "attributes": dict(ldap_entry.attributes),
+            }
+            ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+            if ldif_entry_result.is_failure:
+                return FlextCore.Result[str].fail(
+                    f"Entry conversion failed: {ldif_entry_result.error}"
+                )
+
+            ldif_entry = ldif_entry_result.unwrap()
             return quirks.detect_server_type_from_entries([ldif_entry])
 
         except Exception as e:
@@ -2510,7 +2541,9 @@ class FlextLdap(FlextCore.Service[None]):
                 )
             ]
 
-        return self.modify_entry(dn, changes)
+        # Convert dict to EntryChanges model for type safety
+        changes_model = FlextLdapModels.EntryChanges(**changes)
+        return self.modify_entry(dn, changes_model)
 
     def update_group_attributes(
         self,
@@ -2536,7 +2569,9 @@ class FlextLdap(FlextCore.Service[None]):
                 )
             ]
 
-        return self.modify_entry(dn, changes)
+        # Convert dict to EntryChanges model for type safety
+        changes_model = FlextLdapModels.EntryChanges(**changes)
+        return self.modify_entry(dn, changes_model)
 
     def delete_user(self, dn: str) -> FlextCore.Result[bool]:
         """Delete a user entry.
@@ -2640,7 +2675,7 @@ class FlextLdap(FlextCore.Service[None]):
         # Check if we received SearchRequest objects
         if base_dns and isinstance(base_dns[0], FlextLdapModels.SearchRequest):
             # Process SearchRequest list - type narrowed to list[SearchRequest]
-            search_requests = base_dns
+            search_requests = cast("list[FlextLdapModels.SearchRequest]", base_dns)
             results = []
             for search_request in search_requests:
                 result = self.search(search_request)
@@ -2746,7 +2781,11 @@ class FlextLdap(FlextCore.Service[None]):
         for server_type in server_types:
             servers = FlextLdapServers(server_type)
             # FlextLdapModels.Entry and FlextLdifModels.Entry are structurally compatible
-            validation_result = servers.validate_entry_for_server(entry, server_type)
+            # Cast to FlextLdifModels.Entry for type safety
+            ldif_entry = cast("FlextLdifModels.Entry", entry)
+            validation_result = servers.validate_entry_for_server(
+                ldif_entry, server_type
+            )
             if validation_result.is_success and validation_result.unwrap():
                 return FlextCore.Result[str].ok(server_type)
 
@@ -2771,7 +2810,9 @@ class FlextLdap(FlextCore.Service[None]):
         servers = FlextLdapServers(target_server_type)
         return servers.normalize_entry_for_server(entry, target_server_type)
 
-    def get_server_specific_attributes(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def get_server_specific_attributes(
+        self,
+    ) -> FlextCore.Result[FlextLdapModels.ServerAttributes]:
         """Get server-specific attributes for current server type.
 
         Returns:
@@ -2780,7 +2821,9 @@ class FlextLdap(FlextCore.Service[None]):
         """
         # This would need to be implemented in the servers module
         # For now, return empty dict
-        return FlextCore.Result[FlextCore.Types.Dict].ok({})
+        return FlextCore.Result[FlextLdapModels.ServerAttributes].ok(
+            FlextLdapModels.ServerAttributes()
+        )
 
     def get_detected_server_type(self) -> FlextCore.Result[str | None]:
         """Get the detected server type from current connection.
@@ -2793,7 +2836,9 @@ class FlextLdap(FlextCore.Service[None]):
         # For now, return None
         return FlextCore.Result[str | None].ok(None)
 
-    def get_server_capabilities(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def get_server_capabilities(
+        self,
+    ) -> FlextCore.Result[FlextLdapModels.ServerCapabilities]:
         """Get server capabilities and supported features.
 
         Returns:
@@ -2802,13 +2847,13 @@ class FlextLdap(FlextCore.Service[None]):
         """
         # This would need to query the server
         # For now, return basic capabilities
-        capabilities: FlextCore.Types.Dict = {
-            "supports_ssl": True,
-            "supports_starttls": True,
-            "supports_paged_results": True,
-            "max_page_size": 1000,
-        }
-        return FlextCore.Result[FlextCore.Types.Dict].ok(capabilities)
+        capabilities = FlextLdapModels.ServerCapabilities(
+            supports_ssl=True,
+            supports_starttls=True,
+            supports_paged_results=True,
+            max_page_size=1000,
+        )
+        return FlextCore.Result[FlextLdapModels.ServerCapabilities].ok(capabilities)
 
     def get_server_operations(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get list of supported server operations.
@@ -2955,9 +3000,7 @@ class FlextLdap(FlextCore.Service[None]):
 
         """
         # Initialize result for type safety
-        result: FlextCore.Result[FlextLdapModels.Entry] = self.upsert_entry(
-            upsert_request
-        )
+        result: FlextCore.Result[dict[str, str]] = self.upsert_entry(upsert_request)
         for attempt in range(1, max_retries):
             result = self.upsert_entry(upsert_request)
 

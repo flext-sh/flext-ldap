@@ -356,9 +356,22 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
             normalized_entry = norm_result.unwrap()
 
+            # Extract objectClass from entry
+            attrs = normalized_entry.attributes.attributes
+            object_class = (
+                attrs["objectClass"].values if "objectClass" in attrs else ["top"]
+            )
+
+            # Convert attributes to dict format for ldap3
+            ldap3_attrs: dict[str, list[str]] = {}
+            for attr_name, attr_value in attrs.items():
+                if attr_name != "objectClass":  # Skip objectClass (passed separately)
+                    ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
+
             success = connection.add(
                 str(normalized_entry.dn),
-                attributes=normalized_entry.attributes,
+                object_class,
+                attributes=ldap3_attrs or None,
             )
 
             if not success:
@@ -386,12 +399,13 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextCore.Result[bool].fail("Connection not bound")
 
-            ldap3_mods: dict[str, list[tuple[int, FlextCore.Types.List]]] = {}
+            # Convert modifications to ldap3 format
+            ldap3_mods: dict[str, list[tuple[int, list[str] | str]]] = {}
             for attr, value in modifications.items():
-                values: FlextCore.Types.List = (
-                    value if isinstance(value, list) else [value]
-                )
-                ldap3_mods[attr] = [(int(MODIFY_REPLACE), values)]
+                values = value if isinstance(value, list) else [value]
+                # Convert all values to strings
+                str_values: list[str] | str = [str(v) for v in values]
+                ldap3_mods[attr] = [(MODIFY_REPLACE, str_values)]
 
             success = connection.modify(dn, ldap3_mods)
 
@@ -726,7 +740,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
             # Check for required object classes
             object_classes = entry.attributes.get("objectClass")
-            if not object_classes or not object_classes.values:
+            if not object_classes:
                 return FlextCore.Result[bool].fail(
                     "Entry must have objectClass attribute"
                 )

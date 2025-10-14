@@ -21,7 +21,6 @@ import pytest
 from flext_core import FlextCore
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.acl import FlextLdifAclParser
-from ldap3.core.exceptions import DistinguishedName
 
 from flext_ldap import FlextLdapClients, FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
@@ -339,9 +338,9 @@ class TestEntryConversion:
             object_classes=["person", "organizationalPerson"],
         )
 
-        # Convert to LDIF entry
-        ldif_entry_result = FlextLdifModels.Entry(
-            dn=DistinguishedName(ldap_entry.dn),
+        # Convert to LDIF entry using .create() method
+        ldif_entry_result = FlextLdifModels.Entry.create(
+            dn=ldap_entry.dn,
             attributes=ldap_entry.attributes,
         )
 

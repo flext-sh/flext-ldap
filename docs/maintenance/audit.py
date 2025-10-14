@@ -9,23 +9,85 @@ import json
 import operator
 import os
 import re
-import sys
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
+from flext_core import FlextConstants
 
-# Add parent directory to path for imports
-sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
+# Constants for audit configuration
+MAX_AGE_DAYS: int = FlextConstants.Validation.MAX_AGE
+EXCELLENT_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 10
+GOOD_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 20
+FAIR_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 30
+EXCELLENT_FRESHNESS_DAYS: int = MAX_AGE_DAYS
+LONG_PARAGRAPH_WORD_LIMIT: int = FlextConstants.Validation.PREVIEW_LENGTH * 3
 
-# Constants
-MAX_AGE_DAYS = 30
-EXCELLENT_QUALITY_SCORE = 90
-GOOD_QUALITY_SCORE = 70
-FAIR_QUALITY_SCORE = 50
-EXCELLENT_FRESHNESS_DAYS = 30
-LONG_PARAGRAPH_WORD_LIMIT = 150
+
+# Type definitions
+class IssueInfo(TypedDict):
+    """Information about a documentation issue."""
+
+    type: str
+    pattern: str | None
+    count: int | None
+    message: str
+    link_text: str | None
+    url: str | None
+    line_number: int | None
+    severity: str | None
+
+
+class WarningInfo(TypedDict):
+    """Information about a documentation warning."""
+
+    type: str
+    url: str | None
+    alt_text: str | None
+    message: str
+    line_number: int | None
+
+
+class SuggestionInfo(TypedDict):
+    """Information about a documentation suggestion."""
+
+    type: str
+    message: str
+    improvement: str | None
+    line_number: int | None
+
+
+class AuditThresholds(TypedDict):
+    """Audit thresholds configuration."""
+
+    min_word_count: int
+    max_age_days: int
+    min_quality_score: int
+    min_completeness_score: int
+
+
+class AuditSettings(TypedDict):
+    """Audit settings configuration."""
+
+    include_patterns: list[str]
+    exclude_patterns: list[str]
+    thresholds: AuditThresholds
+
+
+class ContentSettings(TypedDict):
+    """Content settings configuration."""
+
+    required_sections: list[str]
+    prohibited_patterns: list[str]
+
+
+class AuditConfig(TypedDict):
+    """Configuration for documentation audit."""
+
+    audit: AuditSettings
+    content: ContentSettings
 
 
 @dataclass
@@ -41,9 +103,9 @@ class AuditResult:
     completeness_score: int
     structure_score: int
     quality_score: int
-    issues: list[dict[str, object]]
-    warnings: list[dict[str, object]]
-    suggestions: list[dict[str, object]]
+    issues: list[IssueInfo]
+    warnings: list[WarningInfo]
+    suggestions: list[SuggestionInfo]
 
 
 @dataclass
@@ -73,11 +135,11 @@ class DocumentationAuditor:
             config_path: Path to YAML configuration file, or None for defaults.
 
         """
-        self.config = self._load_config(config_path)
+        self.config: AuditConfig = self._load_config(config_path)
         self.results: list[AuditResult] = []
         self.summary: AuditSummary | None = None
 
-    def _load_config(self, config_path: str | None) -> dict[str, object]:
+    def _load_config(self, config_path: str | None) -> AuditConfig:
         """Load configuration from YAML file."""
         default_config = {
             "audit": {
@@ -124,7 +186,18 @@ class DocumentationAuditor:
                 completeness_score=0,
                 structure_score=0,
                 quality_score=0,
-                issues=[{"type": "error", "message": f"Failed to read file: {e}"}],
+                issues=[
+                    {
+                        "type": "error",
+                        "pattern": None,
+                        "count": None,
+                        "message": f"Failed to read file: {e}",
+                        "link_text": None,
+                        "url": None,
+                        "line_number": None,
+                        "severity": "error",
+                    }
+                ],
                 warnings=[],
                 suggestions=[],
             )
@@ -237,7 +310,7 @@ class DocumentationAuditor:
         if code_blocks:
             unspecified = code_blocks.count("")
             if unspecified > 0:
-                score -= min(30, unspecified * 10)
+                score -= min(MAX_AGE_DAYS, unspecified * 10)
 
         # Check for broken links (basic check)
         links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
@@ -263,9 +336,9 @@ class DocumentationAuditor:
         self,
         content: str,
         file_path: str,
-        issues: list[dict],
-        warnings: list[dict],
-        suggestions: list[dict],
+        issues: list[IssueInfo],
+        warnings: list[WarningInfo],
+        suggestions: list[SuggestionInfo],
     ) -> None:
         """Detect various issues in the content."""
         # Check for prohibited patterns
@@ -278,6 +351,10 @@ class DocumentationAuditor:
                     "pattern": pattern,
                     "count": len(matches),
                     "message": f'Found {len(matches)} instances of prohibited pattern "{pattern}"',
+                    "link_text": None,
+                    "url": None,
+                    "line_number": None,
+                    "severity": "warning",
                 })
 
         # Check for broken internal links
@@ -289,9 +366,13 @@ class DocumentationAuditor:
             if not Path(full_path).exists():
                 issues.append({
                     "type": "broken_link",
+                    "pattern": None,
+                    "count": None,
+                    "message": f"Broken internal link: {url}",
                     "link_text": text,
                     "url": url,
-                    "message": f"Broken internal link: {url}",
+                    "line_number": None,
+                    "severity": "error",
                 })
 
         # Check for images without alt text
@@ -301,18 +382,20 @@ class DocumentationAuditor:
                 warnings.append({
                     "type": "missing_alt_text",
                     "url": url,
+                    "alt_text": None,
                     "message": f"Image missing alt text: {url}",
+                    "line_number": None,
                 })
 
         # Check for long paragraphs
         paragraphs = re.split(r"\n\s*\n", content)
-        for i, para in enumerate(paragraphs):
+        for para in paragraphs:
             words = len(para.split())
             if words > LONG_PARAGRAPH_WORD_LIMIT:  # Very long paragraph
                 suggestions.append({
                     "type": "long_paragraph",
-                    "paragraph_index": i,
-                    "word_count": words,
+                    "improvement": f"Consider breaking up long paragraph ({words} words)",
+                    "line_number": None,
                     "message": f"Consider breaking up long paragraph ({words} words)",
                 })
 
@@ -324,12 +407,12 @@ class DocumentationAuditor:
 
         for root, dirs, files in os.walk(directory):
             # Skip excluded directories
-            dirs[:] = [d for d in dirs if not self._is_excluded(Path(root) / d)]
+            dirs[:] = [d for d in dirs if not self._is_excluded(str(Path(root) / d))]
 
             for file in files:
                 file_path = Path(root) / file
-                if self._should_audit_file(file_path):
-                    result = self.audit_file(file_path)
+                if self._should_audit_file(str(file_path)):
+                    result = self.audit_file(str(file_path))
                     results.append(result)
 
             if not recursive:

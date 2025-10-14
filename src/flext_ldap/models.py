@@ -521,7 +521,7 @@ class FlextLdapModels(FlextCore.Models):
 
         # Note: Cannot use frozen=True with Entity (has default timestamp fields)
 
-        server_info: FlextCore.Types.Dict
+        server_info: FlextLdapModels.ServerInfo
         server_type: FlextLdapModels.LdapServerType
         server_quirks: FlextLdapModels.ServerQuirks
         attributes: dict[str, FlextLdapModels.SchemaAttribute]
@@ -944,11 +944,12 @@ class FlextLdapModels(FlextCore.Models):
                 attributes["objectClass"] = self.object_classes
 
             # Add additional attributes
-            for key, value in self.additional_attributes.items():
-                if isinstance(value, list):
-                    attributes[key] = [str(v) for v in value]
-                else:
-                    attributes[key] = [str(value)]
+            if self.additional_attributes is not None:
+                for key, value in self.additional_attributes.items():
+                    if isinstance(value, list):
+                        attributes[key] = [str(v) for v in value]
+                    else:
+                        attributes[key] = [str(value)]
 
             return attributes
 
@@ -1188,8 +1189,8 @@ class FlextLdapModels(FlextCore.Models):
 
         # Core enterprise fields
         status: str | None = Field(default=None, description="Group status")
-        additional_attributes: FlextCore.Types.Dict = Field(
-            default_factory=dict,
+        additional_attributes: FlextLdapModels.AdditionalAttributes | None = Field(
+            default=None,
             description="Additional LDAP attributes",
         )
         modified_at: str | None = Field(
@@ -1251,11 +1252,12 @@ class FlextLdapModels(FlextCore.Models):
                 attributes["uniqueMember"] = self.unique_member_dns
 
             # Add additional attributes
-            for key, value in self.additional_attributes.items():
-                if isinstance(value, list):
-                    attributes[key] = [str(v) for v in value]
-                else:
-                    attributes[key] = [str(value)]
+            if self.additional_attributes is not None:
+                for key, value in self.additional_attributes.model_dump().items():
+                    if isinstance(value, list):
+                        attributes[key] = [str(v) for v in value]
+                    else:
+                        attributes[key] = [str(value)]
 
             return attributes
 
@@ -1319,7 +1321,7 @@ class FlextLdapModels(FlextCore.Models):
                 unique_member_dns=unique_member_dns,
                 object_classes=object_classes,
                 status="active",
-                additional_attributes={},
+                additional_attributes=None,
                 created_timestamp=None,
                 modified_timestamp=None,
             )
@@ -2709,8 +2711,8 @@ class FlextLdapModels(FlextCore.Models):
         target_dn: str = Field(default="", description="Target DN")
 
         # Additional details
-        server_info: FlextCore.Types.Dict = Field(
-            default_factory=dict,
+        server_info: FlextLdapModels.ServerInfo | None = Field(
+            default=None,
             description="Server information",
         )
 
@@ -3479,6 +3481,87 @@ class FlextLdapModels(FlextCore.Models):
         )
         generated_at: str = Field(..., description="Report generation timestamp")
 
+    class ServerInfo(FlexibleModel):
+        """Model for LDAP server information from Root DSE.
+
+        Uses FlexibleModel to allow server-specific attributes like vendor, version, etc.
+        """
+
+        naming_contexts: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Naming contexts"
+        )
+        supported_ldap_version: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported LDAP versions"
+        )
+        supported_sasl_mechanisms: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported SASL mechanisms"
+        )
+        supported_controls: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported controls"
+        )
+        supported_extensions: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported extensions"
+        )
+        vendor_name: str | None = Field(default=None, description="Vendor name")
+        vendor_version: str | None = Field(default=None, description="Vendor version")
+
+    class AdditionalAttributes(FlexibleModel):
+        """Model for additional LDAP attributes with dynamic schema support."""
+
+        # This model allows any additional attributes through FlexibleModel
+        # Individual implementations can add specific fields as needed
+
+    class EntryChanges(FlexibleModel):
+        """Model for LDAP entry attribute changes."""
+
+        # This model allows any attribute changes through FlexibleModel
+        # Keys are attribute names, values are the new attribute values
+
+    class ServerCapabilities(StrictModel):
+        """Model for LDAP server capabilities."""
+
+        supports_ssl: bool = Field(default=True, description="Supports SSL/TLS")
+        supports_starttls: bool = Field(default=True, description="Supports STARTTLS")
+        supports_paged_results: bool = Field(
+            default=True, description="Supports paged results"
+        )
+        supports_vlv: bool = Field(
+            default=False, description="Supports Virtual List View"
+        )
+        supports_sasl: bool = Field(
+            default=True, description="Supports SASL authentication"
+        )
+        max_page_size: int = Field(default=1000, ge=0, description="Maximum page size")
+
+    class ServerAttributes(FlexibleModel):
+        """Model for server-specific LDAP attributes."""
+
+        # This model allows any server-specific attributes through FlexibleModel
+
+    class RootDSE(StrictModel):
+        """Model for LDAP Root DSE (DSA-Specific Entry) information."""
+
+        naming_contexts: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Naming contexts"
+        )
+        supported_ldap_version: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported LDAP versions"
+        )
+        supported_sasl_mechanisms: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported SASL mechanisms"
+        )
+        supported_controls: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported controls"
+        )
+        supported_extensions: FlextCore.Types.StringList = Field(
+            default_factory=list, description="Supported extensions"
+        )
+        subschema_subentry: str | None = Field(
+            default=None, description="Subschema subentry DN"
+        )
+        vendor_name: str | None = Field(default=None, description="Vendor name")
+        vendor_version: str | None = Field(default=None, description="Vendor version")
+
     class Config(FlextCore.Config):
         """Enterprise LDAP configuration with advanced FlextCore.Config features.
 
@@ -3614,9 +3697,8 @@ class FlextLdapModels(FlextCore.Models):
         _di_config_provider: ClassVar[providers.Configuration | None] = None
         _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
-        # Singleton pattern with per-class support
-        _instances: ClassVar[dict[type, Config]] = {}
-        _lock: ClassVar[threading.Lock] = threading.Lock()
+        # Singleton pattern with per-class support (inherited from FlextCore.Config)
+        # _instances and _lock are inherited - no override needed
 
         class LdapHandlerConfiguration:
             """LDAP-specific handler configuration utilities."""
@@ -4180,7 +4262,7 @@ class FlextLdapModels(FlextCore.Models):
                         return self.ldap_mask_passwords
 
             # Fall back to standard FlextCore.Config access
-            return cast(FlextCore.Types.ConfigValue, super().__call__(key))
+            return super().__call__(key)
 
         # =========================================================================
         # INFRASTRUCTURE PROTOCOL IMPLEMENTATIONS

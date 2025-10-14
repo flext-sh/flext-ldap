@@ -358,17 +358,24 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
         caps = result.unwrap()
 
         logger.info("\n✅ Server capabilities discovered:")
-        logger.info(f"   Server type: {caps.get('server_type', 'unknown')}")
-        logger.info(f"   ACL format: {caps.get('acl_format', 'N/A')}")
-        logger.info(f"   ACL attribute: {caps.get('acl_attribute', 'N/A')}")
-        logger.info(f"   Schema DN: {caps.get('schema_dn', 'N/A')}")
-        logger.info(f"   Default port: {caps.get('default_port', 389)}")
-        logger.info(f"   SSL port: {caps.get('default_ssl_port', 636)}")
-        logger.info(f"   StartTLS support: {caps.get('supports_start_tls', False)}")
-        logger.info(f"   Bind mechanisms: {caps.get('bind_mechanisms', [])}")
-        logger.info(f"   Max page size: {caps.get('max_page_size', 'N/A')}")
-        logger.info(f"   Paged results: {caps.get('supports_paged_results', False)}")
-        logger.info(f"   VLV support: {caps.get('supports_vlv', False)}")
+        # ServerCapabilities is a Pydantic model, use model_dump() for dict-like access
+        caps_dict = caps.model_dump() if hasattr(caps, "model_dump") else dict(caps)
+
+        logger.info(f"   Server type: {caps_dict.get('server_type', 'unknown')}")
+        logger.info(f"   ACL format: {caps_dict.get('acl_format', 'N/A')}")
+        logger.info(f"   ACL attribute: {caps_dict.get('acl_attribute', 'N/A')}")
+        logger.info(f"   Schema DN: {caps_dict.get('schema_dn', 'N/A')}")
+        logger.info(f"   Default port: {caps_dict.get('default_port', 389)}")
+        logger.info(f"   SSL port: {caps_dict.get('default_ssl_port', 636)}")
+        logger.info(
+            f"   StartTLS support: {caps_dict.get('supports_start_tls', False)}"
+        )
+        logger.info(f"   Bind mechanisms: {caps_dict.get('bind_mechanisms', [])}")
+        logger.info(f"   Max page size: {caps_dict.get('max_page_size', 'N/A')}")
+        logger.info(
+            f"   Paged results: {caps_dict.get('supports_paged_results', False)}"
+        )
+        logger.info(f"   VLV support: {caps_dict.get('supports_vlv', False)}")
 
         logger.info("\n   ℹ Capabilities inform schema discovery strategy")
 

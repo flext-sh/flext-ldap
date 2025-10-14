@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextCore
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
@@ -290,7 +292,11 @@ class FlextLdapQuirksIntegration(FlextCore.Service[FlextCore.Types.Dict]):
         max_page_raw = quirks.get(FlextLdapConstants.DictKeys.MAX_PAGE_SIZE, 1000)
 
         try:
-            max_page = int(max_page_raw) if max_page_raw is not None else 1000
+            max_page = (
+                int(cast("int | str", max_page_raw))
+                if max_page_raw is not None
+                else 1000
+            )
             return FlextCore.Result[int].ok(max_page)
         except (TypeError, ValueError):
             return FlextCore.Result[int].ok(1000)  # Default on conversion error
@@ -315,7 +321,9 @@ class FlextLdapQuirksIntegration(FlextCore.Service[FlextCore.Types.Dict]):
         timeout_raw = quirks.get(FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT, 30)
 
         try:
-            timeout = int(timeout_raw) if timeout_raw is not None else 30
+            timeout = (
+                int(cast("int | str", timeout_raw)) if timeout_raw is not None else 30
+            )
             return FlextCore.Result[int].ok(timeout)
         except (TypeError, ValueError):
             return FlextCore.Result[int].ok(30)  # Default on conversion error
@@ -387,7 +395,7 @@ class FlextLdapQuirksIntegration(FlextCore.Service[FlextCore.Types.Dict]):
             if isinstance(config_raw, dict):
                 config: FlextCore.Types.Dict = config_raw
             else:
-                config = defaults["generic"]
+                config = cast("FlextCore.Types.Dict", defaults["generic"])
             return FlextCore.Result[FlextCore.Types.Dict].ok(config)
 
         except Exception as e:
