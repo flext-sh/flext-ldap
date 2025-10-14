@@ -379,9 +379,12 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
 
     logger.info("\n2. Converting to Oracle OUD format:")
 
+    # Convert LDIF entry to LDAP entry first
+    ldap_entry = FlextLdapModels.Entry.from_ldif(openldap_entry)
+
     # Use entry adapter to convert between server formats
     result = api.convert_entry_between_servers(
-        entry=openldap_entry,
+        entry=ldap_entry,
         source_server_type="openldap2",
         target_server_type="oud",
     )
@@ -478,7 +481,9 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             logger.warning(f"   ⚠️  Skipping string entry: {entry}")
             continue
         # entry is now guaranteed to be FlextLdifModels.Entry
-        result = api.detect_entry_server_type(entry)
+        # Convert to LDAP entry for server type detection
+        ldap_entry = FlextLdapModels.Entry.from_ldif(entry)
+        result = api.detect_entry_server_type(ldap_entry)
 
         if result.is_success:
             detected = result.unwrap()
@@ -529,7 +534,9 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
 
     logger.info("\n2. Normalizing for current server:")
-    result = api.normalize_entry_for_server(mixed_entry)
+    # Convert LDIF entry to LDAP entry for normalization
+    ldap_entry = FlextLdapModels.Entry.from_ldif(mixed_entry)
+    result = api.normalize_entry_for_server(ldap_entry)
 
     if result.is_success:
         normalized = result.unwrap()
@@ -568,7 +575,9 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         updated_at=None,
     )
 
-    result = api.validate_entry_for_server(valid_entry)
+    # Convert LDIF entry to LDAP entry for validation
+    ldap_entry = FlextLdapModels.Entry.from_ldif(valid_entry)
+    result = api.validate_entry_for_server(ldap_entry)
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -599,7 +608,9 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         updated_at=None,
     )
 
-    result = api.validate_entry_for_server(specific_entry)
+    # Convert LDIF entry to LDAP entry for validation
+    ldap_entry = FlextLdapModels.Entry.from_ldif(specific_entry)
+    result = api.validate_entry_for_server(ldap_entry)
 
     if result.is_success:
         is_valid = result.unwrap()

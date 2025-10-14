@@ -21,6 +21,10 @@ class FlextLdapConstants(FlextCore.Constants):
     - Errors → FlextCore.Constants.Errors.*
     """
 
+    # Direct access constants for backward compatibility
+    DEFAULT_TIMEOUT: Final[int] = 30
+    DEFAULT_PAGE_SIZE: Final[int] = 100
+
     # =========================================================================
     # LDAP-SPECIFIC CONSTANTS ONLY - Essential domain constants
     # =========================================================================
@@ -40,6 +44,13 @@ class FlextLdapConstants(FlextCore.Constants):
         DEFAULT_PORT: Final[int] = 389
         DEFAULT_SSL_PORT: Final[int] = 636
 
+        # Aliases for compatibility (referenced in examples/tests)
+        LDAP_DEFAULT_PORT: Final[int] = DEFAULT_PORT
+        LDAPS_DEFAULT_PORT: Final[int] = DEFAULT_SSL_PORT
+
+        # Timeout constants
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+
         # LDAP URIs (domain-specific defaults)
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
@@ -55,6 +66,10 @@ class FlextLdapConstants(FlextCore.Constants):
         - DEFAULT_POOL_SIZE → FlextCore.Constants.Performance.DEFAULT_DB_POOL_SIZE
         - DEFAULT_PAGE_SIZE → FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE
         """
+
+        # Connection settings (LDAP-specific defaults)
+        DEFAULT_TIMEOUT: Final[int] = 30
+        DEFAULT_PAGE_SIZE: Final[int] = 100
 
         # LDAP-specific page sizes
         DEFAULT_SEARCH_PAGE_SIZE: Final[int] = 100

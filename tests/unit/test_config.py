@@ -41,7 +41,7 @@ class TestFlextLdapConfig:
         # Obsolete assertions - methods no longer exist in optimized API
         # assert (
         #     result.data.get_effective_server_uri()
-        #     == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+        #     == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         # )
         # assert result.data.get_effective_bind_dn() == "cn=admin,dc=example,dc=com"
 
@@ -54,7 +54,7 @@ class TestFlextLdapConfig:
         # Test with minimal config data - should succeed with defaults
         minimal_config: FlextCore.Types.Dict = {
             "server": "ldap://localhost",
-            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
         }
@@ -65,7 +65,7 @@ class TestFlextLdapConfig:
         assert result.is_success
         assert isinstance(result.data, FlextLdapConfig)
         assert result.data.ldap_server_uri == "ldap://localhost"
-        assert result.data.ldap_port == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+        assert result.data.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
         assert result.data.ldap_bind_dn == "cn=admin,dc=example,dc=com"
 
     # Obsolete test - create_connection_config_from_env method no longer exists
@@ -79,7 +79,7 @@ class TestFlextLdapConfig:
     #     assert isinstance(result.data, dict)
     #     # The method uses the global instance with default values
     #     assert result.data["server"] == "ldap://localhost"
-    #     assert result.data["port"] == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+    #     assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
     #     assert result.data["bind_dn"] is None  # Default value
     #     assert not result.data["base_dn"]  # Default value
 
@@ -96,7 +96,7 @@ class TestFlextLdapConfig:
     #         assert isinstance(result.data, dict)
     #         # Should have default values
     #         assert result.data["server"] == "ldap://localhost"
-    #         assert result.data["port"] == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+    #         assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
     #         assert result.data["bind_dn"] is None
     #         assert not result.data["base_dn"]
 
@@ -251,7 +251,7 @@ class TestFlextLdapConfig:
         config = ldap_server_config.copy()
         config["server"] = config.pop(
             "server_uri",
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
 
         result = FlextLdapValidations.validate_connection_config(config)
@@ -427,7 +427,7 @@ class TestFlextLdapConfig:
 
         assert isinstance(config, FlextLdapConfig)
         assert config.ldap_server_uri == "ldap://localhost"
-        assert config.ldap_port == FlextCore.Constants.Platform.LDAP_DEFAULT_PORT
+        assert config.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
 
     def test_get_default_search_config(self) -> None:
         """Test getting default search configuration."""
@@ -445,14 +445,14 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         base_config: FlextCore.Types.Dict = {
-            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "password": "admin123",
             "base_dn": "dc=example,dc=com",
         }
 
         override_config: FlextCore.Types.Dict = {
-            "server_uri": f"ldap://newserver:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            "server_uri": f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "connection_timeout": 60,
         }
 
@@ -461,7 +461,7 @@ class TestFlextLdapConfig:
         assert result.is_success
         assert (
             result.data["server_uri"]
-            == f"ldap://newserver:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            == f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         )
         assert result.data["bind_dn"] == "cn=admin,dc=example,dc=com"
         assert result.data["connection_timeout"] == 60
@@ -471,7 +471,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         base_config: FlextCore.Types.Dict = {
-            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
         }
 
@@ -547,7 +547,7 @@ class TestFlextLdapConfig:
         # Test consistent error handling with valid data
         conn_result = configs.create_from_connection_config_data({
             "server": "ldap://localhost",
-            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "password",
         })
@@ -574,7 +574,7 @@ class TestFlextLdapConfig:
         # Test complete workflow with valid data
         conn_config: FlextCore.Types.Dict = {
             "server": "ldap://localhost",
-            "port": FlextCore.Constants.Platform.LDAP_DEFAULT_PORT,
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -789,7 +789,7 @@ class TestFlextLdapConfig:
         """Test get_effective_bind_password method."""
         config = FlextLdapConfig(ldap_bind_password="secret123")
 
-        password = config.get_effective_bind_password()
+        password = config.effective_bind_password
 
         assert password == "secret123"
 
@@ -855,7 +855,7 @@ class TestFlextLdapConfig:
     def test_get_effective_bind_password_none(self) -> None:
         """Test get_effective_bind_password when password is None - covers line 343."""
         config = FlextLdapConfig(ldap_bind_password=None)
-        password = config.get_effective_bind_password()
+        password = config.effective_bind_password
         assert password is None
 
     def test_get_global_instance_exception_branch(self) -> None:
@@ -910,3 +910,315 @@ class TestFlextLdapConfig:
         # Should succeed with valid dicts
         assert result.is_success
         assert result.data == {"key1": "value1", "key2": "value2"}
+
+
+class TestLdapHandlerConfiguration:
+    """Tests for LdapHandlerConfiguration nested class."""
+
+    def test_resolve_ldap_operation_mode_explicit_valid(self) -> None:
+        """Test resolve_ldap_operation_mode with explicit valid mode - covers line 190-191."""
+        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+            operation_mode="search"
+        )
+        assert result == "search"
+
+        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+            operation_mode="modify"
+        )
+        assert result == "modify"
+
+    def test_resolve_ldap_operation_mode_from_config_attribute(self) -> None:
+        """Test resolve_ldap_operation_mode from config object attribute - covers lines 196-199."""
+
+        class MockConfig:
+            operation_type = "authenticate"
+
+        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+            operation_mode=None, operation_config=MockConfig()
+        )
+        assert result == "authenticate"
+
+    def test_resolve_ldap_operation_mode_from_dict(self) -> None:
+        """Test resolve_ldap_operation_mode from dict config - covers lines 202-210."""
+        config_dict = {FlextLdapConstants.DictKeys.OPERATION_TYPE: "delete"}
+        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+            operation_mode=None, operation_config=config_dict
+        )
+        assert result == "delete"
+
+    def test_resolve_ldap_operation_mode_default(self) -> None:
+        """Test resolve_ldap_operation_mode default fallback - covers line 213."""
+        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+            operation_mode=None, operation_config=None
+        )
+        assert result == "search"
+
+    def test_create_ldap_handler_config_full_params(self) -> None:
+        """Test create_ldap_handler_config with all parameters - covers lines 243-283."""
+        config = FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config(
+            operation_mode="search",
+            ldap_operation="user_search",
+            handler_name="Test Handler",
+            handler_id="test_handler_123",
+            ldap_config={"custom_key": "custom_value"},
+            connection_timeout=45,
+            operation_timeout=90,
+            max_retries=5,
+        )
+
+        assert config["handler_id"] == "test_handler_123"
+        assert config["handler_name"] == "Test Handler"
+        assert config["operation_mode"] == "search"
+        assert config["ldap_operation"] == "user_search"
+        assert config["connection_timeout"] == 45
+        assert config["operation_timeout"] == 90
+        assert config["max_retries"] == 5
+        assert config["custom_key"] == "custom_value"
+
+    def test_create_ldap_handler_config_defaults(self) -> None:
+        """Test create_ldap_handler_config with default parameters - covers lines 251-262."""
+        config = FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config()
+
+        # Defaults should be applied
+        assert "handler_id" in config
+        assert "ldap_" in config["handler_id"]  # Generated ID
+        assert config["handler_name"] == "LDAP Search Handler"  # Default mode is search
+        assert config["operation_mode"] == "search"
+        assert config["ldap_operation"] == "search"
+        assert config["connection_timeout"] == 30
+        assert config["operation_timeout"] == 60
+        assert config["max_retries"] == 3
+
+
+class TestDirectAccessDotNotation:
+    """Tests for __call__ method dot notation access."""
+
+    def test_call_pool_size(self) -> None:
+        """Test __call__ with ldap.pool.size."""
+        config = FlextLdapConfig(ldap_pool_size=25, ldap_bind_password="test")
+        assert config("ldap.pool.size") == 25
+
+    def test_call_pool_timeout(self) -> None:
+        """Test __call__ with ldap.pool.timeout."""
+        config = FlextLdapConfig(ldap_pool_timeout=60, ldap_bind_password="test")
+        assert config("ldap.pool.timeout") == 60
+
+    def test_call_operation_timeout(self) -> None:
+        """Test __call__ with ldap.operation.timeout."""
+        config = FlextLdapConfig(ldap_operation_timeout=120, ldap_bind_password="test")
+        assert config("ldap.operation.timeout") == 120
+
+    def test_call_operation_size_limit(self) -> None:
+        """Test __call__ with ldap.operation.size_limit."""
+        config = FlextLdapConfig(ldap_size_limit=500, ldap_bind_password="test")
+        assert config("ldap.operation.size_limit") == 500
+
+    def test_call_operation_time_limit(self) -> None:
+        """Test __call__ with ldap.operation.time_limit."""
+        config = FlextLdapConfig(ldap_time_limit=60, ldap_bind_password="test")
+        assert config("ldap.operation.time_limit") == 60
+
+    def test_call_cache_enabled(self) -> None:
+        """Test __call__ with ldap.cache.enabled."""
+        config = FlextLdapConfig(ldap_enable_caching=False, ldap_bind_password="test")
+        assert config("ldap.cache.enabled") is False
+
+    def test_call_cache_ttl(self) -> None:
+        """Test __call__ with ldap.cache.ttl."""
+        config = FlextLdapConfig(ldap_cache_ttl=600, ldap_bind_password="test")
+        assert config("ldap.cache.ttl") == 600
+
+    def test_call_retry_attempts(self) -> None:
+        """Test __call__ with ldap.retry.attempts."""
+        config = FlextLdapConfig(ldap_retry_attempts=5, ldap_bind_password="test")
+        assert config("ldap.retry.attempts") == 5
+
+    def test_call_retry_delay(self) -> None:
+        """Test __call__ with ldap.retry.delay."""
+        config = FlextLdapConfig(ldap_retry_delay=5, ldap_bind_password="test")
+        assert config("ldap.retry.delay") == 5
+
+    def test_call_logging_debug(self) -> None:
+        """Test __call__ with ldap.logging.debug."""
+        config = FlextLdapConfig(ldap_enable_debug=True, ldap_bind_password="test")
+        assert config("ldap.logging.debug") is True
+
+    def test_call_logging_trace(self) -> None:
+        """Test __call__ with ldap.logging.trace."""
+        config = FlextLdapConfig(ldap_enable_trace=True, ldap_bind_password="test")
+        assert config("ldap.logging.trace") is True
+
+    def test_call_logging_queries(self) -> None:
+        """Test __call__ with ldap.logging.queries."""
+        config = FlextLdapConfig(ldap_log_queries=True, ldap_bind_password="test")
+        assert config("ldap.logging.queries") is True
+
+    def test_call_mask_passwords(self) -> None:
+        """Test __call__ with ldap.logging.mask_passwords."""
+        config = FlextLdapConfig(ldap_mask_passwords=False, ldap_bind_password="test")
+        assert config("ldap.logging.mask_passwords") is False
+
+    def test_call_connection_server(self) -> None:
+        """Test __call__ with ldap.connection.server."""
+        config = FlextLdapConfig(
+            ldap_server_uri="ldaps://test.local", ldap_bind_password="test"
+        )
+        assert config("ldap.connection.server") == "ldaps://test.local"
+
+    def test_call_connection_port(self) -> None:
+        """Test __call__ with ldap.connection.port."""
+        config = FlextLdapConfig(ldap_port=636, ldap_bind_password="test")
+        assert config("ldap.connection.port") == 636
+
+    def test_call_connection_ssl(self) -> None:
+        """Test __call__ with ldap.connection.ssl."""
+        config = FlextLdapConfig(ldap_use_ssl=True, ldap_bind_password="test")
+        assert config("ldap.connection.ssl") is True
+
+    def test_call_connection_timeout(self) -> None:
+        """Test __call__ with ldap.connection.timeout."""
+        config = FlextLdapConfig(ldap_connection_timeout=45, ldap_bind_password="test")
+        assert config("ldap.connection.timeout") == 45
+
+    def test_call_connection_uri(self) -> None:
+        """Test __call__ with ldap.connection.uri."""
+        config = FlextLdapConfig(
+            ldap_server_uri="ldaps://test.local",
+            ldap_port=636,
+            ldap_bind_password="test",
+        )
+        assert config("ldap.connection.uri") == "ldaps://test.local:636"
+
+    def test_call_auth_bind_dn(self) -> None:
+        """Test __call__ with ldap.auth.bind_dn."""
+        config = FlextLdapConfig(
+            ldap_bind_dn="cn=admin,dc=test,dc=com", ldap_bind_password="test"
+        )
+        assert config("ldap.auth.bind_dn") == "cn=admin,dc=test,dc=com"
+
+    def test_call_auth_bind_password(self) -> None:
+        """Test __call__ with ldap.auth.bind_password."""
+        config = FlextLdapConfig(ldap_bind_password="secret123")
+        assert config("ldap.auth.bind_password") == "secret123"
+
+    def test_call_auth_base_dn(self) -> None:
+        """Test __call__ with ldap.auth.base_dn."""
+        config = FlextLdapConfig(
+            ldap_base_dn="dc=test,dc=com", ldap_bind_password="test"
+        )
+        assert config("ldap.auth.base_dn") == "dc=test,dc=com"
+
+    def test_call_fallback_to_super(self) -> None:
+        """Test __call__ fallback to super() for unknown keys - covers line 722."""
+        import pytest
+
+        config = FlextLdapConfig(ldap_bind_password="test")
+        # Test fallback path - key without ldap. prefix triggers super().__call__()
+        # Super raises KeyError for unknown keys, which is expected behavior
+        with pytest.raises(KeyError, match="Configuration key 'unknown_key' not found"):
+            config("unknown_key")
+
+
+class TestInfrastructureProtocols:
+    """Tests for Infrastructure protocol implementations."""
+
+    def test_configure_method(self) -> None:
+        """Test configure() method runtime updates - covers lines 742-751."""
+        config = FlextLdapConfig(ldap_bind_password="test")
+
+        # Update configuration at runtime (use valid combination)
+        result = config.configure({
+            "ldap_server_uri": "ldaps://localhost",
+            "ldap_port": 636,
+            "ldap_use_ssl": True,
+        })
+
+        assert result.is_success
+        assert config.ldap_port == 636
+        assert config.ldap_use_ssl is True
+        assert config.ldap_server_uri == "ldaps://localhost"
+
+    def test_configure_method_exception(self) -> None:
+        """Test configure() method exception handling - covers line 751."""
+        config = FlextLdapConfig(ldap_bind_password="test")
+
+        # Try invalid configuration that will trigger validation error
+        result = config.configure({
+            "ldap_server_uri": "ldaps://localhost",
+            "ldap_port": 389,  # Wrong port for ldaps
+            "ldap_use_ssl": False,  # SSL must be enabled for ldaps://
+        })
+
+        assert result.is_failure
+
+    def test_validate_runtime_requirements(self) -> None:
+        """Test validate_runtime_requirements() - covers lines 765-770."""
+        config = FlextLdapConfig(ldap_bind_password="test")
+        result = config.validate_runtime_requirements()
+        assert result.is_success
+
+    def test_validate_business_rules(self) -> None:
+        """Test validate_business_rules() - covers line 782."""
+        config = FlextLdapConfig(ldap_bind_password="test")
+        result = config.validate_business_rules()
+        assert result.is_success
+
+
+class TestLdapRequirementsValidation:
+    """Tests for LDAP-specific requirements validation."""
+
+    def test_validate_ldap_requirements_ldaps_wrong_port(self) -> None:
+        """Test validate_ldap_requirements with ldaps:// and wrong port - covers lines 804-810."""
+        config = FlextLdapConfig(
+            ldap_server_uri="ldaps://localhost",
+            ldap_port=389,  # Wrong port for ldaps
+            ldap_use_ssl=True,
+            ldap_bind_password="test",
+        )
+
+        result = config.validate_ldap_requirements()
+        assert result.is_failure
+        assert "389" in result.error
+        assert "636" in result.error
+
+    def test_validate_ldap_requirements_ldap_wrong_port(self) -> None:
+        """Test validate_ldap_requirements with ldap:// and ssl port - covers lines 812-818."""
+        config = FlextLdapConfig(
+            ldap_server_uri="ldap://localhost",
+            ldap_port=636,  # Wrong port for ldap
+            ldap_use_ssl=False,
+            ldap_bind_password="test",
+        )
+
+        result = config.validate_ldap_requirements()
+        assert result.is_failure
+        assert "636" in result.error
+        assert "389" in result.error
+
+    def test_validate_ldap_requirements_timeout_invalid(self) -> None:
+        """Test validate_ldap_requirements with invalid timeout - covers lines 820-824."""
+        config = FlextLdapConfig(
+            ldap_connection_timeout=60,
+            ldap_operation_timeout=50,  # Must be > connection_timeout
+            ldap_bind_password="test",
+        )
+
+        result = config.validate_ldap_requirements()
+        assert result.is_failure
+        assert "timeout" in result.error.lower()
+
+
+class TestDependencyInjection:
+    """Tests for dependency injection methods."""
+
+    def test_get_di_config_provider(self) -> None:
+        """Test get_di_config_provider() - covers lines 842-850."""
+        # Reset to ensure clean test
+        FlextLdapConfig._di_config_provider = None
+
+        provider = FlextLdapConfig.get_di_config_provider()
+        assert provider is not None
+
+        # Second call should return same provider
+        provider2 = FlextLdapConfig.get_di_config_provider()
+        assert provider is provider2

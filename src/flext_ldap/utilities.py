@@ -340,19 +340,6 @@ class FlextLdapUtilities(FlextCore.Utilities):
         except Exception as e:
             return FlextCore.Result[str].fail(f"DN validation failed: {e}")
 
-    @staticmethod
-    def ensure_string_list(
-        value: object,
-    ) -> FlextCore.Result[FlextCore.Types.StringList]:
-        """Ensure value is a list of strings."""
-        try:
-            result = FlextLdapUtilities.LdapTypeGuards.ensure_string_list(value)
-            return FlextCore.Result[FlextCore.Types.StringList].ok(result)
-        except Exception as e:
-            return FlextCore.Result[FlextCore.Types.StringList].fail(
-                f"String list conversion failed: {e}",
-            )
-
 
 # Export the main utilities class
 __all__ = [

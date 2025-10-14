@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextCore
 
@@ -16,7 +16,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
-class FlextLdapAclManager(FlextCore.Handlers[dict[str, Any], FlextLdapModels.Acl]):
+class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.Acl]):
     """ACL Manager for comprehensive ACL operations."""
 
     def __init__(self) -> None:
@@ -34,7 +34,7 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, Any], FlextLdapModels.Acl
     @override
     def handle(
         self,
-        message: dict[str, Any],
+        message: dict[str, object],
     ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL operations with proper type safety."""
         try:
@@ -66,7 +66,7 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, Any], FlextLdapModels.Acl
 
     def _handle_parse(
         self,
-        message: dict[str, Any],
+        message: dict[str, object],
     ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL parsing operations."""
         try:
@@ -106,7 +106,7 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, Any], FlextLdapModels.Acl
 
     def _handle_convert(
         self,
-        message: dict[str, Any],
+        message: dict[str, object],
     ) -> FlextCore.Result[FlextLdapModels.Acl]:
         """Handle ACL conversion operations."""
         try:

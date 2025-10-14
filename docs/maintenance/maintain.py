@@ -7,18 +7,34 @@ Provides automated workflows and comprehensive reporting.
 
 import argparse
 import json
-import os
 import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import yaml
 
 # Add parent directory to path for imports
 sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
+
+# Import documentation quality tools
+from audit import DocumentationAuditor
+from optimize import ContentOptimizer
+from report import ReportGenerator
+from sync import DocumentationSync
+from validate_links import LinkValidator
+from validate_style import StyleValidator
+
+# Constants for maintenance effectiveness calculation
+EXCELLENT_QUALITY_THRESHOLD = 90
+EXCELLENT_ISSUES_MAX = 0
+GOOD_QUALITY_THRESHOLD = 80
+GOOD_ISSUES_MAX = 5
+FAIR_QUALITY_THRESHOLD = 70
+FAIR_ISSUES_MAX = 15
+CRITICAL_ISSUES_THRESHOLD = 10
+CRITICAL_QUALITY_THRESHOLD = 70
 
 
 @dataclass
@@ -28,7 +44,7 @@ class MaintenanceResult:
     operation: str
     success: bool
     duration: float
-    details: dict[str, Any]
+    details: dict[str, object]
     timestamp: datetime
 
 
@@ -41,7 +57,7 @@ class MaintenanceReport:
     operations_run: list[MaintenanceResult]
     overall_success: bool
     total_duration: float
-    summary: dict[str, Any]
+    summary: dict[str, object]
 
 
 class DocumentationMaintainer:
@@ -49,14 +65,12 @@ class DocumentationMaintainer:
 
     def __init__(self, config_path: str | None = None) -> None:
         """Initialize documentation maintenance orchestrator with optional config path."""
-        self.config_path = config_path or os.path.join(
-            Path(__file__).parent, "config.yaml"
-        )
+        self.config_path = config_path or str(Path(__file__).parent / "config.yaml")
         self.config = self._load_config()
         self.session_id = f"maintenance_{int(time.time())}"
         self.results: list[MaintenanceResult] = []
 
-    def _load_config(self) -> dict[str, Any]:
+    def _load_config(self) -> dict[str, object]:
         """Load configuration."""
         try:
             with Path(self.config_path).open(encoding="utf-8") as f:
@@ -117,11 +131,9 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from audit import DocumentationAuditor
-
             auditor = DocumentationAuditor(self.config_path)
 
-            docs_dir = os.path.join(Path(Path(__file__).parent).parent, "docs")
+            docs_dir = Path(__file__).parent.parent / "docs"
             results = auditor.audit_directory(docs_dir)
             summary = auditor.generate_summary()
 
@@ -152,11 +164,9 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from validate_links import LinkValidator
-
             validator = LinkValidator(self.config_path)
 
-            docs_dir = os.path.join(Path(Path(__file__).parent).parent, "docs")
+            docs_dir = Path(__file__).parent.parent / "docs"
             results = validator.validate_directory(docs_dir, check_external=True)
             summary = validator.generate_summary(results)
 
@@ -187,11 +197,9 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from validate_style import StyleValidator
-
             validator = StyleValidator(self.config_path)
 
-            docs_dir = os.path.join(Path(Path(__file__).parent).parent, "docs")
+            docs_dir = Path(__file__).parent.parent / "docs"
             results = validator.validate_directory(docs_dir)
             summary = validator.generate_summary(results)
 
@@ -222,11 +230,9 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from optimize import ContentOptimizer
-
             optimizer = ContentOptimizer(self.config_path)
 
-            docs_dir = os.path.join(Path(Path(__file__).parent).parent, "docs")
+            docs_dir = Path(__file__).parent.parent / "docs"
             results = optimizer.optimize_directory(docs_dir)
             summary = optimizer.generate_summary(results)
 
@@ -257,8 +263,6 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from report import ReportGenerator
-
             generator = ReportGenerator(self.config_path)
 
             report_data = generator.generate_comprehensive_report()
@@ -295,8 +299,6 @@ class DocumentationMaintainer:
         start_time = time.time()
 
         try:
-            from sync import DocumentationSync
-
             sync_manager = DocumentationSync(self.config_path)
 
             # Get pending changes
@@ -333,7 +335,7 @@ class DocumentationMaintainer:
                 timestamp=datetime.now(UTC),
             )
 
-    def _generate_summary(self) -> dict[str, Any]:
+    def _generate_summary(self) -> dict[str, object]:
         """Generate overall maintenance summary."""
         successful_ops = sum(1 for r in self.results if r.success)
         total_ops = len(self.results)
@@ -387,22 +389,25 @@ class DocumentationMaintainer:
 
     def _calculate_effectiveness(self, quality_score: float, issues: int) -> str:
         """Calculate maintenance effectiveness rating."""
-        if quality_score >= 90 and issues == 0:
+        if (
+            quality_score >= EXCELLENT_QUALITY_THRESHOLD
+            and issues == EXCELLENT_ISSUES_MAX
+        ):
             return "excellent"
-        if quality_score >= 80 and issues <= 5:
+        if quality_score >= GOOD_QUALITY_THRESHOLD and issues <= GOOD_ISSUES_MAX:
             return "good"
-        if quality_score >= 70 and issues <= 15:
+        if quality_score >= FAIR_QUALITY_THRESHOLD and issues <= FAIR_ISSUES_MAX:
             return "fair"
         return "needs_attention"
 
-    def _save_report(self, report: MaintenanceReport) -> None:
+    def save_report(self, report: MaintenanceReport) -> None:
         """Save detailed maintenance report."""
-        reports_dir = os.path.join(Path(__file__).parent, "reports")
-        Path(reports_dir).mkdir(exist_ok=True, parents=True)
+        reports_dir = Path(__file__).parent / "reports"
+        reports_dir.mkdir(exist_ok=True, parents=True)
 
-        report_file = os.path.join(reports_dir, f"maintenance_{self.session_id}.json")
+        report_file = reports_dir / f"maintenance_{self.session_id}.json"
 
-        with Path(report_file).open("w", encoding="utf-8") as f:
+        with report_file.open("w", encoding="utf-8") as f:
             # Convert dataclasses to dicts for JSON serialization
             report_dict = {
                 "session_id": report.session_id,
@@ -416,6 +421,7 @@ class DocumentationMaintainer:
 
 
 def main() -> None:
+    """Main entry point for documentation maintenance system."""
     parser = argparse.ArgumentParser(
         description="Documentation Maintenance Orchestrator"
     )
@@ -459,15 +465,15 @@ def main() -> None:
         # Recommendations
         effectiveness = report.summary["maintenance_effectiveness"]
         if effectiveness in {"needs_attention", "fair"}:
-            if report.summary["total_issues"] > 10:
+            if report.summary["total_issues"] > CRITICAL_ISSUES_THRESHOLD:
                 pass
-            if report.summary["average_quality_score"] < 70:
+            if report.summary["average_quality_score"] < CRITICAL_QUALITY_THRESHOLD:
                 pass
         elif effectiveness == "good":
             pass
         # Save report if requested
         if args.output:
-            maintainer._save_report(report)
+            maintainer.save_report(report)
 
 
 if __name__ == "__main__":

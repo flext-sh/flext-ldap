@@ -633,43 +633,33 @@ class TestFlextLdapClientsComprehensive:
         client = FlextLdapClients()
 
         # Mock entry with empty attributes
-        class MockAttribute:
-            def __init__(self, value: object) -> None:
-                self.value = value
+        # The mock must properly simulate FlextLdapModels.Entry behavior
+        class MockEntry(FlextLdapModels.Entry):
+            """Mock Entry that behaves like FlextLdapModels.Entry."""
 
-        class MockEntry:
             def __init__(self) -> None:
-                self.dn = "cn=testgroup,dc=test,dc=com"  # Changed from entry_dn to dn
-                self.entry_attributes = {}
+                # Initialize with minimal required data
+                super().__init__(
+                    dn="cn=testgroup,dc=test,dc=com",
+                    attributes={},
+                    object_classes=["groupOfNames"],
+                )
 
-            def __getitem__(self, key: str) -> MockAttribute:
-                return MockAttribute(self.entry_attributes.get(key, []))
-
-            def get_attribute(
-                self, key: str
-            ) -> str | FlextCore.Types.StringList | None:
-                """Get attribute value(s) - returns single value, list, or None."""
-                values = self.entry_attributes.get(key)
-                if not values:
-                    return None
-                return values[0] if len(values) == 1 else values
-
-            def get_attribute_value(self, key: str, default: str = "") -> str:
-                """Get single attribute value."""
-                values = self.entry_attributes.get(key, [])
-                return values[0] if values else default
-
-            def get_attribute_values(
-                self, key: str, default: FlextCore.Types.StringList | None = None
-            ) -> FlextCore.Types.StringList:
-                """Get attribute values list."""
-                return self.entry_attributes.get(key, default or [])
+            def __getitem__(self, key: str) -> object:
+                """Return attribute value or empty list/string."""
+                value = self.attributes.get(key, [])
+                # Return empty string for single-value attributes like 'cn'
+                if key == "cn":
+                    return "" if not value else value[0]
+                # Return empty list for multi-value attributes like 'member'
+                return value or []
 
         group = client._create_group_from_entry(MockEntry())
 
         assert group is not None
         assert group.dn == "cn=testgroup,dc=test,dc=com"
         assert not group.cn  # Should be empty string when not in attributes
+        assert group.member_dns == []  # Should be empty list when not in attributes
 
     def test_search_universal_not_connected(self) -> None:
         """Test search_universal when not connected."""
@@ -680,48 +670,6 @@ class TestFlextLdapClientsComprehensive:
             filter_str="(objectClass=person)",
             scope="SUBTREE",
         )
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_add_entry_universal_not_connected(self) -> None:
-        """Test add_entry_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.add_entry_universal(
-            "cn=testuser,dc=test,dc=com", {"cn": "Test User"}
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_modify_entry_universal_not_connected(self) -> None:
-        """Test modify_entry_universal when not connected."""
-        client = FlextLdapClients()
-
-        changes: FlextCore.Types.Dict = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
-        result = client.modify_entry_universal("cn=testuser,dc=test,dc=com", changes)
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_delete_entry_universal_not_connected(self) -> None:
-        """Test delete_entry_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.delete_entry_universal("cn=testuser,dc=test,dc=com")
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -750,23 +698,6 @@ class TestFlextLdapClientsComprehensive:
         client = FlextLdapClients()
 
         result = client.extended_operation_universal("1.3.6.1.4.1.1466.20037", b"test")
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_search_with_controls_universal_not_connected(self) -> None:
-        """Test search_with_controls_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.search_with_controls_universal(
-            base_dn="dc=test,dc=com",
-            filter_str="(objectClass=person)",
-            scope="SUBTREE",
-        )
         assert result.is_failure
         assert result.error is not None
         assert (

@@ -13,6 +13,8 @@ import re
 
 from flext_core import FlextCore
 
+from flext_ldap.constants import FlextLdapConstants
+
 
 class FlextLdapValidations:
     """Centralized LDAP validations to eliminate circular dependencies."""
@@ -54,9 +56,7 @@ class FlextLdapValidations:
         attributes: FlextCore.Types.StringList | None,
     ) -> FlextCore.Result[bool]:
         """Centralized LDAP attributes validation - ELIMINATE ALL DUPLICATION."""
-        if attributes is None:
-            return FlextCore.Result[bool].fail("Attributes list cannot be empty")
-        if not attributes:
+        if attributes is None or not attributes:
             return FlextCore.Result[bool].fail("Attributes list cannot be empty")
 
         for attr in attributes:
@@ -148,8 +148,8 @@ class FlextLdapValidations:
         if password is None:
             return FlextCore.Result[bool].fail("Password cannot be None")
 
-        min_length = FlextCore.Constants.Security.MIN_PASSWORD_LENGTH
-        max_length = FlextCore.Constants.Security.MAX_PASSWORD_LENGTH
+        min_length = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
+        max_length = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
 
         if len(password) < min_length:
             return FlextCore.Result[bool].fail(

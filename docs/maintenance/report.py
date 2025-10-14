@@ -12,7 +12,6 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -35,11 +34,11 @@ class ReportData:
     """Container for all report data."""
 
     timestamp: datetime
-    audit_summary: dict[str, Any]
-    validation_summary: dict[str, Any]
-    style_summary: dict[str, Any]
-    trends: dict[str, Any]
-    recommendations: list[dict[str, Any]]
+    audit_summary: dict[str, object]
+    validation_summary: dict[str, object]
+    style_summary: dict[str, object]
+    trends: dict[str, object]
+    recommendations: list[dict[str, object]]
 
 
 @dataclass
@@ -62,7 +61,7 @@ class ReportGenerator:
         self.reports_dir = os.path.join(Path(__file__).parent, "reports")
         Path(self.reports_dir).mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, object]:
         """Load configuration."""
         default_config = {
             "reporting": {
@@ -120,28 +119,28 @@ class ReportGenerator:
             recommendations=recommendations,
         )
 
-    def _load_audit_data(self, audit_file: str | None) -> dict[str, Any]:
+    def _load_audit_data(self, audit_file: str | None) -> dict[str, object]:
         """Load audit data."""
         if audit_file and Path(audit_file).exists():
             with Path(audit_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_audit()
 
-    def _load_validation_data(self, validation_file: str | None) -> dict[str, Any]:
+    def _load_validation_data(self, validation_file: str | None) -> dict[str, object]:
         """Load validation data."""
         if validation_file and Path(validation_file).exists():
             with Path(validation_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_validation()
 
-    def _load_style_data(self, style_file: str | None) -> dict[str, Any]:
+    def _load_style_data(self, style_file: str | None) -> dict[str, object]:
         """Load style data."""
         if style_file and Path(style_file).exists():
             with Path(style_file).open(encoding="utf-8") as f:
                 return json.load(f)
         return self._run_quick_style_check()
 
-    def _run_quick_audit(self) -> dict[str, Any]:
+    def _run_quick_audit(self) -> dict[str, object]:
         """Run a quick audit for basic metrics."""
         # Import here to avoid circular imports
         sys.path.insert(0, Path(__file__).parent)
@@ -158,7 +157,7 @@ class ReportGenerator:
             "results": [asdict(r) for r in results[:10]],  # Limit for quick audit
         }
 
-    def _run_quick_validation(self) -> dict[str, Any]:
+    def _run_quick_validation(self) -> dict[str, object]:
         """Run quick link validation."""
         from validate_links import LinkValidator
 
@@ -171,7 +170,7 @@ class ReportGenerator:
 
         return {"summary": asdict(summary), "results": [asdict(r) for r in results[:5]]}
 
-    def _run_quick_style_check(self) -> dict[str, Any]:
+    def _run_quick_style_check(self) -> dict[str, object]:
         """Run quick style validation."""
         from validate_style import StyleValidator
 
@@ -183,7 +182,7 @@ class ReportGenerator:
 
         return {"summary": asdict(summary), "results": [asdict(r) for r in results[:5]]}
 
-    def _calculate_trends(self) -> dict[str, Any]:
+    def _calculate_trends(self) -> dict[str, object]:
         """Calculate quality trends from historical data."""
         # Look for historical reports
         history_dir = os.path.join(self.reports_dir, "history")
@@ -237,7 +236,7 @@ class ReportGenerator:
 
     def _generate_recommendations(
         self, audit_data: dict, validation_data: dict, style_data: dict
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, object]]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -574,6 +573,7 @@ class ReportGenerator:
 
 
 def main() -> None:
+    """Main entry point for documentation reporting system."""
     parser = argparse.ArgumentParser(
         description="Documentation Quality Assurance Reporting System"
     )

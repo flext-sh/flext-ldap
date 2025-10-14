@@ -5,15 +5,13 @@ Provides unified access to LDAP domain functionality with proper delegation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-"""
 
-# ruff: noqa: PLC0415  # Lazy imports intentional to avoid circular dependencies
-# ruff: noqa: ARG002  # Unused arguments preserved for API compatibility
-# ruff: noqa: TD003, FIX002  # TODOs with proper format for future implementation
+"""
 
 from __future__ import annotations
 
 import concurrent.futures
+import time
 import warnings
 from contextlib import suppress
 from pathlib import Path
@@ -23,7 +21,9 @@ from flext_core import FlextCore
 from flext_ldif import FlextLdif
 
 from flext_ldap.clients import FlextLdapClients
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers import FlextLdapServers
 
 
@@ -45,9 +45,17 @@ class FlextLdap(FlextCore.Service[None]):
     """
 
     @override
-    def __init__(self) -> None:
-        """Initialize LDAP facade with configuration."""
+    def __init__(self, config: FlextLdapConfig | None = None) -> None:
+        """Initialize LDAP facade with configuration.
+
+        Args:
+            config: Optional LDAP configuration. If not provided, uses default instance.
+
+        """
         super().__init__()
+        self._ldap_config: FlextLdapConfig = (
+            config if config is not None else FlextLdapConfig()
+        )
         self._ldif: FlextLdif | None = None
         self._client: FlextLdapClients | None = None
 
@@ -63,6 +71,15 @@ class FlextLdap(FlextCore.Service[None]):
             self._client = FlextLdapClients()
         return self._client
 
+    @property
+    def config(self) -> FlextLdapConfig:
+        """Get LDAP-specific configuration instance.
+
+        Overrides FlextCore.Service.config to return FlextLdapConfig
+        instead of base FlextCore.Config type.
+        """
+        return self._ldap_config
+
     @override
     def execute(self) -> FlextCore.Result[None]:
         """Execute the main domain operation (required by FlextCore.Service)."""
@@ -75,10 +92,6 @@ class FlextLdap(FlextCore.Service[None]):
     # =========================================================================
     # CONNECTION MANAGEMENT - Delegate to client
     # =========================================================================
-
-    def is_connected(self) -> bool:
-        """Check if LDAP client is connected."""
-        return self.client.is_connected()
 
     def connect(
         self,
@@ -105,13 +118,13 @@ class FlextLdap(FlextCore.Service[None]):
 
         return self.client.connect(server_uri, bind_dn, bind_password)
 
-    def test_connection(self) -> FlextCore.Result[bool]:
-        """Test LDAP connection."""
-        return self.client.test_connection()
+    def is_connected(self) -> bool:
+        """Check if LDAP client is connected to server.
 
-    def unbind(self) -> FlextCore.Result[None]:
-        """Unbind from LDAP server."""
-        return self.client.unbind()
+        Returns:
+            True if connected, False otherwise.
+        """
+        return self.client.is_connected()
 
     # =========================================================================
     # CORE LDAP OPERATIONS - Consolidated facade methods
@@ -431,7 +444,30 @@ class FlextLdap(FlextCore.Service[None]):
         search_result = self.client.search_one(upsert_request.dn, "(objectClass=*)")
 
         if search_result.is_success:
-            # Entry exists - update it
+            # Entry exists - check if update is needed (IDEMPOTENT CHECK - GAP #7)
+            live_entry = search_result.unwrap()
+
+            # Build desired attributes (including objectClass if provided)
+            desired_attrs = upsert_request.attributes.copy()
+            if upsert_request.object_classes:
+                desired_attrs["objectClass"] = upsert_request.object_classes
+
+            # Idempotent check: Skip if no changes needed
+            # Note: live_entry is FlextLdapModels.Entry, extract attributes dict
+            live_attrs = live_entry.attributes if live_entry else {}
+            if not self._entry_needs_update(live_attrs, desired_attrs):
+                if self.logger is not None:
+                    self.logger.debug(
+                        f"Skipping upsert for {upsert_request.dn} - ",
+                        "no changes needed (idempotent)",
+                    )
+                return FlextCore.Result[dict[str, str]].ok({
+                    "operation": "skipped",
+                    "dn": upsert_request.dn,
+                    "reason": "no_changes_needed",
+                })
+
+            # Entry exists and needs update
             if upsert_request.update_strategy == "replace":
                 # Replace strategy: delete and recreate with new attributes
                 delete_result = self.delete_entry(upsert_request.dn)
@@ -1063,7 +1099,6 @@ class FlextLdap(FlextCore.Service[None]):
 
         """
         # Import ACL manager lazily
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 
         try:
             # Initialize quirks engine for server detection
@@ -2092,8 +2127,6 @@ class FlextLdap(FlextCore.Service[None]):
             >>> result = api.normalize_entry_with_quirks(entry)
 
         """
-        from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-
         try:
             # Detect server type if not provided
             if server_type is None:
@@ -2787,6 +2820,154 @@ class FlextLdap(FlextCore.Service[None]):
         )
 
         return self.search(request)
+
+    # =========================================================================
+    # IDEMPOTENT CHECK AND RETRY LOGIC (GAP #7)
+    # =========================================================================
+
+    def _entry_needs_update(
+        self,
+        live_entry: dict[str, FlextCore.Types.StringList | str],
+        desired_attributes: dict[str, FlextCore.Types.StringList | str],
+    ) -> bool:
+        """Check if live entry needs update (deep comparison with SET semantics).
+
+        Compares live LDAP entry with desired attributes using SET comparison
+        for multi-valued attributes (order-independent).
+
+        Args:
+            live_entry: Entry currently in LDAP server (attributes dict)
+            desired_attributes: Desired entry attributes
+
+        Returns:
+            True if update needed, False if entries are identical
+
+        Example:
+            >>> live = {"objectClass": ["top", "person"], "cn": ["John"]}
+            >>> desired = {"objectClass": ["person", "top"], "cn": ["John"]}
+            >>> api._entry_needs_update(live, desired)  # Returns False (same set)
+
+        """
+        # Compare all attributes (added/removed/modified)
+        live_attrs = set(live_entry.keys())
+        desired_attrs = set(desired_attributes.keys())
+
+        # Check for added or removed attributes
+        if live_attrs != desired_attrs:
+            return True
+
+        # Check attribute values with SET comparison for multi-valued
+        for attr_name in desired_attrs:
+            live_vals = live_entry[attr_name]
+            desired_vals = desired_attributes[attr_name]
+
+            # Normalize to lists for comparison
+            live_list = live_vals if isinstance(live_vals, list) else [live_vals]
+            desired_list = (
+                desired_vals if isinstance(desired_vals, list) else [desired_vals]
+            )
+
+            # Multi-valued attributes: use SET comparison (order doesn't matter)
+            if set(live_list) != set(desired_list):
+                return True
+
+        return False  # Entries are identical
+
+    def upsert_entry_with_retry(
+        self,
+        upsert_request: FlextLdapModels.UpsertEntryRequest,
+        *,
+        max_retries: int = 3,
+        backoff_base: float = 2.0,
+    ) -> FlextCore.Result[dict[str, str]]:
+        """Upsert entry with exponential backoff retry on transient failures.
+
+        Retries on transient network errors with exponential backoff.
+        Permanent errors (schema violation, invalid DN) are not retried.
+
+        Args:
+            upsert_request: Upsert request with DN and attributes
+            max_retries: Maximum retry attempts (default 3)
+            backoff_base: Base for exponential backoff in seconds (default 2.0)
+
+        Returns:
+            FlextCore.Result with operation details
+
+        Example:
+            >>> upsert_req = FlextLdapModels.UpsertEntryRequest(
+            ...     dn="cn=test,dc=algar",
+            ...     attributes={"cn": "test"},
+            ...     object_classes=["person", "top"],
+            ...     update_strategy="merge",
+            ... )
+            >>> result = api.upsert_entry_with_retry(
+            ...     upsert_req, max_retries=3, backoff_base=2.0
+            ... )
+
+        """
+        for attempt in range(max_retries):
+            result = self.upsert_entry(upsert_request)
+
+            if result.is_success:
+                if attempt > 0 and self.logger is not None:
+                    self.logger.info(
+                        f"Upsert succeeded for {upsert_request.dn} "
+                        f"after {attempt} retries",
+                    )
+                return result
+
+            # Check if error is permanent (don't retry)
+            if self._is_permanent_error(result.error or ""):
+                if self.logger is not None:
+                    self.logger.warning(
+                        f"Permanent error for {upsert_request.dn}, "
+                        f"not retrying: {result.error}",
+                    )
+                return result
+
+            # Transient error - retry with backoff
+            if attempt < max_retries - 1:
+                sleep_time = backoff_base**attempt
+                if self.logger is not None:
+                    self.logger.warning(
+                        f"Retry {attempt + 1}/{max_retries} for "
+                        f"{upsert_request.dn} after {sleep_time}s: {result.error}",
+                    )
+                time.sleep(sleep_time)
+
+        # Return final failure after all retries
+        return result
+
+    def _is_permanent_error(self, error: str) -> bool:
+        """Check if LDAP error is permanent (should not retry).
+
+        Distinguishes between permanent errors (schema violations, invalid DN)
+        and transient errors (network timeout, connection refused).
+
+        Args:
+            error: Error message from LDAP operation
+
+        Returns:
+            True if error is permanent, False if transient
+
+        """
+        permanent_patterns = [
+            "invalid credentials",
+            "insufficient access",
+            "access denied",
+            "constraint violation",
+            "schema violation",
+            "invalid dn",
+            "invalid syntax",
+            "already exists",  # Treat as permanent (idempotent will skip)
+            "no such object",  # Parent DN missing
+            "object class violation",
+            "not allowed on rdn",
+            "naming violation",
+        ]
+
+        error_lower = error.lower()
+        return any(pattern in error_lower for pattern in permanent_patterns)
 
     # =========================================================================
     # CONTEXT MANAGER SUPPORT

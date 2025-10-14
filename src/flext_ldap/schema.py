@@ -20,7 +20,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 
 
-class FlextLdapSchema(FlextCore.Service[FlextCore.Result[object]]):
+class FlextLdapSchema(FlextCore.Service[object]):
     """Unified LDAP schema class following FLEXT one-class-per-module standards.
 
     This class consolidates ALL schema-related functionality including:
@@ -46,10 +46,11 @@ class FlextLdapSchema(FlextCore.Service[FlextCore.Result[object]]):
         def __init__(self) -> None:
             """Initialize generic quirks detector."""
             # Create a minimal handler config for the base class
-            config = FlextCore.Models.Cqrs.Handler()
-            config.handler_type = "query"
-            config.default_name = "GenericQuirksDetector"
-            config.default_id = "generic-quirks-detector"
+            config = FlextCore.Models.Cqrs.Handler(
+                handler_id="generic-quirks-detector",
+                handler_name="GenericQuirksDetector",
+                handler_type="query",
+            )
             super().__init__(config=config)
 
         def handle(self, message: object) -> FlextCore.Result[object]:
@@ -139,10 +140,11 @@ class FlextLdapSchema(FlextCore.Service[FlextCore.Result[object]]):
 
             """
             # Create handler config
-            config = FlextCore.Models.Cqrs.Handler()
-            config.handler_type = "query"
-            config.default_name = "SchemaDiscovery"
-            config.default_id = "schema-discovery"
+            config = FlextCore.Models.Cqrs.Handler(
+                handler_id="schema-discovery",
+                handler_name="SchemaDiscovery",
+                handler_type="query",
+            )
             super().__init__(config=config)
             # Note: self.logger is provided by FlextCore.Service parent class
             self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
@@ -165,24 +167,6 @@ class FlextLdapSchema(FlextCore.Service[FlextCore.Result[object]]):
 
             # Return basic schema discovery result
             return FlextCore.Result[object].ok({"schema_discovered": True})
-
-        def get_schema_subentry_dn(
-            self,
-            server_type: str | None = None,
-        ) -> FlextCore.Result[str]:
-            """Get schema subentry DN based on server type.
-
-            Uses quirks adapter to determine the correct schema endpoint for
-            different server types (cn=subschema, cn=schema, etc.).
-
-            Args:
-                server_type: LDAP server type (detected if not provided)
-
-            Returns:
-                FlextCore.Result containing schema subentry DN
-
-            """
-            return self._quirks_adapter.get_schema_subentry(server_type)
 
     def execute(self) -> FlextCore.Result[object]:
         """Execute the main domain operation (required by FlextCore.Service)."""

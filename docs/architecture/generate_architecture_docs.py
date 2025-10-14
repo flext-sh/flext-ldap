@@ -17,7 +17,6 @@ import traceback
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -45,7 +44,7 @@ class ArchitectureGenerator:
         Path(f"{self.diagrams_dir}/generated").mkdir(exist_ok=True, parents=True)
         Path(f"{self.diagrams_dir}/mermaid").mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self) -> dict[str, Any]:
+    def _load_config(self) -> dict[str, object]:
         """Load configuration."""
         default_config = {
             "generation": {
@@ -87,7 +86,7 @@ class ArchitectureGenerator:
             else:
                 base[key] = value
 
-    def generate_full_suite(self) -> dict[str, Any]:
+    def generate_full_suite(self) -> dict[str, object]:
         """Generate the complete architecture documentation suite."""
         results = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -164,7 +163,7 @@ class ArchitectureGenerator:
 
         return results
 
-    def generate_c4_model(self) -> dict[str, Any]:
+    def generate_c4_model(self) -> dict[str, object]:
         """Generate C4 Model documentation."""
         results = {"files": [], "diagrams": []}
 
@@ -517,7 +516,7 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_arc42(self) -> dict[str, Any]:
+    def generate_arc42(self) -> dict[str, object]:
         """Generate Arc42 documentation template."""
         results = {"files": []}
 
@@ -561,7 +560,7 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_adr_framework(self) -> dict[str, Any]:
+    def generate_adr_framework(self) -> dict[str, object]:
         """Generate ADR framework."""
         results = {"files": []}
 
@@ -657,7 +656,7 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_data_architecture(self) -> dict[str, Any]:
+    def generate_data_architecture(self) -> dict[str, object]:
         """Generate data architecture documentation."""
         results = {"files": [], "diagrams": []}
 
@@ -737,7 +736,7 @@ This document describes how data flows through the system and key processing pip
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_security_architecture(self) -> dict[str, Any]:
+    def generate_security_architecture(self) -> dict[str, object]:
         """Generate security architecture documentation."""
         results = {"files": [], "diagrams": []}
 
@@ -790,7 +789,7 @@ This document describes the threat model and security controls for flext-ldap.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_quality_attributes(self) -> dict[str, Any]:
+    def generate_quality_attributes(self) -> dict[str, object]:
         """Generate quality attributes documentation."""
         results = {"files": []}
 
@@ -829,7 +828,7 @@ This document describes the {attribute.lower()} characteristics and requirements
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_diagrams(self) -> dict[str, Any]:
+    def generate_diagrams(self) -> dict[str, object]:
         """Generate diagrams from PlantUML sources."""
         results = {"diagrams": []}
 
@@ -886,7 +885,7 @@ This document describes the {attribute.lower()} characteristics and requirements
         except subprocess.CalledProcessError:
             pass
 
-    def generate_navigation(self) -> dict[str, Any]:
+    def generate_navigation(self) -> dict[str, object]:
         """Generate navigation and index files."""
         results = {"files": []}
 

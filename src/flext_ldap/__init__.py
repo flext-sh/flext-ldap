@@ -20,12 +20,14 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.domain import FlextLdapDomain
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.exceptions import FlextLdapExceptions
+from flext_ldap.failure_tracker import FlextLdapFailureTracker
 from flext_ldap.handlers import FlextLdapHandlers
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.schema import FlextLdapSchema
+from flext_ldap.schema_sync import FlextLdapSchemaSync
 from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers import FlextLdapServers
 from flext_ldap.services import FlextLdapServices
@@ -44,12 +46,14 @@ __all__ = [
     "FlextLdapDomain",
     "FlextLdapEntryAdapter",
     "FlextLdapExceptions",
+    "FlextLdapFailureTracker",
     "FlextLdapHandlers",
     "FlextLdapModels",
     "FlextLdapProtocols",
     "FlextLdapQuirksIntegration",
     "FlextLdapRepositories",
     "FlextLdapSchema",
+    "FlextLdapSchemaSync",
     "FlextLdapSearch",
     "FlextLdapServers",
     "FlextLdapServices",

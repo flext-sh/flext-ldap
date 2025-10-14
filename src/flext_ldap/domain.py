@@ -43,13 +43,6 @@ class FlextLdapDomain:
             return bool(re.match(r"^[a-zA-Z0-9_-]+$", username))
 
         @staticmethod
-        def is_valid_email(email: str) -> bool:
-            """Check if email format is valid - delegates to flext-core."""
-            # Use flext-core validation (returns FlextCore.Result[str])
-            validation_result = FlextCore.Utilities.Validation.validate_email(email)
-            return validation_result.is_success
-
-        @staticmethod
         def meets_password_policy(password: str) -> FlextCore.Result[bool]:
             """Check if password meets domain security requirements - delegates basic validation."""
             # First check basic password validation (length) via FlextLdapValidations
@@ -180,7 +173,7 @@ class FlextLdapDomain:
             ]
 
             for attr in lock_attrs:
-                value = user[attr]
+                value = user.additional_attributes.get(attr)
                 if value:
                     if isinstance(value, str) and value.lower() in {"true", "1", "yes"}:
                         return "locked"
@@ -188,7 +181,7 @@ class FlextLdapDomain:
                         return "disabled"
 
             # Check password expiry
-            pwd_expiry = user["pwdChangedTime"]
+            pwd_expiry = user.additional_attributes.get("pwdChangedTime")
             if pwd_expiry:
                 # Simplified check - in real implementation would compare with policy
                 return "active"
@@ -208,8 +201,7 @@ class FlextLdapDomain:
                 )
 
             # Example business rule: users must be active
-            user_active = user.is_active
-            if not user_active:
+            if not user.is_active:
                 return FlextCore.Result[bool].fail(
                     "Inactive users cannot be added to groups",
                 )

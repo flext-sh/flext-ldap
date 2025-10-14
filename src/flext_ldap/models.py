@@ -1501,6 +1501,46 @@ class FlextLdapModels(FlextCore.Models):
                 attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attributes),
             )
 
+        def get_attribute(
+            self, name: str
+        ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
+            """Get a single attribute value by name.
+
+            Args:
+                name: Attribute name to retrieve
+
+            Returns:
+                Attribute value or None if not found
+
+            """
+            return self.attributes.get(name)
+
+        def set_attribute(
+            self, name: str, value: FlextLdapTypes.LdapEntries.EntryAttributeValue
+        ) -> None:
+            """Set a single attribute value by name.
+
+            Args:
+                name: Attribute name to set
+                value: Attribute value to set
+
+            """
+            self.attributes[name] = value
+
+        def get_rdn(self) -> str:
+            """Get the Relative Distinguished Name (RDN) from the DN.
+
+            Returns:
+                RDN string (first component of DN)
+
+            """
+            if isinstance(self.dn, str):
+                # Extract RDN from DN (part before first comma)
+                return self.dn.split(",")[0]
+            # Handle DistinguishedName object
+            dn_str = str(self.dn)
+            return dn_str.split(",", maxsplit=1)[0]
+
     # =========================================================================
     # LDAP OPERATION ENTITIES - Request/Response Objects
     # =========================================================================

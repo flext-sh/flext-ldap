@@ -13,13 +13,16 @@ import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
 
 import yaml
 from flext_core import FlextCore
 
 # Add parent directory to path for imports
 sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
+
+# Constants
+CODE_BLOCK_MARKER_MIN_LENGTH = 3
+LONG_PARAGRAPH_WORD_LIMIT = 200
 
 
 @dataclass
@@ -28,9 +31,9 @@ class OptimizationResult:
 
     file_path: str
     changes_made: int
-    optimizations: list[dict[str, Any]]
+    optimizations: list[dict[str, object]]
     backup_created: bool
-    issues_found: list[dict[str, Any]]
+    issues_found: list[dict[str, object]]
 
 
 @dataclass
@@ -49,11 +52,12 @@ class ContentOptimizer:
     """Main content optimization class."""
 
     def __init__(self, config_path: str | None = None) -> None:
+        """Initialize content optimizer with optional config path."""
         self.config = self._load_config(config_path)
-        self.backup_dir = os.path.join(Path(__file__).parent, "backups")
+        self.backup_dir = Path(__file__).parent / "backups"
         Path(self.backup_dir).mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, object]:
         """Load configuration."""
         default_config = {
             "optimization": {
@@ -91,7 +95,7 @@ class ContentOptimizer:
         return default_config
 
     def optimize_file(
-        self, file_path: str, dry_run: bool = False
+        self, file_path: str, *, dry_run: bool = False
     ) -> OptimizationResult:
         """Optimize a single documentation file."""
         try:
@@ -162,7 +166,7 @@ class ContentOptimizer:
 
     def _optimize_content(
         self, content: str, file_path: str
-    ) -> tuple[str, list[dict[str, Any]]]:
+    ) -> tuple[str, list[dict[str, object]]]:
         """Apply content optimizations."""
         optimizations = []
 
@@ -205,7 +209,7 @@ class ContentOptimizer:
 
         return content, optimizations
 
-    def _enhance_code_blocks(self, content: str) -> tuple[str, list[dict[str, Any]]]:
+    def _enhance_code_blocks(self, content: str) -> tuple[str, list[dict[str, object]]]:
         """Enhance code blocks with better formatting."""
         optimizations = []
 
@@ -220,7 +224,10 @@ class ContentOptimizer:
                     in_code_block = True
                     # Check if language is specified
                     code_marker = line.strip()
-                    if code_marker == "```" or len(code_marker) == 3:
+                    if (
+                        code_marker == "```"
+                        or len(code_marker) == CODE_BLOCK_MARKER_MIN_LENGTH
+                    ):
                         # Try to detect language from content
                         detected_lang = self._detect_code_language(lines, i)
                         if detected_lang:
@@ -268,7 +275,7 @@ class ContentOptimizer:
 
         return None
 
-    def _fix_line_lengths(self, content: str) -> tuple[str, list[dict[str, Any]]]:
+    def _fix_line_lengths(self, content: str) -> tuple[str, list[dict[str, object]]]:
         """Fix overly long lines by breaking them appropriately."""
         optimizations = []
         max_length = self.config["optimization"]["max_line_length"]
@@ -299,7 +306,7 @@ class ContentOptimizer:
 
         return "\n".join(lines), optimizations
 
-    def _add_table_of_contents(self, content: str, file_path: str) -> dict[str, Any]:
+    def _add_table_of_contents(self, content: str, file_path: str) -> dict[str, object]:
         """Add table of contents to long documents."""
         lines = content.split("\n")
 
@@ -343,7 +350,9 @@ class ContentOptimizer:
             is not None
         )
 
-    def _check_for_issues(self, content: str, file_path: str) -> list[dict[str, Any]]:
+    def _check_for_issues(
+        self, content: str, file_path: str
+    ) -> list[dict[str, object]]:
         """Check for potential issues in the content."""
         issues = []
 
@@ -366,7 +375,7 @@ class ContentOptimizer:
         paragraphs = re.split(r"\n\s*\n", content)
         for i, para in enumerate(paragraphs):
             word_count = len(para.split())
-            if word_count > 200:  # Very long paragraph
+            if word_count > LONG_PARAGRAPH_WORD_LIMIT:  # Very long paragraph
                 issues.append({
                     "type": "long_paragraph",
                     "paragraph": i,
@@ -392,7 +401,7 @@ class ContentOptimizer:
             return None
 
     def optimize_directory(
-        self, directory: str, dry_run: bool = False
+        self, directory: str, *, dry_run: bool = False
     ) -> list[OptimizationResult]:
         """Optimize all files in a directory."""
         results = []
@@ -448,6 +457,7 @@ class ContentOptimizer:
 
 
 def main() -> None:
+    """Main entry point for documentation optimization system."""
     parser = argparse.ArgumentParser(
         description="Documentation Content Optimization and Enhancement System"
     )

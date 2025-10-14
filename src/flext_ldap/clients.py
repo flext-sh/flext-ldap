@@ -809,49 +809,6 @@ class FlextLdapClients(FlextCore.Service[None]):
         except Exception as e:
             return FlextCore.Result[list].fail(f"Universal search failed: {e}")
 
-    def search_with_controls_universal(
-        self,
-        base_dn: str,
-        filter_str: str,
-        attributes: FlextCore.Types.StringList | None = None,
-        scope: str = "subtree",
-    ) -> FlextCore.Result[list]:
-        """Universal search with LDAP controls."""
-        try:
-            if not self.connection:
-                return FlextCore.Result[list].fail("LDAP connection not established")
-
-            # For now, delegate to regular search - controls support can be added later
-            return self.search(base_dn, filter_str, attributes, scope)
-
-        except Exception as e:
-            return FlextCore.Result[list].fail(
-                f"Universal search with controls failed: {e}"
-            )
-
-    def add_entry_universal(
-        self,
-        dn: str,
-        attributes: dict[str, str | FlextCore.Types.StringList],
-    ) -> FlextCore.Result[bool]:
-        """Universal add entry operation."""
-        return self.add_entry(dn, attributes)
-
-    def modify_entry_universal(
-        self,
-        dn: str,
-        changes: FlextCore.Types.Dict,
-    ) -> FlextCore.Result[bool]:
-        """Universal modify entry operation."""
-        return self.modify_entry(dn, changes)
-
-    def delete_entry_universal(
-        self,
-        dn: str,
-    ) -> FlextCore.Result[bool]:
-        """Universal delete entry operation."""
-        return self.delete_entry(dn)
-
     def compare_universal(
         self,
         dn: str,
@@ -1205,7 +1162,8 @@ class FlextLdapClients(FlextCore.Service[None]):
         """Get the server operations instance."""
         return self._server_operations
 
-    def get_server_type(self) -> str | None:
+    @property
+    def server_type(self) -> str | None:
         """Get detected server type."""
         return self._detected_server_type
 

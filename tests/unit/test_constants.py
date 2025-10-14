@@ -70,7 +70,7 @@ class TestFlextLdapConstants:
             "description",
             "memberOf",
         ]
-        assert FlextLdapConstants.Attributes.ALL_USER_ATTRS == expected_user_attrs
+        assert expected_user_attrs == FlextLdapConstants.Attributes.ALL_USER_ATTRS
 
         expected_group_attrs = [
             "objectClass",
@@ -81,7 +81,7 @@ class TestFlextLdapConstants:
             "owner",
             "memberOf",
         ]
-        assert FlextLdapConstants.Attributes.ALL_GROUP_ATTRS == expected_group_attrs
+        assert expected_group_attrs == FlextLdapConstants.Attributes.ALL_GROUP_ATTRS
 
     def test_attributes_get_group_attributes_method(self) -> None:
         """Test get_group_attributes method returns copy."""
@@ -113,7 +113,9 @@ class TestFlextLdapConstants:
 
     def test_ldap_attribute_names_additional(self) -> None:
         """Test LDAP attribute names additional constants."""
-        assert FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER == "telephoneNumber"
+        assert (
+            FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER == "telephoneNumber"
+        )
         assert FlextLdapConstants.LdapAttributeNames.MOBILE == "mobile"
         assert FlextLdapConstants.LdapAttributeNames.DEPARTMENT == "department"
         assert FlextLdapConstants.LdapAttributeNames.TITLE == "title"
@@ -126,27 +128,49 @@ class TestFlextLdapConstants:
         """Test object classes constants."""
         assert FlextLdapConstants.ObjectClasses.TOP == "top"
         assert FlextLdapConstants.ObjectClasses.PERSON == "person"
-        assert FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON == "organizationalPerson"
+        assert (
+            FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON
+            == "organizationalPerson"
+        )
         assert FlextLdapConstants.ObjectClasses.INET_ORG_PERSON == "inetOrgPerson"
-        assert FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT == "organizationalUnit"
+        assert (
+            FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT == "organizationalUnit"
+        )
         assert FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES == "groupOfNames"
-        assert FlextLdapConstants.ObjectClasses.GROUP_OF_UNIQUE_NAMES == "groupOfUniqueNames"
+        assert (
+            FlextLdapConstants.ObjectClasses.GROUP_OF_UNIQUE_NAMES
+            == "groupOfUniqueNames"
+        )
 
     def test_filters_user_constants(self) -> None:
         """Test filter user constants."""
-        assert FlextLdapConstants.Filters.DEFAULT_USER_FILTER == "(objectClass=inetOrgPerson)"
+        assert (
+            FlextLdapConstants.Filters.DEFAULT_USER_FILTER
+            == "(objectClass=inetOrgPerson)"
+        )
         assert FlextLdapConstants.Filters.ALL_USERS_FILTER == "(objectClass=person)"
-        assert "(objectClass=inetOrgPerson)" in FlextLdapConstants.Filters.ACTIVE_USERS_FILTER
+        assert (
+            "(objectClass=inetOrgPerson)"
+            in FlextLdapConstants.Filters.ACTIVE_USERS_FILTER
+        )
 
     def test_filters_group_constants(self) -> None:
         """Test filter group constants."""
-        assert FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER == "(objectClass=groupOfNames)"
-        assert "(objectClass=groupOfNames)" in FlextLdapConstants.Filters.ALL_GROUPS_FILTER
+        assert (
+            FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER
+            == "(objectClass=groupOfNames)"
+        )
+        assert (
+            "(objectClass=groupOfNames)" in FlextLdapConstants.Filters.ALL_GROUPS_FILTER
+        )
 
     def test_filters_common_constants(self) -> None:
         """Test filter common constants."""
         assert FlextLdapConstants.Filters.ALL_ENTRIES_FILTER == "(objectClass=*)"
-        assert FlextLdapConstants.Filters.ORGANIZATIONAL_UNITS_FILTER == "(objectClass=organizationalUnit)"
+        assert (
+            FlextLdapConstants.Filters.ORGANIZATIONAL_UNITS_FILTER
+            == "(objectClass=organizationalUnit)"
+        )
 
     def test_validation_dn_constants(self) -> None:
         """Test validation DN constants."""
@@ -173,19 +197,30 @@ class TestFlextLdapConstants:
 
     def test_messages_validation_constants(self) -> None:
         """Test messages validation constants."""
-        assert FlextLdapConstants.Messages.HOST_CANNOT_BE_EMPTY == "Host cannot be empty"
+        assert (
+            FlextLdapConstants.Messages.HOST_CANNOT_BE_EMPTY == "Host cannot be empty"
+        )
         assert FlextLdapConstants.Messages.CONNECTION_FAILED == "Connection failed"
         assert "{0}" in FlextLdapConstants.Messages.FIELD_CANNOT_BE_EMPTY
         assert FlextLdapConstants.Messages.INVALID_DN_FORMAT == "Invalid DN format"
-        assert FlextLdapConstants.Messages.INVALID_SEARCH_FILTER == "Invalid LDAP search filter"
+        assert (
+            FlextLdapConstants.Messages.INVALID_SEARCH_FILTER
+            == "Invalid LDAP search filter"
+        )
         assert "{0}" in FlextLdapConstants.Messages.CONNECTION_FAILED_WITH_CONTEXT
 
     def test_messages_error_constants(self) -> None:
         """Test messages error constants."""
         assert "{error}" in FlextLdapConstants.Messages.EMAIL_VALIDATION_FAILED
         assert FlextLdapConstants.Messages.DN_CANNOT_BE_EMPTY == "DN cannot be empty"
-        assert FlextLdapConstants.Messages.CLIENT_NOT_INITIALIZED == "Client not initialized"
-        assert FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE == "No server operations available"
+        assert (
+            FlextLdapConstants.Messages.CLIENT_NOT_INITIALIZED
+            == "Client not initialized"
+        )
+        assert (
+            FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE
+            == "No server operations available"
+        )
 
     def test_errors_ldap_constants(self) -> None:
         """Test LDAP error code constants."""
@@ -207,7 +242,9 @@ class TestFlextLdapConstants:
     def test_defaults_ldap_user_constants(self) -> None:
         """Test defaults LDAP user constants."""
         assert FlextLdapConstants.Defaults.VALID_LDAP_USER_NAME == "testuser"
-        assert FlextLdapConstants.Defaults.VALID_LDAP_USER_DESCRIPTION == "Test LDAP User"
+        assert (
+            FlextLdapConstants.Defaults.VALID_LDAP_USER_DESCRIPTION == "Test LDAP User"
+        )
 
     def test_defaults_model_constants(self) -> None:
         """Test defaults model constants."""
@@ -297,7 +334,10 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.DictKeys.INCLUDE_CREDENTIALS == "include_credentials"
         assert FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT == "default_timeout"
         assert FlextLdapConstants.DictKeys.MAX_PAGE_SIZE == "max_page_size"
-        assert FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS == "supports_operational_attrs"
+        assert (
+            FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS
+            == "supports_operational_attrs"
+        )
         assert FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY == "schema_subentry"
 
     def test_dict_keys_acl_specific_constants(self) -> None:
@@ -379,8 +419,13 @@ class TestFlextLdapConstants:
 
     def test_conversion_warnings_constants(self) -> None:
         """Test conversion warnings constants."""
-        assert "{permission}" in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
-        assert "{format}" in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
+        assert (
+            "{permission}"
+            in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
+        )
+        assert (
+            "{format}" in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
+        )
         assert "{feature}" in FlextLdapConstants.ConversionWarnings.FEATURE_LOSS
         assert "{format}" in FlextLdapConstants.ConversionWarnings.FEATURE_LOSS
         assert "Syntax pattern" in FlextLdapConstants.ConversionWarnings.SYNTAX_MISMATCH
@@ -451,7 +496,10 @@ class TestFlextLdapConstants:
 
     def test_literal_types_ip_mode(self) -> None:
         """Test literal types IP mode constants."""
-        assert FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT == "IP_SYSTEM_DEFAULT"
+        assert (
+            FlextLdapConstants.LiteralTypes.IP_MODE_SYSTEM_DEFAULT
+            == "IP_SYSTEM_DEFAULT"
+        )
         assert FlextLdapConstants.LiteralTypes.IP_MODE_V4_ONLY == "IP_V4_ONLY"
         assert FlextLdapConstants.LiteralTypes.IP_MODE_V4_PREFERRED == "IP_V4_PREFERRED"
         assert FlextLdapConstants.LiteralTypes.IP_MODE_V6_ONLY == "IP_V6_ONLY"
@@ -459,22 +507,56 @@ class TestFlextLdapConstants:
 
     def test_literal_types_project_types(self) -> None:
         """Test literal types project type constants."""
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_SERVICE == "ldap-service"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SERVICE == "directory-service"
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_SERVICE == "ldap-service"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SERVICE
+            == "directory-service"
+        )
         assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_CLIENT == "ldap-client"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_PROVIDER == "identity-provider"
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_PROVIDER
+            == "identity-provider"
+        )
         assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_SYNC == "ldap-sync"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SYNC == "directory-sync"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_PROVISIONING == "user-provisioning"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_GATEWAY == "ldap-gateway"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_AUTHENTICATION_SERVICE == "authentication-service"
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_SYNC
+            == "directory-sync"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_PROVISIONING
+            == "user-provisioning"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_GATEWAY == "ldap-gateway"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_AUTHENTICATION_SERVICE
+            == "authentication-service"
+        )
         assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_SSO_SERVICE == "sso-service"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_API == "directory-api"
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_DIRECTORY_API
+            == "directory-api"
+        )
         assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_PROXY == "ldap-proxy"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_MANAGEMENT == "identity-management"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_DIRECTORY == "user-directory"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_GROUP_MANAGEMENT == "group-management"
-        assert FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_MIGRATION == "ldap-migration"
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_IDENTITY_MANAGEMENT
+            == "identity-management"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_USER_DIRECTORY
+            == "user-directory"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_GROUP_MANAGEMENT
+            == "group-management"
+        )
+        assert (
+            FlextLdapConstants.LiteralTypes.PROJECT_TYPE_LDAP_MIGRATION
+            == "ldap-migration"
+        )
 
     def test_version_constants(self) -> None:
         """Test version constants."""

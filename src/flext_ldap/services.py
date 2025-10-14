@@ -61,11 +61,13 @@ class FlextLdapServices(FlextCore.Service[None]):
             if not FlextLdapDomain.UserSpecification.is_valid_username(request.uid):
                 return FlextCore.Result[bool].fail("Invalid username format")
 
-            # Domain validation: email format
-            if request.mail and not FlextLdapDomain.UserSpecification.is_valid_email(
-                request.mail,
-            ):
-                return FlextCore.Result[bool].fail("Invalid email format")
+            # Domain validation: email format (use flext-core validation directly)
+            if request.mail:
+                email_result = FlextCore.Utilities.Validation.validate_email(
+                    request.mail
+                )
+                if email_result.is_failure:
+                    return FlextCore.Result[bool].fail("Invalid email format")
 
             # Domain validation: password policy
             if request.user_password:
@@ -165,14 +167,12 @@ class FlextLdapServices(FlextCore.Service[None]):
                 )
 
             # Domain validation: search scope
-            scope_result = FlextLdapModels.Scope.create(request.scope)
-            if scope_result.is_failure:
+            try:
+                scope_obj = FlextLdapModels.Scope(value=request.scope)
+            except Exception as e:
                 return FlextCore.Result[bool].fail(
-                    scope_result.error or "Invalid search scope creation",
+                    f"Invalid search scope: {e}",
                 )
-            scope_obj = scope_result.unwrap()
-            if not isinstance(scope_obj, FlextLdapModels.Scope):
-                return FlextCore.Result[bool].fail("Invalid scope object type")
             scope_check = FlextLdapDomain.SearchSpecification.validate_search_scope(
                 request.base_dn,
                 scope_obj,
@@ -211,11 +211,11 @@ class FlextLdapServices(FlextCore.Service[None]):
         try:
             # Domain processing: convert entries to User entities
             # Note: SearchResponse accepts mixed Entry/User/Group in entries list
-            user_entries: list[FlextLdapModels.Entry | FlextLdapModels.User] = []
+            user_entries: list[FlextLdapModels.Entry | FlextLdapModels.LdapUser] = []
             for entry in results.entries:
                 try:
                     # Try to create User entity from entry
-                    user = FlextLdapModels.User(**entry.model_dump())
+                    user = FlextLdapModels.LdapUser(**entry.model_dump())
                     user_entries.append(user)
                 except Exception as e:
                     logger.warning(
@@ -454,7 +454,7 @@ class FlextLdapServices(FlextCore.Service[None]):
                 total_count=0,
                 result_code=0,
                 time_elapsed=0.1,
-                has_more=False,
+                has_more_pages=False,
             )
 
             # Step 4: Domain processing of results
@@ -499,7 +499,7 @@ class FlextLdapServices(FlextCore.Service[None]):
     def execute_user_provisioning_workflow(
         self,
         user_request: FlextLdapModels.CreateUserRequest,
-    ) -> FlextCore.Result[FlextLdapModels.User]:
+    ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
         """Execute complete user provisioning workflow with domain orchestration.
 
         This method orchestrates the entire user provisioning process:
@@ -519,14 +519,14 @@ class FlextLdapServices(FlextCore.Service[None]):
             # Step 1: Domain validation
             validation_result = self.validate_user_creation_request(user_request)
             if validation_result.is_failure:
-                return FlextCore.Result[FlextLdapModels.User].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     validation_result.error or "User validation failed",
                 )
 
             # Step 2: Domain enrichment
             enrichment_result = self.enrich_user_for_creation(user_request)
             if enrichment_result.is_failure:
-                return FlextCore.Result[FlextLdapModels.User].fail(
+                return FlextCore.Result[FlextLdapModels.LdapUser].fail(
                     enrichment_result.error or "User enrichment failed",
                 )
 
@@ -566,11 +566,13 @@ class FlextLdapServices(FlextCore.Service[None]):
 
             # Return LdapUser as-is - it IS a User type
 
-            return FlextCore.Result[FlextLdapModels.User].ok(created_user)
+            return FlextCore.Result[FlextLdapModels.LdapUser].ok(created_user)
 
         except Exception as e:
             logger.exception("User provisioning workflow failed", error=str(e))
-            return FlextCore.Result[FlextLdapModels.User].fail(f"Workflow failed: {e}")
+            return FlextCore.Result[FlextLdapModels.LdapUser].fail(
+                f"Workflow failed: {e}"
+            )
 
     # =============================================================================
     # UTILITY SERVICES

@@ -205,25 +205,6 @@ class TestFlextLdapUtilities:
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
-    def test_ensure_string_list_valid(self) -> None:
-        """Test string list validation and conversion."""
-        data = ["a", "b", "c"]
-        result = FlextLdapUtilities.ensure_string_list(data)
-        assert result.is_success
-        assert result.data == ["a", "b", "c"]
-
-    def test_ensure_string_list_single_string(self) -> None:
-        """Test string list validation with single string."""
-        result = FlextLdapUtilities.ensure_string_list("single")
-        assert result.is_success
-        assert result.data == ["single"]
-
-    def test_ensure_string_list_invalid(self) -> None:
-        """Test string list validation with invalid data."""
-        result = FlextLdapUtilities.ensure_string_list(123)
-        assert result.is_success
-        assert result.data == ["123"]  # The function converts any value to string
-
 
 class TestFlextLdapUtilitiesLdapTypeGuards:
     """Tests for FlextLdapUtilities.LdapTypeGuards nested class."""
@@ -843,14 +824,3 @@ class TestFlextLdapUtilitiesCoverageEnhancement:
         # This should either succeed (if minimal validation) or fail
         # The important part is exercising line 405-406
         assert isinstance(result.is_success, bool)
-
-    def test_ensure_string_list_exception(self) -> None:
-        """Test ensure_string_list with exception - covers lines 414-415."""
-        # The ensure_string_list TypeGuards method is very forgiving and converts almost anything
-        # However, we can still test the wrapper returns success for dict input
-        # (which gets converted to string representation)
-        result = FlextLdapUtilities.ensure_string_list({"not": "a list"})
-        # Should succeed - dict converted to string in list
-        assert result.is_success
-        assert isinstance(result.data, list)
-        assert len(result.data) > 0

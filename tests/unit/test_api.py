@@ -34,13 +34,12 @@ class TestFlextLdap:
 
         assert api is not None
         assert hasattr(api, "_client")
-        assert hasattr(api, "_services")
-        assert hasattr(api, "_config")
+        assert hasattr(api, "_ldap_config")
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
         config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -52,7 +51,7 @@ class TestFlextLdap:
         assert api.config is not None
         assert (
             api.config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
         )
 
     def test_api_factory_method(self) -> None:
@@ -84,20 +83,20 @@ class TestFlextLdap:
         """Test API connection methods."""
         api = FlextLdap()
 
-        # Test is_connected method
-        connected = api.is_connected()
+        # Test is_connected method via client (wrapper removed)
+        connected = api.client.is_connected()
         assert isinstance(connected, bool)
 
-        # Test test_connection method
-        result = api.test_connection()
+        # Test test_connection method via client (wrapper removed)
+        result = api.client.test_connection()
         assert isinstance(result, FlextCore.Result)
 
         # Test connect method
         result = api.connect()
         assert isinstance(result, FlextCore.Result)
 
-        # Test unbind method
-        result = api.unbind()
+        # Test unbind method via client (wrapper removed)
+        result = api.client.unbind()
         assert isinstance(result, FlextCore.Result)
 
     def test_api_search_methods(self) -> None:
@@ -278,7 +277,7 @@ class TestFlextLdap:
     def test_api_configuration_persistence(self) -> None:
         """Test API configuration persistence."""
         config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -290,7 +289,7 @@ class TestFlextLdap:
         stored_config = api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=admin,dc=test,dc=com"
         assert stored_config.ldap_base_dn == "dc=test,dc=com"
@@ -301,7 +300,7 @@ class TestFlextLdap:
 
         # Test that API can be extended with custom configurations
         custom_config = FlextLdapConfig(
-            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}",
+            ldap_server_uri=f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
             ldap_bind_dn="cn=admin,dc=test,dc=com",
             ldap_bind_password=SecretStr("testpass"),
             ldap_base_dn="dc=test,dc=com",
@@ -313,7 +312,7 @@ class TestFlextLdap:
         stored_config = custom_api.config
         assert (
             stored_config.ldap_server_uri
-            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextCore.Constants.Platform.LDAP_DEFAULT_PORT}"
+            == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
         )
         assert stored_config.ldap_bind_dn == "cn=admin,dc=test,dc=com"
 
