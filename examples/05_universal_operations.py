@@ -122,7 +122,9 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
     logger.info("\n=== Server Capabilities ===")
 
     # Get comprehensive server capabilities
-    result: FlextCore.Result[FlextCore.Types.Dict] = api.get_server_capabilities()
+    result: FlextCore.Result[FlextLdapModels.ServerCapabilities] = (
+        api.get_server_capabilities()
+    )
 
     if result.is_failure:
         logger.error(f"❌ Failed to get capabilities: {result.error}")
@@ -419,7 +421,7 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
     logger.info("\n=== Server-Specific Attributes ===")
 
     # Get server-specific attributes
-    result: FlextCore.Result[FlextCore.Types.Dict] = (
+    result: FlextCore.Result[FlextLdapModels.ServerAttributes] = (
         api.get_server_specific_attributes()
     )
 

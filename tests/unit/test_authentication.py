@@ -340,7 +340,6 @@ class TestFlextLdapAuthenticationExecute:
 
         operation = FlextCore.Models.OperationExecutionRequest(
             operation_name="test",
-            operation_type="test",
             operation_callable=test_op,
         )
         result = auth_service.execute_operation(operation)

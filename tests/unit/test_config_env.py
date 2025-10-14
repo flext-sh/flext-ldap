@@ -87,9 +87,15 @@ class TestFlextLdapConfigEnvironment:
 
             # Verify integer fields are properly coerced from strings
             assert config.ldap_port == 3389, f"Expected 3389, got {config.ldap_port}"
-            assert config.ldap_pool_size == 20, f"Expected 20, got {config.ldap_pool_size}"
-            assert config.ldap_cache_ttl == 600, f"Expected 600, got {config.ldap_cache_ttl}"
-            assert config.ldap_retry_attempts == 5, f"Expected 5, got {config.ldap_retry_attempts}"
+            assert config.ldap_pool_size == 20, (
+                f"Expected 20, got {config.ldap_pool_size}"
+            )
+            assert config.ldap_cache_ttl == 600, (
+                f"Expected 600, got {config.ldap_cache_ttl}"
+            )
+            assert config.ldap_retry_attempts == 5, (
+                f"Expected 5, got {config.ldap_retry_attempts}"
+            )
 
             # Verify boolean fields are properly coerced from various string formats
             assert config.ldap_use_ssl is True, "Expected True from 'true'"
@@ -111,7 +117,9 @@ class TestFlextLdapConfigEnvironment:
         Now works with strict=True using explicit field validators for type coercion.
         """
         # Create temporary .env file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".env", delete=False, encoding="utf-8"
+        ) as f:
             f.write("FLEXT_LDAP_PORT=3390\n")
             f.write("FLEXT_LDAP_POOL_SIZE=25\n")
             f.write("FLEXT_LDAP_USE_SSL=false\n")
@@ -124,7 +132,9 @@ class TestFlextLdapConfigEnvironment:
 
             # Verify values loaded from .env file
             assert config.ldap_port == 3390, f"Expected 3390, got {config.ldap_port}"
-            assert config.ldap_pool_size == 25, f"Expected 25, got {config.ldap_pool_size}"
+            assert config.ldap_pool_size == 25, (
+                f"Expected 25, got {config.ldap_pool_size}"
+            )
             assert config.ldap_use_ssl is False, "Expected False from 'false'"
             assert config.ldap_enable_caching is False, "Expected False from '0'"
 
@@ -138,7 +148,9 @@ class TestFlextLdapConfigEnvironment:
         Now works with strict=True using explicit field validators for type coercion.
         """
         # Create temporary .env file with one value
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".env", delete=False, encoding="utf-8"
+        ) as f:
             f.write("FLEXT_LDAP_PORT=3390\n")  # .env file value
             f.write("FLEXT_LDAP_POOL_SIZE=25\n")  # .env file value
             env_file_path = f.name
@@ -234,9 +246,15 @@ class TestFlextLdapConfigEnvironment:
             assert config.ldap_base_dn == "dc=test,dc=example,dc=com"
 
             # Verify computed fields work with env var configuration
-            assert hasattr(config, "connection_info"), "Computed field connection_info missing"
-            assert hasattr(config, "authentication_info"), "Computed field authentication_info missing"
-            assert hasattr(config, "ldap_capabilities"), "Computed field ldap_capabilities missing"
+            assert hasattr(config, "connection_info"), (
+                "Computed field connection_info missing"
+            )
+            assert hasattr(config, "authentication_info"), (
+                "Computed field authentication_info missing"
+            )
+            assert hasattr(config, "ldap_capabilities"), (
+                "Computed field ldap_capabilities missing"
+            )
 
             # Verify computed fields return expected data
             assert config.connection_info is not None

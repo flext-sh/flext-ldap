@@ -147,15 +147,18 @@ class TestEntryAdapterUniversal:
         """Test detecting Oracle OUD from entry with ds-privilege-name attribute."""
         # Arrange - entry with Oracle OUD characteristics
         attributes_dict = {
-            "objectClass": ["ds-root-dn-user", "top"],
-            "ds-privilege-name": ["config-read", "config-write"],
+            "objectClass": FlextLdifModels.AttributeValues(
+                values=["ds-root-dn-user", "top"]
+            ),
+            "ds-privilege-name": FlextLdifModels.AttributeValues(
+                values=["config-read", "config-write"]
+            ),
         }
-        dn_obj = FlextLdifModels.DistinguishedName(
-            value="cn=Directory Manager,cn=Root DNs,cn=config"
-        )
         entry = FlextLdifModels.Entry(
-            dn=dn_obj,
-            attributes=attributes_dict,
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=Directory Manager,cn=Root DNs,cn=config"
+            ),
+            attributes=FlextLdifModels.LdifAttributes(attributes=attributes_dict),
         )
 
         # Act

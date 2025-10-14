@@ -443,7 +443,7 @@ class FlextLdapSearch(FlextCore.Service[None]):
         """Convert scope string to ldap3 scope constant.
 
         Args:
-            scope: Scope string ("base", "level", or "subtree").
+            scope: Scope string ("base", "level", or "subtree") - case insensitive.
 
         Returns:
             ldap3 scope constant (Literal["BASE", "LEVEL", "SUBTREE"]).
@@ -452,15 +452,18 @@ class FlextLdapSearch(FlextCore.Service[None]):
             ValueError: If scope is invalid.
 
         """
+        # Normalize scope to lowercase for case-insensitive matching
+        normalized_scope = scope.lower()
+
         scope_map: dict[str, FlextLdapConstants.SearchScope] = {
             "base": BASE,
             "level": LEVEL,
             "subtree": SUBTREE,
         }
-        if scope not in scope_map:
-            msg = f"Invalid scope: {scope}. Must be one of: base, level, subtree"
+        if normalized_scope not in scope_map:
+            msg = f"Invalid scope: {scope}. Must be one of: base, level, subtree (case insensitive)"
             raise ValueError(msg)
-        return scope_map[scope]
+        return scope_map[normalized_scope]
 
     def execute(self) -> FlextCore.Result[None]:
         """Execute the main domain operation (required by FlextCore.Service)."""
@@ -468,21 +471,21 @@ class FlextLdapSearch(FlextCore.Service[None]):
 
     def execute_operation(
         self,
-        operation: FlextLdapModels.OperationExecutionRequest,
+        request: FlextLdapModels.OperationExecutionRequest,
     ) -> FlextCore.Result[None]:
         """Execute operation using OperationExecutionRequest model (Domain.Service protocol).
 
         Args:
-            operation: OperationExecutionRequest containing operation settings
+            request: OperationExecutionRequest containing operation settings
 
         Returns:
             FlextCore.Result[object]: Success with result or failure with error
 
         """
         # For search operations, we execute the base service operation
-        # The operation parameter could be used for more specific operation handling
-        # Use operation parameter to satisfy protocol requirements
-        _ = operation
+        # The request parameter could be used for more specific operation handling
+        # Use request parameter to satisfy protocol requirements
+        _ = request
         return self.execute()
 
 

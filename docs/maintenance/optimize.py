@@ -10,19 +10,63 @@ import json
 import operator
 import os
 import re
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
-from flext_core import FlextCore
+from flext_core import FlextConstants, FlextCore
 
-# Add parent directory to path for imports
-sys.path.insert(0, Path(Path(Path(__file__).resolve()).parent).parent)
 
-# Constants
-CODE_BLOCK_MARKER_MIN_LENGTH = 3
-LONG_PARAGRAPH_WORD_LIMIT = 200
+# Type definitions
+class OptimizationInfo(TypedDict):
+    """Information about an optimization applied."""
+
+    type: str
+    description: str
+    line_number: int | None
+    old_content: str | None
+    new_content: str | None
+
+
+class IssueInfo(TypedDict):
+    """Information about an issue found during optimization."""
+
+    type: str
+    description: str
+    line_number: int | None
+    severity: str
+
+
+class OptimizationSettings(TypedDict):
+    """Optimization settings configuration."""
+
+    auto_fix: bool
+    create_backups: bool
+    improve_formatting: bool
+    fix_common_typos: bool
+    enhance_code_blocks: bool
+    max_line_length: int | None
+    add_toc_to_long_docs: bool
+    toc_min_headings: int
+
+
+class OptimizationContentSettings(TypedDict):
+    """Content settings for optimization."""
+
+    common_typos: dict[str, str]
+
+
+class OptimizationConfig(TypedDict):
+    """Configuration for content optimization."""
+
+    optimization: OptimizationSettings
+    content: OptimizationContentSettings
+
+
+# Constants for optimization
+CODE_BLOCK_MARKER_MIN_LENGTH: int = FlextConstants.Network.MIN_PORT
+LONG_PARAGRAPH_WORD_LIMIT: int = FlextConstants.Validation.PREVIEW_LENGTH * 4
 
 
 @dataclass
@@ -31,9 +75,9 @@ class OptimizationResult:
 
     file_path: str
     changes_made: int
-    optimizations: list[dict[str, object]]
+    optimizations: list[OptimizationInfo]
     backup_created: bool
-    issues_found: list[dict[str, object]]
+    issues_found: list[IssueInfo]
 
 
 @dataclass
@@ -53,11 +97,11 @@ class ContentOptimizer:
 
     def __init__(self, config_path: str | None = None) -> None:
         """Initialize content optimizer with optional config path."""
-        self.config = self._load_config(config_path)
+        self.config: OptimizationConfig = self._load_config(config_path)
         self.backup_dir = Path(__file__).parent / "backups"
         Path(self.backup_dir).mkdir(exist_ok=True, parents=True)
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, object]:
+    def _load_config(self, config_path: str | None = None) -> OptimizationConfig:
         """Load configuration."""
         default_config = {
             "optimization": {
@@ -165,8 +209,10 @@ class ContentOptimizer:
         )
 
     def _optimize_content(
-        self, content: str, file_path: str
-    ) -> tuple[str, list[dict[str, object]]]:
+        self,
+        content: str,
+        file_path: str,  # noqa: ARG002
+    ) -> tuple[str, list[OptimizationInfo]]:
         """Apply content optimizations."""
         optimizations = []
 
@@ -209,7 +255,7 @@ class ContentOptimizer:
 
         return content, optimizations
 
-    def _enhance_code_blocks(self, content: str) -> tuple[str, list[dict[str, object]]]:
+    def _enhance_code_blocks(self, content: str) -> tuple[str, list[OptimizationInfo]]:
         """Enhance code blocks with better formatting."""
         optimizations = []
 
@@ -275,38 +321,46 @@ class ContentOptimizer:
 
         return None
 
-    def _fix_line_lengths(self, content: str) -> tuple[str, list[dict[str, object]]]:
+    def _fix_line_lengths(self, content: str) -> tuple[str, list[OptimizationInfo]]:
         """Fix overly long lines by breaking them appropriately."""
         optimizations = []
         max_length = self.config["optimization"]["max_line_length"]
 
         lines = content.split("\n")
         for i, line in enumerate(lines):
-            if len(line) > max_length and not line.strip().startswith("```"):
+            if (
+                len(line) > max_length
+                and not line.strip().startswith("```")
+                and "," in line
+                and len(line) > max_length + 20
+            ):
                 # Try to break at natural points
-                if "," in line and len(line) > max_length + 20:
-                    # Break after comma
-                    parts = line.split(",")
-                    if len(parts) > 1:
-                        new_lines = []
-                        current_line = parts[0]
-                        for part in parts[1:]:
-                            if len(current_line + "," + part) > max_length:
-                                new_lines.append(current_line + ",")
-                                current_line = "    " + part  # Indent continuation
-                            else:
-                                current_line += "," + part
-                        new_lines.append(current_line)
+                # Break after comma
+                parts = line.split(",")
+                if len(parts) > 1:
+                    new_lines = []
+                    current_line = parts[0]
+                    for part in parts[1:]:
+                        if len(current_line + "," + part) > max_length:
+                            new_lines.append(current_line + ",")
+                            current_line = "    " + part  # Indent continuation
+                        else:
+                            current_line += "," + part
+                    new_lines.append(current_line)
 
-                        lines[i] = "\n".join(new_lines)
-                        optimizations.append({
-                            "type": "line_length",
-                            "description": f"Fixed long line by breaking at commas (line {i + 1})",
-                        })
+                    lines[i] = "\n".join(new_lines)
+                    optimizations.append({
+                        "type": "line_length",
+                        "description": f"Fixed long line by breaking at commas (line {i + 1})",
+                    })
 
         return "\n".join(lines), optimizations
 
-    def _add_table_of_contents(self, content: str, file_path: str) -> dict[str, object]:
+    def _add_table_of_contents(
+        self,
+        content: str,
+        file_path: str,  # noqa: ARG002
+    ) -> dict[str, str]:
         """Add table of contents to long documents."""
         lines = content.split("\n")
 
@@ -350,9 +404,7 @@ class ContentOptimizer:
             is not None
         )
 
-    def _check_for_issues(
-        self, content: str, file_path: str
-    ) -> list[dict[str, object]]:
+    def _check_for_issues(self, content: str, file_path: str) -> list[OptimizationInfo]:
         """Check for potential issues in the content."""
         issues = []
 
@@ -362,7 +414,7 @@ class ContentOptimizer:
             if not url.startswith(("http", "https", "#")):
                 # Check if relative file exists
                 file_dir = Path(file_path).parent
-                full_path = os.path.join(file_dir, url)
+                full_path = str(file_dir / url)
                 if not Path(full_path).exists():
                     issues.append({
                         "type": "broken_link",
@@ -391,7 +443,7 @@ class ContentOptimizer:
             filename = Path(file_path).name
             timestamp = __import__("time").strftime("%Y%m%d_%H%M%S")
             backup_name = f"{filename}.{timestamp}.backup"
-            backup_path = os.path.join(self.backup_dir, backup_name)
+            backup_path = str(self.backup_dir / backup_name)
 
             with Path(backup_path).open("w", encoding="utf-8") as f:
                 f.write(content)
@@ -408,11 +460,11 @@ class ContentOptimizer:
 
         for root, dirs, files in os.walk(directory):
             # Skip excluded directories
-            dirs[:] = [d for d in dirs if not self._is_excluded(os.path.join(root, d))]
+            dirs[:] = [d for d in dirs if not self._is_excluded(str(Path(root) / d))]
 
             for file in files:
                 if file.endswith((".md", ".mdx")):
-                    file_path = os.path.join(root, file)
+                    file_path = str(Path(root) / file)
                     if not self._is_excluded(file_path):
                         result = self.optimize_file(file_path, dry_run)
                         results.append(result)

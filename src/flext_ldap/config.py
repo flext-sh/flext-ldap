@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from dependency_injector import providers
 from flext_core import FlextConfig, FlextCore
@@ -632,7 +632,10 @@ class FlextLdapConfig(FlextCore.Config):
             except ValueError as e:
                 msg = f"Cannot convert '{v}' to integer"
                 raise ValueError(msg) from e
-        return int(v) if v is not None else v
+        if v is None:
+            msg = "Integer field cannot be None"
+            raise ValueError(msg)
+        return int(cast("int | str", v))
 
     @field_validator(
         "ldap_use_ssl",
@@ -672,9 +675,14 @@ class FlextLdapConfig(FlextCore.Config):
                 return True
             if v_lower in {"false", "0", "no", "off"}:
                 return False
-            msg = f"Cannot convert '{v}' to boolean. Use: true/false, 1/0, yes/no, on/off"
+            msg = (
+                f"Cannot convert '{v}' to boolean. Use: true/false, 1/0, yes/no, on/off"
+            )
             raise ValueError(msg)
-        return bool(v) if v is not None else v
+        if v is None:
+            msg = "Boolean field cannot be None"
+            raise ValueError(msg)
+        return bool(v)
 
     # =========================================================================
     # MODEL VALIDATORS - Cross-field validation with business rules
@@ -706,7 +714,9 @@ class FlextLdapConfig(FlextCore.Config):
     # ENHANCED DIRECT ACCESS - Dot notation support for LDAP config
     # =========================================================================
 
-    def __call__(self, key: str) -> object:
+    def __call__(
+        self, key: str
+    ) -> str | int | float | bool | list[object] | dict[str, object] | None:
         """Enhanced direct value access with LDAP-specific dot notation support.
 
         Extends FlextCore.Config.__call__ with LDAP-specific nested access patterns.

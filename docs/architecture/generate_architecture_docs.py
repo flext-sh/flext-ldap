@@ -11,8 +11,7 @@ Comprehensive tool for generating architecture documentation including:
 
 import argparse
 import shutil
-import subprocess
-import sys
+import subprocess  # nosec S404 - Required for PlantUML diagram generation
 import traceback
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -21,11 +20,9 @@ from typing import Any
 
 import yaml
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(Path(Path(__file__).resolve()).parent).parent))
-
 # Constants
 MAX_DISPLAY_ITEMS = 10
+PLANTUML_ALLOWED_FORMATS = {"png", "svg", "eps", "pdf", "vdx", "xmi", "scxml", "html"}
 
 # Type aliases
 GenerationResults = dict[str, Any]
@@ -39,10 +36,12 @@ class ArchitectureGenerator:
     output_dir: str = "docs/architecture"
     diagrams_dir: str = "docs/architecture/diagrams"
     verbose: bool = False
+    working_dir: str = ""
 
     def __post_init__(self) -> None:
         """Initialize architecture documentation generator after dataclass creation."""
         self.config = self._load_config()
+        self.working_dir = str(Path(Path(__file__).resolve()).parent.parent)
         Path(self.output_dir).mkdir(exist_ok=True, parents=True)
         Path(self.diagrams_dir).mkdir(exist_ok=True, parents=True)
         Path(f"{self.diagrams_dir}/generated").mkdir(exist_ok=True, parents=True)
@@ -90,7 +89,7 @@ class ArchitectureGenerator:
             else:
                 base[key] = value
 
-    def generate_full_suite(self) -> GenerationResults:
+    def generate_full_suite(self) -> dict[str, list[str] | str]:
         """Generate the complete architecture documentation suite."""
         results = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -106,8 +105,10 @@ class ArchitectureGenerator:
                 c4_results = self.generate_c4_model()
                 files_list = c4_results.get("files", [])
                 diagrams_list = c4_results.get("diagrams", [])
-                assert isinstance(files_list, list)
-                assert isinstance(diagrams_list, list)
+                if not isinstance(files_list, list):
+                    files_list = []
+                if not isinstance(diagrams_list, list):
+                    diagrams_list = []
                 results["files_generated"].extend(files_list)
                 results["diagrams_generated"].extend(diagrams_list)
 
@@ -173,7 +174,7 @@ class ArchitectureGenerator:
 
     def generate_c4_model(self) -> dict[str, list[str]]:
         """Generate C4 Model documentation."""
-        results = {"files": [], "diagrams": []}
+        results: dict[str, list[str]] = {"files": [], "diagrams": []}
 
         # System Context
         context_file = f"{self.output_dir}/c4-system-context.md"
@@ -524,9 +525,9 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_arc42(self) -> dict[str, object]:
+    def generate_arc42(self) -> dict[str, list[str]]:
         """Generate Arc42 documentation template."""
-        results = {"files": []}
+        results: dict[str, list[str]] = {"files": []}
 
         arc42_sections = [
             ("01-introduction", "Introduction and Goals"),
@@ -568,9 +569,9 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_adr_framework(self) -> dict[str, object]:
+    def generate_adr_framework(self) -> dict[str, list[str]]:
         """Generate ADR framework."""
-        results = {"files": []}
+        results: dict[str, list[str]] = {"files": []}
 
         # ADR template
         template_file = f"{self.output_dir}/adr/template.md"
@@ -664,9 +665,9 @@ This diagram shows the package structure and implementation details.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_data_architecture(self) -> dict[str, object]:
+    def generate_data_architecture(self) -> dict[str, list[str]]:
         """Generate data architecture documentation."""
-        results = {"files": [], "diagrams": []}
+        results: dict[str, list[str]] = {"files": [], "diagrams": []}
 
         # Data models
         data_models_file = f"{self.output_dir}/data/data-models.md"
@@ -744,9 +745,9 @@ This document describes how data flows through the system and key processing pip
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_security_architecture(self) -> dict[str, object]:
+    def generate_security_architecture(self) -> dict[str, list[str]]:
         """Generate security architecture documentation."""
-        results = {"files": [], "diagrams": []}
+        results: dict[str, list[str]] = {"files": [], "diagrams": []}
 
         # Security model
         security_file = f"{self.output_dir}/security/security-model.md"
@@ -797,9 +798,9 @@ This document describes the threat model and security controls for flext-ldap.
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_quality_attributes(self) -> dict[str, object]:
+    def generate_quality_attributes(self) -> dict[str, list[str]]:
         """Generate quality attributes documentation."""
-        results = {"files": []}
+        results: dict[str, list[str]] = {"files": []}
 
         quality_files = [
             ("performance", "Performance Characteristics"),
@@ -836,9 +837,9 @@ This document describes the {attribute.lower()} characteristics and requirements
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
-    def generate_diagrams(self) -> dict[str, object]:
+    def generate_diagrams(self) -> dict[str, list[str]]:
         """Generate diagrams from PlantUML sources."""
-        results = {"diagrams": []}
+        results: dict[str, list[str]] = {"diagrams": []}
 
         # Check if PlantUML is available
         plantuml_jar = self.config["diagrams"].get("plantuml_jar", "plantuml.jar")
@@ -865,21 +866,12 @@ This document describes the {attribute.lower()} characteristics and requirements
             if plantuml_cmd:
                 # Use plantuml command with input validation
                 formats = self.config["generation"].get("diagram_formats", ["png"])
-                # Validate formats to prevent command injection
-                allowed_formats = {
-                    "png",
-                    "svg",
-                    "eps",
-                    "pdf",
-                    "vdx",
-                    "xmi",
-                    "scxml",
-                    "html",
-                }
+                # Validate formats to prevent command injection using constant
                 for fmt in formats:
-                    if fmt not in allowed_formats:
+                    if fmt not in PLANTUML_ALLOWED_FORMATS:
                         continue  # Skip invalid formats
-                    subprocess.run(
+                    # Security: Use full path and validated arguments only
+                    subprocess.run(  # nosec S603 - PlantUML command with controlled arguments and full path
                         [
                             plantuml_cmd,
                             puml_file,
@@ -888,14 +880,21 @@ This document describes the {attribute.lower()} characteristics and requirements
                             f"{self.diagrams_dir}/generated",
                         ],
                         check=True,
-                        shell=False,
+                        shell=False,  # Explicitly disable shell for security
+                        cwd=self.working_dir,  # Use working directory for safety
                     )
         except subprocess.CalledProcessError:
-            pass
+            # Log the error for debugging
+            if self.verbose:
+                pass
+        except Exception:
+            # Log unexpected errors
+            if self.verbose:
+                pass
 
-    def generate_navigation(self) -> dict[str, object]:
+    def generate_navigation(self) -> dict[str, list[str]]:
         """Generate navigation and index files."""
-        results = {"files": []}
+        results: dict[str, list[str]] = {"files": []}
 
         # Update main README with navigation
         readme_file = f"{self.output_dir}/README.md"

@@ -6,19 +6,49 @@ across documentation repositories.
 """
 
 import argparse
+import logging
 import os
-import subprocess
+import shutil
+import subprocess  # nosec S404 - Required for Git operations in documentation sync
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
+from flext_core import FlextConstants, FlextCore
 
-# Import documentation maintenance modules
-from flext_core import FlextCore
+from .audit import DocumentationAuditor
+from .optimize import ContentOptimizer
+from .report import ReportGenerator
+from .validate_links import LinkValidator
+from .validate_style import StyleValidator
 
-# Constants
-MAX_CHANGES_DISPLAY = 10
+logger = logging.getLogger(__name__)
+
+
+# Type definitions
+class GitStatusInfo(TypedDict):
+    """Git status information."""
+
+    branch: str
+    modified_files: list[str]
+    untracked_files: list[str]
+    staged_files: list[str]
+    ahead_count: int
+    behind_count: int
+
+
+class SyncConfig(TypedDict):
+    """Configuration for documentation synchronization."""
+
+    sync: dict[str, object]
+    git: dict[str, object]
+    maintenance: dict[str, object]
+
+
+# Constants for synchronization
+MAX_CHANGES_DISPLAY: int = FlextConstants.Network.MAX_CONNECTIONS // 10
 
 
 @dataclass
@@ -37,7 +67,7 @@ class SyncResult:
 class SyncStatus:
     """Current synchronization status."""
 
-    git_status: dict[str, object]
+    git_status: GitStatusInfo
     pending_changes: FlextCore.Types.StringList
     last_sync: datetime | None
     sync_needed: bool
@@ -48,10 +78,15 @@ class DocumentationSync:
     """Main documentation synchronization class."""
 
     def __init__(self, config_path: str | None = None) -> None:
-        self.config = self._load_config(config_path)
+        """Initialize documentation synchronization system."""
+        self.config: SyncConfig = self._load_config(config_path)
         self.working_dir = Path(Path(Path(__file__).resolve()).parent).parent
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, object]:
+    def _get_git_command(self) -> str | None:
+        """Get the full path to git command."""
+        return shutil.which("git")
+
+    def _load_config(self, config_path: str | None = None) -> SyncConfig:
         """Load configuration."""
         default_config = {
             "sync": {
@@ -102,12 +137,23 @@ class DocumentationSync:
             conflicts_present=conflicts_present,
         )
 
-    def _get_git_status(self) -> dict[str, object]:
+    def _get_git_status(self) -> GitStatusInfo:
         """Get git repository status."""
         try:
             # Check if we're in a git repository
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments
-                ["git", "rev-parse", "--git-dir"],
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return GitStatusInfo(
+                    branch="unknown",
+                    modified_files=[],
+                    untracked_files=[],
+                    staged_files=[],
+                    ahead_count=0,
+                    behind_count=0,
+                )
+
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+                [git_cmd, "rev-parse", "--git-dir"],
                 check=False,
                 cwd=self.working_dir,
                 capture_output=True,
@@ -115,11 +161,18 @@ class DocumentationSync:
             )
 
             if result.returncode != 0:
-                return {"initialized": False, "message": "Not a git repository"}
+                return GitStatusInfo(
+                    branch="unknown",
+                    modified_files=[],
+                    untracked_files=[],
+                    staged_files=[],
+                    ahead_count=0,
+                    behind_count=0,
+                )
 
             # Get branch info
-            branch_result = subprocess.run(  # nosec S603 - git command with fixed arguments
-                ["git", "branch", "--show-current"],
+            branch_result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+                [git_cmd, "branch", "--show-current"],
                 check=False,
                 cwd=self.working_dir,
                 capture_output=True,
@@ -132,8 +185,8 @@ class DocumentationSync:
             )
 
             # Get status
-            status_result = subprocess.run(  # nosec S603 - git command with fixed arguments
-                ["git", "status", "--porcelain"],
+            status_result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+                [git_cmd, "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
                 capture_output=True,
@@ -152,28 +205,41 @@ class DocumentationSync:
                         elif status_code == "??":
                             untracked_files.append(filename)
 
-            return {
-                "initialized": True,
-                "current_branch": current_branch,
-                "modified_files": modified_files,
-                "untracked_files": untracked_files,
-                "has_changes": len(modified_files) > 0 or len(untracked_files) > 0,
-            }
+            return GitStatusInfo(
+                branch=current_branch,
+                modified_files=modified_files,
+                untracked_files=untracked_files,
+                staged_files=[],
+                ahead_count=0,
+                behind_count=0,
+            )
 
         except Exception as e:
-            return {"initialized": False, "error": str(e)}
+            logger.debug(f"Git operations failed, using default status: {e}")
+            return GitStatusInfo(
+                branch="unknown",
+                modified_files=[],
+                untracked_files=[],
+                staged_files=[],
+                ahead_count=0,
+                behind_count=0,
+            )
 
     def _get_pending_changes(self) -> FlextCore.Types.StringList:
         """Get list of pending changes."""
         status = self._get_git_status()
-        return status.get("modified_files", []) + status.get("untracked_files", [])
+        return status.modified_files + status.untracked_files
 
     def _get_last_sync_time(self) -> datetime | None:
         """Get timestamp of last synchronization."""
         # Look for a marker file or check git log
         try:
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments
-                ["git", "log", "-1", "--format=%ct", "--", "docs/"],
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return None
+
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+                [git_cmd, "log", "-1", "--format=%ct", "--", "docs/"],
                 check=False,
                 cwd=self.working_dir,
                 capture_output=True,
@@ -182,18 +248,23 @@ class DocumentationSync:
 
             if result.returncode == 0 and result.stdout.strip():
                 timestamp = int(result.stdout.strip())
-                return datetime.fromtimestamp(timestamp)
+                return datetime.fromtimestamp(timestamp, tz=UTC)
 
-        except Exception:
-            pass
+        except Exception as e:
+            # Git operations are optional, continue without git info
+            logger.debug(f"Git operations failed, continuing without git info: {e}")
 
         return None
 
     def _check_for_conflicts(self) -> bool:
         """Check if there are merge conflicts."""
         try:
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments
-                ["git", "status", "--porcelain"],
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return False
+
+            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+                [git_cmd, "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
                 capture_output=True,
@@ -203,8 +274,9 @@ class DocumentationSync:
             if result.returncode == 0:
                 return any("U" in line[:2] for line in result.stdout.split("\n"))
 
-        except Exception:
-            pass
+        except Exception as e:
+            # Git operations are optional, continue without git info
+            logger.debug(f"Git operations failed, continuing without git info: {e}")
 
         return False
 
@@ -212,18 +284,16 @@ class DocumentationSync:
         """Validate documentation before synchronization."""
         try:
             # Run validation checks
-            from validate_links import LinkValidator
-            from validate_style import StyleValidator
 
             validator = LinkValidator()
             style_validator = StyleValidator()
 
             # Quick validation
             link_results = validator.validate_directory(
-                os.path.join(self.working_dir, "docs"), check_external=False
+                str(self.working_dir / "docs"), check_external=False
             )
             style_results = style_validator.validate_directory(
-                os.path.join(self.working_dir, "docs")
+                str(self.working_dir / "docs")
             )
 
             broken_links = sum(len(r.broken_links) for r in link_results)
@@ -268,7 +338,13 @@ class DocumentationSync:
 
         try:
             # Stage files
-            subprocess.run(["git", "add"] + files, cwd=self.working_dir, check=True)  # nosec S603 - git command with validated file paths
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return SyncResult.fail("Git command not found")
+
+            subprocess.run(  # nosec S603 - git command with validated file paths and full path
+                [git_cmd, "add"] + files, cwd=self.working_dir, check=True
+            )
 
             # Create commit message
             changes_desc = f"{len(files)} files"
@@ -277,17 +353,17 @@ class DocumentationSync:
             )
 
             # Commit
-            subprocess.run(  # nosec S603 - git command with validated message
-                ["git", "commit", "-m", commit_message],
+            subprocess.run(  # nosec S603 - git command with validated message and full path
+                [git_cmd, "commit", "-m", commit_message],
                 cwd=self.working_dir,
                 check=True,
             )
 
             # Push if configured
             if self.config["sync"]["push_after_commit"]:
-                subprocess.run(  # nosec S603,S607 - git command with validated config
+                subprocess.run(  # nosec S603,S607 - git command with validated config and full path
                     [
-                        "git",
+                        git_cmd,
                         "push",
                         self.config["git"]["remote_name"],
                         self.config["git"]["main_branch"],
@@ -328,11 +404,17 @@ class DocumentationSync:
             )
 
         try:
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return SyncResult.fail("Git command not found")
+
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             branch_name = f"docs-backup-{timestamp}"
 
-            subprocess.run(  # nosec S603,S607 - git command with validated branch name
-                ["git", "checkout", "-b", branch_name], cwd=self.working_dir, check=True
+            subprocess.run(  # nosec S603,S607 - git command with validated branch name and full path
+                [git_cmd, "checkout", "-b", branch_name],
+                cwd=self.working_dir,
+                check=True,
             )
 
             return SyncResult(
@@ -357,8 +439,12 @@ class DocumentationSync:
     def rollback_changes(self, files: FlextCore.Types.StringList) -> SyncResult:
         """Rollback changes to specific files."""
         try:
-            subprocess.run(  # nosec S603 - git command with validated file paths
-                ["git", "checkout", "HEAD", "--"] + files,
+            git_cmd = self._get_git_command()
+            if not git_cmd:
+                return SyncResult.fail("Git command not found")
+
+            subprocess.run(  # nosec S603 - git command with validated file paths and full path
+                [git_cmd, "checkout", "HEAD", "--"] + files,
                 cwd=self.working_dir,
                 check=True,
             )
@@ -481,7 +567,7 @@ class DocumentationSync:
         """Update documentation metadata."""
         try:
             # Update timestamps, version info, etc.
-            docs_dir = os.path.join(self.working_dir, "docs")
+            docs_dir = str(self.working_dir / "docs")
             updated_files = []
 
             for root, _dirs, files in os.walk(docs_dir):
@@ -545,6 +631,7 @@ class DocumentationSync:
 
 
 def main() -> None:
+    """Main entry point for the documentation synchronization system."""
     parser = argparse.ArgumentParser(
         description="Documentation Synchronization and Automated Maintenance System"
     )

@@ -235,7 +235,7 @@ class TestFlextLdapConstants:
     def test_defaults_search_constants(self) -> None:
         """Test defaults search constants."""
         assert FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER == "(objectClass=*)"
-        assert FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE == ""
+        assert not FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE
         assert FlextLdapConstants.Defaults.DEFAULT_SERVICE_NAME == "flext-ldap"
         assert FlextLdapConstants.Defaults.DEFAULT_SERVICE_VERSION == "1.0.0"
 

@@ -206,9 +206,22 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextCore.Result[bool].fail("Connection not bound")
 
+            # Extract objectClass from entry
+            attrs = entry.attributes.attributes
+            object_class = (
+                attrs["objectClass"].values if "objectClass" in attrs else ["top"]
+            )
+
+            # Convert attributes to dict format for ldap3
+            ldap3_attrs: dict[str, list[str]] = {}
+            for attr_name, attr_value in attrs.items():
+                if attr_name != "objectClass":  # Skip objectClass (passed separately)
+                    ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
+
             success = connection.add(
                 str(entry.dn),
-                attributes=entry.attributes,
+                object_class,
+                attributes=ldap3_attrs or None,
             )
 
             if not success:
@@ -236,10 +249,13 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextCore.Result[bool].fail("Connection not bound")
 
-            ldap3_mods: dict[str, list[tuple[str, FlextCore.Types.List]]] = {}
+            # Convert modifications to ldap3 format
+            ldap3_mods: dict[str, list[tuple[int, list[str] | str]]] = {}
             for attr, value in modifications.items():
                 values = value if isinstance(value, list) else [value]
-                ldap3_mods[attr] = [(MODIFY_REPLACE, values)]
+                # Convert all values to strings
+                str_values: list[str] | str = [str(v) for v in values]
+                ldap3_mods[attr] = [(MODIFY_REPLACE, str_values)]
 
             success = connection.modify(dn, ldap3_mods)
 
@@ -396,12 +412,12 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 size_limit=1,
             )
 
-            if result:
-                # Extract attributes from the single result
-                if hasattr(result[0], "entry_attributes"):
-                    attrs = dict[str, object](result[0].entry_attributes)
-                else:
-                    attrs = {}
+            if result and connection.entries:
+                # Extract attributes from the single entry
+                entry = connection.entries[0]
+                attrs: FlextCore.Types.Dict = {}
+                for attr in entry.entry_attributes:
+                    attrs[attr] = entry[attr].value
 
                 return FlextCore.Result[FlextCore.Types.Dict].ok(attrs)
             return FlextCore.Result[FlextCore.Types.Dict].fail("No Root DSE found")

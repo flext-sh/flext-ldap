@@ -324,7 +324,11 @@ def demonstrate_domain_services() -> None:
 
     for scenario in user_scenarios:
         user = scenario["user"]
-        assert isinstance(user, FlextLdapModels.LdapUser)  # Type guard for pyrefly
+        if not isinstance(user, FlextLdapModels.LdapUser):
+            logger.error(
+                f"Invalid user type in scenario '{scenario['name']}': expected LdapUser, got {type(user)}"
+            )
+            continue
         display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(user)
         is_correct = display_name == scenario["expected"]
         status = "✅" if is_correct else "❌"

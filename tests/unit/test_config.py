@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextCore
+from pydantic import SecretStr
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
@@ -609,7 +610,7 @@ class TestFlextLdapConfig:
         ):
             FlextLdapConfig(
                 ldap_server_uri="http://localhost",  # Invalid protocol
-                ldap_bind_password="password",
+                ldap_bind_password=SecretStr("password"),
             )
 
     def test_validator_bind_dn_too_short(self) -> None:
@@ -623,7 +624,7 @@ class TestFlextLdapConfig:
         ):
             FlextLdapConfig(
                 ldap_bind_dn="a",  # Too short
-                ldap_bind_password="password",
+                ldap_bind_password=SecretStr("password"),
             )
 
     def test_validator_bind_dn_too_long(self) -> None:
@@ -636,7 +637,7 @@ class TestFlextLdapConfig:
         with pytest.raises(
             FlextLdapExceptions.LdapValidationError, match="LDAP bind DN too long"
         ):
-            FlextLdapConfig(ldap_bind_dn=long_dn, ldap_bind_password="password")
+            FlextLdapConfig(ldap_bind_dn=long_dn, ldap_bind_password=SecretStr("password"))
 
     def test_validator_bind_dn_invalid_format(self) -> None:
         """Test validator with invalid bind DN format."""
@@ -649,7 +650,7 @@ class TestFlextLdapConfig:
         ):
             FlextLdapConfig(
                 ldap_bind_dn="invalid-no-equals",  # No = sign
-                ldap_bind_password="password",
+                ldap_bind_password=SecretStr("password"),
             )
 
     def test_validator_base_dn_too_long(self) -> None:
@@ -692,7 +693,7 @@ class TestFlextLdapConfig:
             FlextLdapConfig(
                 ldap_enable_caching=True,
                 ldap_cache_ttl=0,  # Invalid TTL
-                ldap_bind_password="password",
+                ldap_bind_password=SecretStr("password"),
             )
 
     def test_validator_consistency_ssl_for_ldaps(self) -> None:
@@ -707,7 +708,7 @@ class TestFlextLdapConfig:
             FlextLdapConfig(
                 ldap_server_uri="ldaps://localhost",  # ldaps protocol
                 ldap_use_ssl=False,  # But SSL disabled
-                ldap_bind_password="password",
+                ldap_bind_password=SecretStr("password"),
             )
 
     def test_get_connection_config(self) -> None:
@@ -717,7 +718,7 @@ class TestFlextLdapConfig:
             ldap_port=636,
             ldap_use_ssl=True,
             ldap_bind_dn="cn=admin,dc=example,dc=com",
-            ldap_bind_password="secret",
+            ldap_bind_password=SecretStr("secret"),
         )
 
         conn_config = config.connection_info
@@ -736,7 +737,7 @@ class TestFlextLdapConfig:
     #         ldap_pool_timeout=60,
     #         ldap_retry_attempts=5,
     #         ldap_retry_delay=3,  # Must be integer
-    #         ldap_bind_password="password",
+    #         ldap_bind_password=SecretStr("password"),
     #     )
 
     #     pool_config = config.get_pool_config()
@@ -755,7 +756,7 @@ class TestFlextLdapConfig:
     #         ldap_time_limit=20,
     #         ldap_enable_caching=True,
     #         ldap_cache_ttl=600,
-    #         ldap_bind_password="password",
+    #         ldap_bind_password=SecretStr("password"),
     #     )
 
     #     op_config = config.get_operation_config()
@@ -788,7 +789,7 @@ class TestFlextLdapConfig:
 
     def test_get_effective_bind_password(self) -> None:
         """Test get_effective_bind_password method."""
-        config = FlextLdapConfig(ldap_bind_password="secret123")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("secret123"))
 
         password = config.effective_bind_password
 
@@ -996,89 +997,89 @@ class TestDirectAccessDotNotation:
 
     def test_call_pool_size(self) -> None:
         """Test __call__ with ldap.pool.size."""
-        config = FlextLdapConfig(ldap_pool_size=25, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_pool_size=25, ldap_bind_password=SecretStr("test"))
         assert config("ldap.pool.size") == 25
 
     def test_call_pool_timeout(self) -> None:
         """Test __call__ with ldap.pool.timeout."""
-        config = FlextLdapConfig(ldap_pool_timeout=60, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_pool_timeout=60, ldap_bind_password=SecretStr("test"))
         assert config("ldap.pool.timeout") == 60
 
     def test_call_operation_timeout(self) -> None:
         """Test __call__ with ldap.operation.timeout."""
-        config = FlextLdapConfig(ldap_operation_timeout=120, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_operation_timeout=120, ldap_bind_password=SecretStr("test"))
         assert config("ldap.operation.timeout") == 120
 
     def test_call_operation_size_limit(self) -> None:
         """Test __call__ with ldap.operation.size_limit."""
-        config = FlextLdapConfig(ldap_size_limit=500, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_size_limit=500, ldap_bind_password=SecretStr("test"))
         assert config("ldap.operation.size_limit") == 500
 
     def test_call_operation_time_limit(self) -> None:
         """Test __call__ with ldap.operation.time_limit."""
-        config = FlextLdapConfig(ldap_time_limit=60, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_time_limit=60, ldap_bind_password=SecretStr("test"))
         assert config("ldap.operation.time_limit") == 60
 
     def test_call_cache_enabled(self) -> None:
         """Test __call__ with ldap.cache.enabled."""
-        config = FlextLdapConfig(ldap_enable_caching=False, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_enable_caching=False, ldap_bind_password=SecretStr("test"))
         assert config("ldap.cache.enabled") is False
 
     def test_call_cache_ttl(self) -> None:
         """Test __call__ with ldap.cache.ttl."""
-        config = FlextLdapConfig(ldap_cache_ttl=600, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_cache_ttl=600, ldap_bind_password=SecretStr("test"))
         assert config("ldap.cache.ttl") == 600
 
     def test_call_retry_attempts(self) -> None:
         """Test __call__ with ldap.retry.attempts."""
-        config = FlextLdapConfig(ldap_retry_attempts=5, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_retry_attempts=5, ldap_bind_password=SecretStr("test"))
         assert config("ldap.retry.attempts") == 5
 
     def test_call_retry_delay(self) -> None:
         """Test __call__ with ldap.retry.delay."""
-        config = FlextLdapConfig(ldap_retry_delay=5, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_retry_delay=5, ldap_bind_password=SecretStr("test"))
         assert config("ldap.retry.delay") == 5
 
     def test_call_logging_debug(self) -> None:
         """Test __call__ with ldap.logging.debug."""
-        config = FlextLdapConfig(ldap_enable_debug=True, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_enable_debug=True, ldap_bind_password=SecretStr("test"))
         assert config("ldap.logging.debug") is True
 
     def test_call_logging_trace(self) -> None:
         """Test __call__ with ldap.logging.trace."""
-        config = FlextLdapConfig(ldap_enable_trace=True, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_enable_trace=True, ldap_bind_password=SecretStr("test"))
         assert config("ldap.logging.trace") is True
 
     def test_call_logging_queries(self) -> None:
         """Test __call__ with ldap.logging.queries."""
-        config = FlextLdapConfig(ldap_log_queries=True, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_log_queries=True, ldap_bind_password=SecretStr("test"))
         assert config("ldap.logging.queries") is True
 
     def test_call_mask_passwords(self) -> None:
         """Test __call__ with ldap.logging.mask_passwords."""
-        config = FlextLdapConfig(ldap_mask_passwords=False, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_mask_passwords=False, ldap_bind_password=SecretStr("test"))
         assert config("ldap.logging.mask_passwords") is False
 
     def test_call_connection_server(self) -> None:
         """Test __call__ with ldap.connection.server."""
         config = FlextLdapConfig(
-            ldap_server_uri="ldaps://test.local", ldap_bind_password="test"
+            ldap_server_uri="ldaps://test.local", ldap_bind_password=SecretStr("test")
         )
         assert config("ldap.connection.server") == "ldaps://test.local"
 
     def test_call_connection_port(self) -> None:
         """Test __call__ with ldap.connection.port."""
-        config = FlextLdapConfig(ldap_port=636, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_port=636, ldap_bind_password=SecretStr("test"))
         assert config("ldap.connection.port") == 636
 
     def test_call_connection_ssl(self) -> None:
         """Test __call__ with ldap.connection.ssl."""
-        config = FlextLdapConfig(ldap_use_ssl=True, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_use_ssl=True, ldap_bind_password=SecretStr("test"))
         assert config("ldap.connection.ssl") is True
 
     def test_call_connection_timeout(self) -> None:
         """Test __call__ with ldap.connection.timeout."""
-        config = FlextLdapConfig(ldap_connection_timeout=45, ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_connection_timeout=45, ldap_bind_password=SecretStr("test"))
         assert config("ldap.connection.timeout") == 45
 
     def test_call_connection_uri(self) -> None:
@@ -1086,26 +1087,26 @@ class TestDirectAccessDotNotation:
         config = FlextLdapConfig(
             ldap_server_uri="ldaps://test.local",
             ldap_port=636,
-            ldap_bind_password="test",
+            ldap_bind_password=SecretStr("test"),
         )
         assert config("ldap.connection.uri") == "ldaps://test.local:636"
 
     def test_call_auth_bind_dn(self) -> None:
         """Test __call__ with ldap.auth.bind_dn."""
         config = FlextLdapConfig(
-            ldap_bind_dn="cn=admin,dc=test,dc=com", ldap_bind_password="test"
+            ldap_bind_dn="cn=admin,dc=test,dc=com", ldap_bind_password=SecretStr("test")
         )
         assert config("ldap.auth.bind_dn") == "cn=admin,dc=test,dc=com"
 
     def test_call_auth_bind_password(self) -> None:
         """Test __call__ with ldap.auth.bind_password."""
-        config = FlextLdapConfig(ldap_bind_password="secret123")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("secret123"))
         assert config("ldap.auth.bind_password") == "secret123"
 
     def test_call_auth_base_dn(self) -> None:
         """Test __call__ with ldap.auth.base_dn."""
         config = FlextLdapConfig(
-            ldap_base_dn="dc=test,dc=com", ldap_bind_password="test"
+            ldap_base_dn="dc=test,dc=com", ldap_bind_password=SecretStr("test")
         )
         assert config("ldap.auth.base_dn") == "dc=test,dc=com"
 
@@ -1113,7 +1114,7 @@ class TestDirectAccessDotNotation:
         """Test __call__ fallback to super() for unknown keys - covers line 722."""
         import pytest
 
-        config = FlextLdapConfig(ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
         # Test fallback path - key without ldap. prefix triggers super().__call__()
         # Super raises KeyError for unknown keys, which is expected behavior
         with pytest.raises(KeyError, match="Configuration key 'unknown_key' not found"):
@@ -1125,7 +1126,7 @@ class TestInfrastructureProtocols:
 
     def test_configure_method(self) -> None:
         """Test configure() method runtime updates - covers lines 742-751."""
-        config = FlextLdapConfig(ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
 
         # Update configuration at runtime (use valid combination)
         result = config.configure({
@@ -1141,7 +1142,7 @@ class TestInfrastructureProtocols:
 
     def test_configure_method_exception(self) -> None:
         """Test configure() method exception handling - covers line 751."""
-        config = FlextLdapConfig(ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
 
         # Try invalid configuration that will trigger validation error
         result = config.configure({
@@ -1154,13 +1155,13 @@ class TestInfrastructureProtocols:
 
     def test_validate_runtime_requirements(self) -> None:
         """Test validate_runtime_requirements() - covers lines 765-770."""
-        config = FlextLdapConfig(ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
         result = config.validate_runtime_requirements()
         assert result.is_success
 
     def test_validate_business_rules(self) -> None:
         """Test validate_business_rules() - covers line 782."""
-        config = FlextLdapConfig(ldap_bind_password="test")
+        config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
         result = config.validate_business_rules()
         assert result.is_success
 
@@ -1174,7 +1175,7 @@ class TestLdapRequirementsValidation:
             ldap_server_uri="ldaps://localhost",
             ldap_port=389,  # Wrong port for ldaps
             ldap_use_ssl=True,
-            ldap_bind_password="test",
+            ldap_bind_password=SecretStr("test"),
         )
 
         result = config.validate_ldap_requirements()
@@ -1188,7 +1189,7 @@ class TestLdapRequirementsValidation:
             ldap_server_uri="ldap://localhost",
             ldap_port=636,  # Wrong port for ldap
             ldap_use_ssl=False,
-            ldap_bind_password="test",
+            ldap_bind_password=SecretStr("test"),
         )
 
         result = config.validate_ldap_requirements()
@@ -1201,7 +1202,7 @@ class TestLdapRequirementsValidation:
         config = FlextLdapConfig(
             ldap_connection_timeout=60,
             ldap_operation_timeout=50,  # Must be > connection_timeout
-            ldap_bind_password="test",
+            ldap_bind_password=SecretStr("test"),
         )
 
         result = config.validate_ldap_requirements()

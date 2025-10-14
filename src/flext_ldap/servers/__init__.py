@@ -166,6 +166,7 @@ class FlextLdapServers(FlextCore.Service[None]):
         base_dn: str,
         search_filter: str,
         attributes: FlextCore.Types.StringList | None = None,
+        scope: str = "subtree",
         page_size: int = 100,
     ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
         """Perform paged search operation."""
@@ -179,22 +180,25 @@ class FlextLdapServers(FlextCore.Service[None]):
             base_dn,
             search_filter,
             attributes,
+            scope,
             page_size,
         )
 
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextCore.Result[FlextLdapModels.RootDSE]:
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextCore.Result[FlextLdapModels.RootDSE].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_root_dse_attributes(connection)
 
-    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
+    def detect_server_type_from_root_dse(
+        self, root_dse: FlextLdapModels.RootDSE
+    ) -> str:
         """Detect server type from Root DSE."""
         ops = self.operations
         return (
@@ -229,7 +233,7 @@ class FlextLdapServers(FlextCore.Service[None]):
 
     def validate_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry,
         server_type: str | None = None,
     ) -> FlextCore.Result[bool]:
         """Validate entry compatibility with server."""
