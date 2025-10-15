@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import TypedDict
 
 import yaml
-from flext_core import FlextConstants, FlextCore
+from flext_core import FlextCore
 
 from .audit import DocumentationAuditor
 from .optimize import ContentOptimizer
@@ -48,7 +48,7 @@ class SyncConfig(TypedDict):
 
 
 # Constants for synchronization
-MAX_CHANGES_DISPLAY: int = FlextConstants.Network.MAX_CONNECTIONS // 10
+MAX_CHANGES_DISPLAY: int = FlextCore.Constants.Network.MAX_CONNECTIONS // 10
 
 
 @dataclass
@@ -362,7 +362,9 @@ class DocumentationSync:
 
             # Create commit message
             changes_desc = f"{len(files)} files"
-            commit_message_template = str(self.config["sync"]["commit_message_template"])
+            commit_message_template = str(
+                self.config["sync"]["commit_message_template"]
+            )
             commit_message = commit_message_template.format(
                 operation=operation, changes=changes_desc
             )
@@ -505,7 +507,10 @@ class DocumentationSync:
     def run_maintenance_schedule(self, schedule_type: str) -> list[SyncResult]:
         """Run scheduled maintenance tasks."""
         maintenance_config = self.config["maintenance"]
-        if not isinstance(maintenance_config, dict) or "schedule" not in maintenance_config:
+        if (
+            not isinstance(maintenance_config, dict)
+            or "schedule" not in maintenance_config
+        ):
             return [
                 SyncResult(
                     operation="maintenance",

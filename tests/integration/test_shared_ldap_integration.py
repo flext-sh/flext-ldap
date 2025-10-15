@@ -99,7 +99,9 @@ class TestSharedLDAPIntegration:
             assert "objectClass: dcObject" in ldif_data
         else:
             # Mock container manager doesn't provide LDIF export
-            pytest.skip("Container manager doesn't provide LDIF export (mock implementation)")
+            pytest.skip(
+                "Container manager doesn't provide LDIF export (mock implementation)"
+            )
 
     def test_shared_ldap_environment_variables(
         self,

@@ -11,13 +11,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from typing import Literal, cast
 
-# Type aliases for ldap3 Literal types
-AuthType = Literal["ANONYMOUS", "SIMPLE", "SASL", "NTLM"]
-ScopeType = Literal["BASE", "LEVEL", "SUBTREE"]
-
 from flext_core import FlextCore
-
-# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SIMPLE, SUBTREE
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
@@ -25,6 +19,11 @@ from ldap3.core.server import Server
 from flext_ldap import FlextLdapModels
 
 logger = FlextCore.Logger(__name__)
+
+
+# Type aliases for ldap3 Literal types
+AuthType = Literal["ANONYMOUS", "SIMPLE", "SASL", "NTLM"]
+ScopeType = Literal["BASE", "LEVEL", "SUBTREE"]
 
 
 def create_test_user(
@@ -45,7 +44,7 @@ def create_test_user(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=cast(AuthType, SIMPLE),
+            authentication=cast("AuthType", SIMPLE),
         )
 
         # Extract object_class from attributes (required by ldap3)
@@ -63,7 +62,7 @@ def create_test_user(
         return FlextCore.Result[bool].fail(f"Failed to create user: {conn.last_error}")
 
     except Exception as e:
-        logger.exception("Error creating test user %s", dn)
+        logger.exception(f"Error creating test user {dn}")
         return FlextCore.Result[bool].fail(f"Error creating test user: {e}")
 
 
@@ -85,7 +84,7 @@ def create_test_group(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=cast(AuthType, SIMPLE),
+            authentication=cast("AuthType", SIMPLE),
         )
 
         # Extract object_class from attributes (required by ldap3)
@@ -103,7 +102,7 @@ def create_test_group(
         return FlextCore.Result[bool].fail(f"Failed to create group: {conn.last_error}")
 
     except Exception as e:
-        logger.exception("Error creating test group %s", dn)
+        logger.exception(f"Error creating test group {dn}")
         return FlextCore.Result[bool].fail(f"Error creating test group: {e}")
 
 
@@ -124,7 +123,7 @@ def cleanup_test_entries(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=cast(AuthType, SIMPLE),
+            authentication=cast("AuthType", SIMPLE),
         )
 
         cleaned_count = 0
@@ -164,13 +163,13 @@ def verify_entry_exists(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=cast(AuthType, SIMPLE),
+            authentication=cast("AuthType", SIMPLE),
         )
 
         success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
-            search_scope=cast(ScopeType, BASE),
+            search_scope=cast("ScopeType", BASE),
         )
 
         exists: bool = success and len(conn.entries) > 0
@@ -179,7 +178,7 @@ def verify_entry_exists(
         return FlextCore.Result[bool].ok(data=exists)
 
     except Exception as e:
-        logger.exception("Error verifying entry %s", dn)
+        logger.exception(f"Error verifying entry {dn}")
         return FlextCore.Result[bool].fail(f"Error verifying entry: {e}")
 
 
@@ -200,13 +199,13 @@ def get_entry_attributes(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=SIMPLE,
+            authentication=cast("AuthType", SIMPLE),
         )
 
         success: bool = conn.search(
             search_base=dn,
             search_filter="(objectClass=*)",
-            search_scope=cast("str", BASE),
+            search_scope=cast("ScopeType", BASE),
         )
 
         if success and len(conn.entries) > 0:
@@ -220,7 +219,7 @@ def get_entry_attributes(
         return FlextCore.Result[FlextCore.Types.Dict].fail(f"Entry not found: {dn}")
 
     except Exception as e:
-        logger.exception("Error getting attributes for %s", dn)
+        logger.exception(f"Error getting attributes for {dn}")
         return FlextCore.Result[FlextCore.Types.Dict].fail(
             f"Error getting attributes: {e}"
         )
@@ -245,7 +244,7 @@ def search_entries(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=SIMPLE,
+            authentication=cast("AuthType", SIMPLE),
         )
 
         ldap_scope: str
@@ -259,7 +258,7 @@ def search_entries(
         success: bool = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
-            search_scope=cast("str", ldap_scope),
+            search_scope=ldap_scope,
         )
 
         results: list[FlextCore.Types.Dict] = []
@@ -301,11 +300,11 @@ def modify_entry(
             user=config.bind_dn,
             password=config.bind_password,
             auto_bind=True,
-            authentication=SIMPLE,
+            authentication=cast("AuthType", SIMPLE),
         )
 
         # Convert changes to ldap3 format
-        ldap3_changes: dict[str, list[tuple[object, FlextCore.Types.List]]] = {}
+        ldap3_changes: dict[str, list[tuple[int, list[str]]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
                 ldap3_changes[attr] = [(MODIFY_REPLACE, values)]
@@ -322,7 +321,7 @@ def modify_entry(
         return FlextCore.Result[bool].fail(f"Failed to modify entry: {conn.last_error}")
 
     except Exception as e:
-        logger.exception("Error modifying entry %s", dn)
+        logger.exception(f"Error modifying entry {dn}")
         return FlextCore.Result[bool].fail(f"Error modifying entry: {e}")
 
 

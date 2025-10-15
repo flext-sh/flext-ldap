@@ -113,7 +113,9 @@ class TestRealServerQuirksDetection:
             pytest.skip("Schema not available on this LDAP server")
 
         schema = discovery_result.value
-        assert isinstance(schema, dict)  # discover_schema returns dict, not SchemaDiscoveryResult
+        assert isinstance(
+            schema, dict
+        )  # discover_schema returns dict, not SchemaDiscoveryResult
         assert len(schema) > 0  # Should have some schema info
 
         # Test quirks detector directly

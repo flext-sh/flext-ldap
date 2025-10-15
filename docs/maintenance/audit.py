@@ -15,15 +15,15 @@ from pathlib import Path
 from typing import TypedDict
 
 import yaml
-from flext_core import FlextConstants
+from flext_core import FlextCore
 
 # Constants for audit configuration
-MAX_AGE_DAYS: int = FlextConstants.Validation.MAX_AGE
-EXCELLENT_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 10
-GOOD_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 20
-FAIR_QUALITY_SCORE: float = FlextConstants.Validation.MAX_PERCENTAGE - 30
+MAX_AGE_DAYS: int = FlextCore.Constants.Validation.MAX_AGE
+EXCELLENT_QUALITY_SCORE: float = FlextCore.Constants.Validation.MAX_PERCENTAGE - 10
+GOOD_QUALITY_SCORE: float = FlextCore.Constants.Validation.MAX_PERCENTAGE - 20
+FAIR_QUALITY_SCORE: float = FlextCore.Constants.Validation.MAX_PERCENTAGE - 30
 EXCELLENT_FRESHNESS_DAYS: int = MAX_AGE_DAYS
-LONG_PARAGRAPH_WORD_LIMIT: int = FlextConstants.Validation.PREVIEW_LENGTH * 3
+LONG_PARAGRAPH_WORD_LIMIT: int = FlextCore.Constants.Validation.PREVIEW_LENGTH * 3
 
 
 # Type definitions

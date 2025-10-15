@@ -106,8 +106,8 @@ class ArchitectureGenerator:
             generation_config = cast("dict[str, object]", config["generation"])
             if cast("bool", generation_config["include_c4_model"]):
                 c4_results: dict[str, list[str]] = self.generate_c4_model()
-                files_list = cast("list[str]", c4_results["files"])
-                diagrams_list = cast("list[str]", c4_results["diagrams"])
+                files_list = c4_results["files"]
+                diagrams_list = c4_results["diagrams"]
                 if not isinstance(files_list, list):
                     files_list = []
                 if not isinstance(diagrams_list, list):
@@ -119,24 +119,24 @@ class ArchitectureGenerator:
             if cast("bool", generation_config["include_arc42"]):
                 arc42_results: dict[str, list[str]] = self.generate_arc42()
                 cast("list[str]", results["files_generated"]).extend(
-                    cast("list[str]", arc42_results["files"])
+                    arc42_results["files"]
                 )
 
             # 3. Generate ADR framework
             if cast("bool", generation_config["include_adr"]):
                 adr_results: dict[str, list[str]] = self.generate_adr_framework()
                 cast("list[str]", results["files_generated"]).extend(
-                    cast("list[str]", adr_results["files"])
+                    adr_results["files"]
                 )
 
             # 4. Generate Data Architecture
             if cast("bool", generation_config["include_data_architecture"]):
                 data_results: dict[str, list[str]] = self.generate_data_architecture()
                 cast("list[str]", results["files_generated"]).extend(
-                    cast("list[str]", data_results["files"])
+                    data_results["files"]
                 )
                 cast("list[str]", results["diagrams_generated"]).extend(
-                    cast("list[str]", data_results["diagrams"])
+                    data_results["diagrams"]
                 )
 
             # 5. Generate Security Architecture
@@ -145,10 +145,10 @@ class ArchitectureGenerator:
                     self.generate_security_architecture()
                 )
                 cast("list[str]", results["files_generated"]).extend(
-                    cast("list[str]", security_results["files"])
+                    security_results["files"]
                 )
                 cast("list[str]", results["diagrams_generated"]).extend(
-                    cast("list[str]", security_results["diagrams"])
+                    security_results["diagrams"]
                 )
 
             # 6. Generate Quality Attributes
@@ -157,21 +157,19 @@ class ArchitectureGenerator:
                     self.generate_quality_attributes()
                 )
                 cast("list[str]", results["files_generated"]).extend(
-                    cast("list[str]", quality_results["files"])
+                    quality_results["files"]
                 )
 
             # 7. Generate Diagrams
             if cast("bool", generation_config["generate_diagrams"]):
                 diagram_results: dict[str, list[str]] = self.generate_diagrams()
                 cast("list[str]", results["diagrams_generated"]).extend(
-                    cast("list[str]", diagram_results["diagrams"])
+                    diagram_results["diagrams"]
                 )
 
             # 8. Generate index and navigation
             nav_results: dict[str, list[str]] = self.generate_navigation()
-            cast("list[str]", results["files_generated"]).extend(
-                cast("list[str]", nav_results["files"])
-            )
+            cast("list[str]", results["files_generated"]).extend(nav_results["files"])
 
             if results["files_generated"]:
                 for _file in results["files_generated"][
@@ -896,7 +894,9 @@ This document describes the {attribute.lower()} characteristics and requirements
             if plantuml_cmd:
                 # Use plantuml command with input validation
                 generation_config = cast("dict[str, object]", self.config["generation"])
-                formats = cast("list[str]", generation_config.get("diagram_formats", ["png"]))
+                formats = cast(
+                    "list[str]", generation_config.get("diagram_formats", ["png"])
+                )
                 # Validate formats to prevent command injection using constant
                 for fmt in formats:
                     if fmt not in PLANTUML_ALLOWED_FORMATS:

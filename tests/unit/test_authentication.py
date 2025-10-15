@@ -92,7 +92,7 @@ class TestFlextLdapAuthenticationUserAuth:
         """Test authenticate_user fails without connection."""
         result = auth_service.authenticate_user("testuser", "testpass")
         assert result.is_failure
-        assert "connection not established" in result.error.lower()
+        assert result.error and "connection not established" in result.error.lower()
 
     def test_authenticate_user_empty_username(
         self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
@@ -104,7 +104,7 @@ class TestFlextLdapAuthenticationUserAuth:
         result = auth_with_context.authenticate_user("", "password")
         assert result.is_failure
         # Empty username leads to search failure - user not found
-        assert (
+        assert result.error and (
             "user not found" in result.error.lower()
             or "search failed" in result.error.lower()
         )
@@ -118,7 +118,7 @@ class TestFlextLdapAuthenticationUserAuth:
 
         result = auth_with_context.authenticate_user("nonexistent", "password")
         assert result.is_failure
-        assert "user not found" in result.error.lower()
+        assert result.error and "user not found" in result.error.lower()
 
     def test_authenticate_user_search_fails(
         self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
@@ -128,7 +128,7 @@ class TestFlextLdapAuthenticationUserAuth:
 
         result = auth_with_context.authenticate_user("testuser", "password")
         assert result.is_failure
-        assert "search failed" in result.error.lower()
+        assert result.error and "search failed" in result.error.lower()
 
     def test_authenticate_user_bind_fails(
         self,
@@ -155,7 +155,7 @@ class TestFlextLdapAuthenticationUserAuth:
 
             result = auth_with_context.authenticate_user("testuser", "wrongpass")
             assert result.is_failure
-            assert "authentication failed" in result.error.lower()
+            assert result.error and "authentication failed" in result.error.lower()
 
     def test_authenticate_user_success(
         self,
@@ -200,7 +200,7 @@ class TestFlextLdapAuthenticationCredentials:
             "cn=test,dc=example,dc=com", "password"
         )
         assert result.is_failure
-        assert "no connection context" in result.error.lower()
+        assert result.error and "no connection context" in result.error.lower()
 
     def test_validate_credentials_bind_failure(
         self, auth_with_context: FlextLdapAuthentication, mock_server: Mock
@@ -246,7 +246,7 @@ class TestFlextLdapAuthenticationHelpers:
         """Test connection validation fails without connection."""
         result = auth_service._validate_connection()
         assert result.is_failure
-        assert "connection not established" in result.error.lower()
+        assert result.error and "connection not established" in result.error.lower()
 
     def test_validate_connection_with_connection(
         self, auth_with_context: FlextLdapAuthentication
@@ -261,7 +261,7 @@ class TestFlextLdapAuthenticationHelpers:
         """Test user search fails without connection."""
         result = auth_service._search_user_by_username("testuser")
         assert result.is_failure
-        assert "connection not established" in result.error.lower()
+        assert result.error and "connection not established" in result.error.lower()
 
     def test_search_user_by_username_not_found(
         self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
@@ -272,7 +272,7 @@ class TestFlextLdapAuthenticationHelpers:
 
         result = auth_with_context._search_user_by_username("nonexistent")
         assert result.is_failure
-        assert "user not found" in result.error.lower()
+        assert result.error and "user not found" in result.error.lower()
 
     def test_search_user_by_username_found(
         self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
@@ -318,7 +318,7 @@ class TestFlextLdapAuthenticationHelpers:
 
         result = auth_service._create_user_from_entry_result(mock_entry)
         assert result.is_failure
-        assert "user creation failed" in result.error.lower()
+        assert result.error and "user creation failed" in result.error.lower()
 
 
 class TestFlextLdapAuthenticationExecute:

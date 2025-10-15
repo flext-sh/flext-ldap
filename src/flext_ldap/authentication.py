@@ -166,6 +166,11 @@ class FlextLdapAuthentication(FlextCore.Service[None]):
                 # Fallback to default if config not available
                 search_base = "dc=flext,dc=local"
 
+            if self._connection is None:
+                return FlextCore.Result[FlextLdapTypes.Ldap3Protocols.Entry].fail(
+                    "LDAP connection not established"
+                )
+
             self._connection.search(
                 search_base,
                 search_filter,

@@ -1234,11 +1234,11 @@ class TestFlextLdapModels:
                 attributes={"cn": ["test"]},
             )
 
-        # Test None attributes
+        # Test None DN (should fail)
         with pytest.raises(Exception):
             FlextLdapModels.Entry(
-                dn="cn=test,dc=example,dc=com",
-                attributes={},  # Empty attributes dict instead of None
+                dn=None,  # type: ignore
+                attributes={"cn": ["test"]},
             )
 
         # Test empty attributes dict[str, object] (should be valid)

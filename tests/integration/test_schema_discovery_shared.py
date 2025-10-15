@@ -56,7 +56,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data = schema_result.value
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
         assert schema_data.server_type is not None
 
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
@@ -76,7 +76,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data = schema_result.value
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
         assert schema_data.server_info is not None
 
         # Verify server info contains expected fields
@@ -100,7 +100,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data = schema_result.value
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
         assert schema_data.server_quirks is not None
 
         # Verify quirks are detected
@@ -122,13 +122,15 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data = schema_result.value
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
         assert schema_data.server_info is not None
 
         # Test quirks detector directly
         quirks_detector = FlextLdapSchema.GenericQuirksDetector()
         server_type = quirks_detector.detect_server_type(schema_data.server_info)
-        quirks = quirks_detector.get_server_quirks(server_type)
+        # Convert LdapServerType enum to string for get_server_quirks
+        server_type_str = server_type.value if server_type else None
+        quirks = quirks_detector.get_server_quirks(server_type_str)
 
         assert server_type is not None
         assert quirks is not None
@@ -201,7 +203,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data = schema_result.value
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
         assert schema_data is not None
 
         # Verify schema components are discovered
@@ -248,7 +250,7 @@ class TestSharedUniversalOperations:
         search_result = shared_ldap_client.search_universal(
             base_dn=shared_ldap_config["base_dn"],
             filter_str="(objectClass=*)",
-            scope="base",
+            scope="BASE",
         )
 
         assert search_result.is_success, (
@@ -266,11 +268,13 @@ class TestSharedUniversalOperations:
         base_dn = shared_ldap_config["base_dn"]
 
         # Test modifying the base DN description
+        # Create EntryChanges with proper type annotation
+        changes: FlextLdapModels.EntryChanges = {  # type: ignore[assignment]
+            "description": ["FLEXT Shared Test Organization - Modified by Test"]
+        }
         modify_result = shared_ldap_client.modify_entry_universal(
             dn=base_dn,
-            changes={
-                "description": ["FLEXT Shared Test Organization - Modified by Test"]
-            },
+            changes=changes,
         )
 
         # Note: Modification might fail due to permissions or existing values
@@ -306,7 +310,7 @@ class TestSharedUniversalOperations:
         if not add_result.is_success:
             # Verify the entry exists by searching
             search_result = shared_ldap_client.search_universal(
-                base_dn=test_dn, filter_str="(objectClass=*)", scope="base"
+                base_dn=test_dn, filter_str="(objectClass=*)", scope="BASE"
             )
             # If search succeeds, entry exists (which is OK)
             if search_result.is_success:

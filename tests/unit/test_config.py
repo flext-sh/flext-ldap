@@ -726,6 +726,7 @@ class TestFlextLdapConfig:
         # Type cast for computed property type inference issues
         # The computed properties return dict[str, object] but type checker infers Callable
         from typing import cast
+
         conn_config = cast("dict[str, object]", config.connection_info)
         auth_config = cast("dict[str, object]", config.authentication_info)
 
@@ -987,7 +988,9 @@ class TestLdapHandlerConfiguration:
 
     def test_create_ldap_handler_config_defaults(self) -> None:
         """Test create_ldap_handler_config with default parameters - covers lines 251-262."""
-        config: dict[str, object] = FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config()
+        config: dict[str, object] = (
+            FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config()
+        )
 
         # Defaults should be applied
         assert "handler_id" in config

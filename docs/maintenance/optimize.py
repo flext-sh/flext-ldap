@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TypedDict
 
 import yaml
-from flext_core import FlextConstants, FlextCore
+from flext_core import FlextCore
 
 
 # Type definitions
@@ -65,8 +65,8 @@ class OptimizationConfig(TypedDict):
 
 
 # Constants for optimization
-CODE_BLOCK_MARKER_MIN_LENGTH: int = FlextConstants.Network.MIN_PORT
-LONG_PARAGRAPH_WORD_LIMIT: int = FlextConstants.Validation.PREVIEW_LENGTH * 4
+CODE_BLOCK_MARKER_MIN_LENGTH: int = FlextCore.Constants.Network.MIN_PORT
+LONG_PARAGRAPH_WORD_LIMIT: int = FlextCore.Constants.Validation.PREVIEW_LENGTH * 4
 
 
 @dataclass
@@ -161,12 +161,12 @@ class ContentOptimizer:
         issues = []
 
         # Apply various optimizations
-        content, file_optimizations = self._optimize_content(content, file_path)
+        content, file_optimizations = self._optimize_content(content)
         optimizations.extend(file_optimizations)
 
         # Generate table of contents if needed
         if self.config["optimization"]["add_toc_to_long_docs"]:
-            toc_result = self._add_table_of_contents(content, file_path)
+            toc_result = self._add_table_of_contents(content)
             if toc_result["added"]:
                 content = toc_result["content"]
                 optimizations.append({
@@ -211,7 +211,6 @@ class ContentOptimizer:
     def _optimize_content(
         self,
         content: str,
-        file_path: str,
     ) -> tuple[str, list[OptimizationInfo]]:
         """Apply content optimizations."""
         optimizations = []
@@ -359,7 +358,6 @@ class ContentOptimizer:
     def _add_table_of_contents(
         self,
         content: str,
-        file_path: str,
     ) -> dict[str, str]:
         """Add table of contents to long documents."""
         lines = content.split("\n")

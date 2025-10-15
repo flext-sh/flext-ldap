@@ -15,6 +15,7 @@ from typing import Literal, cast, override
 
 from flext_core import FlextCore
 from ldap3 import (
+    ALL,
     MODIFY_ADD,
     MODIFY_DELETE,
     MODIFY_REPLACE,
@@ -200,16 +201,13 @@ class FlextLdapClients(FlextCore.Service[None]):
                         server_kwargs[key] = value
                 # Set get_info to ALL if auto_discover_schema is True and not explicitly set
                 if auto_discover_schema and "get_info" not in server_kwargs:
-                    from ldap3 import ALL
                     server_kwargs["get_info"] = ALL
                 self._server = Server(server_uri, **server_kwargs)
+            # Set get_info to ALL if auto_discover_schema is True
+            elif auto_discover_schema:
+                self._server = Server(server_uri, get_info=ALL)
             else:
-                # Set get_info to ALL if auto_discover_schema is True
-                if auto_discover_schema:
-                    from ldap3 import ALL
-                    self._server = Server(server_uri, get_info=ALL)
-                else:
-                    self._server = Server(server_uri)
+                self._server = Server(server_uri)
 
             # Create connection with auto-bind
             self._connection = Connection(

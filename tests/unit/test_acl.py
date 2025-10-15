@@ -629,7 +629,10 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test successful unified ACL parsing."""
         # Test the actual handle method with valid data
-        message = {"format": "openldap", "acl_string": "access to * by users read"}
+        message: dict[str, object] = {
+            "format": "openldap",
+            "acl_string": "access to * by users read",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -641,7 +644,10 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test unified ACL parsing failure."""
         # Test the actual handle method with invalid data
-        message = {"format": "invalid_format", "acl_string": "invalid acl string"}
+        message: dict[str, object] = {
+            "format": "invalid_format",
+            "acl_string": "invalid acl string",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -650,7 +656,10 @@ class TestFlextLdapAclParsers:
     def test_validate_acl_syntax_valid(self, acl_parsers: FlextLdapAclParsers) -> None:
         """Test validating valid ACL syntax."""
         # Test the actual handle method with valid data
-        message = {"format": "openldap", "acl_string": "access to * by users read"}
+        message: dict[str, object] = {
+            "format": "openldap",
+            "acl_string": "access to * by users read",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -661,7 +670,10 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test validating invalid ACL syntax."""
         # Test the actual handle method with invalid data
-        message = {"format": "invalid_format", "acl_string": "invalid acl string"}
+        message: dict[str, object] = {
+            "format": "invalid_format",
+            "acl_string": "invalid acl string",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -672,7 +684,10 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test successful ACL components extraction."""
         # Test the actual handle method with valid data
-        message = {"format": "openldap", "acl_string": "access to * by users read"}
+        message: dict[str, object] = {
+            "format": "openldap",
+            "acl_string": "access to * by users read",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -683,7 +698,10 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test ACL components extraction failure."""
         # Test the actual handle method with invalid data
-        message = {"format": "invalid_format", "acl_string": "invalid acl string"}
+        message: dict[str, object] = {
+            "format": "invalid_format",
+            "acl_string": "invalid acl string",
+        }
         result = acl_parsers.handle(message)
 
         # The method may not be fully implemented, so we just test that it returns a result
@@ -723,7 +741,7 @@ class TestFlextLdapModels:
 
         # Create AclPermissions
         permissions = acl_models.AclPermissions(
-            permissions=["read", "write", "delete"],
+            granted_permissions=["read", "write", "delete"],
             denied_permissions=[],
             grant_type="allow",
         )
@@ -763,19 +781,23 @@ class TestFlextLdapModels:
         """Test successful permission entry creation."""
         # Test creating an AclPermissions instance directly
         permissions = acl_models.AclPermissions(
-            permissions=["read", "write"], denied_permissions=[], grant_type="allow"
+            granted_permissions=["read", "write"],
+            denied_permissions=[],
+            grant_type="allow",
         )
 
         assert isinstance(permissions, acl_models.AclPermissions)
-        assert "read" in permissions.permissions
-        assert "write" in permissions.permissions
+        assert "read" in permissions.granted_permissions
+        assert "write" in permissions.granted_permissions
 
     def test_create_permission_entry_failure(self, acl_models: FlextLdapModels) -> None:
         """Test permission entry creation failure."""
         # Test creating an AclPermissions instance with invalid data
         # Try to create with invalid grant_type
         permissions = acl_models.AclPermissions(
-            permissions=["read"], denied_permissions=[], grant_type="invalid_type"
+            granted_permissions=["read"],
+            denied_permissions=[],
+            grant_type="invalid_type",
         )
         # This should work as the model doesn't validate grant_type
         assert isinstance(permissions, acl_models.AclPermissions)
@@ -801,7 +823,7 @@ class TestFlextLdapModels:
 
         # Create AclPermissions
         permissions = acl_models.AclPermissions(
-            permissions=["read", "write", "delete"],
+            granted_permissions=["read", "write", "delete"],
             denied_permissions=[],
             grant_type="allow",
         )
@@ -915,7 +937,7 @@ class TestFlextLdapAclConvertersComprehensive:
         """Test handle method with valid ACL conversion request."""
         converters = FlextLdapAclConverters()
 
-        message = {
+        message: dict[str, object] = {
             "acl_content": "access to * by * read",
             "source_format": "OPENLDAP",
             "target_format": "ACTIVE_DIRECTORY",
@@ -934,7 +956,7 @@ class TestFlextLdapAclConvertersComprehensive:
         """Test handle method with valid ACL conversion request using default formats."""
         converters = FlextLdapAclConverters()
 
-        message = {"acl_content": "access to * by * read"}
+        message: dict[str, object] = {"acl_content": "access to * by * read"}
 
         result = converters.handle(message)
         # Handle succeeds, but conversion result inside is not implemented
@@ -962,7 +984,10 @@ class TestFlextLdapAclConvertersComprehensive:
         """Test handle method with missing acl_content."""
         converters = FlextLdapAclConverters()
 
-        message = {"source_format": "OPENLDAP", "target_format": "ACTIVE_DIRECTORY"}
+        message: dict[str, object] = {
+            "source_format": "OPENLDAP",
+            "target_format": "ACTIVE_DIRECTORY",
+        }
 
         result = converters.handle(message)
         assert result.is_failure
@@ -1529,7 +1554,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_invalid_message_type(self) -> None:
         """Test handle method with invalid message type."""
         manager = FlextLdapAclManager()
-        result = manager.handle("invalid_message")
+        result = manager.handle("invalid_message")  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -1577,7 +1602,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_parse_operation(self) -> None:
         """Test handle method with parse operation."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "parse",
             "acl_string": 'access to dn.base="cn=test" by * read',
             "format": "openldap",
@@ -1596,7 +1621,7 @@ class TestFlextLdapAclManagerComprehensive:
         This test validates the conversion functionality once it's implemented.
         """
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": 'access to dn.base="cn=test" by * read',
             "source_format": "openldap",
@@ -1609,7 +1634,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_parse_missing_acl_string(self) -> None:
         """Test handle method with parse operation missing acl_string."""
         manager = FlextLdapAclManager()
-        message = {"operation": "parse", "format": "openldap"}
+        message: dict[str, object] = {"operation": "parse", "format": "openldap"}
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
@@ -1622,7 +1647,11 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_parse_invalid_acl_string_type(self) -> None:
         """Test handle method with parse operation invalid acl_string type."""
         manager = FlextLdapAclManager()
-        message = {"operation": "parse", "acl_string": 123, "format": "openldap"}
+        message: dict[str, object] = {
+            "operation": "parse",
+            "acl_string": 123,
+            "format": "openldap",
+        }
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
@@ -1635,7 +1664,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_parse_unsupported_format(self) -> None:
         """Test handle method with parse operation unsupported format."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "parse",
             "acl_string": 'access to dn.base="cn=test" by * read',
             "format": "unsupported",
@@ -1652,7 +1681,10 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_convert_missing_acl_data(self) -> None:
         """Test handle method with convert operation missing acl_data."""
         manager = FlextLdapAclManager()
-        message = {"operation": "convert", "target_format": "active_directory"}
+        message: dict[str, object] = {
+            "operation": "convert",
+            "target_format": "active_directory",
+        }
         result = manager.handle(message)
         assert result.is_failure
         assert result.error is not None
@@ -1665,7 +1697,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_convert_invalid_acl_data_type(self) -> None:
         """Test handle method with convert operation invalid acl_data type."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": 123,
             "target_format": "active_directory",
@@ -1682,7 +1714,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_convert_missing_target_format(self) -> None:
         """Test handle method with convert operation missing target_format."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": 'access to dn.base="cn=test" by * read',
         }
@@ -1698,7 +1730,7 @@ class TestFlextLdapAclManagerComprehensive:
     def test_handle_convert_invalid_target_format_type(self) -> None:
         """Test handle method with convert operation invalid target_format type."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": 'access to dn.base="cn=test" by * read',
             "target_format": 123,
@@ -1962,7 +1994,11 @@ class TestFlextLdapAclManagerValidateAclSyntax:
     def test_handle_parse_oracle_format(self) -> None:
         """Test parse operation with Oracle format - covers line 60."""
         manager = FlextLdapAclManager()
-        message = {"operation": "parse", "acl_string": "GRANT READ", "format": "oracle"}
+        message: dict[str, object] = {
+            "operation": "parse",
+            "acl_string": "GRANT READ",
+            "format": "oracle",
+        }
         result = manager.handle(message)
         # Oracle parser should handle this
         assert isinstance(result.is_success, bool)
@@ -1970,7 +2006,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
     def test_handle_parse_aci_format(self) -> None:
         """Test parse operation with ACI format - covers line 62."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "parse",
             "acl_string": "(targetattr=*)",
             "format": "aci",
@@ -1983,7 +2019,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         """Test parse operation exception handler - covers lines 70-71."""
         manager = FlextLdapAclManager()
         # Valid message structure but may trigger parser exception
-        message = {
+        message: dict[str, object] = {
             "operation": "parse",
             "acl_string": "invalid acl",
             "format": "openldap",
@@ -1994,7 +2030,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
     def test_handle_convert_openldap_format(self) -> None:
         """Test convert operation to OpenLDAP - covers line 87."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": "GRANT READ",
             "target_format": "openldap",
@@ -2005,7 +2041,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
     def test_handle_convert_exception_coverage(self) -> None:
         """Test convert operation exception - covers lines 91-92."""
         manager = FlextLdapAclManager()
-        message = {
+        message: dict[str, object] = {
             "operation": "convert",
             "acl_data": "test",
             "target_format": "openldap",
