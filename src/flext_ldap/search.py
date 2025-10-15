@@ -139,6 +139,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
 
             # Perform search with attribute error handling
             # If specific attributes are requested but don't exist in schema, retry with all attributes
+            if self._connection is None:
+                return FlextCore.Result.fail("LDAP connection not established")
+
             success: bool = False
             try:
                 success = self._connection.search(
@@ -152,6 +155,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
             except LDAPAttributeError as e:
                 # If attribute error occurs, retry with all attributes (makes API extensible)
                 # This allows requesting any attributes, even if they don't exist in schema
+                if self._connection is None:
+                    return FlextCore.Result.fail("LDAP connection not established")
+
                 self.logger.debug(
                     f"Attribute error exception with {attributes}, retrying with all attributes: {e}"
                 )
@@ -168,7 +174,7 @@ class FlextLdapSearch(FlextCore.Service[None]):
             # Check if search failed due to invalid attribute type (ldap3 doesn't always raise exception)
             # If so, retry with all attributes to make API extensible
             if not success:
-                if self._connection.last_error:
+                if self._connection is not None and self._connection.last_error:
                     error_msg = str(self._connection.last_error).lower()
                     self.logger.trace(
                         f"Search failed, checking error: success={success}, error_msg='{error_msg}'"
@@ -177,8 +183,13 @@ class FlextLdapSearch(FlextCore.Service[None]):
                         "invalid attribute" in error_msg
                         or "no such attribute" in error_msg
                     ):
+                        if self._connection is None:
+                            return FlextCore.Result.fail(
+                                "LDAP connection not established"
+                            )
+
                         self.logger.debug(
-                            f"Attribute validation failed with {attributes}, retrying with all attributes: {self._connection.last_error}"
+                            f"Attribute validation failed with {attributes}, retrying with all attributes: {self._connection.last_error if self._connection else 'Connection not established'}"
                         )
                         success = self._connection.search(
                             base_dn,
@@ -194,11 +205,14 @@ class FlextLdapSearch(FlextCore.Service[None]):
 
             if not success:
                 return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
-                    f"Search failed: {self._connection.last_error}",
+                    f"Search failed: {self._connection.last_error if self._connection else 'Connection not established'}",
                 )
 
             # Convert entries to Entry models
             entries: list[FlextLdapModels.Entry] = []
+            if self._connection is None:
+                return FlextCore.Result.fail("LDAP connection not established")
+
             for entry in self._connection.entries:  # ldap3 Entry objects
                 # Build attributes dict[str, object] from ldap3 entry
                 entry_attributes_dict: FlextCore.Types.Dict = {}
@@ -338,7 +352,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
             )
 
             if not success:
-                error_msg = self._connection.last_error or "Unknown error"
+                error_msg = (
+                    self._connection.last_error if self._connection else None
+                ) or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
                     self.logger.debug("Entry not found for DN: %s", dn)
                     return FlextCore.Result[FlextLdapModels.LdapUser | None].ok(None)
@@ -347,6 +363,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
                 return FlextCore.Result[FlextLdapModels.LdapUser | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
+
+            if self._connection is None:
+                return FlextCore.Result.fail("LDAP connection not established")
 
             entries = self._connection.entries
             if not entries:
@@ -393,7 +412,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
             )
 
             if not success:
-                error_msg = self._connection.last_error or "Unknown error"
+                error_msg = (
+                    self._connection.last_error if self._connection else None
+                ) or "Unknown error"
                 if "noSuchObject" in error_msg or "No such object" in error_msg:
                     self.logger.debug("Group not found for DN: %s", dn)
                     return FlextCore.Result[FlextLdapModels.Group | None].ok(None)
@@ -402,6 +423,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
                 return FlextCore.Result[FlextLdapModels.Group | None].fail(
                     f"LDAP search failed: {error_msg}",
                 )
+
+            if self._connection is None:
+                return FlextCore.Result.fail("LDAP connection not established")
 
             entries = self._connection.entries
             if not entries:

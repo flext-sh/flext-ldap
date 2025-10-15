@@ -30,6 +30,15 @@ from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers import FlextLdapServers
 
 
+def _extract_password_value(password_field: str | SecretStr | None) -> str:
+    """Extract password value from a field that can be str or SecretStr."""
+    if password_field is None:
+        return ""
+    if isinstance(password_field, SecretStr):
+        return password_field.get_secret_value()
+    return str(password_field)
+
+
 class FlextLdap(FlextCore.Service[None]):
     """Thin facade for LDAP operations with FLEXT ecosystem integration.
 
@@ -311,14 +320,7 @@ class FlextLdap(FlextCore.Service[None]):
             attributes["mail"] = user_request.mail
         if user_request.user_password:
             # Handle SecretStr (imported at top-level)
-            if user_request.user_password is not None:
-                password = (
-                    user_request.user_password.get_secret_value()
-                    if isinstance(user_request.user_password, SecretStr)
-                    else str(user_request.user_password)
-                )
-            else:
-                password = ""
+            password = _extract_password_value(user_request.user_password)
             attributes["userPassword"] = password
         if user_request.telephone_number:
             attributes["telephoneNumber"] = user_request.telephone_number
@@ -591,14 +593,7 @@ class FlextLdap(FlextCore.Service[None]):
                 update_attrs["mail"] = user_request.mail
             if user_request.user_password:
                 # Handle SecretStr (imported at top-level)
-                if user_request.user_password is not None:
-                    password = (
-                        user_request.user_password.get_secret_value()
-                        if isinstance(user_request.user_password, SecretStr)
-                        else str(user_request.user_password)
-                    )
-                else:
-                    password = ""
+                password = _extract_password_value(user_request.user_password)
                 update_attrs["userPassword"] = password
             if user_request.telephone_number:
                 update_attrs["telephoneNumber"] = user_request.telephone_number
@@ -998,14 +993,7 @@ class FlextLdap(FlextCore.Service[None]):
                 attributes["mail"] = user_req.mail
             if user_req.user_password:
                 # Handle SecretStr (imported at top-level)
-                if user_req.user_password is not None:
-                    password = (
-                        user_req.user_password.get_secret_value()
-                        if isinstance(user_req.user_password, SecretStr)
-                        else str(user_req.user_password)
-                    )
-                else:
-                    password = ""
+                password = _extract_password_value(user_req.user_password)
                 attributes["userPassword"] = password
             if user_req.telephone_number:
                 attributes["telephoneNumber"] = user_req.telephone_number
