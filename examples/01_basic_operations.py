@@ -288,10 +288,13 @@ def demonstrate_update_entry(api: FlextLdap, user_dn: str) -> None:
     logger.info("\n=== Update Entry Operations ===")
 
     # OPTIMIZED: Use LdapAttributeNames constants for attribute names
-    changes: FlextLdapModels.EntryChanges = {
+    changes_dict = {
         FlextLdapConstants.LdapAttributeNames.MAIL: ["john.doe.updated@example.com"],
         FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER: ["+1-555-1234"],
     }
+
+    # Create EntryChanges instance from dict
+    changes: FlextLdapModels.EntryChanges = FlextLdapModels.EntryChanges(**changes_dict)
 
     logger.info(f"Updating entry: {user_dn}")
     logger.info(f"Changes: {changes}")

@@ -187,18 +187,16 @@ class FlextLdapServers(FlextCore.Service[None]):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextLdapModels.RootDSE]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Get Root DSE attributes."""
         ops = self.operations
         if not ops:
-            return FlextCore.Result[FlextLdapModels.RootDSE].fail(
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
         return ops.get_root_dse_attributes(connection)
 
-    def detect_server_type_from_root_dse(
-        self, root_dse: FlextLdapModels.RootDSE
-    ) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
         """Detect server type from Root DSE."""
         ops = self.operations
         return (

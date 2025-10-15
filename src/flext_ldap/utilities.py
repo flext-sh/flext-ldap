@@ -278,7 +278,7 @@ class FlextLdapUtilities(FlextCore.Utilities):
     # LDAP-SPECIFIC CONVERSION UTILITIES
     # =========================================================================
 
-    class Conversion(FlextCore.Utilities.TypeConversions):
+    class Conversion:
         """LDAP data conversion utilities."""
 
         @staticmethod

@@ -12,6 +12,8 @@ All type annotations follow FLEXT standards with no hacks or workarounds.
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextCore
 from ldap3 import SUBTREE, Connection, Server
 
@@ -177,7 +179,9 @@ class FlextLdapAuthentication(FlextCore.Service[None]):
                 )
 
             return FlextCore.Result[FlextLdapTypes.Ldap3Protocols.Entry].ok(
-                self._connection.entries[0],
+                cast(
+                    "FlextLdapTypes.Ldap3Protocols.Entry", self._connection.entries[0]
+                ),
             )
 
         except Exception as e:

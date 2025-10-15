@@ -1147,7 +1147,9 @@ class FlextLdap(FlextCore.Service[None]):
                             "dn": str(ldap_entry.dn),
                             "attributes": dict(ldap_entry.attributes),
                         }
-                        ldif_entry_result = adapter.ldap3_to_ldif_entry(entry_dict)
+                        ldif_entry_result = adapter.ldap3_to_ldif_entry(
+                            cast("FlextCore.Types.Dict", entry_dict)
+                        )
                         if ldif_entry_result.is_failure:
                             server_type_result = FlextCore.Result[str].fail(
                                 f"Failed to convert entry: {ldif_entry_result.error}"
@@ -2693,14 +2695,18 @@ class FlextLdap(FlextCore.Service[None]):
                 "filters parameter is required when passing base DNs as strings",
             )
 
-        if len(base_dns) != len(filters):
+        # Type guard: at this point base_dns and filters are both StringList
+        base_dns_str = base_dns
+        filters_str = filters
+
+        if len(base_dns_str) != len(filters_str):
             return FlextCore.Result[list[list[FlextLdapModels.Entry]]].fail(
                 "base_dns and filters lists must have the same length",
             )
 
         results = []
         # Note: Already validated len(base_dns) == len(filters) above
-        for base_dn, filter_str in zip(base_dns, filters, strict=False):
+        for base_dn, filter_str in zip(base_dns_str, filters_str, strict=False):
             # Extract base DN string from either string or SearchRequest
             base_dn_str = base_dn if isinstance(base_dn, str) else base_dn.base_dn
 
@@ -2832,8 +2838,13 @@ class FlextLdap(FlextCore.Service[None]):
             Server type or None if not detected
 
         """
+        # Check if client is initialized
+        if self._client is None:
+            return FlextCore.Result[str | None].fail("Client not initialized")
+
+        # Get server type from client connection
         # This would require inspecting the current connection
-        # For now, return None
+        # For now, return None as server type not detected
         return FlextCore.Result[str | None].ok(None)
 
     def get_server_capabilities(

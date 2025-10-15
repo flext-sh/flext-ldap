@@ -61,7 +61,7 @@ class FlextLdapHandlers:
             """
             if not isinstance(message, FlextLdapModels.CqrsCommand):
                 return FlextCore.Result[TResult].fail("Message must be a CqrsCommand")
-            return self.handle(cast("TCommand", message))
+            return self.handle(message)
 
         def execute(self, message: TCommand) -> FlextCore.Result[TResult]:
             """Execute handler - implements Application.Handler protocol.
@@ -75,19 +75,19 @@ class FlextLdapHandlers:
             """
             return self(message)
 
-        def validate(self, message: object) -> FlextCore.Result[None]:
-            """Validate message - implements Application.Handler protocol.
+        def validate(self, command: object) -> FlextCore.Result[None]:
+            """Validate command - implements Application.Handler protocol.
 
             Args:
-                message: Message to validate
+                command: Command to validate
 
             Returns:
                 FlextCore.Result indicating validation success
 
             """
-            if not isinstance(message, FlextLdapModels.CqrsCommand):
+            if not isinstance(command, FlextLdapModels.CqrsCommand):
                 return FlextCore.Result[None].fail("Message must be a CqrsCommand")
-            return self._validate_command(cast("TCommand", message))
+            return self._validate_command(cast("TCommand", command))
 
         def validate_command(self, command: TCommand) -> FlextCore.Result[None]:
             """Validate command - implements Application.Handler protocol.
@@ -101,7 +101,7 @@ class FlextLdapHandlers:
             """
             if not isinstance(command, FlextLdapModels.CqrsCommand):
                 return FlextCore.Result[None].fail("Command must be a CqrsCommand")
-            return self._validate_command(cast("TCommand", command))
+            return self._validate_command(command)
 
         def validate_query(self, query: object) -> FlextCore.Result[None]:
             """Validate query - implements Application.Handler protocol (not applicable for command handlers).
@@ -239,10 +239,8 @@ class FlextLdapHandlers:
 
             """
             if not isinstance(message, FlextLdapModels.CqrsQuery):
-                return FlextCore.Result[dict[str, object]].fail(
-                    "Message must be a CqrsQuery"
-                )
-            return self.handle(cast("TQuery", message))
+                return FlextCore.Result[TResult].fail("Message must be a CqrsQuery")
+            return self.handle(message)
 
         def execute(self, message: TQuery) -> FlextCore.Result[TResult]:
             """Execute handler - implements Application.Handler protocol.
@@ -256,19 +254,19 @@ class FlextLdapHandlers:
             """
             return self(message)
 
-        def validate(self, message: object) -> FlextCore.Result[None]:
+        def validate(self, _data: object) -> FlextCore.Result[None]:
             """Validate message - implements Application.Handler protocol.
 
             Args:
-                message: Message to validate
+                _data: Message to validate
 
             Returns:
                 FlextCore.Result indicating validation success
 
             """
-            if not isinstance(message, FlextLdapModels.CqrsQuery):
+            if not isinstance(_data, FlextLdapModels.CqrsQuery):
                 return FlextCore.Result[None].fail("Message must be a CqrsQuery")
-            return self._validate_query(cast("TQuery", message))
+            return self._validate_query(cast("TQuery", _data))
 
         def validate_command(self, command: object) -> FlextCore.Result[None]:
             """Validate command - implements Application.Handler protocol (not applicable for query handlers).
@@ -295,7 +293,7 @@ class FlextLdapHandlers:
             """
             if not isinstance(query, FlextLdapModels.CqrsQuery):
                 return FlextCore.Result[None].fail("Query must be a CqrsQuery")
-            return self._validate_query(cast("TQuery", query))
+            return self._validate_query(query)
 
         @property
         def handler_name(self) -> str:

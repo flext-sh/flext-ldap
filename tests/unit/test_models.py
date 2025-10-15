@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import threading
 import time
+from datetime import UTC, datetime
 from typing import cast
 
 import pytest
@@ -187,8 +188,16 @@ class TestFlextLdapModels:
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
         # Pass arguments explicitly to avoid mixed type issues
+        server_info = FlextLdapModels.ServerInfo(
+            naming_contexts=["dc=test,dc=com"],
+            supported_ldap_version=["3"],
+        )
+        # Add vendor and version as dynamic attributes (FlexibleModel allows this)
+        setattr(server_info, "vendor", "OpenLDAP")
+        setattr(server_info, "version", "2.4")
+
         result = FlextLdapModels.SchemaDiscoveryResult(
-            server_info={"vendor": "OpenLDAP", "version": "2.4"},
+            server_info=server_info,
             server_type=FlextLdapModels.LdapServerType.OPENLDAP,
             server_quirks=FlextLdapModels.ServerQuirks(
                 server_type=FlextLdapModels.LdapServerType.OPENLDAP
@@ -406,9 +415,10 @@ class TestFlextLdapModels:
 
     def test_delete_config_creation(self) -> None:
         """Test DeleteConfig model creation."""
-        delete_data = {"dn": "cn=testuser,dc=test,dc=com"}
-
-        config = FlextLdapModels.DeleteConfig(**delete_data)
+        config = FlextLdapModels.DeleteConfig(
+            dn="cn=testuser,dc=test,dc=com",
+            created_at=datetime.now(UTC),
+        )
 
         assert config.dn == "cn=testuser,dc=test,dc=com"
 
@@ -430,10 +440,10 @@ class TestFlextLdapModels:
         # Pass arguments explicitly to avoid mixed type issues
         response = FlextLdapModels.SearchResponse(
             entries=[
-                {
-                    "dn": "cn=testuser,dc=test,dc=com",
-                    "attributes": {"cn": "testuser", "mail": "test@example.com"},
-                }
+                FlextLdapModels.Entry(
+                    dn="cn=testuser,dc=test,dc=com",
+                    attributes={"cn": "testuser", "mail": "test@example.com"},
+                )
             ],
             total_count=1,
             next_cookie=b"",
@@ -961,6 +971,7 @@ class TestFlextLdapModels:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=["uid=user1,ou=people,dc=example,dc=com"],
         )
 
@@ -1227,7 +1238,7 @@ class TestFlextLdapModels:
         with pytest.raises(Exception):
             FlextLdapModels.Entry(
                 dn="cn=test,dc=example,dc=com",
-                attributes=None,  # None attributes
+                attributes={},  # Empty attributes dict instead of None
             )
 
         # Test empty attributes dict[str, object] (should be valid)
@@ -1403,12 +1414,12 @@ class TestFlextLdapModels:
         group = FlextLdapModels.Group(
             dn="cn=developers,ou=groups,dc=example,dc=com",
             cn="developers",
+            description="Developers group",
             member_dns=[
                 "uid=user1,ou=people,dc=example,dc=com",
                 "uid=user2,ou=people,dc=example,dc=com",
                 "uid=user3,ou=people,dc=example,dc=com",
             ],
-            description="Development team",
             gid_number=1001,
         )
 
@@ -1628,42 +1639,37 @@ class TestFlextLdapModels:
         """Test AclPermissions model direct creation with various permission sets."""
         # Read-only permissions
         read_perms = FlextLdapModels.AclPermissions(
-            permissions=["read", "search", "compare"],
+            granted_permissions=["read", "search", "compare"],
             grant_type="allow",
         )
-        assert "read" in read_perms.permissions
-        assert "write" not in read_perms.permissions
-        assert "search" in read_perms.permissions
+        assert "read" in read_perms.granted_permissions
+        assert "write" not in read_perms.granted_permissions
+        assert "search" in read_perms.granted_permissions
         assert read_perms.grant_type == "allow"
 
         # Full permissions
         full_perms = FlextLdapModels.AclPermissions(
-            permissions=["read", "write", "add", "delete", "search", "compare"],
+            granted_permissions=["read", "write", "add", "delete", "search", "compare"],
             grant_type="allow",
         )
-        assert "read" in full_perms.permissions
-        assert "write" in full_perms.permissions
-        assert "add" in full_perms.permissions
-        assert len(full_perms.permissions) == 6
-        assert "delete" in full_perms.permissions
+        assert "read" in full_perms.granted_permissions
+        assert "write" in full_perms.granted_permissions
+        assert "add" in full_perms.granted_permissions
+        assert len(full_perms.granted_permissions) == 6
+        assert "delete" in full_perms.granted_permissions
 
     def test_unified_acl_direct_creation(self) -> None:
         """Test Acl model direct creation with complete ACL definition."""
         target = FlextLdapModels.AclTarget(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
-            scope="subtree",
         )
         subject = FlextLdapModels.AclSubject(
             subject_type="group",
-            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
+            subject_dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
         )
         permissions = FlextLdapModels.AclPermissions(
-            read=True,
-            write=True,
-            add=True,
-            delete=True,
-            search=True,
+            granted_permissions=["read", "write", "add", "delete", "search"],
         )
 
         unified_acl = FlextLdapModels.Acl(
@@ -1790,11 +1796,11 @@ class TestFlextLdapModels:
         group = FlextLdapModels.Group(
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             cn="REDACTED_LDAP_BIND_PASSWORDs",
+            description="Administrators group",
             member_dns=[
                 "uid=REDACTED_LDAP_BIND_PASSWORD1,ou=users,dc=example,dc=com",
                 "uid=REDACTED_LDAP_BIND_PASSWORD2,ou=users,dc=example,dc=com",
             ],
-            description="Administrator group",
             gid_number=1000,
             object_classes=["groupOfNames", "posixGroup"],
         )

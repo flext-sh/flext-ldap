@@ -88,7 +88,7 @@ class DocumentationSync:
 
     def _load_config(self, config_path: str | None = None) -> SyncConfig:
         """Load configuration."""
-        default_config = {
+        default_config: SyncConfig = {
             "sync": {
                 "auto_commit": False,
                 "commit_message_template": "docs: {operation} - {changes} changes",
@@ -112,10 +112,13 @@ class DocumentationSync:
 
         if config_path and Path(config_path).exists():
             with Path(config_path).open(encoding="utf-8") as f:
-                user_config = yaml.safe_load(f)
+                user_config: dict[str, object] = yaml.safe_load(f)
                 for key, value in user_config.items():
-                    if key in default_config:
-                        default_config[key].update(value)
+                    if key in default_config and isinstance(value, dict):
+                        # Merge nested configs
+                        current_val = default_config.get(key)
+                        if isinstance(current_val, dict):
+                            current_val.update(value)
                     else:
                         default_config[key] = value
 
@@ -228,7 +231,7 @@ class DocumentationSync:
     def _get_pending_changes(self) -> FlextCore.Types.StringList:
         """Get list of pending changes."""
         status = self._get_git_status()
-        return status.modified_files + status.untracked_files
+        return status["modified_files"] + status["untracked_files"]
 
     def _get_last_sync_time(self) -> datetime | None:
         """Get timestamp of last synchronization."""
@@ -340,36 +343,49 @@ class DocumentationSync:
             # Stage files
             git_cmd = self._get_git_command()
             if not git_cmd:
-                return SyncResult.fail("Git command not found")
+                return SyncResult(
+                    operation="sync",
+                    success=False,
+                    changes_made=0,
+                    files_affected=[],
+                    error_message="Git command not found",
+                    timestamp=datetime.now(UTC),
+                )
 
             subprocess.run(  # nosec S603 - git command with validated file paths and full path
-                [git_cmd, "add"] + files, cwd=self.working_dir, check=True
+                [git_cmd, "add", *files],
+                cwd=str(self.working_dir),
+                check=True,
+                capture_output=True,
+                text=True,
             )
 
             # Create commit message
             changes_desc = f"{len(files)} files"
-            commit_message = self.config["sync"]["commit_message_template"].format(
+            commit_message_template = str(self.config["sync"]["commit_message_template"])
+            commit_message = commit_message_template.format(
                 operation=operation, changes=changes_desc
             )
 
             # Commit
             subprocess.run(  # nosec S603 - git command with validated message and full path
                 [git_cmd, "commit", "-m", commit_message],
-                cwd=self.working_dir,
+                cwd=str(self.working_dir),
                 check=True,
+                capture_output=True,
+                text=True,
             )
 
             # Push if configured
             if self.config["sync"]["push_after_commit"]:
+                remote_name = str(self.config["git"]["remote_name"])
+                main_branch = str(self.config["git"]["main_branch"])
                 subprocess.run(  # nosec S603,S607 - git command with validated config and full path
-                    [
-                        git_cmd,
-                        "push",
-                        self.config["git"]["remote_name"],
-                        self.config["git"]["main_branch"],
-                    ],
-                    cwd=self.working_dir,
+                    [git_cmd, "push", remote_name, main_branch],
+                    cwd=str(self.working_dir),
                     check=True,
+                    capture_output=True,
+                    text=True,
                 )
 
             return SyncResult(
@@ -406,15 +422,24 @@ class DocumentationSync:
         try:
             git_cmd = self._get_git_command()
             if not git_cmd:
-                return SyncResult.fail("Git command not found")
+                return SyncResult(
+                    operation="backup_branch",
+                    success=False,
+                    changes_made=0,
+                    files_affected=[],
+                    error_message="Git command not found",
+                    timestamp=datetime.now(UTC),
+                )
 
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             branch_name = f"docs-backup-{timestamp}"
 
             subprocess.run(  # nosec S603,S607 - git command with validated branch name and full path
                 [git_cmd, "checkout", "-b", branch_name],
-                cwd=self.working_dir,
+                cwd=str(self.working_dir),
                 check=True,
+                capture_output=True,
+                text=True,
             )
 
             return SyncResult(
@@ -441,12 +466,21 @@ class DocumentationSync:
         try:
             git_cmd = self._get_git_command()
             if not git_cmd:
-                return SyncResult.fail("Git command not found")
+                return SyncResult(
+                    operation="rollback",
+                    success=False,
+                    changes_made=0,
+                    files_affected=[],
+                    error_message="Git command not found",
+                    timestamp=datetime.now(UTC),
+                )
 
             subprocess.run(  # nosec S603 - git command with validated file paths and full path
-                [git_cmd, "checkout", "HEAD", "--"] + files,
-                cwd=self.working_dir,
+                [git_cmd, "checkout", "HEAD", "--", *files],
+                cwd=str(self.working_dir),
                 check=True,
+                capture_output=True,
+                text=True,
             )
 
             return SyncResult(
@@ -470,7 +504,21 @@ class DocumentationSync:
 
     def run_maintenance_schedule(self, schedule_type: str) -> list[SyncResult]:
         """Run scheduled maintenance tasks."""
-        if schedule_type not in self.config["maintenance"]["schedule"]:
+        maintenance_config = self.config["maintenance"]
+        if not isinstance(maintenance_config, dict) or "schedule" not in maintenance_config:
+            return [
+                SyncResult(
+                    operation="maintenance",
+                    success=False,
+                    changes_made=0,
+                    files_affected=[],
+                    error_message="Invalid maintenance configuration",
+                    timestamp=datetime.now(UTC),
+                )
+            ]
+
+        schedule = maintenance_config["schedule"]
+        if not isinstance(schedule, dict) or schedule_type not in schedule:
             return [
                 SyncResult(
                     operation="maintenance",
@@ -482,7 +530,20 @@ class DocumentationSync:
                 )
             ]
 
-        tasks = self.config["maintenance"]["schedule"][schedule_type]
+        tasks_obj = schedule[schedule_type]
+        if not isinstance(tasks_obj, list):
+            return [
+                SyncResult(
+                    operation="maintenance",
+                    success=False,
+                    changes_made=0,
+                    files_affected=[],
+                    error_message="Invalid schedule tasks configuration",
+                    timestamp=datetime.now(UTC),
+                )
+            ]
+
+        tasks: list[str] = [str(task) for task in tasks_obj]
         results = []
 
         for task in tasks:
@@ -515,7 +576,7 @@ class DocumentationSync:
         """Run comprehensive documentation audit."""
         try:
             auditor = DocumentationAuditor()
-            results = auditor.audit_directory(Path(self.working_dir) / "docs")
+            results = auditor.audit_directory(str(self.working_dir / "docs"))
             auditor.generate_summary()
 
             return SyncResult(
@@ -540,7 +601,7 @@ class DocumentationSync:
         """Run content optimization."""
         try:
             optimizer = ContentOptimizer()
-            results = optimizer.optimize_directory(Path(self.working_dir) / "docs")
+            results = optimizer.optimize_directory(str(self.working_dir / "docs"))
 
             files_modified = [r.file_path for r in results if r.changes_made > 0]
             total_changes = sum(r.changes_made for r in results)
@@ -568,7 +629,7 @@ class DocumentationSync:
         try:
             # Update timestamps, version info, etc.
             docs_dir = str(self.working_dir / "docs")
-            updated_files = []
+            updated_files: list[str] = []
 
             for root, _dirs, files in os.walk(docs_dir):
                 for file in files:
@@ -581,7 +642,7 @@ class DocumentationSync:
                         # Update last modified timestamp if present
                         if "last_updated:" in content or "updated:" in content:
                             # This would be more complex in practice
-                            updated_files.append(file_path)
+                            updated_files.append(str(file_path))
 
             return SyncResult(
                 operation="metadata_update",
@@ -671,7 +732,8 @@ def main() -> None:
         status = sync.get_sync_status()
 
         git_info = status.git_status
-        if git_info.get("initialized"):
+        # Check git status - branch "unknown" indicates not initialized
+        if git_info["branch"] != "unknown":
             pass
 
         if status.pending_changes and args.verbose:

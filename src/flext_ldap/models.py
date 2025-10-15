@@ -614,14 +614,12 @@ class FlextLdapModels(FlextCore.Models):
                 raise exceptions.validation_error(msg, value=v, field="required_string")
             return v.strip()
 
-    class EntityBase(Base, ValidationMixin):
+    class EntityBase(FlextCore.Models.Entity, ValidationMixin):
         """Base class for LDAP entities with common fields and validation.
 
         Provides common fields and validation methods that are shared
         across multiple LDAP entity types.
         """
-
-        # Timestamp fields inherited from Base
 
         # Common additional attributes field
         additional_attributes: dict[
@@ -704,12 +702,6 @@ class FlextLdapModels(FlextCore.Models):
         ] = Field(
             default_factory=dict,
             description="Additional LDAP attributes",
-        )
-        # Override TimestampableMixin's non-nullable created_at - architectural decision
-        # LDAP users may not have creation timestamps in all directory implementations
-        created_at: datetime | None = Field(
-            default=None,
-            description="Creation timestamp",
         )
         display_name: str | None = Field(default=None, description="Display Name")
         modified_at: str | None = Field(
@@ -1061,7 +1053,6 @@ class FlextLdapModels(FlextCore.Models):
                 user_password=None,  # Never store passwords from LDAP
                 additional_attributes={},
                 status="active",
-                created_at=None,
                 display_name=cn,
                 modified_at=None,
                 created_timestamp=None,
@@ -2112,8 +2103,6 @@ class FlextLdapModels(FlextCore.Models):
                 object_classes=self.object_classes,
                 # Dict variance: EntryAttributeValue is compatible with object
                 additional_attributes=self.additional_attributes,
-                created_at=None,
-                modified_at=None,
             )
 
         def to_attributes(
@@ -4454,6 +4443,11 @@ class FlextLdapModels(FlextCore.Models):
                 bind_password_value = data.get(
                     FlextLdapConstants.DictKeys.BIND_PASSWORD
                 )
+                # Ensure bind_password_value is a string for SecretStr
+                bind_password_str: str | None = None
+                if bind_password_value is not None:
+                    bind_password_str = str(bind_password_value)
+
                 config = cls(
                     ldap_server_uri=str(
                         data.get(
@@ -4468,8 +4462,8 @@ class FlextLdapModels(FlextCore.Models):
                     ldap_bind_dn=str(data.get(FlextLdapConstants.DictKeys.BIND_DN, ""))
                     if data.get(FlextLdapConstants.DictKeys.BIND_DN)
                     else None,
-                    ldap_bind_password=SecretStr(str(bind_password_value))
-                    if bind_password_value
+                    ldap_bind_password=SecretStr(bind_password_str)
+                    if bind_password_str
                     else None,
                     ldap_base_dn=str(data.get(FlextLdapConstants.DictKeys.BASE_DN, "")),
                 )

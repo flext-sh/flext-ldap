@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextCore
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services import FlextLdapServices
@@ -274,6 +273,7 @@ class TestFlextLdapServices:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=[],
         )
 
@@ -292,6 +292,7 @@ class TestFlextLdapServices:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=["uid=user1,ou=users,dc=example,dc=com"],
         )
 
@@ -310,6 +311,7 @@ class TestFlextLdapServices:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=[],
         )
 
@@ -328,6 +330,7 @@ class TestFlextLdapServices:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=[],  # Empty - member doesn't exist
         )
 
@@ -465,11 +468,11 @@ class TestFlextLdapServices:
     def test_validate_ldap_configuration_basic(self) -> None:
         """Test LDAP configuration validation with minimal config."""
         services = FlextLdapServices()
-        config_data: FlextCore.Types.Dict = {
-            "server": "ldap.example.com",
-            "port": 389,
-            "base_dn": "dc=example,dc=com",
-        }
+        config_data = FlextLdapModels.LdapConfigValidation(
+            ldap_server="ldap.example.com",
+            ldap_port=389,
+            base_dn="dc=example,dc=com",
+        )
 
         result = services.validate_ldap_configuration(config_data)
 
@@ -479,12 +482,11 @@ class TestFlextLdapServices:
     def test_validate_ldap_configuration_with_ssl(self) -> None:
         """Test LDAP configuration validation with SSL settings."""
         services = FlextLdapServices()
-        config_data: FlextCore.Types.Dict = {
-            "server": "ldap.example.com",
-            "port": 636,
-            "use_ssl": True,
-            "base_dn": "dc=example,dc=com",
-        }
+        config_data = FlextLdapModels.LdapConfigValidation(
+            ldap_server="ldap.example.com",
+            ldap_port=636,
+            base_dn="dc=example,dc=com",
+        )
 
         result = services.validate_ldap_configuration(config_data)
 
