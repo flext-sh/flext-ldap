@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_core import FlextCore
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
@@ -20,19 +18,15 @@ from flext_ldap.models import FlextLdapModels
 class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.Acl]):
     """ACL Manager for comprehensive ACL operations."""
 
+    _parsers: FlextLdapAclParsers
+    _converters: FlextLdapAclConverters
+
     def __init__(self) -> None:
         """Initialize ACL Manager."""
-        config = FlextCore.Models.Cqrs.Handler(
-            handler_id="flext_ldap_acl_manager",
-            handler_name="FlextLdapAclManager",
-            handler_type="command",
-        )
-        super().__init__(config=config)
         # Initialize parsers and converters - unified classes without config
         self._parsers: FlextLdapAclParsers = FlextLdapAclParsers()
         self._converters: FlextLdapAclConverters = FlextLdapAclConverters()
 
-    @override
     def handle(
         self,
         message: dict[str, object],
@@ -91,18 +85,13 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.
 
             # Use parser to parse ACL based on format type
             if final_format_type == FlextLdapConstants.AclFormat.OPENLDAP:
-                result = self._parsers.OpenLdapAclParser.parse(acl_string)
-            elif final_format_type == FlextLdapConstants.AclFormat.ORACLE:
-                result = self._parsers.OracleAclParser.parse(acl_string)
-            elif final_format_type == FlextLdapConstants.AclFormat.ACI:
-                result = self._parsers.AciParser.parse(acl_string)
-            else:
-                return FlextCore.Result[FlextLdapModels.Acl].fail(
-                    f"Unsupported ACL format: {final_format_type}",
-                )
-
-            return (
-                result  # Parser already returns FlextCore.Result[FlextLdapModels.Acl]
+                return self._parsers.OpenLdapAclParser.parse(acl_string)
+            if final_format_type == FlextLdapConstants.AclFormat.ORACLE:
+                return self._parsers.OracleAclParser.parse(acl_string)
+            if final_format_type == FlextLdapConstants.AclFormat.ACI:
+                return self._parsers.AciParser.parse(acl_string)
+            return FlextCore.Result[FlextLdapModels.Acl].fail(
+                f"Unsupported ACL format: {final_format_type}",
             )
 
         except Exception as e:
@@ -140,6 +129,7 @@ class FlextLdapAclManager(FlextCore.Handlers[dict[str, object], FlextLdapModels.
                 if not isinstance(source_format_raw, str)
                 else source_format_raw
             )
+            # Converter returns FlextCore.Result[FlextLdapModels.Acl], return it directly
             return self._converters.convert_acl(
                 acl_data, final_source_format, target_format
             )

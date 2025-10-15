@@ -47,10 +47,12 @@ class FlextTestDocker:
         # Mock implementation - assume container is not running
         class MockContainerStatus:
             def __init__(self) -> None:
+                super().__init__()
                 self.value = "not_running"
 
         class MockValue:
             def __init__(self) -> None:
+                super().__init__()
                 self.status = MockContainerStatus()
 
         # Return as FlextCore.Result.ok with mock value
@@ -298,8 +300,8 @@ def sample_group() -> FlextLdapModels.Group:
     return FlextLdapModels.Group(
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
+        description="Test group",
         gid_number=1000,
-        description="Test Group",
         member_dns=["uid=testuser,ou=people,dc=example,dc=com"],
     )
 
@@ -498,6 +500,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
         port=3390,
         bind_dn="cn=admin,dc=flext,dc=local",
         bind_password="admin123",
+        base_dn="dc=flext,dc=local",
         use_ssl=False,
         timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
@@ -518,6 +521,7 @@ def shared_ldap_client(
         server_uri=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
         password=shared_ldap_config["password"],
+        auto_discover_schema=True,  # Enable schema discovery for testing
     )
 
     if connect_result.is_failure:

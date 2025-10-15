@@ -269,7 +269,7 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             reverse=True,
         )[:10]  # Top 10
 
-        report = {
+        report: dict[str, object] = {
             "total": len(failures),
             "by_phase": {
                 phase: {

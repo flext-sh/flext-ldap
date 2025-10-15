@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from flext_core import FlextCore
 
@@ -33,7 +33,7 @@ class FlextLdapRepositories:
     # Logger moved into class to follow single-class-per-module pattern
     logger = FlextCore.Logger(__name__)
 
-    class LdapRepository(ABC, FlextCore.Protocols.Domain.Repository[T], Generic[T]):
+    class LdapRepository(ABC, FlextCore.Protocols.Domain.Repository[T]):
         """Abstract base class for LDAP repositories implementing Domain.Repository protocol.
 
         This class provides the foundation for LDAP-specific repository implementations,
@@ -50,6 +50,7 @@ class FlextLdapRepositories:
                 client: LDAP client instance. If None, creates a new instance.
 
             """
+            super().__init__()
             self._client = client or FlextLdapClients()
             self.logger = FlextCore.Logger(__name__)
 
@@ -78,7 +79,7 @@ class FlextLdapRepositories:
 
             """
             # Default implementation - subclasses should override for efficiency
-            return FlextCore.Result[list["T"]].fail(
+            return FlextCore.Result[list[T]].fail(
                 "find_all not implemented - use subclass",
             )
 
@@ -93,11 +94,10 @@ class FlextLdapRepositories:
 
             """
             # Default implementation - check if entity exists and add or update accordingly
-            exists_result = self.exists(
-                entity.dn if hasattr(entity, "dn") else str(entity),
-            )
+            entity_dn = getattr(entity, "dn", None) or str(entity)
+            exists_result = self.exists(entity_dn)
             if exists_result.is_failure:
-                return FlextCore.Result["T"].fail(
+                return FlextCore.Result[T].fail(
                     f"Failed to check existence: {exists_result.error}",
                 )
 
@@ -286,8 +286,10 @@ class FlextLdapRepositories:
                 for entry in entries:
                     if hasattr(entry, "dn"):
                         user_result = self._client.get_user(str(entry.dn))
-                        if user_result.is_success and user_result.unwrap():
-                            users.append(user_result.unwrap())
+                        if user_result.is_success:
+                            user = user_result.unwrap()
+                            if user is not None:
+                                users.append(user)
 
                 return FlextCore.Result[list[FlextLdapModels.LdapUser]].ok(users)
             except Exception as e:

@@ -17,11 +17,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextCore
-from ldap3 import BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPAttributeError
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 if TYPE_CHECKING:
@@ -245,10 +245,10 @@ class FlextLdapSearch(FlextCore.Service[None]):
                 entry_model = FlextLdapModels.Entry(
                     dn=str(entry.entry_dn),  # Fixed: ldap3 uses entry_dn not dn
                     attributes=cast(
-                        "dict[str, str | FlextCore.Types.StringList]",
+                        "dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]",
                         entry_attributes_dict,
                     ),
-                    object_classes=cast("FlextCore.Types.StringList", object_classes),
+                    object_classes=object_classes,
                 )
                 entries.append(entry_model)
 
@@ -456,9 +456,9 @@ class FlextLdapSearch(FlextCore.Service[None]):
         normalized_scope = scope.lower()
 
         scope_map: dict[str, FlextLdapConstants.SearchScope] = {
-            "base": BASE,
-            "level": LEVEL,
-            "subtree": SUBTREE,
+            "base": FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_BASE,
+            "level": FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_LEVEL,
+            "subtree": FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE,
         }
         if normalized_scope not in scope_map:
             msg = f"Invalid scope: {scope}. Must be one of: base, level, subtree (case insensitive)"

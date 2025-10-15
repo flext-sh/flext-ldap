@@ -218,7 +218,7 @@ class FlextLdapConstants(FlextCore.Constants):
 
     # LDAP-specific validation constants
     class Validation(FlextCore.Constants.Validation):
-        """LDAP-specific validation constants extending base validation."""
+        """LDAP-specific validation constants."""
 
         # LDAP DN validation
         MIN_DN_PARTS: Final[int] = 2
@@ -242,7 +242,7 @@ class FlextLdapConstants(FlextCore.Constants):
 
     # LDAP-specific error and validation messages
     class Messages(FlextCore.Constants.Messages):
-        """LDAP-specific error and validation messages extending base messages."""
+        """LDAP-specific error and validation messages."""
 
         # LDAP validation messages
         HOST_CANNOT_BE_EMPTY: Final[str] = "Host cannot be empty"
@@ -263,7 +263,7 @@ class FlextLdapConstants(FlextCore.Constants):
 
     # LDAP-specific error codes
     class Errors(FlextCore.Constants.Errors):
-        """LDAP-specific error codes extending universal error codes."""
+        """LDAP-specific error codes."""
 
         # LDAP-specific errors
         LDAP_BIND_ERROR: Final[str] = "LDAP_BIND_ERROR"
@@ -276,7 +276,7 @@ class FlextLdapConstants(FlextCore.Constants):
 
     # LDAP-specific default values
     class Defaults(FlextCore.Constants.Defaults):
-        """LDAP-specific default values extending base defaults."""
+        """LDAP-specific default values."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
         DEFAULT_SEARCH_BASE: Final[str] = ""

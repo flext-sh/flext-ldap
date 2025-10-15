@@ -367,9 +367,7 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
                 "olcLogLevel": FlextLdifModels.AttributeValues(values=["stats"]),
             }
         ),
-        version="1",
-        created_at=None,
-        updated_at=None,
+        version=1,
     )
 
     logger.info("   ✅ OpenLDAP 2.x entry created")
@@ -423,9 +421,7 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
                         ),
                     }
                 ),
-                version="1",
-                created_at=None,
-                updated_at=None,
+                version=1,
             ),
             "expected": "openldap2",
         },
@@ -525,9 +521,7 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
                 ),
             }
         ),
-        version="1",
-        created_at=None,
-        updated_at=None,
+        version=1,
     )
 
     logger.info("   ✅ Entry created with attributes:")
@@ -570,9 +564,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
                 "sn": FlextLdifModels.AttributeValues(values=["User"]),
             }
         ),
-        version="1",
-        created_at=None,
-        updated_at=None,
+        version=1,
     )
 
     # Convert LDIF entry to LDAP entry for validation
@@ -603,9 +595,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
                 ),  # OpenLDAP-specific
             }
         ),
-        version="1",
-        created_at=None,
-        updated_at=None,
+        version=1,
     )
 
     # Convert LDIF entry to LDAP entry for validation

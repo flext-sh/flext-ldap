@@ -64,12 +64,15 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
 
     def ldap3_to_ldif_entry(
         self,
-        ldap3_entry: Ldap3Entry | FlextCore.Types.Dict,
+        ldap3_entry: Ldap3Entry
+        | dict[str, object]
+        | dict[str, str | dict[str, object]]
+        | dict[str, dict[str, list[str] | str] | str],
     ) -> FlextCore.Result[FlextLdifModels.Entry]:
-        """Convert ldap3.Entry or dict[str, object] to FlextLdifModels.Entry.
+        """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
         Args:
-            ldap3_entry: ldap3 Entry object from search results or dict[str, object] with 'dn' and 'attributes' keys
+            ldap3_entry: ldap3 Entry object or dict with 'dn' and 'attributes' keys
 
         Returns:
             FlextCore.Result containing FlextLdifModels.Entry or error
@@ -81,9 +84,9 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
                 "ldap3 entry cannot be None"
             )
 
-        # Handle both ldap3 Entry objects and dict[str, object] objects
+        # Handle both ldap3 Entry objects and dict objects
         if isinstance(ldap3_entry, dict):
-            # Handle dict[str, object] input (from search operations)
+            # Handle dict input (from search operations)
             if "dn" not in ldap3_entry:
                 return FlextCore.Result[FlextLdifModels.Entry].fail(
                     "Dict entry missing 'dn' key",
@@ -99,8 +102,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
                 return FlextCore.Result[FlextLdifModels.Entry].fail(
                     "Dict entry 'attributes' must be a dictionary",
                 )
-        else:
-            # Handle ldap3 Entry object input
+        elif isinstance(ldap3_entry, Ldap3Entry):
             # Extract DN from ldap3 entry
             dn_str = str(ldap3_entry.entry_dn)
             if not dn_str:
@@ -127,6 +129,10 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
                     ldap3_attributes[attr_name] = []
             # Assign to attributes variable for unified handling below
             attributes = ldap3_attributes
+        else:
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
+                "Unsupported entry type"
+            )
 
         # Convert attributes dict[str, object] to FlextLdifModels.LdifAttributes
         # Explicit FlextCore.Result error handling - NO try/except
@@ -145,7 +151,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
 
         # Create LdifAttributes - .create() method wraps in {"attributes": ...} internally
         ldif_attributes_result = FlextLdifModels.LdifAttributes.create(
-            attr_values_dict,
+            cast("dict[str, object]", attr_values_dict),
         )
         if ldif_attributes_result.is_failure:
             return FlextCore.Result[FlextLdifModels.Entry].fail(
@@ -283,7 +289,7 @@ class FlextLdapEntryAdapter(FlextCore.Service[None]):
         for attr_name, attr_value in modifications.items():
             # Default to REPLACE operation
             values = attr_value if isinstance(attr_value, list) else [attr_value]
-            changes[attr_name] = [(MODIFY_REPLACE, values)]
+            changes[attr_name] = [(str(MODIFY_REPLACE), values)]
 
         return FlextCore.Result[dict[str, list[tuple[str, FlextCore.Types.List]]]].ok(
             changes

@@ -13,10 +13,10 @@ import argparse
 import shutil
 import subprocess  # nosec S404 - Required for PlantUML diagram generation
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -37,6 +37,7 @@ class ArchitectureGenerator:
     diagrams_dir: str = "docs/architecture/diagrams"
     verbose: bool = False
     working_dir: str = ""
+    config: dict[str, object] = field(init=False, default_factory=dict)
 
     def __post_init__(self) -> None:
         """Initialize architecture documentation generator after dataclass creation."""
@@ -89,9 +90,10 @@ class ArchitectureGenerator:
             else:
                 base[key] = value
 
-    def generate_full_suite(self) -> dict[str, list[str] | str]:
+    def generate_full_suite(self) -> dict[str, Any]:
         """Generate the complete architecture documentation suite."""
-        results = {
+        config = self.config
+        results: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "files_generated": [],
             "diagrams_generated": [],
@@ -101,10 +103,11 @@ class ArchitectureGenerator:
 
         try:
             # 1. Generate C4 Model documentation
-            if self.config["generation"]["include_c4_model"]:
-                c4_results = self.generate_c4_model()
-                files_list = c4_results.get("files", [])
-                diagrams_list = c4_results.get("diagrams", [])
+            generation_config = cast("dict[str, object]", config["generation"])
+            if cast("bool", generation_config["include_c4_model"]):
+                c4_results: dict[str, list[str]] = self.generate_c4_model()
+                files_list = cast("list[str]", c4_results["files"])
+                diagrams_list = cast("list[str]", c4_results["diagrams"])
                 if not isinstance(files_list, list):
                     files_list = []
                 if not isinstance(diagrams_list, list):
@@ -113,44 +116,62 @@ class ArchitectureGenerator:
                 results["diagrams_generated"].extend(diagrams_list)
 
             # 2. Generate Arc42 documentation
-            if self.config["generation"]["include_arc42"]:
-                arc42_results = self.generate_arc42()
-                results["files_generated"].extend(arc42_results.get("files", []))
+            if cast("bool", generation_config["include_arc42"]):
+                arc42_results: dict[str, list[str]] = self.generate_arc42()
+                cast("list[str]", results["files_generated"]).extend(
+                    cast("list[str]", arc42_results["files"])
+                )
 
             # 3. Generate ADR framework
-            if self.config["generation"]["include_adr"]:
-                adr_results = self.generate_adr_framework()
-                results["files_generated"].extend(adr_results.get("files", []))
+            if cast("bool", generation_config["include_adr"]):
+                adr_results: dict[str, list[str]] = self.generate_adr_framework()
+                cast("list[str]", results["files_generated"]).extend(
+                    cast("list[str]", adr_results["files"])
+                )
 
             # 4. Generate Data Architecture
-            if self.config["generation"]["include_data_architecture"]:
-                data_results = self.generate_data_architecture()
-                results["files_generated"].extend(data_results.get("files", []))
-                results["diagrams_generated"].extend(data_results.get("diagrams", []))
+            if cast("bool", generation_config["include_data_architecture"]):
+                data_results: dict[str, list[str]] = self.generate_data_architecture()
+                cast("list[str]", results["files_generated"]).extend(
+                    cast("list[str]", data_results["files"])
+                )
+                cast("list[str]", results["diagrams_generated"]).extend(
+                    cast("list[str]", data_results["diagrams"])
+                )
 
             # 5. Generate Security Architecture
-            if self.config["generation"]["include_security_architecture"]:
-                security_results = self.generate_security_architecture()
-                results["files_generated"].extend(security_results.get("files", []))
-                results["diagrams_generated"].extend(
-                    security_results.get("diagrams", [])
+            if cast("bool", generation_config["include_security_architecture"]):
+                security_results: dict[str, list[str]] = (
+                    self.generate_security_architecture()
+                )
+                cast("list[str]", results["files_generated"]).extend(
+                    cast("list[str]", security_results["files"])
+                )
+                cast("list[str]", results["diagrams_generated"]).extend(
+                    cast("list[str]", security_results["diagrams"])
                 )
 
             # 6. Generate Quality Attributes
-            if self.config["generation"]["include_quality_attributes"]:
-                quality_results = self.generate_quality_attributes()
-                results["files_generated"].extend(quality_results.get("files", []))
+            if cast("bool", generation_config["include_quality_attributes"]):
+                quality_results: dict[str, list[str]] = (
+                    self.generate_quality_attributes()
+                )
+                cast("list[str]", results["files_generated"]).extend(
+                    cast("list[str]", quality_results["files"])
+                )
 
             # 7. Generate Diagrams
-            if self.config["generation"]["generate_diagrams"]:
-                diagram_results = self.generate_diagrams()
-                results["diagrams_generated"].extend(
-                    diagram_results.get("diagrams", [])
+            if cast("bool", generation_config["generate_diagrams"]):
+                diagram_results: dict[str, list[str]] = self.generate_diagrams()
+                cast("list[str]", results["diagrams_generated"]).extend(
+                    cast("list[str]", diagram_results["diagrams"])
                 )
 
             # 8. Generate index and navigation
-            nav_results = self.generate_navigation()
-            results["files_generated"].extend(nav_results.get("files", []))
+            nav_results: dict[str, list[str]] = self.generate_navigation()
+            cast("list[str]", results["files_generated"]).extend(
+                cast("list[str]", nav_results["files"])
+            )
 
             if results["files_generated"]:
                 for _file in results["files_generated"][
@@ -213,27 +234,31 @@ class ArchitectureGenerator:
 
     def _generate_c4_system_context(self, output_file: str) -> None:
         """Generate C4 System Context documentation."""
+        config = self.config
+        content_config = cast("dict[str, object]", config["content"])
+        project_name = cast("str", content_config["project_name"])
+        version = cast("str", content_config["version"])
         content = f"""# C4 Model: System Context
 
 **Level 1: System Context Diagram**
 
-This diagram shows {self.config["content"]["project_name"]} in relation to its users and external systems.
+This diagram shows {project_name} in relation to its users and external systems.
 
 ## 🎯 System Context Overview
 
-{self.config["content"]["project_name"]} is an enterprise-grade LDAP operations library that provides universal LDAP server support within the FLEXT ecosystem. It serves as the authoritative LDAP abstraction layer for all enterprise directory service needs.
+{project_name} is an enterprise-grade LDAP operations library that provides universal LDAP server support within the FLEXT ecosystem. It serves as the authoritative LDAP abstraction layer for all enterprise directory service needs.
 
 ```plantuml
 @startuml FLEXT-LDAP System Context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-title System Context diagram for {self.config["content"]["project_name"]}
+title System Context diagram for {project_name}
 
 Person(admin, "System Administrator", "Manages LDAP directories and user access")
 Person(developer, "Application Developer", "Builds applications requiring LDAP integration")
 Person(operator, "DevOps Engineer", "Deploys and monitors LDAP-integrated systems")
 
-System(flext_ldap, "{self.config["content"]["project_name"]}", "Universal LDAP operations library with server-specific implementations")
+System(flext_ldap, "{project_name}", "Universal LDAP operations library with server-specific implementations")
 
 System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextCore.Result, DI, and domain patterns")
 System_Ext(flext_ldif, "FLEXT-LDIF", "LDIF processing and LDAP entry model management")
@@ -298,7 +323,7 @@ Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 ### **External Systems**
 
 #### **LDAP Directory Servers**
-{self.config["content"]["project_name"]} provides universal support for major LDAP server implementations:
+{project_name} provides universal support for major LDAP server implementations:
 - **OpenLDAP**: Open-source LDAP server (versions 1.x and 2.x)
 - **Oracle Internet Directory (OID)**: Oracle's enterprise LDAP solution
 - **Oracle Unified Directory (OUD)**: Oracle's next-generation directory server
@@ -401,7 +426,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 
 ## 📊 System Metrics
 
-### **Current Status (Version {self.config["content"]["version"]})**
+### **Current Status (Version {version})**
 - **Test Coverage**: 35% (Target: 90%)
 - **Lines of Code**: 21,222 across 51 test files
 - **Supported Servers**: 6 LDAP server types
@@ -433,13 +458,16 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ---
 
 **C4 Model - Level 1: System Context**
-*Understanding {self.config["content"]["project_name"]}'s role in the enterprise ecosystem*
+*Understanding {project_name}'s role in the enterprise ecosystem*
 """
         with Path(output_file).open("w", encoding="utf-8") as f:
             f.write(content)
 
     def _generate_c4_containers(self, output_file: str) -> None:
         """Generate C4 Container documentation."""
+        config = self.config
+        content_config = cast("dict[str, object]", config["content"])
+        project_name = cast("str", content_config["project_name"])
         # Implementation for container diagram generation
         content = f"""# C4 Model: Container Architecture
 
@@ -449,7 +477,7 @@ This diagram shows the high-level technology choices and how containers communic
 
 ## 🏗️ Container Architecture Overview
 
-{self.config["content"]["project_name"]} is implemented as a Python library with Clean Architecture patterns, providing LDAP operations through a unified interface while supporting multiple LDAP server implementations.
+{project_name} is implemented as a Python library with Clean Architecture patterns, providing LDAP operations through a unified interface while supporting multiple LDAP server implementations.
 
 [Container diagram content would go here]
 
@@ -842,7 +870,9 @@ This document describes the {attribute.lower()} characteristics and requirements
         results: dict[str, list[str]] = {"diagrams": []}
 
         # Check if PlantUML is available
-        plantuml_jar = self.config["diagrams"].get("plantuml_jar", "plantuml.jar")
+        config = self.config
+        diagrams_config = cast("dict[str, object]", config["diagrams"])
+        plantuml_jar = cast("str", diagrams_config.get("plantuml_jar", "plantuml.jar"))
         if Path(plantuml_jar).exists() or self._has_plantuml_command():
             # Generate diagrams for each .puml file
             for puml_file in Path(self.diagrams_dir).glob("*.puml"):
@@ -865,7 +895,8 @@ This document describes the {attribute.lower()} characteristics and requirements
             plantuml_cmd = self._get_plantuml_command()
             if plantuml_cmd:
                 # Use plantuml command with input validation
-                formats = self.config["generation"].get("diagram_formats", ["png"])
+                generation_config = cast("dict[str, object]", self.config["generation"])
+                formats = cast("list[str]", generation_config.get("diagram_formats", ["png"]))
                 # Validate formats to prevent command injection using constant
                 for fmt in formats:
                     if fmt not in PLANTUML_ALLOWED_FORMATS:
@@ -985,7 +1016,9 @@ def main() -> None:
     if config_updates:
         for key, value in config_updates.items():
             if key in generator.config:
-                generator.config[key].update(value)
+                existing_value = generator.config[key]
+                if isinstance(existing_value, dict) and isinstance(value, dict):
+                    existing_value.update(value)
             else:
                 generator.config[key] = value
 

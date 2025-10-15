@@ -211,7 +211,7 @@ class ContentOptimizer:
     def _optimize_content(
         self,
         content: str,
-        file_path: str,  # noqa: ARG002
+        file_path: str,
     ) -> tuple[str, list[OptimizationInfo]]:
         """Apply content optimizations."""
         optimizations = []
@@ -359,7 +359,7 @@ class ContentOptimizer:
     def _add_table_of_contents(
         self,
         content: str,
-        file_path: str,  # noqa: ARG002
+        file_path: str,
     ) -> dict[str, str]:
         """Add table of contents to long documents."""
         lines = content.split("\n")

@@ -19,7 +19,7 @@ import uuid
 from typing import ClassVar, cast
 
 from dependency_injector import providers
-from flext_core import FlextConfig, FlextCore
+from flext_core import FlextCore
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -163,9 +163,8 @@ class FlextLdapConfig(FlextCore.Config):
     _di_config_provider: ClassVar[providers.Configuration | None] = None
     _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    # Singleton pattern with per-class support
-    _instances: ClassVar[dict[type, FlextConfig]] = {}
-    _lock: ClassVar[threading.Lock] = threading.Lock()
+    # Singleton pattern inherited from FlextCore.Config - no need to redefine _instances
+    # _lock inherited as well
 
     class LdapHandlerConfiguration:
         """LDAP-specific handler configuration utilities."""

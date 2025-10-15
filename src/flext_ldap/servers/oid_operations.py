@@ -443,14 +443,19 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 return FlextCore.Result[bool].fail("Connection not bound")
 
             # Convert modifications to ldap3 format
-            ldap3_mods: dict[str, list[tuple[int, list[str] | str]]] = {}
+            ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
             for attr, value in modifications.items():
                 values = value if isinstance(value, list) else [value]
                 # Convert all values to strings
                 str_values: list[str] | str = [str(v) for v in values]
-                ldap3_mods[attr] = [(MODIFY_REPLACE, str_values)]
+                ldap3_mods[attr] = cast(
+                    "list[tuple[object, list[str] | str]]",
+                    [(MODIFY_REPLACE, str_values)],
+                )
 
-            success: bool = connection.modify(dn, ldap3_mods)
+            success: bool = connection.modify(
+                dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
+            )
 
             if not success:
                 error_msg = connection.result.get(

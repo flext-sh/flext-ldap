@@ -30,9 +30,15 @@ pytestmark = pytest.mark.integration
 # Helper function to replace create_ldap_attributes
 def create_ldap_attributes(
     attrs: dict[str, FlextCore.Types.StringList],
-) -> dict[str, FlextCore.Types.StringList]:
+) -> dict[str, str | FlextCore.Types.StringList]:
     """Convert attributes to LDAP format using Python standard conversion."""
-    return {k: [str(item) for item in v] for k, v in attrs.items()}
+    result: dict[str, str | FlextCore.Types.StringList] = {}
+    for k, v in attrs.items():
+        if len(v) == 1:
+            result[k] = str(v[0])
+        else:
+            result[k] = [str(item) for item in v]
+    return result
 
 
 @pytest.mark.integration
@@ -160,9 +166,11 @@ class TestLdapClientRealOperations:
             "description": ["Updated user description"],
         }
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
+        # Wrap in EntryChanges model for proper typing
+        modify_changes = FlextLdapModels.EntryChanges(**modify_attributes)
         modify_result = client.modify_entry(
             test_dn,
-            modify_attributes,
+            modify_changes,
         )
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
@@ -261,7 +269,7 @@ class TestLdapServiceRealOperations:
         ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         client.add_entry(
             ou_dn,
-            cast("dict[str, str | FlextCore.Types.StringList] | None", ou_attributes_2),
+            ou_attributes_2,
         )  # Ignore if exists
 
         # Test user creation
@@ -289,7 +297,7 @@ class TestLdapServiceRealOperations:
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
-            sn="Default",
+            sn="User",
             status="active",
             modified_at=None,
             given_name="Default",
@@ -301,8 +309,7 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_at=None,
-            updated_at=None,
+            # created_at and updated_at have defaults from TimestampableMixin
         )
         if create_result.is_success:
             created_user = create_result.unwrap()
@@ -318,7 +325,7 @@ class TestLdapServiceRealOperations:
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
-            sn="Default",
+            sn="User",
             status="active",
             modified_at=None,
             given_name="Default",
@@ -330,8 +337,7 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_at=None,
-            updated_at=None,
+            # created_at and updated_at have defaults from TimestampableMixin
         )
         retrieved_user = get_result.unwrap() if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -344,9 +350,7 @@ class TestLdapServiceRealOperations:
             "description": ["Updated via service"],
         }
         update_attributes_raw = create_ldap_attributes(update_attrs_raw)
-        update_attributes: FlextCore.Types.Dict = cast(
-            "FlextCore.Types.Dict", update_attributes_raw
-        )
+        update_attributes: FlextCore.Types.Dict = update_attributes_raw
         update_result = client.update_user_attributes(
             user_request.dn,
             update_attributes,
@@ -360,7 +364,7 @@ class TestLdapServiceRealOperations:
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
-            sn="Default",
+            sn="User",
             status="active",
             modified_at=None,
             given_name="Default",
@@ -372,8 +376,7 @@ class TestLdapServiceRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_at=None,
-            updated_at=None,
+            # created_at and updated_at have defaults from TimestampableMixin
         )
         updated_user = (
             updated_get_result.unwrap()
@@ -456,9 +459,7 @@ class TestLdapServiceRealOperations:
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
         client.add(
             user_dn,
-            cast(
-                "dict[str, str | FlextCore.Types.StringList] | None", user_attributes_4
-            ),
+            user_attributes_4,
         )
 
         # Test group creation
@@ -482,7 +483,7 @@ class TestLdapServiceRealOperations:
         default_group = FlextLdapModels.Group(
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
-            description="Default group",
+            description="Default test group",
             object_classes=["groupOfNames"],
             member_dns=[],
             unique_member_dns=[],
@@ -522,9 +523,7 @@ class TestLdapServiceRealOperations:
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
         client.add(
             user2_dn,
-            cast(
-                "dict[str, str | FlextCore.Types.StringList] | None", user2_attributes_6
-            ),
+            user2_attributes_6,
         )
 
         # Add member
@@ -637,7 +636,7 @@ class TestLdapValidationRealOperations:
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
         client.add(
             ou_dn,
-            cast("dict[str, str | FlextCore.Types.StringList] | None", ou_attributes_7),
+            ou_attributes_7,
         )
 
         # Test user with valid business rules
@@ -668,7 +667,7 @@ class TestLdapValidationRealOperations:
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
-            sn="Default",
+            sn="User",
             status="active",
             modified_at=None,
             given_name="Default",
@@ -680,8 +679,7 @@ class TestLdapValidationRealOperations:
             organization="Example Corp",
             organizational_unit="IT Department",
             user_password=SecretStr("defaultpass"),
-            created_at=None,
-            updated_at=None,
+            # created_at and updated_at have defaults from TimestampableMixin
         )
         created_user = (
             create_result.unwrap() if create_result.is_success else default_user
@@ -790,9 +788,7 @@ class TestLdapErrorHandlingReal:
 
         add_result = client.add_entry(
             invalid_dn,
-            cast(
-                "dict[str, str | FlextCore.Types.StringList] | None", invalid_attributes
-            ),
+            invalid_attributes,
         )
         # Should fail with appropriate error
         assert not add_result.is_success

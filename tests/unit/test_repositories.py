@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.repositories import FlextLdapRepositories
 
@@ -79,9 +77,21 @@ class TestFlextLdapRepositories:
 
     def test_ldap_repository_is_abstract(self) -> None:
         """Test LdapRepository is abstract and cannot be instantiated directly."""
-        # LdapRepository is abstract - trying to instantiate should fail
-        with pytest.raises(TypeError):
-            FlextLdapRepositories.LdapRepository()
+        # LdapRepository is abstract - check that it has abstract methods
+        from abc import ABC
+
+        # Check that LdapRepository is a subclass of ABC
+        assert issubclass(FlextLdapRepositories.LdapRepository, ABC)
+
+        # Check that it has abstract methods by checking the class's __abstractmethods__ attribute
+        abstract_methods = getattr(
+            FlextLdapRepositories.LdapRepository, "__abstractmethods__", set()
+        )
+
+        # Should have at least the core abstract methods
+        expected_abstract_methods = {"get_by_id", "add", "update", "delete"}
+        missing_methods = expected_abstract_methods - abstract_methods
+        assert not missing_methods, f"Missing abstract methods: {missing_methods}"
 
     def test_ldap_repository_generic_type(self) -> None:
         """Test LdapRepository is generic."""
@@ -239,6 +249,7 @@ class TestFlextLdapRepositories:
         group = FlextLdapModels.Group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
+            description="Test group",
             member_dns=["uid=user1,ou=users,dc=example,dc=com"],
         )
 

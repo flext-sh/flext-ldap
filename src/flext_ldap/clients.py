@@ -14,7 +14,13 @@ from __future__ import annotations
 from typing import Literal, cast, override
 
 from flext_core import FlextCore
-from ldap3 import SUBTREE, Connection, Server
+from ldap3 import (
+    MODIFY_ADD,
+    MODIFY_DELETE,
+    MODIFY_REPLACE,
+    Connection,
+    Server,
+)
 
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
@@ -79,7 +85,9 @@ class FlextLdapClients(FlextCore.Service[None]):
         self._detected_server_type: str | None = None
 
         # Search scope constant
-        self._search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = SUBTREE
+        self._search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = (
+            FlextLdapConstants.LiteralTypes.SEARCH_SCOPE_SUBTREE
+        )
 
         # Lazy-loaded components for search and authentication (substantial logic modules)
         self._searcher: FlextLdapProtocols.Ldap.LdapSearcherProtocol | None = None
@@ -190,9 +198,18 @@ class FlextLdapClients(FlextCore.Service[None]):
                         server_kwargs[key] = str(value)
                     else:
                         server_kwargs[key] = value
+                # Set get_info to ALL if auto_discover_schema is True and not explicitly set
+                if auto_discover_schema and "get_info" not in server_kwargs:
+                    from ldap3 import ALL
+                    server_kwargs["get_info"] = ALL
                 self._server = Server(server_uri, **server_kwargs)
             else:
-                self._server = Server(server_uri)
+                # Set get_info to ALL if auto_discover_schema is True
+                if auto_discover_schema:
+                    from ldap3 import ALL
+                    self._server = Server(server_uri, get_info=ALL)
+                else:
+                    self._server = Server(server_uri)
 
             # Create connection with auto-bind
             self._connection = Connection(
@@ -341,20 +358,26 @@ class FlextLdapClients(FlextCore.Service[None]):
         if len(args) >= FlextLdapConstants.Validation.MIN_CONNECTION_ARGS:
             server_uri, bind_dn, password = str(args[0]), str(args[1]), str(args[2])
 
-            # Extract known parameters from kwargs to avoid type issues
-            connect_kwargs = {}
+            # Extract known parameters with proper types
+            auto_discover_schema_val: bool = True
+            connection_options_val: dict[str, object] | None = None
+
             if "auto_discover_schema" in kwargs:
-                connect_kwargs["auto_discover_schema"] = bool(
-                    kwargs["auto_discover_schema"]
-                )
+                auto_discover_schema_val = bool(kwargs["auto_discover_schema"])
+
             if "connection_options" in kwargs:
-                connect_kwargs["connection_options"] = kwargs["connection_options"]
+                conn_opts = kwargs["connection_options"]
+                if isinstance(conn_opts, dict):
+                    connection_options_val = conn_opts
+                else:
+                    connection_options_val = None
 
             return self.connect(
                 server_uri=server_uri,
                 bind_dn=bind_dn,
                 password=password,
-                **connect_kwargs,
+                auto_discover_schema=auto_discover_schema_val,
+                connection_options=connection_options_val,
             )
 
         return FlextCore.Result[bool].fail(
@@ -455,7 +478,13 @@ class FlextLdapClients(FlextCore.Service[None]):
 
             while not success and retry_count < max_retries:
                 try:
-                    success = self.connection.add(dn, attributes=attempted_attributes)
+                    # Extract object class from attributes if present, otherwise use default
+                    object_class = attempted_attributes.get("objectClass", ["top"])
+                    if isinstance(object_class, list):
+                        object_class = object_class[0] if object_class else "top"
+                    success = self.connection.add(
+                        dn, object_class=object_class, attributes=attempted_attributes
+                    )
                     if success:
                         if removed_attributes:
                             self.logger.debug(
@@ -535,11 +564,11 @@ class FlextLdapClients(FlextCore.Service[None]):
 
             # Convert changes to ldap3 format
             # ldap3 expects: {'attr': [(MODIFY_OP, [values])]}
-            ldap3_changes: FlextCore.Types.Dict = {}
-            changes_dict = (
+            ldap3_changes: dict[str, object] = {}
+            changes_dict: dict[str, object] = (
                 changes.model_dump()
                 if hasattr(changes, "model_dump")
-                else dict(changes)
+                else dict[str, object](changes)
             )
             for attr, change_spec in changes_dict.items():
                 # Check if already in ldap3 tuple format: [(operation, values)]
@@ -552,19 +581,56 @@ class FlextLdapClients(FlextCore.Service[None]):
                     ldap3_changes[attr] = change_spec
                 elif isinstance(change_spec, dict):
                     # Handle dict[str, object] format (complex operations)
-                    ldap3_changes[attr] = change_spec
+                    # Convert dict operations to proper tuple format for ldap3
+                    operations = []
+                    for op_name, op_value in change_spec.items():
+                        if op_name == "MODIFY_ADD":
+                            operations.append((
+                                MODIFY_ADD,
+                                [op_value]
+                                if not isinstance(op_value, list)
+                                else op_value,
+                            ))
+                        elif op_name == "MODIFY_DELETE":
+                            operations.append((
+                                MODIFY_DELETE,
+                                [op_value]
+                                if not isinstance(op_value, list)
+                                else op_value,
+                            ))
+                        elif op_name == "MODIFY_REPLACE":
+                            operations.append((
+                                MODIFY_REPLACE,
+                                [op_value]
+                                if not isinstance(op_value, list)
+                                else op_value,
+                            ))
+                        elif op_name == "MODIFY_INCREMENT":
+                            # MODIFY_INCREMENT not available in this ldap3 version, use MODIFY_REPLACE
+                            operations.append((
+                                MODIFY_REPLACE,
+                                [op_value]
+                                if not isinstance(op_value, list)
+                                else op_value,
+                            ))
+                    ldap3_changes[attr] = operations
                 else:
                     # Simple value - wrap as MODIFY_REPLACE
                     ldap3_changes[attr] = [
                         (
-                            "MODIFY_REPLACE",
+                            MODIFY_REPLACE,
                             change_spec
                             if isinstance(change_spec, list)
                             else [change_spec],
                         )
                     ]
 
-            success = self.connection.modify(dn, changes=ldap3_changes)
+            success = self.connection.modify(
+                dn,
+                changes=cast(
+                    "dict[str, list[tuple[int, list[str] | str]]]", ldap3_changes
+                ),
+            )
             if success:
                 return FlextCore.Result[bool].ok(True)
             return FlextCore.Result[bool].fail(
@@ -609,6 +675,7 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             FlextCore.Result indicating success
+
         """
         return self.add_entry(dn, attributes)
 
@@ -620,6 +687,7 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             FlextCore.Result indicating success
+
         """
         return self.delete_entry(dn)
 
@@ -636,6 +704,7 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             FlextCore.Result indicating success
+
         """
         return self.add_entry(dn, attributes)
 
@@ -647,6 +716,7 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             FlextCore.Result indicating success
+
         """
         return self.delete_entry(dn)
 
@@ -655,6 +725,7 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             Server type string or None if not detected
+
         """
         return self._detected_server_type
 
@@ -669,8 +740,21 @@ class FlextLdapClients(FlextCore.Service[None]):
 
         Returns:
             FlextCore.Result indicating success
+
         """
         return self.modify_entry(dn, changes)
+
+    def delete_group(self, dn: str) -> FlextCore.Result[bool]:
+        """Delete LDAP group entry.
+
+        Args:
+            dn: Distinguished name of group to delete
+
+        Returns:
+            FlextCore.Result indicating success
+
+        """
+        return self.delete_entry(dn)
 
     # =========================================================================
     # VALIDATION OPERATIONS - Direct implementation
@@ -852,7 +936,7 @@ class FlextLdapClients(FlextCore.Service[None]):
                     "Server operations not available",
                 )
 
-            capabilities = {
+            capabilities: dict[str, object] = {
                 "server_type": self.server_operations.server_type,
                 "acl_format": self.server_operations.get_acl_format(),
                 "acl_attribute": self.server_operations.get_acl_attribute_name(),
@@ -955,7 +1039,8 @@ class FlextLdapClients(FlextCore.Service[None]):
                     "Extended operation failed"
                 )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(result)
+            # Convert result to dict format for consistency
+            return FlextCore.Result[FlextCore.Types.Dict].ok({"result": result})
 
         except Exception as e:
             return FlextCore.Result[FlextCore.Types.Dict].fail(
