@@ -341,7 +341,7 @@ class TestUniversalLdapIntegration:
         )
         # Current implementation returns failure for invalid entries
         assert validate_result.is_failure
-        assert "objectClass" in validate_result.error
+        assert validate_result.error and "objectClass" in validate_result.error
 
     def test_api_handles_invalid_server_types(self, ldap_api: FlextLdap) -> None:
         """Test API handles invalid server types gracefully."""
@@ -378,7 +378,7 @@ class TestUniversalLdapIntegration:
             assert result.is_success
         elapsed = time.time() - start
 
-        # Should be reasonable (< 5s for 30 creations - each operation creates FlextCore.Logger, etc.)
+        # Should be reasonable (< 5s for 30 creations - each operation creates FlextLogger, etc.)
         assert elapsed < 5.0, f"Factory creation too slow: {elapsed}s for 30 operations"
 
     def test_entry_adapter_converts_batch_efficiently(
@@ -412,5 +412,5 @@ class TestUniversalLdapIntegration:
             assert result.is_success
         elapsed = time.time() - start
 
-        # Should be reasonable (< 2s for 20 entries - accounts for FlextCore.Logger overhead)
+        # Should be reasonable (< 2s for 20 entries - accounts for FlextLogger overhead)
         assert elapsed < 2.0, f"Batch conversion too slow: {elapsed}s for 20 entries"

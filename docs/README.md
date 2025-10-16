@@ -14,7 +14,7 @@ Comprehensive documentation for **FLEXT-LDAP**, a production-ready enterprise LD
 
 - **[Architecture Overview](architecture/README.md)** - Production-scale Clean Architecture + DDD implementation
 - **[Domain Model](architecture/domain-model.md)** - Rich entities, value objects, and domain services with business logic
-- **[FLEXT Integration](architecture/flext-integration.md)** - Deep flext-core integration with railway patterns (784 FlextCore.Result usages)
+- **[FLEXT Integration](architecture/flext-integration.md)** - Deep flext-core integration with railway patterns (784 FlextResult usages)
 - **[Design Patterns](architecture/design-patterns.md)** - Enterprise patterns and -first architecture (120+ methods)
 - **[Quality Excellence](architecture/quality-metrics.md)** - Exceptional quality metrics and industry standards
 

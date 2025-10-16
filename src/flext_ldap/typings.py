@@ -1,4 +1,4 @@
-"""LDAP domain type exports - centralized in FlextCore.Types.Ldap.
+"""LDAP domain type exports - centralized in FlextTypes.Ldap.
 
 This module consolidates all type aliases, type definitions, and protocol
 definitions used throughout the flext-ldap domain. Following FLEXT standards,
@@ -14,21 +14,21 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldap.constants import FlextLdapConstants
 
 
-class FlextLdapTypes(FlextCore.Types):
-    """Unified LDAP types class extending FlextCore.Types with LDAP-specific type definitions.
+class FlextLdapTypes(FlextTypes):
+    """Unified LDAP types class extending FlextTypes with LDAP-specific type definitions.
 
-    This class extends the base FlextCore.Types with LDAP-specific type aliases, type variables,
+    This class extends the base FlextTypes with LDAP-specific type aliases, type variables,
     complex type definitions, and protocol definitions following FLEXT domain separation patterns.
     All types are centralized and extend from flext-core to eliminate duplication.
 
     Following FLEXT standards:
     - Single unified class per module
-    - Extends FlextCore.Types from flext-core
+    - Extends FlextTypes from flext-core
     - No duplicate type definitions
     - Centralized type management
     - Python 3.13+ syntax
@@ -50,17 +50,17 @@ class FlextLdapTypes(FlextCore.Types):
     # =========================================================================
 
     class LdapDomain:
-        """LDAP domain-specific types extending FlextCore.Types.Ldap."""
+        """LDAP domain-specific types extending FlextTypes.Ldap."""
 
         # Core LDAP attribute and value types
-        type AttributeValue = str | FlextCore.Types.StringList
+        type AttributeValue = str | FlextTypes.StringList
         type AttributeDict = dict[str, AttributeValue]
-        type ModifyChanges = dict[str, list[tuple[str, FlextCore.Types.StringList]]]
+        type ModifyChanges = dict[str, list[tuple[str, FlextTypes.StringList]]]
 
         # LDAP search and filter types
         type SearchFilter = str
         type SearchScope = FlextLdapConstants.SearchScope
-        type SearchResult = list[FlextCore.Types.Dict]
+        type SearchResult = list[FlextTypes.Dict]
 
         # LDAP connection and server types
         type ServerURI = str
@@ -78,38 +78,34 @@ class FlextLdapTypes(FlextCore.Types):
 
         # Complex LDAP operation types
         type BulkOperation = list[dict[str, AttributeValue | OperationType]]
-        type SearchConfiguration = dict[
-            str, SearchScope | int | FlextCore.Types.StringList
-        ]
+        type SearchConfiguration = dict[str, SearchScope | int | FlextTypes.StringList]
         type EntryTemplate = dict[str, AttributeValue | list[ObjectClass]]
 
     # =========================================================================
-    # LDAP CORE TYPES - Domain-specific core types extending FlextCore.Types
+    # LDAP CORE TYPES - Domain-specific core types extending FlextTypes
     # =========================================================================
 
     class LdapCore:
-        """Core LDAP types extending FlextCore.Types.
+        """Core LDAP types extending FlextTypes.
 
-        Use FlextCore.Types directly for most operations. Only define LDAP-specific
+        Use FlextTypes directly for most operations. Only define LDAP-specific
         composite types that add domain meaning.
         """
 
         # LDAP-specific configuration value (composite type)
         type LdapConfigValue = (
-            str | int | bool | FlextCore.Types.StringList | FlextCore.Types.Dict
+            str | int | bool | FlextTypes.StringList | FlextTypes.Dict
         )
 
         # LDAP-specific attribute value (composite type)
-        type LdapAttributeValue = (
-            str | FlextCore.Types.StringList | FlextCore.Types.Dict
-        )
+        type LdapAttributeValue = str | FlextTypes.StringList | FlextTypes.Dict
 
         # LDAP-specific entry value (composite type)
-        type LdapEntryValue = dict[str, str | FlextCore.Types.StringList]
+        type LdapEntryValue = dict[str, str | FlextTypes.StringList]
 
-    # Note: Configuration types use FlextCore.Types.Dict directly
+    # Note: Configuration types use FlextTypes.Dict directly
     # Operation types use FlextLdapModels (Command/Query patterns)
-    # Result types use FlextCore.Result[T] from flext-core
+    # Result types use FlextResult[T] from flext-core
 
     # =========================================================================
     # LDAP ENTRY TYPES - Entry-specific types
@@ -118,18 +114,18 @@ class FlextLdapTypes(FlextCore.Types):
     class LdapEntries:
         """LDAP entry-specific types."""
 
-        type EntryAttributeValue = str | FlextCore.Types.StringList
+        type EntryAttributeValue = str | FlextTypes.StringList
         type EntryAttributeDict = dict[str, EntryAttributeValue]
 
     # =========================================================================
-    # LDAP PROJECT TYPES - Domain-specific project types extending FlextCore.Types
+    # LDAP PROJECT TYPES - Domain-specific project types extending FlextTypes
     # =========================================================================
 
-    class Project(FlextCore.Types.Project):
-        """LDAP-specific project types extending FlextCore.Types.Project.
+    class Project(FlextTypes.Project):
+        """LDAP-specific project types extending FlextTypes.Project.
 
         Adds LDAP/directory services-specific project types while inheriting
-        generic types from FlextCore.Types. Follows domain separation principle:
+        generic types from FlextTypes. Follows domain separation principle:
         LDAP domain owns directory-specific types.
         """
 
@@ -141,8 +137,8 @@ class FlextLdapTypes(FlextCore.Types):
             str,
             FlextLdapTypes.LdapCore.LdapConfigValue | object,
         ]
-        type DirectoryConfig = dict[str, str | int | bool | FlextCore.Types.StringList]
-        type AuthenticationConfig = dict[str, bool | str | FlextCore.Types.Dict]
+        type DirectoryConfig = dict[str, str | int | bool | FlextTypes.StringList]
+        type AuthenticationConfig = dict[str, bool | str | FlextTypes.Dict]
         type SyncConfig = dict[str, FlextLdapTypes.LdapCore.LdapConfigValue | object]
 
     # =========================================================================
@@ -276,7 +272,7 @@ class FlextLdapTypes(FlextCore.Types):
 # PUBLIC API EXPORTS - FlextLdapTypes and flext-core TypeVars
 # =========================================================================
 
-__all__: FlextCore.Types.StringList = [
+__all__: FlextTypes.StringList = [
     "Any",  # Re-export for type stub usage
     "FlextLdapTypes",
     "Protocol",  # Re-export for type stub usage

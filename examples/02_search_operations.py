@@ -33,7 +33,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -44,7 +44,7 @@ from flext_ldap import (
     FlextLdapValidations,
 )
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:3390")
 BIND_DN: Final[str] = os.getenv("LDAP_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
@@ -87,7 +87,7 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
 
     # Simple search for all person entries
     logger.info(f"Searching for person objects in {BASE_DN}")
-    result: FlextCore.Result[FlextLdapModels.SearchResponse] = api.search_entries(
+    result: FlextResult[FlextLdapModels.SearchResponse] = api.search_entries(
         base_dn=BASE_DN,
         filter_str="(objectClass=person)",
         attributes=["cn", "sn", "mail"],
@@ -117,7 +117,7 @@ def demonstrate_search_one(api: FlextLdap) -> None:
 
     # Search for a single specific entry
     logger.info("Searching for REDACTED_LDAP_BIND_PASSWORD entry...")
-    result: FlextCore.Result[FlextLdapModels.Entry | None] = api.search_one(
+    result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
         FlextLdapModels.SearchRequest(
             base_dn=BASE_DN,
             filter_str="(cn=REDACTED_LDAP_BIND_PASSWORD)",
@@ -166,7 +166,7 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     logger.info(f"   Size Limit: {search_request.size_limit}")
 
     # Execute search using search_entries (returns SearchResponse)
-    result: FlextCore.Result[FlextLdapModels.SearchResponse] = api.search_entries(
+    result: FlextResult[FlextLdapModels.SearchResponse] = api.search_entries(
         base_dn=search_request.base_dn,
         filter_str=search_request.filter_str,  # Access the actual field name
         scope=search_request.scope,
@@ -198,7 +198,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     groups_dn = f"ou=groups,{BASE_DN}"
     logger.info(f"Searching for groups in {groups_dn}")
 
-    result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search_groups(
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_groups(
         search_base=groups_dn,
         attributes=["cn", "member", "description"],
     )
@@ -235,7 +235,7 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     for scope, description in scopes:
         logger.info(f"\nTesting {description}:")
-        result: FlextCore.Result[FlextLdapModels.SearchResponse] = api.search_entries(
+        result: FlextResult[FlextLdapModels.SearchResponse] = api.search_entries(
             base_dn=BASE_DN,
             filter_str="(objectClass=*)",
             scope=scope,
@@ -270,8 +270,8 @@ def demonstrate_filter_validation(_api: FlextLdap) -> None:
     ]
 
     for filter_str, should_be_valid, description in test_filters:
-        validation_result: FlextCore.Result[bool] = (
-            FlextLdapValidations.validate_filter(filter_str)
+        validation_result: FlextResult[bool] = FlextLdapValidations.validate_filter(
+            filter_str
         )
 
         is_valid = validation_result.is_success
@@ -298,7 +298,7 @@ def demonstrate_dn_validation() -> None:
     ]
 
     for dn, should_be_valid, description in test_dns:
-        validation_result: FlextCore.Result[bool] = FlextLdapValidations.validate_dn(dn)
+        validation_result: FlextResult[bool] = FlextLdapValidations.validate_dn(dn)
 
         is_valid = validation_result.is_success
         status = "✅" if is_valid == should_be_valid else "❌"
@@ -320,7 +320,7 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
 
     # Search with specific attributes
     logger.info("Requesting only 'cn' and 'mail' attributes:")
-    result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search(
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search(
         FlextLdapModels.SearchRequest(
             base_dn=BASE_DN,
             filter_str="(objectClass=inetOrgPerson)",

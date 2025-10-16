@@ -1,6 +1,6 @@
 """Comprehensive tests for FlextLdapTypes module.
 
-Tests verify all type aliases, nested classes, and inheritance from FlextCore.Types.
+Tests verify all type aliases, nested classes, and inheritance from FlextTypes.
 For type definition modules, testing focuses on structure and accessibility of types.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
@@ -20,8 +20,8 @@ class TestFlextLdapTypesStructure:
     """Test FlextLdapTypes structure and inheritance."""
 
     def test_extends_flextcore_types(self) -> None:
-        """Verify FlextLdapTypes extends FlextCore.Types."""
-        assert issubclass(FlextLdapTypes, FlextCore.Types)
+        """Verify FlextLdapTypes extends FlextTypes."""
+        assert issubclass(FlextLdapTypes, FlextTypes)
 
     def test_has_ldap_domain_class(self) -> None:
         """Verify LdapDomain nested class exists."""
@@ -39,9 +39,9 @@ class TestFlextLdapTypesStructure:
         assert FlextLdapTypes.LdapEntries is not None
 
     def test_has_project_class(self) -> None:
-        """Verify Project nested class exists and extends FlextCore.Types.Project."""
+        """Verify Project nested class exists and extends FlextTypes.Project."""
         assert hasattr(FlextLdapTypes, "Project")
-        assert issubclass(FlextLdapTypes.Project, FlextCore.Types.Project)
+        assert issubclass(FlextLdapTypes.Project, FlextTypes.Project)
 
 
 class TestLdapDomainTypes:
@@ -186,11 +186,11 @@ class TestFlextLdapTypesIntegration:
     """Integration tests for FlextLdapTypes with dependencies."""
 
     def test_uses_flextcore_types(self) -> None:
-        """Verify FlextLdapTypes uses FlextCore.Types dependencies."""
-        # Verify FlextCore.Types.StringList is accessible
-        assert hasattr(FlextCore.Types, "StringList")
-        # Verify FlextCore.Types.Dict is accessible
-        assert hasattr(FlextCore.Types, "Dict")
+        """Verify FlextLdapTypes uses FlextTypes dependencies."""
+        # Verify FlextTypes.StringList is accessible
+        assert hasattr(FlextTypes, "StringList")
+        # Verify FlextTypes.Dict is accessible
+        assert hasattr(FlextTypes, "Dict")
 
     def test_uses_flextldap_constants_literal_types(self) -> None:
         """Verify FlextLdapTypes can access FlextLdapConstants.LiteralTypes class."""
@@ -219,7 +219,7 @@ class TestFlextLdapTypesInstantiation:
     """Test FlextLdapTypes instantiation (though typically not instantiated)."""
 
     def test_can_instantiate_flextldap_types(self) -> None:
-        """Verify FlextLdapTypes can be instantiated (inherits from FlextCore.Types)."""
+        """Verify FlextLdapTypes can be instantiated (inherits from FlextTypes)."""
         instance = FlextLdapTypes()
         assert instance is not None
-        assert isinstance(instance, FlextCore.Types)
+        assert isinstance(instance, FlextTypes)

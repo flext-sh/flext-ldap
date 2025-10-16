@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldap import FlextLdap
 
@@ -65,11 +65,11 @@ class TestIdempotentSync:
         """Should return False when entries are identical."""
         api = FlextLdap()
 
-        live_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        live_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "objectClass": ["person", "top"],
         }
-        desired_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        desired_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": "test",
             "objectClass": ["person", "top"],
         }
@@ -80,11 +80,11 @@ class TestIdempotentSync:
         """Should return True when values change."""
         api = FlextLdap()
 
-        live_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        live_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "mail": ["old@client-a.com"],
         }
-        desired_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        desired_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": "test",
             "mail": "new@client-a.com",
         }
@@ -95,8 +95,8 @@ class TestIdempotentSync:
         """Should return True when attribute is added."""
         api = FlextLdap()
 
-        live_attrs: dict[str, FlextCore.Types.StringList | str] = {"cn": ["test"]}
-        desired_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        live_attrs: dict[str, FlextTypes.StringList | str] = {"cn": ["test"]}
+        desired_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": "test",
             "mail": "test@client-a.com",
         }
@@ -107,11 +107,11 @@ class TestIdempotentSync:
         """Should return True when attribute is removed."""
         api = FlextLdap()
 
-        live_attrs: dict[str, FlextCore.Types.StringList | str] = {
+        live_attrs: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "mail": ["test@client-a.com"],
         }
-        desired_attrs: dict[str, FlextCore.Types.StringList | str] = {"cn": "test"}
+        desired_attrs: dict[str, FlextTypes.StringList | str] = {"cn": "test"}
 
         assert api._entry_needs_update(live_attrs, desired_attrs)
 
@@ -123,11 +123,11 @@ class TestMultiValuedComparison:
         """Same objectClasses in different order should be considered equal."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["top", "person", "organizationalPerson", "inetOrgPerson"],
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
         }
 
@@ -138,7 +138,7 @@ class TestMultiValuedComparison:
         """Group members in different order should be equal."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "member": [
                 "cn=user1,dc=client-a",
                 "cn=user2,dc=client-a",
@@ -146,7 +146,7 @@ class TestMultiValuedComparison:
             ],
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "member": [
                 "cn=user3,dc=client-a",
                 "cn=user1,dc=client-a",
@@ -160,11 +160,11 @@ class TestMultiValuedComparison:
         """Should detect when value is added to multi-valued attribute."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["top", "person"]
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["top", "person", "inetOrgPerson"]
         }  # Added
 
@@ -174,11 +174,11 @@ class TestMultiValuedComparison:
         """Should detect when value is removed from multi-valued attribute."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["top", "person", "inetOrgPerson"]
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "objectClass": ["top", "person"]
         }  # Removed inetOrgPerson
 
@@ -188,9 +188,9 @@ class TestMultiValuedComparison:
         """Should detect when new attribute is added."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {"cn": ["test"]}
+        live: dict[str, FlextTypes.StringList | str] = {"cn": ["test"]}
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "mail": ["test@client-a.com"],
         }  # Added mail
@@ -201,12 +201,12 @@ class TestMultiValuedComparison:
         """Should detect when attribute is removed."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "mail": ["test@client-a.com"],
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"]
         }  # Removed mail
 
@@ -216,27 +216,27 @@ class TestMultiValuedComparison:
         """Single-valued attributes should be compared directly."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {"cn": "test"}
+        live: dict[str, FlextTypes.StringList | str] = {"cn": "test"}
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {"cn": "test"}
+        desired: dict[str, FlextTypes.StringList | str] = {"cn": "test"}
 
         assert not api._entry_needs_update(live, desired)
 
         # Changed value
-        desired_changed: dict[str, FlextCore.Types.StringList | str] = {"cn": "changed"}
+        desired_changed: dict[str, FlextTypes.StringList | str] = {"cn": "changed"}
         assert api._entry_needs_update(live, desired_changed)
 
     def test_mixed_single_and_multi_valued(self) -> None:
         """Should handle mix of single and multi-valued attributes."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {
+        live: dict[str, FlextTypes.StringList | str] = {
             "cn": "John Doe",  # Single-valued
             "objectClass": ["top", "person", "inetOrgPerson"],  # Multi-valued
             "mail": ["john@client-a.com"],  # Multi-valued (1 value)
         }
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "cn": "John Doe",  # Same
             "objectClass": ["inetOrgPerson", "person", "top"],  # Same (different order)
             "mail": ["john@client-a.com"],  # Same
@@ -248,9 +248,9 @@ class TestMultiValuedComparison:
         """Should handle empty attribute values correctly."""
         api = FlextLdap()
 
-        live: dict[str, FlextCore.Types.StringList | str] = {"cn": ["test"], "mail": []}
+        live: dict[str, FlextTypes.StringList | str] = {"cn": ["test"], "mail": []}
 
-        desired: dict[str, FlextCore.Types.StringList | str] = {
+        desired: dict[str, FlextTypes.StringList | str] = {
             "cn": ["test"],
             "mail": [],
         }

@@ -25,11 +25,11 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextCore
+from flext_core import FlextLogger
 
 from flext_ldap import FlextLdapDomain, FlextLdapModels
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 def demonstrate_domain_driven_design_concepts() -> None:
@@ -359,7 +359,7 @@ def demonstrate_specification_pattern_benefits() -> None:
     logger.info("   ```python")
     logger.info("   # Clear, readable business rule check")
     logger.info("   if not UserSpecification.is_valid_username(username):")
-    logger.info("       return FlextCore.Result.fail('Invalid username')")
+    logger.info("       return FlextResult.fail('Invalid username')")
     logger.info("   ")
     logger.info("   # vs scattered validation logic")
     logger.info("   if len(username) < 3 or not username.isalnum():")

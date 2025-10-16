@@ -53,7 +53,7 @@ FLEXT-LDAP provides **complete server-specific implementations** with automatic 
 
 ### **Integration Points**
 
-- **flext-core** → FlextCore.Result, FlextCore.Service, FlextCore.Logger, FlextCore.Container patterns
+- **flext-core** → FlextResult, FlextService, FlextLogger, FlextContainer patterns
 - **flext-ldif** → LDIF entry models, quirks detection, server-specific handling
 - **ldap3** → Low-level LDAP protocol operations (wrapped by flext-ldap)
 - **flext-auth** → LDAP authentication provider for SSO systems
@@ -218,7 +218,7 @@ make validate  # Run quality checks
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 def basic_ldap_search():
-    """Basic LDAP search using FlextCore.Result patterns."""
+    """Basic LDAP search using FlextResult patterns."""
     api = get_flext_ldap_api()
 
     search_request = FlextLdapEntities.SearchRequest(
@@ -314,7 +314,7 @@ make ldap-test-server-stop   # Stop test container
 
 ### **Ecosystem Integration**
 
-- **flext-core**: FlextCore.Result, FlextCore.Service, FlextCore.Logger patterns
+- **flext-core**: FlextResult, FlextService, FlextLogger patterns
 - **flext-ldif**: Entry models, quirks detection, LDIF processing
 - **ldap3**: Protocol layer (wrapped by server operations)
 - **client-a-oud-mig**: Oracle Unified Directory migration (enterprise tool)
@@ -340,7 +340,7 @@ make ldap-test-server-stop   # Stop test container
 
 #### **Phase 2: Ecosystem Protocol Adoption (✅ COMPLETE)**
 
-- **Domain.Service Protocol**: Automatic compliance via FlextCore.Service inheritance
+- **Domain.Service Protocol**: Automatic compliance via FlextService inheritance
 - **Infrastructure.Connection Protocol**: Full implementation in FlextLdapClient
 - **Ecosystem Impact**: 3+ production services gained automatic protocol compliance
 - **Zero Breaking Changes**: Backward compatibility maintained throughout
@@ -382,10 +382,10 @@ make ldap-test-server-stop   # Stop test container
 
 ### **FLEXT-Core Compliance Checklist**
 
-- [ ] Use FlextCore.Result<T> for all operations
+- [ ] Use FlextResult<T> for all operations
 - [ ] Implement domain entities with business logic
 - [ ] Follow Clean Architecture layer separation
-- [ ] Use FlextCore.Container for dependency injection
+- [ ] Use FlextContainer for dependency injection
 - [ ] Implement proper error handling patterns
 
 ### **Quality Standards**

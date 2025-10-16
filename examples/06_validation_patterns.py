@@ -25,11 +25,11 @@ from __future__ import annotations
 import sys
 from typing import cast
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLdapModels, FlextLdapValidations
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 def demonstrate_dn_validation() -> None:
@@ -65,7 +65,7 @@ def demonstrate_dn_validation() -> None:
 
     logger.info("\nTesting DN validation:")
     for dn, expected_valid, description in test_cases:
-        result: FlextCore.Result[bool] = FlextLdapValidations.validate_dn(dn)
+        result: FlextResult[bool] = FlextLdapValidations.validate_dn(dn)
 
         is_valid = result.is_success
         status = "✅" if is_valid == expected_valid else "❌"
@@ -115,9 +115,7 @@ def demonstrate_filter_validation() -> None:
 
     logger.info("\nTesting filter validation:")
     for filter_str, expected_valid, description in test_cases:
-        result: FlextCore.Result[bool] = FlextLdapValidations.validate_filter(
-            filter_str
-        )
+        result: FlextResult[bool] = FlextLdapValidations.validate_filter(filter_str)
 
         is_valid = result.is_success
         status = "✅" if is_valid == expected_valid else "❌"
@@ -166,7 +164,7 @@ def demonstrate_search_request_validation() -> None:
     logger.info("\n=== SearchRequest Validation ===")
 
     # Test various SearchRequest configurations
-    test_cases: list[FlextCore.Types.Dict] = [
+    test_cases: list[FlextTypes.Dict] = [
         {
             "name": "Valid basic search",
             "params": {
@@ -230,7 +228,7 @@ def demonstrate_search_request_validation() -> None:
         logger.info(f"\nTest: {test_case['name']}")
 
         try:
-            params = cast("FlextCore.Types.Dict", test_case["params"])
+            params = cast("FlextTypes.Dict", test_case["params"])
             search_request = FlextLdapModels.SearchRequest(**params)
             logger.info("   ✅ SearchRequest created successfully")
             logger.info(f"      Base DN: {search_request.base_dn}")

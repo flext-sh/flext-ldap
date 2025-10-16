@@ -21,7 +21,7 @@ class TestFlextLdapConfigEnvironment:
     """Test suite for FlextLdapConfig environment variable configuration."""
 
     def test_env_prefix_configuration(self) -> None:
-        """Test env_prefix is correctly inherited from FlextCore.Config."""
+        """Test env_prefix is correctly inherited from FlextConfig."""
         config = FlextLdapConfig()
         model_config = config.model_config
 

@@ -35,7 +35,7 @@ api = get_flext_ldap_api()
 
 Main API facade providing high-level LDAP operations.
 
-### `search_entries(request: SearchRequest) -> FlextCore.Result[List[LdapEntry]]`
+### `search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`
 
 Search LDAP directory entries.
 
@@ -43,7 +43,7 @@ Search LDAP directory entries.
 
 - `request`: SearchRequest object with search criteria
 
-**Returns:** FlextCore.Result containing list of matching entries
+**Returns:** FlextResult containing list of matching entries
 
 **Example:**
 
@@ -60,7 +60,7 @@ if result.is_success:
     entries = result.unwrap()
 ```
 
-### `authenticate_user(username: str, password: str) -> FlextCore.Result[FlextLdapUser]`
+### `authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`
 
 Authenticate user credentials against LDAP directory.
 
@@ -69,7 +69,7 @@ Authenticate user credentials against LDAP directory.
 - `username` (str): User identifier
 - `password` (str): User password
 
-**Returns:** FlextCore.Result containing authenticated user object
+**Returns:** FlextResult containing authenticated user object
 
 **Example:**
 
@@ -80,7 +80,7 @@ if result.is_success:
     print(f"Authenticated: {user.cn}")
 ```
 
-### `create_user(request: CreateUserRequest) -> FlextCore.Result[FlextLdapUser]`
+### `create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`
 
 Create a new user in LDAP directory.
 
@@ -88,7 +88,7 @@ Create a new user in LDAP directory.
 
 - `request`: CreateUserRequest with user details
 
-**Returns:** FlextCore.Result containing created user object
+**Returns:** FlextResult containing created user object
 
 **Example:**
 
@@ -104,11 +104,11 @@ user_request = FlextLdapEntities.CreateUserRequest(
 result = api.create_user(user_request)
 ```
 
-### `test_connection() -> FlextCore.Result[str]`
+### `test_connection() -> FlextResult[str]`
 
 Test LDAP server connectivity.
 
-**Returns:** FlextCore.Result with connection status message
+**Returns:** FlextResult with connection status message
 
 **Example:**
 
@@ -135,7 +135,7 @@ Search criteria for LDAP operations.
 - `base_dn` (str): Base distinguished name for search
 - `filter_str` (str): LDAP search filter
 - `scope` (str): Search scope ("base", "onelevel", "subtree")
-- `attributes` (FlextCore.Types.StringList): Attributes to retrieve
+- `attributes` (FlextTypes.StringList): Attributes to retrieve
 - `size_limit` (int, optional): Maximum results to return
 - `time_limit` (int, optional): Search timeout in seconds
 
@@ -150,7 +150,7 @@ User creation request data.
 - `cn` (str): Common name
 - `sn` (str): Surname
 - `mail` (str, optional): Email address
-- `object_classes` (FlextCore.Types.StringList, optional): LDAP object classes
+- `object_classes` (FlextTypes.StringList, optional): LDAP object classes
 
 #### FlextLdapUser
 
@@ -164,7 +164,7 @@ LDAP user entity.
 - `sn` (str): Surname
 - `given_name` (str, optional): First name
 - `mail` (str, optional): Email address
-- `member_of` (FlextCore.Types.StringList, optional): Group memberships
+- `member_of` (FlextTypes.StringList, optional): Group memberships
 
 **Methods:**
 
@@ -179,7 +179,7 @@ LDAP group entity.
 
 - `dn` (str): Distinguished name
 - `cn` (str): Common name
-- `members` (FlextCore.Types.StringList): Member distinguished names
+- `members` (FlextTypes.StringList): Member distinguished names
 - `description` (str, optional): Group description
 
 **Methods:**
@@ -369,7 +369,7 @@ from flext_ldap import FlextLdapExceptions
 try:
     result = api.search_entries(request)
     if result.is_failure:
-        # Handle FlextCore.Result error
+        # Handle FlextResult error
         print(f"Search failed: {result.error}")
 except FlextLdapExceptions.FlextLdapConnectionError as e:
     print(f"Connection error: {e.message}")
@@ -377,9 +377,9 @@ except FlextLdapExceptions.FlextLdapConnectionError as e:
 
 ---
 
-## 🔄 FlextCore.Result Usage
+## 🔄 FlextResult Usage
 
-All API methods return `FlextCore.Result[T]` for consistent error handling.
+All API methods return `FlextResult[T]` for consistent error handling.
 
 ### Success Handling
 
@@ -393,7 +393,7 @@ if result.is_success:
 # Alternative: direct access (raises if failure)
 try:
     data = result.unwrap()
-except FlextCore.ResultError:
+except FlextResultError:
     print("Operation failed")
 ```
 
@@ -416,7 +416,7 @@ if search_result.is_success:
     # Process entries...
 else:
     # Handle search failure
-    return FlextCore.Result.fail(f"Search failed: {search_result.error}")
+    return FlextResult.fail(f"Search failed: {search_result.error}")
 ```
 
 ---
@@ -433,7 +433,7 @@ Bidirectional converter between ldap3 entries and FlextLdif entries.
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 ```
 
-#### `ldap3_to_ldif_entry(ldap3_entry) -> FlextCore.Result[FlextLdifModels.Entry]`
+#### `ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`
 
 Convert ldap3.Entry to FlextLdif entry.
 
@@ -441,7 +441,7 @@ Convert ldap3.Entry to FlextLdif entry.
 
 - `ldap3_entry`: ldap3.Entry object from search results
 
-**Returns:** FlextCore.Result containing FlextLdifModels.Entry
+**Returns:** FlextResult containing FlextLdifModels.Entry
 
 **Example:**
 
@@ -462,7 +462,7 @@ for ldap3_entry in connection.entries:
         print(f"DN: {ldif_entry.dn}")
 ```
 
-#### `ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextCore.Result[List[FlextLdifModels.Entry]]`
+#### `ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`
 
 Batch convert multiple ldap3 entries to FlextLdif entries.
 
@@ -470,9 +470,9 @@ Batch convert multiple ldap3 entries to FlextLdif entries.
 
 - `ldap3_entries`: List of ldap3.Entry objects
 
-**Returns:** FlextCore.Result containing list of FlextLdifModels.Entry
+**Returns:** FlextResult containing list of FlextLdifModels.Entry
 
-#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextCore.Result[dict[str, FlextCore.Types.List]]`
+#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, FlextTypes.List]]`
 
 Convert FlextLdif entry to ldap3 attributes dictionary.
 
@@ -480,7 +480,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** FlextCore.Result containing attributes dict[str, object] for ldap3 operations
+**Returns:** FlextResult containing attributes dict[str, object] for ldap3 operations
 
 **Example:**
 
@@ -507,7 +507,7 @@ if result.is_success:
     connection.add(str(ldif_entry.dn), attributes=attributes)
 ```
 
-#### `convert_ldif_file_to_entries(ldif_file_path) -> FlextCore.Result[List[FlextLdifModels.Entry]]`
+#### `convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`
 
 Load and convert LDIF file to FlextLdif entries.
 
@@ -515,9 +515,9 @@ Load and convert LDIF file to FlextLdif entries.
 
 - `ldif_file_path` (str): Path to LDIF file
 
-**Returns:** FlextCore.Result containing list of entries
+**Returns:** FlextResult containing list of entries
 
-#### `write_entries_to_ldif_file(entries, output_path) -> FlextCore.Result[bool]`
+#### `write_entries_to_ldif_file(entries, output_path) -> FlextResult[bool]`
 
 Write FlextLdif entries to LDIF file.
 
@@ -526,7 +526,7 @@ Write FlextLdif entries to LDIF file.
 - `entries`: List of FlextLdifModels.Entry
 - `output_path` (str): Output file path
 
-**Returns:** FlextCore.Result indicating success
+**Returns:** FlextResult indicating success
 
 ---
 
@@ -540,7 +540,7 @@ Server detection and quirks system integration using FlextLdif.
 from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 ```
 
-#### `detect_server_type_from_entries(entries) -> FlextCore.Result[str]`
+#### `detect_server_type_from_entries(entries) -> FlextResult[str]`
 
 Detect LDAP server type from entry analysis.
 
@@ -548,7 +548,7 @@ Detect LDAP server type from entry analysis.
 
 - `entries`: List of FlextLdifModels.Entry objects
 
-**Returns:** FlextCore.Result containing server type string
+**Returns:** FlextResult containing server type string
 
 **Server Types:**
 
@@ -585,7 +585,7 @@ if result.is_success:
         ops = OracleOUDOperations()
 ```
 
-#### `get_acl_attribute_name(server_type=None) -> FlextCore.Result[str]`
+#### `get_acl_attribute_name(server_type=None) -> FlextResult[str]`
 
 Get server-specific ACL attribute name.
 
@@ -593,7 +593,7 @@ Get server-specific ACL attribute name.
 
 - `server_type` (str, optional): Server type (uses detected if None)
 
-**Returns:** FlextCore.Result containing ACL attribute name
+**Returns:** FlextResult containing ACL attribute name
 
 **ACL Attributes:**
 
@@ -604,11 +604,11 @@ Get server-specific ACL attribute name.
 - Active Directory: `"nTSecurityDescriptor"`
 - Generic: `"aci"`
 
-#### `get_acl_format(server_type=None) -> FlextCore.Result[str]`
+#### `get_acl_format(server_type=None) -> FlextResult[str]`
 
 Get server-specific ACL format identifier.
 
-#### `get_schema_subentry(server_type=None) -> FlextCore.Result[str]`
+#### `get_schema_subentry(server_type=None) -> FlextResult[str]`
 
 Get server-specific schema DN.
 
@@ -619,11 +619,11 @@ Get server-specific schema DN.
 - Oracle OUD: `"cn=schema"`
 - Active Directory: `"cn=schema,cn=configuration"`
 
-#### `get_max_page_size(server_type=None) -> FlextCore.Result[int]`
+#### `get_max_page_size(server_type=None) -> FlextResult[int]`
 
 Get server-specific maximum page size for paged searches.
 
-#### `normalize_entry_for_server(entry, server_type=None) -> FlextCore.Result[FlextLdifModels.Entry]`
+#### `normalize_entry_for_server(entry, server_type=None) -> FlextResult[FlextLdifModels.Entry]`
 
 Normalize entry for server-specific requirements.
 
@@ -665,7 +665,7 @@ Get default port for server type.
 
 Check if server supports START_TLS.
 
-##### `get_bind_mechanisms() -> FlextCore.Types.StringList`
+##### `get_bind_mechanisms() -> FlextTypes.StringList`
 
 Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
@@ -675,11 +675,11 @@ Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
 Get schema discovery DN for server type.
 
-##### `discover_schema(connection) -> FlextCore.Result[FlextCore.Types.Dict]`
+##### `discover_schema(connection) -> FlextResult[FlextTypes.Dict]`
 
 Discover schema from server.
 
-**Returns:** FlextCore.Result containing schema data:
+**Returns:** FlextResult containing schema data:
 
 - `object_classes`: List of objectClass definitions
 - `attribute_types`: List of attributeType definitions
@@ -708,11 +708,11 @@ if schema_result.is_success:
     print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
-##### `parse_object_class(object_class_def) -> FlextCore.Result[FlextCore.Types.Dict]`
+##### `parse_object_class(object_class_def) -> FlextResult[FlextTypes.Dict]`
 
 Parse objectClass definition string.
 
-##### `parse_attribute_type(attribute_def) -> FlextCore.Result[FlextCore.Types.Dict]`
+##### `parse_attribute_type(attribute_def) -> FlextResult[FlextTypes.Dict]`
 
 Parse attributeType definition string.
 
@@ -726,7 +726,7 @@ Get ACL attribute name for server type.
 
 Get ACL format identifier.
 
-##### `get_acls(connection, dn) -> FlextCore.Result[list[FlextCore.Types.Dict]]`
+##### `get_acls(connection, dn) -> FlextResult[list[FlextTypes.Dict]]`
 
 Retrieve ACLs from entry.
 
@@ -749,7 +749,7 @@ if result.is_success:
         print(f"ACL: {acl.get('raw')}")
 ```
 
-##### `set_acls(connection, dn, acls) -> FlextCore.Result[bool]`
+##### `set_acls(connection, dn, acls) -> FlextResult[bool]`
 
 Set ACLs on entry.
 
@@ -764,17 +764,17 @@ new_acls = [
 result = ops.set_acls(connection, dn, acls=new_acls)
 ```
 
-##### `parse_acl(acl_string) -> FlextCore.Result[FlextCore.Types.Dict]`
+##### `parse_acl(acl_string) -> FlextResult[FlextTypes.Dict]`
 
 Parse server-specific ACL string to dictionary.
 
-##### `format_acl(acl_dict) -> FlextCore.Result[str]`
+##### `format_acl(acl_dict) -> FlextResult[str]`
 
 Format ACL dictionary to server-specific string.
 
 #### Entry Operations
 
-##### `add_entry(connection, entry) -> FlextCore.Result[bool]`
+##### `add_entry(connection, entry) -> FlextResult[bool]`
 
 Add FlextLdif entry to directory.
 
@@ -801,7 +801,7 @@ if result.is_success:
     print("Entry added successfully")
 ```
 
-##### `modify_entry(connection, dn, modifications) -> FlextCore.Result[bool]`
+##### `modify_entry(connection, dn, modifications) -> FlextResult[bool]`
 
 Modify entry attributes.
 
@@ -820,11 +820,11 @@ result = ops.modify_entry(
 )
 ```
 
-##### `delete_entry(connection, dn) -> FlextCore.Result[bool]`
+##### `delete_entry(connection, dn) -> FlextResult[bool]`
 
 Delete entry from directory.
 
-##### `normalize_entry(entry) -> FlextCore.Result[FlextLdifModels.Entry]`
+##### `normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`
 
 Normalize entry for server-specific requirements.
 
@@ -842,7 +842,7 @@ Check if server supports paged results control.
 
 Check if server supports Virtual List View (VLV).
 
-##### `search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> FlextCore.Result[list[FlextLdifModels.Entry]]`
+##### `search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`
 
 Execute paged search with automatic pagination.
 
@@ -975,7 +975,7 @@ All public APIs include comprehensive type annotations for IDE support and stati
 def search_entries(
     self,
     request: FlextLdapEntities.SearchRequest
-) -> FlextCore.Result[List[FlextLdapEntities.LdapEntry]]:
+) -> FlextResult[List[FlextLdapEntities.LdapEntry]]:
     """Search LDAP entries with full type safety."""
 
 # Server operations with FlextLdif integration
@@ -983,7 +983,7 @@ def add_entry(
     self,
     connection: object,
     entry: FlextLdifModels.Entry
-) -> FlextCore.Result[bool]:
+) -> FlextResult[bool]:
     """Add entry with type safety."""
 ```
 

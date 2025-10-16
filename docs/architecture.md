@@ -86,12 +86,12 @@ FLEXT-LDAP implements a four-layer architecture for universal LDAP server suppor
 ```python
 def ldap3_to_ldif_entry(
     ldap3_entry: Ldap3Entry
-) -> FlextCore.Result[FlextLdifModels.Entry]:
+) -> FlextResult[FlextLdifModels.Entry]:
     """Convert ldap3 entry to FlextLdif entry."""
 
 def ldif_entry_to_ldap3_attributes(
     ldif_entry: FlextLdifModels.Entry
-) -> FlextCore.Result[dict[str, FlextCore.Types.List]]:
+) -> FlextResult[dict[str, FlextTypes.List]]:
     """Convert FlextLdif entry to ldap3 attributes."""
 ```
 
@@ -112,17 +112,17 @@ def ldif_entry_to_ldap3_attributes(
 ```python
 def detect_server_type_from_entries(
     entries: list[FlextLdifModels.Entry]
-) -> FlextCore.Result[str]:
+) -> FlextResult[str]:
     """Detect server type using FlextLdif quirks."""
 
 def get_acl_attribute_name(
     server_type: str | None = None
-) -> FlextCore.Result[str]:
+) -> FlextResult[str]:
     """Get ACL attribute for server (olcAccess, orclaci, etc.)."""
 
 def get_schema_subentry(
     server_type: str | None = None
-) -> FlextCore.Result[str]:
+) -> FlextResult[str]:
     """Get schema DN for server (cn=subschema, cn=schema, etc.)."""
 ```
 
@@ -267,12 +267,12 @@ sequenceDiagram
     participant ldap3 as ldap3 Library
 
     Client->>Adapter: ldif_entry_to_ldap3_attributes(entry)
-    Adapter-->>Client: FlextCore.Result[dict[str, list]]
+    Adapter-->>Client: FlextResult[dict[str, list]]
     Client->>Ops: add_entry(connection, entry)
     Ops->>Ops: normalize_entry(entry)
     Ops->>ldap3: connection.add(dn, attributes)
     ldap3-->>Ops: success/failure
-    Ops-->>Client: FlextCore.Result[bool]
+    Ops-->>Client: FlextResult[bool]
 ```
 
 ### **Schema Discovery Flow**
@@ -285,14 +285,14 @@ sequenceDiagram
     participant ldap3 as ldap3 Library
 
     Client->>Quirks: detect_server_type_from_entries(entries)
-    Quirks-->>Client: FlextCore.Result[str] (server_type)
+    Quirks-->>Client: FlextResult[str] (server_type)
     Client->>Ops: discover_schema(connection)
     Ops->>Quirks: get_schema_dn(server_type)
     Quirks-->>Ops: schema_dn
     Ops->>ldap3: search(schema_dn, ...)
     ldap3-->>Ops: schema entries
     Ops->>Ops: parse_object_class(definition)
-    Ops-->>Client: FlextCore.Result[FlextCore.Types.Dict]
+    Ops-->>Client: FlextResult[FlextTypes.Dict]
 ```
 
 ### **ACL Management Flow**
@@ -308,13 +308,13 @@ sequenceDiagram
     Ops->>ldap3: search(dn, acl_attribute)
     ldap3-->>Ops: acl strings
     Ops->>Ops: parse_acl(acl_string)
-    Ops-->>Client: FlextCore.Result[list[FlextCore.Types.Dict]]
+    Ops-->>Client: FlextResult[list[FlextTypes.Dict]]
 
     Client->>Ops: set_acls(connection, dn, acls)
     Ops->>Ops: format_acl(acl_dict)
     Ops->>ldap3: modify(dn, {acl_attr: acls})
     ldap3-->>Ops: success/failure
-    Ops-->>Client: FlextCore.Result[bool]
+    Ops-->>Client: FlextResult[bool]
 ```
 
 ---
@@ -364,32 +364,32 @@ class BaseServerOperations(ABC):
     @abstractmethod
     def add_entry(
         self, connection: object, entry: FlextLdifModels.Entry
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Template for entry addition."""
 
     @abstractmethod
     def normalize_entry(
         self, entry: FlextLdifModels.Entry
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Template for server-specific normalization."""
 ```
 
 ### **4. Railway-Oriented Programming**
 
-**FlextCore.Result** pattern for explicit error handling:
+**FlextResult** pattern for explicit error handling:
 
 ```python
 # Operation chain with early returns
 result = adapter.ldif_entry_to_ldap3_attributes(entry)
 if result.is_failure:
-    return FlextCore.Result[bool].fail(result.error)
+    return FlextResult[bool].fail(result.error)
 
 attributes = result.unwrap()
 add_result = ops.add_entry(connection, entry)
 if add_result.is_failure:
-    return FlextCore.Result[bool].fail(add_result.error)
+    return FlextResult[bool].fail(add_result.error)
 
-return FlextCore.Result[bool].ok(True)
+return FlextResult[bool].ok(True)
 ```
 
 ---

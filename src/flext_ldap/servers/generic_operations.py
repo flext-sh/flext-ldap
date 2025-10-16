@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 
@@ -50,7 +50,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         return True
 
     @override
-    def get_bind_mechanisms(self) -> FlextCore.Types.StringList:
+    def get_bind_mechanisms(self) -> FlextTypes.StringList:
         """Get supported BIND mechanisms for generic LDAP."""
         return ["SIMPLE"]
 
@@ -67,13 +67,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     def discover_schema(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from generic LDAP server."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Connection not bound"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Connection not bound")
 
             success = connection.search(
                 search_base=self.get_schema_dn(),
@@ -83,14 +81,16 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             if not success or not connection.entries:
                 self.logger.warning("Generic schema discovery failed - using defaults")
-                return FlextCore.Result[FlextCore.Types.Dict].ok({
-                    "object_classes": [],
-                    "attribute_types": [],
-                    "server_type": "generic",
-                })
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "object_classes": [],
+                        "attribute_types": [],
+                        "server_type": "generic",
+                    }
+                )
 
             entry = connection.entries[0]
-            schema_data: FlextCore.Types.Dict = {
+            schema_data: FlextTypes.Dict = {
                 "object_classes": (
                     entry.objectClasses.values
                     if hasattr(entry, "objectClasses")
@@ -104,38 +104,40 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 "server_type": "generic",
             }
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(schema_data)
+            return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
             self.logger.warning(
                 "Generic schema discovery error",
                 extra={"error": str(e)},
             )
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "object_classes": [],
-                "attribute_types": [],
-                "server_type": "generic",
-            })
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "object_classes": [],
+                    "attribute_types": [],
+                    "server_type": "generic",
+                }
+            )
 
     @override
-    def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic objectClass definition."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "definition": object_class_def,
-            "server_type": "generic",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "definition": object_class_def,
+                "server_type": "generic",
+            }
+        )
 
     @override
-    def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic attributeType definition."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "definition": attribute_def,
-            "server_type": "generic",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "definition": attribute_def,
+                "server_type": "generic",
+            }
+        )
 
     # =========================================================================
     # ACL OPERATIONS
@@ -156,40 +158,40 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+    ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs from generic LDAP server."""
         self.logger.warning("Generic ACL retrieval - may not work on all servers")
-        return FlextCore.Result[list[FlextCore.Types.Dict]].ok([])
+        return FlextResult[list[FlextTypes.Dict]].ok([])
 
     @override
     def set_acls(
         self,
         connection: Connection,
         dn: str,
-        acls: list[FlextCore.Types.Dict],
-    ) -> FlextCore.Result[bool]:
+        acls: list[FlextTypes.Dict],
+    ) -> FlextResult[bool]:
         """Set ACLs on generic LDAP server."""
-        return FlextCore.Result[bool].fail(
+        return FlextResult[bool].fail(
             "Generic LDAP ACL setting not supported - implement server-specific operations",
         )
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic ACL string."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "raw": acl_string,
-            "format": "generic",
-            "server_type": "generic",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "raw": acl_string,
+                "format": "generic",
+                "server_type": "generic",
+            }
+        )
 
     @override
-    def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
         """Format ACL dict[str, object] to generic string."""
         if "raw" in acl_dict:
-            return FlextCore.Result[str].ok(str(acl_dict["raw"]))
-        return FlextCore.Result[str].fail(
-            "Generic ACL formatting requires raw ACL string"
-        )
+            return FlextResult[str].ok(str(acl_dict["raw"]))
+        return FlextResult[str].fail("Generic ACL formatting requires raw ACL string")
 
     # =========================================================================
     # ENTRY OPERATIONS
@@ -200,11 +202,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         self,
         connection: Connection,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Add entry to generic LDAP server."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             # Extract objectClass from entry
             attrs = entry.attributes.attributes
@@ -229,25 +231,25 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Add entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Add entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Add entry failed: {e}")
+            return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
     def modify_entry(
         self,
         connection: Connection,
         dn: str,
-        modifications: FlextCore.Types.Dict,
-    ) -> FlextCore.Result[bool]:
+        modifications: FlextTypes.Dict,
+    ) -> FlextResult[bool]:
         """Modify entry in generic LDAP server."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             # Convert modifications to ldap3 format
             ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
@@ -269,24 +271,24 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Modify entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Modify entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Modify entry failed: {e}")
+            return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
     def delete_entry(
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Delete entry from generic LDAP server."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             success = connection.delete(dn)
 
@@ -295,21 +297,21 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Delete entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Delete entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Delete entry failed: {e}")
+            return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
     def normalize_entry(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for generic LDAP server."""
-        return FlextCore.Result[FlextLdifModels.Entry].ok(entry)
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     # =========================================================================
     # SEARCH OPERATIONS
@@ -336,10 +338,10 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         connection: Connection,
         base_dn: str,
         search_filter: str,
-        attributes: FlextCore.Types.StringList | None = None,
+        attributes: FlextTypes.StringList | None = None,
         scope: str = "subtree",
         page_size: int = 100,
-    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search on generic LDAP server.
 
         Args:
@@ -351,12 +353,12 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             page_size: Page size for results
 
         Returns:
-            FlextCore.Result containing list of entries
+            FlextResult containing list of entries
 
         """
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "Connection not bound",
                 )
 
@@ -387,13 +389,13 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                         entries.append(entry_result.unwrap())
 
             # Cast LDIF entries to LDAP entries - they have compatible structure
-            return FlextCore.Result[list[FlextLdapModels.Entry]].ok(
+            return FlextResult[list[FlextLdapModels.Entry]].ok(
                 cast("list[FlextLdapModels.Entry]", entries),
             )
 
         except Exception as e:
             self.logger.exception("Paged search error", extra={"error": str(e)})
-            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 f"Paged search failed: {e}",
             )
 
@@ -405,7 +407,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Get Root DSE attributes for generic server."""
         try:
             # Use standard Root DSE search
@@ -420,21 +422,21 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             if result and connection.entries:
                 # Extract attributes from the single entry
                 entry = connection.entries[0]
-                attrs: FlextCore.Types.Dict = {}
+                attrs: FlextTypes.Dict = {}
                 for attr in entry.entry_attributes:
                     attrs[attr] = entry[attr].value
 
-                return FlextCore.Result[FlextCore.Types.Dict].ok(attrs)
-            return FlextCore.Result[FlextCore.Types.Dict].fail("No Root DSE found")
+                return FlextResult[FlextTypes.Dict].ok(attrs)
+            return FlextResult[FlextTypes.Dict].fail("No Root DSE found")
 
         except Exception as e:
             self.logger.exception("Root DSE retrieval error", extra={"error": str(e)})
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Root DSE retrieval failed: {e}",
             )
 
     @override
-    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: FlextTypes.Dict) -> str:
         """Detect server type from Root DSE attributes."""
         # Check for common vendor identifiers
         if "vendorName" in root_dse:
@@ -465,13 +467,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     def get_supported_controls(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.StringList]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Get supported controls for generic server."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[FlextCore.Types.StringList].fail(
-                    "Connection not bound"
-                )
+                return FlextResult[FlextTypes.StringList].fail("Connection not bound")
 
             # For generic servers, return standard LDAP controls
             standard_controls = [
@@ -481,11 +481,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 "1.3.6.1.4.1.1466.20037",  # StartTLS
             ]
 
-            return FlextCore.Result[FlextCore.Types.StringList].ok(standard_controls)
+            return FlextResult[FlextTypes.StringList].ok(standard_controls)
 
         except Exception as e:
             self.logger.exception("Control retrieval error", extra={"error": str(e)})
-            return FlextCore.Result[FlextCore.Types.StringList].fail(
+            return FlextResult[FlextTypes.StringList].fail(
                 f"Control retrieval failed: {e}"
             )
 
@@ -494,7 +494,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         self,
         entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextCore.Result[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for generic server.
 
         Args:
@@ -502,19 +502,19 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             target_server_type: Target server type (unused for generic)
 
         Returns:
-            FlextCore.Result containing normalized entry
+            FlextResult containing normalized entry
 
         """
         try:
             # For generic server, just return the entry as-is
             # Cast to FlextLdapModels.Entry since both types have compatible structure
-            return FlextCore.Result[FlextLdapModels.Entry].ok(
+            return FlextResult[FlextLdapModels.Entry].ok(
                 cast("FlextLdapModels.Entry", entry),
             )
 
         except Exception as e:
             self.logger.exception("Entry normalization error", extra={"error": str(e)})
-            return FlextCore.Result[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 f"Entry normalization failed: {e}",
             )
 
@@ -523,26 +523,24 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         self,
         entry: FlextLdifModels.Entry,
         server_type: str | None = None,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate entry for generic server."""
         try:
             # For generic server, perform basic validation
             if not entry.dn:
-                return FlextCore.Result[bool].fail("Entry must have a DN")
+                return FlextResult[bool].fail("Entry must have a DN")
 
             if not entry.attributes:
-                return FlextCore.Result[bool].fail("Entry must have attributes")
+                return FlextResult[bool].fail("Entry must have attributes")
 
             # Check for required attributes based on object classes
             object_classes = entry.attributes.get("objectClass", [])
             if not object_classes:
-                return FlextCore.Result[bool].fail(
-                    "Entry must have objectClass attribute"
-                )
+                return FlextResult[bool].fail("Entry must have objectClass attribute")
 
             # For generic server, we assume the entry is valid if it has DN and attributes
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Entry validation error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Entry validation failed: {e}")
+            return FlextResult[bool].fail(f"Entry validation failed: {e}")

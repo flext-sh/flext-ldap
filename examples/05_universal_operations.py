@@ -43,7 +43,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult
 from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
@@ -51,7 +51,7 @@ from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -97,7 +97,7 @@ def demonstrate_server_detection(api: FlextLdap) -> str | None:
     logger.info("=== Server Type Detection ===")
 
     # Get detected server type
-    result: FlextCore.Result[str | None] = api.get_detected_server_type()
+    result: FlextResult[str | None] = api.get_detected_server_type()
 
     if result.is_failure:
         logger.error(f"❌ Server detection failed: {result.error}")
@@ -122,7 +122,7 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
     logger.info("\n=== Server Capabilities ===")
 
     # Get comprehensive server capabilities
-    result: FlextCore.Result[FlextLdapModels.ServerCapabilities] = (
+    result: FlextResult[FlextLdapModels.ServerCapabilities] = (
         api.get_server_capabilities()
     )
 
@@ -134,19 +134,20 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
     logger.info("✅ Server capabilities retrieved:")
 
     # Display capabilities
-    logger.info(f"   Server Type: {capabilities.get('server_type', 'unknown')}")
-    logger.info(f"   ACL Format: {capabilities.get('acl_format', 'N/A')}")
-    logger.info(f"   ACL Attribute: {capabilities.get('acl_attribute', 'N/A')}")
-    logger.info(f"   Schema DN: {capabilities.get('schema_dn', 'N/A')}")
-    logger.info(f"   Default Port: {capabilities.get('default_port', 'N/A')}")
-    logger.info(f"   SSL Port: {capabilities.get('default_ssl_port', 'N/A')}")
-    start_tls = capabilities.get("supports_start_tls", False)
+    caps_dict = capabilities.model_dump()
+    logger.info(f"   Server Type: {caps_dict.get('server_type', 'unknown')}")
+    logger.info(f"   ACL Format: {caps_dict.get('acl_format', 'N/A')}")
+    logger.info(f"   ACL Attribute: {caps_dict.get('acl_attribute', 'N/A')}")
+    logger.info(f"   Schema DN: {caps_dict.get('schema_dn', 'N/A')}")
+    logger.info(f"   Default Port: {caps_dict.get('default_port', 'N/A')}")
+    logger.info(f"   SSL Port: {caps_dict.get('default_ssl_port', 'N/A')}")
+    start_tls = caps_dict.get("supports_start_tls", False)
     logger.info(f"   Supports StartTLS: {start_tls}")
-    logger.info(f"   Bind Mechanisms: {capabilities.get('bind_mechanisms', [])}")
-    logger.info(f"   Max Page Size: {capabilities.get('max_page_size', 'N/A')}")
-    paged = capabilities.get("supports_paged_results", False)
+    logger.info(f"   Bind Mechanisms: {caps_dict.get('bind_mechanisms', [])}")
+    logger.info(f"   Max Page Size: {caps_dict.get('max_page_size', 'N/A')}")
+    paged = caps_dict.get("supports_paged_results", False)
     logger.info(f"   Supports Paged Results: {paged}")
-    logger.info(f"   Supports VLV: {capabilities.get('supports_vlv', False)}")
+    logger.info(f"   Supports VLV: {caps_dict.get('supports_vlv', False)}")
 
 
 def demonstrate_server_operations(api: FlextLdap) -> None:
@@ -201,7 +202,7 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
         attributes=["dn", "objectClass"],
         page_size=100,
     )
-    result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search_universal(
+    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_universal(
         search_request
     )
 
@@ -241,9 +242,7 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
                 "mail": FlextLdifModels.AttributeValues(values=["test@example.com"]),
             }
         ),
-        version="1",
-        created_at=None,
-        updated_at=None,
+        version=1,
     )
 
     logger.info("Normalizing entry for current server...")
@@ -399,7 +398,7 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
     logger.info("Validating entry for current server...")
     # Convert LDIF entry to LDAP entry for validation
     ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
-    result: FlextCore.Result[bool] = api.validate_entry_for_server(ldap_entry)
+    result: FlextResult[bool] = api.validate_entry_for_server(ldap_entry)
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -421,7 +420,7 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
     logger.info("\n=== Server-Specific Attributes ===")
 
     # Get server-specific attributes
-    result: FlextCore.Result[FlextLdapModels.ServerAttributes] = (
+    result: FlextResult[FlextLdapModels.ServerAttributes] = (
         api.get_server_specific_attributes()
     )
 
@@ -433,7 +432,8 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
     logger.info("✅ Server-specific attributes retrieved:")
 
     # Display attribute information
-    for key, value in attributes.items():
+    attrs_dict = attributes.model_dump()
+    for key, value in attrs_dict.items():
         if isinstance(value, list):
             logger.info(f"   {key}: {len(value)} items")
             # Show first few items

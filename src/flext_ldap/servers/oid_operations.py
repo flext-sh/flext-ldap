@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 
@@ -50,7 +50,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         return True
 
     @override
-    def get_bind_mechanisms(self) -> FlextCore.Types.StringList:
+    def get_bind_mechanisms(self) -> FlextTypes.StringList:
         """Get supported BIND mechanisms."""
         return ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]
 
@@ -64,23 +64,19 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         return "cn=subschemasubentry"
 
     @override
-    def discover_schema(
-        self, connection: Connection
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from Oracle OID.
 
         Args:
             connection: Active ldap3 connection
 
         Returns:
-            FlextCore.Result containing schema information
+            FlextResult containing schema information
 
         """
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Connection not bound"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Connection not bound")
 
             success: bool = connection.search(
                 search_base=self.get_schema_dn(),
@@ -89,12 +85,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             )
 
             if not success or not connection.entries:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Schema discovery failed"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Schema discovery failed")
 
             entry = connection.entries[0]
-            schema_data: FlextCore.Types.Dict = {
+            schema_data: FlextTypes.Dict = {
                 "object_classes": (
                     entry.objectClasses.values
                     if hasattr(entry, "objectClasses")
@@ -108,39 +102,37 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 "server_type": "oid",
             }
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(schema_data)
+            return FlextResult[FlextTypes.Dict].ok(schema_data)
 
         except Exception as e:
             self.logger.exception("Schema discovery error", extra={"error": str(e)})
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                f"Schema discovery failed: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"Schema discovery failed: {e}")
 
     @override
-    def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID objectClass definition."""
         try:
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "definition": object_class_def,
-                "server_type": "oid",
-            })
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "definition": object_class_def,
+                    "server_type": "oid",
+                }
+            )
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(f"Parse failed: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
     @override
-    def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID attributeType definition."""
         try:
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "definition": attribute_def,
-                "server_type": "oid",
-            })
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "definition": attribute_def,
+                    "server_type": "oid",
+                }
+            )
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(f"Parse failed: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
     # =========================================================================
     # ACL OPERATIONS
@@ -161,13 +153,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+    ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get orclaci ACLs from Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
-                    "Connection not bound"
-                )
+                return FlextResult[list[FlextTypes.Dict]].fail("Connection not bound")
 
             success: bool = connection.search(
                 search_base=dn,
@@ -177,42 +167,40 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             )
 
             if not success or not connection.entries:
-                return FlextCore.Result[list[FlextCore.Types.Dict]].ok([])
+                return FlextResult[list[FlextTypes.Dict]].ok([])
 
             entry = connection.entries[0]
             acl_values = entry.orclaci.values if hasattr(entry, "orclaci") else []
 
-            acls: list[FlextCore.Types.Dict] = []
+            acls: list[FlextTypes.Dict] = []
             for acl_str in acl_values:
                 parse_result = self.parse_acl(str(acl_str))
                 if parse_result.is_success:
                     acls.append(parse_result.unwrap())
 
-            return FlextCore.Result[list[FlextCore.Types.Dict]].ok(acls)
+            return FlextResult[list[FlextTypes.Dict]].ok(acls)
 
         except Exception as e:
             self.logger.exception("Get ACLs error", extra={"error": str(e)})
-            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
-                f"Get ACLs failed: {e}"
-            )
+            return FlextResult[list[FlextTypes.Dict]].fail(f"Get ACLs failed: {e}")
 
     @override
     def set_acls(
         self,
         connection: Connection,
         dn: str,
-        acls: list[FlextCore.Types.Dict],
-    ) -> FlextCore.Result[bool]:
+        acls: list[FlextTypes.Dict],
+    ) -> FlextResult[bool]:
         """Set orclaci ACLs on Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
-            formatted_acls: FlextCore.Types.StringList = []
+            formatted_acls: FlextTypes.StringList = []
             for acl in acls:
                 format_result = self.format_acl(acl)
                 if format_result.is_failure:
-                    return FlextCore.Result[bool].fail(
+                    return FlextResult[bool].fail(
                         format_result.error or "ACL format failed",
                     )
                 formatted_acls.append(format_result.unwrap())
@@ -227,16 +215,16 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Set ACLs failed: {error_msg}")
+                return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Set ACLs error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Set ACLs failed: {e}")
+            return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse orclaci ACL string for Oracle OID.
 
         Oracle OID ACL format (orclaci):
@@ -251,7 +239,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             acl_string: orclaci ACL string
 
         Returns:
-            FlextCore.Result containing parsed ACL with structure:
+            FlextResult containing parsed ACL with structure:
             {
                 "raw": original string,
                 "format": "oracle",
@@ -264,7 +252,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
         """
         try:
-            acl_dict: FlextCore.Types.Dict = {
+            acl_dict: FlextTypes.Dict = {
                 "raw": acl_string,
                 "format": "oracle",
                 "server_type": "oid",
@@ -308,15 +296,15 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                         acl_dict["subject"] = by_clause
                         acl_dict["permissions"] = ["read"]  # Default
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(acl_dict)
+            return FlextResult[FlextTypes.Dict].ok(acl_dict)
 
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Oracle OID ACL parse failed: {e}",
             )
 
     @override
-    def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
         """Format ACL dict[str, object] to orclaci string for Oracle OID.
 
         Args:
@@ -330,7 +318,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             }
 
         Returns:
-            FlextCore.Result containing formatted ACL string
+            FlextResult containing formatted ACL string
 
         Examples:
             - access to entry by * : browse
@@ -340,7 +328,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         try:
             # Use raw if available
             if "raw" in acl_dict:
-                return FlextCore.Result[str].ok(str(acl_dict["raw"]))
+                return FlextResult[str].ok(str(acl_dict["raw"]))
 
             # Build structured ACL
             parts = ["access to"]
@@ -371,10 +359,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 perms_str = ", ".join(str(p) for p in permissions)
                 parts.append(f": {perms_str}")
 
-            return FlextCore.Result[str].ok(" ".join(parts))
+            return FlextResult[str].ok(" ".join(parts))
 
         except Exception as e:
-            return FlextCore.Result[str].fail(f"Oracle OID ACL format failed: {e}")
+            return FlextResult[str].fail(f"Oracle OID ACL format failed: {e}")
 
     # =========================================================================
     # ENTRY OPERATIONS
@@ -385,15 +373,15 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         self,
         connection: Connection,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Add entry to Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             norm_result = self.normalize_entry(entry)
             if norm_result.is_failure:
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     norm_result.error or "Normalization failed",
                 )
 
@@ -422,25 +410,25 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Add entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Add entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Add entry failed: {e}")
+            return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     @override
     def modify_entry(
         self,
         connection: Connection,
         dn: str,
-        modifications: FlextCore.Types.Dict,
-    ) -> FlextCore.Result[bool]:
+        modifications: FlextTypes.Dict,
+    ) -> FlextResult[bool]:
         """Modify entry in Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             # Convert modifications to ldap3 format
             ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
@@ -462,20 +450,20 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Modify entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Modify entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Modify entry failed: {e}")
+            return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
     @override
-    def delete_entry(self, connection: Connection, dn: str) -> FlextCore.Result[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[bool].fail("Connection not bound")
+                return FlextResult[bool].fail("Connection not bound")
 
             success: bool = connection.delete(dn)
 
@@ -484,19 +472,19 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     FlextLdapConstants.DictKeys.DESCRIPTION,
                     "Unknown error",
                 )
-                return FlextCore.Result[bool].fail(f"Delete entry failed: {error_msg}")
+                return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             self.logger.exception("Delete entry error", extra={"error": str(e)})
-            return FlextCore.Result[bool].fail(f"Delete entry failed: {e}")
+            return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
     @override
     def normalize_entry(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for Oracle OID.
 
         Oracle OID Considerations:
@@ -508,7 +496,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextCore.Result containing normalized entry
+            FlextResult containing normalized entry
 
         """
         try:
@@ -520,14 +508,14 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 object_class_attr = attributes_dict["objectClass"]
                 # Handle both list and AttributeValues types
                 if isinstance(object_class_attr, list):
-                    object_classes: FlextCore.Types.StringList = object_class_attr
+                    object_classes: FlextTypes.StringList = object_class_attr
                 elif hasattr(object_class_attr, "values"):
                     object_classes = object_class_attr.values
                 else:
                     object_classes = [str(object_class_attr)]
 
                 # Map standard objectClasses to Oracle equivalents
-                mapped_classes: FlextCore.Types.StringList = []
+                mapped_classes: FlextTypes.StringList = []
                 has_person = False
                 has_org_person = False
 
@@ -569,10 +557,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 attributes=normalized_attributes,
             )
 
-            return FlextCore.Result[FlextLdifModels.Entry].ok(normalized_entry)
+            return FlextResult[FlextLdifModels.Entry].ok(normalized_entry)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdifModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 f"Oracle OID entry normalization failed: {e}",
             )
 
@@ -601,10 +589,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         connection: Connection,
         base_dn: str,
         search_filter: str,
-        attributes: FlextCore.Types.StringList | None = None,
+        attributes: FlextTypes.StringList | None = None,
         scope: str = "subtree",
         page_size: int = 100,
-    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search on Oracle OID.
 
         Args:
@@ -616,12 +604,12 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             page_size: Page size for results
 
         Returns:
-            FlextCore.Result containing list of entries
+            FlextResult containing list of entries
 
         """
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
                     "Connection not bound",
                 )
 
@@ -653,11 +641,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                         ldap_entry = FlextLdapModels.Entry.from_ldif(ldif_entry)
                         entries.append(ldap_entry)
 
-            return FlextCore.Result[list[FlextLdapModels.Entry]].ok(entries)
+            return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
         except Exception as e:
             self.logger.exception("Paged search error", extra={"error": str(e)})
-            return FlextCore.Result[list[FlextLdapModels.Entry]].fail(
+            return FlextResult[list[FlextLdapModels.Entry]].fail(
                 f"Paged search failed: {e}",
             )
 
@@ -683,7 +671,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """
         return True
 
-    def get_oracle_object_classes(self) -> FlextCore.Types.StringList:
+    def get_oracle_object_classes(self) -> FlextTypes.StringList:
         """Get Oracle-specific object classes.
 
         Returns:
@@ -698,7 +686,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             "orclSubscriber",
         ]
 
-    def get_oracle_attributes(self) -> FlextCore.Types.StringList:
+    def get_oracle_attributes(self) -> FlextTypes.StringList:
         """Get Oracle-specific attributes.
 
         Returns:
@@ -737,7 +725,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         return False
 
     @override
-    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: FlextTypes.Dict) -> str:
         """Detect server type from Root DSE for Oracle OID."""
         # Oracle OID specific detection logic
         if "vendorname" in root_dse:
@@ -750,44 +738,38 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Get Root DSE attributes for Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Connection not established"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Connection not established")
 
             root_dse = connection.server.info
             if not root_dse:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Root DSE not available"
-                )
+                return FlextResult[FlextTypes.Dict].fail("Root DSE not available")
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(dict(root_dse))
+            return FlextResult[FlextTypes.Dict].ok(dict(root_dse))
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                f"Failed to get Root DSE: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to get Root DSE: {e}")
 
     @override
     def get_supported_controls(
         self, connection: Connection
-    ) -> FlextCore.Result[FlextCore.Types.StringList]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Get supported LDAP controls for Oracle OID."""
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[FlextCore.Types.StringList].fail(
+                return FlextResult[FlextTypes.StringList].fail(
                     "Connection not established"
                 )
 
             controls = connection.server.info.supported_controls
             if controls is None:
-                return FlextCore.Result[FlextCore.Types.StringList].ok([])
+                return FlextResult[FlextTypes.StringList].ok([])
 
-            return FlextCore.Result[FlextCore.Types.StringList].ok(list(controls))
+            return FlextResult[FlextTypes.StringList].ok(list(controls))
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.StringList].fail(
+            return FlextResult[FlextTypes.StringList].fail(
                 f"Failed to get supported controls: {e}"
             )
 
@@ -796,7 +778,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         self,
         entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextCore.Result[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for Oracle OID server.
 
         Args:
@@ -804,7 +786,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             target_server_type: Ignored for OID (uses self._server_type)
 
         Returns:
-            FlextCore.Result containing normalized entry
+            FlextResult containing normalized entry
 
         """
         try:
@@ -824,11 +806,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 )
 
             # Cast back to FlextLdapModels.Entry for return type
-            return FlextCore.Result[FlextLdapModels.Entry].ok(
+            return FlextResult[FlextLdapModels.Entry].ok(
                 cast("FlextLdapModels.Entry", normalized_entry),
             )
         except Exception as e:
-            return FlextCore.Result[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 f"Failed to normalize entry: {e}",
             )
 
@@ -837,25 +819,23 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         self,
         entry: FlextLdifModels.Entry,
         server_type: str | None = None,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate entry compatibility with Oracle OID."""
         try:
             # Oracle OID specific validation
             # Convert DistinguishedName to string if needed before strip()
             dn_str = str(entry.dn) if entry.dn else ""
             if not dn_str or not dn_str.strip():
-                return FlextCore.Result[bool].fail("Entry DN cannot be empty")
+                return FlextResult[bool].fail("Entry DN cannot be empty")
 
             if not entry.attributes:
-                return FlextCore.Result[bool].fail("Entry must have attributes")
+                return FlextResult[bool].fail("Entry must have attributes")
 
             # Check for required object classes
             object_classes = entry.attributes.get("objectClass")
             if not object_classes:
-                return FlextCore.Result[bool].fail(
-                    "Entry must have objectClass attribute"
-                )
+                return FlextResult[bool].fail("Entry must have objectClass attribute")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextCore.Result[bool].fail(f"Entry validation failed: {e}")
+            return FlextResult[bool].fail(f"Entry validation failed: {e}")

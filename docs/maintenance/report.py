@@ -11,7 +11,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import yaml
 
@@ -140,7 +140,7 @@ class ReportGenerator:
                     else:
                         default_config[key] = value
 
-        return default_config
+        return cast("ReportConfig", default_config)
 
     def generate_comprehensive_report(
         self,
@@ -314,12 +314,12 @@ class ReportGenerator:
         recommendations = []
 
         # Audit-based recommendations
-        if audit_data.critical_issues > 0:
+        if audit_data["critical_issues"] > 0:
             recommendations.append(
                 RecommendationInfo(
                     title="Address Critical Content Issues",
                     priority="high",
-                    description=f"{audit_data.critical_issues} critical content issues require immediate attention",
+                    description=f"{audit_data['critical_issues']} critical content issues require immediate attention",
                     actions=[
                         "Review files with quality score < 50",
                         "Update outdated content (>90 days old)",
@@ -329,12 +329,12 @@ class ReportGenerator:
             )
 
         # Link validation recommendations
-        if validation_data.broken_links > MAX_BROKEN_LINKS_THRESHOLD:
+        if validation_data["broken_links"] > MAX_BROKEN_LINKS_THRESHOLD:
             recommendations.append(
                 RecommendationInfo(
                     title="Fix Broken Links",
                     priority="medium",
-                    description=f"{validation_data.broken_links} broken links detected across documentation",
+                    description=f"{validation_data['broken_links']} broken links detected across documentation",
                     actions=[
                         "Update or remove broken external links",
                         "Fix incorrect internal references",
@@ -344,12 +344,12 @@ class ReportGenerator:
             )
 
         # Style recommendations
-        if style_data.average_score < MIN_STYLE_SCORE_THRESHOLD:
+        if style_data["average_score"] < MIN_STYLE_SCORE_THRESHOLD:
             recommendations.append(
                 RecommendationInfo(
                     title="Improve Style Consistency",
                     priority="low",
-                    description=f"Average style score of {style_data.average_score:.1f}/100 indicates formatting issues",
+                    description=f"Average style score of {style_data['average_score']:.1f}/100 indicates formatting issues",
                     actions=[
                         "Fix heading hierarchy violations",
                         "Add language specifications to code blocks",
@@ -374,6 +374,68 @@ class ReportGenerator:
             )
 
         return recommendations
+
+    def _calculate_quality_metrics(self, report_data: ReportData) -> QualityMetrics:
+        """Calculate overall quality metrics from report data."""
+        # Calculate content health (weighted average of audit quality)
+        content_health = (
+            report_data.audit_summary["average_quality"]
+            if report_data.audit_summary["total_files"] > 0
+            else 50.0
+        )
+
+        # Calculate link health (inverse of broken links ratio)
+        total_links = (
+            report_data.validation_summary["broken_links"]
+            + report_data.validation_summary["external_links"]
+            + report_data.validation_summary["internal_links"]
+        )
+        link_health = (
+            100.0
+            * (
+                1
+                - (report_data.validation_summary["broken_links"] / max(total_links, 1))
+            )
+            if total_links > 0
+            else 100.0
+        )
+
+        # Calculate style consistency (inverse of violations ratio)
+        style_consistency = (
+            100.0
+            * (
+                1
+                - (
+                    report_data.style_summary["total_violations"]
+                    / max(report_data.style_summary["files_with_violations"], 1)
+                )
+            )
+            if report_data.style_summary["files_with_violations"] > 0
+            else 100.0
+        )
+
+        # Calculate accessibility (estimated based on content health and link health)
+        accessibility = (content_health + link_health) / 2
+
+        # Calculate overall score (weighted average)
+        overall_score = (
+            content_health * 0.4
+            + link_health * 0.3
+            + style_consistency * 0.2
+            + accessibility * 0.1
+        )
+
+        # Determine trends direction (simplified - would need historical data)
+        trends_direction = "stable"
+
+        return QualityMetrics(
+            overall_score=overall_score,
+            content_health=content_health,
+            link_health=link_health,
+            style_consistency=style_consistency,
+            accessibility=accessibility,
+            trends_direction=trends_direction,
+        )
 
     def generate_dashboard(
         self, report_data: ReportData, output_file: str = "dashboard.html"
@@ -698,10 +760,12 @@ def main() -> None:
     if not any([args.generate_dashboard, args.weekly_summary, args.monthly_report]):
         dashboard_file = generator.generate_dashboard(report_data)
         summary_file = generator.generate_weekly_summary(report_data)
-        generated_files.extend([
-            ("Dashboard", dashboard_file),
-            ("Weekly Summary", summary_file),
-        ])
+        generated_files.extend(
+            [
+                ("Dashboard", dashboard_file),
+                ("Weekly Summary", summary_file),
+            ]
+        )
 
     # Generate quality metrics for display
     generator.calculate_quality_metrics(report_data)

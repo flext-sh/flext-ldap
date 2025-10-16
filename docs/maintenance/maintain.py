@@ -98,7 +98,8 @@ class DocumentationMaintainer:
         self.results.append(report_result)
 
         # 6. Synchronization (optional)
-        if self.config.get("sync", {}).get("auto_commit", False):
+        config_sync = self.config.get("sync", {})
+        if isinstance(config_sync, dict) and config_sync.get("auto_commit", False):
             sync_result = self._run_synchronization()
             self.results.append(sync_result)
 
@@ -107,7 +108,10 @@ class DocumentationMaintainer:
 
         summary = self._generate_summary()
 
-        report = MaintenanceReport(
+        # Save detailed report (optional - could be implemented to save to file)
+        # self._save_report(report)
+
+        return MaintenanceReport(
             session_id=self.session_id,
             timestamp=datetime.now(UTC),
             operations_run=self.results,
@@ -115,11 +119,6 @@ class DocumentationMaintainer:
             total_duration=total_duration,
             summary=summary,
         )
-
-        # Save detailed report
-        self._save_report(report)
-
-        return report
 
     def _run_audit(self) -> MaintenanceResult:
         """Run content quality audit."""
@@ -129,7 +128,7 @@ class DocumentationMaintainer:
             auditor = DocumentationAuditor(self.config_path)
 
             docs_dir = Path(__file__).parent.parent / "docs"
-            results = auditor.audit_directory(docs_dir)
+            results = auditor.audit_directory(str(docs_dir))
             summary = auditor.generate_summary()
 
             return MaintenanceResult(
@@ -162,7 +161,7 @@ class DocumentationMaintainer:
             validator = LinkValidator(self.config_path)
 
             docs_dir = Path(__file__).parent.parent / "docs"
-            results = validator.validate_directory(docs_dir, check_external=True)
+            results = validator.validate_directory(str(docs_dir), check_external=True)
             summary = validator.generate_summary(results)
 
             return MaintenanceResult(
@@ -195,7 +194,7 @@ class DocumentationMaintainer:
             validator = StyleValidator(self.config_path)
 
             docs_dir = Path(__file__).parent.parent / "docs"
-            results = validator.validate_directory(docs_dir)
+            results = validator.validate_directory(str(docs_dir))
             summary = validator.generate_summary(results)
 
             return MaintenanceResult(
@@ -228,7 +227,7 @@ class DocumentationMaintainer:
             optimizer = ContentOptimizer(self.config_path)
 
             docs_dir = Path(__file__).parent.parent / "docs"
-            results = optimizer.optimize_directory(docs_dir)
+            results = optimizer.optimize_directory(str(docs_dir))
             summary = optimizer.generate_summary(results)
 
             return MaintenanceResult(
@@ -343,21 +342,32 @@ class DocumentationMaintainer:
 
         for result in self.results:
             if result.operation == "content_audit":
+                files_audited = result.details.get("files_audited", 0)
                 total_files_processed = max(
-                    total_files_processed, result.details.get("files_audited", 0)
+                    total_files_processed,
+                    files_audited if isinstance(files_audited, int) else 0,
                 )
-                total_issues += result.details.get("critical_issues", 0)
+                critical_issues = result.details.get("critical_issues", 0)
+                total_issues += (
+                    critical_issues if isinstance(critical_issues, int) else 0
+                )
                 if "average_quality" in result.details:
                     quality_scores.append(result.details["average_quality"])
 
             elif result.operation in {"link_validation", "style_validation"}:
+                files_checked = result.details.get("files_checked", 0)
                 total_files_processed = max(
-                    total_files_processed, result.details.get("files_checked", 0)
+                    total_files_processed,
+                    files_checked if isinstance(files_checked, int) else 0,
                 )
                 if result.operation == "link_validation":
-                    total_issues += result.details.get("broken_links", 0)
+                    broken_links = result.details.get("broken_links", 0)
+                    total_issues += broken_links if isinstance(broken_links, int) else 0
                 else:
-                    total_issues += result.details.get("total_violations", 0)
+                    total_violations = result.details.get("total_violations", 0)
+                    total_issues += (
+                        total_violations if isinstance(total_violations, int) else 0
+                    )
 
             elif (
                 result.operation == "style_validation"
@@ -459,10 +469,19 @@ def main() -> None:
 
         # Recommendations
         effectiveness = report.summary["maintenance_effectiveness"]
+        total_issues = report.summary.get("total_issues", 0)
+        avg_quality_score = report.summary.get("average_quality_score", 100)
+
         if effectiveness in {"needs_attention", "fair"}:
-            if report.summary["total_issues"] > CRITICAL_ISSUES_THRESHOLD:
+            if (
+                isinstance(total_issues, (int, float))
+                and total_issues > CRITICAL_ISSUES_THRESHOLD
+            ):
                 pass
-            if report.summary["average_quality_score"] < CRITICAL_QUALITY_THRESHOLD:
+            if (
+                isinstance(avg_quality_score, (int, float))
+                and avg_quality_score < CRITICAL_QUALITY_THRESHOLD
+            ):
                 pass
         elif effectiveness == "good":
             pass

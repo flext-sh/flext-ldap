@@ -69,9 +69,14 @@ class TestRealSchemaDiscovery:
         client.discover_schema()
 
         # Get server capabilities
-        capabilities = client.get_server_capabilities()
+        capabilities_result = client.get_server_capabilities()
+        assert capabilities_result.is_success, (
+            f"Failed to get capabilities: {capabilities_result.error}"
+        )
 
+        capabilities = capabilities_result.unwrap()
         assert capabilities is not None
+        assert isinstance(capabilities, dict)
         assert capabilities.get("connected") is True
         assert capabilities.get("schema_discovered") is True
         assert capabilities.get("server_info") is not None
@@ -120,7 +125,9 @@ class TestRealServerQuirksDetection:
 
         # Test quirks detector directly
         detector = FlextLdapSchema.GenericQuirksDetector()
-        server_type = detector.detect_server_type(schema.server_info)
+        server_info = schema.get("server_info")
+        assert server_info is not None
+        server_type = detector.detect_server_type(server_info)
 
         assert server_type is not None
         assert isinstance(server_type, FlextLdapModels.LdapServerType)

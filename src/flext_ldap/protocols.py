@@ -14,28 +14,29 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Protocol, runtime_checkable
 
-from flext_core import FlextCore
+from flext_core import FlextProtocols, FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection, Server
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 
 
-class FlextLdapProtocols(FlextCore.Protocols):
-    """Unified LDAP protocols class extending FlextCore.Protocols with LDAP-specific protocols.
+class FlextLdapProtocols(FlextProtocols):
+    """Unified LDAP protocols class extending FlextProtocols with LDAP-specific protocols.
 
-    This class extends the base FlextCore.Protocols with LDAP-specific protocol definitions,
+    This class extends the base FlextProtocols with LDAP-specific protocol definitions,
     using Python's typing.Protocol for structural subtyping.
 
     Contains both high-level service protocols and low-level ldap3 protocols.
     """
 
     # =========================================================================
-    # INHERIT FOUNDATION PROTOCOLS - Available through inheritance from FlextCore.Protocols
+    # INHERIT FOUNDATION PROTOCOLS - Available through inheritance from FlextProtocols
     # =========================================================================
 
     # Foundation, Domain, Application, Infrastructure, Extensions, Commands
-    # are all inherited from FlextCore.Protocols - no need to re-export
+    # are all inherited from FlextProtocols - no need to re-export
 
     # =========================================================================
     # LDAP-SPECIFIC PROTOCOLS - Domain extension for LDAP operations
@@ -56,7 +57,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 file_path: Path,
                 server_type: str = "rfc",
-            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Parse LDIF file and return entries."""
                 ...
 
@@ -64,7 +65,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 entries: list[FlextLdifModels.Entry],
                 output_path: Path,
-            ) -> FlextCore.Result[str]:
+            ) -> FlextResult[str]:
                 """Write entries to LDIF file."""
                 ...
 
@@ -79,7 +80,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
             """Protocol for LDAP entry objects from ldap3."""
 
             dn: str
-            attributes: dict[str, FlextCore.Types.StringList]
+            attributes: dict[str, FlextTypes.StringList]
 
             def __getitem__(self, key: str) -> FlextLdapProtocols.Ldap.LdapAttribute:
                 """Get attribute by key."""
@@ -109,10 +110,10 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 search_base: str,
                 search_filter: str,
                 _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
-                attributes: FlextCore.Types.StringList | None = None,
+                attributes: FlextTypes.StringList | None = None,
                 _paged_size: int | None = None,
                 paged_cookie: str | bytes | None = None,
-                controls: FlextCore.Types.List | None = None,
+                controls: FlextTypes.List | None = None,
             ) -> bool:
                 """Search LDAP directory."""
                 ...
@@ -120,7 +121,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
             def add(
                 self,
                 dn: str,
-                attributes: dict[str, str | FlextCore.Types.StringList] | None = None,
+                attributes: dict[str, str | FlextTypes.StringList] | None = None,
             ) -> bool:
                 """Add entry to LDAP directory."""
                 ...
@@ -128,7 +129,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
             def modify(
                 self,
                 dn: str,
-                changes: dict[str, list[tuple[str, FlextCore.Types.StringList]]],
+                changes: dict[str, list[tuple[str, FlextTypes.StringList]]],
             ) -> bool:
                 """Modify LDAP entry."""
                 ...
@@ -150,13 +151,11 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         # =====================================================================
-        # HIGH-LEVEL SERVICE PROTOCOLS - FlextCore.Result-based service protocols
+        # HIGH-LEVEL SERVICE PROTOCOLS - FlextResult-based service protocols
         # =====================================================================
 
         @runtime_checkable
-        class LdapConnectionProtocol(
-            FlextCore.Protocols.Domain.Service[None], Protocol
-        ):
+        class LdapConnectionProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP connection operations."""
 
             def connect(
@@ -164,7 +163,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 server_uri: str,
                 bind_dn: str,
                 password: str,
-            ) -> FlextCore.Result[bool]:
+            ) -> FlextResult[bool]:
                 """Establish LDAP connection.
 
                 Args:
@@ -173,39 +172,39 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     password: Authentication password
 
                 Returns:
-                    FlextCore.Result[bool]: Connection success status
+                    FlextResult[bool]: Connection success status
 
                 """
                 ...
 
-            def disconnect(self) -> FlextCore.Result[None]:
+            def disconnect(self) -> FlextResult[None]:
                 """Close LDAP connection.
 
                 Returns:
-                    FlextCore.Result[None]: Disconnect success status
+                    FlextResult[None]: Disconnect success status
 
                 """
                 ...
 
-            def is_connected(self) -> FlextCore.Result[bool]:
+            def is_connected(self) -> FlextResult[bool]:
                 """Check if LDAP connection is active.
 
                 Returns:
-                    FlextCore.Result[bool]: Connection status
+                    FlextResult[bool]: Connection status
 
                 """
                 ...
 
         @runtime_checkable
-        class LdapSearchProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
+        class LdapSearchProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search(
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextCore.Types.StringList | None = None,
-            ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
+                attributes: FlextTypes.StringList | None = None,
+            ) -> FlextResult[list[FlextLdapModels.Entry]]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -214,7 +213,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextCore.Result[list[FlextLdapModels.Entry]]: Search results
+                    FlextResult[list[FlextLdapModels.Entry]]: Search results
 
                 """
                 ...
@@ -223,8 +222,8 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextCore.Types.StringList | None = None,
-            ) -> FlextCore.Result[FlextCore.Types.Dict | None]:
+                attributes: FlextTypes.StringList | None = None,
+            ) -> FlextResult[FlextTypes.Dict | None]:
                 """Perform LDAP search for single entry.
 
                 Args:
@@ -233,20 +232,20 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextCore.Result[FlextCore.Types.Dict | None]: Single search result or None
+                    FlextResult[FlextTypes.Dict | None]: Single search result or None
 
                 """
                 ...
 
         @runtime_checkable
-        class LdapModifyProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
+        class LdapModifyProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP modification operations."""
 
             def add_entry(
                 self,
                 dn: str,
-                attributes: dict[str, FlextCore.Types.StringList],
-            ) -> FlextCore.Result[bool]:
+                attributes: dict[str, FlextTypes.StringList],
+            ) -> FlextResult[bool]:
                 """Add new LDAP entry.
 
                 Args:
@@ -254,7 +253,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     attributes: Entry attributes
 
                 Returns:
-                    FlextCore.Result[bool]: Add operation success status
+                    FlextResult[bool]: Add operation success status
 
                 """
                 ...
@@ -262,8 +261,8 @@ class FlextLdapProtocols(FlextCore.Protocols):
             def modify_entry(
                 self,
                 dn: str,
-                changes: FlextCore.Types.Dict,
-            ) -> FlextCore.Result[bool]:
+                changes: FlextTypes.Dict,
+            ) -> FlextResult[bool]:
                 """Modify existing LDAP entry.
 
                 Args:
@@ -271,34 +270,32 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     changes: Attribute changes to apply
 
                 Returns:
-                    FlextCore.Result[bool]: Modify operation success status
+                    FlextResult[bool]: Modify operation success status
 
                 """
                 ...
 
-            def delete_entry(self, dn: str) -> FlextCore.Result[bool]:
+            def delete_entry(self, dn: str) -> FlextResult[bool]:
                 """Delete LDAP entry.
 
                 Args:
                     dn: Distinguished name of entry to delete
 
                 Returns:
-                    FlextCore.Result[bool]: Delete operation success status
+                    FlextResult[bool]: Delete operation success status
 
                 """
                 ...
 
         @runtime_checkable
-        class LdapAuthenticationProtocol(
-            FlextCore.Protocols.Domain.Service[None], Protocol
-        ):
+        class LdapAuthenticationProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP authentication operations."""
 
             def authenticate_user(
                 self,
                 username: str,
                 password: str,
-            ) -> FlextCore.Result[FlextLdapModels.LdapUser]:
+            ) -> FlextResult[FlextLdapModels.LdapUser]:
                 """Authenticate user against LDAP.
 
                 Args:
@@ -306,14 +303,12 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     password: Password for authentication
 
                 Returns:
-                    FlextCore.Result[LdapUser]: Authentication result with user object
+                    FlextResult[LdapUser]: Authentication result with user object
 
                 """
                 ...
 
-            def validate_credentials(
-                self, dn: str, password: str
-            ) -> FlextCore.Result[bool]:
+            def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
                 """Validate user credentials against LDAP.
 
                 Args:
@@ -321,7 +316,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     password: User password
 
                 Returns:
-                    FlextCore.Result[bool]: Validation success status
+                    FlextResult[bool]: Validation success status
 
                 """
                 ...
@@ -330,7 +325,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 connection: Connection | None,
                 server: Server | None,
-                config: FlextLdapModels.Config | None,
+                config: FlextLdapConfig | None,
             ) -> None:
                 """Set the connection context for authentication operations.
 
@@ -343,41 +338,37 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
-        class LdapValidationProtocol(
-            FlextCore.Protocols.Domain.Service[None], Protocol
-        ):
+        class LdapValidationProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP validation operations."""
 
-            def validate_dn(self, dn: str) -> FlextCore.Result[bool]:
+            def validate_dn(self, dn: str) -> FlextResult[bool]:
                 """Validate distinguished name format.
 
                 Args:
                     dn: Distinguished name to validate
 
                 Returns:
-                    FlextCore.Result[bool]: Validation success status
+                    FlextResult[bool]: Validation success status
 
                 """
                 ...
 
-            def validate_entry(
-                self, entry: FlextCore.Types.Dict
-            ) -> FlextCore.Result[bool]:
+            def validate_entry(self, entry: FlextTypes.Dict) -> FlextResult[bool]:
                 """Validate LDAP entry structure.
 
                 Args:
                     entry: LDAP entry to validate
 
                 Returns:
-                    FlextCore.Result[bool]: Validation success status
+                    FlextResult[bool]: Validation success status
 
                 """
                 ...
 
         @runtime_checkable
         class LdapConnectionManagerProtocol(
-            FlextCore.Protocols.Domain.Service[None],
-            FlextCore.Protocols.Infrastructure.Connection,
+            FlextProtocols.Service[None],
+            FlextProtocols.Connection,
             Protocol,
         ):
             """Protocol for LDAP connection management operations.
@@ -391,7 +382,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 server_uri: str,
                 bind_dn: str | None = None,
                 password: str | None = None,
-            ) -> FlextCore.Result[bool]:
+            ) -> FlextResult[bool]:
                 """Establish LDAP connection.
 
                 Args:
@@ -400,12 +391,12 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     password: Password for authentication
 
                 Returns:
-                    FlextCore.Result[bool]: Connection success status
+                    FlextResult[bool]: Connection success status
 
                 """
                 ...
 
-            def bind(self, bind_dn: str, password: str) -> FlextCore.Result[bool]:
+            def bind(self, bind_dn: str, password: str) -> FlextResult[bool]:
                 """Bind to LDAP server.
 
                 Args:
@@ -413,25 +404,25 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     password: Authentication password
 
                 Returns:
-                    FlextCore.Result[bool]: Bind success status
+                    FlextResult[bool]: Bind success status
 
                 """
                 ...
 
-            def unbind(self) -> FlextCore.Result[None]:
+            def unbind(self) -> FlextResult[None]:
                 """Unbind from LDAP server.
 
                 Returns:
-                    FlextCore.Result[None]: Unbind success status
+                    FlextResult[None]: Unbind success status
 
                 """
                 ...
 
-            def disconnect(self) -> FlextCore.Result[None]:
+            def disconnect(self) -> FlextResult[None]:
                 """Disconnect from LDAP server.
 
                 Returns:
-                    FlextCore.Result[None]: Disconnect success status
+                    FlextResult[None]: Disconnect success status
 
                 """
                 ...
@@ -445,20 +436,20 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 """
                 ...
 
-            def test_connection(self) -> FlextCore.Result[bool]:
+            def test_connection(self) -> FlextResult[bool]:
                 """Test LDAP connection.
 
                 Returns:
-                    FlextCore.Result[bool]: Connection test success status
+                    FlextResult[bool]: Connection test success status
 
                 """
                 ...
 
-            def close_connection(self) -> FlextCore.Result[None]:
+            def close_connection(self) -> FlextResult[None]:
                 """Close LDAP connection.
 
                 Returns:
-                    FlextCore.Result[None]: Close operation success status
+                    FlextResult[None]: Close operation success status
 
                 """
                 ...
@@ -473,15 +464,15 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
-        class LdapSearcherProtocol(FlextCore.Protocols.Domain.Service[None], Protocol):
+        class LdapSearcherProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search_one(
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextCore.Types.StringList | None = None,
-            ) -> FlextCore.Result[FlextLdapModels.Entry | None]:
+                attributes: FlextTypes.StringList | None = None,
+            ) -> FlextResult[FlextLdapModels.Entry | None]:
                 """Search for single LDAP entry.
 
                 Args:
@@ -490,7 +481,7 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextCore.Result[FlextLdapModels.Entry | None]: Single search result or None
+                    FlextResult[FlextLdapModels.Entry | None]: Single search result or None
 
                 """
                 ...
@@ -499,11 +490,11 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 self,
                 base_dn: str,
                 filter_str: str,
-                attributes: FlextCore.Types.StringList | None = None,
+                attributes: FlextTypes.StringList | None = None,
                 scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
                 page_size: int = 0,
                 paged_cookie: bytes | None = None,
-            ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
+            ) -> FlextResult[list[FlextLdapModels.Entry]]:
                 """Search for LDAP entries.
 
                 Args:
@@ -515,21 +506,19 @@ class FlextLdapProtocols(FlextCore.Protocols):
                     paged_cookie: Cookie for paged results continuation
 
                 Returns:
-                    FlextCore.Result[list[FlextLdapModels.Entry]]: Search results
+                    FlextResult[list[FlextLdapModels.Entry]]: Search results
 
                 """
                 ...
 
-            def get_user(
-                self, dn: str
-            ) -> FlextCore.Result[FlextLdapModels.LdapUser | None]:
+            def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
                 """Get user by DN.
 
                 Args:
                     dn: User distinguished name
 
                 Returns:
-                    FlextCore.Result[FlextLdapModels.LdapUser | None]: User object or None
+                    FlextResult[FlextLdapModels.LdapUser | None]: User object or None
 
                 """
                 ...
@@ -543,40 +532,38 @@ class FlextLdapProtocols(FlextCore.Protocols):
                 """
                 ...
 
-            def get_group(
-                self, dn: str
-            ) -> FlextCore.Result[FlextLdapModels.Group | None]:
+            def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
                 """Get group by DN.
 
                 Args:
                     dn: Group distinguished name
 
                 Returns:
-                    FlextCore.Result[FlextLdapModels.Group | None]: Group object or None
+                    FlextResult[FlextLdapModels.Group | None]: Group object or None
 
                 """
                 ...
 
-            def user_exists(self, dn: str) -> FlextCore.Result[bool]:
+            def user_exists(self, dn: str) -> FlextResult[bool]:
                 """Check if user exists.
 
                 Args:
                     dn: User distinguished name
 
                 Returns:
-                    FlextCore.Result[bool]: True if user exists
+                    FlextResult[bool]: True if user exists
 
                 """
                 ...
 
-            def group_exists(self, dn: str) -> FlextCore.Result[bool]:
+            def group_exists(self, dn: str) -> FlextResult[bool]:
                 """Check if group exists.
 
                 Args:
                     dn: Group distinguished name
 
                 Returns:
-                    FlextCore.Result[bool]: True if group exists
+                    FlextResult[bool]: True if group exists
 
                 """
                 ...

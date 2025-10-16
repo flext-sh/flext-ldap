@@ -56,7 +56,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value
         assert schema_data.server_type is not None
 
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
@@ -76,7 +76,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value
         assert schema_data.server_info is not None
 
         # Verify server info contains expected fields
@@ -100,7 +100,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value
         assert schema_data.server_quirks is not None
 
         # Verify quirks are detected
@@ -122,7 +122,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value
         assert schema_data.server_info is not None
 
         # Test quirks detector directly
@@ -203,7 +203,7 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value  # type: ignore[assignment]
+        schema_data: FlextLdapModels.SchemaDiscoveryResult = schema_result.value
         assert schema_data is not None
 
         # Verify schema components are discovered
@@ -269,9 +269,9 @@ class TestSharedUniversalOperations:
 
         # Test modifying the base DN description
         # Create EntryChanges with proper type annotation
-        changes: FlextLdapModels.EntryChanges = {  # type: ignore[assignment]
-            "description": ["FLEXT Shared Test Organization - Modified by Test"]
-        }
+        changes = FlextLdapModels.EntryChanges(
+            description=["FLEXT Shared Test Organization - Modified by Test"]
+        )
         modify_result = shared_ldap_client.modify_entry_universal(
             dn=base_dn,
             changes=changes,
