@@ -170,7 +170,7 @@ class TestSharedLDAPIntegration:
 
         # Test creating an organizational unit using universal add
         ou_dn = f"ou=test,{base_dn}"
-        create_result = shared_ldap_client.add_entry_universal(
+        create_result = shared_ldap_client.add_entry(
             dn=ou_dn,
             attributes={
                 "objectClass": ["organizationalUnit", "top"],
@@ -205,7 +205,7 @@ class TestSharedLDAPIntegration:
         assert len(search_result.value) > 0
 
         # Clean up - delete the test entry
-        delete_result = shared_ldap_client.delete_entry_universal(ou_dn)
+        delete_result = shared_ldap_client.delete_entry(ou_dn)
         # Note: Deletion might fail if entry doesn't exist or we don't have permissions
         # This is OK for shared container testing
         if not delete_result.is_success:

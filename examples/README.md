@@ -266,7 +266,7 @@ python examples/06_validation_patterns.py
 - Retry patterns with exponential backoff
 - Bulk operations with batching
 - Complete FlextResult error handling patterns
-- Exception handling with FlextLdapExceptions
+- Exception handling with FlextExceptions
 - Performance optimization techniques
   - Attribute filtering
   - Scope limitation

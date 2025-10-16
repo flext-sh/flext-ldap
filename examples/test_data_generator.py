@@ -173,6 +173,7 @@ class TestDataGenerator:
             base_dn: Base DN for all entries
 
         """
+        super().__init__()
         self.server_type = server_type
         self.base_dn = base_dn
         self.entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
@@ -301,20 +302,18 @@ class TestDataGenerator:
                     FlextLdapConstants.LdapAttributeNames.DISPLAY_NAME: cn,
                     FlextLdapConstants.LdapAttributeNames.EMPLOYEE_NUMBER: str(user_id),
                     FlextLdapConstants.LdapAttributeNames.DEPARTMENT: dept,
-                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice(
-                        [
-                            "Engineer",
-                            "Manager",
-                            "Analyst",
-                            "Specialist",
-                            "Coordinator",
-                            "Director",
-                            "Lead",
-                            "Senior",
-                            "Junior",
-                            "Intern",
-                        ]
-                    ),
+                    FlextLdapConstants.LdapAttributeNames.TITLE: random.choice([
+                        "Engineer",
+                        "Manager",
+                        "Analyst",
+                        "Specialist",
+                        "Coordinator",
+                        "Director",
+                        "Lead",
+                        "Senior",
+                        "Junior",
+                        "Intern",
+                    ]),
                 }
 
                 # Add optional attributes for some users
@@ -330,14 +329,12 @@ class TestDataGenerator:
 
                 if random.random() < 0.3:  # 30% have employee type
                     attributes[FlextLdapConstants.LdapAttributeNames.EMPLOYEE_TYPE] = (
-                        random.choice(
-                            [
-                                "full-time",
-                                "part-time",
-                                "contractor",
-                                "intern",
-                            ]
-                        )
+                        random.choice([
+                            "full-time",
+                            "part-time",
+                            "contractor",
+                            "intern",
+                        ])
                     )
 
                 self.entries.append((dn, attributes))

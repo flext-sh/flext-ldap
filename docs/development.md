@@ -160,7 +160,7 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
-# src/flext_ldap/exceptions.py
+# src/flext_core.py
 ```
 
 **Application Layer** (Use cases):

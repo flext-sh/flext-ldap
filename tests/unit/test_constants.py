@@ -36,25 +36,32 @@ class TestFlextLdapConstants:
 
     def test_attributes_core_constants(self) -> None:
         """Test core attribute constants."""
-        assert FlextLdapConstants.Attributes.COMMON_NAME == "cn"
-        assert FlextLdapConstants.Attributes.SURNAME == "sn"
-        assert FlextLdapConstants.Attributes.GIVEN_NAME == "givenName"
-        assert FlextLdapConstants.Attributes.DISPLAY_NAME == "displayName"
-        assert FlextLdapConstants.Attributes.USER_ID == "uid"
-        assert FlextLdapConstants.Attributes.MAIL == "mail"
-        assert FlextLdapConstants.Attributes.USER_PASSWORD == "userPassword"
+        assert FlextLdapConstants.LdapAttributeNames.COMMON_NAME == "cn"
+        assert FlextLdapConstants.LdapAttributeNames.SURNAME == "sn"
+        assert FlextLdapConstants.LdapAttributeNames.GIVEN_NAME == "givenName"
+        assert FlextLdapConstants.LdapAttributeNames.DISPLAY_NAME == "displayName"
+        assert FlextLdapConstants.LdapAttributeNames.USER_ID == "uid"
+        assert FlextLdapConstants.LdapAttributeNames.MAIL == "mail"
+        assert FlextLdapConstants.LdapAttributeNames.USER_PASSWORD == "userPassword"
 
     def test_attributes_group_constants(self) -> None:
         """Test group attribute constants."""
-        assert FlextLdapConstants.Attributes.MEMBER == "member"
-        assert FlextLdapConstants.Attributes.UNIQUE_MEMBER == "uniqueMember"
-        assert FlextLdapConstants.Attributes.MEMBER_OF == "memberOf"
-        assert FlextLdapConstants.Attributes.OWNER == "owner"
+        assert FlextLdapConstants.LdapAttributeNames.MEMBER == "member"
+        assert FlextLdapConstants.LdapAttributeNames.UNIQUE_MEMBER == "uniqueMember"
+        assert FlextLdapConstants.LdapAttributeNames.MEMBER_OF == "memberOf"
+        assert FlextLdapConstants.LdapAttributeNames.OWNER == "owner"
 
     def test_attributes_minimal_lists(self) -> None:
         """Test minimal attribute lists."""
-        assert FlextLdapConstants.Attributes.MINIMAL_USER_ATTRS == ["uid", "cn", "mail"]
-        assert FlextLdapConstants.Attributes.MINIMAL_GROUP_ATTRS == ["cn", "member"]
+        assert FlextLdapConstants.LdapAttributeNames.MINIMAL_USER_ATTRS == [
+            "uid",
+            "cn",
+            "mail",
+        ]
+        assert FlextLdapConstants.LdapAttributeNames.MINIMAL_GROUP_ATTRS == [
+            "cn",
+            "member",
+        ]
 
     def test_attributes_all_lists(self) -> None:
         """Test comprehensive attribute lists."""
@@ -70,7 +77,9 @@ class TestFlextLdapConstants:
             "description",
             "memberOf",
         ]
-        assert expected_user_attrs == FlextLdapConstants.Attributes.ALL_USER_ATTRS
+        assert (
+            expected_user_attrs == FlextLdapConstants.LdapAttributeNames.ALL_USER_ATTRS
+        )
 
         expected_group_attrs = [
             "objectClass",
@@ -81,15 +90,18 @@ class TestFlextLdapConstants:
             "owner",
             "memberOf",
         ]
-        assert expected_group_attrs == FlextLdapConstants.Attributes.ALL_GROUP_ATTRS
+        assert (
+            expected_group_attrs
+            == FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
+        )
 
     def test_attributes_get_group_attributes_method(self) -> None:
         """Test get_group_attributes method returns copy."""
-        result = FlextLdapConstants.Attributes.get_group_attributes()
-        assert result == FlextLdapConstants.Attributes.ALL_GROUP_ATTRS
+        result = FlextLdapConstants.LdapAttributeNames.get_group_attributes()
+        assert result == FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
         # Verify it's a copy (modification doesn't affect original)
         result.append("test")
-        assert "test" not in FlextLdapConstants.Attributes.ALL_GROUP_ATTRS
+        assert "test" not in FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
 
     def test_ldap_attribute_names_core(self) -> None:
         """Test LDAP attribute names core constants."""

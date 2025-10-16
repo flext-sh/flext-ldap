@@ -112,20 +112,16 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
                             if len(parts) == FlextLdapConstants.Parsing.ACL_RULE_PARTS:
-                                rules.append(
-                                    {
-                                        "who": parts[0].strip(),
-                                        "access": parts[1].strip(),
-                                    }
-                                )
+                                rules.append({
+                                    "who": parts[0].strip(),
+                                    "access": parts[1].strip(),
+                                })
                             else:
                                 # Handle rule without explicit access level
-                                rules.append(
-                                    {
-                                        "who": rule_stripped,
-                                        "access": "read",  # Default
-                                    }
-                                )
+                                rules.append({
+                                    "who": rule_stripped,
+                                    "access": "read",  # Default
+                                })
 
                     acl_dict["rules"] = rules
                     # Keep legacy "by" field for backward compatibility

@@ -32,18 +32,18 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final
+from typing import Any, Final, cast
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
-    FlextLdap,
     FlextLdapConfig,
     FlextLdapModels,
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
+from flext_ldap.clients import FlextLdapClients
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -54,55 +54,38 @@ BIND_PASSWORD: Final[str] = os.getenv("LDAP_BIND_PASSWORD", "admin")
 BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
 
 
-def setup_api() -> FlextLdap | None:
-    """Setup and connect FlextLdap API.
-
-    Returns:
-        Connected FlextLdap instance or None if connection failed.
-
-    """
-    FlextLdapConfig(
+def setup_client() -> FlextLdapClients | None:
+    """Configure and connect a FlextLdapClients instance."""
+    config = FlextLdapConfig(
         ldap_server_uri=LDAP_URI,
         ldap_bind_dn=BIND_DN,
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap()
 
-    # Use context manager for automatic connection/disconnection
-    try:
-        with api:
-            return api
-    except Exception:
-        logger.exception("Connection failed")
+    client = FlextLdapClients(config)
+    connect_result = client.connect(
+        server_uri=LDAP_URI,
+        bind_dn=BIND_DN,
+        password=BIND_PASSWORD,
+    )
+
+    if connect_result.is_failure:
+        logger.error("❌ Connection failed: %s", connect_result.error)
         return None
 
+    return client
 
-def demonstrate_server_detection(api: FlextLdap) -> str | None:
-    """Demonstrate automatic server type detection with schema awareness.
 
-    Args:
-        api: Connected FlextLdap instance
-
-    Returns:
-        Detected server type or None if detection failed.
-
-    """
+def demonstrate_server_detection(client: FlextLdapClients) -> str | None:
+    """Demonstrate automatic server type detection with schema awareness."""
     logger.info("=== Server Type Detection ===")
 
-    # Get detected server type
-    result: FlextResult[str | None] = api.get_detected_server_type()
-
-    if result.is_failure:
-        logger.error(f"❌ Server detection failed: {result.error}")
-        return None
-
-    server_type = result.unwrap()
+    server_type = client.get_server_type()
 
     if server_type:
         logger.info(f"✅ Detected server type: {server_type}")
 
-        # Map server type to description
         server_descriptions = {
             "openldap1": "OpenLDAP 1.x (legacy)",
             "openldap2": "OpenLDAP 2.x (modern)",
@@ -115,7 +98,6 @@ def demonstrate_server_detection(api: FlextLdap) -> str | None:
 
         description = server_descriptions.get(server_type, "Unknown LDAP server")
         logger.info(f"   Description: {description}")
-
     else:
         logger.info("⚠️  Server type not detected (generic LDAP server)")
         server_type = "generic"
@@ -255,11 +237,13 @@ def demonstrate_quirks_integration(server_type: str | None) -> None:
         logger.warning(f"   ⚠️  Quirks integration: {result.error}")
 
 
-def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
+def demonstrate_schema_search(
+    client: FlextLdapClients, server_type: str | None
+) -> None:
     """Demonstrate schema search operations.
 
     Args:
-        api: Connected FlextLdap instance
+        client: Connected FlextLdapClients instance
         server_type: Detected server type for schema DN
 
     """
@@ -285,17 +269,21 @@ def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
         filter_str="(objectClass=*)",
         attributes=["objectClasses", "attributeTypes", "ldapSyntaxes", "matchingRules"],
     )
-    result = api.search(search_request)
+    result = client.search(
+        search_request.base_dn,
+        search_request.filter_str,
+        search_request.attributes,
+    )
 
     if result.is_success:
         entries = result.unwrap()
 
         if entries:
             entry = entries[0]
-            logger.info(f"   ✅ Schema entry found: {entry.dn}")
+            logger.info(f"   ✅ Schema entry found: {entry['dn']}")
 
             # Show available schema attributes
-            attrs = entry.attributes
+            attrs = cast("dict[str, Any]", entry["attributes"])
             logger.info("\n2. Available schema attributes:")
 
             if "objectClasses" in attrs:
@@ -342,24 +330,24 @@ def demonstrate_schema_search(api: FlextLdap, server_type: str | None) -> None:
         logger.info("   ℹ Schema may not be accessible or different DN required")
 
 
-def demonstrate_server_capabilities(api: FlextLdap) -> None:
+def demonstrate_server_capabilities(client: FlextLdapClients) -> None:
     """Demonstrate server capabilities discovery.
 
     Args:
-        api: Connected FlextLdap instance
+        client: Connected FlextLdapClients instance
 
     """
     logger.info("\n=== Server Capabilities Discovery ===")
 
     # Get comprehensive server capabilities
-    result = api.get_server_capabilities()
+    result = client.get_server_capabilities()
 
     if result.is_success:
         caps = result.unwrap()
 
         logger.info("\n✅ Server capabilities discovered:")
-        # ServerCapabilities is a Pydantic model, use model_dump() for dict-like access
-        caps_dict = caps.model_dump() if hasattr(caps, "model_dump") else dict(caps)
+        # ServerCapabilities is a Dict, use directly
+        caps_dict = caps
 
         logger.info(f"   Server type: {caps_dict.get('server_type', 'unknown')}")
         logger.info(f"   ACL format: {caps_dict.get('acl_format', 'N/A')}")
@@ -400,16 +388,16 @@ def main() -> int:
     try:
         # 1. Connect to LDAP server
         logger.info("\n1. Connecting to LDAP server...")
-        api = setup_api()
+        client = setup_client()
 
-        if not api:
+        if not client:
             logger.error("Cannot proceed without connection")
             logger.info("\nℹ Schema operations require LDAP connection")
             return 1
 
         try:
             # 2. Server Type Detection
-            server_type = demonstrate_server_detection(api)
+            server_type = demonstrate_server_detection(client)
 
             # 3. Schema Discovery
             demonstrate_schema_discovery(server_type)
@@ -421,10 +409,10 @@ def main() -> int:
             demonstrate_quirks_integration(server_type)
 
             # 6. Schema Search
-            demonstrate_schema_search(api, server_type)
+            demonstrate_schema_search(client, server_type)
 
             # 7. Server Capabilities
-            demonstrate_server_capabilities(api)
+            demonstrate_server_capabilities(client)
 
             logger.info(f"\n{'=' * 70}")
             logger.info("✅ Schema operations demonstration completed!")
@@ -447,8 +435,8 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected():
-                api.unbind()
+            if client.is_connected:
+                client.unbind()
                 logger.info("\nDisconnected from LDAP server")
 
         return 0

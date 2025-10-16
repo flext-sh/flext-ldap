@@ -43,11 +43,12 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -136,12 +137,11 @@ description: Another sample user from LDIF import
 
 
 def demonstrate_ldif_import(
-    api: FlextLdap, ldif_path: Path
-) -> list[FlextLdapModels.Entry] | None:
+    ldif_path: Path,
+) -> list[FlextLdifModels.Entry] | None:
     """Demonstrate importing entries from LDIF file.
 
     Args:
-        api: Connected FlextLdap instance
         ldif_path: Path to LDIF file
 
     Returns:
@@ -152,20 +152,19 @@ def demonstrate_ldif_import(
 
     logger.info(f"Importing entries from: {ldif_path}")
 
-    # Import entries from LDIF
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.import_from_ldif(ldif_path)
-
-    if result.is_failure:
-        logger.error(f"❌ LDIF import failed: {result.error}")
+    # Import entries from LDIF using FlextLdif
+    ldif_processor = FlextLdif()
+    import_result = ldif_processor.parse_ldif_file(Path(ldif_path))
+    if import_result.is_failure:
+        logger.error(f"❌ LDIF import failed: {import_result.error}")
         return None
-
-    entries = result.unwrap()
+    entries = import_result.unwrap()
     logger.info(f"✅ Imported {len(entries)} entries from LDIF")
 
     # Display imported entries
     for i, entry in enumerate(entries, 1):
         logger.info(f"   {i}. DN: {entry.dn}")
-        logger.info(f"      Attributes: {list(entry.attributes.keys())}")
+        logger.info(f"      Attributes: {list(entry.attributes.attributes.keys())}")
 
         # Show object classes
         object_classes = entry.attributes.get("objectClass", [])
@@ -189,31 +188,46 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     # Search for entries to export
     logger.info("Searching for entries to export...")
-    search_request = FlextLdapModels.SearchRequest.create(
+    search_result = api.search(
         base_dn=BASE_DN,
-        filter_str="(objectClass=person)",
+        search_filter="(objectClass=person)",
         attributes=["cn", "sn", "mail", "uid", "objectClass"],
     )
-    search_result = api.search(search_request)
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
         return None
 
-    entries = search_result.unwrap()
-    if not entries:
+    search_entries = search_result.unwrap()
+    if not search_entries:
         logger.warning("⚠️  No entries found to export")
         return None
 
-    logger.info(f"Found {len(entries)} entries to export")
+    logger.info(f"Found {len(search_entries)} entries to export")
+
+    # Convert search results to Entry objects for LDIF export
+    entries = []
+    for search_entry in search_entries:
+        # search_entry is already a dict[str, object] from the search result
+        if isinstance(search_entry, dict):
+            # Properly type the attributes access
+            attributes = search_entry.get("attributes", {})
+            if isinstance(attributes, dict):
+                entry = FlextLdapModels.Entry(
+                    dn=str(search_entry.get("dn", "")),
+                    attributes=attributes,
+                )
+                entries.append(entry)
 
     # Create export file path
     temp_dir = tempfile.gettempdir()
     export_path = Path(temp_dir) / "exported_users.ldif"
 
-    # Export entries to LDIF
+    # Export entries to LDIF using FlextLdif
     logger.info(f"Exporting to: {export_path}")
-    export_result: FlextResult[bool] = api.export_to_ldif(entries, export_path)
+
+    ldif_processor = FlextLdif()
+    export_result: FlextResult[str] = ldif_processor.write(entries, Path(export_path))
 
     if export_result.is_failure:
         logger.error(f"❌ LDIF export failed: {export_result.error}")
@@ -266,11 +280,11 @@ def demonstrate_entry_conversion() -> None:
     logger.info(f"   Object Classes: {', '.join(object_classes)}")
 
 
-def demonstrate_ldif_round_trip(api: FlextLdap) -> None:
+def demonstrate_ldif_round_trip() -> None:
     """Demonstrate complete LDIF round-trip (import → modify → export).
 
     Args:
-        api: Connected FlextLdap instance
+        api: Connected FlextLdap instance (currently unused for LDIF operations)
 
     """
     logger.info("\n=== LDIF Round-Trip Operations ===")
@@ -280,7 +294,7 @@ def demonstrate_ldif_round_trip(api: FlextLdap) -> None:
     ldif_path = create_sample_ldif_file()
 
     logger.info("Step 2: Importing entries from LDIF...")
-    entries = demonstrate_ldif_import(api, ldif_path)
+    entries = demonstrate_ldif_import(ldif_path)
 
     if not entries:
         logger.error("Round-trip aborted: Import failed")
@@ -290,7 +304,9 @@ def demonstrate_ldif_round_trip(api: FlextLdap) -> None:
     logger.info("Step 3: Modifying imported entries...")
     for entry in entries:
         # Add a processed marker
-        entry.attributes["description"] = [f"Processed by flext-ldap at {Path.cwd()}"]
+        entry.attributes.attributes["description"] = FlextLdifModels.AttributeValues(
+            values=[f"Processed by flext-ldap at {Path.cwd()}"]
+        )
 
     logger.info(f"✅ Modified {len(entries)} entries")
 
@@ -299,7 +315,9 @@ def demonstrate_ldif_round_trip(api: FlextLdap) -> None:
     temp_dir = tempfile.gettempdir()
     output_path = Path(temp_dir) / "round_trip_output.ldif"
 
-    export_result = api.export_to_ldif(entries, output_path)
+    # Entries are already LDIF entries from import
+    ldif_processor = FlextLdif()
+    export_result: FlextResult[str] = ldif_processor.write(entries, output_path)
 
     if export_result.is_success:
         logger.info("✅ Round-trip completed successfully!")
@@ -316,11 +334,8 @@ def demonstrate_ldif_round_trip(api: FlextLdap) -> None:
         logger.warning(f"Failed to cleanup {ldif_path}: {e}")
 
 
-def demonstrate_ldif_availability(api: FlextLdap) -> bool:
+def demonstrate_ldif_availability() -> bool:
     """Check if FlextLdif is available.
-
-    Args:
-        api: FlextLdap instance
 
     Returns:
         True if FlextLdif is available, False otherwise.
@@ -329,7 +344,7 @@ def demonstrate_ldif_availability(api: FlextLdap) -> bool:
     logger.info("\n=== FlextLdif Availability Check ===")
 
     # Check if ldif property is available
-    ldif_instance = api.ldif
+    ldif_instance = FlextLdif()
 
     if ldif_instance is None:
         logger.error("❌ FlextLdif not available")
@@ -340,13 +355,8 @@ def demonstrate_ldif_availability(api: FlextLdap) -> bool:
     return True
 
 
-def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
-    """Demonstrate entry adapter format conversion between servers.
-
-    Args:
-        api: FlextLdap instance
-
-    """
+def demonstrate_entry_adapter_conversion() -> None:
+    """Demonstrate entry adapter format conversion between servers."""
     logger.info("\n=== Entry Adapter Format Conversion ===")
 
     logger.info("\n1. Creating sample entry with server-specific attributes:")
@@ -375,12 +385,14 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
 
     logger.info("\n2. Converting to Oracle OUD format:")
 
-    # Convert LDIF entry to LDAP entry first
+    # Convert LDIF entry to LDAP entry first, then back to LDIF for adapter
     ldap_entry = FlextLdapModels.Entry.from_ldif(openldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     # Use entry adapter to convert between server formats
-    result = api.convert_entry_between_servers(
-        entry=ldap_entry,
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.convert_entry_format(
+        entry=ldif_entry_for_adapter,
         source_server_type="openldap2",
         target_server_type="oud",
     )
@@ -388,19 +400,16 @@ def demonstrate_entry_adapter_conversion(api: FlextLdap) -> None:
     if result.is_success:
         oud_entry = result.unwrap()
         logger.info("   ✅ Conversion successful")
-        logger.info(f"      Target attributes: {list(oud_entry.attributes.keys())}")
+        logger.info(
+            f"      Target attributes: {list(oud_entry.attributes.attributes.keys())}"
+        )
         logger.info("      Note: Server-specific attributes adapted")
     else:
         logger.warning(f"   ⚠️  Conversion: {result.error}")
 
 
-def demonstrate_entry_server_detection(api: FlextLdap) -> None:
-    """Demonstrate server type detection from entry attributes.
-
-    Args:
-        api: FlextLdap instance
-
-    """
+def demonstrate_entry_server_detection() -> None:
+    """Demonstrate server type detection from entry attributes."""
     logger.info("\n=== Entry Server Type Detection ===")
 
     # Test entries with server-specific attributes
@@ -471,9 +480,12 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             logger.warning(f"   ⚠️  Skipping string entry: {entry}")
             continue
         # entry is now guaranteed to be FlextLdifModels.Entry
-        # Convert to LDAP entry for server type detection
+        # Convert to LDAP entry for server type detection, then back to LDIF for adapter
         ldap_entry = FlextLdapModels.Entry.from_ldif(entry)
-        result = api.detect_entry_server_type(ldap_entry)
+        ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+        adapter = FlextLdapEntryAdapter()
+        result = adapter.detect_entry_server_type(ldif_entry_for_adapter)
 
         if result.is_success:
             detected = result.unwrap()
@@ -486,13 +498,8 @@ def demonstrate_entry_server_detection(api: FlextLdap) -> None:
             logger.warning(f"   ⚠️  Detection failed: {result.error}")
 
 
-def demonstrate_entry_normalization(api: FlextLdap) -> None:
-    """Demonstrate entry normalization for target servers.
-
-    Args:
-        api: FlextLdap instance
-
-    """
+def demonstrate_entry_normalization() -> None:
+    """Demonstrate entry normalization for target servers."""
     logger.info("\n=== Entry Normalization for Servers ===")
     logger.info("\n1. Creating entry with mixed attributes:")
 
@@ -522,27 +529,27 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     logger.info(f"      {list(mixed_entry.attributes.attributes.keys())}")
 
     logger.info("\n2. Normalizing for current server:")
-    # Convert LDIF entry to LDAP entry for normalization
+    # Convert LDIF entry to LDAP entry for normalization, then back to LDIF for adapter
     ldap_entry = FlextLdapModels.Entry.from_ldif(mixed_entry)
-    result = api.normalize_entry_for_server(ldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.normalize_entry_for_server(ldif_entry_for_adapter, "generic")
 
     if result.is_success:
         normalized = result.unwrap()
         logger.info("   ✅ Normalization successful")
         logger.info(f"      Normalized DN: {normalized.dn}")
-        logger.info(f"      Attributes: {list(normalized.attributes.keys())}")
+        logger.info(
+            f"      Attributes: {list(normalized.attributes.attributes.keys())}"
+        )
         logger.info("      Entry is ready for LDAP operations")
     else:
         logger.warning(f"   ⚠️  Normalization: {result.error}")
 
 
-def demonstrate_entry_validation(api: FlextLdap) -> None:
-    """Demonstrate entry validation for target servers.
-
-    Args:
-        api: FlextLdap instance
-
-    """
+def demonstrate_entry_validation() -> None:
+    """Demonstrate entry validation for target servers."""
     logger.info("\n=== Entry Validation for Servers ===")
     logger.info("\n1. Validating compatible entry:")
 
@@ -561,9 +568,12 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         version=1,
     )
 
-    # Convert LDIF entry to LDAP entry for validation
+    # Convert LDIF entry to LDAP entry for validation, then back to LDIF for adapter
     ldap_entry = FlextLdapModels.Entry.from_ldif(valid_entry)
-    result = api.validate_entry_for_server(ldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.validate_entry_for_server(ldif_entry_for_adapter, "generic")
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -592,9 +602,12 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         version=1,
     )
 
-    # Convert LDIF entry to LDAP entry for validation
+    # Convert LDIF entry to LDAP entry for validation, then back to LDIF for adapter
     ldap_entry = FlextLdapModels.Entry.from_ldif(specific_entry)
-    result = api.validate_entry_for_server(ldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.validate_entry_for_server(ldif_entry_for_adapter, "generic")
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -606,29 +619,21 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
         logger.info(f"   INFO Validation note: {result.error}")
 
 
-def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
-    """Demonstrate server-specific attribute information.
-
-    Args:
-        api: FlextLdap instance
-
-    """
+def demonstrate_server_specific_attributes() -> None:
+    """Demonstrate server-specific attribute information."""
     logger.info("\n=== Server-Specific Attributes ===")
 
     logger.info("\n1. Getting server-specific attributes:")
 
-    result = api.get_server_specific_attributes()
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.get_server_specific_attributes("generic")
 
     if result.is_success:
         attributes = result.unwrap()
         logger.info("   ✅ Server-specific attributes retrieved:")
 
         # Display attribute information - ServerAttributes is a Pydantic model
-        attrs_dict = (
-            attributes.model_dump()
-            if hasattr(attributes, "model_dump")
-            else dict(attributes)
-        )
+        attrs_dict = dict(attributes)
         attr_items = list(attrs_dict.items())[:5]  # Show first 5
 
         for key, value in attr_items:
@@ -670,7 +675,7 @@ def main() -> int:
 
         try:
             # Check FlextLdif availability
-            if not demonstrate_ldif_availability(api):
+            if not demonstrate_ldif_availability():
                 logger.warning("FlextLdif not available - skipping LDIF operations")
                 logger.info("Install flext-ldif to enable LDIF functionality:")
                 logger.info("   pip install flext-ldif")
@@ -678,16 +683,16 @@ def main() -> int:
 
             # LDIF operations demonstrations
             ldif_path = create_sample_ldif_file()
-            demonstrate_ldif_import(api, ldif_path)
+            demonstrate_ldif_import(ldif_path)
             demonstrate_ldif_export(api)
-            demonstrate_ldif_round_trip(api)
+            demonstrate_ldif_round_trip()
 
             # Entry adapter demonstrations
-            demonstrate_entry_adapter_conversion(api)
-            demonstrate_entry_server_detection(api)
-            demonstrate_entry_normalization(api)
-            demonstrate_entry_validation(api)
-            demonstrate_server_specific_attributes(api)
+            demonstrate_entry_adapter_conversion()
+            demonstrate_entry_server_detection()
+            demonstrate_entry_normalization()
+            demonstrate_entry_validation()
+            demonstrate_server_specific_attributes()
 
             # Cleanup
             with contextlib.suppress(Exception):
@@ -706,7 +711,16 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected():
+            if (
+                hasattr(api, "client")
+                and hasattr(api.client, "is_connected")
+                and api.client.is_connected
+            ):
+                api.client.unbind()
+            elif hasattr(api, "is_connected") and api.is_connected:
+                if hasattr(api, "unbind"):
+                    api.unbind()
+            elif hasattr(api, "unbind"):
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 

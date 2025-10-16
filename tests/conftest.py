@@ -35,6 +35,24 @@ from flext_ldap.typings import FlextLdapTypes
 logger = FlextLogger(__name__)
 
 
+# =============================================================================
+# TEST HELPER FUNCTIONS
+# =============================================================================
+
+
+def secret(value: str = "test") -> SecretStr:
+    """Create a SecretStr for use in tests.
+
+    Args:
+        value: The password string to wrap (default: "test")
+
+    Returns:
+        A SecretStr instance
+
+    """
+    return SecretStr(value)
+
+
 # Import test data directly to avoid pyrefly import issues
 SAMPLE_ACL_DATA = {
     "target": "dc=example,dc=com",
@@ -102,7 +120,7 @@ TEST_USERS = [
 class FlextTestDocker:
     """Mock implementation of FlextTestDocker for testing."""
 
-    def get_container_status(self, container_name: str) -> FlextResult:
+    def get_container_status(self, container_name: str) -> FlextResult[object]:
         """Mock container status check."""
 
         # Mock implementation - assume container is not running
@@ -119,7 +137,7 @@ class FlextTestDocker:
         # Return as FlextResult.ok with mock value
         return FlextResult.ok(MockValue())
 
-    def compose_up(self, compose_file: str, service: str) -> FlextResult:
+    def compose_up(self, compose_file: str, service: str) -> FlextResult[object]:
         """Mock compose up."""
         # Mock implementation - assume failure
         return FlextResult.fail("Mock implementation - Docker not available")
@@ -155,7 +173,7 @@ def ldap_config() -> FlextLdapConfig:
     config.ldap_port = FlextLdapConstants.Protocol.DEFAULT_PORT
     config.ldap_use_ssl = False
     config.ldap_bind_dn = "cn=admin,dc=example,dc=com"
-    config.ldap_bind_password = SecretStr("admin123")
+    config.ldap_bind_password = secret("admin123")
     config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
     return config
 
@@ -168,7 +186,7 @@ def ldap_config_invalid() -> FlextLdapConfig:
     config.ldap_port = FlextLdapConstants.Protocol.DEFAULT_PORT
     config.ldap_use_ssl = False
     config.ldap_bind_dn = ""  # Invalid empty DN
-    config.ldap_bind_password = SecretStr("")  # Invalid empty password
+    config.ldap_bind_password = secret("")  # Invalid empty password
     config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
     return config
 
@@ -399,19 +417,17 @@ def mock_connection_result() -> FlextResult[bool]:
 @pytest.fixture
 def mock_search_result() -> FlextResult[list[FlextTypes.Dict]]:
     """Get mock search result."""
-    return FlextResult[list[FlextTypes.Dict]].ok(
-        [
-            {
-                "dn": "uid=testuser,ou=people,dc=example,dc=com",
-                "attributes": {
-                    "uid": ["testuser"],
-                    "cn": ["Test User"],
-                    "sn": ["User"],
-                    "mail": ["testuser@example.com"],
-                },
-            }
-        ]
-    )
+    return FlextResult[list[FlextTypes.Dict]].ok([
+        {
+            "dn": "uid=testuser,ou=people,dc=example,dc=com",
+            "attributes": {
+                "uid": ["testuser"],
+                "cn": ["Test User"],
+                "sn": ["User"],
+                "mail": ["testuser@example.com"],
+            },
+        }
+    ])
 
 
 @pytest.fixture
@@ -446,7 +462,10 @@ def clean_ldap_container(
     # The container is managed by docker-compose.openldap.yml
     status = docker_control.get_container_status(container_name)
 
-    if status.is_failure or status.value.status.value != "running":
+    if (
+        status.is_failure
+        or getattr(getattr(status.value, "status", None), "value", None) != "running"
+    ):
         # Container not running - start it via docker-compose
         compose_file = "..docker/docker-compose.openldap.yml"
         start_result = docker_control.compose_up(compose_file, "openldap")

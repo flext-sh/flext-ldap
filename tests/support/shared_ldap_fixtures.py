@@ -7,7 +7,7 @@ that require Docker containers.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 import pytest
 from flext_core import FlextResult
@@ -44,7 +44,7 @@ def check_docker_available() -> bool:
         return False
 
 
-def skip_if_no_docker(func: Callable) -> Callable:
+def skip_if_no_docker(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to skip test if Docker is not available."""
     return pytest.mark.skipif(
         not check_docker_available(), reason="Docker not available or not running"

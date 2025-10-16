@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -212,7 +213,8 @@ class FlextLdapDomain:
                 )
 
             # Example business rule: users must be active
-            if not user.is_active:
+            is_active_status: bool = cast("bool", user.is_active)
+            if not is_active_status:
                 return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups",
                 )

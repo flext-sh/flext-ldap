@@ -100,56 +100,48 @@ def load_test_data_openldap() -> bool:
 
     api = FlextLdap()
 
-    # Connect to server
+    # Connect to server using context manager
     logger.info("Connecting to OpenLDAP server...")
-    connect_result = api.connect(
-        server="localhost",
-        port=3390,
-        use_ssl=False,
-        bind_dn="cn=admin,dc=flext,dc=local",
-        bind_password="admin123",
-    )
-    if connect_result.is_failure:
-        logger.error(f"Failed to connect: {connect_result.error}")
+    try:
+        with api:
+            logger.info("✅ Connected successfully")
+
+            # Load entries
+            success_count = 0
+            failure_count = 0
+            skipped_count = 0
+
+            logger.info(f"Loading {len(entries)} entries...")
+            logger.info("-" * 80)
+
+            for i, (dn, attributes) in enumerate(entries, 1):
+                # Skip base DN (already exists)
+                if dn == "dc=flext,dc=local":
+                    skipped_count += 1
+                    continue
+
+                # Show progress every 50 entries
+                if i % 50 == 0:
+                    logger.info(f"Progress: {i}/{len(entries)} entries processed...")
+
+                # Add entry using flext-ldap
+                add_result = api.add_entry(dn=dn, attributes=attributes)
+
+                if add_result.is_success:
+                    success_count += 1
+                else:
+                    # Check if entry already exists (code 68)
+                    error_msg = str(add_result.error)
+                    if "Already exists" in error_msg or "68" in error_msg:
+                        skipped_count += 1
+                    else:
+                        failure_count += 1
+                        if failure_count <= 10:  # Only log first 10 failures
+                            logger.warning(f"Failed to add {dn}: {add_result.error}")
+
+    except Exception:
+        logger.exception("Failed to connect")
         return False
-
-    logger.info("✅ Connected successfully")
-
-    # Load entries
-    success_count = 0
-    failure_count = 0
-    skipped_count = 0
-
-    logger.info(f"Loading {len(entries)} entries...")
-    logger.info("-" * 80)
-
-    for i, (dn, attributes) in enumerate(entries, 1):
-        # Skip base DN (already exists)
-        if dn == "dc=flext,dc=local":
-            skipped_count += 1
-            continue
-
-        # Show progress every 50 entries
-        if i % 50 == 0:
-            logger.info(f"Progress: {i}/{len(entries)} entries processed...")
-
-        # Add entry using flext-ldap
-        add_result = api.add_entry(dn=dn, attributes=attributes)
-
-        if add_result.is_success:
-            success_count += 1
-        else:
-            # Check if entry already exists (code 68)
-            error_msg = str(add_result.error)
-            if "Already exists" in error_msg or "68" in error_msg:
-                skipped_count += 1
-            else:
-                failure_count += 1
-                if failure_count <= 10:  # Only log first 10 failures
-                    logger.warning(f"Failed to add {dn}: {add_result.error}")
-
-    # Disconnect
-    api.unbind()
 
     # Summary
     logger.info("-" * 80)

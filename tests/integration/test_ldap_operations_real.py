@@ -29,7 +29,7 @@ class TestRealLdapConnection:
         client = shared_ldap_client
 
         # The shared client should already be connected
-        assert client.is_connected()
+        assert client.is_connected
 
     def test_bind_with_correct_credentials(
         self,
@@ -44,7 +44,7 @@ class TestRealLdapConnection:
         )
 
         assert connect_result.is_success
-        assert client.is_connected()
+        assert client.is_connected
 
     def test_bind_with_incorrect_credentials(
         self,
@@ -71,7 +71,7 @@ class TestRealLdapConnection:
 
         close_result = client.unbind()
         assert close_result.is_success
-        assert not client.is_connected()
+        assert not client.is_connected
 
 
 @pytest.mark.integration
@@ -134,7 +134,7 @@ class TestRealLdapCRUD:
         client = shared_ldap_client
 
         # Add OU
-        add_result = client.add_entry_universal(
+        add_result = client.add_entry(
             dn="ou=testou,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "testou"},
         )
@@ -150,7 +150,7 @@ class TestRealLdapCRUD:
         assert len(search_result.value) > 0
 
         # Delete OU
-        delete_result = client.delete_entry_universal(dn="ou=testou,dc=flext,dc=local")
+        delete_result = client.delete_entry(dn="ou=testou,dc=flext,dc=local")
         assert delete_result.is_success, f"Delete OU failed: {delete_result.error}"
 
     def test_add_and_modify_user(self, shared_ldap_client: FlextLdapClients) -> None:
@@ -158,13 +158,13 @@ class TestRealLdapCRUD:
         client = shared_ldap_client
 
         # First ensure OU exists
-        client.add_entry_universal(
+        client.add_entry(
             dn="ou=users,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "users"},
         )
 
         # Add user
-        add_result = client.add_entry_universal(
+        add_result = client.add_entry(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             attributes={
                 "objectClass": ["inetOrgPerson"],
@@ -177,9 +177,11 @@ class TestRealLdapCRUD:
         assert add_result.is_success, f"Add user failed: {add_result.error}"
 
         # Modify user
-        modify_result = client.modify_entry_universal(
+        changes = FlextLdapModels.EntryChanges()
+        setattr(changes, "mail", ["newemail@flext.local"])
+        modify_result = client.modify_entry(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
-            changes=FlextLdapModels.EntryChanges(mail="newemail@flext.local"),
+            changes=changes,
         )
 
         # Note: modify_entry_universal may have issues in current implementation
@@ -199,21 +201,21 @@ class TestRealLdapCRUD:
             assert mail_value in {"testuser@flext.local", "newemail@flext.local"}
 
         # Cleanup
-        client.delete_entry_universal(dn="cn=testuser,ou=users,dc=flext,dc=local")
-        client.delete_entry_universal(dn="ou=users,dc=flext,dc=local")
+        client.delete_entry(dn="cn=testuser,ou=users,dc=flext,dc=local")
+        client.delete_entry(dn="ou=users,dc=flext,dc=local")
 
     def test_add_and_delete_group(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test adding and deleting a group entry."""
         client = shared_ldap_client
 
         # First ensure OU exists
-        client.add_entry_universal(
+        client.add_entry(
             dn="ou=groups,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "groups"},
         )
 
         # Add group
-        add_result = client.add_entry_universal(
+        add_result = client.add_entry(
             dn="cn=testgroup,ou=groups,dc=flext,dc=local",
             attributes={
                 "objectClass": ["groupOfNames"],
@@ -234,8 +236,8 @@ class TestRealLdapCRUD:
         assert len(search_result.value) > 0
 
         # Cleanup
-        client.delete_entry_universal(dn="cn=testgroup,ou=groups,dc=flext,dc=local")
-        client.delete_entry_universal(dn="ou=groups,dc=flext,dc=local")
+        client.delete_entry(dn="cn=testgroup,ou=groups,dc=flext,dc=local")
+        client.delete_entry(dn="ou=groups,dc=flext,dc=local")
 
 
 @pytest.mark.integration
@@ -249,7 +251,7 @@ class TestRealLdapAuthentication:
         client = shared_ldap_client
 
         # Authenticate works through successful connection
-        assert client.is_connected()
+        assert client.is_connected
 
     def test_user_password_authentication(
         self, shared_ldap_client: FlextLdapClients
@@ -258,12 +260,12 @@ class TestRealLdapAuthentication:
         client = shared_ldap_client
 
         # Create test OU and user
-        client.add_entry_universal(
+        client.add_entry(
             dn="ou=people,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "people"},
         )
 
-        client.add_entry_universal(
+        client.add_entry(
             dn="cn=authuser,ou=people,dc=flext,dc=local",
             attributes={
                 "objectClass": ["inetOrgPerson", "simpleSecurityObject"],
@@ -291,5 +293,5 @@ class TestRealLdapAuthentication:
             bind_dn="cn=admin,dc=flext,dc=local",
             password="admin123",
         )
-        client.delete_entry_universal(dn="cn=authuser,ou=people,dc=flext,dc=local")
-        client.delete_entry_universal(dn="ou=people,dc=flext,dc=local")
+        client.delete_entry(dn="cn=authuser,ou=people,dc=flext,dc=local")
+        client.delete_entry(dn="ou=people,dc=flext,dc=local")

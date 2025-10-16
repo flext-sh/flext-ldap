@@ -16,7 +16,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 **Symptom:**
 
 ```
-FlextLdapConnectionError: Connection failed: [Errno 111] Connection refused
+ConnectionError: Connection failed: [Errno 111] Connection refused
 ```
 
 **Diagnosis:**
@@ -45,7 +45,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w 
 **Symptom:**
 
 ```
-FlextLdapConnectionError: TLS handshake failed
+ConnectionError: TLS handshake failed
 ```
 
 **Diagnosis:**
@@ -98,7 +98,7 @@ config = FlextLdapConfig(
 **Symptom:**
 
 ```
-FlextLdapAuthenticationError: Authentication failed: Invalid credentials
+AuthenticationError: Authentication failed: Invalid credentials
 ```
 
 **Diagnosis:**
@@ -134,7 +134,7 @@ run(diagnose_auth())
 **Symptom:**
 
 ```
-FlextLdapSearchError: Invalid DN format
+SearchError: Invalid DN format
 ```
 
 **Common DN Format Mistakes:**
@@ -188,7 +188,7 @@ for test_dn in test_dns:
 **Symptom:**
 
 ```
-FlextLdapSearchError: Bad search filter
+SearchError: Bad search filter
 ```
 
 **Common Filter Mistakes:**
@@ -245,7 +245,7 @@ for test_filter in test_filters:
 **Symptom:**
 
 ```
-FlextLdapSearchError: No such object: ou=users,dc=example,dc=com
+SearchError: No such object: ou=users,dc=example,dc=com
 ```
 
 **Diagnosis:**
@@ -392,7 +392,7 @@ search_request = FlextLdapEntities.SearchRequest(
 **Symptoms:**
 
 ```
-FlextLdapConnectionError: Connection pool exhausted
+ConnectionError: Connection pool exhausted
 ```
 
 **Diagnosis:**

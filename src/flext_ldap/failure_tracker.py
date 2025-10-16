@@ -229,14 +229,12 @@ class FlextLdapFailureTracker(FlextService[None]):
 
         """
         if not self._failures_file.exists():
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "total": 0,
-                    "by_phase": {},
-                    "by_operation": {},
-                    "most_common_errors": [],
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "total": 0,
+                "by_phase": {},
+                "by_operation": {},
+                "most_common_errors": [],
+            })
 
         failures = []
         with self._failures_file.open("r", encoding="utf-8") as f:

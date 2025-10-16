@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
@@ -73,7 +73,7 @@ class FlextLdapProtocols(FlextProtocols):
         class LdapAttribute(Protocol):
             """Protocol for LDAP attribute objects from ldap3."""
 
-            value: object
+            value: Any
 
         @runtime_checkable
         class LdapEntry(Protocol):

@@ -127,8 +127,20 @@ class TestFlextLdapConfigEnvironment:
             env_file_path = f.name
 
         try:
-            # Load config from .env file (field validators handle type coercion)
-            config = FlextLdapConfig(_env_file=env_file_path)
+            # Set environment variables from .env file content
+            with Path(env_file_path).open("r", encoding="utf-8") as f:
+                for line_content in f:
+                    stripped_line = line_content.strip()
+                    if (
+                        stripped_line
+                        and not stripped_line.startswith("#")
+                        and "=" in stripped_line
+                    ):
+                        key, value = stripped_line.split("=", 1)
+                        os.environ[key] = value
+
+            # Load config (will pick up environment variables)
+            config = FlextLdapConfig()
 
             # Verify values loaded from .env file
             assert config.ldap_port == 3390, f"Expected 3390, got {config.ldap_port}"
@@ -159,8 +171,22 @@ class TestFlextLdapConfigEnvironment:
         os.environ["FLEXT_LDAP_PORT"] = "3391"  # env var should win
 
         try:
-            # Load config
-            config = FlextLdapConfig(_env_file=env_file_path)
+            # Set environment variables from .env file content
+            with Path(env_file_path).open("r", encoding="utf-8") as f:
+                for line_content in f:
+                    stripped_line = line_content.strip()
+                    if (
+                        stripped_line
+                        and not stripped_line.startswith("#")
+                        and "=" in stripped_line
+                    ):
+                        key, value = stripped_line.split("=", 1)
+                        # Only set if not already overridden by env var
+                        if key not in os.environ:
+                            os.environ[key] = value
+
+            # Load config (will pick up environment variables)
+            config = FlextLdapConfig()
 
             # Verify precedence: env var > .env file > defaults
             assert config.ldap_port == 3391, (

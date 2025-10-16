@@ -205,7 +205,9 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
         try:
             # Validate input is not empty
             if not acls:
-                return FlextResult[list[FlextLdapModels.Acl]].fail("ACL list cannot be empty")
+                return FlextResult[list[FlextLdapModels.Acl]].fail(
+                    "ACL list cannot be empty"
+                )
 
             results = []
             for acl in acls:

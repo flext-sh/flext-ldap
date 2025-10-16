@@ -32,7 +32,13 @@ import sys
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
-from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapConfig,
+    FlextLdapConstants,
+    FlextLdapModels,
+    FlextLdapTypes,
+)
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -75,7 +81,7 @@ def demonstrate_context_manager() -> None:
     try:
         with FlextLdap() as api:
             logger.info("✅ Automatically connected via context manager")
-            logger.info(f"   Connected: {api.is_connected()}")
+            logger.info(f"   Connected: {api.is_connected}")
             logger.info(f"   Server: {config.ldap_server_uri}:{config.ldap_port}")
             # Connection automatically closed on exit
     except RuntimeError:
@@ -177,7 +183,9 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     logger.info(f"Searching users in: {users_dn}")
-    search_result: FlextResult[list[FlextLdapModels.Entry]] = api.search_users(users_dn)
+    search_result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = (
+        api.search_users(users_dn)
+    )
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
@@ -186,23 +194,31 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     entries = search_result.unwrap()
     logger.info(f"✅ Found {len(entries)} users (using DEFAULT_USER_FILTER):")
     for entry in entries:
-        # OPTIMIZED: Use LdapAttributeNames constants for attribute access
-        cn_attr = entry.attributes.get(
-            FlextLdapConstants.LdapAttributeNames.CN, ["Unknown"]
-        )
-        cn = cn_attr[0] if isinstance(cn_attr, list) else cn_attr
-        mail_attr = entry.attributes.get(
-            FlextLdapConstants.LdapAttributeNames.MAIL, ["N/A"]
-        )
-        mail = mail_attr[0] if isinstance(mail_attr, list) else mail_attr
-        logger.info(f"   - {cn} ({mail})")
+        # API returns dict[str, object], extract attributes
+        if isinstance(entry, dict):
+            attributes = entry.get("attributes", {})
+            if isinstance(attributes, dict):
+                # OPTIMIZED: Use LdapAttributeNames constants for attribute access
+                cn_attr = attributes.get(
+                    FlextLdapConstants.LdapAttributeNames.CN, ["Unknown"]
+                )
+                cn = cn_attr[0] if isinstance(cn_attr, list) else cn_attr
+                mail_attr = attributes.get(
+                    FlextLdapConstants.LdapAttributeNames.MAIL, ["N/A"]
+                )
+                mail = mail_attr[0] if isinstance(mail_attr, list) else mail_attr
+                logger.info(f"   - {cn} ({mail})")
+            else:
+                logger.info("   - (entry has no attributes)")
 
     logger.info("\nFinding specific user with find_user():")
     user_result = api.find_user("john.doe", users_dn)
     if user_result.is_success:
         user = user_result.unwrap()
-        if user:
-            logger.info(f"✅ Found: {user.dn}")
+        if user and isinstance(user, dict):
+            # API returns dict[str, object]
+            dn = user.get("dn", "Unknown")
+            logger.info(f"✅ Found: {dn}")
         else:
             logger.info("User not found")
     else:
@@ -263,11 +279,20 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
         f"({FlextLdapConstants.LdapAttributeNames.UID}=john.doe)",
     ]
     logger.info(f"\nBulk search with {len(filters)} filters...")
-    bulk_result = api.search_entries_bulk([users_dn], filters)
+
+    # Build SearchRequest objects for each filter
+    search_requests: list[FlextLdapModels.SearchRequest] = [
+        FlextLdapModels.SearchRequest(
+            base_dn=users_dn,
+            filter_str=filter_str,
+        )
+        for filter_str in filters
+    ]
+    bulk_result = api.search_entries_bulk(search_requests)
 
     if bulk_result.is_success:
         results = bulk_result.unwrap()
-        total_found = sum(len(r) for r in results)
+        total_found = len(results)
         logger.info(f"✅ Bulk search completed: {total_found} total entries found")
     else:
         logger.error(f"⚠️  Bulk search with errors: {bulk_result.error}")
@@ -286,13 +311,10 @@ def demonstrate_update_entry(api: FlextLdap, user_dn: str) -> None:
     logger.info("\n=== Update Entry Operations ===")
 
     # OPTIMIZED: Use LdapAttributeNames constants for attribute names
-    changes_dict = {
+    changes: dict[str, str | list[str]] = {
         FlextLdapConstants.LdapAttributeNames.MAIL: ["john.doe.updated@example.com"],
         FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER: ["+1-555-1234"],
     }
-
-    # Create EntryChanges instance from dict
-    changes: FlextLdapModels.EntryChanges = FlextLdapModels.EntryChanges(**changes_dict)
 
     logger.info(f"Updating entry: {user_dn}")
     logger.info(f"Changes: {changes}")
@@ -348,7 +370,7 @@ def demonstrate_configuration() -> None:
     api = FlextLdap()  # Auto-loads config from environment
 
     # Validate configuration consistency
-    validation_result: FlextResult[bool] = api.validate_configuration_consistency()
+    validation_result: FlextResult[None] = api.validate_configuration_consistency()
     if validation_result.is_success:
         logger.info("✅ Configuration validation passed")
     else:
@@ -445,7 +467,7 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected():
+            if api.is_connected:
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 

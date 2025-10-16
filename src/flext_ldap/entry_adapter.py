@@ -67,7 +67,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
         ldap3_entry: Ldap3Entry
         | dict[str, object]
         | dict[str, str | dict[str, object]]
-        | dict[str, dict[str, list[str] | str] | str],
+        | dict[str, dict[str, list[str] | str] | str]
+        | None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
@@ -212,7 +213,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        ldif_entry: FlextLdifModels.Entry,
+        ldif_entry: FlextLdifModels.Entry | None,
     ) -> FlextResult[dict[str, FlextTypes.StringList]]:
         """Convert FlextLdifModels.Entry to ldap3 attributes dict.
 
@@ -239,7 +240,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def normalize_attributes_for_add(
         self,
-        attributes: FlextTypes.Dict,
+        attributes: dict[str, object],
     ) -> FlextResult[dict[str, FlextTypes.List]]:
         """Normalize attributes for ldap3 add operation.
 
@@ -264,7 +265,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def create_modify_changes(
         self,
-        modifications: FlextTypes.Dict,
+        modifications: dict[str, object],
     ) -> FlextResult[dict[str, list[tuple[str, FlextTypes.List]]]]:
         """Create ldap3 modify changes from simple modifications dict.
 

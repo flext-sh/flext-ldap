@@ -46,6 +46,46 @@ class FlextLdapTypes(FlextTypes):
     # Use FlextLdapConstants.LiteralTypes directly instead of redeclaring here
 
     # =========================================================================
+    # LDAP DICTIONARY TYPES - LDAP-specific dict type aliases
+    # =========================================================================
+
+    class LdapDict:
+        """LDAP-specific dictionary type definitions overriding FlextTypes.Dict restrictions.
+
+        LDAP attributes and operations require more flexible dictionary types than
+        FlextTypes.Dict which is restricted to: dict[str, bool|float|int|str|None].
+        These LDAP-specific aliases support the complex data structures needed for
+        directory operations.
+        """
+
+        # Core LDAP attribute dictionary: attribute_name → attribute_value(s)
+        type LdapAttributeDict = dict[str, str | list[str]]
+
+        # Entry attributes as dictionary: attribute_name → attribute_values (always list in LDAP)
+        type LdapEntryAttributeDict = dict[str, list[str]]
+
+        # Complex LDAP entry with mixed attribute types
+        type LdapComplexEntryDict = dict[str, list[str] | str]
+
+        # LDAP modify operation: attribute_name → [(operation, values), ...]
+        type LdapModifyDict = dict[str, list[tuple[str, list[str]]]]
+
+        # LDAP search result entries (compatible with ldap3 response format)
+        type LdapSearchResultDict = dict[str, dict[str, list[str]] | str]
+
+        # Configuration dictionaries (more flexible than FlextTypes.Dict)
+        type LdapConfigDict = dict[str, str | int | bool | list[str] | None]
+
+        # Schema attribute dictionary
+        type LdapSchemaAttributeDict = dict[str, str | list[str] | bool | None]
+
+        # LDAP response dictionary from ldap3 operations
+        type LdapResponseDict = dict[str, str | int | bool | list[str] | None]
+
+        # LDAP entry template for creating entries
+        type LdapEntryTemplateDict = dict[str, str | list[str]]
+
+    # =========================================================================
     # LDAP DOMAIN TYPES - LDAP-specific type definitions
     # =========================================================================
 
@@ -60,7 +100,7 @@ class FlextLdapTypes(FlextTypes):
         # LDAP search and filter types
         type SearchFilter = str
         type SearchScope = FlextLdapConstants.SearchScope
-        type SearchResult = list[FlextTypes.Dict]
+        type SearchResult = list[FlextLdapTypes.LdapDict.LdapSearchResultDict]
 
         # LDAP connection and server types
         type ServerURI = str
@@ -94,16 +134,22 @@ class FlextLdapTypes(FlextTypes):
 
         # LDAP-specific configuration value (composite type)
         type LdapConfigValue = (
-            str | int | bool | FlextTypes.StringList | FlextTypes.Dict
+            str
+            | int
+            | bool
+            | FlextTypes.StringList
+            | FlextLdapTypes.LdapDict.LdapConfigDict
         )
 
         # LDAP-specific attribute value (composite type)
-        type LdapAttributeValue = str | FlextTypes.StringList | FlextTypes.Dict
+        type LdapAttributeValue = (
+            str | FlextTypes.StringList | FlextLdapTypes.LdapDict.LdapAttributeDict
+        )
 
         # LDAP-specific entry value (composite type)
         type LdapEntryValue = dict[str, str | FlextTypes.StringList]
 
-    # Note: Configuration types use FlextTypes.Dict directly
+    # Note: Configuration types use FlextLdapTypes.LdapDict for flexibility
     # Operation types use FlextLdapModels (Command/Query patterns)
     # Result types use FlextResult[T] from flext-core
 
@@ -138,7 +184,9 @@ class FlextLdapTypes(FlextTypes):
             FlextLdapTypes.LdapCore.LdapConfigValue | object,
         ]
         type DirectoryConfig = dict[str, str | int | bool | FlextTypes.StringList]
-        type AuthenticationConfig = dict[str, bool | str | FlextTypes.Dict]
+        type AuthenticationConfig = dict[
+            str, bool | str | FlextLdapTypes.LdapDict.LdapConfigDict
+        ]
         type SyncConfig = dict[str, FlextLdapTypes.LdapCore.LdapConfigValue | object]
 
     # =========================================================================

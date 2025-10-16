@@ -75,7 +75,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
         search_request = FlextLdapModels.SearchRequest.create(
             base_dn=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
         )
-        search_result = api.search(search_request)
+        search_result = api.search_with_request(search_request)
 
         if search_result.is_success:
             entries = search_result.unwrap()
@@ -87,7 +87,7 @@ def demonstrate_basic_connection_lifecycle() -> None:
     finally:
         # Always disconnect (resource cleanup)
         logger.info("\n3. Disconnecting...")
-        if api.is_connected():
+        if api.is_connected:
             api.unbind()
             logger.info("   ✅ Disconnected successfully")
         else:
@@ -107,12 +107,12 @@ def demonstrate_connection_state_monitoring() -> None:
     api = FlextLdap()
 
     logger.info("\n1. Initial state (before connection):")
-    logger.info(f"   Is connected: {api.is_connected()}")
+    logger.info(f"   Is connected: {api.is_connected}")
 
     logger.info("\n2. Connecting...")
     try:
         logger.info("   ✅ Connection established")
-        logger.info(f"   Is connected: {api.is_connected()}")
+        logger.info(f"   Is connected: {api.is_connected}")
 
         logger.info("\n3. Performing health check...")
         # Simple health check - try to search root DSE
@@ -121,7 +121,7 @@ def demonstrate_connection_state_monitoring() -> None:
             filter_str="(objectClass=*)",
             attributes=["*"],
         )
-        health_result = api.search(health_request)
+        health_result = api.search_with_request(health_request)
 
         if health_result.is_success:
             logger.info("   ✅ Health check passed - connection is healthy")
@@ -130,7 +130,7 @@ def demonstrate_connection_state_monitoring() -> None:
 
         logger.info("\n4. Disconnecting...")
         api.unbind()
-        logger.info(f"   Is connected: {api.is_connected()}")
+        logger.info(f"   Is connected: {api.is_connected}")
 
     except Exception:
         logger.exception("   ❌ Connection failed")
@@ -221,7 +221,7 @@ def demonstrate_connection_context_manager() -> None:
         search_request = FlextLdapModels.SearchRequest(
             base_dn=BASE_DN, filter_str="(objectClass=*)", attributes=["dn"]
         )
-        search_result = api.search(search_request)
+        search_result = api.search_with_request(search_request)
 
         if search_result.is_success:
             entries = search_result.unwrap()
@@ -229,7 +229,7 @@ def demonstrate_connection_context_manager() -> None:
 
     finally:
         # Cleanup guaranteed even if exception occurs
-        if api.is_connected():
+        if api.is_connected:
             api.unbind()
             logger.info("   ✅ Disconnected (context exited)")
 
@@ -272,7 +272,7 @@ def demonstrate_connection_retry_pattern() -> None:
 
     if connected:
         logger.info("\n2. Connection established - performing cleanup:")
-        if api.is_connected():
+        if api.is_connected:
             api.unbind()
             logger.info("   ✅ Disconnected")
     else:
@@ -312,23 +312,23 @@ def demonstrate_multiple_connections() -> None:
         logger.info("   ✅ Both connections established")
 
         logger.info("\n3. Using connections independently:")
-        logger.info(f"   Connection 1 active: {api1.is_connected()}")
-        logger.info(f"   Connection 2 active: {api2.is_connected()}")
+        logger.info(f"   Connection 1 active: {api1.is_connected}")
+        logger.info(f"   Connection 2 active: {api2.is_connected}")
 
         logger.info("\n4. Cleanup - disconnecting both:")
-        if api1.is_connected():
+        if api1.is_connected:
             api1.unbind()
             logger.info("   ✅ Connection 1 closed")
 
-        if api2.is_connected():
+        if api2.is_connected:
             api2.unbind()
             logger.info("   ✅ Connection 2 closed")
 
     else:
         logger.error("   ❌ One or both connections failed")
-        if api1.is_connected():
+        if api1.is_connected:
             api1.unbind()
-        if api2.is_connected():
+        if api2.is_connected:
             api2.unbind()
 
 
@@ -420,7 +420,7 @@ def main() -> int:
 
         logger.info("\nKey Takeaways:")
         logger.info("  • Always disconnect connections (resource cleanup)")
-        logger.info("  • Use is_connected() to monitor connection state")
+        logger.info("  • Use is_connected to monitor connection state")
         logger.info("  • Handle connection errors explicitly with FlextResult")
         logger.info("  • Implement retry logic for resilient connections")
         logger.info("  • Proper lifecycle management prevents resource leaks")

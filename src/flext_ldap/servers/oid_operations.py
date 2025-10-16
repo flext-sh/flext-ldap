@@ -112,12 +112,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID objectClass definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": object_class_def,
-                    "server_type": "oid",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": object_class_def,
+                "server_type": "oid",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -125,12 +123,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID attributeType definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": attribute_def,
-                    "server_type": "oid",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": attribute_def,
+                "server_type": "oid",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
