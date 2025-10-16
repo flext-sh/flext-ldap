@@ -49,7 +49,7 @@ class TestFlextLdapSchema:
 
         assert isinstance(result, FlextResult)
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     def test_detect_server_type_none(self) -> None:
         """Test server type detection with None input."""

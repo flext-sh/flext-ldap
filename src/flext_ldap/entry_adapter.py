@@ -64,11 +64,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def ldap3_to_ldif_entry(
         self,
-        ldap3_entry: Ldap3Entry
-        | dict[str, object]
-        | dict[str, str | dict[str, object]]
-        | dict[str, dict[str, list[str] | str] | str]
-        | None,
+        ldap3_entry: Ldap3Entry | dict[str, object] | None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
@@ -240,7 +236,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def normalize_attributes_for_add(
         self,
-        attributes: dict[str, object],
+        attributes: dict[str, str | FlextTypes.StringList],
     ) -> FlextResult[dict[str, FlextTypes.List]]:
         """Normalize attributes for ldap3 add operation.
 
@@ -257,9 +253,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
         normalized: dict[str, FlextTypes.List] = {}
         for attr_name, attr_value in attributes.items():
             if isinstance(attr_value, list):
-                normalized[attr_name] = attr_value
+                normalized[attr_name] = cast("FlextTypes.List", attr_value)
             else:
-                normalized[attr_name] = [attr_value]
+                normalized[attr_name] = cast("FlextTypes.List", [attr_value])
 
         return FlextResult[dict[str, FlextTypes.List]].ok(normalized)
 

@@ -37,7 +37,9 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
     # QUIRKS DETECTION - Server-specific behavior detection
     # =========================================================================
 
-    class QuirksDetector(FlextHandlers[dict[str, Any] | None, dict[str, Any] | None], ABC):
+    class QuirksDetector(
+        FlextHandlers[dict[str, Any] | None, dict[str, Any] | None], ABC
+    ):
         """Abstract base class for LDAP server quirks detection."""
 
     class GenericQuirksDetector(QuirksDetector):

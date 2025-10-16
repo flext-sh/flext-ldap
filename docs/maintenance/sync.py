@@ -11,8 +11,6 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
 os.environ.setdefault("FLEXT_DOC_PROJECT_ROOT", _PROJECT_ROOT)
 os.environ.setdefault("FLEXT_DOC_PROFILE", "advanced")
 
-from flext_quality.docs_maintenance.profiles.advanced.sync import *  # noqa: F403,E402
-
 
 def _run_cli() -> None:
     """Execute the shared CLI entry point."""

@@ -389,7 +389,7 @@ class FlextLdapClients(FlextService[None]):
 
             if self._connection.bound:
                 # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.unbind()  # type: ignore[no-untyped-call]
+                self._connection.unbind()
                 self.logger.info("Unbound from LDAP server")
 
             self._connection = None
@@ -422,18 +422,19 @@ class FlextLdapClients(FlextService[None]):
         except Exception as e:
             return FlextResult[bool].fail(f"Connection test failed: {e}")
 
-    def get_connection_string(self) -> FlextResult[str]:
+    @property
+    def connection_string(self) -> str:
         """Get sanitized LDAP connection string."""
         if self._server and hasattr(self._server, "host"):
             protocol = "ldaps" if getattr(self._server, "ssl", False) else "ldap"
             host = self._server.host
             port = self._server.port
-            return FlextResult[str].ok(f"{protocol}://{host}:{port}")
+            return f"{protocol}://{host}:{port}"
 
         if self._ldap_config and hasattr(self._ldap_config, "ldap_server_uri"):
-            return FlextResult[str].ok(str(self._ldap_config.ldap_server_uri))
+            return str(self._ldap_config.ldap_server_uri)
 
-        return FlextResult[str].ok("ldap://not-connected")
+        return "ldap://not-connected"
 
     def __call__(self, *args: str, **kwargs: FlextTypes.Dict) -> FlextResult[bool]:
         """Callable interface for connection."""
@@ -569,7 +570,7 @@ class FlextLdapClients(FlextService[None]):
                     else:
                         object_class = str(object_class_raw)
                     # ldap3 library has incomplete type stubs; external library limitation
-                    success = self.connection.add(  # type: ignore[no-untyped-call]
+                    success = self.connection.add(
                         dn, object_class=object_class, attributes=attempted_attributes
                     )
                     if success:
@@ -712,7 +713,7 @@ class FlextLdapClients(FlextService[None]):
                     ]
 
             # ldap3 library has incomplete type stubs; external library limitation
-            success = self.connection.modify(  # type: ignore[no-untyped-call]
+            success = self.connection.modify(
                 dn,
                 changes=cast(
                     "dict[str, list[tuple[int, list[str] | str]]]", ldap3_changes
@@ -735,7 +736,7 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # ldap3 library has incomplete type stubs; external library limitation
-            success = self.connection.delete(dn)  # type: ignore[no-untyped-call]
+            success = self.connection.delete(dn)
             if success:
                 return FlextResult[bool].ok(True)
             return FlextResult[bool].fail(
@@ -745,15 +746,6 @@ class FlextLdapClients(FlextService[None]):
         except Exception as e:
             self.logger.exception("Delete entry failed")
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
-
-    def get_server_type(self) -> str | None:
-        """Get the detected server type.
-
-        Returns:
-            Server type string or None if not detected
-
-        """
-        return self._detected_server_type
 
     # =========================================================================
     # VALIDATION OPERATIONS - Direct implementation
@@ -1018,7 +1010,7 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # ldap3 library has incomplete type stubs; external library limitation
-            result = self.connection.compare(dn, attribute, value)  # type: ignore[no-untyped-call]
+            result = self.connection.compare(dn, attribute, value)
             if result is None:
                 return FlextResult[bool].fail("Compare operation failed")
 
@@ -1387,7 +1379,8 @@ class FlextLdapClients(FlextService[None]):
         """Set session ID for connection tracking."""
         self._session_id = value
 
-    def get_server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
+    @property
+    def server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
         """Get server quirks for detected server type."""
         if not self._detected_server_type:
             return None

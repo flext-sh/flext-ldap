@@ -576,8 +576,8 @@ class TestFlextLdapAclParsers:
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])
 
             assert result.is_success
-            assert "target" in result.data
-            assert "permissions" in result.data
+            assert "target" in result.unwrap()
+            assert "permissions" in result.unwrap()
             mock_handle.assert_called_once()
 
     def test_parse_openldap_aci_failure(
@@ -942,11 +942,12 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.handle(message)
         # Handle succeeds, but nested conversion result is not implemented
         assert result.is_success
-        assert result.data is not None
-        assert hasattr(result.data, "is_failure")
-        assert result.data.is_failure
-        assert result.data.error is not None
-        assert "not implemented" in result.data.error.lower()
+        inner_result = result.unwrap()
+        assert inner_result is not None
+        assert hasattr(inner_result, "is_failure")
+        assert inner_result.is_failure
+        assert inner_result.error is not None
+        assert "not implemented" in str(inner_result.error).lower()
 
     def test_handle_valid_acl_conversion_request_default_formats(self) -> None:
         """Test handle method with valid ACL conversion request using default formats."""
@@ -957,11 +958,12 @@ class TestFlextLdapAclConvertersComprehensive:
         result = converters.handle(message)
         # Handle succeeds, but conversion result inside is not implemented
         assert result.is_success
-        assert result.data is not None
-        assert hasattr(result.data, "is_failure")
-        assert result.data.is_failure
-        assert result.data.error is not None
-        assert "not implemented" in result.data.error.lower()
+        inner_result = result.unwrap()
+        assert inner_result is not None
+        assert hasattr(inner_result, "is_failure")
+        assert inner_result.is_failure
+        assert inner_result.error is not None
+        assert "not implemented" in str(inner_result.error).lower()
 
     def test_handle_invalid_message_type(self) -> None:
         """Test handle method with invalid message type."""
@@ -1529,10 +1531,11 @@ class TestFlextLdapAclConvertersIntegration:
             result = converters.handle(test_case)
             # Handle succeeds, but nested conversion is not implemented
             assert result.is_success
-            assert result.data is not None
-            assert result.data.is_failure
-            assert result.data.error is not None
-            assert "not implemented" in result.data.error.lower()
+            inner_result = result.unwrap()
+            assert inner_result is not None
+            assert inner_result.is_failure
+            assert inner_result.error is not None
+            assert "not implemented" in str(inner_result.error).lower()
 
 
 class TestFlextLdapAclManagerComprehensive:
@@ -1605,7 +1608,7 @@ class TestFlextLdapAclManagerComprehensive:
         }
         result = manager.handle(message)
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     @pytest.mark.skip(
         reason="ACL conversion not yet implemented - feature planned for future release"
@@ -1625,7 +1628,7 @@ class TestFlextLdapAclManagerComprehensive:
         }
         result = manager.handle(message)
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     def test_handle_parse_missing_acl_string(self) -> None:
         """Test handle method with parse operation missing acl_string."""
@@ -1767,7 +1770,7 @@ class TestFlextLdapAclManagerParseAcl:
         acl_string = 'access to dn.base="cn=test" by * read'
         result = manager.parse_acl(acl_string, "openldap")
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     def test_parse_acl_oracle_success(self) -> None:
         """Test parse_acl method with Oracle format."""
@@ -1775,7 +1778,7 @@ class TestFlextLdapAclManagerParseAcl:
         acl_string = "access to entry by users (read,write)"
         result = manager.parse_acl(acl_string, "oracle")
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     def test_parse_acl_aci_success(self) -> None:
         """Test parse_acl method with ACI format."""
@@ -1783,7 +1786,7 @@ class TestFlextLdapAclManagerParseAcl:
         acl_string = '(target="cn=test")(version 3.0; acl "test_acl";  allow (read,write) userdn="ldap:///all";)'
         result = manager.parse_acl(acl_string, "aci")
         assert result.is_success
-        assert result.data is not None
+        assert result.unwrap() is not None
 
     def test_parse_acl_unsupported_format(self) -> None:
         """Test parse_acl method with unsupported format."""
@@ -1931,7 +1934,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         acl_string = 'access to dn.base="cn=test" by * read'
         result = manager.validate_acl_syntax(acl_string, "openldap")
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_acl_syntax_valid_oracle(self) -> None:
         """Test validate_acl_syntax method with valid Oracle ACL."""
@@ -1939,7 +1942,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         acl_string = "access to entry by users (read,write)"
         result = manager.validate_acl_syntax(acl_string, "oracle")
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_acl_syntax_valid_aci(self) -> None:
         """Test validate_acl_syntax method with valid ACI ACL."""
@@ -1947,7 +1950,7 @@ class TestFlextLdapAclManagerValidateAclSyntax:
         acl_string = '(target="cn=test")(version 3.0; acl "test_acl";  allow (read,write) userdn="ldap:///all";)'
         result = manager.validate_acl_syntax(acl_string, "aci")
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_acl_syntax_invalid_acl(self) -> None:
         """Test validate_acl_syntax method with invalid ACL."""
@@ -2072,8 +2075,8 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.Acl)
+        assert result.unwrap() is not None
+        assert isinstance(result.unwrap(), FlextLdapModels.Acl)
 
     def test_parse_empty_acl_string(self) -> None:
         """Test parsing empty ACL string."""
@@ -2162,115 +2165,115 @@ class TestFlextLdapAclParsersOpenLdapAclParser:
         acl = "access to attrs=mail,cn by * read"
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "attributes"
-        assert "mail" in result.data.target.attributes
-        assert "cn" in result.data.target.attributes
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "attributes"
+        assert "mail" in result.unwrap().target.attributes
+        assert "cn" in result.unwrap().target.attributes
 
     def test_parse_dn_exact_target(self) -> None:
         """Test parsing ACL with dn.exact= target."""
         acl = 'access to dn.exact="cn=test,dc=example,dc=com" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "dn"  # dn.exact= target
-        assert result.data.target.dn_pattern == "cn=test,dc=example,dc=com"
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "dn"  # dn.exact= target
+        assert result.unwrap().target.dn_pattern == "cn=test,dc=example,dc=com"
 
     def test_parse_default_target(self) -> None:
         """Test parsing ACL with default target."""
         acl = "access to * by * read"
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "entry"
-        assert result.data.target.dn_pattern == "*"
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "entry"
+        assert result.unwrap().target.dn_pattern == "*"
 
     def test_parse_subject_self(self) -> None:
         """Test parsing ACL with 'self' subject."""
         acl = 'access to dn.base="cn=test" by self read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "self"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "self"
 
     def test_parse_subject_users(self) -> None:
         """Test parsing ACL with 'users' subject."""
         acl = 'access to dn.base="cn=test" by users read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "authenticated"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "authenticated"
 
     def test_parse_subject_anonymous(self) -> None:
         """Test parsing ACL with 'anonymous' subject."""
         acl = 'access to dn.base="cn=test" by anonymous read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "anonymous"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "anonymous"
 
     def test_parse_subject_wildcard(self) -> None:
         """Test parsing ACL with '*' subject."""
         acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "anyone"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "anyone"
 
     def test_parse_subject_default(self) -> None:
         """Test parsing ACL with default subject type."""
         acl = 'access to dn.base="cn=test" by cn=admin read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "user"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "user"
 
     def test_parse_permissions_single(self) -> None:
         """Test parsing ACL with single permission."""
         acl = 'access to dn.base="cn=test" by * read'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_multiple(self) -> None:
         """Test parsing ACL with multiple permissions."""
         acl = 'access to dn.base="cn=test" by * read,write,search'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "search" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "search" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_default(self) -> None:
         """Test parsing ACL with no permissions (defaults to read)."""
         acl = 'access to dn.base="cn=test" by *'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_mapped(self) -> None:
         """Test parsing ACL with mapped permissions."""
         acl = 'access to dn.base="cn=test" by * add,delete,compare,auth'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "add" in result.data.permissions.permissions
-        assert "delete" in result.data.permissions.permissions
-        assert "compare" in result.data.permissions.permissions
-        assert "auth" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "add" in result.unwrap().permissions.permissions
+        assert "delete" in result.unwrap().permissions.permissions
+        assert "compare" in result.unwrap().permissions.permissions
+        assert "auth" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_unknown_filtered(self) -> None:
         """Test parsing ACL with unknown permissions (should be filtered out)."""
         acl = 'access to dn.base="cn=test" by * read,unknown,write'
         result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "unknown" not in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "unknown" not in result.unwrap().permissions.permissions
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACL with exception handling."""
@@ -2293,8 +2296,8 @@ class TestFlextLdapAclParsersOracleAclParser:
         acl = "access to entry by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.Acl)
+        assert result.unwrap() is not None
+        assert isinstance(result.unwrap(), FlextLdapModels.Acl)
 
     def test_parse_empty_acl_string(self) -> None:
         """Test parsing empty ACL string."""
@@ -2371,132 +2374,132 @@ class TestFlextLdapAclParsersOracleAclParser:
         acl = "access to entry by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "entry"
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "entry"
 
     def test_parse_attrs_target(self) -> None:
         """Test parsing ACL with 'attrs=' target."""
         acl = "access to attrs=mail,cn by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "attributes"
-        assert "mail" in result.data.target.attributes
-        assert "cn" in result.data.target.attributes
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "attributes"
+        assert "mail" in result.unwrap().target.attributes
+        assert "cn" in result.unwrap().target.attributes
 
     def test_parse_attr_target(self) -> None:
         """Test parsing ACL with 'attr=' target."""
         acl = "access to attr=(userPassword) by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "attributes"
-        assert "userPassword" in result.data.target.attributes
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "attributes"
+        assert "userPassword" in result.unwrap().target.attributes
 
     def test_parse_attr_target_no_parentheses(self) -> None:
         """Test parsing ACL with 'attr=' target without parentheses."""
         acl = "access to attr=userPassword by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "attributes"
-        assert "userPassword" in result.data.target.attributes
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "attributes"
+        assert "userPassword" in result.unwrap().target.attributes
 
     def test_parse_default_target(self) -> None:
         """Test parsing ACL with default target."""
         acl = "access to other by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "entry"
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "entry"
 
     def test_parse_subject_group(self) -> None:
         """Test parsing ACL with group subject."""
         acl = "access to entry by group=admins (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "group"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "group"
 
     def test_parse_subject_user(self) -> None:
         """Test parsing ACL with user subject."""
         acl = "access to entry by user=admin (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "user"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "user"
 
     def test_parse_subject_self(self) -> None:
         """Test parsing ACL with 'self' subject."""
         acl = "access to entry by self (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "self"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "self"
 
     def test_parse_subject_anonymous(self) -> None:
         """Test parsing ACL with 'anonymous' subject."""
         acl = "access to entry by anonymous (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "anonymous"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "anonymous"
 
     def test_parse_subject_default(self) -> None:
         """Test parsing ACL with default subject type."""
         acl = "access to entry by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "user"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "user"
 
     def test_parse_permissions_multiple(self) -> None:
         """Test parsing ACL with multiple permissions."""
         acl = "access to entry by users (read,write,add,delete)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "add" in result.data.permissions.permissions
-        assert "delete" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "add" in result.unwrap().permissions.permissions
+        assert "delete" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_with_parentheses(self) -> None:
         """Test parsing ACL with permissions in parentheses."""
         acl = "access to entry by users (read,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_oracle_specific(self) -> None:
         """Test parsing ACL with Oracle-specific permissions."""
         acl = "access to entry by users (selfwrite,selfadd,selfdelete)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "selfwrite" in result.data.permissions.permissions
-        assert "selfadd" in result.data.permissions.permissions
-        assert "selfdelete" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "selfwrite" in result.unwrap().permissions.permissions
+        assert "selfadd" in result.unwrap().permissions.permissions
+        assert "selfdelete" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_unknown_filtered(self) -> None:
         """Test parsing ACL with unknown permissions (should be filtered out)."""
         acl = "access to entry by users (read,unknown,write)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "unknown" not in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "unknown" not in result.unwrap().permissions.permissions
 
     def test_parse_permissions_default(self) -> None:
         """Test parsing ACL with no permissions (defaults to read)."""
         acl = "access to entry by users (read)"
         result = FlextLdapAclParsers.OracleAclParser.parse(acl)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACL with exception handling."""
@@ -2519,8 +2522,8 @@ class TestFlextLdapAclParsersAciParser:
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert isinstance(result.data, FlextLdapModels.Acl)
+        assert result.unwrap() is not None
+        assert isinstance(result.unwrap(), FlextLdapModels.Acl)
 
     def test_parse_empty_aci_string(self) -> None:
         """Test parsing empty ACI string."""
@@ -2611,86 +2614,88 @@ class TestFlextLdapAclParsersAciParser:
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.permissions.grant_type == "allow"
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert result.unwrap().permissions.grant_type == "allow"
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
 
     def test_parse_deny_grant_type(self) -> None:
         """Test parsing ACI with 'deny' grant type."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; deny (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.permissions.grant_type == "deny"
-        assert "read" in result.data.permissions.denied_permissions
-        assert "write" in result.data.permissions.denied_permissions
+        assert result.unwrap() is not None
+        assert result.unwrap().permissions.grant_type == "deny"
+        assert "read" in result.unwrap().permissions.denied_permissions
+        assert "write" in result.unwrap().permissions.denied_permissions
 
     def test_parse_userdn_subject(self) -> None:
         """Test parsing ACI with 'userdn' subject."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "user"
-        assert result.data.subject.subject_dn == "ldap:///all"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "user"
+        assert result.unwrap().subject.subject_dn == "ldap:///all"
 
     def test_parse_groupdn_subject(self) -> None:
         """Test parsing ACI with 'groupdn' subject."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write) groupdn="ldap:///cn=admins,dc=example,dc=com";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "group"
-        assert result.data.subject.subject_dn == "ldap:///cn=admins,dc=example,dc=com"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "group"
+        assert (
+            result.unwrap().subject.subject_dn == "ldap:///cn=admins,dc=example,dc=com"
+        )
 
     def test_parse_anyone_subject(self) -> None:
         """Test parsing ACI with 'anyone' in subject."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write) userdn="ldap:///anyone";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.subject.subject_type == "anyone"
+        assert result.unwrap() is not None
+        assert result.unwrap().subject.subject_type == "anyone"
 
     def test_parse_target_entry(self) -> None:
         """Test parsing ACI with entry target."""
         aci = '(target="cn=test,dc=example,dc=com")(version 3.0; acl "test_acl"; allow (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.target.target_type == "entry"
-        assert result.data.target.dn_pattern == "cn=test,dc=example,dc=com"
+        assert result.unwrap() is not None
+        assert result.unwrap().target.target_type == "entry"
+        assert result.unwrap().target.dn_pattern == "cn=test,dc=example,dc=com"
 
     def test_parse_acl_name(self) -> None:
         """Test parsing ACI with ACL name."""
         aci = '(target="cn=test")(version 3.0; acl "my_test_acl"; allow (read,write) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert result.data.name == "my_test_acl"
+        assert result.unwrap() is not None
+        assert result.unwrap().name == "my_test_acl"
 
     def test_parse_permissions_multiple(self) -> None:
         """Test parsing ACI with multiple permissions."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read,write,add,delete,search) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "add" in result.data.permissions.permissions
-        assert "delete" in result.data.permissions.permissions
-        assert "search" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "add" in result.unwrap().permissions.permissions
+        assert "delete" in result.unwrap().permissions.permissions
+        assert "search" in result.unwrap().permissions.permissions
 
     def test_parse_permissions_with_spaces(self) -> None:
         """Test parsing ACI with permissions containing spaces."""
         aci = '(target="cn=test")(version 3.0; acl "test_acl"; allow (read, write, add, delete) userdn="ldap:///all";)'
         result = FlextLdapAclParsers.AciParser.parse(aci)
         assert result.is_success
-        assert result.data is not None
-        assert "read" in result.data.permissions.permissions
-        assert "write" in result.data.permissions.permissions
-        assert "add" in result.data.permissions.permissions
-        assert "delete" in result.data.permissions.permissions
+        assert result.unwrap() is not None
+        assert "read" in result.unwrap().permissions.permissions
+        assert "write" in result.unwrap().permissions.permissions
+        assert "add" in result.unwrap().permissions.permissions
+        assert "delete" in result.unwrap().permissions.permissions
 
     def test_parse_exception_handling(self) -> None:
         """Test parsing ACI with exception handling."""

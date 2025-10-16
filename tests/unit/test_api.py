@@ -386,7 +386,7 @@ class TestFlextLdapComprehensive:
 
         assert isinstance(result, FlextResult)
         assert result.is_success
-        assert result.data is None
+        assert result.unwrap() is None
 
     def test_client_property_lazy_initialization(self) -> None:
         """Test client property lazy initialization."""

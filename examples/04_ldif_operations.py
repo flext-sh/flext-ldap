@@ -205,19 +205,14 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     logger.info(f"Found {len(search_entries)} entries to export")
 
-    # Convert search results to Entry objects for LDIF export
+    # Convert search results to LDIF Entry objects for LDIF export
+    adapter = FlextLdapEntryAdapter()
     entries = []
     for search_entry in search_entries:
-        # search_entry is already a dict[str, object] from the search result
-        if isinstance(search_entry, dict):
-            # Properly type the attributes access
-            attributes = search_entry.get("attributes", {})
-            if isinstance(attributes, dict):
-                entry = FlextLdapModels.Entry(
-                    dn=str(search_entry.get("dn", "")),
-                    attributes=attributes,
-                )
-                entries.append(entry)
+        # Convert dict to FlextLdifModels.Entry using adapter
+        ldif_entry_result = adapter.ldap3_to_ldif_entry(search_entry)
+        if ldif_entry_result.is_success:
+            entries.append(ldif_entry_result.unwrap())
 
     # Create export file path
     temp_dir = tempfile.gettempdir()

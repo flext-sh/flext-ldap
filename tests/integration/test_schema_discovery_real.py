@@ -50,7 +50,7 @@ class TestRealSchemaDiscovery:
         assert result.is_success
 
         # Get server type
-        server_type = client.get_server_type()
+        server_type = client.server_type
         assert server_type is not None
 
         # OpenLDAP should be detected or GENERIC (enum values)
@@ -90,7 +90,7 @@ class TestRealSchemaDiscovery:
         client.discover_schema()
 
         # Get quirks
-        quirks = client.get_server_quirks()
+        quirks = client.server_quirks
 
         # Schema discovery may fail but should return default quirks
         assert quirks is not None
@@ -150,7 +150,7 @@ class TestRealServerQuirksDetection:
         # Discover schema
         client.discover_schema()
 
-        quirks = client.get_server_quirks()
+        quirks = client.server_quirks
         assert quirks is not None
 
         # OpenLDAP typically has these characteristics
