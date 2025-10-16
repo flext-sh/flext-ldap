@@ -11,6 +11,9 @@ Tests cover:
 from unittest.mock import Mock, patch
 
 import pytest
+from flext_core import (
+    FlextModels,
+)
 from ldap3 import Connection, Server
 
 from flext_ldap.authentication import FlextLdapAuthentication
@@ -333,12 +336,11 @@ class TestFlextLdapAuthenticationExecute:
 
     def test_execute_operation(self, auth_service: FlextLdapAuthentication) -> None:
         """Test execute_operation method."""
-        from flext_core import FlextCore
 
         def test_op() -> None:
             return None
 
-        operation = FlextCore.Models.OperationExecutionRequest(
+        operation = FlextModels.OperationExecutionRequest(
             operation_name="test",
             operation_callable=test_op,
         )

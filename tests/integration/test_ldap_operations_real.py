@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapClients
+from flext_ldap import FlextLdapClients, FlextLdapModels
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration
@@ -179,7 +179,7 @@ class TestRealLdapCRUD:
         # Modify user
         modify_result = client.modify_entry_universal(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
-            changes={"mail": "newemail@flext.local"},
+            changes=FlextLdapModels.EntryChanges(mail="newemail@flext.local"),
         )
 
         # Note: modify_entry_universal may have issues in current implementation

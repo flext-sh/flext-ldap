@@ -1,4 +1,4 @@
-"""LDAP Constants - Essential constants only, using FlextCore.Constants.LDAP exclusively.
+"""LDAP Constants - Essential constants only, using FlextConstants.LDAP exclusively.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,22 +9,22 @@ from __future__ import annotations
 
 from typing import Final, Literal
 
-from flext_core import FlextCore
+from flext_core import FlextConstants, FlextTypes
 
 
-class FlextLdapConstants(FlextCore.Constants):
+class FlextLdapConstants(FlextConstants):
     """LDAP domain-specific constants - essential constants only.
 
-    Extends FlextCore.Constants from flext-core. Use parent constants directly:
-    - Network constants → FlextCore.Constants.Network.*
-    - Platform constants → FlextCore.Constants.Platform.*
-    - Performance constants → FlextCore.Constants.Performance.*
-    - Errors → FlextCore.Constants.Errors.*
+    Extends FlextConstants from flext-core. Use parent constants directly:
+    - Network constants → FlextConstants.Network.*
+    - Platform constants → FlextConstants.Platform.*
+    - Performance constants → FlextConstants.Performance.*
+    - Errors → FlextConstants.Errors.*
     """
 
     # Direct access constants for backward compatibility
-    DEFAULT_TIMEOUT: Final[int] = 30
-    DEFAULT_PAGE_SIZE: Final[int] = 100
+    DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
+    DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.Performance.DEFAULT_PAGE_SIZE
 
     # LDAP port constants for compatibility
     LDAP_DEFAULT_PORT: Final[int] = 389
@@ -66,10 +66,10 @@ class FlextLdapConstants(FlextCore.Constants):
     class Connection:
         """LDAP connection-specific constants.
 
-        Note: Use FlextCore.Constants directly for:
-        - DEFAULT_TIMEOUT → FlextCore.Constants.Network.DEFAULT_TIMEOUT
-        - DEFAULT_POOL_SIZE → FlextCore.Constants.Performance.DEFAULT_DB_POOL_SIZE
-        - DEFAULT_PAGE_SIZE → FlextCore.Constants.Performance.DEFAULT_PAGE_SIZE
+        Note: Use FlextConstants directly for:
+        - DEFAULT_TIMEOUT → FlextConstants.Network.DEFAULT_TIMEOUT
+        - DEFAULT_POOL_SIZE → FlextConstants.Performance.DEFAULT_DB_POOL_SIZE
+        - DEFAULT_PAGE_SIZE → FlextConstants.Performance.DEFAULT_PAGE_SIZE
         """
 
         # Connection settings (LDAP-specific defaults)
@@ -96,67 +96,14 @@ class FlextLdapConstants(FlextCore.Constants):
         # LDAP-specific scope (not in RFC 4511)
         CHILDREN: Final[str] = "children"
 
-    class Attributes:
-        """Standard LDAP attribute names.
-
-        Note: OBJECT_CLASS from FlextCore.Constants.Platform.LDAP_ATTR_OBJECT_CLASS
-        """
-
-        # Core LDAP attributes (RFC 4519 standard names)
-        COMMON_NAME: Final[str] = "cn"
-        SURNAME: Final[str] = "sn"
-        GIVEN_NAME: Final[str] = "givenName"
-        DISPLAY_NAME: Final[str] = "displayName"
-        DESCRIPTION: Final[str] = "description"
-        USER_ID: Final[str] = "uid"
-        MAIL: Final[str] = "mail"
-        USER_PASSWORD: Final[str] = "userPassword"  # nosec B105
-
-        # Group attributes
-        MEMBER: Final[str] = "member"
-        UNIQUE_MEMBER: Final[str] = "uniqueMember"
-        MEMBER_OF: Final[str] = "memberOf"
-        OWNER: Final[str] = "owner"
-
-        # Convenience attribute sets
-        MINIMAL_USER_ATTRS: Final[FlextCore.Types.StringList] = ["uid", "cn", "mail"]
-        MINIMAL_GROUP_ATTRS: Final[FlextCore.Types.StringList] = ["cn", "member"]
-
-        ALL_USER_ATTRS: Final[FlextCore.Types.StringList] = [
-            "objectClass",
-            "cn",
-            "sn",
-            "givenName",
-            "displayName",
-            "uid",
-            "mail",
-            "userPassword",
-            "description",
-            "memberOf",
-        ]
-        ALL_GROUP_ATTRS: Final[FlextCore.Types.StringList] = [
-            "objectClass",
-            "cn",
-            "description",
-            "member",
-            "uniqueMember",
-            "owner",
-            "memberOf",
-        ]
-
-        @classmethod
-        def get_group_attributes(cls) -> FlextCore.Types.StringList:
-            """Get all standard group attributes."""
-            return cls.ALL_GROUP_ATTRS.copy()
-
     class LdapAttributeNames:
         """LDAP attribute names for convenience access.
 
-        Provides direct access to commonly used LDAP attribute names.
-        These are aliases to the values in the Attributes class.
+        Consolidated LDAP attribute constants with both short names and
+        convenience attribute lists for common LDAP operations.
         """
 
-        # Core attributes (aliases for convenience)
+        # Core attributes
         DN: Final[str] = "dn"
         OBJECT_CLASS: Final[str] = "objectClass"
         CN: Final[str] = "cn"
@@ -166,6 +113,11 @@ class FlextLdapConstants(FlextCore.Constants):
         UID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
         USER_PASSWORD: Final[str] = "userPassword"
+
+        # Aliases for backward compatibility (long-form names)
+        COMMON_NAME: Final[str] = "cn"  # Alias for CN
+        SURNAME: Final[str] = "sn"  # Alias for SN
+        USER_ID: Final[str] = "uid"  # Alias for UID
 
         # Group attributes
         MEMBER: Final[str] = "member"
@@ -183,6 +135,37 @@ class FlextLdapConstants(FlextCore.Constants):
         DESCRIPTION: Final[str] = "description"
         EMPLOYEE_NUMBER: Final[str] = "employeeNumber"
         EMPLOYEE_TYPE: Final[str] = "employeeType"
+
+        # Convenience attribute sets (moved from removed Attributes class)
+        MINIMAL_USER_ATTRS: Final[FlextTypes.StringList] = ["uid", "cn", "mail"]
+        MINIMAL_GROUP_ATTRS: Final[FlextTypes.StringList] = ["cn", "member"]
+
+        ALL_USER_ATTRS: Final[FlextTypes.StringList] = [
+            "objectClass",
+            "cn",
+            "sn",
+            "givenName",
+            "displayName",
+            "uid",
+            "mail",
+            "userPassword",
+            "description",
+            "memberOf",
+        ]
+        ALL_GROUP_ATTRS: Final[FlextTypes.StringList] = [
+            "objectClass",
+            "cn",
+            "description",
+            "member",
+            "uniqueMember",
+            "owner",
+            "memberOf",
+        ]
+
+        @classmethod
+        def get_group_attributes(cls) -> FlextTypes.StringList:
+            """Get all standard group attributes."""
+            return cls.ALL_GROUP_ATTRS.copy()
 
     class ObjectClasses:
         """Standard LDAP object classes."""
@@ -217,7 +200,7 @@ class FlextLdapConstants(FlextCore.Constants):
         ORGANIZATIONAL_UNITS_FILTER: Final[str] = "(objectClass=organizationalUnit)"
 
     # LDAP-specific validation constants
-    class Validation(FlextCore.Constants.Validation):
+    class Validation(FlextConstants.Validation):
         """LDAP-specific validation constants."""
 
         # LDAP DN validation
@@ -241,7 +224,7 @@ class FlextLdapConstants(FlextCore.Constants):
         MIN_CONNECTION_ARGS: Final[int] = 3  # server_uri, bind_dn, password
 
     # LDAP-specific error and validation messages
-    class Messages(FlextCore.Constants.Messages):
+    class Messages(FlextConstants.Messages):
         """LDAP-specific error and validation messages."""
 
         # LDAP validation messages
@@ -253,7 +236,7 @@ class FlextLdapConstants(FlextCore.Constants):
         CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed: {0}"
 
         # LDAP error messages following FLEXT standards
-        # INVALID_EMAIL_FORMAT inherited from FlextCore.Constants.Messages
+        # INVALID_EMAIL_FORMAT inherited from FlextConstants.Messages
         EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
 
@@ -262,7 +245,7 @@ class FlextLdapConstants(FlextCore.Constants):
         NO_SERVER_OPERATIONS_AVAILABLE: Final[str] = "No server operations available"
 
     # LDAP-specific error codes
-    class Errors(FlextCore.Constants.Errors):
+    class Errors(FlextConstants.Errors):
         """LDAP-specific error codes."""
 
         # LDAP-specific errors
@@ -275,7 +258,7 @@ class FlextLdapConstants(FlextCore.Constants):
         LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
 
     # LDAP-specific default values
-    class Defaults(FlextCore.Constants.Defaults):
+    class Defaults(FlextConstants.Defaults):
         """LDAP-specific default values."""
 
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
@@ -283,7 +266,7 @@ class FlextLdapConstants(FlextCore.Constants):
         DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
         DEFAULT_SERVICE_VERSION: Final[str] = "1.0.0"
         MAX_SEARCH_ENTRIES: Final[int] = (
-            FlextCore.Constants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
+            FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
         )
 
         # Valid LDAP user for testing

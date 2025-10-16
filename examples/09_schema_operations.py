@@ -34,7 +34,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -45,7 +45,7 @@ from flext_ldap import (
     FlextLdapSchema,
 )
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -91,7 +91,7 @@ def demonstrate_server_detection(api: FlextLdap) -> str | None:
     logger.info("=== Server Type Detection ===")
 
     # Get detected server type
-    result: FlextCore.Result[str | None] = api.get_detected_server_type()
+    result: FlextResult[str | None] = api.get_detected_server_type()
 
     if result.is_failure:
         logger.error(f"❌ Server detection failed: {result.error}")
@@ -139,7 +139,7 @@ def demonstrate_schema_discovery(server_type: str | None) -> None:
     logger.info("\n1. Schema Subentry DN Discovery:")
 
     # Get schema subentry DN based on server type
-    result: FlextCore.Result[str] = discovery.get_schema_subentry_dn(server_type)
+    result: FlextResult[str] = discovery.get_schema_subentry_dn(server_type)
 
     if result.is_success:
         schema_dn = result.unwrap()

@@ -33,7 +33,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextCore
+from flext_core import FlextLogger
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
@@ -43,7 +43,7 @@ from flext_ldap.acl import (
     FlextLdapAclParsers,
 )
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")

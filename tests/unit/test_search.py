@@ -63,9 +63,9 @@ class TestFlextLdapSearch:
     # =========================================================================
 
     def test_search_is_flext_service(self) -> None:
-        """Test search service inherits from FlextCore.Service."""
+        """Test search service inherits from FlextService."""
         search = FlextLdapSearch()
-        # Should have FlextCore.Service methods
+        # Should have FlextService methods
         assert hasattr(search, "execute")
         assert callable(getattr(search, "execute"))
 
@@ -74,7 +74,7 @@ class TestFlextLdapSearch:
         search = FlextLdapSearch()
         result = search.execute()
 
-        # execute() should return FlextCore.Result
+        # execute() should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
         assert result.is_success  # Default execute returns success
@@ -144,7 +144,7 @@ class TestFlextLdapSearch:
     # =========================================================================
 
     def test_search_method_returns_flext_result(self) -> None:
-        """Test search method returns FlextCore.Result."""
+        """Test search method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call search without connection (will fail gracefully)
@@ -152,14 +152,14 @@ class TestFlextLdapSearch:
             base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
         )
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
         # Will fail without connection
         assert result.is_failure
 
     def test_search_one_method_returns_flext_result(self) -> None:
-        """Test search_one method returns FlextCore.Result."""
+        """Test search_one method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call search_one without connection (will fail gracefully)
@@ -168,53 +168,53 @@ class TestFlextLdapSearch:
             filter_str="(uid=testuser)",
         )
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
         # Will fail without connection
         assert result.is_failure
 
     def test_user_exists_method_returns_flext_result(self) -> None:
-        """Test user_exists method returns FlextCore.Result."""
+        """Test user_exists method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call user_exists without connection (will fail gracefully)
         result = search.user_exists(dn="uid=testuser,ou=users,dc=example,dc=com")
 
-        # Should return FlextCore.Result[bool]
+        # Should return FlextResult[bool]
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
     def test_group_exists_method_returns_flext_result(self) -> None:
-        """Test group_exists method returns FlextCore.Result."""
+        """Test group_exists method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call group_exists without connection (will fail gracefully)
         result = search.group_exists(dn="cn=testgroup,ou=groups,dc=example,dc=com")
 
-        # Should return FlextCore.Result[bool]
+        # Should return FlextResult[bool]
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
     def test_get_user_method_returns_flext_result(self) -> None:
-        """Test get_user method returns FlextCore.Result."""
+        """Test get_user method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call get_user without connection (will fail gracefully)
         result = search.get_user(dn="uid=testuser,ou=users,dc=example,dc=com")
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
     def test_get_group_method_returns_flext_result(self) -> None:
-        """Test get_group method returns FlextCore.Result."""
+        """Test get_group method returns FlextResult."""
         search = FlextLdapSearch()
 
         # Call get_group without connection (will fail gracefully)
         result = search.get_group(dn="cn=testgroup,ou=groups,dc=example,dc=com")
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -233,7 +233,7 @@ class TestFlextLdapSearch:
             attributes=["uid", "cn", "mail"],
         )
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -248,7 +248,7 @@ class TestFlextLdapSearch:
             attributes=["uid", "cn", "sn"],
         )
 
-        # Should return FlextCore.Result
+        # Should return FlextResult
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 

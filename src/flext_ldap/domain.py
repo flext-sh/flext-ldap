@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.validations import FlextLdapValidations
 
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapDomain:
@@ -44,7 +44,7 @@ class FlextLdapDomain:
             return bool(re.match(r"^[a-zA-Z0-9_-]+$", username))
 
         @staticmethod
-        def meets_password_policy(password: str) -> FlextCore.Result[bool]:
+        def meets_password_policy(password: str) -> FlextResult[bool]:
             """Check if password meets domain security requirements - delegates basic validation."""
             # First check basic password validation (length) via FlextLdapValidations
             basic_validation = FlextLdapValidations.validate_password(password)
@@ -57,11 +57,11 @@ class FlextLdapDomain:
             has_digit = any(c.isdigit() for c in password)
 
             if not (has_upper and has_lower and has_digit):
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     "Password must contain uppercase, lowercase, and numeric characters",
                 )
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         @staticmethod
         def is_valid_email(email: str) -> bool:
@@ -81,23 +81,23 @@ class FlextLdapDomain:
             group: FlextLdapModels.Group,
             member_dn: str,
             max_members: int = 1000,
-        ) -> FlextCore.Result[bool]:
+        ) -> FlextResult[bool]:
             """Check if a member can be added to a group."""
             if not member_dn or not member_dn.strip():
-                return FlextCore.Result[bool].fail("Member DN cannot be empty")
+                return FlextResult[bool].fail("Member DN cannot be empty")
 
             # Check current member count
             member_count = len(group.member_dns) + len(group.unique_member_dns)
             if member_count >= max_members:
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     f"Group exceeds maximum members ({max_members})",
                 )
 
             # Check if already a member
             if group.has_member(member_dn):
-                return FlextCore.Result[bool].fail("Member is already in the group")
+                return FlextResult[bool].fail("Member is already in the group")
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         @staticmethod
         def is_valid_group_name(name: str) -> bool:
@@ -116,10 +116,10 @@ class FlextLdapDomain:
         """Specification for search-related business rules."""
 
         @staticmethod
-        def is_safe_search_filter(filter_str: str) -> FlextCore.Result[bool]:
+        def is_safe_search_filter(filter_str: str) -> FlextResult[bool]:
             """Check if search filter is safe from LDAP injection."""
             if not filter_str:
-                return FlextCore.Result[bool].fail("Filter cannot be empty")
+                return FlextResult[bool].fail("Filter cannot be empty")
 
             # Check for potentially dangerous patterns
             dangerous_patterns = [
@@ -129,31 +129,31 @@ class FlextLdapDomain:
 
             for pattern in dangerous_patterns:
                 if re.search(pattern, filter_str):
-                    return FlextCore.Result[bool].fail(
+                    return FlextResult[bool].fail(
                         f"Unsafe filter pattern detected: {pattern}",
                     )
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         @staticmethod
         def validate_search_scope(
             base_dn: str,
             scope: FlextLdapModels.Scope,
             max_depth: int = 5,
-        ) -> FlextCore.Result[bool]:
+        ) -> FlextResult[bool]:
             """Validate search scope against business rules."""
             if not base_dn:
-                return FlextCore.Result[bool].fail("Base DN cannot be empty")
+                return FlextResult[bool].fail("Base DN cannot be empty")
 
             # For subtree searches, check depth
             if scope.value == "subtree":
                 dn_components = base_dn.count(",") + 1
                 if dn_components > max_depth:
-                    return FlextCore.Result[bool].fail(
+                    return FlextResult[bool].fail(
                         f"Search depth exceeds maximum ({max_depth})",
                     )
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
     class DomainServices:
         """Domain services implementing business logic."""
@@ -203,31 +203,31 @@ class FlextLdapDomain:
         def validate_group_membership_rules(
             user: FlextLdapModels.LdapUser,
             group: FlextLdapModels.Group,
-        ) -> FlextCore.Result[bool]:
+        ) -> FlextResult[bool]:
             """Validate if user can be member of group based on business rules."""
             # Example business rule: users must have email for certain groups
             if group.cn and "admin" in group.cn.lower() and not user.mail:
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     "Admin group members must have email addresses",
                 )
 
             # Example business rule: users must be active
             if not user.is_active:
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups",
                 )
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         @staticmethod
         def generate_unique_username(
             base_name: str,
             existing_users: list[FlextLdapModels.LdapUser],
             max_attempts: int = 100,
-        ) -> FlextCore.Result[str]:
+        ) -> FlextResult[str]:
             """Generate unique username based on domain rules."""
             if not base_name:
-                return FlextCore.Result[str].fail("Base name cannot be empty")
+                return FlextResult[str].fail("Base name cannot be empty")
 
             # Normalize base name
             username = base_name.lower().replace(" ", "_")
@@ -237,22 +237,20 @@ class FlextLdapDomain:
             username = re.sub(r"[^a-zA-Z0-9_-]", "", username)
 
             if not username:
-                return FlextCore.Result[str].fail(
-                    "Base name contains no valid characters"
-                )
+                return FlextResult[str].fail("Base name contains no valid characters")
 
             # Check if base username is available
             existing_uids = {u.uid for u in existing_users if u.uid}
             if username not in existing_uids:
-                return FlextCore.Result[str].ok(username)
+                return FlextResult[str].ok(username)
 
             # Generate unique username with number suffix
             for i in range(1, max_attempts):
                 candidate = f"{username}{i}"
                 if candidate not in existing_uids:
-                    return FlextCore.Result[str].ok(candidate)
+                    return FlextResult[str].ok(candidate)
 
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Could not generate unique username after {max_attempts} attempts",
             )
 

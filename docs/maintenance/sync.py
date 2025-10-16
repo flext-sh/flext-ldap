@@ -9,14 +9,17 @@ import argparse
 import logging
 import os
 import shutil
-import subprocess  # nosec S404 - Required for Git operations in documentation sync
+import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
 import yaml
-from flext_core import FlextCore
+from flext_core import (
+    FlextConstants,
+    FlextTypes,
+)
 
 from .audit import DocumentationAuditor
 from .optimize import ContentOptimizer
@@ -48,7 +51,7 @@ class SyncConfig(TypedDict):
 
 
 # Constants for synchronization
-MAX_CHANGES_DISPLAY: int = FlextCore.Constants.Network.MAX_CONNECTIONS // 10
+MAX_CHANGES_DISPLAY: int = FlextConstants.Network.MAX_CONNECTIONS // 10
 
 
 @dataclass
@@ -58,7 +61,7 @@ class SyncResult:
     operation: str
     success: bool
     changes_made: int
-    files_affected: FlextCore.Types.StringList
+    files_affected: FlextTypes.StringList
     error_message: str | None
     timestamp: datetime
 
@@ -68,7 +71,7 @@ class SyncStatus:
     """Current synchronization status."""
 
     git_status: GitStatusInfo
-    pending_changes: FlextCore.Types.StringList
+    pending_changes: FlextTypes.StringList
     last_sync: datetime | None
     sync_needed: bool
     conflicts_present: bool
@@ -155,7 +158,7 @@ class DocumentationSync:
                     behind_count=0,
                 )
 
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+            result = subprocess.run(
                 [git_cmd, "rev-parse", "--git-dir"],
                 check=False,
                 cwd=self.working_dir,
@@ -174,7 +177,7 @@ class DocumentationSync:
                 )
 
             # Get branch info
-            branch_result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+            branch_result = subprocess.run(
                 [git_cmd, "branch", "--show-current"],
                 check=False,
                 cwd=self.working_dir,
@@ -188,7 +191,7 @@ class DocumentationSync:
             )
 
             # Get status
-            status_result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+            status_result = subprocess.run(
                 [git_cmd, "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
@@ -228,7 +231,7 @@ class DocumentationSync:
                 behind_count=0,
             )
 
-    def _get_pending_changes(self) -> FlextCore.Types.StringList:
+    def _get_pending_changes(self) -> FlextTypes.StringList:
         """Get list of pending changes."""
         status = self._get_git_status()
         return status["modified_files"] + status["untracked_files"]
@@ -241,7 +244,7 @@ class DocumentationSync:
             if not git_cmd:
                 return None
 
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+            result = subprocess.run(
                 [git_cmd, "log", "-1", "--format=%ct", "--", "docs/"],
                 check=False,
                 cwd=self.working_dir,
@@ -266,7 +269,7 @@ class DocumentationSync:
             if not git_cmd:
                 return False
 
-            result = subprocess.run(  # nosec S603 - git command with fixed arguments and full path
+            result = subprocess.run(
                 [git_cmd, "status", "--porcelain"],
                 check=False,
                 cwd=self.working_dir,
@@ -325,9 +328,7 @@ class DocumentationSync:
                 timestamp=datetime.now(UTC),
             )
 
-    def sync_changes(
-        self, operation: str, files: FlextCore.Types.StringList
-    ) -> SyncResult:
+    def sync_changes(self, operation: str, files: FlextTypes.StringList) -> SyncResult:
         """Synchronize changes to git."""
         if not self.config["sync"]["auto_commit"]:
             return SyncResult(
@@ -352,7 +353,7 @@ class DocumentationSync:
                     timestamp=datetime.now(UTC),
                 )
 
-            subprocess.run(  # nosec S603 - git command with validated file paths and full path
+            subprocess.run(
                 [git_cmd, "add", *files],
                 cwd=str(self.working_dir),
                 check=True,
@@ -370,7 +371,7 @@ class DocumentationSync:
             )
 
             # Commit
-            subprocess.run(  # nosec S603 - git command with validated message and full path
+            subprocess.run(
                 [git_cmd, "commit", "-m", commit_message],
                 cwd=str(self.working_dir),
                 check=True,
@@ -382,7 +383,7 @@ class DocumentationSync:
             if self.config["sync"]["push_after_commit"]:
                 remote_name = str(self.config["git"]["remote_name"])
                 main_branch = str(self.config["git"]["main_branch"])
-                subprocess.run(  # nosec S603,S607 - git command with validated config and full path
+                subprocess.run(
                     [git_cmd, "push", remote_name, main_branch],
                     cwd=str(self.working_dir),
                     check=True,
@@ -436,7 +437,7 @@ class DocumentationSync:
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             branch_name = f"docs-backup-{timestamp}"
 
-            subprocess.run(  # nosec S603,S607 - git command with validated branch name and full path
+            subprocess.run(
                 [git_cmd, "checkout", "-b", branch_name],
                 cwd=str(self.working_dir),
                 check=True,
@@ -463,7 +464,7 @@ class DocumentationSync:
                 timestamp=datetime.now(UTC),
             )
 
-    def rollback_changes(self, files: FlextCore.Types.StringList) -> SyncResult:
+    def rollback_changes(self, files: FlextTypes.StringList) -> SyncResult:
         """Rollback changes to specific files."""
         try:
             git_cmd = self._get_git_command()
@@ -477,7 +478,7 @@ class DocumentationSync:
                     timestamp=datetime.now(UTC),
                 )
 
-            subprocess.run(  # nosec S603 - git command with validated file paths and full path
+            subprocess.run(
                 [git_cmd, "checkout", "HEAD", "--", *files],
                 cwd=str(self.working_dir),
                 check=True,

@@ -15,7 +15,10 @@ from pathlib import Path
 from typing import TypedDict
 
 import yaml
-from flext_core import FlextCore
+from flext_core import (
+    FlextConstants,
+    FlextTypes,
+)
 
 
 # Type definitions
@@ -65,8 +68,8 @@ class OptimizationConfig(TypedDict):
 
 
 # Constants for optimization
-CODE_BLOCK_MARKER_MIN_LENGTH: int = FlextCore.Constants.Network.MIN_PORT
-LONG_PARAGRAPH_WORD_LIMIT: int = FlextCore.Constants.Validation.PREVIEW_LENGTH * 4
+CODE_BLOCK_MARKER_MIN_LENGTH: int = FlextConstants.Network.MIN_PORT
+LONG_PARAGRAPH_WORD_LIMIT: int = FlextConstants.Validation.PREVIEW_LENGTH * 4
 
 
 @dataclass
@@ -89,7 +92,7 @@ class OptimizationSummary:
     optimizations_by_type: dict[str, int]
     files_modified: int
     errors_encountered: int
-    backup_files_created: FlextCore.Types.StringList
+    backup_files_created: FlextTypes.StringList
 
 
 class ContentOptimizer:
@@ -97,13 +100,14 @@ class ContentOptimizer:
 
     def __init__(self, config_path: str | None = None) -> None:
         """Initialize content optimizer with optional config path."""
+        super().__init__()
         self.config: OptimizationConfig = self._load_config(config_path)
         self.backup_dir = Path(__file__).parent / "backups"
         Path(self.backup_dir).mkdir(exist_ok=True, parents=True)
 
     def _load_config(self, config_path: str | None = None) -> OptimizationConfig:
         """Load configuration."""
-        default_config = {
+        default_config: OptimizationConfig = {
             "optimization": {
                 "auto_fix": True,
                 "create_backups": True,
@@ -152,7 +156,12 @@ class ContentOptimizer:
                 optimizations=[],
                 backup_created=False,
                 issues_found=[
-                    {"type": "read_error", "message": f"Failed to read file: {e}"}
+                    {
+                        "type": "read_error",
+                        "description": f"Failed to read file: {e}",
+                        "line_number": None,
+                        "severity": "error",
+                    }
                 ],
             )
 
@@ -168,11 +177,13 @@ class ContentOptimizer:
         if self.config["optimization"]["add_toc_to_long_docs"]:
             toc_result = self._add_table_of_contents(content)
             if toc_result["added"]:
-                content = toc_result["content"]
-                optimizations.append({
-                    "type": "toc_added",
-                    "description": "Added table of contents to long document",
-                })
+                content = str(toc_result["content"])
+                optimizations.append(
+                    {
+                        "type": "toc_added",
+                        "description": "Added table of contents to long document",
+                    }
+                )
 
         # Check for issues
         issues.extend(self._check_for_issues(content, file_path))
@@ -193,12 +204,16 @@ class ContentOptimizer:
         if not dry_run and content != original_content:
             try:
                 with Path(file_path).open("w", encoding="utf-8") as f:
-                    f.write(content)
+                    f.write(str(content))
             except Exception as e:
-                issues.append({
-                    "type": "write_error",
-                    "message": f"Failed to write optimized content: {e}",
-                })
+                issues.append(
+                    {
+                        "type": "write_error",
+                        "description": f"Failed to write optimized content: {e}",
+                        "line_number": None,
+                        "severity": "error",
+                    }
+                )
 
         return OptimizationResult(
             file_path=file_path,
@@ -224,10 +239,12 @@ class ContentOptimizer:
 
             if new_content != content:
                 content = new_content
-                optimizations.append({
-                    "type": "trailing_whitespace",
-                    "description": "Removed trailing whitespace from lines",
-                })
+                optimizations.append(
+                    {
+                        "type": "trailing_whitespace",
+                        "description": "Removed trailing whitespace from lines",
+                    }
+                )
 
         # Fix common typos
         if self.config["optimization"]["fix_common_typos"]:
@@ -235,12 +252,14 @@ class ContentOptimizer:
                 pattern = rf"\b{re.escape(typo)}\b"
                 if re.search(pattern, content, re.IGNORECASE):
                     content = re.sub(pattern, correction, content, flags=re.IGNORECASE)
-                    optimizations.append({
-                        "type": "typo_fix",
-                        "typo": typo,
-                        "correction": correction,
-                        "description": f"Fixed typo: {typo} → {correction}",
-                    })
+                    optimizations.append(
+                        {
+                            "type": "typo_fix",
+                            "typo": typo,
+                            "correction": correction,
+                            "description": f"Fixed typo: {typo} → {correction}",
+                        }
+                    )
 
         # Enhance code blocks
         if self.config["optimization"]["enhance_code_blocks"]:
@@ -277,11 +296,13 @@ class ContentOptimizer:
                         detected_lang = self._detect_code_language(lines, i)
                         if detected_lang:
                             lines[i] = f"``` {detected_lang}"
-                            optimizations.append({
-                                "type": "code_block_language",
-                                "description": f"Added language specification: {detected_lang}",
-                                "line": i + 1,
-                            })
+                            optimizations.append(
+                                {
+                                    "type": "code_block_language",
+                                    "description": f"Added language specification: {detected_lang}",
+                                    "line": i + 1,
+                                }
+                            )
                 else:
                     # End of code block
                     in_code_block = False
@@ -289,7 +310,7 @@ class ContentOptimizer:
         return "\n".join(lines), optimizations
 
     def _detect_code_language(
-        self, lines: FlextCore.Types.StringList, start_index: int
+        self, lines: FlextTypes.StringList, start_index: int
     ) -> str | None:
         """Detect programming language from code block content."""
         # Look at the next few lines for language clues
@@ -325,6 +346,9 @@ class ContentOptimizer:
         optimizations = []
         max_length = self.config["optimization"]["max_line_length"]
 
+        if max_length is None:
+            return content, optimizations
+
         lines = content.split("\n")
         for i, line in enumerate(lines):
             if (
@@ -348,17 +372,19 @@ class ContentOptimizer:
                     new_lines.append(current_line)
 
                     lines[i] = "\n".join(new_lines)
-                    optimizations.append({
-                        "type": "line_length",
-                        "description": f"Fixed long line by breaking at commas (line {i + 1})",
-                    })
+                    optimizations.append(
+                        {
+                            "type": "line_length",
+                            "description": f"Fixed long line by breaking at commas (line {i + 1})",
+                        }
+                    )
 
         return "\n".join(lines), optimizations
 
     def _add_table_of_contents(
         self,
         content: str,
-    ) -> dict[str, str]:
+    ) -> dict[str, str | bool]:
         """Add table of contents to long documents."""
         lines = content.split("\n")
 
@@ -408,30 +434,34 @@ class ContentOptimizer:
 
         # Check for broken internal links
         internal_links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
-        for text, url in internal_links:
+        for _text, url in internal_links:
             if not url.startswith(("http", "https", "#")):
                 # Check if relative file exists
                 file_dir = Path(file_path).parent
                 full_path = str(file_dir / url)
                 if not Path(full_path).exists():
-                    issues.append({
-                        "type": "broken_link",
-                        "text": text,
-                        "url": url,
-                        "message": f"Broken internal link: {url}",
-                    })
+                    issues.append(
+                        {
+                            "type": "broken_link",
+                            "description": f"Broken internal link: {url}",
+                            "line_number": None,
+                            "severity": "warning",
+                        }
+                    )
 
         # Check for very long paragraphs
         paragraphs = re.split(r"\n\s*\n", content)
-        for i, para in enumerate(paragraphs):
+        for para in paragraphs:
             word_count = len(para.split())
             if word_count > LONG_PARAGRAPH_WORD_LIMIT:  # Very long paragraph
-                issues.append({
-                    "type": "long_paragraph",
-                    "paragraph": i,
-                    "word_count": word_count,
-                    "message": f"Very long paragraph ({word_count} words) - consider breaking up",
-                })
+                issues.append(
+                    {
+                        "type": "long_paragraph",
+                        "description": f"Very long paragraph ({word_count} words) - consider breaking up",
+                        "line_number": None,
+                        "severity": "info",
+                    }
+                )
 
         return issues
 
@@ -464,7 +494,7 @@ class ContentOptimizer:
                 if file.endswith((".md", ".mdx")):
                     file_path = str(Path(root) / file)
                     if not self._is_excluded(file_path):
-                        result = self.optimize_file(file_path, dry_run)
+                        result = self.optimize_file(file_path, dry_run=dry_run)
                         results.append(result)
 
         return results
@@ -539,7 +569,7 @@ def main() -> None:
     if args.verbose:
         pass
 
-    results = optimizer.optimize_directory(args.directory, args.dry_run)
+    results = optimizer.optimize_directory(args.directory, dry_run=args.dry_run)
     summary = optimizer.generate_summary(results)
 
     if args.output:

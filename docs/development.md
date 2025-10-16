@@ -189,26 +189,26 @@ class FlextLdapUserService:
 
     def __init__(self) -> None:
         self._client = get_ldap_client()
-        self.logger = FlextCore.Logger(__name__)
+        self.logger = FlextLogger(__name__)
 
-    def authenticate_user(self, username: str, password: str) -> FlextCore.Result[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
 
-**2. FlextCore.Result Pattern**
+**2. FlextResult Pattern**
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> FlextCore.Result[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
     if not request.is_valid():
-        return FlextCore.Result[FlextLdapUser].fail("Invalid user data")
+        return FlextResult[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
-        return FlextCore.Result[FlextLdapUser].fail(f"User creation failed: {result.error}")
+        return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
-    return FlextCore.Result[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
+    return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
 
 # ❌ WRONG - Try/catch fallbacks
 def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
@@ -228,16 +228,16 @@ class SearchRequest:
     base_dn: str
     filter_str: str
     scope: str
-    attributes: FlextCore.Types.StringList
+    attributes: FlextTypes.StringList
     size_limit: int = 100
     time_limit: int = 30
 
-def search_entries(self, request: SearchRequest) -> FlextCore.Result[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
     # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
-                        attributes: FlextCore.Types.StringList, size_limit: int, time_limit: int):
+                        attributes: FlextTypes.StringList, size_limit: int, time_limit: int):
     # FORBIDDEN - use parameter objects
 ```
 
@@ -270,10 +270,10 @@ def authenticate_user(
     self,
     username: str,
     password: str
-) -> FlextCore.Result[FlextLdapUser]:
+) -> FlextResult[FlextLdapUser]:
     """Complete type signature required."""
 
-# Generic types for FlextCore.Result patterns
+# Generic types for FlextResult patterns
 T = TypeVar('T')
 
 class FlextLdapService(Generic[T]):
@@ -292,7 +292,26 @@ import pydantic
 from ldap3 import Connection, Server
 
 # FLEXT imports
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Local imports
 from flext_ldap.entities import FlextLdapUser
@@ -411,7 +430,26 @@ class TestLdapOperations:
 # tests/conftest.py
 import pytest
 from flext_tests import FlextTestDocker
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
@@ -517,7 +555,7 @@ class FlextLdapClients:
         self,
         username: str,
         password: str
-    ) -> FlextCore.Result[FlextLdapUser]:
+    ) -> FlextResult[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:
@@ -525,11 +563,11 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            FlextCore.Result containing authenticated user object on success,
+            FlextResult containing authenticated user object on success,
             or error message on failure.
 
         Raises:
-            No exceptions raised - all errors returned via FlextCore.Result.
+            No exceptions raised - all errors returned via FlextResult.
 
         Examples:
             >>> result = api.authenticate_user("john.doe", "secret123")
@@ -548,7 +586,7 @@ All public APIs require comprehensive documentation including:
 - Purpose and responsibility
 - Parameter descriptions with types
 - Return value descriptions
-- FlextCore.Result usage patterns
+- FlextResult usage patterns
 - Complete working examples
 - Integration with Clean Architecture layers
 
@@ -636,7 +674,7 @@ results = gather(*[
 ### Code Review Checklist
 
 - [ ] Follows Clean Architecture patterns
-- [ ] Uses FlextCore.Result for error handling
+- [ ] Uses FlextResult for error handling
 - [ ] Includes comprehensive tests
 - [ ] Type annotations complete
 - [ ] Documentation updated

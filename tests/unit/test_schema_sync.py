@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldap.schema_sync import FlextLdapSchemaSync
 
@@ -54,7 +54,7 @@ def temp_schema_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def existing_schema() -> FlextCore.Types.Dict:
+def existing_schema() -> FlextTypes.Dict:
     """Provide existing schema for idempotent testing.
 
     Returns:
@@ -121,7 +121,7 @@ class TestSchemaSyncInitialization:
         """Test that schema_ldif_file is converted to Path."""
         schema_file_str = str(tmp_path / "schema.ldif")
         service = FlextLdapSchemaSync(
-            schema_ldif_file=schema_file_str,
+            schema_ldif_file=Path(schema_file_str),
             server_host="localhost",
         )
 
@@ -260,7 +260,7 @@ class TestIdempotentFiltering:
             server_host="localhost",
         )
 
-        definitions: list[FlextCore.Types.Dict] = [
+        definitions: list[FlextTypes.Dict] = [
             {
                 "type": "attributeType",
                 "oid": "2.5.4.4",
@@ -275,7 +275,7 @@ class TestIdempotentFiltering:
             },
         ]
 
-        existing_schema: FlextCore.Types.Dict = {
+        existing_schema: FlextTypes.Dict = {
             "attributeTypes": {},
             "objectClasses": {},
         }
@@ -286,7 +286,7 @@ class TestIdempotentFiltering:
         assert new_definitions == definitions
 
     def test_filter_new_definitions_all_existing(
-        self, temp_schema_file: Path, existing_schema: FlextCore.Types.Dict
+        self, temp_schema_file: Path, existing_schema: FlextTypes.Dict
     ) -> None:
         """Test filtering when all definitions already exist."""
         service = FlextLdapSchemaSync(
@@ -294,7 +294,7 @@ class TestIdempotentFiltering:
             server_host="localhost",
         )
 
-        definitions: list[FlextCore.Types.Dict] = [
+        definitions: list[FlextTypes.Dict] = [
             {
                 "type": "attributeType",
                 "oid": "2.5.4.3",
@@ -315,7 +315,7 @@ class TestIdempotentFiltering:
         assert len(new_definitions) == 0
 
     def test_filter_new_definitions_mixed(
-        self, temp_schema_file: Path, existing_schema: FlextCore.Types.Dict
+        self, temp_schema_file: Path, existing_schema: FlextTypes.Dict
     ) -> None:
         """Test filtering with mix of new and existing definitions."""
         service = FlextLdapSchemaSync(
@@ -323,7 +323,7 @@ class TestIdempotentFiltering:
             server_host="localhost",
         )
 
-        definitions: list[FlextCore.Types.Dict] = [
+        definitions: list[FlextTypes.Dict] = [
             {
                 "type": "attributeType",
                 "oid": "2.5.4.3",
@@ -367,7 +367,7 @@ class TestIdempotentFiltering:
             server_host="localhost",
         )
 
-        definitions: list[FlextCore.Types.Dict] = [
+        definitions: list[FlextTypes.Dict] = [
             {
                 "type": "attributeType",
                 "oid": "2.5.4.3",
@@ -376,7 +376,7 @@ class TestIdempotentFiltering:
             },
         ]
 
-        existing_schema: FlextCore.Types.Dict = {
+        existing_schema: FlextTypes.Dict = {
             "attributeTypes": {
                 "2.5.4.3": {  # Existing by OID
                     "oid": "2.5.4.3",
@@ -435,7 +435,7 @@ class TestConnectionAndSchema:
             server_host="localhost",
         )
 
-        definitions: list[FlextCore.Types.Dict] = [
+        definitions: list[FlextTypes.Dict] = [
             {
                 "type": "attributeType",
                 "oid": "2.5.4.3",

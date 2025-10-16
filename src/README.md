@@ -47,7 +47,7 @@ src/flext_ldap/
 All source code follows enterprise-grade standards:
 
 - **Type Safety**: MyPy strict mode adoption; aiming for full coverage
-- **Error Handling**: Railway-oriented programming with FlextCore.Result pattern
+- **Error Handling**: Railway-oriented programming with FlextResult pattern
 - **Documentation**: Comprehensive docstrings with business context
 - **Testing**: 95%+ test coverage requirement
 - **Code Quality**: Ruff linting with comprehensive rule enforcement
@@ -56,7 +56,7 @@ All source code follows enterprise-grade standards:
 
 FLEXT-LDAP integrates seamlessly with the broader FLEXT ecosystem:
 
-- **flext-core**: Foundation patterns (FlextCore.Result, FlextCore.Container, FlextCore.Models.Entity)
+- **flext-core**: Foundation patterns (FlextResult, FlextContainer, FlextModels.Entity)
 - **flext-auth**: Authentication and authorization services
 - **flext-meltano**: Data pipeline orchestration
 - **Singer ecosystem**: Extract-load-transform operations

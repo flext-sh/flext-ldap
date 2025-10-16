@@ -26,7 +26,7 @@ class TestSharedLDAPIntegration:
     def test_shared_ldap_connection(
         self,
         shared_ldap_client: FlextLdapClients,
-        shared_ldap_config: dict,
+        shared_ldap_config: dict[str, object],
     ) -> None:
         """Test connecting to shared LDAP container."""
         # The client should already be connected via the fixture
@@ -34,9 +34,9 @@ class TestSharedLDAPIntegration:
 
         # Test basic search to verify connection
         search_result = shared_ldap_client.search_universal(
-            base_dn=shared_ldap_config["base_dn"],
+            base_dn=str(shared_ldap_config["base_dn"]),
             filter_str="(objectClass=*)",
-            scope="base",
+            scope="BASE",
         )
 
         assert search_result.is_success, f"Search failed: {search_result.error}"
@@ -105,7 +105,7 @@ class TestSharedLDAPIntegration:
 
     def test_shared_ldap_environment_variables(
         self,
-        shared_ldap_config: dict,
+        shared_ldap_config: dict[str, object],
     ) -> None:
         """Test that shared LDAP environment variables are properly set."""
         # Verify all required config keys are present
@@ -163,7 +163,7 @@ class TestSharedLDAPIntegration:
     def test_shared_ldap_crud_operations(
         self,
         shared_ldap_client: FlextLdapClients,
-        shared_ldap_config: dict,
+        shared_ldap_config: dict[str, object],
     ) -> None:
         """Test CRUD operations with shared LDAP container."""
         base_dn = shared_ldap_config["base_dn"]
@@ -183,7 +183,7 @@ class TestSharedLDAPIntegration:
         if not create_result.is_success:
             # If creation failed, try to search for existing entry
             search_result = shared_ldap_client.search_universal(
-                base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
+                base_dn=ou_dn, filter_str="(objectClass=*)", scope="BASE"
             )
             assert search_result.is_success, (
                 f"Entry should exist or be creatable: {create_result.error}"
@@ -195,7 +195,7 @@ class TestSharedLDAPIntegration:
 
         # Test searching for the entry
         search_result = shared_ldap_client.search_universal(
-            base_dn=ou_dn, filter_str="(objectClass=*)", scope="base"
+            base_dn=ou_dn, filter_str="(objectClass=*)", scope="BASE"
         )
 
         assert search_result.is_success, (

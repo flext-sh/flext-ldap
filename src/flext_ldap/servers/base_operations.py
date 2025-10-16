@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
 from flext_ldap.models import FlextLdapModels
 
 
-class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
+class FlextLdapServersBaseOperations(FlextService[None], ABC):
     """Abstract base class for server-specific LDAP operations.
 
     All server implementations (OpenLDAP, OID, OUD, AD, etc.) must extend
@@ -39,12 +39,12 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
 
         """
         super().__init__()
-        # logger inherited from FlextCore.Service
+        # logger inherited from FlextService
         self._server_type = server_type or "generic"
 
-    def execute(self) -> FlextCore.Result[None]:
-        """Execute method required by FlextCore.Service."""
-        return FlextCore.Result[None].ok(None)
+    def execute(self) -> FlextResult[None]:
+        """Execute method required by FlextService."""
+        return FlextResult[None].ok(None)
 
     @property
     def server_type(self) -> str:
@@ -72,7 +72,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         """Check if server supports START_TLS."""
 
     @abstractmethod
-    def get_bind_mechanisms(self) -> FlextCore.Types.StringList:
+    def get_bind_mechanisms(self) -> FlextTypes.StringList:
         """Get supported BIND mechanisms (SIMPLE, SASL, etc.)."""
 
     # =========================================================================
@@ -89,44 +89,38 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         """
 
     @abstractmethod
-    def discover_schema(
-        self, connection: Connection
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
         """Discover schema from server.
 
         Args:
             connection: Active LDAP connection
 
         Returns:
-            FlextCore.Result containing schema information
+            FlextResult containing schema information
 
         """
 
     @abstractmethod
-    def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse objectClass definition from schema.
 
         Args:
             object_class_def: ObjectClass definition string
 
         Returns:
-            FlextCore.Result containing parsed objectClass information
+            FlextResult containing parsed objectClass information
 
         """
 
     @abstractmethod
-    def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse attributeType definition from schema.
 
         Args:
             attribute_def: AttributeType definition string
 
         Returns:
-            FlextCore.Result containing parsed attribute information
+            FlextResult containing parsed attribute information
 
         """
 
@@ -157,7 +151,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+    ) -> FlextResult[list[FlextTypes.Dict]]:
         """Get ACLs for a given DN.
 
         Args:
@@ -165,7 +159,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             dn: Distinguished Name
 
         Returns:
-            FlextCore.Result containing list of ACL entries
+            FlextResult containing list of ACL entries
 
         """
 
@@ -174,8 +168,8 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         connection: Connection,
         dn: str,
-        acls: list[FlextCore.Types.Dict],
-    ) -> FlextCore.Result[bool]:
+        acls: list[FlextTypes.Dict],
+    ) -> FlextResult[bool]:
         """Set ACLs for a given DN.
 
         Args:
@@ -184,31 +178,31 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             acls: List of ACL entries to set
 
         Returns:
-            FlextCore.Result indicating success
+            FlextResult indicating success
 
         """
 
     @abstractmethod
-    def parse_acl(self, acl_string: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse ACL string to structured format.
 
         Args:
             acl_string: ACL string in server-specific format
 
         Returns:
-            FlextCore.Result containing parsed ACL structure
+            FlextResult containing parsed ACL structure
 
         """
 
     @abstractmethod
-    def format_acl(self, acl_dict: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
         """Format ACL structure to server-specific string.
 
         Args:
             acl_dict: ACL dictionary structure
 
         Returns:
-            FlextCore.Result containing formatted ACL string
+            FlextResult containing formatted ACL string
 
         """
 
@@ -221,7 +215,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         connection: Connection,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Add entry to LDAP server.
 
         Args:
@@ -229,7 +223,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             entry: FlextLdif Entry to add
 
         Returns:
-            FlextCore.Result indicating success
+            FlextResult indicating success
 
         """
 
@@ -238,8 +232,8 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         connection: Connection,
         dn: str,
-        modifications: FlextCore.Types.Dict,
-    ) -> FlextCore.Result[bool]:
+        modifications: FlextTypes.Dict,
+    ) -> FlextResult[bool]:
         """Modify existing entry.
 
         Args:
@@ -248,12 +242,12 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             modifications: Modifications to apply
 
         Returns:
-            FlextCore.Result indicating success
+            FlextResult indicating success
 
         """
 
     @abstractmethod
-    def delete_entry(self, connection: Connection, dn: str) -> FlextCore.Result[bool]:
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
         """Delete entry from LDAP server.
 
         Args:
@@ -261,7 +255,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             dn: Distinguished Name of entry to delete
 
         Returns:
-            FlextCore.Result indicating success
+            FlextResult indicating success
 
         """
 
@@ -269,14 +263,14 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
     def normalize_entry(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for this server type.
 
         Args:
             entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextCore.Result containing normalized entry
+            FlextResult containing normalized entry
 
         """
 
@@ -303,10 +297,10 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         connection: Connection,
         base_dn: str,
         search_filter: str,
-        attributes: FlextCore.Types.StringList | None = None,
+        attributes: FlextTypes.StringList | None = None,
         scope: str = "subtree",
         page_size: int = 100,
-    ) -> FlextCore.Result[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdapModels.Entry]]:
         """Execute paged search.
 
         Args:
@@ -318,7 +312,7 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
             page_size: Page size for results
 
         Returns:
-            FlextCore.Result containing list of entries
+            FlextResult containing list of entries
 
         """
 
@@ -326,19 +320,19 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Get Root DSE attributes.
 
         Args:
             connection: Active LDAP connection
 
         Returns:
-            FlextCore.Result containing Root DSE attributes
+            FlextResult containing Root DSE attributes
 
         """
 
     @abstractmethod
-    def detect_server_type_from_root_dse(self, root_dse: FlextCore.Types.Dict) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: FlextTypes.Dict) -> str:
         """Detect server type from Root DSE.
 
         Args:
@@ -352,14 +346,14 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
     @abstractmethod
     def get_supported_controls(
         self, connection: Connection
-    ) -> FlextCore.Result[FlextCore.Types.StringList]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Get supported LDAP controls.
 
         Args:
             connection: Active LDAP connection
 
         Returns:
-            FlextCore.Result containing list of supported control OIDs
+            FlextResult containing list of supported control OIDs
 
         """
 
@@ -368,14 +362,14 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextCore.Result[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Normalize entry for this server type.
 
         Args:
             entry: Entry to normalize
 
         Returns:
-            FlextCore.Result containing normalized entry
+            FlextResult containing normalized entry
 
         """
 
@@ -420,13 +414,13 @@ class FlextLdapServersBaseOperations(FlextCore.Service[None], ABC):
         self,
         entry: FlextLdifModels.Entry,
         server_type: str | None = None,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate entry for this server type.
 
         Args:
             entry: Entry to validate
 
         Returns:
-            FlextCore.Result indicating validation success or failure
+            FlextResult indicating validation success or failure
 
         """

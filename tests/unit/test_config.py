@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextTypes
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdapConfig, FlextLdapModels, FlextLdapValidations
@@ -30,7 +30,7 @@ class TestFlextLdapConfig:
 
     def test_create_connection_config_success(
         self,
-        ldap_server_config: FlextCore.Types.Dict,
+        ldap_server_config: FlextTypes.Dict,
     ) -> None:
         """Test successful connection config creation."""
         configs = FlextLdapConfig()
@@ -54,7 +54,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with minimal config data - should succeed with defaults
-        minimal_config: FlextCore.Types.Dict = {
+        minimal_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -106,7 +106,7 @@ class TestFlextLdapConfig:
         """Test successful search config creation."""
         configs = FlextLdapConfig()
 
-        search_data: FlextCore.Types.Dict = {
+        search_data: FlextTypes.Dict = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -125,7 +125,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause Pydantic validation to fail
-        invalid_data: FlextCore.Types.Dict = {
+        invalid_data: FlextTypes.Dict = {
             "base_dn": None,
             "filter_str": None,
             "attributes": "invalid",
@@ -142,7 +142,7 @@ class TestFlextLdapConfig:
         """Test successful modify config creation."""
         configs = FlextLdapConfig()
 
-        modify_data: FlextCore.Types.Dict = {
+        modify_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "operation": "replace",
             "attribute": "cn",
@@ -163,7 +163,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: FlextCore.Types.Dict = {
+        data_with_types: FlextTypes.Dict = {
             "dn": None,
             "operation": None,
             "attribute": None,
@@ -182,7 +182,7 @@ class TestFlextLdapConfig:
         """Test successful add config creation."""
         configs = FlextLdapConfig()
 
-        add_data: FlextCore.Types.Dict = {
+        add_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": [
@@ -210,7 +210,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: FlextCore.Types.Dict = {"dn": None, "attributes": "invalid"}
+        data_with_types: FlextTypes.Dict = {"dn": None, "attributes": "invalid"}
         result = configs.create_add_config(data_with_types)
 
         # The method should succeed with proper type conversion
@@ -222,7 +222,7 @@ class TestFlextLdapConfig:
         """Test successful delete config creation."""
         configs = FlextLdapConfig()
 
-        delete_data: FlextCore.Types.Dict = {
+        delete_data: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com"
         }
 
@@ -237,7 +237,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause an exception
-        invalid_data: FlextCore.Types.Dict = {"dn": None}
+        invalid_data: FlextTypes.Dict = {"dn": None}
         result = configs.create_delete_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
@@ -246,7 +246,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_success(
         self,
-        ldap_server_config: FlextCore.Types.Dict,
+        ldap_server_config: FlextTypes.Dict,
     ) -> None:
         """Test successful connection data validation."""
         # Update the config to use the expected field names
@@ -263,7 +263,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
-        invalid_data: FlextCore.Types.Dict = {"invalid": "data"}
+        invalid_data: FlextTypes.Dict = {"invalid": "data"}
         result = FlextLdapValidations.validate_connection_config(invalid_data)
 
         assert result.is_failure
@@ -275,7 +275,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_missing_required_fields(self) -> None:
         """Test connection data validation with missing required fields."""
-        incomplete_data: FlextCore.Types.Dict = {
+        incomplete_data: FlextTypes.Dict = {
             "server": "localhost"
             # Missing port, bind_dn, bind_password
         }
@@ -297,11 +297,13 @@ class TestFlextLdapConfig:
         filter_result = FlextLdapValidations.validate_filter("(objectClass=person)")
         assert filter_result.is_success
 
-        attributes_result = FlextLdapValidations.validate_attributes([
-            "cn",
-            "sn",
-            "mail",
-        ])
+        attributes_result = FlextLdapValidations.validate_attributes(
+            [
+                "cn",
+                "sn",
+                "mail",
+            ]
+        )
         assert attributes_result.is_success
 
     def test_validate_search_data_failure(self) -> None:
@@ -446,14 +448,14 @@ class TestFlextLdapConfig:
         """Test successful config merging."""
         configs = FlextLdapConfig()
 
-        base_config: FlextCore.Types.Dict = {
+        base_config: FlextTypes.Dict = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "password": "admin123",
             "base_dn": "dc=example,dc=com",
         }
 
-        override_config: FlextCore.Types.Dict = {
+        override_config: FlextTypes.Dict = {
             "server_uri": f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "connection_timeout": 60,
         }
@@ -472,7 +474,7 @@ class TestFlextLdapConfig:
         """Test config merging with empty override."""
         configs = FlextLdapConfig()
 
-        base_config: FlextCore.Types.Dict = {
+        base_config: FlextTypes.Dict = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
         }
@@ -547,26 +549,32 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test consistent error handling with valid data
-        conn_result = configs.create_from_connection_config_data({
-            "server": "ldap://localhost",
-            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
-            "bind_dn": "cn=admin,dc=example,dc=com",
-            "bind_password": "password",
-        })
+        conn_result = configs.create_from_connection_config_data(
+            {
+                "server": "ldap://localhost",
+                "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
+                "bind_dn": "cn=admin,dc=example,dc=com",
+                "bind_password": "password",
+            }
+        )
         assert conn_result.is_success
 
-        search_result = configs.create_search_config({
-            "base_dn": "dc=example,dc=com",
-            "filter_str": "(objectClass=*)",
-        })
+        search_result = configs.create_search_config(
+            {
+                "base_dn": "dc=example,dc=com",
+                "filter_str": "(objectClass=*)",
+            }
+        )
         assert search_result.is_success
 
-        modify_result = configs.create_modify_config({
-            "dn": "cn=test,dc=example,dc=com",
-            "operation": "replace",
-            "attribute": "description",
-            "values": ["test description"],
-        })
+        modify_result = configs.create_modify_config(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "operation": "replace",
+                "attribute": "description",
+                "values": ["test description"],
+            }
+        )
         assert modify_result.is_success
 
     def test_config_integration_complete_workflow(self) -> None:
@@ -574,7 +582,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test complete workflow with valid data
-        conn_config: FlextCore.Types.Dict = {
+        conn_config: FlextTypes.Dict = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -584,7 +592,7 @@ class TestFlextLdapConfig:
         conn_result = configs.create_from_connection_config_data(conn_config)
         assert conn_result.is_success
 
-        search_config: FlextCore.Types.Dict = {
+        search_config: FlextTypes.Dict = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -592,7 +600,7 @@ class TestFlextLdapConfig:
         search_result = configs.create_search_config(search_config)
         assert search_result.is_success
 
-        add_config: FlextCore.Types.Dict = {
+        add_config: FlextTypes.Dict = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
@@ -839,8 +847,8 @@ class TestFlextLdapConfig:
     def test_merge_configs(self) -> None:
         """Test merge_configs method."""
         configs = FlextLdapConfig()
-        base_config: FlextCore.Types.Dict = {"server": "ldap://localhost", "port": 389}
-        override_config: FlextCore.Types.Dict = {"port": 636, "use_ssl": True}
+        base_config: FlextTypes.Dict = {"server": "ldap://localhost", "port": 389}
+        override_config: FlextTypes.Dict = {"port": 636, "use_ssl": True}
 
         result = configs.merge_configs(base_config, override_config)
 
@@ -892,20 +900,24 @@ class TestFlextLdapConfig:
 
     def test_create_modify_config_exception(self) -> None:
         """Test create_modify_config exception - covers lines 430-431."""
-        result = FlextLdapConfig.create_modify_config({
-            "dn": "cn=test,dc=com",
-            "attribute": "cn",
-            "values": ["test"],
-        })
+        result = FlextLdapConfig.create_modify_config(
+            {
+                "dn": "cn=test,dc=com",
+                "attribute": "cn",
+                "values": ["test"],
+            }
+        )
         # Should succeed with valid data
         assert result.is_success
 
     def test_create_add_config_exception(self) -> None:
         """Test create_add_config exception - covers lines 454-455."""
-        result = FlextLdapConfig.create_add_config({
-            "dn": "cn=test,dc=com",
-            "attributes": {"cn": ["test"]},
-        })
+        result = FlextLdapConfig.create_add_config(
+            {
+                "dn": "cn=test,dc=com",
+                "attributes": {"cn": ["test"]},
+            }
+        )
         # Should succeed with valid data
         assert result.is_success
 
@@ -1170,11 +1182,13 @@ class TestInfrastructureProtocols:
         config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
 
         # Update configuration at runtime (use valid combination)
-        result = config.configure({
-            "ldap_server_uri": "ldaps://localhost",
-            "ldap_port": 636,
-            "ldap_use_ssl": True,
-        })
+        result = config.configure(
+            {
+                "ldap_server_uri": "ldaps://localhost",
+                "ldap_port": 636,
+                "ldap_use_ssl": True,
+            }
+        )
 
         assert result.is_success
         assert config.ldap_port == 636
@@ -1186,11 +1200,13 @@ class TestInfrastructureProtocols:
         config = FlextLdapConfig(ldap_bind_password=SecretStr("test"))
 
         # Try invalid configuration that will trigger validation error
-        result = config.configure({
-            "ldap_server_uri": "ldaps://localhost",
-            "ldap_port": 389,  # Wrong port for ldaps
-            "ldap_use_ssl": False,  # SSL must be enabled for ldaps://
-        })
+        result = config.configure(
+            {
+                "ldap_server_uri": "ldaps://localhost",
+                "ldap_port": 389,  # Wrong port for ldaps
+                "ldap_use_ssl": False,  # SSL must be enabled for ldaps://
+            }
+        )
 
         assert result.is_failure
 

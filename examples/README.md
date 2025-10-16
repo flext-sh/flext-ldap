@@ -4,13 +4,13 @@
 
 ## 📚 Overview
 
-These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with FlextCore.Result error handling, proper type hints, and zero CLI code.
+These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with FlextResult error handling, proper type hints, and zero CLI code.
 
 **Key Principles:**
 
 - ✅ **ALWAYS use api.py (FlextLdap)** as the primary interface
 - ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
-- ✅ **FlextCore.Result patterns** for explicit error handling (NO try/except fallbacks)
+- ✅ **FlextResult patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
 - ✅ **Library usage only** - NO CLI tools
 
@@ -265,7 +265,7 @@ python examples/06_validation_patterns.py
 - Context managers for connection management
 - Retry patterns with exponential backoff
 - Bulk operations with batching
-- Complete FlextCore.Result error handling patterns
+- Complete FlextResult error handling patterns
 - Exception handling with FlextLdapExceptions
 - Performance optimization techniques
   - Attribute filtering
@@ -285,7 +285,7 @@ python examples/07_advanced_patterns.py
 - Context manager automatic connection handling
 - Retry pattern with simulated failures
 - Bulk user creation with batching
-- FlextCore.Result error handling patterns
+- FlextResult error handling patterns
 - Exception handling demonstrations
 - Performance optimization results
 
@@ -395,8 +395,6 @@ python examples/10_connection_management.py
 
 **Demonstrates:**
 
-- FlextLdapRepositories.UserRepository for user management
-- FlextLdapRepositories.GroupRepository for group management
 - Domain.Repository protocol implementation
 - CRUD operations through repository pattern
 - Entity lifecycle management
@@ -416,7 +414,7 @@ python examples/11_repository_patterns.py
 - Repository pattern concepts and benefits
 - UserRepository and GroupRepository usage
 - Entity lifecycle demonstrations
-- FlextCore.Result integration with repositories
+- FlextResult integration with repositories
 - Clean Architecture layer separation
 - Testing benefits explanation
 
@@ -745,7 +743,7 @@ with ldap_connection() as api:
     result = api.search(...)
 ```
 
-### Pattern 3: FlextCore.Result Error Handling
+### Pattern 3: FlextResult Error Handling
 
 ```python
 # Pattern 1: Check before unwrap
@@ -760,10 +758,10 @@ entries = result.unwrap()
 def process():
     result = api.search(...)
     if result.is_failure:
-        return FlextCore.Result.fail(f"Search failed: {result.error}")
+        return FlextResult.fail(f"Search failed: {result.error}")
 
     entries = result.unwrap()
-    return FlextCore.Result.ok(entries)
+    return FlextResult.ok(entries)
 ```
 
 ### Pattern 4: Validation Before Operations
@@ -834,7 +832,7 @@ pip install flext-ldif
 
 1. **Always use api.py (FlextLdap)** as the primary interface
 2. **Validate inputs** before LDAP operations (DN, filters)
-3. **Handle FlextCore.Result** explicitly - check is_success before unwrap
+3. **Handle FlextResult** explicitly - check is_success before unwrap
 4. **Use context managers** for automatic resource cleanup
 5. **Implement retry patterns** for resilient operations
 6. **Batch bulk operations** for better performance
@@ -849,7 +847,7 @@ After exploring these examples:
 
 1. **Integrate into your application** - Use patterns from examples
 2. **Customize configurations** - Adapt to your LDAP server
-3. **Implement error handling** - Use FlextCore.Result patterns
+3. **Implement error handling** - Use FlextResult patterns
 4. **Add business logic** - Build domain-specific validation
 5. **Optimize performance** - Apply advanced patterns from example 07
 

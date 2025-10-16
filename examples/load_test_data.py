@@ -11,22 +11,24 @@ This script demonstrates:
 import sys
 from pathlib import Path
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextLogger,
+    FlextTypes,
+)
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig
 
-# Setup logging
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 
 def parse_ldif_file(
     ldif_path: Path,
-) -> list[tuple[str, dict[str, str | FlextCore.Types.StringList]]]:
+) -> list[tuple[str, dict[str, str | FlextTypes.StringList]]]:
     """Parse LDIF file into list of (dn, attributes) tuples."""
-    entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = []
+    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
     current_dn: str | None = None
-    current_attrs: dict[str, str | FlextCore.Types.StringList] = {}
+    current_attrs: dict[str, str | FlextTypes.StringList] = {}
 
     with Path(ldif_path).open(encoding="utf-8") as f:
         for line in f:
@@ -56,10 +58,11 @@ def parse_ldif_file(
 
                 # Handle multi-valued attributes
                 if attr in current_attrs:
-                    if isinstance(current_attrs[attr], list):
-                        current_attrs[attr].append(value)
+                    existing_value = current_attrs[attr]
+                    if isinstance(existing_value, list):
+                        existing_value.append(value)
                     else:
-                        current_attrs[attr] = [current_attrs[attr], value]
+                        current_attrs[attr] = [existing_value, value]
                 else:
                     current_attrs[attr] = value
 

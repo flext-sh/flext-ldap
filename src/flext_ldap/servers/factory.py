@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 from ldap3 import Connection
@@ -23,7 +23,7 @@ from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Ope
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 
 
-class FlextLdapServersFactory(FlextCore.Service[None]):
+class FlextLdapServersFactory(FlextService[None]):
     """Factory for creating appropriate server operations instances.
 
     This factory provides methods to:
@@ -45,7 +45,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
     def __init__(self) -> None:
         """Initialize server operations factory with Phase 1 context enrichment."""
         super().__init__()
-        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
+        # Logger and container inherited from FlextService via FlextMixins
         self._quirks_manager = FlextLdifQuirksManager()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             "openldap1": FlextLdapServersOpenLDAP1Operations,
@@ -60,26 +60,26 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
             "generic": FlextLdapServersGenericOperations,
         }
 
-    def execute(self) -> FlextCore.Result[None]:
-        """Execute method required by FlextCore.Service."""
-        return FlextCore.Result[None].ok(None)
+    def execute(self) -> FlextResult[None]:
+        """Execute method required by FlextService."""
+        return FlextResult[None].ok(None)
 
     def create_from_server_type(
         self,
         server_type: str,
-    ) -> FlextCore.Result[FlextLdapServersBaseOperations]:
+    ) -> FlextResult[FlextLdapServersBaseOperations]:
         """Create server operations instance from explicit server type.
 
         Args:
             server_type: Server type identifier (e.g., "openldap2", "oid", "oud")
 
         Returns:
-            FlextCore.Result containing server operations instance
+            FlextResult containing server operations instance
 
         """
         try:
             if not server_type or not server_type.strip():
-                return FlextCore.Result[FlextLdapServersBaseOperations].fail(
+                return FlextResult[FlextLdapServersBaseOperations].fail(
                     "Server type cannot be empty",
                 )
 
@@ -96,7 +96,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                         "class": operations_class.__name__,
                     },
                 )
-                return FlextCore.Result[FlextLdapServersBaseOperations].ok(
+                return FlextResult[FlextLdapServersBaseOperations].ok(
                     operations_instance,
                 )
 
@@ -105,7 +105,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "Unknown server type, using generic operations",
                 extra={"server_type": server_type_lower},
             )
-            return FlextCore.Result[FlextLdapServersBaseOperations].ok(
+            return FlextResult[FlextLdapServersBaseOperations].ok(
                 FlextLdapServersGenericOperations(),
             )
 
@@ -114,14 +114,14 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "Failed to create server operations",
                 extra={"server_type": server_type, "error": str(e)},
             )
-            return FlextCore.Result[FlextLdapServersBaseOperations].fail(
+            return FlextResult[FlextLdapServersBaseOperations].fail(
                 f"Server operations creation failed: {e}",
             )
 
     def create_from_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextCore.Result[FlextLdapServersBaseOperations]:
+    ) -> FlextResult[FlextLdapServersBaseOperations]:
         """Create server operations instance by detecting server type from entries.
 
         Uses FlextLdif quirks system to analyze entry characteristics and
@@ -131,13 +131,13 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
             entries: List of FlextLdif entries to analyze
 
         Returns:
-            FlextCore.Result containing server operations instance
+            FlextResult containing server operations instance
 
         """
         try:
             if not entries:
                 self.logger.warning("No entries provided, using generic operations")
-                return FlextCore.Result[FlextLdapServersBaseOperations].ok(
+                return FlextResult[FlextLdapServersBaseOperations].ok(
                     FlextLdapServersGenericOperations(),
                 )
 
@@ -148,7 +148,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                     "Server type detection failed, using generic operations",
                     extra={"error": detection_result.error},
                 )
-                return FlextCore.Result[FlextLdapServersBaseOperations].ok(
+                return FlextResult[FlextLdapServersBaseOperations].ok(
                     FlextLdapServersGenericOperations(),
                 )
 
@@ -166,14 +166,14 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "Failed to create server operations from entries",
                 extra={"entry_count": len(entries) if entries else 0, "error": str(e)},
             )
-            return FlextCore.Result[FlextLdapServersBaseOperations].fail(
+            return FlextResult[FlextLdapServersBaseOperations].fail(
                 f"Server operations creation from entries failed: {e}",
             )
 
     def detect_server_type_from_root_dse(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Detect server type from root DSE (rootDomainServiceEntry).
 
         The root DSE contains server-specific attributes that can be used
@@ -189,7 +189,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
             connection: Active ldap3 connection
 
         Returns:
-            FlextCore.Result containing detected server type string
+            FlextResult containing detected server type string
 
         Examples:
             - OpenLDAP: vendorName="OpenLDAP"
@@ -200,7 +200,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
         """
         try:
             if not connection or not connection.bound:
-                return FlextCore.Result[str].fail("Connection not bound")
+                return FlextResult[str].fail("Connection not bound")
 
             # Search for root DSE
             # Use '*' and '+' to get all attributes (standard and operational)
@@ -219,7 +219,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 self.logger.warning(
                     "Root DSE query failed, unable to detect server type",
                 )
-                return FlextCore.Result[str].ok("generic")
+                return FlextResult[str].ok("generic")
 
             entry = connection.entries[0]
 
@@ -239,7 +239,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                     "OpenLDAP detected from root DSE",
                     extra={"version": vendor_version, "type": detected_type},
                 )
-                return FlextCore.Result[str].ok(detected_type)
+                return FlextResult[str].ok(detected_type)
 
             # Detect Oracle OID/OUD
             if "oracle" in vendor_name.lower():
@@ -256,7 +256,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                     "Oracle directory server detected from root DSE",
                     extra={"vendor": vendor_name, "type": detected_type},
                 )
-                return FlextCore.Result[str].ok(detected_type)
+                return FlextResult[str].ok(detected_type)
 
             # Detect Active Directory
             if hasattr(entry, "rootDomainNamingContext") or hasattr(
@@ -264,26 +264,26 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "defaultNamingContext",
             ):
                 self.logger.info("Active Directory detected from root DSE")
-                return FlextCore.Result[str].ok("ad")
+                return FlextResult[str].ok("ad")
 
             # Generic fallback
             self.logger.info(
                 "Generic LDAP server detected",
                 extra={"vendor": vendor_name or "unknown"},
             )
-            return FlextCore.Result[str].ok("generic")
+            return FlextResult[str].ok("generic")
 
         except Exception as e:
             self.logger.exception(
                 "Root DSE detection error",
                 extra={"error": str(e)},
             )
-            return FlextCore.Result[str].fail(f"Root DSE detection failed: {e}")
+            return FlextResult[str].fail(f"Root DSE detection failed: {e}")
 
     def create_from_connection(
         self,
         connection: Connection,
-    ) -> FlextCore.Result[FlextLdapServersBaseOperations]:
+    ) -> FlextResult[FlextLdapServersBaseOperations]:
         """Create server operations instance by detecting server type from connection.
 
         Performs root DSE query to detect server type, then instantiates
@@ -293,12 +293,12 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
             connection: Active ldap3 connection
 
         Returns:
-            FlextCore.Result containing server operations instance
+            FlextResult containing server operations instance
 
         """
         try:
             if not connection:
-                return FlextCore.Result[FlextLdapServersBaseOperations].fail(
+                return FlextResult[FlextLdapServersBaseOperations].fail(
                     "Connection cannot be None",
                 )
 
@@ -309,7 +309,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                     "Server detection from connection failed, using generic",
                     extra={"error": detection_result.error},
                 )
-                return FlextCore.Result[FlextLdapServersBaseOperations].ok(
+                return FlextResult[FlextLdapServersBaseOperations].ok(
                     FlextLdapServersGenericOperations(),
                 )
 
@@ -323,11 +323,11 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "Failed to create server operations from connection",
                 extra={"error": str(e)},
             )
-            return FlextCore.Result[FlextLdapServersBaseOperations].fail(
+            return FlextResult[FlextLdapServersBaseOperations].fail(
                 f"Server operations creation from connection failed: {e}",
             )
 
-    def get_supported_server_types(self) -> FlextCore.Types.StringList:
+    def get_supported_server_types(self) -> FlextTypes.StringList:
         """Get list of supported server types.
 
         Returns:
@@ -348,21 +348,19 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
         """
         return server_type.lower().strip() in self._server_registry
 
-    def get_server_info(
-        self, server_type: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def get_server_info(self, server_type: str) -> FlextResult[FlextTypes.Dict]:
         """Get information about a server type.
 
         Args:
             server_type: Server type identifier
 
         Returns:
-            FlextCore.Result containing server information dict
+            FlextResult containing server information dict
 
         """
         try:
             if not self.is_server_type_supported(server_type):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"Unsupported server type: {server_type}",
                 )
 
@@ -370,7 +368,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
             operations_class = self._server_registry[server_type_lower]
             temp_instance = operations_class()
 
-            info: FlextCore.Types.Dict = {
+            info: FlextTypes.Dict = {
                 "server_type": server_type,
                 "class_name": operations_class.__name__,
                 "default_port": temp_instance.get_default_port(use_ssl=False),
@@ -380,9 +378,7 @@ class FlextLdapServersFactory(FlextCore.Service[None]):
                 "schema_dn": temp_instance.get_schema_dn(),
             }
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(info)
+            return FlextResult[FlextTypes.Dict].ok(info)
 
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                f"Failed to get server info: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to get server info: {e}")

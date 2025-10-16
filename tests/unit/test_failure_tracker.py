@@ -331,7 +331,7 @@ class TestGenerateReport:
         report_result = tracker.generate_report()
 
         assert report_result.is_success
-        report = report_result.unwrap()
+        report: dict[str, object] = report_result.unwrap()
         assert report["total"] == 0
         assert report["by_phase"] == {}
         assert report["by_operation"] == {}
@@ -348,7 +348,7 @@ class TestGenerateReport:
         report_result = tracker.generate_report()
 
         assert report_result.is_success
-        report = report_result.unwrap()
+        report: dict[str, object] = report_result.unwrap()
         assert report["total"] == 3
 
     def test_generate_report_by_phase(self, tmp_path: Path) -> None:
@@ -362,9 +362,18 @@ class TestGenerateReport:
         report_result = tracker.generate_report()
         report = report_result.unwrap()
 
-        assert report["by_phase"]["users"]["count"] == 2
-        assert report["by_phase"]["groups"]["count"] == 1
-        assert len(report["by_phase"]["users"]["dns"]) == 2
+        # Type-safe access to nested report structure
+        by_phase = report["by_phase"]
+        assert isinstance(by_phase, dict)
+        users_data = by_phase["users"]
+        assert isinstance(users_data, dict)
+        assert users_data["count"] == 2
+        groups_data = by_phase["groups"]
+        assert isinstance(groups_data, dict)
+        assert groups_data["count"] == 1
+        users_dns = users_data["dns"]
+        assert isinstance(users_dns, list)
+        assert len(users_dns) == 2
 
     def test_generate_report_by_operation(self, tmp_path: Path) -> None:
         """Should group failures by operation."""
@@ -377,8 +386,11 @@ class TestGenerateReport:
         report_result = tracker.generate_report()
         report = report_result.unwrap()
 
-        assert report["by_operation"]["create"] == 2
-        assert report["by_operation"]["update"] == 1
+        # Type-safe access to nested report structure
+        by_operation = report["by_operation"]
+        assert isinstance(by_operation, dict)
+        assert by_operation["create"] == 2
+        assert by_operation["update"] == 1
 
     def test_generate_report_most_common_errors(self, tmp_path: Path) -> None:
         """Should identify most common errors."""
@@ -391,11 +403,18 @@ class TestGenerateReport:
         report_result = tracker.generate_report()
         report = report_result.unwrap()
 
-        assert len(report["most_common_errors"]) == 2
-        assert report["most_common_errors"][0]["error"] == "Error A"
-        assert report["most_common_errors"][0]["count"] == 2
-        assert report["most_common_errors"][1]["error"] == "Error B"
-        assert report["most_common_errors"][1]["count"] == 1
+        # Type-safe access to most_common_errors
+        most_common_errors = report["most_common_errors"]
+        assert isinstance(most_common_errors, list)
+        assert len(most_common_errors) == 2
+        first_error = most_common_errors[0]
+        assert isinstance(first_error, dict)
+        assert first_error["error"] == "Error A"
+        assert first_error["count"] == 2
+        second_error = most_common_errors[1]
+        assert isinstance(second_error, dict)
+        assert second_error["error"] == "Error B"
+        assert second_error["count"] == 1
 
     def test_generate_report_excludes_resolved(self, tmp_path: Path) -> None:
         """Should not count resolved failures."""
@@ -406,7 +425,7 @@ class TestGenerateReport:
         tracker.mark_resolved("cn=test1,dc=algar", "users")
 
         report_result = tracker.generate_report()
-        report = report_result.unwrap()
+        report: dict[str, object] = report_result.unwrap()
 
         assert report["total"] == 1
 

@@ -16,9 +16,14 @@ Note: This file has type checking disabled due to limitations in the official ty
 import os
 from typing import Protocol, TypedDict, cast
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
+from ldap3 import BASE, SIMPLE, Connection, Server
 
-from flext_ldap import FlextLdapModels, FlextLdapTypes
+from flext_ldap import FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
 
 # from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
@@ -31,78 +36,71 @@ class ContainerInfo(TypedDict):
     name: str
     status: object  # Status enum, but we'll access .value
     ports: str
+    image: str  # Docker image name
 
 
 # Temporary placeholder until FlextTestDocker is available
 class FlextTestDocker:
     """Placeholder for FlextTestDocker until it's available in flext_tests."""
 
-    def start_container(self, container_name: str) -> FlextCore.Result[bool]:
+    def start_container(self, container_name: str) -> FlextResult[bool]:
         """Start a container with the given name."""
-        return FlextCore.Result[bool].fail("FlextTestDocker not available")
+        return FlextResult[bool].fail("FlextTestDocker not available")
 
     def stop_container(
         self, container_name: str, *, remove: bool = False
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Stop a container with the given name, optionally removing it."""
-        return FlextCore.Result[bool].fail("FlextTestDocker not available")
+        return FlextResult[bool].fail("FlextTestDocker not available")
 
     def get_container_logs(
         self, container_name: str, tail: int = 100
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Get logs from a container, optionally limiting to last N lines."""
-        return FlextCore.Result[str].fail("FlextTestDocker not available")
+        return FlextResult[str].fail("FlextTestDocker not available")
 
     def execute_container_command(
         self, container_name: str, command: str
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Execute a command in a running container."""
-        return FlextCore.Result[str].fail("FlextTestDocker not available")
+        return FlextResult[str].fail("FlextTestDocker not available")
 
-    def get_container_status(
-        self, container_name: str
-    ) -> FlextCore.Result[ContainerInfo]:
+    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
         """Get status information for a container."""
-        return FlextCore.Result[ContainerInfo].fail("FlextTestDocker not available")
+        return FlextResult[ContainerInfo].fail("FlextTestDocker not available")
 
 
 class DockerManagerProtocol(Protocol):
     """Protocol for Docker manager with required methods."""
 
-    def start_container(self, container_name: str) -> FlextCore.Result[bool]:
+    def start_container(self, container_name: str) -> FlextResult[bool]:
         """Start a container with the given name."""
         ...
 
-    def stop_container(
-        self, container_name: str, remove: bool
-    ) -> FlextCore.Result[bool]:
+    def stop_container(self, container_name: str, remove: bool) -> FlextResult[bool]:
         """Stop a container with the given name, optionally removing it."""
         ...
 
-    def get_container_logs(
-        self, container_name: str, tail: int
-    ) -> FlextCore.Result[str]:
+    def get_container_logs(self, container_name: str, tail: int) -> FlextResult[str]:
         """Get logs from a container, optionally limiting to last N lines."""
         ...
 
     def execute_container_command(
         self, container_name: str, command: str
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Execute a command in a running container."""
         ...
 
-    def get_container_status(
-        self, container_name: str
-    ) -> FlextCore.Result[ContainerInfo]:
+    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
         """Get status information for a container."""
         ...
 
-    def get_docker_version(self) -> FlextCore.Result[str]:
+    def get_docker_version(self) -> FlextResult[str]:
         """Get the Docker version information."""
         ...
 
 
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class LdapTestServer:
@@ -127,7 +125,7 @@ class LdapTestServer:
         )
         self._container: object | None = None  # For backward compatibility
 
-    def start(self) -> FlextCore.Result[bool]:
+    def start(self) -> FlextResult[bool]:
         """Start LDAP server container using FlextTestDocker."""
         try:
             logger.info(
@@ -137,23 +135,21 @@ class LdapTestServer:
             # Use FlextTestDocker to start the shared OpenLDAP container
             start_result = self.docker_manager.start_container(self.container_name)
             if start_result.is_failure:
-                return FlextCore.Result[bool].fail(
+                return FlextResult[bool].fail(
                     f"Failed to start LDAP container: {start_result.error}"
                 )
 
             # Wait for server to be ready
             if self.wait_for_ready():
                 logger.info("LDAP test server started successfully via FlextTestDocker")
-                return FlextCore.Result[bool].ok(data=True)
-            return FlextCore.Result[bool].fail(
-                "LDAP server failed to start within timeout"
-            )
+                return FlextResult[bool].ok(data=True)
+            return FlextResult[bool].fail("LDAP server failed to start within timeout")
 
         except Exception as e:
             logger.exception("Failed to start LDAP server")
-            return FlextCore.Result[bool].fail(f"Failed to start LDAP server: {e}")
+            return FlextResult[bool].fail(f"Failed to start LDAP server: {e}")
 
-    def stop(self) -> FlextCore.Result[bool]:
+    def stop(self) -> FlextResult[bool]:
         """Stop LDAP server container using FlextTestDocker."""
         try:
             logger.info("Stopping LDAP container: %s", self.container_name)
@@ -167,11 +163,11 @@ class LdapTestServer:
                 # Don't fail here as the container might already be stopped
 
             logger.info("LDAP container stop requested via FlextTestDocker")
-            return FlextCore.Result[bool].ok(data=True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to stop LDAP server")
-            return FlextCore.Result[bool].fail(f"Failed to stop LDAP server: {e}")
+            return FlextResult[bool].fail(f"Failed to stop LDAP server: {e}")
 
     def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
@@ -181,25 +177,25 @@ class LdapTestServer:
         while time.time() - start_time < timeout_seconds:
             try:
                 # Try to connect to LDAP server
-                server = FlextLdapTypes.Server(
+                server = Server(
                     host="localhost",
                     port=self.port,
                     use_ssl=False,
                     connect_timeout=5,
                 )
 
-                conn = FlextLdapTypes.Connection(
+                conn = Connection(
                     server=server,
                     user="cn=admin,dc=flext,dc=local",
                     password=self.admin_password,
                     auto_bind=True,
-                    authentication=FlextLdapTypes.SIMPLE,
+                    authentication=SIMPLE,
                 )
 
                 conn.search(
                     search_base="dc=flext,dc=local",
                     search_filter="(objectClass=*)",
-                    search_scope=FlextLdapTypes.BASE,
+                    search_scope=BASE,
                 )
 
                 conn.unbind()
@@ -212,30 +208,39 @@ class LdapTestServer:
         logger.error("LDAP server failed to become ready within timeout")
         return False
 
-    def setup_test_data(self) -> FlextCore.Result[bool]:
+    def setup_test_data(self) -> FlextResult[bool]:
         """Set up initial test data in LDAP server."""
         try:
             # Connect to LDAP server
-            server = FlextLdapTypes.Server(
+            server = Server(
                 host="localhost",
                 port=self.port,
                 use_ssl=False,
             )
 
-            conn = FlextLdapTypes.Connection(
+            conn = Connection(
                 server=server,
                 user="cn=admin,dc=flext,dc=local",
                 password=self.admin_password,
                 auto_bind=True,
-                authentication=FlextLdapTypes.SIMPLE,
+                authentication=SIMPLE,
             )
 
             # Create organizational units first
             for ou_data in TEST_OUS:
                 try:
+                    # Extract objectClass from attributes
+                    attrs_dict = cast("dict[str, object]", ou_data["attributes"])
+                    object_class_list: list[str] = cast(
+                        "list[str]", attrs_dict.get("objectClass", ["top"])
+                    )
+                    attrs_without_oc = {
+                        k: v for k, v in attrs_dict.items() if k != "objectClass"
+                    }
                     conn.add(
                         cast("str", ou_data["dn"]),
-                        attributes=cast("FlextCore.Types.Dict", ou_data["attributes"]),
+                        object_class_list,
+                        attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created OU: %s", ou_data["dn"])
                 except Exception as e:
@@ -244,11 +249,18 @@ class LdapTestServer:
             # Create test users
             for user_data in TEST_USERS:
                 try:
+                    # Extract objectClass from attributes
+                    attrs_dict = cast("dict[str, object]", user_data["attributes"])
+                    object_class_list = cast(
+                        "list[str]", attrs_dict.get("objectClass", ["top"])
+                    )
+                    attrs_without_oc = {
+                        k: v for k, v in attrs_dict.items() if k != "objectClass"
+                    }
                     conn.add(
                         cast("str", user_data["dn"]),
-                        attributes=cast(
-                            "FlextCore.Types.Dict", user_data["attributes"]
-                        ),
+                        object_class_list,
+                        attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created user: %s", user_data["dn"])
                 except Exception as e:
@@ -257,11 +269,18 @@ class LdapTestServer:
             # Create test groups
             for group_data in TEST_GROUPS:
                 try:
+                    # Extract objectClass from attributes
+                    attrs_dict = cast("dict[str, object]", group_data["attributes"])
+                    object_class_list = cast(
+                        "list[str]", attrs_dict.get("objectClass", ["top"])
+                    )
+                    attrs_without_oc = {
+                        k: v for k, v in attrs_dict.items() if k != "objectClass"
+                    }
                     conn.add(
                         cast("str", group_data["dn"]),
-                        attributes=cast(
-                            "FlextCore.Types.Dict", group_data["attributes"]
-                        ),
+                        object_class_list,
+                        attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created group: %s", group_data["dn"])
                 except Exception as e:
@@ -269,11 +288,11 @@ class LdapTestServer:
 
             conn.unbind()
             logger.info("Test data setup completed")
-            return FlextCore.Result[bool].ok(data=True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to setup test data")
-            return FlextCore.Result[bool].fail(f"Failed to setup test data: {e}")
+            return FlextResult[bool].fail(f"Failed to setup test data: {e}")
 
     def get_connection_config(self) -> FlextLdapModels.ConnectionConfig:
         """Get connection configuration for test server."""
@@ -285,30 +304,32 @@ class LdapTestServer:
             timeout=30,
         )
 
-    def get_container_logs(self, tail: int = 100) -> FlextCore.Result[str]:
+    def get_container_logs(self, tail: int = 100) -> FlextResult[str]:
         """Get container logs using FlextTestDocker."""
         return self.docker_manager.get_container_logs(self.container_name, tail)
 
-    def execute_container_command(self, command: str) -> FlextCore.Result[str]:
+    def execute_container_command(self, command: str) -> FlextResult[str]:
         """Execute command in container using FlextTestDocker."""
         return self.docker_manager.execute_container_command(
             self.container_name, command
         )
 
-    def get_container_status(self) -> FlextCore.Result[FlextCore.Types.StringDict]:
+    def get_container_status(self) -> FlextResult[FlextTypes.StringDict]:
         """Get container status using FlextTestDocker."""
         status_result = self.docker_manager.get_container_status(self.container_name)
         if status_result.is_failure:
             error_msg = status_result.error or "Unknown error"
-            return FlextCore.Result[FlextCore.Types.StringDict].fail(error_msg)
+            return FlextResult[FlextTypes.StringDict].fail(error_msg)
 
         container_info: ContainerInfo = status_result.value
-        return FlextCore.Result[FlextCore.Types.StringDict].ok({
-            "name": container_info["name"],
-            "status": str(container_info["status"]),  # Convert status to string
-            "ports": container_info["ports"],
-            "image": container_info["image"],
-        })
+        return FlextResult[FlextTypes.StringDict].ok(
+            {
+                "name": container_info["name"],
+                "status": str(container_info["status"]),  # Convert status to string
+                "ports": container_info["ports"],
+                "image": container_info["image"],
+            }
+        )
 
 
 def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:
@@ -334,26 +355,26 @@ def wait_for_ldap_server(
     start_time = time.time()
     while time.time() - start_time < timeout_seconds:
         try:
-            server = FlextLdapTypes.Server(
+            server = Server(
                 host=host,
                 port=port,
                 use_ssl=False,
                 connect_timeout=5,
             )
 
-            conn_raw = FlextLdapTypes.Connection(
+            conn_raw = Connection(
                 server=server,
                 user="cn=admin,dc=flext,dc=local",
                 password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "admin123"),
                 auto_bind=True,
-                authentication=FlextLdapTypes.SIMPLE,
+                authentication=SIMPLE,
             )
             conn = conn_raw
 
             conn.search(
                 search_base="dc=flext,dc=local",
                 search_filter="(objectClass=*)",
-                search_scope=FlextLdapTypes.BASE,
+                search_scope=BASE,
             )
 
             conn.unbind()

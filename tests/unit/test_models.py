@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from typing import cast
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextResult
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -61,7 +61,7 @@ class TestFlextLdapModels:
         """Test DistinguishedName create method."""
         # Test valid DN creation
         result = FlextLdapModels.DistinguishedName.create("cn=testuser,dc=test,dc=com")
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
         assert result.is_success
         # Use unwrap() to get the actual DistinguishedName object
         dn_obj = result.unwrap()
@@ -70,7 +70,7 @@ class TestFlextLdapModels:
 
         # Test invalid DN creation
         result = FlextLdapModels.DistinguishedName.create("")
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
         assert result.is_failure
 
     def test_filter_creation(self) -> None:
@@ -270,7 +270,7 @@ class TestFlextLdapModels:
         )
 
         result = valid_user.validate_business_rules()
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
         assert result.is_success
 
         # Test invalid user - validation happens at field level
@@ -323,7 +323,7 @@ class TestFlextLdapModels:
         )
 
         result = valid_group.validate_business_rules()
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
         assert result.is_success
 
         # Test invalid group - validation happens at field level
@@ -664,34 +664,30 @@ class TestFlextLdapModels:
         assert request.base_dn == "dc=example,dc=com"
         assert request.page_size == 10
         assert request.size_limit == 100
-        assert request.is_paged_search is True
+        assert request.page_size is not None and request.page_size > 0
         assert request.deref_aliases == "never"
 
     def test_create_user_request_validation(self) -> None:
-        """Test CreateUserRequest with field validation."""
-        request = FlextLdapModels.CreateUserRequest(
+        """Test AddEntryRequest with user attributes."""
+        request = FlextLdapModels.AddEntryRequest(
             dn="uid=newuser,ou=people,dc=example,dc=com",
-            uid="newuser",
-            cn="New User",
-            sn="User",
-            mail="newuser@example.com",
-            user_password="securepass123",
-            given_name=None,
-            telephone_number=None,
-            description=None,
-            department=None,
-            organizational_unit=None,
-            title=None,
-            organization=None,
+            attributes={
+                "uid": "newuser",
+                "cn": "New User",
+                "sn": "User",
+                "mail": "newuser@example.com",
+                "userPassword": "securepass123",
+                "objectClass": ["inetOrgPerson", "person", "top"],
+            },
         )
 
-        assert request.uid == "newuser"
-        assert request.mail == "newuser@example.com"
-        assert request.user_password == "securepass123"
+        assert request.attributes["uid"] == "newuser"
+        assert request.attributes["mail"] == "newuser@example.com"
+        assert request.attributes["userPassword"] == "securepass123"
 
     def test_create_group_request_validation(self) -> None:
         """Test CreateGroupRequest with members."""
-        request = FlextLdapModels.CreateGroupRequest(
+        request = FlextLdapModels.AddEntryRequest(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             description="Test Group",
@@ -1002,7 +998,7 @@ class TestFlextLdapModels:
             page_size=50,
         )
 
-        assert request.is_paged_search is True
+        assert request.page_size is not None and request.page_size > 0
         assert request.page_size == 50
         assert request.base_dn == "dc=example,dc=com"
 
@@ -1206,7 +1202,7 @@ class TestFlextLdapModels:
         assert request.size_limit == 100
         assert request.time_limit == 30
         assert request.page_size == 10
-        assert request.is_paged_search is True
+        assert request.page_size is not None and request.page_size > 0
 
         # Test search without limits (defaults)
         request_no_limits = FlextLdapModels.SearchRequest(
@@ -1223,7 +1219,7 @@ class TestFlextLdapModels:
             scope="subtree",
         )
         # When page_size is not specified, is_paged_search should be False
-        assert request_no_paging.is_paged_search is False
+        assert request_no_paging.page_size is None or request_no_paging.page_size <= 0
 
     def test_entry_attributes_validation(self) -> None:
         """Test Entry attribute validation."""
@@ -1237,7 +1233,7 @@ class TestFlextLdapModels:
         # Test None DN (should fail)
         with pytest.raises(Exception):
             FlextLdapModels.Entry(
-                dn=None,  # type: ignore
+                dn=None,
                 attributes={"cn": ["test"]},
             )
 
@@ -1253,7 +1249,7 @@ class TestFlextLdapModels:
         """Test CreateUserRequest with invalid data."""
         # Test invalid email format
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLdapModels.AddEntryRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="test",
                 cn="Test",
@@ -1270,7 +1266,7 @@ class TestFlextLdapModels:
 
         # Test empty uid
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLdapModels.AddEntryRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="",  # Empty uid
                 cn="Test",
@@ -1286,7 +1282,7 @@ class TestFlextLdapModels:
 
         # Test whitespace-only password
         with pytest.raises(Exception):
-            FlextLdapModels.CreateUserRequest(
+            FlextLdapModels.AddEntryRequest(
                 dn="uid=test,ou=people,dc=example,dc=com",
                 uid="test",
                 cn="Test",
@@ -1304,7 +1300,7 @@ class TestFlextLdapModels:
     def test_create_group_request_invalid(self) -> None:
         """Test CreateGroupRequest with invalid data."""
         # Test valid group request with members
-        request = FlextLdapModels.CreateGroupRequest(
+        request = FlextLdapModels.AddEntryRequest(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             description="Test Group",
@@ -1315,7 +1311,7 @@ class TestFlextLdapModels:
 
         # Test empty cn (should fail)
         with pytest.raises(Exception):
-            FlextLdapModels.CreateGroupRequest(
+            FlextLdapModels.AddEntryRequest(
                 dn="cn=testgroup,ou=groups,dc=example,dc=com",
                 cn="",  # Empty cn
                 description="Test",
@@ -1324,7 +1320,7 @@ class TestFlextLdapModels:
 
         # Test empty description (should fail)
         with pytest.raises(Exception):
-            FlextLdapModels.CreateGroupRequest(
+            FlextLdapModels.AddEntryRequest(
                 dn="cn=testgroup,ou=groups,dc=example,dc=com",
                 cn="testgroup",
                 description="",  # Empty description
@@ -1465,7 +1461,7 @@ class TestFlextLdapModels:
             scope="subtree",
             page_size=50,
         )
-        assert paged_request.is_paged_search is True
+        assert paged_request.page_size is not None and paged_request.page_size > 0
 
         # Test non-paged search
         non_paged = FlextLdapModels.SearchRequest(
@@ -1473,7 +1469,7 @@ class TestFlextLdapModels:
             filter_str="(objectClass=person)",
             scope="subtree",
         )
-        assert non_paged.is_paged_search is False
+        assert non_paged.page_size is None or non_paged.page_size <= 0
 
         # Test with attributes specification
         with_attrs = FlextLdapModels.SearchRequest(
@@ -2305,7 +2301,7 @@ class TestFlextLdapModels:
 
     def test_create_user_request_validate_business_rules_success(self) -> None:
         """Test CreateUserRequest.validate_business_rules() succeeds with valid data."""
-        request = FlextLdapModels.CreateUserRequest(
+        request = FlextLdapModels.AddEntryRequest(
             dn="uid=test,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -2326,7 +2322,7 @@ class TestFlextLdapModels:
 
     def test_create_user_request_to_user_entity(self) -> None:
         """Test CreateUserRequest.to_user_entity() conversion."""
-        request = FlextLdapModels.CreateUserRequest(
+        request = FlextLdapModels.AddEntryRequest(
             dn="uid=test,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",

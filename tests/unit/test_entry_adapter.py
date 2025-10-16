@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 from flext_ldif import FlextLdifModels
+from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
@@ -632,7 +635,7 @@ class TestEntryAdapterCoreConversions:
         return FlextLdapEntryAdapter()
 
     @pytest.fixture
-    def sample_ldap3_entry(self) -> FlextCore.Types.Dict:
+    def sample_ldap3_entry(self) -> FlextTypes.Dict:
         """Create a sample ldap3 entry as dict."""
         return {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -665,7 +668,7 @@ class TestEntryAdapterCoreConversions:
     # =========================================================================
 
     def test_ldap3_to_ldif_entry_dict_input(
-        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: FlextCore.Types.Dict
+        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: FlextTypes.Dict
     ) -> None:
         """Test converting ldap3 dict[str, object] to FlextLdif Entry."""
         # Act
@@ -689,7 +692,7 @@ class TestEntryAdapterCoreConversions:
 
         # Assert
         assert result.is_failure
-        assert "cannot be None" in result.error
+        assert result.error and "cannot be None" in result.error
 
     def test_ldap3_to_ldif_entry_missing_dn(
         self, adapter: FlextLdapEntryAdapter
@@ -701,11 +704,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(invalid_entry)
+        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
 
         # Assert
         assert result.is_failure
-        assert "missing 'dn' key" in result.error
+        assert result.error and "missing 'dn' key" in result.error
 
     def test_ldap3_to_ldif_entry_missing_attributes(
         self, adapter: FlextLdapEntryAdapter
@@ -717,11 +720,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(invalid_entry)
+        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
 
         # Assert
         assert result.is_failure
-        assert "missing 'attributes' key" in result.error
+        assert result.error and "missing 'attributes' key" in result.error
 
     def test_ldap3_to_ldif_entry_invalid_attributes_type(
         self, adapter: FlextLdapEntryAdapter
@@ -734,11 +737,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(invalid_entry)
+        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
 
         # Assert
         assert result.is_failure
-        assert "must be a dictionary" in result.error
+        assert result.error and "must be a dictionary" in result.error
 
     def test_ldap3_to_ldif_entry_empty_attributes(
         self, adapter: FlextLdapEntryAdapter
@@ -806,7 +809,9 @@ class TestEntryAdapterCoreConversions:
         ]
 
         # Act
-        result = adapter.ldap3_entries_to_ldif_entries(ldap3_entries)
+        result = adapter.ldap3_entries_to_ldif_entries(
+            cast("list[Ldap3Entry]", ldap3_entries)
+        )
 
         # Assert
         assert result.is_success
@@ -845,7 +850,7 @@ class TestEntryAdapterCoreConversions:
 
         # Assert
         assert result.is_failure
-        assert "Failed to convert entry" in result.error
+        assert result.error and "Failed to convert entry" in result.error
 
     # =========================================================================
     # LDIF TO LDAP3 CONVERSION TESTS
@@ -876,7 +881,7 @@ class TestEntryAdapterCoreConversions:
 
         # Assert
         assert result.is_failure
-        assert "cannot be None" in result.error
+        assert result.error and "cannot be None" in result.error
 
     def test_ldif_entry_to_ldap3_attributes_empty_attributes(
         self, adapter: FlextLdapEntryAdapter

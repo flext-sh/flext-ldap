@@ -14,11 +14,11 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldap import FlextLdap, FlextLdapConstants, FlextLdapModels
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 class ValidationMetrics:
@@ -57,12 +57,14 @@ class ValidationMetrics:
         elif status == "skip":
             self.skipped_tests += 1
 
-        self.test_results.append({
-            "test_name": test_name,
-            "status": status,
-            "message": message,
-            "duration": duration,
-        })
+        self.test_results.append(
+            {
+                "test_name": test_name,
+                "status": status,
+                "message": message,
+                "duration": duration,
+            }
+        )
 
     def print_summary(self) -> None:
         """Print validation summary."""
@@ -370,8 +372,8 @@ def validate_crud_operations(
     all_passed = True
 
     # Test 0: Ensure parent OU exists (create if needed)
+    start_time = time.time()
     try:
-        start_time = time.time()
         parent_ou_dn = f"ou=users,{base_dn}"
 
         # Check if parent OU exists
@@ -385,7 +387,7 @@ def validate_crud_operations(
 
         # Create parent OU if it doesn't exist
         if search_result.is_failure or not search_result.unwrap():
-            ou_attributes: dict[str, str | FlextCore.Types.StringList] = {
+            ou_attributes: dict[str, str | FlextTypes.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -405,7 +407,7 @@ def validate_crud_operations(
     # Test 1: Create entry
     try:
         start_time = time.time()
-        attributes: dict[str, str | FlextCore.Types.StringList] = {
+        attributes: dict[str, str | FlextTypes.StringList] = {
             FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                 FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                 FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
@@ -495,7 +497,7 @@ def validate_crud_operations(
     # Test 3: Update entry
     try:
         start_time = time.time()
-        changes: FlextCore.Types.Dict = {
+        changes: FlextTypes.Dict = {
             FlextLdapConstants.LdapAttributeNames.DESCRIPTION: [
                 ("MODIFY_REPLACE", ["Updated test entry"])
             ]
@@ -586,11 +588,11 @@ def validate_batch_operations(
 
     # Test 1: Batch add entries
     try:
-        entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = []
+        entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
 
         for i in range(batch_size):
             dn = f"cn=batch-test-{i},ou=users,{base_dn}"
-            attributes: dict[str, str | FlextCore.Types.StringList] = {
+            attributes: dict[str, str | FlextTypes.StringList] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,

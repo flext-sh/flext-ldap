@@ -32,12 +32,12 @@ import sys
 import time
 from typing import Final
 
-from flext_core import FlextCore
+from flext_core import FlextLogger
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 # Configuration from environment
 LDAP_URI: Final[str] = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
@@ -421,14 +421,14 @@ def main() -> int:
         logger.info("\nKey Takeaways:")
         logger.info("  • Always disconnect connections (resource cleanup)")
         logger.info("  • Use is_connected() to monitor connection state")
-        logger.info("  • Handle connection errors explicitly with FlextCore.Result")
+        logger.info("  • Handle connection errors explicitly with FlextResult")
         logger.info("  • Implement retry logic for resilient connections")
         logger.info("  • Proper lifecycle management prevents resource leaks")
 
         logger.info("\nConnection Lifecycle Best Practices:")
         logger.info("  1. Create FlextLdapConfig with connection parameters")
         logger.info("  2. Initialize FlextLdap with config")
-        logger.info("  3. Call connect() and check FlextCore.Result")
+        logger.info("  3. Call connect() and check FlextResult")
         logger.info("  4. Perform LDAP operations")
         logger.info("  5. Always call unbind() in finally block")
 

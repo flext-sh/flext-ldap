@@ -8,7 +8,7 @@ This example demonstrates basic LDAP CRUD operations using the FlextLdap facade:
 - Update entries (modify_entry)
 - Delete entries (delete_entry)
 - Configuration setup with FlextLdapConfig
-- Error handling with FlextCore.Result patterns
+- Error handling with FlextResult patterns
 
 Uses ONLY api.py (FlextLdap) as the primary interface.
 
@@ -30,11 +30,11 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextCore
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapConstants, FlextLdapModels
 
-logger: FlextCore.Logger = FlextCore.Logger(__name__)
+logger: FlextLogger = FlextLogger(__name__)
 
 
 # Create LDAP configuration using default settings
@@ -101,7 +101,7 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     users_dn = f"ou=users,{base_dn}"
     user_dn = f"cn=john.doe,{users_dn}"
 
-    attributes: dict[str, str | FlextCore.Types.StringList] = {
+    attributes: dict[str, str | FlextTypes.StringList] = {
         FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
             FlextLdapConstants.ObjectClasses.PERSON,
             FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
@@ -114,7 +114,7 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     }
 
     logger.info(f"Creating entry: {user_dn}")
-    create_result: FlextCore.Result[bool] = api.add_entry(user_dn, attributes)
+    create_result: FlextResult[bool] = api.add_entry(user_dn, attributes)
 
     if create_result.is_failure:
         logger.error(f"❌ Create failed: {create_result.error}")
@@ -142,7 +142,7 @@ def demonstrate_read_entry(api: FlextLdap, user_dn: str) -> None:
     cn_value = user_dn.split(",", maxsplit=1)[0].split("=")[1]
 
     logger.info(f"Searching for entry: {user_dn}")
-    search_result: FlextCore.Result[FlextLdapModels.Entry | None] = api.search_one(
+    search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
         FlextLdapModels.SearchRequest(
             base_dn=users_dn,
             filter_str=f"({FlextLdapConstants.LdapAttributeNames.CN}={cn_value})",
@@ -177,9 +177,7 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     logger.info(f"Searching users in: {users_dn}")
-    search_result: FlextCore.Result[list[FlextLdapModels.Entry]] = api.search_users(
-        users_dn
-    )
+    search_result: FlextResult[list[FlextLdapModels.Entry]] = api.search_users(users_dn)
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
@@ -221,13 +219,13 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     # OPTIMIZED: Use FlextLdapConstants for object classes and attributes
-    object_classes: FlextCore.Types.StringList = [
+    object_classes: FlextTypes.StringList = [
         FlextLdapConstants.ObjectClasses.PERSON,
         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
     ]
 
     # NEW: Batch add multiple users
-    entries: list[tuple[str, dict[str, str | FlextCore.Types.StringList]]] = [
+    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = [
         (
             f"cn=batch.user1,{users_dn}",
             {
@@ -298,7 +296,7 @@ def demonstrate_update_entry(api: FlextLdap, user_dn: str) -> None:
 
     logger.info(f"Updating entry: {user_dn}")
     logger.info(f"Changes: {changes}")
-    update_result: FlextCore.Result[bool] = api.modify_entry(user_dn, changes)
+    update_result: FlextResult[bool] = api.modify_entry(user_dn, changes)
 
     if update_result.is_failure:
         logger.error(f"❌ Update failed: {update_result.error}")
@@ -318,7 +316,7 @@ def demonstrate_delete_entry(api: FlextLdap, user_dn: str) -> None:
     logger.info("\n=== Delete Entry Operations ===")
 
     logger.info(f"Deleting entry: {user_dn}")
-    delete_result: FlextCore.Result[bool] = api.delete_entry(user_dn)
+    delete_result: FlextResult[bool] = api.delete_entry(user_dn)
 
     if delete_result.is_failure:
         logger.error(f"❌ Delete failed: {delete_result.error}")
@@ -330,19 +328,19 @@ def demonstrate_delete_entry(api: FlextLdap, user_dn: str) -> None:
 def demonstrate_configuration() -> None:
     """Demonstrate FlextLdapConfig usage and validation.
 
-    OPTIMIZATION: Shows ONLY from_env() pattern with FlextCore.Config smart defaults.
-    ZERO CODE BLOAT: No manual configuration - FlextCore.Constants provide all defaults!
+    OPTIMIZATION: Shows ONLY from_env() pattern with FlextConfig smart defaults.
+    ZERO CODE BLOAT: No manual configuration - FlextConstants provide all defaults!
     """
     logger.info("\n=== Configuration Operations ===")
 
-    # OPTIMIZED: Use from_env() with automatic smart defaults from FlextCore.Constants
+    # OPTIMIZED: Use from_env() with automatic smart defaults from FlextConstants
     logger.info("Using FlextLdapConfig.from_env() - automatic environment loading:")
     logger.info(f"   Server URI: {config_env.ldap_server_uri}")
     logger.info(f"   Bind DN: {config_env.ldap_bind_dn}")
     logger.info(f"   Base DN: {config_env.ldap_base_dn}")
     logger.info(f"   Port: {config_env.ldap_port} (auto-detected from URI)")
     logger.info(
-        f"   Timeout: {FlextLdapConstants.DEFAULT_TIMEOUT}s (from FlextCore.Constants)"
+        f"   Timeout: {FlextLdapConstants.DEFAULT_TIMEOUT}s (from FlextConstants)"
     )
     logger.info(f"   Use SSL: {config_env.ldap_use_ssl} (auto-detected from URI)")
 
@@ -350,7 +348,7 @@ def demonstrate_configuration() -> None:
     api = FlextLdap()  # Auto-loads config from environment
 
     # Validate configuration consistency
-    validation_result: FlextCore.Result[bool] = api.validate_configuration_consistency()
+    validation_result: FlextResult[bool] = api.validate_configuration_consistency()
     if validation_result.is_success:
         logger.info("✅ Configuration validation passed")
     else:
@@ -384,7 +382,7 @@ def demonstrate_constants() -> None:
 def main() -> int:
     """Run basic LDAP operations demonstration.
 
-    OPTIMIZATION: Uses FlextCore.Config for all configuration - ZERO manual extraction!
+    OPTIMIZATION: Uses FlextConfig for all configuration - ZERO manual extraction!
 
     Returns:
         Exit code (0 for success, 1 for failure).
@@ -440,9 +438,7 @@ def main() -> int:
             logger.info("✅ All operations completed successfully!")
             logger.info("📊 OPTIMIZATION RESULTS:")
             logger.info("   • ZERO hardcoded strings (all FlextLdapConstants)")
-            logger.info(
-                "   • ZERO manual config extraction (FlextCore.Config.from_env())"
-            )
+            logger.info("   • ZERO manual config extraction (FlextConfig.from_env())")
             logger.info("   • Minimal .env (5 variables vs 15+ manual)")
             logger.info("   • ~60% code reduction via library patterns!")
             logger.info("=" * 60)

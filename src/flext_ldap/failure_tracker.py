@@ -12,10 +12,10 @@ import operator
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService
 
 
-class FlextLdapFailureTracker(FlextCore.Service[None]):
+class FlextLdapFailureTracker(FlextService[None]):
     """Track and manage LDAP sync failures with retry support.
 
     Failures are persisted to JSONL files for durability across restarts.
@@ -41,7 +41,7 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
         operation: str,
         error: str,
         context: dict[str, object] | None = None,
-    ) -> FlextCore.Result[None]:
+    ) -> FlextResult[None]:
         """Log sync failure to persistent JSONL file.
 
         Args:
@@ -52,7 +52,7 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             context: Optional context information
 
         Returns:
-            FlextCore.Result[None]: Success or failure of logging operation
+            FlextResult[None]: Success or failure of logging operation
 
         """
         try:
@@ -70,26 +70,24 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             with self._failures_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(failure_record) + "\n")
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
         except OSError as e:
-            return FlextCore.Result[None].fail(f"Failed to log failure: {e}")
+            return FlextResult[None].fail(f"Failed to log failure: {e}")
         except Exception as e:
-            return FlextCore.Result[None].fail(f"Unexpected error logging failure: {e}")
+            return FlextResult[None].fail(f"Unexpected error logging failure: {e}")
 
-    def get_failures_by_phase(
-        self, phase: str
-    ) -> FlextCore.Result[list[dict[str, object]]]:
+    def get_failures_by_phase(self, phase: str) -> FlextResult[list[dict[str, object]]]:
         """Load all unresolved failures for specific phase.
 
         Args:
             phase: Phase name to filter by
 
         Returns:
-            FlextCore.Result containing list of failure records for phase
+            FlextResult containing list of failure records for phase
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[list[dict[str, object]]].ok([])
+            return FlextResult[list[dict[str, object]]].ok([])
 
         try:
             failures = []
@@ -99,29 +97,29 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
                     if failure["phase"] == phase and not failure.get("resolved", False):
                         failures.append(failure)
 
-            return FlextCore.Result[list[dict[str, object]]].ok(failures)
+            return FlextResult[list[dict[str, object]]].ok(failures)
         except OSError as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Failed to read failures: {e}"
             )
         except json.JSONDecodeError as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Invalid JSON in failures file: {e}"
             )
         except Exception as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Unexpected error reading failures: {e}"
             )
 
-    def get_all_failures(self) -> FlextCore.Result[list[dict[str, object]]]:
+    def get_all_failures(self) -> FlextResult[list[dict[str, object]]]:
         """Load all unresolved failures across all phases.
 
         Returns:
-            FlextCore.Result containing list of all failure records
+            FlextResult containing list of all failure records
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[list[dict[str, object]]].ok([])
+            return FlextResult[list[dict[str, object]]].ok([])
 
         try:
             failures = []
@@ -131,21 +129,21 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
                     if not failure.get("resolved", False):
                         failures.append(failure)
 
-            return FlextCore.Result[list[dict[str, object]]].ok(failures)
+            return FlextResult[list[dict[str, object]]].ok(failures)
         except OSError as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Failed to read failures: {e}"
             )
         except json.JSONDecodeError as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Invalid JSON in failures file: {e}"
             )
         except Exception as e:
-            return FlextCore.Result[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Unexpected error reading failures: {e}"
             )
 
-    def mark_resolved(self, dn: str, phase: str) -> FlextCore.Result[None]:
+    def mark_resolved(self, dn: str, phase: str) -> FlextResult[None]:
         """Mark failure as resolved (remove from active failures).
 
         Args:
@@ -153,11 +151,11 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             phase: Phase name
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[None].fail("No failures file exists")
+            return FlextResult[None].fail("No failures file exists")
 
         # Read all failures
         all_failures: list[dict[str, object]] = []
@@ -173,7 +171,7 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
                 found = True
 
         if not found:
-            return FlextCore.Result[None].fail(
+            return FlextResult[None].fail(
                 f"No failure found for DN {dn} in phase {phase}"
             )
 
@@ -182,9 +180,9 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             for failure in all_failures:
                 f.write(json.dumps(failure) + "\n")
 
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
-    def increment_retry_count(self, dn: str, phase: str) -> FlextCore.Result[None]:
+    def increment_retry_count(self, dn: str, phase: str) -> FlextResult[None]:
         """Increment retry count for failure.
 
         Args:
@@ -192,11 +190,11 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             phase: Phase name
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[None].fail("No failures file exists")
+            return FlextResult[None].fail("No failures file exists")
 
         # Read all failures
         all_failures: list[dict[str, object]] = []
@@ -212,7 +210,7 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
                 found = True
 
         if not found:
-            return FlextCore.Result[None].fail(
+            return FlextResult[None].fail(
                 f"No failure found for DN {dn} in phase {phase}"
             )
 
@@ -221,22 +219,24 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             for failure in all_failures:
                 f.write(json.dumps(failure) + "\n")
 
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
-    def generate_report(self) -> FlextCore.Result[dict[str, object]]:
+    def generate_report(self) -> FlextResult[dict[str, object]]:
         """Generate comprehensive failure summary report.
 
         Returns:
-            FlextCore.Result containing report dict
+            FlextResult containing report dict
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[dict[str, object]].ok({
-                "total": 0,
-                "by_phase": {},
-                "by_operation": {},
-                "most_common_errors": [],
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "total": 0,
+                    "by_phase": {},
+                    "by_operation": {},
+                    "most_common_errors": [],
+                }
+            )
 
         failures = []
         with self._failures_file.open("r", encoding="utf-8") as f:
@@ -284,17 +284,17 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             ],
         }
 
-        return FlextCore.Result[dict[str, object]].ok(report)
+        return FlextResult[dict[str, object]].ok(report)
 
-    def clear_resolved(self) -> FlextCore.Result[int]:
+    def clear_resolved(self) -> FlextResult[int]:
         """Remove resolved failures from log file.
 
         Returns:
-            FlextCore.Result containing count of removed failures
+            FlextResult containing count of removed failures
 
         """
         if not self._failures_file.exists():
-            return FlextCore.Result[int].ok(0)
+            return FlextResult[int].ok(0)
 
         # Read all failures
         all_failures: list[dict[str, object]] = []
@@ -310,19 +310,19 @@ class FlextLdapFailureTracker(FlextCore.Service[None]):
             for failure in unresolved:
                 f.write(json.dumps(failure) + "\n")
 
-        return FlextCore.Result[int].ok(removed_count)
+        return FlextResult[int].ok(removed_count)
 
-    def execute(self) -> FlextCore.Result[None]:
-        """Execute the main service operation (required by FlextCore.Service).
+    def execute(self) -> FlextResult[None]:
+        """Execute the main service operation (required by FlextService).
 
         For FlextLdapFailureTracker, there is no single "main" operation.
         Use specific methods (log_failure, get_all_failures, etc.) directly.
 
         Returns:
-            FlextCore.Result[None]: Success indicator
+            FlextResult[None]: Success indicator
 
         """
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 
 __all__ = ["FlextLdapFailureTracker"]
