@@ -82,7 +82,7 @@ class TestFlextLdapClientsComprehensive:
         result = client.unbind()
         # unbind is idempotent - returns success when not connected
         assert result.is_success
-        assert result.data is None
+        assert result.unwrap() is None
 
     def test_is_connected_initial_state(self) -> None:
         """Test is_connected in initial state."""
@@ -215,7 +215,7 @@ class TestFlextLdapClientsComprehensive:
 
         result = client._validate_search_request(request)
         assert result.is_success
-        assert result.data is None
+        assert result.unwrap() is None
 
     def test_search_with_request_not_connected(self) -> None:
         """Test search_with_request when not connected."""
@@ -397,7 +397,7 @@ class TestFlextLdapClientsComprehensive:
 
         result = client.unbind()
         assert result.is_success
-        assert result.data is None
+        assert result.unwrap() is None
 
     def test_update_group_not_connected(self) -> None:
         """Test update_group_attributes when not connected."""
@@ -461,7 +461,7 @@ class TestFlextLdapClientsComprehensive:
 
         result = client.group_exists("cn=testgroup,dc=test,dc=com")
         assert result.is_success
-        assert result.data is False
+        assert result.unwrap() is False
 
     def test_search_not_connected(self) -> None:
         """Test search when not connected."""

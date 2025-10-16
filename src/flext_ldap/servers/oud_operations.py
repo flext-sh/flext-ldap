@@ -204,6 +204,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                     )
                 formatted_acls.append(format_result.unwrap())
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success = connection.modify(
                 dn,
                 {"ds-privilege-name": [(MODIFY_REPLACE, formatted_acls)]},
@@ -352,6 +353,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 if attr_name != "objectClass":  # Skip objectClass (passed separately)
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success = connection.add(
                 str(normalized_entry.dn),
                 object_class,
@@ -394,6 +396,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success = connection.modify(
                 dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
             )
@@ -418,6 +421,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success = connection.delete(dn)
 
             if not success:

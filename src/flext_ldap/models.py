@@ -49,7 +49,6 @@ from typing import (
     Any,
     ClassVar,
     Literal,
-    Union,
 )
 
 from flext_core import (
@@ -66,7 +65,6 @@ from pydantic import (
     Discriminator,
     Field,
     SecretStr,
-    TypeAdapter,
     ValidationInfo,
     computed_field,
     field_serializer,
@@ -3070,8 +3068,8 @@ class FlextLdapModels(FlextModels):
 
 
 __all__ = [
-    "FlextLdapModels",
     "AnyLdapEntry",
+    "FlextLdapModels",
 ]
 
 # ============================================================================
@@ -3085,10 +3083,6 @@ __all__ = [
 # automatically without manual type checking or Factory methods.
 
 AnyLdapEntry = Annotated[
-    Union[
-        FlextLdapModels.LdapUser,
-        FlextLdapModels.Group,
-        FlextLdapModels.Entry,
-    ],
+    FlextLdapModels.LdapUser | FlextLdapModels.Group | FlextLdapModels.Entry,
     Discriminator("entry_type"),
 ]

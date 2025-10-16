@@ -81,7 +81,7 @@ def demonstrate_server_detection(client: FlextLdapClients) -> str | None:
     """Demonstrate automatic server type detection with schema awareness."""
     logger.info("=== Server Type Detection ===")
 
-    server_type = client.get_server_type()
+    server_type = client.server_type
 
     if server_type:
         logger.info(f"✅ Detected server type: {server_type}")

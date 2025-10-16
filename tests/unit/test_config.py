@@ -57,13 +57,13 @@ class TestFlextLdapConfig:
         result = configs.create_from_connection_config_data(ldap_server_config)
 
         assert result.is_success
-        assert isinstance(result.data, FlextLdapConfig)
+        assert isinstance(result.unwrap(), FlextLdapConfig)
         # Obsolete assertions - methods no longer exist in optimized API
         # assert (
-        #     result.data.get_effective_server_uri()
+        #     result.unwrap().get_effective_server_uri()
         #     == f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         # )
-        # assert result.data.get_effective_bind_dn() == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        # assert result.unwrap().get_effective_bind_dn() == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_create_connection_config_with_minimal_data(
         self,
@@ -83,10 +83,10 @@ class TestFlextLdapConfig:
 
         # Should succeed with default values
         assert result.is_success
-        assert isinstance(result.data, FlextLdapConfig)
-        assert result.data.ldap_server_uri == "ldap://localhost"
-        assert result.data.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
-        assert result.data.ldap_bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        assert isinstance(result.unwrap(), FlextLdapConfig)
+        assert result.unwrap().ldap_server_uri == "ldap://localhost"
+        assert result.unwrap().ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
+        assert result.unwrap().ldap_bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     # Obsolete test - create_connection_config_from_env method no longer exists
     # def test_create_connection_config_from_env_success(self) -> None:
@@ -96,12 +96,12 @@ class TestFlextLdapConfig:
     #     result = configs.create_connection_config_from_env()
     #
     #     assert result.is_success
-    #     assert isinstance(result.data, dict)
+    #     assert isinstance(result.unwrap(), dict)
     #     # The method uses the global instance with default values
-    #     assert result.data["server"] == "ldap://localhost"
-    #     assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
-    #     assert result.data["bind_dn"] is None  # Default value
-    #     assert not result.data["base_dn"]  # Default value
+    #     assert result.unwrap()["server"] == "ldap://localhost"
+    #     assert result.unwrap()["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #     assert result.unwrap()["bind_dn"] is None  # Default value
+    #     assert not result.unwrap()["base_dn"]  # Default value
 
     # Obsolete test - create_connection_config_from_env method no longer exists
     # def test_create_connection_config_from_env_missing_vars(self) -> None:
@@ -113,12 +113,12 @@ class TestFlextLdapConfig:
     #
     #         # The method uses the global instance with default values, so it succeeds
     #         assert result.is_success
-    #         assert isinstance(result.data, dict)
+    #         assert isinstance(result.unwrap(), dict)
     #         # Should have default values
-    #         assert result.data["server"] == "ldap://localhost"
-    #         assert result.data["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
-    #         assert result.data["bind_dn"] is None
-    #         assert not result.data["base_dn"]
+    #         assert result.unwrap()["server"] == "ldap://localhost"
+    #         assert result.unwrap()["port"] == FlextLdapConstants.Protocol.DEFAULT_PORT
+    #         assert result.unwrap()["bind_dn"] is None
+    #         assert not result.unwrap()["base_dn"]
 
     def test_create_search_config_success(self) -> None:
         """Test successful search config creation."""
@@ -133,10 +133,10 @@ class TestFlextLdapConfig:
         result = configs.create_search_config(search_data)
 
         assert result.is_success
-        assert isinstance(result.data, FlextLdapModels.SearchConfig)
-        assert result.data.base_dn == "dc=example,dc=com"
-        assert result.data.filter_str == "(objectClass=person)"
-        assert result.data.attributes == ["cn", "sn", "mail"]
+        assert isinstance(result.unwrap(), FlextLdapModels.SearchConfig)
+        assert result.unwrap().base_dn == "dc=example,dc=com"
+        assert result.unwrap().filter_str == "(objectClass=person)"
+        assert result.unwrap().attributes == ["cn", "sn", "mail"]
 
     def test_create_search_config_validation_failure(self) -> None:
         """Test search config creation with validation failure."""
@@ -152,9 +152,9 @@ class TestFlextLdapConfig:
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
-        assert result.data.base_dn == "None"
-        assert result.data.filter_str == "None"
-        assert result.data.attributes == []
+        assert result.unwrap().base_dn == "None"
+        assert result.unwrap().filter_str == "None"
+        assert result.unwrap().attributes == []
 
     def test_create_modify_config_success(self) -> None:
         """Test successful modify config creation."""
@@ -170,11 +170,11 @@ class TestFlextLdapConfig:
         result = configs.create_modify_config(modify_data)
 
         assert result.is_success
-        assert isinstance(result.data, dict)
-        assert result.data["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
-        assert result.data["operation"] == "replace"
-        assert result.data["attribute"] == "cn"
-        assert result.data["values"] == ["New Name"]
+        assert isinstance(result.unwrap(), dict)
+        assert result.unwrap()["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
+        assert result.unwrap()["operation"] == "replace"
+        assert result.unwrap()["attribute"] == "cn"
+        assert result.unwrap()["values"] == ["New Name"]
 
     def test_create_modify_config_validation_failure(self) -> None:
         """Test modify config creation with validation failure."""
@@ -191,10 +191,10 @@ class TestFlextLdapConfig:
 
         # The method should succeed with proper type conversion
         assert result.is_success
-        assert result.data["dn"] == "None"  # None converted to string
-        assert result.data["operation"] == "None"  # None converted to string
-        assert result.data["attribute"] == "None"  # None converted to string
-        assert result.data["values"] == []  # String handled properly as empty list
+        assert result.unwrap()["dn"] == "None"  # None converted to string
+        assert result.unwrap()["operation"] == "None"  # None converted to string
+        assert result.unwrap()["attribute"] == "None"  # None converted to string
+        assert result.unwrap()["values"] == []  # String handled properly as empty list
 
     def test_create_add_config_success(self) -> None:
         """Test successful add config creation."""
@@ -219,9 +219,9 @@ class TestFlextLdapConfig:
         result = configs.create_add_config(add_data)
 
         assert result.is_success
-        assert isinstance(result.data, dict)
-        assert result.data["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
-        assert result.data["attributes"] == add_data["attributes"]
+        assert isinstance(result.unwrap(), dict)
+        assert result.unwrap()["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
+        assert result.unwrap()["attributes"] == add_data["attributes"]
 
     def test_create_add_config_type_conversion(self) -> None:
         """Test add config creation with type conversion."""
@@ -233,8 +233,10 @@ class TestFlextLdapConfig:
 
         # The method should succeed with proper type conversion
         assert result.is_success
-        assert result.data["dn"] == "None"  # None converted to string
-        assert result.data["attributes"] == {}  # Invalid string converted to empty dict
+        assert result.unwrap()["dn"] == "None"  # None converted to string
+        assert (
+            result.unwrap()["attributes"] == {}
+        )  # Invalid string converted to empty dict
 
     def test_create_delete_config_success(self) -> None:
         """Test successful delete config creation."""
@@ -247,8 +249,8 @@ class TestFlextLdapConfig:
         result = configs.create_delete_config(delete_data)
 
         assert result.is_success
-        assert isinstance(result.data, dict)
-        assert result.data["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
+        assert isinstance(result.unwrap(), dict)
+        assert result.unwrap()["dn"] == "uid=testuser,ou=people,dc=example,dc=com"
 
     def test_create_delete_config_validation_failure(self) -> None:
         """Test delete config creation with validation failure."""
@@ -260,7 +262,7 @@ class TestFlextLdapConfig:
 
         # The method should still succeed as it uses defaults and str() conversion
         assert result.is_success
-        assert result.data["dn"] == "None"
+        assert result.unwrap()["dn"] == "None"
 
     def test_validate_connection_data_success(
         self,
@@ -277,7 +279,7 @@ class TestFlextLdapConfig:
         result = FlextLdapValidations.validate_connection_config(config)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
@@ -455,10 +457,10 @@ class TestFlextLdapConfig:
         result = FlextLdapConfig.get_default_search_config()
 
         assert result.is_success
-        assert isinstance(result.data, dict)
-        assert "base_dn" in result.data
-        assert "filter_str" in result.data
-        assert "attributes" in result.data
+        assert isinstance(result.unwrap(), dict)
+        assert "base_dn" in result.unwrap()
+        assert "filter_str" in result.unwrap()
+        assert "attributes" in result.unwrap()
 
     def test_merge_configs_success(self) -> None:
         """Test successful config merging."""
@@ -480,11 +482,11 @@ class TestFlextLdapConfig:
 
         assert result.is_success
         assert (
-            result.data["server_uri"]
+            result.unwrap()["server_uri"]
             == f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         )
-        assert result.data["bind_dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-        assert result.data["connection_timeout"] == 60
+        assert result.unwrap()["bind_dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        assert result.unwrap()["connection_timeout"] == 60
 
     def test_merge_configs_empty_override(self) -> None:
         """Test config merging with empty override."""
@@ -498,7 +500,7 @@ class TestFlextLdapConfig:
         result = configs.merge_configs(base_config, {})
 
         assert result.is_success
-        assert result.data == base_config
+        assert result.unwrap() == base_config
 
     def test_validate_dn_format_valid(self) -> None:
         """Test validating valid DN format."""
@@ -507,7 +509,7 @@ class TestFlextLdapConfig:
         )
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test validating invalid DN format."""
@@ -536,7 +538,7 @@ class TestFlextLdapConfig:
         result = FlextLdapValidations.validate_filter("(objectClass=person)")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_filter_format_invalid(self) -> None:
         """Test validating invalid filter format."""
@@ -834,9 +836,9 @@ class TestFlextLdapConfig:
         result = configs.get_default_search_config()
 
         assert result.is_success
-        assert "base_dn" in result.data
-        assert "filter_str" in result.data
-        assert "scope" in result.data
+        assert "base_dn" in result.unwrap()
+        assert "filter_str" in result.unwrap()
+        assert "scope" in result.unwrap()
 
     def test_merge_configs(self) -> None:
         """Test merge_configs method."""
@@ -847,9 +849,9 @@ class TestFlextLdapConfig:
         result = configs.merge_configs(base_config, override_config)
 
         assert result.is_success
-        assert result.data["server"] == "ldap://localhost"
-        assert result.data["port"] == 636  # Overridden
-        assert result.data["use_ssl"] is True
+        assert result.unwrap()["server"] == "ldap://localhost"
+        assert result.unwrap()["port"] == 636  # Overridden
+        assert result.unwrap()["use_ssl"] is True
 
     def test_ldap_default_connection(self) -> None:
         """Test ldap_default_connection property."""
@@ -922,7 +924,7 @@ class TestFlextLdapConfig:
         result = FlextLdapConfig.merge_configs({"key1": "value1"}, {"key2": "value2"})
         # Should succeed with valid dicts
         assert result.is_success
-        assert result.data == {"key1": "value1", "key2": "value2"}
+        assert result.unwrap() == {"key1": "value1", "key2": "value2"}
 
 
 class TestLdapHandlerConfiguration:

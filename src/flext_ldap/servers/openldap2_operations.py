@@ -258,6 +258,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 formatted_acls.append(format_result.unwrap())
 
             # Modify entry with new ACLs
+            # ldap3 library has incomplete type stubs; external library limitation
             success: bool = connection.modify(
                 dn,
                 {"olcAccess": [(MODIFY_REPLACE, formatted_acls)]},
@@ -399,6 +400,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
             # Add entry using ldap3
+            # ldap3 library has incomplete type stubs; external library limitation
             success: bool = connection.add(
                 str(normalized_entry.dn),
                 object_class,
@@ -454,6 +456,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success = connection.modify(
                 dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
             )
@@ -490,6 +493,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
+            # ldap3 library has incomplete type stubs; external library limitation
             success: bool = connection.delete(dn)
 
             if not success:

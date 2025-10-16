@@ -108,6 +108,7 @@ class FlextLdapAuthentication(FlextService[None]):
     def _safe_unbind(self, connection: Connection) -> None:
         """Safely unbind LDAP connection.
 
+            # ldap3 library has incomplete type stubs; external library limitation
         This helper isolates the ldap3.Connection.unbind() call which lacks
         type stubs. The method is private infrastructure layer.
 
@@ -116,6 +117,7 @@ class FlextLdapAuthentication(FlextService[None]):
 
         """
         with contextlib.suppress(Exception):
+            # ldap3 library has incomplete type stubs; external library limitation
             connection.unbind()
 
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:

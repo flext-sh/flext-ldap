@@ -33,7 +33,7 @@ import os
 import sys
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -88,7 +88,7 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
 
     # Simple search for all person entries
     logger.info(f"Searching for person objects in {BASE_DN}")
-    result: FlextResult[list[FlextTypes.Dict]] = api.search_entries(
+    result: FlextResult[list[dict[str, object]]] = api.search_entries(
         base_dn=BASE_DN,
         filter_str="(objectClass=person)",
         attributes=["cn", "sn", "mail"],
@@ -165,7 +165,7 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     logger.info(f"   Size Limit: {search_request.size_limit}")
 
     # Execute search using search_entries (returns SearchResponse)
-    result: FlextResult[list[FlextTypes.Dict]] = api.search_entries(
+    result: FlextResult[list[dict[str, object]]] = api.search_entries(
         base_dn=search_request.base_dn,
         filter_str=search_request.filter_str,  # Access the actual field name
         attributes=search_request.attributes,
@@ -205,7 +205,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
         logger.error(f"❌ Group search failed: {result.error}")
         return
 
-    groups: list[FlextTypes.Dict] = result.unwrap()
+    groups: list[dict[str, object]] = result.unwrap()
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
         logger.info(f"   {i}. Group DN: {group.get('dn', 'N/A')}")
@@ -319,7 +319,7 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
 
     # Search with specific attributes
     logger.info("Requesting only 'cn' and 'mail' attributes:")
-    result: FlextResult[list[FlextTypes.Dict]] = api.search(
+    result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = api.search(
         base_dn=BASE_DN,
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail"],  # Only these attributes

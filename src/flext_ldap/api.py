@@ -234,7 +234,7 @@ class FlextLdap(FlextService[None]):
             try:
                 if self._connection is not None:
                     # ldap3 library has incomplete type stubs; external library limitation
-                    self._connection.unbind()  # type: ignore[no-untyped-call]
+                    self._connection.unbind()
                     self._connection = None
                 return FlextResult.ok(None)
             except Exception as e:
@@ -307,7 +307,7 @@ class FlextLdap(FlextService[None]):
                         ldap3_attributes[key] = [value]
 
                 # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.add(  # type: ignore[no-untyped-call]
+                self._connection.add(
                     dn, object_class, attributes=ldap3_attributes or None
                 )
                 return FlextResult.ok(True)
@@ -336,7 +336,7 @@ class FlextLdap(FlextService[None]):
                         modifications[attr] = [(MODIFY_REPLACE, [value])]
 
                 # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.modify(dn, modifications)  # type: ignore[no-untyped-call]
+                self._connection.modify(dn, modifications)
                 return FlextResult.ok(True)
             except Exception as e:
                 return FlextResult.fail(f"LDAP modify failed: {e}")
@@ -351,6 +351,7 @@ class FlextLdap(FlextService[None]):
 
             try:
                 # ldap3 delete() is untyped; wrap with cast for type safety
+                # ldap3 library has incomplete type stubs; external library limitation
                 cast("type[bool]", self._connection.delete(dn))
                 return FlextResult.ok(True)
             except Exception as e:
@@ -570,7 +571,8 @@ class FlextLdap(FlextService[None]):
                     cast("str | FlextTypes.StringList | bytes | list[bytes]", value)
                 )
                 for key, value in entry_dict.items()
-                if key != "dn" and not isinstance(value, dict)  # Skip DN and nested dicts
+                if key != "dn"
+                and not isinstance(value, dict)  # Skip DN and nested dicts
             }
 
             return FlextResult.ok(

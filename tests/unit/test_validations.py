@@ -36,7 +36,7 @@ class TestFlextLdapValidations:
         result = validations.validate_dn(sample_valid_dn)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_dn_failure(
         self, validations: FlextLdapValidations, sample_invalid_dn: str
@@ -87,7 +87,7 @@ class TestFlextLdapValidations:
         result = validations.validate_filter(sample_valid_filter)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_filter_failure(self, validations: FlextLdapValidations) -> None:
         """Test filter validation failure."""
@@ -124,7 +124,7 @@ class TestFlextLdapValidations:
         result = validations.validate_password("validpassword123")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_password_too_short(
         self, validations: FlextLdapValidations
@@ -187,7 +187,7 @@ class TestFlextLdapValidations:
         result = validations.validate_attributes(attributes)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_attributes_empty(self, validations: FlextLdapValidations) -> None:
         """Test attributes validation with empty list."""
@@ -251,14 +251,14 @@ class TestFlextLdapValidations:
         )
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_server_uri_ldaps(self, validations: FlextLdapValidations) -> None:
         """Test server URI validation with LDAPS."""
         result = validations.validate_server_uri("ldaps://localhost:636")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_server_uri_failure(
         self, validations: FlextLdapValidations
@@ -297,14 +297,14 @@ class TestFlextLdapValidations:
         result = validations.validate_timeout(FlextConstants.Network.DEFAULT_TIMEOUT)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_timeout_zero(self, validations: FlextLdapValidations) -> None:
         """Test timeout validation with zero."""
         result = validations.validate_timeout(0)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_timeout_negative(self, validations: FlextLdapValidations) -> None:
         """Test timeout validation with negative value."""
@@ -335,14 +335,14 @@ class TestFlextLdapValidations:
         result = validations.validate_size_limit(100)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_size_limit_zero(self, validations: FlextLdapValidations) -> None:
         """Test size limit validation with zero."""
         result = validations.validate_size_limit(0)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_size_limit_negative(
         self, validations: FlextLdapValidations
@@ -375,14 +375,14 @@ class TestFlextLdapValidations:
         result = validations.validate_scope("subtree")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_scope_base(self, validations: FlextLdapValidations) -> None:
         """Test scope validation with base scope."""
         result = validations.validate_scope("base")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_scope_one(self, validations: FlextLdapValidations) -> None:
         """Test scope validation with one scope."""
@@ -450,7 +450,7 @@ class TestFlextLdapValidations:
         result = validations.validate_modify_operation("add")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_modify_operation_delete(
         self, validations: FlextLdapValidations
@@ -459,7 +459,7 @@ class TestFlextLdapValidations:
         result = validations.validate_modify_operation("delete")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_modify_operation_invalid(
         self, validations: FlextLdapValidations
@@ -514,7 +514,7 @@ class TestFlextLdapValidations:
         result = validations.validate_object_class("inetOrgPerson")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_object_class_organizational_person(
         self, validations: FlextLdapValidations
@@ -523,7 +523,7 @@ class TestFlextLdapValidations:
         result = validations.validate_object_class("organizationalPerson")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_object_class_group(
         self, validations: FlextLdapValidations
@@ -532,7 +532,7 @@ class TestFlextLdapValidations:
         result = validations.validate_object_class("groupOfNames")
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_object_class_invalid(
         self, validations: FlextLdapValidations
@@ -542,7 +542,7 @@ class TestFlextLdapValidations:
 
         # Object class validation might be permissive, so check if it succeeds or fails
         if result.is_success:
-            assert result.data is True
+            assert result.unwrap() is True
         else:
             assert result.error is not None
             assert (
@@ -592,7 +592,7 @@ class TestFlextLdapValidations:
         result = validations.validate_connection_config(config)
 
         assert result.is_success
-        assert result.data is True
+        assert result.unwrap() is True
 
     def test_validate_connection_config_missing_fields(
         self, validations: FlextLdapValidations
