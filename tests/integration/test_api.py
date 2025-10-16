@@ -61,11 +61,11 @@ class TestLdapClientRealOperations:
 
         # Verify connection succeeded
         assert result.is_success, f"Connection failed: {result.error}"
-        assert client.is_connected()
+        assert client.is_connected
 
         # Cleanup
         client.unbind()
-        assert not client.is_connected()
+        assert not client.is_connected
 
     def test_client_search_real_entries(
         self,
@@ -350,7 +350,7 @@ class TestLdapServiceRealOperations:
             "description": ["Updated via service"],
         }
         update_attributes_raw = create_ldap_attributes(update_attrs_raw)
-        update_attributes = update_attributes_raw
+        update_attributes = cast("FlextTypes.Dict", update_attributes_raw)
         update_result = client.update_user_attributes(
             user_request.dn,
             update_attributes,
@@ -439,7 +439,7 @@ class TestLdapServiceRealOperations:
                 "ou": [ou_name],
             }
             ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
-            client.add(
+            client.add_entry(
                 ou_dn,
                 ou_attributes_3,
             )  # Ignore if exists
@@ -455,7 +455,7 @@ class TestLdapServiceRealOperations:
             "uid": [f"groupuser-{uuid4().hex[:8]}"],
         }
         user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
-        client.add(
+        client.add_entry(
             user_dn,
             user_attributes_4,
         )
@@ -466,7 +466,7 @@ class TestLdapServiceRealOperations:
             dn=f"cn=realgroup-{group_id},ou=groups,{clean_ldap_container['base_dn']}",
             cn=f"Real Test Group {group_id}",
             description="Real test group for integration testing",
-            members=[user_dn],  # Add member during creation
+            member=[user_dn],  # Add member during creation
         )
 
         # CREATE: Real group creation
@@ -519,7 +519,7 @@ class TestLdapServiceRealOperations:
             "uid": [f"groupuser2-{uuid4().hex[:8]}"],
         }
         user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
-        client.add(
+        client.add_entry(
             user2_dn,
             user2_attributes_6,
         )
@@ -561,7 +561,7 @@ class TestLdapServiceRealOperations:
         assert user_dn in remaining_members  # Original member should remain
 
         # DELETE: Remove group
-        delete_result = client.delete_group(group_request.dn)
+        delete_result = client.delete_entry(group_request.dn)
         assert delete_result.is_success, (
             f"Failed to delete group: {delete_result.error}"
         )
@@ -576,8 +576,8 @@ class TestLdapServiceRealOperations:
         assert verified_group is None  # Should not exist
 
         # Cleanup users
-        client.delete(user_dn)
-        client.delete(user2_dn)
+        client.delete_entry(user_dn)
+        client.delete_entry(user2_dn)
 
 
 @pytest.mark.integration
@@ -632,7 +632,7 @@ class TestLdapValidationRealOperations:
             "ou": ["validation-test"],
         }
         ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
-        client.add(
+        client.add_entry(
             ou_dn,
             ou_attributes_7,
         )
@@ -693,8 +693,8 @@ class TestLdapValidationRealOperations:
         # Some LDAP servers might allow overwrites, others might fail - either is valid behavior
 
         # Cleanup
-        client.delete(valid_user_request.dn)
-        client.delete(ou_dn)
+        client.delete_entry(valid_user_request.dn)
+        client.delete_entry(ou_dn)
 
 
 @pytest.mark.integration
@@ -797,7 +797,7 @@ class TestLdapErrorHandlingReal:
         )
 
         # Test delete non-existent entry
-        delete_result = client.delete(
+        delete_result = client.delete_entry(
             f"cn=nonexistent-{uuid4().hex},ou=nonexistent,{clean_ldap_container['base_dn']}",
         )
         # Should handle gracefully

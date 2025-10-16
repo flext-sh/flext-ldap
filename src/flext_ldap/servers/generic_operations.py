@@ -81,13 +81,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             if not success or not connection.entries:
                 self.logger.warning("Generic schema discovery failed - using defaults")
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "object_classes": [],
-                        "attribute_types": [],
-                        "server_type": "generic",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "object_classes": [],
+                    "attribute_types": [],
+                    "server_type": "generic",
+                })
 
             entry = connection.entries[0]
             schema_data: FlextTypes.Dict = {
@@ -111,33 +109,27 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 "Generic schema discovery error",
                 extra={"error": str(e)},
             )
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "object_classes": [],
-                    "attribute_types": [],
-                    "server_type": "generic",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "object_classes": [],
+                "attribute_types": [],
+                "server_type": "generic",
+            })
 
     @override
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic objectClass definition."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "definition": object_class_def,
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "definition": object_class_def,
+            "server_type": "generic",
+        })
 
     @override
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic attributeType definition."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "definition": attribute_def,
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "definition": attribute_def,
+            "server_type": "generic",
+        })
 
     # =========================================================================
     # ACL OPERATIONS
@@ -178,13 +170,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     @override
     def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse generic ACL string."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "raw": acl_string,
-                "format": "generic",
-                "server_type": "generic",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "raw": acl_string,
+            "format": "generic",
+            "server_type": "generic",
+        })
 
     @override
     def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:

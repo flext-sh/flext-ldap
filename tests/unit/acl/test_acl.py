@@ -1744,13 +1744,11 @@ class TestFlextLdapAclManagerComprehensive:
         """Test handle method exception handling."""
         manager = FlextLdapAclManager()
         # Mock an exception by passing invalid data that will cause an error
-        result = manager.handle(
-            {
-                "operation": "parse",
-                "acl_string": None,
-                "format": "openldap",
-            }
-        )
+        result = manager.handle({
+            "operation": "parse",
+            "acl_string": None,
+            "format": "openldap",
+        })
         assert result.is_failure
         assert result.error is not None
         assert (

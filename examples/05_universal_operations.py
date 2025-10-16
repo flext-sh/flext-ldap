@@ -48,8 +48,10 @@ from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.typings import FlextLdapTypes
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -97,7 +99,7 @@ def demonstrate_server_detection(api: FlextLdap) -> str | None:
     logger.info("=== Server Type Detection ===")
 
     # Get detected server type
-    result: FlextResult[str | None] = api.get_detected_server_type()
+    result = api.get_detected_server_type()
 
     if result.is_failure:
         logger.error(f"❌ Server detection failed: {result.error}")
@@ -134,20 +136,12 @@ def demonstrate_server_capabilities(api: FlextLdap) -> None:
     logger.info("✅ Server capabilities retrieved:")
 
     # Display capabilities
-    caps_dict = capabilities.model_dump()
-    logger.info(f"   Server Type: {caps_dict.get('server_type', 'unknown')}")
-    logger.info(f"   ACL Format: {caps_dict.get('acl_format', 'N/A')}")
-    logger.info(f"   ACL Attribute: {caps_dict.get('acl_attribute', 'N/A')}")
-    logger.info(f"   Schema DN: {caps_dict.get('schema_dn', 'N/A')}")
-    logger.info(f"   Default Port: {caps_dict.get('default_port', 'N/A')}")
-    logger.info(f"   SSL Port: {caps_dict.get('default_ssl_port', 'N/A')}")
-    start_tls = caps_dict.get("supports_start_tls", False)
-    logger.info(f"   Supports StartTLS: {start_tls}")
-    logger.info(f"   Bind Mechanisms: {caps_dict.get('bind_mechanisms', [])}")
-    logger.info(f"   Max Page Size: {caps_dict.get('max_page_size', 'N/A')}")
-    paged = caps_dict.get("supports_paged_results", False)
-    logger.info(f"   Supports Paged Results: {paged}")
-    logger.info(f"   Supports VLV: {caps_dict.get('supports_vlv', False)}")
+    logger.info(f"   Supports SSL: {capabilities.supports_ssl}")
+    logger.info(f"   Supports StartTLS: {capabilities.supports_starttls}")
+    logger.info(f"   Supports Paged Results: {capabilities.supports_paged_results}")
+    logger.info(f"   Supports VLV: {capabilities.supports_vlv}")
+    logger.info(f"   Supports SASL: {capabilities.supports_sasl}")
+    logger.info(f"   Max Page Size: {capabilities.max_page_size}")
 
 
 def demonstrate_server_operations(api: FlextLdap) -> None:
@@ -160,16 +154,24 @@ def demonstrate_server_operations(api: FlextLdap) -> None:
     logger.info("\n=== Server Operations Access ===")
 
     # Get server operations instance
-    result = api.get_server_operations()
+    server_ops = api.get_server_operations()
+    result = (
+        FlextResult.ok(server_ops)
+        if server_ops
+        else FlextResult.fail("No server operations available")
+    )
 
     if result.is_failure:
         logger.error(f"❌ Failed to get server operations: {result.error}")
         return
 
-    server_ops = result.unwrap()
-    if server_ops:
-        logger.info("✅ Server operations instance available")
-        logger.info(f"   Type: {type(server_ops).__name__}")
+    if result.is_success:
+        server_ops = result.unwrap()
+        if server_ops:
+            logger.info("✅ Server operations instance available")
+            logger.info(f"   Type: {type(server_ops).__name__}")
+        else:
+            logger.warning("⚠️  Server operations instance is None")
 
         # Access server-specific information - we know this is BaseServerOperations
         # but need to handle the type annotation issue from the API
@@ -196,37 +198,28 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Perform universal search (automatically uses server-specific optimizations)
     logger.info(f"Performing universal search on {BASE_DN}")
-    search_request = FlextLdapModels.SearchRequest(
+    result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = api.search_universal(
         base_dn=BASE_DN,
         filter_str="(objectClass=*)",
         attributes=["dn", "objectClass"],
-        page_size=100,
-    )
-    result: FlextResult[list[FlextLdapModels.Entry]] = api.search_universal(
-        search_request
     )
 
     if result.is_failure:
         logger.error(f"❌ Universal search failed: {result.error}")
         return
 
-    entries: list[FlextLdapModels.Entry] = result.unwrap()
-    logger.info(f"✅ Universal search found {len(entries)} entries")
+    search_results = result.unwrap()
+    logger.info(f"✅ Universal search found {len(search_results)} entries")
     logger.info("   (Used server-specific optimizations automatically)")
 
     # Show first few entries
-    for i, entry in enumerate(entries[:3], 1):
-        dn = str(entry.dn) if hasattr(entry, "dn") else "N/A"
+    for i, search_entry in enumerate(search_results[:3], 1):
+        dn = str(search_entry.get("dn", "N/A"))
         logger.info(f"   {i}. {dn}")
 
 
-def demonstrate_entry_normalization(api: FlextLdap) -> None:
-    """Demonstrate entry normalization for target servers.
-
-    Args:
-        api: Connected FlextLdap instance
-
-    """
+def demonstrate_entry_normalization() -> None:
+    """Demonstrate entry normalization for target servers."""
     logger.info("\n=== Entry Normalization ===")
 
     # Create a sample entry
@@ -248,13 +241,17 @@ def demonstrate_entry_normalization(api: FlextLdap) -> None:
     logger.info("Normalizing entry for current server...")
     # Convert LDIF entry to LDAP entry for normalization
     ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
-    result = api.normalize_entry_for_server(ldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.normalize_entry_for_server(ldif_entry_for_adapter, "generic")
+    # result is already typed as FlextResult[FlextLdifModels.Entry] from the method signature
 
     if result.is_success:
         normalized_entry = result.unwrap()
         logger.info("✅ Entry normalized successfully")
         logger.info(f"   DN: {normalized_entry.dn}")
-        attrs = list(normalized_entry.attributes.keys())
+        attrs = list(normalized_entry.attributes.attributes.keys())
         logger.info(f"   Attributes: {attrs}")
     else:
         logger.error(f"❌ Normalization failed: {result.error}")
@@ -265,7 +262,7 @@ def demonstrate_entry_conversion() -> None:
     logger.info("\n=== Entry Format Conversion ===")
 
     # Create FlextLdap API for conversion
-    api = FlextLdap()
+    FlextLdap()
 
     # Create a sample entry with OpenLDAP 1.x ACL
     sample_entry = FlextLdifModels.Entry(
@@ -289,8 +286,11 @@ def demonstrate_entry_conversion() -> None:
 
     # Convert LDIF entry to LDAP entry for server conversion
     ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
-    result = api.convert_entry_between_servers(
-        entry=ldap_entry,
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.convert_entry_format(
+        entry=ldif_entry_for_adapter,
         source_server_type="openldap1",
         target_server_type="openldap2",
     )
@@ -298,7 +298,7 @@ def demonstrate_entry_conversion() -> None:
     if result.is_success:
         converted_entry = result.unwrap()
         logger.info("✅ Entry converted successfully")
-        tgt_attrs = list(converted_entry.attributes.keys())
+        tgt_attrs = list(converted_entry.attributes.attributes.keys())
         logger.info(f"   Target attributes: {tgt_attrs}")
         logger.info("   (ACL format converted: 'access' → 'olcAccess')")
     else:
@@ -313,7 +313,7 @@ def demonstrate_server_detection_from_entry() -> None:
     logger.info("\n=== Server Type Detection from Entry ===")
 
     # Create FlextLdap API for detection
-    api = FlextLdap()
+    FlextLdap()
 
     # Create sample entries with server-specific attributes
     test_entries: list[dict[str, str | FlextLdifModels.Entry]] = [
@@ -359,7 +359,10 @@ def demonstrate_server_detection_from_entry() -> None:
         if isinstance(entry, FlextLdifModels.Entry):
             # Convert LDIF entry to LDAP entry for server type detection
             ldap_entry = FlextLdapModels.Entry.from_ldif(entry)
-            result = api.detect_entry_server_type(ldap_entry)
+            ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+            adapter = FlextLdapEntryAdapter()
+            result = adapter.detect_entry_server_type(ldif_entry_for_adapter)
         else:
             logger.warning(f"   ⚠️  Skipping invalid entry type: {type(entry)}")
             continue
@@ -371,13 +374,8 @@ def demonstrate_server_detection_from_entry() -> None:
             logger.error(f"   ❌ Detection failed: {result.error}")
 
 
-def demonstrate_entry_validation(api: FlextLdap) -> None:
-    """Demonstrate entry validation for target servers.
-
-    Args:
-        api: Connected FlextLdap instance
-
-    """
+def demonstrate_entry_validation() -> None:
+    """Demonstrate entry validation for target servers."""
     logger.info("\n=== Entry Validation ===")
 
     # Create a sample entry
@@ -398,7 +396,10 @@ def demonstrate_entry_validation(api: FlextLdap) -> None:
     logger.info("Validating entry for current server...")
     # Convert LDIF entry to LDAP entry for validation
     ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
-    result: FlextResult[bool] = api.validate_entry_for_server(ldap_entry)
+    ldif_entry_for_adapter = ldap_entry.to_ldif()
+
+    adapter = FlextLdapEntryAdapter()
+    result = adapter.validate_entry_for_server(ldif_entry_for_adapter, "generic")
 
     if result.is_success:
         is_valid = result.unwrap()
@@ -420,27 +421,13 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
     logger.info("\n=== Server-Specific Attributes ===")
 
     # Get server-specific attributes
-    result: FlextResult[FlextLdapModels.ServerAttributes] = (
-        api.get_server_specific_attributes()
-    )
-
-    if result.is_failure:
-        logger.error(f"❌ Failed to get attributes: {result.error}")
-        return
-
-    attributes = result.unwrap()
+    attributes = api.get_server_specific_attributes("generic")
     logger.info("✅ Server-specific attributes retrieved:")
+    logger.info(f"   Attributes: {attributes}")
 
     # Display attribute information
-    attrs_dict = attributes.model_dump()
-    for key, value in attrs_dict.items():
-        if isinstance(value, list):
-            logger.info(f"   {key}: {len(value)} items")
-            # Show first few items
-            for item in value[:3]:
-                logger.info(f"      - {item}")
-        else:
-            logger.info(f"   {key}: {value}")
+    for attr in attributes:
+        logger.info(f"   • {attr}")
 
 
 def demonstrate_server_quirks_details(server_type: str | None) -> None:
@@ -636,8 +623,8 @@ def main() -> int:
             demonstrate_server_capabilities(api)
             demonstrate_server_operations(api)
             demonstrate_universal_search(api)
-            demonstrate_entry_normalization(api)
-            demonstrate_entry_validation(api)
+            demonstrate_entry_normalization()
+            demonstrate_entry_validation()
             demonstrate_server_specific_attributes(api)
 
             # Quirks demonstrations
@@ -666,7 +653,7 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected():
+            if api.is_connected:
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 

@@ -329,11 +329,11 @@ LDAP protocol constants.
 
 ## 🚨 Exceptions
 
-### FlextLdapExceptions
+### FlextExceptions
 
 LDAP-specific exception classes.
 
-#### FlextLdapConnectionError
+#### ConnectionError
 
 Connection-related errors.
 
@@ -342,7 +342,7 @@ Connection-related errors.
 - `message` (str): Error description
 - `server` (str, optional): LDAP server address
 
-#### FlextLdapAuthenticationError
+#### AuthenticationError
 
 Authentication failures.
 
@@ -351,7 +351,7 @@ Authentication failures.
 - `message` (str): Error description
 - `username` (str, optional): Failed username
 
-#### FlextLdapSearchError
+#### SearchError
 
 Search operation errors.
 
@@ -364,14 +364,14 @@ Search operation errors.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapExceptions
+from flext_ldap import FlextExceptions
 
 try:
     result = api.search_entries(request)
     if result.is_failure:
         # Handle FlextResult error
         print(f"Search failed: {result.error}")
-except FlextLdapExceptions.FlextLdapConnectionError as e:
+except FlextExceptions.ConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 

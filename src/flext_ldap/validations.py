@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextExceptions, FlextResult, FlextTypes, FlextUtilities
+from flext_ldif import DnService
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -183,8 +184,6 @@ class FlextLdapValidations:
     def validate_dn_for_field(dn: str) -> str:
         """DN validation for Pydantic field validators - raises exception on failure."""
         # Import here to avoid circular dependency
-        from flext_core import FlextExceptions  # noqa: PLC0415
-        from flext_ldif import DnService  # noqa: PLC0415
 
         # Clean DN first to handle OID export quirks
         cleaned_dn = DnService.clean_dn(dn)
@@ -204,7 +203,6 @@ class FlextLdapValidations:
             return None
 
         # Import here to avoid circular dependency
-        from flext_core import FlextExceptions  # noqa: PLC0415
 
         validation_result = FlextUtilities.Validation.validate_email(email)
         if validation_result.is_failure:
@@ -216,8 +214,6 @@ class FlextLdapValidations:
     def validate_password_for_field(password: str | None) -> str | None:
         """Password validation for Pydantic field validators - raises exception on failure."""
         # Import here to avoid circular dependency
-        from flext_core import FlextExceptions  # noqa: PLC0415
-
         validation_result = FlextLdapValidations.validate_password(
             str(password) if password is not None else ""
         ).map(lambda _: None)
@@ -232,7 +228,6 @@ class FlextLdapValidations:
     def validate_required_string_for_field(value: str) -> str:
         """Required string validation for Pydantic field validators - raises exception on failure."""
         # Import here to avoid circular dependency
-        from flext_core import FlextExceptions  # noqa: PLC0415
 
         if not value or not value.strip():
             error_msg = "Required field cannot be empty"

@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import override
+from typing import Any, override
 
 from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
 
@@ -21,7 +21,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 
 
-class FlextLdapSchema(FlextService[object]):
+class FlextLdapSchema(FlextService[dict[str, Any] | None]):
     """Unified LDAP schema class following FLEXT one-class-per-module standards.
 
     This class consolidates ALL schema-related functionality including:
@@ -37,7 +37,7 @@ class FlextLdapSchema(FlextService[object]):
     # QUIRKS DETECTION - Server-specific behavior detection
     # =========================================================================
 
-    class QuirksDetector(FlextHandlers[object, object], ABC):
+    class QuirksDetector(FlextHandlers[dict[str, Any] | None, dict[str, Any] | None], ABC):
         """Abstract base class for LDAP server quirks detection."""
 
     class GenericQuirksDetector(QuirksDetector):
@@ -54,7 +54,10 @@ class FlextLdapSchema(FlextService[object]):
             )
             super().__init__(config=config)
 
-        def handle(self, message: object) -> FlextResult[object]:
+        @override
+        def handle(
+            self, message: dict[str, Any] | None
+        ) -> FlextResult[dict[str, Any] | None]:
             """Handle quirks detection message.
 
             Args:
@@ -65,14 +68,19 @@ class FlextLdapSchema(FlextService[object]):
 
             """
             if not message:
-                return FlextResult[object].fail("Message cannot be empty")
+                return FlextResult[dict[str, Any] | None].fail(
+                    "Message cannot be empty"
+                )
 
             # For generic detection, return a basic success result
-            return FlextResult[object].ok({"detected": True, "type": "generic"})
+            return FlextResult[dict[str, Any] | None].ok({
+                "detected": True,
+                "type": "generic",
+            })
 
         def detect_server_type(
             self,
-            server_info: object,
+            server_info: dict[str, list[str]] | None,
         ) -> FlextLdapModels.LdapServerType | None:
             """Detect LDAP server type from server info.
 
@@ -123,7 +131,7 @@ class FlextLdapSchema(FlextService[object]):
     # SCHEMA DISCOVERY - Automatic LDAP schema discovery and analysis
     # =========================================================================
 
-    class Discovery(FlextHandlers[object, object]):
+    class Discovery(FlextHandlers[dict[str, Any] | None, dict[str, Any] | None]):
         """Schema discovery operations with quirks-aware server detection.
 
         This class provides automatic schema discovery that adapts to different
@@ -151,7 +159,9 @@ class FlextLdapSchema(FlextService[object]):
             self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override
-        def handle(self, message: object) -> FlextResult[object]:
+        def handle(
+            self, message: dict[str, Any] | None
+        ) -> FlextResult[dict[str, Any] | None]:
             """Handle schema discovery message.
 
             Args:
@@ -162,12 +172,12 @@ class FlextLdapSchema(FlextService[object]):
 
             """
             if not message:
-                return FlextResult[object].fail(
+                return FlextResult[dict[str, Any] | None].fail(
                     "Schema discovery message cannot be empty",
                 )
 
             # Return basic schema discovery result
-            return FlextResult[object].ok({"schema_discovered": True})
+            return FlextResult[dict[str, Any] | None].ok({"schema_discovered": True})
 
         def get_schema_subentry_dn(self, server_type: str | None) -> FlextResult[str]:
             """Get schema subentry DN based on server type.
@@ -198,6 +208,6 @@ class FlextLdapSchema(FlextService[object]):
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to get schema subentry DN: {e}")
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self) -> FlextResult[dict[str, Any] | None]:
         """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[object].ok(None)
+        return FlextResult[dict[str, Any] | None].ok(None)

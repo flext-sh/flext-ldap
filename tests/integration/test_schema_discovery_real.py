@@ -245,7 +245,7 @@ class TestRealUniversalOperations:
         client.discover_schema()
 
         # Use universal add
-        result = client.add_entry_universal(
+        result = client.add_entry(
             dn="ou=universal-test,dc=flext,dc=local",
             attributes={"objectClass": ["organizationalUnit"], "ou": "universal-test"},
         )
@@ -253,7 +253,7 @@ class TestRealUniversalOperations:
         assert result.is_success, f"Universal add failed: {result.error}"
 
         # Cleanup
-        client.delete_entry_universal(dn="ou=universal-test,dc=flext,dc=local")
+        client.delete_entry(dn="ou=universal-test,dc=flext,dc=local")
 
     def test_schema_discovery_performance(
         self, shared_ldap_client: FlextLdapClients

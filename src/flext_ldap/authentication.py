@@ -12,6 +12,7 @@ All type annotations follow FLEXT standards with no hacks or workarounds.
 
 from __future__ import annotations
 
+import contextlib
 from typing import cast
 
 from flext_core import FlextModels, FlextResult, FlextService
@@ -104,6 +105,19 @@ class FlextLdapAuthentication(FlextService[None]):
 
         return self._create_user_from_entry_result(auth_result.value)
 
+    def _safe_unbind(self, connection: Connection) -> None:
+        """Safely unbind LDAP connection.
+
+        This helper isolates the ldap3.Connection.unbind() call which lacks
+        type stubs. The method is private infrastructure layer.
+
+        Args:
+            connection: ldap3 Connection to unbind
+
+        """
+        with contextlib.suppress(Exception):
+            connection.unbind()
+
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
         """Validate user credentials against LDAP - implements LdapAuthenticationProtocol.
 
@@ -133,7 +147,7 @@ class FlextLdapAuthentication(FlextService[None]):
                     is_valid = test_connection.bound
                     return FlextResult[bool].ok(is_valid)
                 finally:
-                    test_connection.unbind()
+                    self._safe_unbind(test_connection)
             else:
                 # Fallback: Create a minimal test connection if no context is available
                 return FlextResult[bool].fail(
@@ -218,12 +232,12 @@ class FlextLdapAuthentication(FlextService[None]):
             )
 
             if not test_connection.bind():
-                test_connection.unbind()
+                self._safe_unbind(test_connection)
                 return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                     "Authentication failed",
                 )
 
-            test_connection.unbind()
+            self._safe_unbind(test_connection)
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].ok(user_entry)
 
         except Exception as e:

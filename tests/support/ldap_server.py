@@ -237,7 +237,7 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add(
+                    conn.add_entry(
                         cast("str", ou_data["dn"]),
                         object_class_list,
                         attributes=attrs_without_oc or None,
@@ -257,7 +257,7 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add(
+                    conn.add_entry(
                         cast("str", user_data["dn"]),
                         object_class_list,
                         attributes=attrs_without_oc or None,
@@ -277,7 +277,7 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add(
+                    conn.add_entry(
                         cast("str", group_data["dn"]),
                         object_class_list,
                         attributes=attrs_without_oc or None,
@@ -322,14 +322,12 @@ class LdapTestServer:
             return FlextResult[FlextTypes.StringDict].fail(error_msg)
 
         container_info: ContainerInfo = status_result.value
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "name": container_info["name"],
-                "status": str(container_info["status"]),  # Convert status to string
-                "ports": container_info["ports"],
-                "image": container_info["image"],
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "name": container_info["name"],
+            "status": str(container_info["status"]),  # Convert status to string
+            "ports": container_info["ports"],
+            "image": container_info["image"],
+        })
 
 
 def get_test_ldap_config() -> FlextLdapModels.ConnectionConfig:

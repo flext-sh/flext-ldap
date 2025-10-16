@@ -35,7 +35,7 @@ class TestFlextLdap:
 
         assert api is not None
         assert hasattr(api, "_client")
-        assert hasattr(api, "_ldap_config")
+        assert hasattr(api, "_config")
 
     def test_api_initialization_with_config(self) -> None:
         """Test API initialization with custom configuration."""
@@ -84,13 +84,15 @@ class TestFlextLdap:
         """Test API connection methods."""
         api = FlextLdap()
 
-        # Test is_connected method via client (wrapper removed)
-        connected = api.client.is_connected()
+        # Test is_connected property via client (wrapper removed)
+        connected = api.client.is_connected
         assert isinstance(connected, bool)
 
         # Test test_connection method via client (wrapper removed)
         result = api.client.test_connection()
         assert isinstance(result, FlextResult)
+        # In unit tests, connection will fail due to no LDAP server running
+        # This is expected behavior for unit tests
 
         # Test connect method
         result = api.connect()
@@ -115,7 +117,7 @@ class TestFlextLdap:
         result = api.search_entries(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=*)",
-            scope="subtree",
+            _scope="subtree",
             attributes=["cn", "mail"],
         )
         assert isinstance(result, FlextResult)
@@ -130,15 +132,15 @@ class TestFlextLdap:
 
         # Test update_user_attributes method
         result = api.update_user_attributes(
-            dn="cn=testuser,dc=test,dc=com",
-            attributes={"cn": "newcn", "mail": "newmail@example.com"},
+            _dn="cn=testuser,dc=test,dc=com",
+            _attributes={"cn": "newcn", "mail": "newmail@example.com"},
         )
         assert isinstance(result, FlextResult)
 
         # Test update_group_attributes method
         result = api.update_group_attributes(
-            dn="cn=testgroup,dc=test,dc=com",
-            attributes={"cn": "newgroup", "description": "Updated group"},
+            _dn="cn=testgroup,dc=test,dc=com",
+            _attributes={"cn": "newgroup", "description": "Updated group"},
         )
         assert isinstance(result, FlextResult)
 

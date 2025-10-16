@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import ClassVar, cast
+from typing import Any, ClassVar, Self, cast
 
 from dependency_injector import providers
 from flext_core import (
@@ -171,13 +171,37 @@ class FlextLdapConfig(FlextConfig):
     # Singleton pattern inherited from FlextConfig - no need to redefine _instances
     # _lock inherited as well
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+        """Create FlextLdapConfig instance with SecretStr preprocessing.
+
+        Converts SecretStr values to strings before passing to parent constructor
+        to avoid type errors with FlextConfig.__new__ signature.
+
+        Args:
+            *args: Positional arguments
+            **kwargs: Keyword arguments
+
+        Returns:
+            FlextLdapConfig: New instance
+
+        """
+        # Preprocess kwargs to convert SecretStr to string for compatibility
+        processed_kwargs = {}
+        for key, value in kwargs.items():
+            if isinstance(value, SecretStr):
+                processed_kwargs[key] = value.get_secret_value()
+            else:
+                processed_kwargs[key] = value
+
+        return super().__new__(cls, *args, **processed_kwargs)
+
     class LdapHandlerConfiguration:
         """LDAP-specific handler configuration utilities."""
 
         @staticmethod
         def resolve_ldap_operation_mode(
             operation_mode: str | None = None,
-            operation_config: object = None,
+            operation_config: dict[str, Any] | None = None,
         ) -> str | None:
             """Resolve LDAP operation mode from various sources.
 
@@ -609,7 +633,7 @@ class FlextLdapConfig(FlextConfig):
         mode="before",
     )
     @classmethod
-    def coerce_int_from_env(cls, v: object) -> int:
+    def coerce_int_from_env(cls, v: str | int | bool) -> int:
         """Coerce environment variable strings to integers for strict mode.
 
         Pydantic Settings with strict=True doesn't automatically convert env var
@@ -648,7 +672,7 @@ class FlextLdapConfig(FlextConfig):
         mode="before",
     )
     @classmethod
-    def coerce_bool_from_env(cls, v: object) -> bool:
+    def coerce_bool_from_env(cls, v: str | bool | int) -> bool:
         """Coerce environment variable strings to booleans for strict mode.
 
         Pydantic Settings with strict=True doesn't automatically convert env var
@@ -964,8 +988,10 @@ class FlextLdapConfig(FlextConfig):
         """
         try:
             bind_password_value = data.get(FlextLdapConstants.DictKeys.BIND_PASSWORD)
-            config = cls(
-                ldap_server_uri=str(
+
+            # Build config arguments with proper typing
+            config_kwargs: dict[str, object] = {
+                "ldap_server_uri": str(
                     data.get(
                         FlextLdapConstants.DictKeys.SERVER_URI,
                         data.get(
@@ -974,15 +1000,21 @@ class FlextLdapConfig(FlextConfig):
                         ),
                     ),
                 ),
-                ldap_port=int(str(data.get(FlextLdapConstants.DictKeys.PORT, 389))),
-                ldap_bind_dn=str(data.get(FlextLdapConstants.DictKeys.BIND_DN, ""))
-                if data.get(FlextLdapConstants.DictKeys.BIND_DN)
-                else None,
-                ldap_bind_password=SecretStr(str(bind_password_value))
-                if bind_password_value
-                else None,
-                ldap_base_dn=str(data.get(FlextLdapConstants.DictKeys.BASE_DN, "")),
-            )
+                "ldap_port": int(str(data.get(FlextLdapConstants.DictKeys.PORT, 389))),
+                "ldap_base_dn": str(data.get(FlextLdapConstants.DictKeys.BASE_DN, "")),
+            }
+
+            # Add optional fields only if they exist
+            bind_dn = data.get(FlextLdapConstants.DictKeys.BIND_DN)
+            if bind_dn:
+                config_kwargs["ldap_bind_dn"] = str(bind_dn)
+
+            if bind_password_value:
+                config_kwargs["ldap_bind_password"] = SecretStr(
+                    str(bind_password_value)
+                )
+
+            config = FlextLdapConfig.model_validate(config_kwargs)
             return FlextResult[FlextLdapConfig].ok(config)
         except Exception as e:
             return FlextResult[FlextLdapConfig].fail(f"Config creation failed: {e}")

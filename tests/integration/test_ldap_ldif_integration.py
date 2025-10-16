@@ -73,7 +73,7 @@ def test_entries(
         object_classes=["organizationalUnit"],
     )
 
-    add_result = ldap_client.add_entry_universal(ou_entry.dn, ou_entry.attributes)
+    add_result = ldap_client.add_entry(ou_entry.dn, ou_entry.attributes)
     if add_result.is_success:
         test_dns.append(ou_dn)
 
@@ -92,9 +92,7 @@ def test_entries(
             object_classes=["person", "organizationalPerson", "inetOrgPerson"],
         )
 
-        add_result = ldap_client.add_entry_universal(
-            user_entry.dn, user_entry.attributes
-        )
+        add_result = ldap_client.add_entry(user_entry.dn, user_entry.attributes)
         if add_result.is_success:
             test_dns.append(user_dn)
 
@@ -102,7 +100,7 @@ def test_entries(
 
     # Cleanup
     for dn in reversed(test_dns):
-        ldap_client.delete(dn)
+        ldap_client.delete_entry(dn)
 
 
 class TestLdapLdifExport:
@@ -128,13 +126,26 @@ class TestLdapLdifExport:
         # Convert LDAP entries to LDIF format entries
         ldif_entries: list[FlextLdifModels.Entry] = []
         for ldap_entry in ldap_entries:
-            # Entry.create signature: (dn, attributes) not (data={...})
-            ldif_entry_result = FlextLdifModels.Entry.create(
-                dn=ldap_entry["dn"],
-                attributes=ldap_entry["attributes"],
+            # Convert attributes to ensure all values are StringList (list of strings)
+            converted_attributes: dict[str, FlextTypes.StringList] = {}
+            for attr_name, attr_value in ldap_entry.attributes.items():
+                if isinstance(attr_value, str):
+                    converted_attributes[attr_name] = [attr_value]
+                else:
+                    converted_attributes[attr_name] = attr_value
+
+            # Create LDIF entry directly
+            ldif_attributes = {}
+            for attr_name, attr_values in converted_attributes.items():
+                ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                    values=attr_values
+                )
+
+            ldif_entry = FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value=ldap_entry.dn),
+                attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attributes),
             )
-            assert ldif_entry_result.is_success
-            ldif_entries.append(ldif_entry_result.unwrap())
+            ldif_entries.append(ldif_entry)
 
         # Generate LDIF string using flext-ldif
         ldif_content_result = ldif_api.write(ldif_entries)
@@ -173,13 +184,28 @@ class TestLdapLdifExport:
             # Convert to LDIF format
             ldif_entries = []
             for ldap_entry in ldap_entries:
-                # Entry.create signature: (dn, attributes) not (data={...})
-                ldif_entry_result = FlextLdifModels.Entry.create(
-                    dn=ldap_entry["dn"],
-                    attributes=ldap_entry["attributes"],
+                # Convert attributes to ensure all values are StringList (list of strings)
+                converted_attributes: dict[str, FlextTypes.StringList] = {}
+                for attr_name, attr_value in ldap_entry.attributes.items():
+                    if isinstance(attr_value, str):
+                        converted_attributes[attr_name] = [attr_value]
+                    else:
+                        converted_attributes[attr_name] = attr_value
+
+                # Create LDIF entry directly
+                ldif_attributes = {}
+                for attr_name, attr_values in converted_attributes.items():
+                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                        values=attr_values
+                    )
+
+                ldif_entry = FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(value=ldap_entry.dn),
+                    attributes=FlextLdifModels.LdifAttributes(
+                        attributes=ldif_attributes
+                    ),
                 )
-                assert ldif_entry_result.is_success
-                ldif_entries.append(ldif_entry_result.unwrap())
+                ldif_entries.append(ldif_entry)
 
             # Write to file using flext-ldif (write() returns string, then save to file)
             write_result = ldif_api.write(ldif_entries)
@@ -240,9 +266,7 @@ sn: ImportedUser
                 attributes=ldap_attributes,
             )
 
-            add_result = ldap_client.add_entry_universal(
-                ldap_entry.dn, ldap_entry.attributes
-            )
+            add_result = ldap_client.add_entry(ldap_entry.dn, ldap_entry.attributes)
             if add_result.is_success:
                 imported_dns.append(ldif_entry.dn)
 
@@ -258,7 +282,7 @@ sn: ImportedUser
 
         # Cleanup
         for dn in reversed(imported_dns):
-            ldap_client.delete(dn)
+            ldap_client.delete_entry(dn)
 
     def test_import_ldif_file_to_ldap(
         self, ldap_client: FlextLdapClients, ldif_api: FlextLdif
@@ -282,40 +306,43 @@ sn: FileUser
             ldif_file.write_text(ldif_content)
 
             # Parse LDIF file using flext-ldif (method is parse_file, not parse_ldif_file)
-            parse_result = ldif_api.parse_file(ldif_file)
-
-            assert parse_result.is_success
-            ldif_entries = parse_result.unwrap()
+            ldif_entries = ldif_api.parse_file(ldif_file)
 
             # Import to LDAP
             imported_dns = []
-            for ldif_entry in ldif_entries:
-                # Convert LdifAttributes to dict[str, EntryAttributeValue]
-                # LdifAttributes.attributes is dict[str, AttributeValues]
-                ldap_attributes = {}
-                for attr_name, attr_values in ldif_entry.attributes.attributes.items():
-                    if len(attr_values.values) == 1:
-                        ldap_attributes[attr_name] = attr_values.values[0]
-                    else:
-                        ldap_attributes[attr_name] = attr_values.values
+            for ldif_entry_data in ldif_entries:
+                # ldif_entry_data is a tuple (dn, attributes_dict)
+                if isinstance(ldif_entry_data, tuple) and len(ldif_entry_data) == 2:
+                    dn, attributes_dict = ldif_entry_data
 
-                ldap_entry = FlextLdapModels.Entry(
-                    dn=str(ldif_entry.dn),
-                    attributes=ldap_attributes,
-                )
+                    # Convert attributes to proper format
+                    ldap_attributes = {}
+                    for attr_name, attr_values in attributes_dict.items():
+                        if isinstance(attr_values, list) and len(attr_values) == 1:
+                            ldap_attributes[attr_name] = attr_values[0]
+                        else:
+                            ldap_attributes[attr_name] = attr_values
 
-                add_result = ldap_client.add_entry_universal(
-                    ldap_entry.dn, ldap_entry.attributes
-                )
-                if add_result.is_success:
-                    imported_dns.append(ldif_entry.dn)
+                    ldap_entry = FlextLdapModels.Entry(
+                        dn=str(dn),
+                        attributes=ldap_attributes,
+                    )
+
+                    add_result = ldap_client.add_entry(
+                        ldap_entry.dn, ldap_entry.attributes
+                    )
+                    if add_result.is_success:
+                        imported_dns.append(str(dn))
+                else:
+                    # Skip invalid entries
+                    continue
 
             # Verify
             assert len(imported_dns) == 2
 
             # Cleanup
             for dn in reversed(imported_dns):
-                ldap_client.delete(dn)
+                ldap_client.delete_entry(dn)
 
 
 class TestEntryConversion:
@@ -335,10 +362,18 @@ class TestEntryConversion:
             object_classes=["person", "organizationalPerson"],
         )
 
+        # Convert attributes to ensure all values are StringList (list of strings)
+        converted_attributes: dict[str, FlextTypes.StringList] = {}
+        for attr_name, attr_value in ldap_entry.attributes.items():
+            if isinstance(attr_value, str):
+                converted_attributes[attr_name] = [attr_value]
+            else:
+                converted_attributes[attr_name] = attr_value
+
         # Convert to LDIF entry using .create() method
         ldif_entry_result = FlextLdifModels.Entry.create(
             dn=ldap_entry.dn,
-            attributes=ldap_entry.attributes,
+            attributes=converted_attributes,
         )
 
         assert ldif_entry_result.is_success
@@ -452,13 +487,25 @@ class TestRoundTripConversion:
         original_entry = original_entries[0]
 
         # Step 2: Convert to LDIF
-        # Entry.create signature: (dn, attributes) not (data={...})
-        ldif_entry_result = FlextLdifModels.Entry.create(
-            dn=original_entry["dn"],
-            attributes=original_entry["attributes"],
+        # Convert attributes to ensure all values are StringList (list of strings)
+        converted_attributes: dict[str, FlextTypes.StringList] = {}
+        for attr_name, attr_value in original_entry.attributes.items():
+            if isinstance(attr_value, str):
+                converted_attributes[attr_name] = [attr_value]
+            else:
+                converted_attributes[attr_name] = attr_value
+
+        # Create LDIF entry directly
+        ldif_attributes = {}
+        for attr_name, attr_values in converted_attributes.items():
+            ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                values=attr_values
+            )
+
+        ldif_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=original_entry.dn),
+            attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attributes),
         )
-        assert ldif_entry_result.is_success
-        ldif_entry = ldif_entry_result.unwrap()
 
         # Step 3: Generate LDIF string
         ldif_content_result = ldif_api.write([ldif_entry])
@@ -478,9 +525,12 @@ class TestRoundTripConversion:
         if hasattr(parsed_entry.attributes, "get_attribute"):
             cn_values = parsed_entry.attributes.get_attribute("cn")
             sn_values = parsed_entry.attributes.get_attribute("sn")
-            # Cast original_entry to dict[str, object] for safe access
-            original_dict = original_entry
-            original_attrs: dict[str, object] = original_dict["attributes"]
+            # Access original_entry attributes safely
+            if not hasattr(original_entry, "attributes"):
+                pytest.fail(
+                    f"original_entry missing attributes: {type(original_entry)}"
+                )
+            original_attrs = original_entry.attributes
             if isinstance(original_attrs, dict):
                 assert cn_values == original_attrs["cn"]
                 assert sn_values == original_attrs["sn"]

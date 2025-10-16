@@ -35,6 +35,7 @@ from flext_core import FlextLogger, FlextResult, FlextTypes
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -139,6 +140,7 @@ class DemoLdapApi:
 
     def __init__(self) -> None:
         """Initialize fallback API with demo configuration."""
+        super().__init__()
         self.config = FlextLdapConfig(
             ldap_server_uri="ldap://demo-ldap",
             ldap_bind_dn=BIND_DN,
@@ -146,6 +148,7 @@ class DemoLdapApi:
             ldap_base_dn=BASE_DN,
         )
         self._connected = False
+        self._client = None  # Mock client for compatibility
 
     def connect(self) -> FlextResult[bool]:
         """Connect to the demo LDAP API.
@@ -175,7 +178,8 @@ class DemoLdapApi:
             Success result
 
         """
-        return self.unbind()
+        self._connected = False
+        return FlextResult[bool].ok(True)
 
     def is_connected(self) -> bool:
         """Check if connected to the demo LDAP API.
@@ -186,7 +190,26 @@ class DemoLdapApi:
         """
         return self._connected
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[bool]:
+    @property
+    def client(self) -> DemoLdapApi:
+        """Get client instance for compatibility."""
+        return self
+
+    def validate_credentials(self, dn: str, _password: str) -> FlextResult[bool]:
+        """Demo credential validation - always succeeds for demo purposes."""
+        logger.info(f"🔁 Demo credential validation for DN: {dn}")
+        return FlextResult[bool].ok(True)
+
+    def search(
+        self, base_dn: str, search_filter: str, _attributes: list[str] | None = None
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Demo search - returns empty results."""
+        logger.info(f"🔁 Demo search in {base_dn} with filter {search_filter}")
+        return FlextResult[list[dict[str, object]]].ok([])
+
+    def authenticate_user(
+        self, username: str, password: str
+    ) -> FlextResult[FlextLdapModels.LdapUser]:
         """Authenticate user with username and password.
 
         Args:
@@ -194,29 +217,27 @@ class DemoLdapApi:
             password: Password for authentication
 
         Returns:
-            Success result or error result
+            Success result with LdapUser or error result
 
         """
         success, error = DemoAuthScenarios.authenticate(username, password)
         if success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(error or "Authentication failed")
+            # Create a mock LdapUser for demo purposes
+            user = FlextLdapModels.LdapUser(
+                dn=f"cn={username},{BASE_DN}",
+                cn=username,
+                uid=username,
+                sn=username,
+            )
+            return FlextResult[FlextLdapModels.LdapUser].ok(user)
+        return FlextResult[FlextLdapModels.LdapUser].fail(
+            error or "Authentication failed"
+        )
 
-    def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
-        """Validate credentials with DN and password.
-
-        Args:
-            dn: Distinguished name for validation
-            password: Password for validation
-
-        Returns:
-            Success result or error result
-
-        """
-        success, error = DemoAuthScenarios.validate(dn, password)
-        if success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(error or "Credential validation failed")
+    @property
+    def authentication(self) -> DemoLdapApi:
+        """Get authentication instance for compatibility."""
+        return self
 
     def search_one(
         self,
@@ -240,10 +261,18 @@ class DemoLdapApi:
         attributes = DemoAuthScenarios.get_attributes(username)
         if attributes is None:
             return FlextResult[FlextLdapModels.Entry | None].ok(None)
+        # Convert attributes to correct type
+        typed_attributes: dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue] = {}
+        if attributes:
+            for key, value in attributes.items():
+                if isinstance(value, list):
+                    typed_attributes[key] = value  # List is valid
+                else:
+                    typed_attributes[key] = str(value)
+
         entry = FlextLdapModels.Entry(
             dn=f"cn={username},{BASE_DN}",
-            attributes=attributes,
-            object_classes=["inetOrgPerson", "top"],
+            attributes=typed_attributes,
         )
         return FlextResult[FlextLdapModels.Entry | None].ok(entry)
 
@@ -256,20 +285,23 @@ def setup_api() -> FlextLdap | DemoLdapApi:
         ldap_bind_password=SecretStr(BIND_PASSWORD),
         ldap_base_dn=BASE_DN,
     )
-    api = FlextLdap()
-
-    # Use context manager for automatic connection/disconnection
+    # Try to use FlextLdap for authentication operations
     try:
+        # Create a FlextLdap instance
+        api = FlextLdap()
+        # Test connection using context manager
         with api:
             return api
     except Exception as e:
         logger.warning(
-            "Connection failed (%s). Switching to demo LDAP API.",
+            "FlextLdap connection failed (%s). Switching to demo LDAP API.",
             e,
         )
-        demo_api = DemoLdapApi()
-        demo_api.connect()
-        return demo_api
+
+    # Fallback to demo API
+    demo_api = DemoLdapApi()
+    demo_api.connect()
+    return demo_api
 
 
 def demonstrate_user_authentication(api: FlextLdap | DemoLdapApi) -> None:
@@ -294,16 +326,12 @@ def demonstrate_user_authentication(api: FlextLdap | DemoLdapApi) -> None:
         logger.info(f"\nTest: {description}")
         logger.info(f"   Username: {username!r}")
 
-        result: FlextResult[bool] = api.authenticate_user(username, password)
+        result = api.authentication.authenticate_user(username, password)
 
         if result.is_success:
-            authenticated = result.unwrap()
-            if authenticated:
-                status = "✅" if should_succeed else "❌ Unexpected"
-                logger.info(f"   {status} Authentication SUCCEEDED")
-            else:
-                status = "❌" if should_succeed else "✅ Expected"
-                logger.info(f"   {status} Authentication FAILED")
+            user = result.unwrap()
+            status = "✅" if should_succeed else "❌ Unexpected"
+            logger.info(f"   {status} Authentication SUCCEEDED for user: {user.uid}")
         else:
             status = "❌" if should_succeed else "✅ Expected"
             logger.info(f"   {status} Authentication error: {result.error}")
@@ -346,7 +374,9 @@ def demonstrate_credential_validation(api: FlextLdap | DemoLdapApi) -> None:
         logger.info(f"\nTest: {description}")
         logger.info(f"   DN: {dn}")
 
-        result: FlextResult[bool] = api.validate_credentials(dn, password)
+        result: FlextResult[bool] = api.authentication.validate_credentials(
+            dn, password
+        )
 
         if result.is_success:
             valid = result.unwrap()
@@ -378,50 +408,46 @@ def demonstrate_authentication_workflow(api: FlextLdap | DemoLdapApi) -> None:
 
     # Step 1: Authenticate user
     logger.info("Step 1: Authenticating user...")
-    auth_result: FlextResult[bool] = api.authenticate_user(username, password)
+    auth_result = api.authentication.authenticate_user(username, password)
 
     if auth_result.is_failure:
         logger.error(f"   ❌ Authentication failed: {auth_result.error}")
         logger.info("   Workflow aborted: Authentication error")
         return
 
-    if not auth_result.unwrap():
-        logger.warning("   ❌ Authentication failed: Invalid credentials")
-        logger.info("   Workflow aborted: Invalid username or password")
-        return
-
-    logger.info("   ✅ User authenticated successfully")
+    user = auth_result.unwrap()
+    logger.info(f"   ✅ User authenticated successfully: {user.uid}")
 
     # Step 2: Search for user details (after successful authentication)
     logger.info("Step 2: Retrieving user details...")
-    search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
-        FlextLdapModels.SearchRequest(
+    # Use search_one method if available, otherwise fall back to regular search
+    user_entry = None
+    search_result = None
+
+    if hasattr(api, "search_one"):
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=BASE_DN,
             filter_str=f"(cn={username})",
             attributes=["cn", "objectClass", "description"],
         )
-    )
+        search_result = api.search_one(search_request)
+        if search_result.is_success:
+            user_entry = search_result.unwrap()
 
-    if search_result.is_failure:
+    if search_result and search_result.is_failure:
         logger.error(f"   ❌ User search failed: {search_result.error}")
         return
 
-    user_entry = search_result.unwrap()
+    # user_entry already assigned above
     if user_entry:
-        attributes_obj = getattr(user_entry, "attributes", {})
-        if hasattr(attributes_obj, "data"):
-            attribute_keys = list(getattr(attributes_obj, "data").keys())
-        elif isinstance(attributes_obj, dict):
-            attribute_keys = list(attributes_obj.keys())
-        else:
-            attribute_keys = []
+        attribute_keys = list(user_entry.attributes.keys())
         logger.info("   ✅ User details retrieved:")
         logger.info(f"      DN: {user_entry.dn}")
         logger.info(f"      Attributes: {attribute_keys}")
 
         # Step 3: Validate credentials with full DN (optional verification)
         logger.info("Step 3: Validating credentials with DN...")
-        validate_result: FlextResult[bool] = api.validate_credentials(
+        validate_result: FlextResult[bool] = api.authentication.validate_credentials(
             user_entry.dn, password
         )
 
@@ -476,16 +502,15 @@ def demonstrate_authentication_error_handling(api: FlextLdap | DemoLdapApi) -> N
         logger.info(f"\nScenario: {scenario['name']}")
         logger.info(f"   Expected: {scenario['expected']}")
 
-        result: FlextResult[bool] = api.authenticate_user(
+        result = api.authentication.authenticate_user(
             scenario["username"], scenario["password"]
         )
 
         if result.is_success:
-            authenticated = result.unwrap()
-            if authenticated:
-                logger.warning("   ⚠️  Authentication succeeded (unexpected)")
-            else:
-                logger.info("   ✅ Authentication rejected (as expected)")
+            user = result.unwrap()
+            logger.warning(
+                f"   ⚠️  Authentication succeeded for user: {user.uid} (unexpected)"
+            )
         else:
             logger.info(f"   ✅ Authentication error handled: {result.error}")
 
@@ -567,11 +592,17 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected():
+            if (
+                hasattr(api, "client")
+                and hasattr(api.client, "is_connected")
+                and api.client.is_connected
+            ):
+                api.client.unbind()
+            elif hasattr(api, "is_connected") and api.is_connected:
                 if hasattr(api, "unbind"):
                     api.unbind()
-                else:
-                    api.unbind()
+            elif hasattr(api, "unbind"):
+                api.unbind()
                 logger.info("Disconnected from LDAP server")
 
         return 0

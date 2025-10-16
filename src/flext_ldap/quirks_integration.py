@@ -65,13 +65,11 @@ class FlextLdapQuirksIntegration(FlextService[FlextTypes.Dict]):
             FlextResult containing quirks adapter status
 
         """
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "service": "FlextLdapQuirksAdapter",
-                "server_type": self._detected_server_type,
-                "quirks_loaded": bool(self._quirks_cache),
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "service": "FlextLdapQuirksAdapter",
+            "server_type": self._detected_server_type,
+            "quirks_loaded": bool(self._quirks_cache),
+        })
 
     @property
     def server_type(self) -> str | None:

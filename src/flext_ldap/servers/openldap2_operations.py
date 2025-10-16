@@ -738,9 +738,9 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             if "supportedControl" in root_dse:
                 controls = root_dse["supportedControl"]
                 if isinstance(controls, list):
-                    return FlextResult[FlextTypes.StringList].ok(
-                        [str(c) for c in controls]
-                    )
+                    return FlextResult[FlextTypes.StringList].ok([
+                        str(c) for c in controls
+                    ])
                 return FlextResult[FlextTypes.StringList].ok([str(controls)])
 
             # Return empty list if not found

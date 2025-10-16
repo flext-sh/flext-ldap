@@ -983,17 +983,15 @@ def main() -> None:
     if args.full_suite:
         generate_all = True
     else:
-        generate_all = not any(
-            [
-                args.c4_model,
-                args.arc42,
-                args.adr,
-                args.data_architecture,
-                args.security_architecture,
-                args.quality_attributes,
-                args.diagrams,
-            ]
-        )
+        generate_all = not any([
+            args.c4_model,
+            args.arc42,
+            args.adr,
+            args.data_architecture,
+            args.security_architecture,
+            args.quality_attributes,
+            args.diagrams,
+        ])
 
     # Update config based on args
     config_updates = {}

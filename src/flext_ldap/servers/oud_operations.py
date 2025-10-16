@@ -113,12 +113,10 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OUD objectClass definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": object_class_def,
-                    "server_type": "oud",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": object_class_def,
+                "server_type": "oud",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 
@@ -126,12 +124,10 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OUD attributeType definition."""
         try:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "definition": attribute_def,
-                    "server_type": "oud",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "definition": attribute_def,
+                "server_type": "oud",
+            })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Parse failed: {e}")
 

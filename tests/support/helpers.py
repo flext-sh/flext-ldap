@@ -57,7 +57,7 @@ def create_test_user(
             k: v for k, v in attributes.items() if k != "objectClass"
         }
 
-        success: bool = conn.add(dn, object_class, attributes=attrs_dict or None)
+        success: bool = conn.add_entry(dn, object_class, attributes=attrs_dict or None)
         conn.unbind()
 
         if success:
@@ -97,7 +97,7 @@ def create_test_group(
             k: v for k, v in attributes.items() if k != "objectClass"
         }
 
-        success: bool = conn.add(dn, object_class, attributes=attrs_dict or None)
+        success: bool = conn.add_entry(dn, object_class, attributes=attrs_dict or None)
         conn.unbind()
 
         if success:
@@ -134,7 +134,7 @@ def cleanup_test_entries(
         for dn in dns:
             try:
                 # ldap3.delete returns a boolean, but mypy doesn't know this
-                if conn.delete(dn):
+                if conn.delete_entry(dn):
                     cleaned_count += 1
                     logger.debug("Cleaned up entry: %s", dn)
                 else:
@@ -260,7 +260,7 @@ def search_entries(
         success: bool = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
-            search_scope=cast("ScopeType", ldap_scope),
+            search_scope=ldap_scope,
         )
 
         results: list[FlextTypes.Dict] = []
@@ -306,7 +306,7 @@ def modify_entry(
         )
 
         # Convert changes to ldap3 format
-        ldap3_changes: dict[str, list[tuple[int, list[str]]]] = {}
+        ldap3_changes: dict[str, list[tuple[Literal["MODIFY_REPLACE"], list[str]]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
                 ldap3_changes[attr] = [(MODIFY_REPLACE, values)]

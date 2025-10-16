@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import cast
+from typing import Any, cast
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
@@ -176,6 +176,8 @@ def demonstrate_search_request_validation() -> None:
                 "time_limit": 30,
                 "page_size": None,
                 "paged_cookie": None,
+                "types_only": False,
+                "deref_aliases": "never",
             },
             "should_succeed": True,
         },
@@ -183,13 +185,15 @@ def demonstrate_search_request_validation() -> None:
             "name": "Valid with paging",
             "params": {
                 "base_dn": "ou=users,dc=example,dc=com",
-                "search_filter": "(uid=*)",
+                "filter_str": "(uid=*)",
                 "scope": "one",
                 "attributes": [],
                 "size_limit": 0,
                 "time_limit": 0,
                 "page_size": 100,
                 "paged_cookie": b"",
+                "types_only": False,
+                "deref_aliases": "never",
             },
             "should_succeed": True,
         },
@@ -197,13 +201,15 @@ def demonstrate_search_request_validation() -> None:
             "name": "Empty base DN",
             "params": {
                 "base_dn": "",
-                "search_filter": "(objectClass=*)",
+                "filter_str": "(objectClass=*)",
                 "scope": "base",
                 "attributes": [],
                 "size_limit": 0,
                 "time_limit": 0,
                 "page_size": None,
                 "paged_cookie": None,
+                "types_only": False,
+                "deref_aliases": "never",
             },
             "should_succeed": False,
         },
@@ -211,13 +217,15 @@ def demonstrate_search_request_validation() -> None:
             "name": "Invalid scope",
             "params": {
                 "base_dn": "dc=example,dc=com",
-                "search_filter": "(objectClass=*)",
+                "filter_str": "(objectClass=*)",
                 "scope": "invalid_scope",
                 "attributes": [],
                 "size_limit": 0,
                 "time_limit": 0,
                 "page_size": None,
                 "paged_cookie": None,
+                "types_only": False,
+                "deref_aliases": "never",
             },
             "should_succeed": False,
         },
@@ -228,7 +236,8 @@ def demonstrate_search_request_validation() -> None:
         logger.info(f"\nTest: {test_case['name']}")
 
         try:
-            params = cast("FlextTypes.Dict", test_case["params"])
+            # Cast to allow proper type inference for SearchRequest constructor
+            params = cast("Any", test_case["params"])
             search_request = FlextLdapModels.SearchRequest(**params)
             logger.info("   ✅ SearchRequest created successfully")
             logger.info(f"      Base DN: {search_request.base_dn}")

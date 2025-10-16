@@ -44,7 +44,13 @@ from __future__ import annotations
 import base64
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    Union,
+)
 
 from flext_core import (
     FlextConstants,
@@ -57,8 +63,10 @@ from flext_ldif import FlextLdifModels
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Discriminator,
     Field,
     SecretStr,
+    TypeAdapter,
     ValidationInfo,
     computed_field,
     field_serializer,
@@ -268,14 +276,16 @@ class FlextLdapModels(FlextModels):
             return ",".join(components)
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
+        def create(
+            cls, *args: Any, **kwargs: Any
+        ) -> FlextResult[FlextLdapModels.DistinguishedName]:
             """Create DN with validation - compatible with base class signature."""
             try:
                 # Handle single argument case for DN string
                 if len(args) == 1 and not kwargs:
                     dn_string = str(args[0])
                     dn_obj = cls(value=dn_string.strip())
-                    return FlextResult[object].ok(dn_obj)
+                    return FlextResult[FlextLdapModels.DistinguishedName].ok(dn_obj)
 
                 # Handle kwargs case - ensure value is string
                 if "value" in kwargs:
@@ -287,13 +297,13 @@ class FlextLdapModels(FlextModels):
                     typed_kwargs[k] = str(v)
 
                 dn_obj = cls(**typed_kwargs)
-                return FlextResult[object].ok(dn_obj)
+                return FlextResult[FlextLdapModels.DistinguishedName].ok(dn_obj)
             except FlextExceptions.ValidationError as e:
-                return FlextResult[object].fail(
+                return FlextResult[FlextLdapModels.DistinguishedName].fail(
                     f"DN creation failed: {e}",
                 )
             except Exception as e:
-                return FlextResult[object].fail(
+                return FlextResult[FlextLdapModels.DistinguishedName].fail(
                     f"DN creation failed: {e}",
                 )
 
@@ -356,7 +366,7 @@ class FlextLdapModels(FlextModels):
             valid_scopes = {cls.BASE, cls.ONELEVEL, cls.SUBTREE}
             if v not in valid_scopes:
                 msg = f"Invalid scope: {v}. Must be one of {valid_scopes}"
-                raise FlextExceptions.ValidationError(msg, field="scope", value=v)
+                raise FlextExceptions.ValidationError(msg, field="scope")
             return v
 
         @classmethod
@@ -526,7 +536,15 @@ class FlextLdapModels(FlextModels):
         - Direct use of flext-core centralized models
 
         **PYTHON 3.13+ COMPATIBILITY**: Uses modern union syntax and latest type features.
+
+        **PYDANTIC 2.11 DISCRIMINATED UNION**: Polymorphic LDAP entry type with automatic routing
         """
+
+        # Discriminator for polymorphic union - Pydantic 2.11 feature
+        entry_type: Literal["user"] = Field(
+            default="user",
+            description="Entry type discriminator for polymorphic unions",
+        )
 
         # Core identification
         dn: str = Field(..., description="Distinguished Name (unique identifier)")
@@ -633,10 +651,10 @@ class FlextLdapModels(FlextModels):
         @computed_field
         def is_active(self) -> bool:
             """Computed field indicating if user is active."""
-            # Users are active unless explicitly disabled
-            if self.status == "disabled":
-                return False
-            return True
+            # Users are active unless status is explicitly set to "disabled"
+            if self.status is None or self.status == "active":
+                return True
+            return self.status != "disabled"
 
         @computed_field
         def has_contact_info(self) -> bool:
@@ -921,7 +939,7 @@ class FlextLdapModels(FlextModels):
             dn: str,
             cn: str,
             uid: str | None = None,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> FlextResult[FlextLdapModels.LdapUser]:
             """Create minimal user with required fields only and enhanced error handling."""
             try:
@@ -1015,7 +1033,15 @@ class FlextLdapModels(FlextModels):
         - Direct use of flext-core centralized models
 
         **PYTHON 3.13+ COMPATIBILITY**: Uses modern union syntax and latest type features.
+
+        **PYDANTIC 2.11 DISCRIMINATED UNION**: Polymorphic LDAP entry type with automatic routing
         """
+
+        # Discriminator for polymorphic union - Pydantic 2.11 feature
+        entry_type: Literal["group"] = Field(
+            default="group",
+            description="Entry type discriminator for polymorphic unions",
+        )
 
         # Core identification
         dn: str = Field(..., description="Distinguished Name")
@@ -1200,7 +1226,7 @@ class FlextLdapModels(FlextModels):
             cn: str,
             gid_number: int | None = None,
             description: str | None = None,
-            **_kwargs: object,
+            **_kwargs: Any,
         ) -> FlextResult[FlextLdapModels.Group]:
             """Create minimal group with required fields only and enhanced error handling."""
             # Explicit FlextResult error handling - NO try/except
@@ -1229,7 +1255,15 @@ class FlextLdapModels(FlextModels):
         - Direct use of flext-core centralized models
 
         **PYTHON 3.13+ COMPATIBILITY**: Uses modern union syntax and latest type features.
+
+        **PYDANTIC 2.11 DISCRIMINATED UNION**: Polymorphic LDAP entry type with automatic routing
         """
+
+        # Discriminator for polymorphic union - Pydantic 2.11 feature
+        entry_type: Literal["entry"] = Field(
+            default="entry",
+            description="Entry type discriminator for polymorphic unions",
+        )
 
         # Core identification
         dn: str = Field(..., description="Distinguished Name")
@@ -1261,7 +1295,11 @@ class FlextLdapModels(FlextModels):
         def __getitem__(
             self,
             key: str,
-        ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
+        ) -> (
+            FlextLdapTypes.LdapEntries.EntryAttributeValue
+            | dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]
+            | None
+        ):
             """Dict-like access to attributes.
 
             Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
@@ -1269,6 +1307,8 @@ class FlextLdapModels(FlextModels):
             # Special case: DN is a field, not an attribute
             if key == "dn":
                 return self.dn
+            if key == "attributes":
+                return self.attributes
             # Special case: objectClass/objectClasses mapping
             if key in {"objectClass", "objectClasses"}:
                 return self.object_classes
@@ -1285,6 +1325,8 @@ class FlextLdapModels(FlextModels):
             # Special cases: DN and objectClass are always present as model fields
             if key == "dn":
                 return self.dn is not None
+            if key == "attributes":
+                return bool(self.attributes)
             if key in {"objectClass", "objectClasses"}:
                 return self.object_classes is not None
             # Regular attribute check
@@ -1293,8 +1335,14 @@ class FlextLdapModels(FlextModels):
         def get(
             self,
             key: str,
-            default: FlextLdapTypes.LdapEntries.EntryAttributeValue | None = None,
-        ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue | None:
+            default: FlextLdapTypes.LdapEntries.EntryAttributeValue
+            | dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]
+            | None = None,
+        ) -> (
+            FlextLdapTypes.LdapEntries.EntryAttributeValue
+            | dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue]
+            | None
+        ):
             """Dict-like get method with default value.
 
             Special handling for 'dn' and 'object_classes' which are model fields, not attributes.
@@ -1302,6 +1350,8 @@ class FlextLdapModels(FlextModels):
             # Special case: DN is a field, not an attribute
             if key == "dn":
                 return self.dn or default
+            if key == "attributes":
+                return self.attributes or default
             # Special case: objectClass/objectClasses mapping
             if key in {"objectClass", "objectClasses"}:
                 return self.object_classes or default
@@ -1643,7 +1693,7 @@ class FlextLdapModels(FlextModels):
         def create(
             cls,
             base_dn: str,
-            filter_str: str | None = None,
+            filter_str: str,
             scope: str = FlextLdapConstants.Scopes.SUBTREE,
             attributes: FlextTypes.StringList | None = None,
         ) -> FlextLdapModels.SearchRequest:
@@ -1655,7 +1705,7 @@ class FlextLdapModels(FlextModels):
 
             Args:
                 base_dn: Search base Distinguished Name
-                filter_str: LDAP search filter
+                filter_str: LDAP search filter (required)
                 scope: Search scope (default: SUBTREE from FlextLdapConstants)
                 attributes: Attributes to retrieve (default: empty list for all attributes)
 
@@ -1677,22 +1727,16 @@ class FlextLdapModels(FlextModels):
                 request = FlextLdapModels.SearchRequest.create(base_dn, filter_str, scope, attributes)
 
             """
-            if filter_str is None:
-                msg = "filter_str must be provided"
-                raise ValueError(msg)
-
-            return cls.model_validate(
-                {
-                    "base_dn": base_dn,
-                    "filter_str": filter_str,
-                    "scope": scope,
-                    "attributes": attributes or [],
-                    "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-                    "paged_cookie": b"",
-                    "size_limit": FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
-                    "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
-                }
-            )
+            return cls.model_validate({
+                "base_dn": base_dn,
+                "filter_str": filter_str,
+                "scope": scope,
+                "attributes": attributes or [],
+                "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+                "paged_cookie": b"",
+                "size_limit": FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
+                "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
+            })
 
         @staticmethod
         def create_user_filter(username_filter: str | None = None) -> str:
@@ -1800,7 +1844,7 @@ class FlextLdapModels(FlextModels):
 
         # Required fields
         dn: str = Field(..., description="Distinguished Name for new entry")
-        attributes: dict[str, str | FlextTypes.StringList] = Field(
+        attributes: dict[str, str | FlextTypes.StringList | None] = Field(
             ...,
             description="Entry attributes as key-value pairs",
         )
@@ -2504,7 +2548,9 @@ class FlextLdapModels(FlextModels):
 
         @model_validator(mode="before")
         @classmethod
-        def handle_permissions_parameter(cls, data: object) -> object:
+        def handle_permissions_parameter(
+            cls, data: dict[str, Any] | list[Any] | str
+        ) -> dict[str, Any] | list[Any] | str:
             """Handle 'permissions' parameter for convenience."""
             if isinstance(data, dict) and "permissions" in data:
                 permissions = data.pop("permissions")
@@ -2872,11 +2918,25 @@ class FlextLdapModels(FlextModels):
         given_name: str | None = Field(default=None, description="Given Name")
         mail: str | None = Field(default=None, description="Email address")
         user_password: str | None = Field(default=None, description="User password")
-        telephone_number: str | None = Field(default=None, description="Telephone number")
+
+        @field_validator("mail")
+        @classmethod
+        def validate_mail(cls, v: str | None) -> str | None:
+            """Validate email format."""
+            if v is not None and "@" not in v:
+                msg = f"Invalid email format: {v}"
+                raise ValueError(msg)
+            return v
+
+        telephone_number: str | None = Field(
+            default=None, description="Telephone number"
+        )
         mobile: str | None = Field(default=None, description="Mobile phone number")
         description: str | None = Field(default=None, description="Description")
         department: str | None = Field(default=None, description="Department")
-        organizational_unit: str | None = Field(default=None, description="Organizational Unit")
+        organizational_unit: str | None = Field(
+            default=None, description="Organizational Unit"
+        )
         title: str | None = Field(default=None, description="Job title")
         organization: str | None = Field(default=None, description="Organization")
 
@@ -2913,6 +2973,32 @@ class FlextLdapModels(FlextModels):
 
             return attributes
 
+        def to_user_entity(self) -> FlextLdapModels.LdapUser:
+            """Convert request to the unified LdapUser domain entity."""
+            additional_attributes: dict[
+                str,
+                FlextLdapTypes.LdapEntries.EntryAttributeValue,
+            ] = {}
+            if self.description:
+                additional_attributes["description"] = self.description
+
+            return FlextLdapModels.LdapUser(
+                dn=self.dn,
+                cn=self.cn,
+                uid=self.uid,
+                sn=self.sn,
+                given_name=self.given_name,
+                mail=self.mail,
+                telephone_number=self.telephone_number,
+                mobile=self.mobile,
+                user_password=self.user_password,
+                department=self.department,
+                organizational_unit=self.organizational_unit,
+                title=self.title,
+                organization=self.organization,
+                additional_attributes=additional_attributes,
+            )
+
     class CreateGroupRequest(BaseModel):
         """Request model for creating LDAP groups.
 
@@ -2948,7 +3034,61 @@ class FlextLdapModels(FlextModels):
 
             return attributes
 
+    # =========================================================================
+    # PYDANTIC 2.11 DISCRIMINATED UNION - Polymorphic LDAP Entry Types
+    # =========================================================================
+    #
+    # AnyLdapEntry enables automatic routing and type narrowing for polymorphic
+    # LDAP operations. Pydantic 2.11 uses the 'entry_type' field to automatically
+    # select the correct subclass during deserialization and validation.
+    #
+    # Usage Examples:
+    #
+    #   from typing import Annotated, Union
+    #   from pydantic import TypeAdapter
+    #
+    #   # Automatic type routing in API responses
+    #   entries = TypeAdapter(list[AnyLdapEntry]).validate_python(json_data)
+    #   for entry in entries:
+    #       match entry:
+    #           case FlextLdapModels.LdapUser():
+    #               process_user(entry)
+    #           case FlextLdapModels.Group():
+    #               process_group(entry)
+    #           case FlextLdapModels.Entry():
+    #               process_generic_entry(entry)
+    #
+    #   # Polymorphic LDAP search results
+    #   search_results: list[AnyLdapEntry] = api.search_polymorphic(query)
+    #
+    # Benefits:
+    # - Automatic type routing without manual type checking
+    # - Type-safe pattern matching (match/case in Python 3.10+)
+    # - Cleaner, more maintainable code
+    # - Full Pydantic 2.11 validation support
+    # - Zero runtime type checking overhead
+
 
 __all__ = [
     "FlextLdapModels",
+    "AnyLdapEntry",
+]
+
+# ============================================================================
+# PYDANTIC 2.11 DISCRIMINATED UNION - Automatic polymorphic routing
+# ============================================================================
+#
+# Enables type-safe polymorphic handling of LDAP entries with automatic
+# routing based on the 'entry_type' discriminator field.
+#
+# This is the killer feature that makes polymorphic deserialization work
+# automatically without manual type checking or Factory methods.
+
+AnyLdapEntry = Annotated[
+    Union[
+        FlextLdapModels.LdapUser,
+        FlextLdapModels.Group,
+        FlextLdapModels.Entry,
+    ],
+    Discriminator("entry_type"),
 ]
