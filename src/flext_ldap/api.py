@@ -627,15 +627,6 @@ class FlextLdap(FlextService[None]):
                 results.append(result.value)
         return FlextResult.ok(results)
 
-    def search_universal(
-        self,
-        base_dn: str,
-        filter_str: str,
-        attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
-        """Universal search method."""
-        return self.client.search(base_dn, filter_str, attributes)
-
     def modify_entry(
         self,
         dn: str,

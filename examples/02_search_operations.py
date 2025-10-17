@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
@@ -88,10 +88,13 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
 
     # Simple search for all person entries
     logger.info(f"Searching for person objects in {BASE_DN}")
-    result: FlextResult[list[dict[str, object]]] = api.search_entries(
-        base_dn=BASE_DN,
-        filter_str="(objectClass=person)",
-        attributes=["cn", "sn", "mail"],
+    result = cast(
+        "FlextResult[list[dict[str, object]]]",
+        api.search_entries(
+            base_dn=BASE_DN,
+            filter_str="(objectClass=person)",
+            attributes=["cn", "sn", "mail"],
+        ),
     )
 
     if result.is_failure:
@@ -165,10 +168,13 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     logger.info(f"   Size Limit: {search_request.size_limit}")
 
     # Execute search using search_entries (returns SearchResponse)
-    result: FlextResult[list[dict[str, object]]] = api.search_entries(
-        base_dn=search_request.base_dn,
-        filter_str=search_request.filter_str,  # Access the actual field name
-        attributes=search_request.attributes,
+    result = cast(
+        "FlextResult[list[dict[str, object]]]",
+        api.search_entries(
+            base_dn=search_request.base_dn,
+            filter_str=search_request.filter_str,  # Access the actual field name
+            attributes=search_request.attributes,
+        ),
     )
 
     if result.is_failure:
@@ -205,7 +211,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
         logger.error(f"❌ Group search failed: {result.error}")
         return
 
-    groups: list[dict[str, object]] = result.unwrap()
+    groups: FlextLdapTypes.LdapDomain.SearchResult = result.unwrap()
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
         logger.info(f"   {i}. Group DN: {group.get('dn', 'N/A')}")

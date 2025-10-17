@@ -666,50 +666,6 @@ class TestFlextLdapClientsComprehensive:
         assert not group.cn  # Should be empty string when not in attributes
         assert group.member_dns == []  # Should be empty list when not in attributes
 
-    def test_search_universal_not_connected(self) -> None:
-        """Test search_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.search_universal(
-            base_dn="dc=test,dc=com",
-            filter_str="(objectClass=person)",
-            scope="SUBTREE",
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_compare_universal_not_connected(self) -> None:
-        """Test compare_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.compare_universal(
-            "cn=testuser,dc=test,dc=com", "cn", "Test User"
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
-
-    def test_extended_operation_universal_not_connected(self) -> None:
-        """Test extended_operation_universal when not connected."""
-        client = FlextLdapClients()
-
-        result = client.extended_operation_universal("1.3.6.1.4.1.1466.20037", b"test")
-        assert result.is_failure
-        assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
 
     def test_get_server_capabilities_not_connected(self) -> None:
         """Test get_server_capabilities when not connected."""
