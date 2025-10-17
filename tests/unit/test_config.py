@@ -1094,7 +1094,9 @@ class TestDirectAccessDotNotation:
     def test_call_connection_server(self) -> None:
         """Test __call__ with ldap.connection.server."""
         config = FlextLdapConfig(
-            ldap_server_uri="ldaps://test.local", ldap_bind_password=secret("test")
+            ldap_server_uri="ldaps://test.local",
+            ldap_use_ssl=True,
+            ldap_bind_password=secret("test"),
         )
         assert config("ldap.connection.server") == "ldaps://test.local"
 
