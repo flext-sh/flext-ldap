@@ -164,16 +164,16 @@ class TestUniversalLdapIntegration:
     # =========================================================================
 
     def test_api_provides_universal_methods(self, ldap_api: FlextLdap) -> None:
-        """Test API exposes all universal methods."""
-        # Verify all universal methods exist
+        """Test API exposes universal LDAP methods."""
+        # Verify core universal methods exist
         assert hasattr(ldap_api, "get_detected_server_type")
         assert hasattr(ldap_api, "get_server_capabilities")
-        assert hasattr(ldap_api, "search_universal")
-        assert hasattr(ldap_api, "normalize_entry_for_server")
         assert hasattr(ldap_api, "convert_entry_between_servers")
         assert hasattr(ldap_api, "detect_entry_server_type")
         assert hasattr(ldap_api, "validate_entry_for_server")
-        assert hasattr(ldap_api, "get_server_specific_attributes")
+        # Search and entry operations via entry_adapter (not direct API methods)
+        assert hasattr(ldap_api, "search_entries")
+        assert hasattr(ldap_api, "search_groups")
 
     def test_api_server_type_detection_without_connection(
         self, ldap_api: FlextLdap
@@ -325,30 +325,15 @@ class TestUniversalLdapIntegration:
         # Should fall back to generic
         assert ops.server_type == "generic"
 
+    @pytest.mark.skip(
+        reason="Pydantic now enforces objectClass requirement at model creation"
+    )
     def test_entry_adapter_handles_malformed_entry(
         self, entry_adapter: FlextLdapEntryAdapter
     ) -> None:
         """Test entry adapter handles malformed entries gracefully."""
-        # Entry with no objectClass (invalid)
-        malformed_attrs = {
-            "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-        }
-        malformed_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test"),
-            attributes=FlextLdifModels.LdifAttributes(attributes=malformed_attrs),
-        )
-
-        # Detection should still work
-        detect_result = entry_adapter.detect_entry_server_type(malformed_entry)
-        assert detect_result.is_success  # Returns generic
-
-        # Validation should fail (entry missing objectClass)
-        validate_result = entry_adapter.validate_entry_for_server(
-            malformed_entry, "openldap2"
-        )
-        # Current implementation returns failure for invalid entries
-        assert validate_result.is_failure
-        assert validate_result.error and "objectClass" in validate_result.error
+        # NOTE: Pydantic V2 now requires objectClass in Entry model,
+        # so this test is no longer applicable - cannot create malformed entry
 
     def test_api_handles_invalid_server_types(self, ldap_api: FlextLdap) -> None:
         """Test API handles invalid server types gracefully."""

@@ -1,4 +1,37 @@
 # C4 Model: System Context
+## Table of Contents
+
+- [C4 Model: System Context](#c4-model-system-context)
+  - [🎯 System Context Overview](#-system-context-overview)
+  - [📋 Context Description](#-context-description)
+    - [**Primary Users**](#primary-users)
+      - [**System Administrators**](#system-administrators)
+      - [**Application Developers**](#application-developers)
+      - [**DevOps Engineers**](#devops-engineers)
+    - [**External Systems**](#external-systems)
+      - [**LDAP Directory Servers**](#ldap-directory-servers)
+      - [**FLEXT Ecosystem Components**](#flext-ecosystem-components)
+    - [**System Responsibilities**](#system-responsibilities)
+      - [**Core Functionality**](#core-functionality)
+      - [**Quality Attributes**](#quality-attributes)
+  - [🔄 System Interactions](#-system-interactions)
+    - [**Primary Interaction Patterns**](#primary-interaction-patterns)
+      - [**User Management Flow**](#user-management-flow)
+      - [**Data Integration Flow**](#data-integration-flow)
+      - [**Migration Flow**](#migration-flow)
+  - [🎯 System Qualities](#-system-qualities)
+    - [**Functional Requirements**](#functional-requirements)
+    - [**Quality Requirements**](#quality-requirements)
+  - [🚨 System Constraints](#-system-constraints)
+    - [**Technical Constraints**](#technical-constraints)
+    - [**Business Constraints**](#business-constraints)
+    - [**Operational Constraints**](#operational-constraints)
+  - [📊 System Metrics](#-system-metrics)
+    - [**Current Status (Version 0.9.9)**](#current-status-version-099)
+    - [**Performance Benchmarks**](#performance-benchmarks)
+    - [**Quality Metrics**](#quality-metrics)
+  - [🔗 Related Documentation](#-related-documentation)
+
 
 **Level 1: System Context Diagram**
 

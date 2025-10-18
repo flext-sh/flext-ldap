@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
@@ -35,7 +35,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Initialize base server operations.
 
         Args:
-            server_type: LDAP server type identifier (optional, child classes may hardcode)
+            server_type: LDAP server type identifier (optional)
 
         """
         super().__init__()
@@ -72,7 +72,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Check if server supports START_TLS."""
 
     @abstractmethod
-    def get_bind_mechanisms(self) -> FlextTypes.StringList:
+    def get_bind_mechanisms(self) -> list[str]:
         """Get supported BIND mechanisms (SIMPLE, SASL, etc.)."""
 
     # =========================================================================
@@ -89,7 +89,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def discover_schema(self, connection: Connection) -> FlextResult[FlextTypes.Dict]:
+    def discover_schema(self, connection: Connection) -> FlextResult[dict[str, object]]:
         """Discover schema from server.
 
         Args:
@@ -101,7 +101,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def parse_object_class(self, object_class_def: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_object_class(
+        self, object_class_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse objectClass definition from schema.
 
         Args:
@@ -113,7 +115,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def parse_attribute_type(self, attribute_def: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_attribute_type(
+        self, attribute_def: str
+    ) -> FlextResult[dict[str, object]]:
         """Parse attributeType definition from schema.
 
         Args:
@@ -151,7 +155,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Get ACLs for a given DN.
 
         Args:
@@ -168,7 +172,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self,
         connection: Connection,
         dn: str,
-        acls: list[FlextTypes.Dict],
+        acls: list[dict[str, object]],
     ) -> FlextResult[bool]:
         """Set ACLs for a given DN.
 
@@ -183,7 +187,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
         """Parse ACL string to structured format.
 
         Args:
@@ -195,7 +199,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
+    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
         """Format ACL structure to server-specific string.
 
         Args:
@@ -232,7 +236,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self,
         connection: Connection,
         dn: str,
-        modifications: FlextTypes.Dict,
+        modifications: dict[str, object],
     ) -> FlextResult[bool]:
         """Modify existing entry.
 
@@ -297,7 +301,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         connection: Connection,
         base_dn: str,
         search_filter: str,
-        attributes: FlextTypes.StringList | None = None,
+        attributes: list[str] | None = None,
         scope: str = "subtree",
         page_size: int = 100,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
@@ -320,7 +324,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes.
 
         Args:
@@ -332,7 +336,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def detect_server_type_from_root_dse(self, root_dse: FlextTypes.Dict) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect server type from Root DSE.
 
         Args:
@@ -344,9 +348,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def get_supported_controls(
-        self, connection: Connection
-    ) -> FlextResult[FlextTypes.StringList]:
+    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
         """Get supported LDAP controls.
 
         Args:

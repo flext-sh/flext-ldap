@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, override
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
@@ -60,7 +60,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
         """Parse access ACL string for OpenLDAP 1.x.
 
         OpenLDAP 1.x ACL format (slapd.conf):
@@ -86,7 +86,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         """
         try:
-            acl_dict: FlextTypes.Dict = {
+            acl_dict: dict[str, object] = {
                 "raw": acl_string,
                 "format": "openldap1",
                 "server_type": "openldap1",
@@ -103,7 +103,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 if len(by_split) > 1:
                     # Parse multiple "by <who> <access>" rules
                     by_rules = by_split[1]
-                    rules: list[FlextTypes.StringDict] = []
+                    rules: list[dict[str, str]] = []
 
                     # Split by " by " to get individual rules
                     for rule in by_rules.split(" by "):
@@ -111,7 +111,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         if rule_stripped:
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
-                            if len(parts) == FlextLdapConstants.Parsing.ACL_RULE_PARTS:
+                            if len(parts) == FlextLdapConstants.ACL_RULE_PARTS:
                                 rules.append({
                                     "who": parts[0].strip(),
                                     "access": parts[1].strip(),
@@ -127,15 +127,15 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                     # Keep legacy "by" field for backward compatibility
                     acl_dict["by"] = by_rules
 
-            return FlextResult[FlextTypes.Dict].ok(acl_dict)
+            return FlextResult[dict[str, object]].ok(acl_dict)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x ACL parse failed: {e}",
             )
 
     @override
-    def format_acl(self, acl_dict: FlextTypes.Dict) -> FlextResult[str]:
+    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
         """Format ACL dict[str, object] to access string for OpenLDAP 1.x.
 
         Args:
@@ -170,10 +170,10 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
             # Add "by" clauses from structured rules
             if "rules" in acl_dict:
                 # Cast to list of dicts for type safety
-                rules_list = cast("list[FlextTypes.StringDict]", acl_dict["rules"])
+                rules_list = cast("list[dict[str, str]]", acl_dict["rules"])
                 for rule in rules_list:
-                    who = rule.get(FlextLdapConstants.DictKeys.WHO, "*")
-                    access = rule.get(FlextLdapConstants.DictKeys.ACCESS, "read")
+                    who = rule.get(FlextLdapConstants.LdapDictKeys.WHO, "*")
+                    access = rule.get(FlextLdapConstants.LdapDictKeys.ACCESS, "read")
                     parts.append(f"by {who} {access}")
             # Fallback to legacy "by" string
             elif "by" in acl_dict:
@@ -228,8 +228,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         continue
                     if oc.startswith("olc"):
                         # Remove olc prefix for 1.x compatibility
-                        prefix_len = FlextLdapConstants.Parsing.OPENLDAP_PREFIX_LENGTH
-                        min_len = FlextLdapConstants.Parsing.MIN_OC_LENGTH
+                        prefix_len = FlextLdapConstants.OPENLDAP_PREFIX_LENGTH
+                        min_len = FlextLdapConstants.MIN_OC_LENGTH
                         mapped_classes.append(
                             oc[prefix_len:] if len(oc) > min_len else oc,
                         )
@@ -291,7 +291,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     def get_root_dse_attributes(
         self,
         connection: Connection,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes for OpenLDAP 1.x server."""
         try:
             # Use standard Root DSE search
@@ -309,17 +309,17 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 attrs = {}
                 for attr in entry.entry_attributes:
                     attrs[attr] = entry[attr].value
-                return FlextResult[FlextTypes.Dict].ok(attrs)
+                return FlextResult[dict[str, object]].ok(attrs)
 
-            return FlextResult[FlextTypes.Dict].fail("No Root DSE found")
+            return FlextResult[dict[str, object]].fail("No Root DSE found")
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Root DSE retrieval failed: {e}",
             )
 
     @override
-    def detect_server_type_from_root_dse(self, root_dse: FlextTypes.Dict) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect OpenLDAP version from Root DSE attributes."""
         # Check for vendorName
         if "vendorName" in root_dse:
@@ -343,13 +343,11 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def get_supported_controls(
-        self, connection: Connection
-    ) -> FlextResult[FlextTypes.StringList]:
+    def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
         """Get supported controls for OpenLDAP 1.x server."""
         try:
             if not connection or not connection.bound:
-                return FlextResult[FlextTypes.StringList].fail("Connection not bound")
+                return FlextResult[list[str]].fail("Connection not bound")
 
             # OpenLDAP 1.x standard controls
             openldap1_controls = [
@@ -358,12 +356,10 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 "1.3.6.1.4.1.1466.20037",  # StartTLS
             ]
 
-            return FlextResult[FlextTypes.StringList].ok(openldap1_controls)
+            return FlextResult[list[str]].ok(openldap1_controls)
 
         except Exception as e:
-            return FlextResult[FlextTypes.StringList].fail(
-                f"Control retrieval failed: {e}"
-            )
+            return FlextResult[list[str]].fail(f"Control retrieval failed: {e}")
 
     @override
     def normalize_entry_for_server(

@@ -12,6 +12,11 @@ SRC_DIR := src
 TESTS_DIR := tests
 COV_DIR := flext_ldap
 
+# Documentation maintenance tooling
+FLEXT_ROOT := $(abspath ..)
+DOCS_CLI := PYTHONPATH=$(FLEXT_ROOT)/flext-quality/src python -m flext_quality.docs_maintenance.cli
+DOCS_PROFILE := advanced
+
 # Quality Standards
 MIN_COVERAGE := 75
 
@@ -229,6 +234,10 @@ ldap-search-groups: ## Search LDAP groups
 .PHONY: docs
 docs: ## Build documentation
 	$(POETRY) run mkdocs build
+
+.PHONY: docs-maintenance
+docs-maintenance: ## Run shared documentation maintenance (Markdown only)
+	FLEXT_DOC_PROFILE=$(DOCS_PROFILE) FLEXT_DOC_PROJECT_ROOT=$(PWD) $(DOCS_CLI) --project-root $(PWD)
 
 .PHONY: docs-serve
 docs-serve: ## Serve documentation

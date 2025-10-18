@@ -104,33 +104,42 @@ class FlextLdap(FlextService[None]):
         """Get LDAP configuration."""
         return self._config
 
+    def _lazy_init(self, attr_name: str, factory: callable) -> object:
+        """Unified lazy initialization pattern using FlextContainer-like pattern.
+
+        Eliminates 4 repetitive lazy-load properties with single unified method.
+        """
+        attr = getattr(self, f"_{attr_name}", None)
+        if attr is None:
+            attr = factory()
+            setattr(self, f"_{attr_name}", attr)
+        return attr
+
     @property
     def client(self) -> FlextLdap.Client:
         """Get LDAP client instance."""
-        if self._client is None:
-            self._client = FlextLdap.Client(self._config)
-        return self._client
+        return cast(
+            "FlextLdap.Client",
+            self._lazy_init("client", lambda: FlextLdap.Client(self._config)),
+        )
 
     @property
     def servers(self) -> FlextLdap.Servers:
         """Get server operations instance."""
-        if self._servers is None:
-            self._servers = FlextLdap.Servers()
-        return self._servers
+        return cast("FlextLdap.Servers", self._lazy_init("servers", FlextLdap.Servers))
 
     @property
     def acl(self) -> FlextLdap.Acl:
         """Get ACL operations instance."""
-        if self._acl is None:
-            self._acl = FlextLdap.Acl()
-        return self._acl
+        return cast("FlextLdap.Acl", self._lazy_init("acl", FlextLdap.Acl))
 
     @property
     def authentication(self) -> FlextLdapAuthentication:
         """Get authentication operations instance."""
-        if not hasattr(self, "_authentication"):
-            self._authentication = FlextLdapAuthentication()
-        return self._authentication
+        return cast(
+            "FlextLdapAuthentication",
+            self._lazy_init("authentication", FlextLdapAuthentication),
+        )
 
     @override
     def execute(self) -> FlextResult[None]:

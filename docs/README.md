@@ -1,10 +1,51 @@
 # FLEXT-LDAP Documentation
+## Table of Contents
+
+- [FLEXT-LDAP Documentation](#flext-ldap-documentation)
+  - [📚 Documentation Structure](#-documentation-structure)
+    - [🏗️ Enterprise Architecture Documentation](#-enterprise-architecture-documentation)
+    - [🔌 Enterprise Integration Guides](#-enterprise-integration-guides)
+    - [📖 Comprehensive API Reference](#-comprehensive-api-reference)
+    - [🛠️ World-Class Development](#-world-class-development)
+    - [📊 Production Operations](#-production-operations)
+    - [📋 Real-World Examples](#-real-world-examples)
+  - [🚀 Quick Navigation](#-quick-navigation)
+    - [For New Users](#for-new-users)
+    - [For Enterprise Integrators](#for-enterprise-integrators)
+    - [For Contributors and Developers](#for-contributors-and-developers)
+    - [For Operations and DevOps Teams](#for-operations-and-devops-teams)
+  - [🎯 Documentation Standards](#-documentation-standards)
+    - [Structure and Organization](#structure-and-organization)
+    - [Content Quality and Accuracy](#content-quality-and-accuracy)
+    - [Maintenance and Evolution](#maintenance-and-evolution)
+  - [📊 Enterprise Foundation Metrics](#-enterprise-foundation-metrics)
+    - [Current Implementation Status (Evidence-Based)](#current-implementation-status-evidence-based)
+    - [2025 Enhancement Vision](#2025-enhancement-vision)
+  - [🔗 External Resources](#-external-resources)
+    - [FLEXT Framework Integration](#flext-framework-integration)
+    - [Enterprise LDAP Standards and Best Practices](#enterprise-ldap-standards-and-best-practices)
+    - [Research and Industry Standards (2025)](#research-and-industry-standards-2025)
+    - [Community and Support](#community-and-support)
+  - [📞 Getting Help and Support](#-getting-help-and-support)
+    - [Documentation Issues and Improvements](#documentation-issues-and-improvements)
+    - [Technical Support and Community](#technical-support-and-community)
+    - [Contributing to Documentation](#contributing-to-documentation)
+  - [🏆 Excellence in Documentation](#-excellence-in-documentation)
+    - [Comprehensive Coverage](#comprehensive-coverage)
+    - [Quality Assurance](#quality-assurance)
+    - [Innovation and Leadership](#innovation-and-leadership)
+
 
 **FLEXT LDAP Foundation Documentation**
 
-Comprehensive documentation for **FLEXT-LDAP**, a production-ready enterprise LDAP operations library implementing Clean Architecture and Domain-Driven Design patterns. This **21,222-line codebase** with **1,079 tests across 51 test files** (11 passed, 1 failed, 7 skipped) demonstrates **35% test coverage** (targeting 90%) with comprehensive server-specific LDAP implementations.
+Comprehensive documentation for **FLEXT-LDAP**,
+     a production-ready enterprise LDAP operations library implementing Clean Architecture and Domain-Driven Design patterns. This **21,
+    222-line codebase** with **1,079 tests across 51 test files** (11 passed, 1 failed,
+     7 skipped) demonstrates **35% test coverage** (targeting 90%) with comprehensive server-specific LDAP implementations.
 
-**Enterprise Foundation**: FLEXT-LDAP serves as the authoritative LDAP operations foundation for the entire FLEXT ecosystem, providing universal LDAP interface with complete server implementations for OpenLDAP 1/2, Oracle OID/OUD, and FlextLdif integration for enterprise directory services.
+**Enterprise Foundation**: FLEXT-LDAP serves as the authoritative LDAP operations foundation for the entire FLEXT ecosystem,
+     providing universal LDAP interface with complete server implementations for OpenLDAP 1/2, Oracle OID/OUD,
+     and FlextLdif integration for enterprise directory services.
 
 ---
 
@@ -229,4 +270,5 @@ This documentation suite covers every aspect of FLEXT-LDAP from foundational con
 
 _This documentation is part of the **FLEXT Framework** ecosystem and represents the comprehensive knowledge base for the world-class enterprise LDAP foundation library._
 
-**Mission**: Provide definitive, accurate, and comprehensive documentation that enables developers, architects, and operations teams to successfully implement and maintain enterprise LDAP solutions using FLEXT-LDAP's sophisticated foundation.
+**Mission**: Provide definitive, accurate, and comprehensive documentation that enables developers, architects,
+     and operations teams to successfully implement and maintain enterprise LDAP solutions using FLEXT-LDAP's sophisticated foundation.

@@ -14,7 +14,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 from flext_ldap import (
     FlextLdapConstants,
@@ -48,13 +48,13 @@ class TestFlextLdapConstants:
         assert acl_constants.Permission.DELETE == "delete"
         assert acl_constants.Permission.SEARCH == "search"
 
+    @pytest.mark.skip(reason="SubjectType is now a Literal type alias, not a class")
     def test_get_subject_types(self, acl_constants: FlextLdapConstants) -> None:
-        """Test getting subject types."""
-        # Test that we can access the subject type constants
-        assert hasattr(acl_constants, "SubjectType")
-        assert acl_constants.SubjectType.USER == "user"
-        assert acl_constants.SubjectType.GROUP == "group"
-        assert acl_constants.SubjectType.ANONYMOUS == "anonymous"
+        """Test getting subject types.
+
+        NOTE: SubjectType was refactored to a Literal type alias, so attribute
+        access pattern is no longer applicable.
+        """
 
     def test_get_scope_types(self, acl_constants: FlextLdapConstants) -> None:
         """Test getting scope types."""
@@ -142,10 +142,11 @@ class TestFlextLdapConstants:
         """Test validating valid scope type."""
         # Test that we can access the constants structure
         assert hasattr(acl_constants, "AclFormat")
-        assert hasattr(acl_constants, "Permission")
-        assert hasattr(acl_constants, "SubjectType")
-        assert hasattr(acl_constants, "TargetType")
-        # Note: Scope types are defined in models, not in constants
+        # Note: Permission, SubjectType, TargetType are now module-level type aliases,
+        # not nested classes. They can be imported from constants module directly:
+        # from flext_ldap.constants import Permission, SubjectType, TargetType
+        assert hasattr(acl_constants, "DictKeys")
+        assert hasattr(acl_constants, "Validation")
 
     def test_validate_scope_type_invalid(
         self, acl_constants: FlextLdapConstants
@@ -153,9 +154,11 @@ class TestFlextLdapConstants:
         """Test validating invalid scope type."""
         # Test that we can access the constants structure
         assert hasattr(acl_constants, "AclFormat")
-        assert hasattr(acl_constants, "Permission")
-        assert hasattr(acl_constants, "SubjectType")
-        assert hasattr(acl_constants, "TargetType")
+        # Note: Permission, SubjectType, TargetType are now module-level type aliases,
+        # not nested classes. They can be imported from constants module directly:
+        # from flext_ldap.constants import Permission, SubjectType, TargetType
+        assert hasattr(acl_constants, "DictKeys")
+        assert hasattr(acl_constants, "Validation")
         # Note: Scope types are defined in models, not in constants
 
 
@@ -173,7 +176,7 @@ class TestFlextLdapAclConverters:
     def test_convert_unified_to_openldap_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful unified to OpenLDAP conversion."""
         # Test the actual convert_acl method
@@ -204,7 +207,7 @@ class TestFlextLdapAclConverters:
     def test_convert_unified_to_oracle_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful unified to Oracle conversion."""
         # Test the actual convert_acl method
@@ -235,7 +238,7 @@ class TestFlextLdapAclConverters:
     def test_convert_openldap_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful OpenLDAP to unified conversion."""
         # Test the actual convert_acl method
@@ -266,7 +269,7 @@ class TestFlextLdapAclConverters:
     def test_convert_oracle_to_unified_success(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful Oracle to unified conversion."""
         result = acl_converters.convert_acl(
@@ -309,7 +312,7 @@ class TestFlextLdapAclConverters:
     def test_convert_between_formats_unsupported(
         self,
         acl_converters: FlextLdapAclConverters,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test conversion between unsupported formats."""
         result = acl_converters.convert_acl(
@@ -364,7 +367,7 @@ class TestFlextLdapAclManager:
     def test_create_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful ACL creation."""
         # Test the actual parse_acl method with valid data
@@ -393,7 +396,7 @@ class TestFlextLdapAclManager:
     def test_create_acl_storage_failure(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test ACL creation with storage failure."""
         with (
@@ -401,7 +404,7 @@ class TestFlextLdapAclManager:
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
             mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
+            mock_parse.return_value = FlextResult[dict[str, object]].ok({"valid": True})
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -414,7 +417,7 @@ class TestFlextLdapAclManager:
     def test_update_acl_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful ACL update."""
         with (
@@ -422,7 +425,7 @@ class TestFlextLdapAclManager:
             patch.object(acl_manager, "parse_acl") as mock_parse,
         ):
             mock_validate.return_value = FlextResult[bool].ok(True)
-            mock_parse.return_value = FlextResult[FlextTypes.Dict].ok({"valid": True})
+            mock_parse.return_value = FlextResult[dict[str, object]].ok({"valid": True})
 
             result = acl_manager.parse_acl(
                 acl_string=str(sample_acl_data["unified_acl"]),
@@ -435,7 +438,7 @@ class TestFlextLdapAclManager:
     def test_update_acl_not_found(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test ACL update when ACL not found."""
         # Test the actual parse_acl method with valid data
@@ -528,7 +531,7 @@ class TestFlextLdapAclManager:
     def test_validate_acl_data_success(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful ACL data validation."""
         # Test the actual parse_acl method with valid data
@@ -565,12 +568,12 @@ class TestFlextLdapAclParsers:
     def test_parse_openldap_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful OpenLDAP ACI parsing."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[FlextTypes.Dict].ok(
-                cast("FlextTypes.Dict", sample_acl_data["unified_acl"])
+            mock_handle.return_value = FlextResult[dict[str, object]].ok(
+                cast("dict[str, object]", sample_acl_data["unified_acl"])
             )
 
             result = acl_parsers.handle(sample_acl_data["openldap_aci"])
@@ -586,7 +589,7 @@ class TestFlextLdapAclParsers:
     ) -> None:
         """Test OpenLDAP ACI parsing failure."""
         with patch.object(acl_parsers, "handle") as mock_handle:
-            mock_handle.return_value = FlextResult[FlextTypes.Dict].fail(
+            mock_handle.return_value = FlextResult[dict[str, object]].fail(
                 "Parsing failed"
             )
 
@@ -599,7 +602,7 @@ class TestFlextLdapAclParsers:
     def test_parse_oracle_aci_success(
         self,
         acl_parsers: FlextLdapAclParsers,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test successful Oracle ACI parsing."""
         # Test the actual OracleAclParser.parse method
@@ -839,8 +842,39 @@ class TestFlextLdapModels:
 
     def test_validate_unified_data_failure(self, acl_models: FlextLdapModels) -> None:
         """Test unified data validation failure."""
-        # Skip this test as Acl validation is not implemented yet
-        pytest.skip("Acl validation test not yet implemented")
+        from pydantic import ValidationError
+
+        # Test 1: Missing required 'name' field should fail
+        target = acl_models.AclTarget(
+            target_type="entry",
+            dn_pattern="dc=example,dc=com",
+        )
+        subject = acl_models.AclSubject(
+            subject_type="user",
+            subject_dn="uid=admin,ou=people,dc=example,dc=com",
+        )
+        permissions = acl_models.AclPermissions(
+            granted_permissions=["read"],
+        )
+
+        # Try to create Acl without required 'name' - should fail
+        with pytest.raises(ValidationError):
+            acl_models.Acl(
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                # name is missing - required field
+            )
+
+        # Test 2: Invalid data type for priority should fail
+        with pytest.raises(ValidationError):
+            acl_models.Acl(
+                name="test_acl",
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                priority="invalid",  # Should be int
+            )
 
     def test_validate_permission_data_success(
         self, acl_models: FlextLdapModels
@@ -854,8 +888,32 @@ class TestFlextLdapModels:
         self, acl_models: FlextLdapModels
     ) -> None:
         """Test permission data validation failure."""
-        # Skip this test as AclPermissions validation is not implemented yet
-        pytest.skip("AclPermissions validation test not yet implemented")
+        from pydantic import ValidationError
+
+        # Test 1: Invalid data type for granted_permissions should fail
+        with pytest.raises(ValidationError):
+            acl_models.AclPermissions(
+                granted_permissions="invalid",  # Should be list
+                grant_type="allow",
+            )
+
+        # Test 2: Invalid data type for denied_permissions should fail
+        with pytest.raises(ValidationError):
+            acl_models.AclPermissions(
+                granted_permissions=["read"],
+                denied_permissions="invalid",  # Should be list
+                grant_type="allow",
+            )
+
+        # Test 3: Test convenience 'permissions' parameter handling works
+        # When using 'permissions' param with grant_type='deny', it should map to denied_permissions
+        perm_deny = acl_models.AclPermissions(
+            permissions=["write", "delete"],
+            grant_type="deny",
+        )
+        assert perm_deny.grant_type == "deny"
+        assert perm_deny.denied_permissions == ["write", "delete"]
+        assert perm_deny.granted_permissions == []
 
 
 class TestAclIntegration:
@@ -884,7 +942,7 @@ class TestAclIntegration:
     def test_acl_management_complete_lifecycle(
         self,
         acl_manager: FlextLdapAclManager,
-        sample_acl_data: FlextTypes.Dict,
+        sample_acl_data: dict[str, object],
     ) -> None:
         """Test complete ACL management lifecycle."""
         # Test ACL parsing (may fail if parser not fully implemented)
@@ -1605,26 +1663,6 @@ class TestFlextLdapAclManagerComprehensive:
             "operation": "parse",
             "acl_string": 'access to dn.base="cn=test" by * read',
             "format": "openldap",
-        }
-        result = manager.handle(message)
-        assert result.is_success
-        assert result.unwrap() is not None
-
-    @pytest.mark.skip(
-        reason="ACL conversion not yet implemented - feature planned for future release"
-    )
-    def test_handle_convert_operation(self) -> None:
-        """Test handle method with convert operation.
-
-        TODO: Implement ACL conversion between formats (openldap, active_directory, oid, oud).
-        This test validates the conversion functionality once it's implemented.
-        """
-        manager = FlextLdapAclManager()
-        message: dict[str, object] = {
-            "operation": "convert",
-            "acl_data": 'access to dn.base="cn=test" by * read',
-            "source_format": "openldap",
-            "target_format": "active_directory",
         }
         result = manager.handle(message)
         assert result.is_success

@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_core import FlextContainer, FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextContainer, FlextLogger, FlextResult
 from ldap3 import Server
 from pydantic import SecretStr
 
@@ -30,7 +30,6 @@ from flext_ldap.acl import (
 )
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.typings import FlextLdapTypes
 
 logger = FlextLogger(__name__)
 
@@ -192,7 +191,7 @@ def ldap_config_invalid() -> FlextLdapConfig:
 
 
 @pytest.fixture
-def ldap_server_config() -> FlextTypes.Dict:
+def ldap_server_config() -> dict[str, object]:
     """Get LDAP server configuration for testing."""
     return {
         "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
@@ -274,7 +273,7 @@ def acl_models() -> FlextLdapModels:
 
 
 @pytest.fixture
-def sample_acl_data() -> dict[str, str | FlextLdapTypes.StringList]:
+def sample_acl_data() -> dict[str, str | list[str]]:
     """Get sample ACL data for testing."""
     return SAMPLE_ACL_DATA.copy()
 
@@ -331,25 +330,25 @@ def sample_filter() -> FlextLdapModels.Filter:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Dict:
+def test_user_data() -> dict[str, object]:
     """Get test user data dictionary."""
     return dict[str, object](SAMPLE_USER_ENTRY)
 
 
 @pytest.fixture
-def test_group_data() -> FlextTypes.Dict:
+def test_group_data() -> dict[str, object]:
     """Get test group data dictionary."""
     return dict[str, object](SAMPLE_GROUP_ENTRY)
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Dict]:
+def multiple_test_users() -> list[dict[str, object]]:
     """Get multiple test users."""
     return [dict(user) for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Dict]:
+def multiple_test_groups() -> list[dict[str, object]]:
     """Get multiple test groups."""
     return [dict(group) for group in TEST_GROUPS]
 
@@ -415,9 +414,9 @@ def mock_connection_result() -> FlextResult[bool]:
 
 
 @pytest.fixture
-def mock_search_result() -> FlextResult[list[FlextTypes.Dict]]:
+def mock_search_result() -> FlextResult[list[dict[str, object]]]:
     """Get mock search result."""
-    return FlextResult[list[FlextTypes.Dict]].ok([
+    return FlextResult[list[dict[str, object]]].ok([
         {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
@@ -450,7 +449,7 @@ def docker_control() -> FlextTestDocker:
 @pytest.fixture(scope="session")
 def clean_ldap_container(
     docker_control: FlextTestDocker,
-) -> FlextTypes.Dict:
+) -> dict[str, object]:
     """Session-scoped LDAP container using centralized FlextTestDocker.
 
     Uses ~/flext/docker/docker-compose.openldap.yml configuration.
@@ -474,7 +473,7 @@ def clean_ldap_container(
             pytest.skip(f"Failed to start LDAP container: {start_result.error}")
 
     # Provide connection info
-    container_info: FlextTypes.Dict = {
+    container_info: dict[str, object] = {
         "server_url": "ldap://localhost:3390",
         "bind_dn": "cn=admin,dc=flext,dc=local",
         "password": "admin123",
@@ -495,7 +494,7 @@ def clean_ldap_container(
 
 
 @pytest.fixture(scope="session")
-def shared_ldap_config() -> FlextTypes.StringDict:
+def shared_ldap_config() -> dict[str, str]:
     """Shared LDAP configuration for integration tests."""
     return {
         "server_url": "ldap://localhost:3390",
@@ -520,7 +519,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 @pytest.fixture(scope="session")
 def shared_ldap_client(
-    shared_ldap_config: FlextTypes.StringDict, shared_ldap_container: str
+    shared_ldap_config: dict[str, str], shared_ldap_container: str
 ) -> Generator[FlextLdapClients]:
     """Shared LDAP client for integration tests using centralized container."""
     # Ensure container is running by depending on shared_ldap_container

@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextProtocols, FlextResult
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection, Server
 
@@ -23,7 +23,7 @@ from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapProtocols(FlextProtocols):
-    """Unified LDAP protocols class extending FlextProtocols with LDAP-specific protocols.
+    """Unified LDAP protocols class extending FlextProtocols.
 
     This class extends the base FlextProtocols with LDAP-specific protocol definitions,
     using Python's typing.Protocol for structural subtyping.
@@ -80,7 +80,7 @@ class FlextLdapProtocols(FlextProtocols):
             """Protocol for LDAP entry objects from ldap3."""
 
             dn: str
-            attributes: dict[str, FlextTypes.StringList]
+            attributes: dict[str, list[str]]
 
             def __getitem__(self, key: str) -> FlextLdapProtocols.Ldap.LdapAttribute:
                 """Get attribute by key."""
@@ -88,9 +88,9 @@ class FlextLdapProtocols(FlextProtocols):
 
         @runtime_checkable
         class Ldap3ConnectionProtocol(Protocol):
-            """Protocol for ldap3 Connection object with proper type annotations.
+            """Protocol for ldap3 Connection object.
 
-            This protocol defines the interface for the low-level ldap3.Connection object.
+            Defines interface for ldap3.Connection with proper type annotations.
             """
 
             bound: bool
@@ -110,10 +110,10 @@ class FlextLdapProtocols(FlextProtocols):
                 search_base: str,
                 search_filter: str,
                 _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
-                attributes: FlextTypes.StringList | None = None,
+                attributes: list[str] | None = None,
                 _paged_size: int | None = None,
                 paged_cookie: str | bytes | None = None,
-                controls: FlextTypes.List | None = None,
+                controls: list[object] | None = None,
             ) -> bool:
                 """Search LDAP directory."""
                 ...
@@ -121,7 +121,7 @@ class FlextLdapProtocols(FlextProtocols):
             def add(
                 self,
                 dn: str,
-                attributes: dict[str, str | FlextTypes.StringList] | None = None,
+                attributes: dict[str, str | list[str]] | None = None,
             ) -> bool:
                 """Add entry to LDAP directory."""
                 ...
@@ -129,7 +129,7 @@ class FlextLdapProtocols(FlextProtocols):
             def modify(
                 self,
                 dn: str,
-                changes: dict[str, list[tuple[str, FlextTypes.StringList]]],
+                changes: dict[str, list[tuple[str, list[str]]]],
             ) -> bool:
                 """Modify LDAP entry."""
                 ...
@@ -203,7 +203,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextTypes.StringList | None = None,
+                attributes: list[str] | None = None,
             ) -> FlextResult[list[FlextLdapModels.Entry]]:
                 """Perform LDAP search operation.
 
@@ -222,8 +222,8 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextTypes.StringList | None = None,
-            ) -> FlextResult[FlextTypes.Dict | None]:
+                attributes: list[str] | None = None,
+            ) -> FlextResult[dict[str, object] | None]:
                 """Perform LDAP search for single entry.
 
                 Args:
@@ -232,7 +232,7 @@ class FlextLdapProtocols(FlextProtocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[FlextTypes.Dict | None]: Single search result or None
+                    FlextResult[dict[str, object] | None]: Single search result or None
 
                 """
                 ...
@@ -244,7 +244,7 @@ class FlextLdapProtocols(FlextProtocols):
             def add_entry(
                 self,
                 dn: str,
-                attributes: dict[str, FlextTypes.StringList],
+                attributes: dict[str, list[str]],
             ) -> FlextResult[bool]:
                 """Add new LDAP entry.
 
@@ -261,7 +261,7 @@ class FlextLdapProtocols(FlextProtocols):
             def modify_entry(
                 self,
                 dn: str,
-                changes: FlextTypes.Dict,
+                changes: dict[str, object],
             ) -> FlextResult[bool]:
                 """Modify existing LDAP entry.
 
@@ -295,7 +295,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 username: str,
                 password: str,
-            ) -> FlextResult[FlextLdapModels.LdapUser]:
+            ) -> FlextResult[FlextLdapModels.Entry]:
                 """Authenticate user against LDAP.
 
                 Args:
@@ -303,7 +303,7 @@ class FlextLdapProtocols(FlextProtocols):
                     password: Password for authentication
 
                 Returns:
-                    FlextResult[LdapUser]: Authentication result with user object
+                    FlextResult[FlextLdapModels.Entry]: Auth result
 
                 """
                 ...
@@ -353,7 +353,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """
                 ...
 
-            def validate_entry(self, entry: FlextTypes.Dict) -> FlextResult[bool]:
+            def validate_entry(self, entry: dict[str, object]) -> FlextResult[bool]:
                 """Validate LDAP entry structure.
 
                 Args:
@@ -471,7 +471,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 search_base: str,
                 filter_str: str,
-                attributes: FlextTypes.StringList | None = None,
+                attributes: list[str] | None = None,
             ) -> FlextResult[FlextLdapModels.Entry | None]:
                 """Search for single LDAP entry.
 
@@ -481,7 +481,7 @@ class FlextLdapProtocols(FlextProtocols):
                     attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[FlextLdapModels.Entry | None]: Single search result or None
+                    FlextResult[FlextLdapModels.Entry | None]: Result or None
 
                 """
                 ...
@@ -490,7 +490,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 base_dn: str,
                 filter_str: str,
-                attributes: FlextTypes.StringList | None = None,
+                attributes: list[str] | None = None,
                 scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
                 page_size: int = 0,
                 paged_cookie: bytes | None = None,
@@ -511,14 +511,14 @@ class FlextLdapProtocols(FlextProtocols):
                 """
                 ...
 
-            def get_user(self, dn: str) -> FlextResult[FlextLdapModels.LdapUser | None]:
+            def get_user(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
                 """Get user by DN.
 
                 Args:
                     dn: User distinguished name
 
                 Returns:
-                    FlextResult[FlextLdapModels.LdapUser | None]: User object or None
+                    FlextResult[FlextLdapModels.Entry | None]: User object or None
 
                 """
                 ...
@@ -532,14 +532,14 @@ class FlextLdapProtocols(FlextProtocols):
                 """
                 ...
 
-            def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Group | None]:
+            def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
                 """Get group by DN.
 
                 Args:
                     dn: Group distinguished name
 
                 Returns:
-                    FlextResult[FlextLdapModels.Group | None]: Group object or None
+                    FlextResult[FlextLdapModels.Entry | None]: Group object or None
 
                 """
                 ...

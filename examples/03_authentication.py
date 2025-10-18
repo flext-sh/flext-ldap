@@ -31,11 +31,11 @@ import sys
 from copy import deepcopy
 from typing import ClassVar, Final
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.typings import LdapAttributeValue
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -48,7 +48,7 @@ BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
 class DemoAuthScenarios:
     """Inline scenario data for authentication demonstrations."""
 
-    _USERS: ClassVar[dict[str, FlextTypes.Dict]] = {
+    _USERS: ClassVar[dict[str, dict[str, object]]] = {
         "admin": {
             "password": "admin",
             "dn": "cn=admin,dc=example,dc=com",
@@ -116,7 +116,7 @@ class DemoAuthScenarios:
         return False, f"DN '{dn}' not found"
 
     @classmethod
-    def get_attributes(cls, username: str) -> dict[str, FlextTypes.StringList] | None:
+    def get_attributes(cls, username: str) -> dict[str, list[str]] | None:
         """Get user attributes by username.
 
         Args:
@@ -262,7 +262,7 @@ class DemoLdapApi:
         if attributes is None:
             return FlextResult[FlextLdapModels.Entry | None].ok(None)
         # Convert attributes to correct type
-        typed_attributes: dict[str, FlextLdapTypes.LdapEntries.EntryAttributeValue] = {}
+        typed_attributes: dict[str, LdapAttributeValue] = {}
         if attributes:
             for key, value in attributes.items():
                 if isinstance(value, list):

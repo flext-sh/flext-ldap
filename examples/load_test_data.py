@@ -13,7 +13,6 @@ from pathlib import Path
 
 from flext_core import (
     FlextLogger,
-    FlextTypes,
 )
 from pydantic import SecretStr
 
@@ -24,11 +23,11 @@ logger = FlextLogger(__name__)
 
 def parse_ldif_file(
     ldif_path: Path,
-) -> list[tuple[str, dict[str, str | FlextTypes.StringList]]]:
+) -> list[tuple[str, dict[str, str | list[str]]]]:
     """Parse LDIF file into list of (dn, attributes) tuples."""
-    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
+    entries: list[tuple[str, dict[str, str | list[str]]]] = []
     current_dn: str | None = None
-    current_attrs: dict[str, str | FlextTypes.StringList] = {}
+    current_attrs: dict[str, str | list[str]] = {}
 
     with Path(ldif_path).open(encoding="utf-8") as f:
         for line in f:

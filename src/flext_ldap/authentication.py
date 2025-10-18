@@ -6,8 +6,8 @@ with Clean Architecture patterns and flext-core integration.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Note: This module uses proper type annotations with FlextResult[T] for railway-oriented programming.
-All type annotations follow FLEXT standards with no hacks or workarounds.
+Note: Proper type annotations with FlextResult[T] for railway patterns.
+All annotations follow FLEXT standards with no workarounds.
 """
 
 from __future__ import annotations
@@ -70,11 +70,11 @@ class FlextLdapAuthentication(FlextService[None]):
         self,
         username: str,
         password: str,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Authenticate user credentials using FlextResults railways pattern.
 
         Note: Protocol specifies FlextResult[bool], but this implementation returns
-        FlextResult[FlextLdapModels.LdapUser] for richer authentication context.
+        FlextResult[FlextLdapModels.Entry] for richer authentication context.
 
         Args:
             username: Username to authenticate.
@@ -87,19 +87,19 @@ class FlextLdapAuthentication(FlextService[None]):
         # Railway pattern: Chain validation -> search -> bind -> create user
         validation_result = self._validate_connection()
         if validation_result.is_failure:
-            return FlextResult[FlextLdapModels.LdapUser].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 validation_result.error or "Validation failed",
             )
 
         search_result = self._search_user_by_username(username)
         if search_result.is_failure:
-            return FlextResult[FlextLdapModels.LdapUser].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 search_result.error or "Search failed",
             )
 
         auth_result = self._authenticate_user_credentials(search_result.value, password)
         if auth_result.is_failure:
-            return FlextResult[FlextLdapModels.LdapUser].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 auth_result.error or "Authentication failed",
             )
 
@@ -121,7 +121,7 @@ class FlextLdapAuthentication(FlextService[None]):
             connection.unbind()
 
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
-        """Validate user credentials against LDAP - implements LdapAuthenticationProtocol.
+        """Validate user credentials against LDAP server.
 
         Args:
             dn: User distinguished name
@@ -135,7 +135,7 @@ class FlextLdapAuthentication(FlextService[None]):
         try:
             # Use the existing connection context if available
             if self._connection is not None and self._server is not None:
-                # Create a test connection using the same server but different credentials
+                # Create test connection with alternate credentials
                 test_connection = Connection(
                     self._server,
                     user=dn,
@@ -250,12 +250,12 @@ class FlextLdapAuthentication(FlextService[None]):
     def _create_user_from_entry_result(
         self,
         user_entry: FlextLdapTypes.Ldap3Protocols.Entry,
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Create user from LDAP entry using railway pattern."""
         try:
             # Create user from entry - simplified for now
             # ldap3 Entry uses entry_dn, not dn
-            user = FlextLdapModels.LdapUser(
+            user = FlextLdapModels.Entry(
                 dn=str(user_entry.entry_dn),
                 uid=getattr(user_entry, "uid", [""])[0]
                 if hasattr(user_entry, "uid")
@@ -269,10 +269,12 @@ class FlextLdapAuthentication(FlextService[None]):
                 mail=getattr(user_entry, "mail", [""])[0]
                 if hasattr(user_entry, "mail")
                 else "",
+                entry_type="user",
+                object_classes=["person", "inetOrgPerson", "top"],
             )
-            return FlextResult[FlextLdapModels.LdapUser].ok(user)
+            return FlextResult[FlextLdapModels.Entry].ok(user)
         except Exception as e:
-            return FlextResult[FlextLdapModels.LdapUser].fail(
+            return FlextResult[FlextLdapModels.Entry].fail(
                 f"User creation failed: {e}",
             )
 
@@ -284,7 +286,7 @@ class FlextLdapAuthentication(FlextService[None]):
         self,
         request: FlextModels.OperationExecutionRequest,
     ) -> FlextResult[None]:
-        """Execute operation using OperationExecutionRequest model (Domain.Service protocol).
+        """Execute operation from OperationExecutionRequest model.
 
         Args:
             request: OperationExecutionRequest containing operation settings

@@ -1,4 +1,64 @@
 # ACL Management System
+## Table of Contents
+
+- [ACL Management System](#acl-management-system)
+  - [Overview](#overview)
+  - [Architecture](#architecture)
+  - [Quick Start](#quick-start)
+    - [Basic Usage](#basic-usage)
+- [Initialize API](#initialize-api)
+- [Parse an OpenLDAP ACL](#parse-an-openldap-acl)
+    - [Converting ACL Formats](#converting-acl-formats)
+- [Convert OpenLDAP to Oracle format](#convert-openldap-to-oracle-format)
+    - [Batch Conversion](#batch-conversion)
+- [Convert multiple ACLs at once](#convert-multiple-acls-at-once)
+  - [ACL Format Examples](#acl-format-examples)
+    - [OpenLDAP Format](#openldap-format)
+- [Simple attribute ACL](#simple-attribute-acl)
+- [DN-based ACL](#dn-based-acl)
+- [Multiple attributes](#multiple-attributes)
+    - [Oracle Directory Format](#oracle-directory-format)
+- [Attribute ACL](#attribute-acl)
+- [Entry-level ACL](#entry-level-acl)
+- [Multiple attributes](#multiple-attributes)
+    - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds--apache-ds)
+- [Simple ACI](#simple-aci)
+- [Deny ACL](#deny-acl)
+- [Group-based ACI](#group-based-aci)
+  - [Creating Custom ACLs](#creating-custom-acls)
+    - [Using the Unified Model](#using-the-unified-model)
+- [Create ACL components](#create-acl-components)
+- [Create unified ACL](#create-unified-acl)
+- [Convert to any format](#convert-to-any-format)
+  - [ACL Validation](#acl-validation)
+- [Validate ACL syntax](#validate-acl-syntax)
+  - [Migration Scenarios](#migration-scenarios)
+    - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
+- [Parse Oracle ACLs from existing directory](#parse-oracle-acls-from-existing-directory)
+- [Convert to OpenLDAP format](#convert-to-openldap-format)
+    - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
+- [Parse OpenLDAP slapd.conf ACLs](#parse-openldap-slapdconf-acls)
+- [Convert to ACI format for 389 DS](#convert-to-aci-format-for-389-ds)
+  - [Advanced Features](#advanced-features)
+    - [ACL with Conditions](#acl-with-conditions)
+- [Create ACL with time and IP restrictions](#create-acl-with-time-and-ip-restrictions)
+    - [Permission Mapping](#permission-mapping)
+- [Standard permissions across formats](#standard-permissions-across-formats)
+    - [Subject Types](#subject-types)
+- [Different subject types](#different-subject-types)
+  - [Error Handling](#error-handling)
+- [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
+  - [Integration with ALGAR OUD Migration](#integration-with-algar-oud-migration)
+- [Example: Convert Oracle OUD ACLs to OpenLDAP format](#example-convert-oracle-oud-acls-to-openldap-format)
+- [Read Oracle ACLs from OUD](#read-oracle-acls-from-oud)
+- [Convert each ACL](#convert-each-acl)
+- [Write to OpenLDAP configuration](#write-to-openldap-configuration)
+  - [Best Practices](#best-practices)
+  - [API Reference](#api-reference)
+    - [FlextLdap ACL Methods](#flextldap-acl-methods)
+    - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
+  - [See Also](#see-also)
+
 
 ## Overview
 
@@ -115,7 +175,8 @@ if batch_result.is_success:
 '(target="ldap:///dc=example,dc=com")(version 3.0; acl "Deny Delete"; deny (delete) userdn="ldap:///anyone";)'
 
 # Group-based ACI
-'(target="ldap:///ou=data,dc=example,dc=com")(version 3.0; acl "Admin Access"; allow (read,write) groupdn="ldap:///cn=admins,ou=groups,dc=example,dc=com";)'
+'(target="ldap:///ou=data,dc=example,dc=com")(version 3.0; acl "Admin Access"; allow (read,
+    write) groupdn="ldap:///cn=admins,ou=groups,dc=example,dc=com";)'
 ```
 
 ## Creating Custom ACLs

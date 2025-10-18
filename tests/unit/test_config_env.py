@@ -282,11 +282,13 @@ class TestFlextLdapConfigEnvironment:
                 "Computed field ldap_capabilities missing"
             )
 
-            # Verify computed fields return expected data
+            # Verify computed fields return expected data (using new typed models API)
             assert config.connection_info is not None
-            assert isinstance(config.connection_info, dict)
-            assert config.connection_info["server_uri"] == "ldap://test.example.com"
-            assert config.connection_info["port"] == 3389
+            assert hasattr(config.connection_info, "server"), (
+                "connection_info should have server attribute"
+            )
+            assert config.connection_info.server == "ldap://test.example.com"
+            assert config.connection_info.port == 3389
 
         finally:
             # Restore original environment

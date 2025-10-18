@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextConstants
 
 from flext_ldap import FlextLdapValidations
 from flext_ldap.constants import FlextLdapConstants
@@ -581,7 +581,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test successful connection config validation."""
-        config: FlextTypes.Dict = {
+        config: dict[str, object] = {
             "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
             "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -598,7 +598,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with missing fields."""
-        config: FlextTypes.Dict = {
+        config: dict[str, object] = {
             "server": "ldap://localhost:389"
             # Missing bind_dn, password, base_dn
         }
@@ -617,7 +617,7 @@ class TestFlextLdapValidations:
         self, validations: FlextLdapValidations
     ) -> None:
         """Test connection config validation with invalid fields."""
-        config: FlextTypes.Dict = {
+        config: dict[str, object] = {
             "server": "invalid-uri",
             "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",

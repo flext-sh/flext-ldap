@@ -1,4 +1,11 @@
-"""LDAP Constants - Essential constants only, using FlextConstants.LDAP exclusively.
+"""LDAP Constants - Extends FlextLdifConstants with LDAP-specific additions only.
+
+Reuses FlextLdifConstants for common patterns:
+- DN patterns, LDAP servers, encoding, objectclasses
+- ACL formats, DN patterns, server quirks
+- Operational attributes
+
+Defines ONLY LDAP-specific constants not in flext-ldif.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,101 +16,202 @@ from __future__ import annotations
 
 from typing import Final, Literal
 
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextConstants
+from flext_ldif import FlextLdifConstants
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - Consolidated from LdapLiteralTypes
+# =========================================================================
+
+type SearchScope = Literal["base", "onelevel", "subtree", "children"]
+type ModifyOperation = Literal["add", "delete", "replace"]
+type UpdateStrategy = Literal["merge", "replace"]
+type AclType = Literal["openldap", "oracle", "aci", "active_directory", "auto"]
+type ObjectClassKind = Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
+type ConnectionState = Literal["unbound", "bound", "closed", "error"]
+type OperationType = Literal["search", "add", "modify", "delete", "compare", "extended"]
+type SecurityLevel = Literal["none", "simple", "sasl"]
+type AuthenticationMethod = Literal["simple", "sasl", "external"]
+type ConnectionMode = Literal["sync", "async"]
+type IpMode = Literal[
+    "IP_SYSTEM_DEFAULT",
+    "IP_V4_ONLY",
+    "IP_V4_PREFERRED",
+    "IP_V6_ONLY",
+    "IP_V6_PREFERRED",
+]
+type ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+type LdapProjectType = Literal[
+    "ldap-service",
+    "directory-service",
+    "ldap-client",
+    "identity-provider",
+    "ldap-sync",
+    "directory-sync",
+    "user-provisioning",
+    "ldap-gateway",
+    "authentication-service",
+    "sso-service",
+    "directory-api",
+    "ldap-proxy",
+    "identity-management",
+    "user-directory",
+    "group-management",
+    "ldap-migration",
+]
+
+# =========================================================================
+# MODULE-LEVEL ACL PERMISSION & SUBJECT TYPE CONSTANTS
+# =========================================================================
+
+# Permission types
+type Permission = Literal[
+    "read",
+    "write",
+    "add",
+    "delete",
+    "search",
+    "compare",
+    "browse",
+    "proxy",
+    "auth",
+    "all",
+    "none",
+]
+
+# ACL subject types
+type SubjectType = Literal[
+    "user", "group", "dn", "self", "anonymous", "authenticated", "anyone"
+]
+
+# ACL target types
+type TargetType = Literal["dn", "attributes", "entry", "filter"]
+
+# ACL format types
+type AclFormat = Literal[
+    "openldap", "oracle", "aci", "active_directory", "unified", "auto"
+]
+
+# =========================================================================
+# MODULE-LEVEL ACL KEYWORD CONSTANTS
+# =========================================================================
+
+# OpenLDAP ACL keywords
+OPENLDAP_ACCESS_TO: Final[str] = "access to"
+OPENLDAP_BY: Final[str] = "by"
+OPENLDAP_ATTRS: Final[str] = "attrs="
+OPENLDAP_DN_EXACT: Final[str] = "dn.exact="
+OPENLDAP_DN_REGEX: Final[str] = "dn.regex="
+OPENLDAP_FILTER: Final[str] = "filter="
+
+# Oracle ACL keywords
+ORACLE_ACCESS_TO: Final[str] = "access to"
+ORACLE_ATTR: Final[str] = "attr="
+ORACLE_ENTRY: Final[str] = "entry"
+ORACLE_BY: Final[str] = "by"
+ORACLE_GROUP: Final[str] = "group="
+ORACLE_USER: Final[str] = "user="
+
+# 389 DS/Apache DS ACI keywords
+ACI_TARGET: Final[str] = "target"
+ACI_TARGETATTR: Final[str] = "targetattr"
+ACI_TARGETFILTER: Final[str] = "targetfilter"
+ACI_VERSION: Final[str] = "version 3.0"
+ACI_ACL: Final[str] = "acl"
+ACI_ALLOW: Final[str] = "allow"
+ACI_DENY: Final[str] = "deny"
+ACI_USERDN: Final[str] = "userdn"
+ACI_GROUPDN: Final[str] = "groupdn"
+
+# =========================================================================
+# MODULE-LEVEL ACL PARSING CONSTANTS
+# =========================================================================
+
+MIN_ACL_PARTS: Final[int] = 4
+ACL_RULE_PARTS: Final[int] = 2
+OPENLDAP_PREFIX_LENGTH: Final[int] = 3
+MIN_OC_LENGTH: Final[int] = 3
+
+# ACL conversion warning messages
+ACL_PERMISSION_NOT_SUPPORTED: Final[str] = "Perm '{permission}' not in {format}"
+ACL_FEATURE_LOSS: Final[str] = "Feature '{feature}' lost in {format}"
+ACL_SYNTAX_MISMATCH: Final[str] = "Syntax not translatable"
 
 
-class FlextLdapConstants(FlextConstants):
-    """LDAP domain-specific constants - essential constants only.
+class FlextLdapConstants(FlextLdifConstants):
+    """LDAP domain-specific constants extending FlextLdifConstants.
 
-    Extends FlextConstants from flext-core. Use parent constants directly:
-    - Network constants → FlextConstants.Network.*
-    - Platform constants → FlextConstants.Platform.*
-    - Performance constants → FlextConstants.Performance.*
-    - Errors → FlextConstants.Errors.*
+    Reuses from FlextLdifConstants:
+    - DnPatterns, ObjectClasses, Encoding, LdapServers
+    - AclFormats, OperationalAttributes, EntryType
+    - Schema, Acl, LiteralTypes and all LDIF patterns
+
+    Adds ONLY LDAP-specific extensions:
+    - LDAP Protocol (RFC 4511 scopes, ports)
+    - LDAP Connection management
+    - LDAP-specific ACL keywords and formats
+    - LDAP operation types and validation
+
+    Dependency Chain:
+    - FlextLdapConstants → FlextLdifConstants → FlextConstants
     """
+
+    # Re-export commonly used flext-ldif constants for convenience
+    DnPatterns = FlextLdifConstants.DnPatterns
+    ObjectClasses = FlextLdifConstants.ObjectClasses
+    Encoding = FlextLdifConstants.Encoding
+    LdapServers = FlextLdifConstants.LdapServers
+    Servers = FlextLdifConstants.LdapServers
+    EntryType = FlextLdifConstants.EntryType
+    AclFormats = FlextLdifConstants.AclFormats
+    OperationalAttributes = FlextLdifConstants.OperationalAttributes
 
     # Direct access constants for backward compatibility
     DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
     DEFAULT_PAGE_SIZE: Final[int] = FlextConstants.Performance.DEFAULT_PAGE_SIZE
-
-    # LDAP port constants for compatibility
     LDAP_DEFAULT_PORT: Final[int] = 389
     LDAPS_DEFAULT_PORT: Final[int] = 636
 
     # =========================================================================
-    # LDAP-SPECIFIC CONSTANTS ONLY - Essential domain constants
+    # PROTOCOL CONSTANTS
     # =========================================================================
 
     class Protocol:
-        """LDAP protocol-specific constants.
+        """LDAP protocol-specific constants (RFC 4511)."""
 
-        Standard LDAP protocol constants. These are LDAP-specific and not
-        available in flext-core Platform constants.
-        """
-
-        # LDAP protocols (domain-specific string values)
         LDAP: Final[str] = "ldap"
         LDAPS: Final[str] = "ldaps"
-
-        # LDAP standard ports (RFC 4511)
         DEFAULT_PORT: Final[int] = 389
         DEFAULT_SSL_PORT: Final[int] = 636
-
-        # Aliases for compatibility (referenced in examples/tests)
-        LDAP_DEFAULT_PORT: Final[int] = DEFAULT_PORT
-        LDAPS_DEFAULT_PORT: Final[int] = DEFAULT_SSL_PORT
-
-        # Timeout constants
         DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-
-        # LDAP URIs (domain-specific defaults)
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
-
-        # Limits for LDAP data
         MAX_DESCRIPTION_LENGTH: Final[int] = 1024
 
     class Connection:
-        """LDAP connection-specific constants.
+        """LDAP connection-specific constants."""
 
-        Note: Use FlextConstants directly for:
-        - DEFAULT_TIMEOUT → FlextConstants.Network.DEFAULT_TIMEOUT
-        - DEFAULT_POOL_SIZE → FlextConstants.Performance.DEFAULT_DB_POOL_SIZE
-        - DEFAULT_PAGE_SIZE → FlextConstants.Performance.DEFAULT_PAGE_SIZE
-        """
-
-        # Connection settings (LDAP-specific defaults)
         DEFAULT_TIMEOUT: Final[int] = 30
         DEFAULT_PAGE_SIZE: Final[int] = 100
-
-        # LDAP-specific page sizes
         DEFAULT_SEARCH_PAGE_SIZE: Final[int] = 100
         MAX_PAGE_SIZE_GENERIC: Final[int] = 1000
         MAX_PAGE_SIZE_AD: Final[int] = 100000
 
     class Scopes:
-        """LDAP search scope constants.
+        """LDAP search scope constants (RFC 4511)."""
 
-        Standard RFC 4511 scope constants. These are LDAP-specific and not
-        available in flext-core Platform constants.
-        """
-
-        # RFC 4511 standard search scopes
         BASE: Final[str] = "base"
         ONELEVEL: Final[str] = "onelevel"
         SUBTREE: Final[str] = "subtree"
-
-        # LDAP-specific scope (not in RFC 4511)
         CHILDREN: Final[str] = "children"
 
+    # =========================================================================
+    # LDAP ATTRIBUTE NAMES - High frequency usage (63 references)
+    # =========================================================================
+
     class LdapAttributeNames:
-        """LDAP attribute names for convenience access.
+        """LDAP attribute names with convenience attribute lists."""
 
-        Consolidated LDAP attribute constants with both short names and
-        convenience attribute lists for common LDAP operations.
-        """
-
-        # Core attributes
         DN: Final[str] = "dn"
         OBJECT_CLASS: Final[str] = "objectClass"
         CN: Final[str] = "cn"
@@ -113,20 +221,14 @@ class FlextLdapConstants(FlextConstants):
         UID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
         USER_PASSWORD: Final[str] = "userPassword"
-
-        # Aliases for backward compatibility (long-form names)
-        COMMON_NAME: Final[str] = "cn"  # Alias for CN
-        SURNAME: Final[str] = "sn"  # Alias for SN
-        USER_ID: Final[str] = "uid"  # Alias for UID
-
-        # Group attributes
+        COMMON_NAME: Final[str] = "cn"
+        SURNAME: Final[str] = "sn"
+        USER_ID: Final[str] = "uid"
         MEMBER: Final[str] = "member"
         UNIQUE_MEMBER: Final[str] = "uniqueMember"
         MEMBER_OF: Final[str] = "memberOf"
         OWNER: Final[str] = "owner"
         GID_NUMBER: Final[str] = "gidNumber"
-
-        # Additional common attributes
         TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
         MOBILE: Final[str] = "mobile"
         DEPARTMENT: Final[str] = "department"
@@ -136,11 +238,9 @@ class FlextLdapConstants(FlextConstants):
         EMPLOYEE_NUMBER: Final[str] = "employeeNumber"
         EMPLOYEE_TYPE: Final[str] = "employeeType"
 
-        # Convenience attribute sets (moved from removed Attributes class)
-        MINIMAL_USER_ATTRS: Final[FlextTypes.StringList] = ["uid", "cn", "mail"]
-        MINIMAL_GROUP_ATTRS: Final[FlextTypes.StringList] = ["cn", "member"]
-
-        ALL_USER_ATTRS: Final[FlextTypes.StringList] = [
+        MINIMAL_USER_ATTRS: Final[list[str]] = ["uid", "cn", "mail"]
+        MINIMAL_GROUP_ATTRS: Final[list[str]] = ["cn", "member"]
+        ALL_USER_ATTRS: Final[list[str]] = [
             "objectClass",
             "cn",
             "sn",
@@ -152,7 +252,7 @@ class FlextLdapConstants(FlextConstants):
             "description",
             "memberOf",
         ]
-        ALL_GROUP_ATTRS: Final[FlextTypes.StringList] = [
+        ALL_GROUP_ATTRS: Final[list[str]] = [
             "objectClass",
             "cn",
             "description",
@@ -163,92 +263,74 @@ class FlextLdapConstants(FlextConstants):
         ]
 
         @classmethod
-        def get_group_attributes(cls) -> FlextTypes.StringList:
+        def get_group_attributes(cls) -> list[str]:
             """Get all standard group attributes."""
             return cls.ALL_GROUP_ATTRS.copy()
 
-    class ObjectClasses:
-        """Standard LDAP object classes."""
-
-        TOP: Final[str] = "top"
-        PERSON: Final[str] = "person"
-        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
-        INET_ORG_PERSON: Final[str] = "inetOrgPerson"
-        ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
-        GROUP_OF_NAMES: Final[str] = "groupOfNames"
-        GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
+    # =========================================================================
+    # SEARCH FILTERS - Consolidated from Filters class
+    # =========================================================================
 
     class Filters:
-        """Default LDAP search filters for common operations."""
+        """Default LDAP search filters."""
 
-        # User filters
         DEFAULT_USER_FILTER: Final[str] = "(objectClass=inetOrgPerson)"
         ALL_USERS_FILTER: Final[str] = "(objectClass=person)"
-        ACTIVE_USERS_FILTER: Final[str] = (
-            "(&(objectClass=inetOrgPerson)"
-            "(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
-        )
-
-        # Group filters
+        # userAccountControl:1.2.840.113556.1.4.803:=2 → disabled
+        _IOP = "(objectClass=inetOrgPerson)"
+        _COND = "(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
+        ACTIVE_USERS_FILTER: Final[str] = f"(&{_IOP}{_COND})"
         DEFAULT_GROUP_FILTER: Final[str] = "(objectClass=groupOfNames)"
-        ALL_GROUPS_FILTER: Final[str] = (
-            "(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames))"
-        )
-
-        # Common combined filters
+        _GOU_FILTER = "(objectClass=groupOfUniqueNames)"
+        ALL_GROUPS_FILTER: Final[str] = f"(|(objectClass=groupOfNames){_GOU_FILTER})"
         ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
         ORGANIZATIONAL_UNITS_FILTER: Final[str] = "(objectClass=organizationalUnit)"
 
-    # LDAP-specific validation constants
+    # =========================================================================
+    # VALIDATION CONSTANTS
+    # =========================================================================
+
     class Validation(FlextConstants.Validation):
         """LDAP-specific validation constants."""
 
-        # LDAP DN validation
         MIN_DN_PARTS: Final[int] = 2
         MIN_DN_LENGTH: Final[int] = 3
         MAX_DN_LENGTH: Final[int] = 2048
-        DN_PATTERN: Final[str] = (
-            r"^[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+(?:,[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+)*$"
-        )
-
-        # LDAP filter validation
+        # DN RDN format: attr=value(,attr=value)*
+        _RDN_PART = r"[a-zA-Z0-9][a-zA-Z0-9\-_]*=[^,]+"
+        DN_PATTERN: Final[str] = rf"^{_RDN_PART}(?:,{_RDN_PART})*$"
         MIN_FILTER_LENGTH: Final[int] = 1
         MAX_FILTER_LENGTH: Final[int] = 8192
         FILTER_PATTERN: Final[str] = r"^\(.+\)$"
-
-        # LDAP password validation
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
+        MIN_CONNECTION_ARGS: Final[int] = 3
 
-        # LDAP connection validation
-        MIN_CONNECTION_ARGS: Final[int] = 3  # server_uri, bind_dn, password
+    # =========================================================================
+    # ERROR & VALIDATION MESSAGES
+    # =========================================================================
 
-    # LDAP-specific error and validation messages
     class Messages(FlextConstants.Messages):
         """LDAP-specific error and validation messages."""
 
-        # LDAP validation messages
         HOST_CANNOT_BE_EMPTY: Final[str] = "Host cannot be empty"
         CONNECTION_FAILED: Final[str] = "Connection failed"
         FIELD_CANNOT_BE_EMPTY: Final[str] = "{0} cannot be empty"
         INVALID_DN_FORMAT: Final[str] = "Invalid DN format"
         INVALID_SEARCH_FILTER: Final[str] = "Invalid LDAP search filter"
         CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed: {0}"
-
-        # LDAP error messages following FLEXT standards
-        # INVALID_EMAIL_FORMAT inherited from FlextConstants.Messages
         EMAIL_VALIDATION_FAILED: Final[str] = "Invalid email format: {error}"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
-
-        # Client and server error messages
         CLIENT_NOT_INITIALIZED: Final[str] = "Client not initialized"
         NO_SERVER_OPERATIONS_AVAILABLE: Final[str] = "No server operations available"
 
-    # LDAP-specific error codes
+    # =========================================================================
+    # ERROR CODES
+    # =========================================================================
+
     class Errors(FlextConstants.Errors):
         """LDAP-specific error codes."""
 
-        # LDAP-specific errors
         LDAP_BIND_ERROR: Final[str] = "LDAP_BIND_ERROR"
         LDAP_SEARCH_ERROR: Final[str] = "LDAP_SEARCH_ERROR"
         LDAP_ADD_ERROR: Final[str] = "LDAP_ADD_ERROR"
@@ -257,7 +339,10 @@ class FlextLdapConstants(FlextConstants):
         LDAP_INVALID_DN: Final[str] = "LDAP_INVALID_DN"
         LDAP_INVALID_FILTER: Final[str] = "LDAP_INVALID_FILTER"
 
-    # LDAP-specific default values
+    # =========================================================================
+    # DEFAULT VALUES - High frequency usage (31 references)
+    # =========================================================================
+
     class Defaults(FlextConstants.Defaults):
         """LDAP-specific default values."""
 
@@ -265,364 +350,94 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_SEARCH_BASE: Final[str] = ""
         DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
         DEFAULT_SERVICE_VERSION: Final[str] = "1.0.0"
-        MAX_SEARCH_ENTRIES: Final[int] = (
-            FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
-        )
-
-        # Valid LDAP user for testing
+        # Import max validation size from core performance constants
+        _MAX_VAL_SZ = FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
+        MAX_SEARCH_ENTRIES: Final[int] = _MAX_VAL_SZ
         VALID_LDAP_USER_NAME: Final[str] = "testuser"
         VALID_LDAP_USER_DESCRIPTION: Final[str] = "Test LDAP User"
-
-        # Default values for LDAP models
         DEFAULT_DEPARTMENT: Final[str] = "IT"
         DEFAULT_ORGANIZATION: Final[str] = "Company"
         DEFAULT_TITLE: Final[str] = "Employee"
         DEFAULT_STATUS: Final[str] = "active"
-
-        # Error reporting constants
         ERROR_SUMMARY_MAX_ITEMS: Final[int] = 3
-
-        # Domain validation constants
         MIN_USERNAME_LENGTH: Final[int] = 3
         MIN_GROUP_NAME_LENGTH: Final[int] = 2
         MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
-
-        # Service limits
-        MAX_DESCRIPTION_LENGTH: Final[int] = (
-            500  # Maximum description length for groups/users
-        )
-
-        # Connection argument count
+        MAX_DESCRIPTION_LENGTH: Final[int] = 500
         MIN_CONNECTION_ARGS: Final[int] = 3
+
+    # =========================================================================
+    # RETRY & TIMING CONSTANTS
+    # =========================================================================
 
     class LdapRetry:
         """LDAP retry and timing constants."""
 
-        # Server readiness retry timing
-        SERVER_READY_RETRY_DELAY: Final[int] = 2  # seconds
+        SERVER_READY_RETRY_DELAY: Final[int] = 2
         SERVER_READY_MAX_RETRIES: Final[int] = 10
-        SERVER_READY_TIMEOUT: Final[int] = 30  # seconds
-
-        # Connection retry timing
-        CONNECTION_RETRY_DELAY: Final[float] = 1.0  # seconds
+        SERVER_READY_TIMEOUT: Final[int] = 30
+        CONNECTION_RETRY_DELAY: Final[float] = 1.0
         CONNECTION_MAX_RETRIES: Final[int] = 3
+
+    # =========================================================================
+    # ACL SUPPORT - Consolidated from multiple keyword classes
+    # =========================================================================
 
     class AclFormat:
         """Supported ACL format identifiers."""
 
         OPENLDAP: Final[str] = "openldap"
         ORACLE: Final[str] = "oracle"
-        ACI: Final[str] = "aci"  # 389 DS / Apache DS
+        ACI: Final[str] = "aci"
         ACTIVE_DIRECTORY: Final[str] = "active_directory"
         UNIFIED: Final[str] = "unified"
-        AUTO: Final[str] = "auto"  # Auto-detect format
+        AUTO: Final[str] = "auto"
 
-    class DictKeys:
-        """Standard dictionary key names for LDAP operations."""
+    # =========================================================================
+    # LDAP DICT KEYS - High frequency usage (62 references)
+    # =========================================================================
 
-        # ACL operation keys
-        OPERATION: Final[str] = "operation"
-        ACL_STRING: Final[str] = "acl_string"
+    class LdapDictKeys(FlextLdifConstants.DictKeys):
+        """Extend FlextLdifConstants.DictKeys with LDAP-specific keys."""
+
         ACL_DATA: Final[str] = "acl_data"
-        TARGET_FORMAT: Final[str] = "target_format"
-        FORMAT: Final[str] = "format"
-
-        # LDAP entry attribute keys
-        DN: Final[str] = "dn"
-        UID: Final[str] = "uid"
-        CN: Final[str] = "cn"
-        SN: Final[str] = "sn"
-        MAIL: Final[str] = "mail"
-        GIVEN_NAME: Final[str] = "given_name"
-        TELEPHONE_NUMBER: Final[str] = "telephone_number"
-        MOBILE: Final[str] = "mobile"
-        DEPARTMENT: Final[str] = "department"
-        TITLE: Final[str] = "title"
-        ORGANIZATION: Final[str] = "organization"
-        ORGANIZATIONAL_UNIT: Final[str] = "organizational_unit"
-        USER_PASSWORD: Final[str] = "user_password"  # nosec B105 - Dictionary key
-
-        # LDAP search keys
-        BASE_DN: Final[str] = "base_dn"
-        FILTER: Final[str] = "filter"
-        FILTER_STR: Final[str] = "filter_str"
-
-        # LDAP connection keys
+        GENERIC: Final[str] = "generic"
         LDAP_SERVER: Final[str] = "ldap_server"
         LDAP_PORT: Final[str] = "ldap_port"
         BIND_DN: Final[str] = "bind_dn"
         BIND_PASSWORD: Final[str] = "bind_password"
         LDAP_BIND_PASSWORD: Final[str] = "ldap_bind_password"
-
-        # Operation config keys
-        OPERATION_TYPE: Final[str] = "operation_type"
-
-        # Additional config/operation keys
-        SERVER: Final[str] = "server"
         SERVER_URI: Final[str] = "server_uri"
-        PORT: Final[str] = "port"
-        ATTRIBUTES: Final[str] = "attributes"
-        ATTRIBUTE: Final[str] = "attribute"
-        VALUES: Final[str] = "values"
-        INDENT: Final[str] = "indent"
-        SORT_KEYS: Final[str] = "sort_keys"
-        INCLUDE_CREDENTIALS: Final[str] = "include_credentials"
         DEFAULT_TIMEOUT: Final[str] = "default_timeout"
         MAX_PAGE_SIZE: Final[str] = "max_page_size"
-        SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
-        SCHEMA_SUBENTRY: Final[str] = "schema_subentry"
-
-        # ACL-specific keys
-        ACL_ATTRIBUTE: Final[str] = "acl_attribute"
-        ACL_FORMAT: Final[str] = "acl_format"
-        SOURCE_FORMAT: Final[str] = "source_format"
-        PERMISSIONS: Final[str] = "permissions"
-        SUBJECT: Final[str] = "subject"
-        TARGET: Final[str] = "target"
-        TARGET_TYPE: Final[str] = "target_type"
-        ACCESS: Final[str] = "access"
+        OPERATION: Final[str] = "operation"
+        ACL_STRING: Final[str] = "acl_string"
         WHO: Final[str] = "who"
-        TYPE: Final[str] = "type"
-        DESCRIPTION: Final[str] = "description"
-        SUCCESS: Final[str] = "success"
+        ATTRIBUTE: Final[str] = "attribute"
+        VALUES: Final[str] = "values"
+        OPERATION_TYPE: Final[str] = "operation_type"
+        PORT: Final[str] = "port"
+        BASE_DN: Final[str] = "base_dn"
+        SERVER: Final[str] = "server"
+        TARGET_TYPE: Final[str] = "target_type"
+        SUBJECT: Final[str] = "subject"
+        ORGANIZATION: Final[str] = "organization"
+        TITLE: Final[str] = "title"
+        DEPARTMENT: Final[str] = "department"
+        MOBILE: Final[str] = "mobile"
+        GIVEN_NAME: Final[str] = "given_name"
+        USER_PASSWORD: Final[str] = "user_password"
 
-        # Server type keys
-        GENERIC: Final[str] = "generic"
-
-    class Permission:
-        """Standard ACL permissions mapped across formats."""
-
-        READ: Final[str] = "read"
-        WRITE: Final[str] = "write"
-        ADD: Final[str] = "add"
-        DELETE: Final[str] = "delete"
-        SEARCH: Final[str] = "search"
-        COMPARE: Final[str] = "compare"
-        BROWSE: Final[str] = "browse"
-        PROXY: Final[str] = "proxy"
-        AUTH: Final[str] = "auth"
-        ALL: Final[str] = "all"
-        NONE: Final[str] = "none"
-
-    class SubjectType:
-        """ACL subject types."""
-
-        USER: Final[str] = "user"
-        GROUP: Final[str] = "group"
-        DN: Final[str] = "dn"
-        SELF: Final[str] = "self"
-        ANONYMOUS: Final[str] = "anonymous"
-        AUTHENTICATED: Final[str] = "authenticated"
-        ANYONE: Final[str] = "anyone"
-
-    class TargetType:
-        """ACL target types."""
-
-        DN: Final[str] = "dn"
-        ATTRIBUTES: Final[str] = "attributes"
-        ENTRY: Final[str] = "entry"
-        FILTER: Final[str] = "filter"
-
-    class OpenLdapKeywords:
-        """OpenLDAP ACL keywords."""
-
-        ACCESS_TO: Final[str] = "access to"
-        BY: Final[str] = "by"
-        ATTRS: Final[str] = "attrs="
-        DN_EXACT: Final[str] = "dn.exact="
-        DN_REGEX: Final[str] = "dn.regex="
-        FILTER: Final[str] = "filter="
-
-    class OracleKeywords:
-        """Oracle Directory ACL keywords."""
-
-        ACCESS_TO: Final[str] = "access to"
-        ATTR: Final[str] = "attr="
-        ENTRY: Final[str] = "entry"
-        BY: Final[str] = "by"
-        GROUP: Final[str] = "group="
-        USER: Final[str] = "user="
-
-    class AciKeywords:
-        """389 DS/Apache DS ACI keywords."""
-
-        TARGET: Final[str] = "target"
-        TARGETATTR: Final[str] = "targetattr"
-        TARGETFILTER: Final[str] = "targetfilter"
-        VERSION: Final[str] = "version 3.0"
-        ACL: Final[str] = "acl"
-        ALLOW: Final[str] = "allow"
-        DENY: Final[str] = "deny"
-        USERDN: Final[str] = "userdn"
-        GROUPDN: Final[str] = "groupdn"
-
-    class ConversionWarnings:
-        """Warning messages for ACL conversion."""
-
-        PERMISSION_NOT_SUPPORTED: Final[str] = (
-            "Permission '{permission}' not supported in {format}, using closest match"
-        )
-        FEATURE_LOSS: Final[str] = (
-            "Feature '{feature}' cannot be preserved in {format} conversion"
-        )
-        SYNTAX_MISMATCH: Final[str] = (
-            "Syntax pattern not directly translatable between formats"
-        )
-
-    class Parsing:
-        """ACL parsing constants."""
-
-        MIN_ACL_PARTS: Final[int] = 4  # Minimum parts for valid ACL (OpenLDAP format)
-        ACL_RULE_PARTS: Final[int] = (
-            2  # Number of parts in an ACL rule (<who> <access>)
-        )
-        OPENLDAP_PREFIX_LENGTH: Final[int] = 3  # Length of "olc" prefix
-        MIN_OC_LENGTH: Final[int] = 3  # Minimum length for object class with prefix
+    # Alias for backward compatibility
+    DictKeys = LdapDictKeys
 
     # =========================================================================
-    # LITERAL TYPES - All Literal types centralized here per FLEXT standards
+    # VERSION CONSTANTS
     # =========================================================================
-
-    class LiteralTypes:
-        """Centralized Literal types for LDAP operations."""
-
-        # LDAP scope literals
-        SEARCH_SCOPE_BASE: Final = "BASE"
-        SEARCH_SCOPE_LEVEL: Final = "LEVEL"
-        SEARCH_SCOPE_SUBTREE: Final = "SUBTREE"
-
-        # LDAP modify operation literals
-        MODIFY_ADD: Final = "MODIFY_ADD"
-        MODIFY_DELETE: Final = "MODIFY_DELETE"
-        MODIFY_REPLACE: Final = "MODIFY_REPLACE"
-
-        # LDAP connection state literals
-        CONNECTION_STATE_UNBOUND: Final = "unbound"
-        CONNECTION_STATE_BOUND: Final = "bound"
-        CONNECTION_STATE_CLOSED: Final = "closed"
-        CONNECTION_STATE_ERROR: Final = "error"
-
-        # LDAP operation type literals
-        OPERATION_SEARCH: Final = "search"
-        OPERATION_ADD: Final = "add"
-        OPERATION_MODIFY: Final = "modify"
-        OPERATION_DELETE: Final = "delete"
-        OPERATION_COMPARE: Final = "compare"
-        OPERATION_EXTENDED: Final = "extended"
-
-        # ACL operation literals
-        OPERATION_PARSE: Final = "parse"
-        OPERATION_CONVERT: Final = "convert"
-
-        # LDAP security level literals
-        SECURITY_NONE: Final = "none"
-        SECURITY_SIMPLE: Final = "simple"
-        SECURITY_SASL: Final = "sasl"
-
-        # LDAP authentication method literals
-        AUTH_SIMPLE: Final = "simple"
-        AUTH_SASL: Final = "sasl"
-        AUTH_EXTERNAL: Final = "external"
-
-        # LDAP connection info literals
-        CONNECTION_INFO_ALL: Final = "ALL"
-        CONNECTION_INFO_DSA: Final = "DSA"
-        CONNECTION_INFO_NO_INFO: Final = "NO_INFO"
-        CONNECTION_INFO_SCHEMA: Final = "SCHEMA"
-
-        # LDAP connection mode literals
-        CONNECTION_MODE_SYNC: Final = "sync"
-        CONNECTION_MODE_ASYNC: Final = "async"
-
-        # LDAP IP mode literals
-        IP_MODE_SYSTEM_DEFAULT: Final = "IP_SYSTEM_DEFAULT"
-        IP_MODE_V4_ONLY: Final = "IP_V4_ONLY"
-        IP_MODE_V4_PREFERRED: Final = "IP_V4_PREFERRED"
-        IP_MODE_V6_ONLY: Final = "IP_V6_ONLY"
-        IP_MODE_V6_PREFERRED: Final = "IP_V6_PREFERRED"
-
-        # LDAP search scope literals
-
-        # LDAP connection state literals
-
-        # LDAP operation type literals
-
-        # LDAP security level literals
-
-        # LDAP authentication method literals
-
-        # LDAP project type literals
-        PROJECT_TYPE_LDAP_SERVICE: Final = "ldap-service"
-        PROJECT_TYPE_DIRECTORY_SERVICE: Final = "directory-service"
-        PROJECT_TYPE_LDAP_CLIENT: Final = "ldap-client"
-        PROJECT_TYPE_IDENTITY_PROVIDER: Final = "identity-provider"
-        PROJECT_TYPE_LDAP_SYNC: Final = "ldap-sync"
-        PROJECT_TYPE_DIRECTORY_SYNC: Final = "directory-sync"
-        PROJECT_TYPE_USER_PROVISIONING: Final = "user-provisioning"
-        PROJECT_TYPE_LDAP_GATEWAY: Final = "ldap-gateway"
-        PROJECT_TYPE_AUTHENTICATION_SERVICE: Final = "authentication-service"
-        PROJECT_TYPE_SSO_SERVICE: Final = "sso-service"
-        PROJECT_TYPE_DIRECTORY_API: Final = "directory-api"
-        PROJECT_TYPE_LDAP_PROXY: Final = "ldap-proxy"
-        PROJECT_TYPE_IDENTITY_MANAGEMENT: Final = "identity-management"
-        PROJECT_TYPE_USER_DIRECTORY: Final = "user-directory"
-        PROJECT_TYPE_GROUP_MANAGEMENT: Final = "group-management"
-        PROJECT_TYPE_LDAP_MIGRATION: Final = "ldap-migration"
-
-    # =========================================================================
-    # LITERAL TYPE DEFINITIONS - Centralized Literal types for ALL modules
-    # =========================================================================
-
-    # LDAP scope literals (CRITICAL: Use these instead of inline Literal types)
-    type SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
-    type ConnectionState = Literal["unbound", "bound", "closed", "error"]
-    type OperationType = Literal[
-        "search", "add", "modify", "delete", "compare", "extended"
-    ]
-    type SecurityLevel = Literal["none", "simple", "sasl"]
-    type AuthenticationMethod = Literal["simple", "sasl", "external"]
-
-    # LDAP modify operation literals
-    type ModifyOperation = Literal["MODIFY_ADD", "MODIFY_DELETE", "MODIFY_REPLACE"]
-    type UpdateStrategy = Literal["merge", "replace"]
-    type AclType = Literal["openldap", "oracle", "aci", "auto"]
-    type ObjectClassKind = Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
-
-    # LDAP connection and server literals
-    type ConnectionMode = Literal["sync", "async"]
-    type IpMode = Literal[
-        "IP_SYSTEM_DEFAULT",
-        "IP_V4_ONLY",
-        "IP_V4_PREFERRED",
-        "IP_V6_ONLY",
-        "IP_V6_PREFERRED",
-    ]
-    type ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
-
-    # LDAP project type literals
-    type LdapProjectType = Literal[
-        "ldap-service",
-        "directory-service",
-        "ldap-client",
-        "identity-provider",
-        "ldap-sync",
-        "directory-sync",
-        "user-provisioning",
-        "ldap-gateway",
-        "authentication-service",
-        "sso-service",
-        "directory-api",
-        "ldap-proxy",
-        "identity-management",
-        "user-directory",
-        "group-management",
-        "ldap-migration",
-    ]
 
     class Version:
         """Version constants for flext-ldap."""
 
-        # Version information from metadata
         CURRENT_VERSION: Final[str] = "0.9.0"
         VERSION_INFO: Final[tuple[int | str, ...]] = (0, 9, 0)
 
@@ -636,18 +451,51 @@ class FlextLdapConstants(FlextConstants):
             """Get version info tuple."""
             return cls.VERSION_INFO
 
-    class Servers:
-        """LDAP server type constants."""
-
-        # Server type identifiers
-        OPENLDAP1: Final[str] = "openldap1"
-        OPENLDAP2: Final[str] = "openldap2"
-        OID: Final[str] = "oid"  # Oracle Internet Directory
-        OUD: Final[str] = "oud"  # Oracle Unified Directory
-        AD: Final[str] = "ad"  # Active Directory
-        GENERIC: Final[str] = "generic"
-
 
 __all__ = [
+    "ACI_ACL",
+    "ACI_ALLOW",
+    "ACI_DENY",
+    "ACI_GROUPDN",
+    "ACI_TARGET",
+    "ACI_TARGETATTR",
+    "ACI_TARGETFILTER",
+    "ACI_USERDN",
+    "ACI_VERSION",
+    "ACL_FEATURE_LOSS",
+    "ACL_PERMISSION_NOT_SUPPORTED",
+    "ACL_RULE_PARTS",
+    "MIN_ACL_PARTS",
+    "MIN_OC_LENGTH",
+    "OPENLDAP_ACCESS_TO",
+    "OPENLDAP_ATTRS",
+    "OPENLDAP_BY",
+    "OPENLDAP_DN_EXACT",
+    "OPENLDAP_DN_REGEX",
+    "OPENLDAP_FILTER",
+    "OPENLDAP_PREFIX_LENGTH",
+    "ORACLE_ACCESS_TO",
+    "ORACLE_ATTR",
+    "ORACLE_BY",
+    "ORACLE_ENTRY",
+    "ORACLE_GROUP",
+    "ORACLE_USER",
+    "AclFormat",
+    "AclType",
+    "AuthenticationMethod",
+    "ConnectionInfo",
+    "ConnectionMode",
+    "ConnectionState",
     "FlextLdapConstants",
+    "IpMode",
+    "LdapProjectType",
+    "ModifyOperation",
+    "ObjectClassKind",
+    "OperationType",
+    "Permission",
+    "SearchScope",
+    "SecurityLevel",
+    "SubjectType",
+    "TargetType",
+    "UpdateStrategy",
 ]

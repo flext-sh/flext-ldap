@@ -7,15 +7,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextHandlers, FlextModels, FlextResult, FlextTypes
+from flext_core import FlextHandlers, FlextModels, FlextResult
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapConfigDict
 
 
-class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl]):
+class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
     """ACL Manager for comprehensive ACL operations."""
 
     def __init__(self) -> None:
@@ -33,7 +34,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
 
     def handle(
         self,
-        message: dict[str, object],
+        message: LdapConfigDict,
     ) -> FlextResult[FlextLdapModels.Acl]:
         """Handle ACL operations with proper type safety."""
         try:
@@ -43,7 +44,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
                     "Request must be a dictionary",
                 )
 
-            operation_raw = message.get(FlextLdapConstants.DictKeys.OPERATION)
+            operation_raw = message.get(FlextLdapConstants.LdapDictKeys.OPERATION)
             if not isinstance(operation_raw, str):
                 return FlextResult[FlextLdapModels.Acl].fail(
                     "Operation must be a string",
@@ -51,9 +52,9 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
             operation: str = operation_raw
 
             # Route to appropriate handler based on operation
-            if operation == FlextLdapConstants.LiteralTypes.OPERATION_PARSE:
+            if operation == FlextLdapConstants.LdapLiteralTypes.OPERATION_PARSE:
                 return self._handle_parse(message)
-            if operation == FlextLdapConstants.LiteralTypes.OPERATION_CONVERT:
+            if operation == FlextLdapConstants.LdapLiteralTypes.OPERATION_CONVERT:
                 return self._handle_convert(message)
             return FlextResult[FlextLdapModels.Acl].fail(
                 f"Unknown operation: {operation}",
@@ -66,11 +67,11 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
 
     def _handle_parse(
         self,
-        message: dict[str, object],
+        message: LdapConfigDict,
     ) -> FlextResult[FlextLdapModels.Acl]:
         """Handle ACL parsing operations."""
         try:
-            acl_string_raw = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
+            acl_string_raw = message.get(FlextLdapConstants.LdapDictKeys.ACL_STRING)
             if not isinstance(acl_string_raw, str):
                 return FlextResult[FlextLdapModels.Acl].fail(
                     "ACL string must be provided",
@@ -78,7 +79,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
             acl_string: str = acl_string_raw
 
             format_type_raw = message.get(
-                FlextLdapConstants.DictKeys.FORMAT,
+                FlextLdapConstants.LdapDictKeys.FORMAT,
                 FlextLdapConstants.AclFormat.AUTO,
             )
             final_format_type: str = (
@@ -105,18 +106,20 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
 
     def _handle_convert(
         self,
-        message: dict[str, object],
+        message: LdapConfigDict,
     ) -> FlextResult[FlextLdapModels.Acl]:
         """Handle ACL conversion operations."""
         try:
-            acl_data_raw = message.get(FlextLdapConstants.DictKeys.ACL_DATA)
+            acl_data_raw = message.get(FlextLdapConstants.LdapDictKeys.ACL_DATA)
             if not isinstance(acl_data_raw, str):
                 return FlextResult[FlextLdapModels.Acl].fail(
                     "ACL data must be a string",
                 )
             acl_data: str = acl_data_raw
 
-            target_format_raw = message.get(FlextLdapConstants.DictKeys.TARGET_FORMAT)
+            target_format_raw = message.get(
+                FlextLdapConstants.LdapDictKeys.TARGET_FORMAT
+            )
             if not isinstance(target_format_raw, str):
                 return FlextResult[FlextLdapModels.Acl].fail(
                     "Target format must be specified",
@@ -197,7 +200,7 @@ class FlextLdapAclManager(FlextHandlers[dict[str, object], FlextLdapModels.Acl])
 
     def batch_convert(
         self,
-        acls: FlextTypes.StringList,
+        acls: list[str],
         source_format: str,
         target_format: str,
     ) -> FlextResult[list[FlextLdapModels.Acl]]:

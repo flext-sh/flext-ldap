@@ -12,16 +12,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.typings import LdapResponseDict
 
 
-class FlextLdapSchema(FlextService[dict[str, Any] | None]):
+class FlextLdapSchema(FlextService[LdapResponseDict | None]):
     """Unified LDAP schema class following FLEXT one-class-per-module standards.
 
     This class consolidates ALL schema-related functionality including:
@@ -38,7 +39,11 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
     # =========================================================================
 
     class QuirksDetector(
-        FlextHandlers[dict[str, Any] | None, dict[str, Any] | None], ABC
+        FlextHandlers[
+            LdapResponseDict | None,
+            LdapResponseDict | None,
+        ],
+        ABC,
     ):
         """Abstract base class for LDAP server quirks detection."""
 
@@ -58,8 +63,8 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
 
         @override
         def handle(
-            self, message: dict[str, Any] | None
-        ) -> FlextResult[dict[str, Any] | None]:
+            self, message: LdapResponseDict | None
+        ) -> FlextResult[LdapResponseDict | None]:
             """Handle quirks detection message.
 
             Args:
@@ -70,19 +75,19 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
 
             """
             if not message:
-                return FlextResult[dict[str, Any] | None].fail(
+                return FlextResult[LdapResponseDict | None].fail(
                     "Message cannot be empty"
                 )
 
             # For generic detection, return a basic success result
-            return FlextResult[dict[str, Any] | None].ok({
+            return FlextResult[LdapResponseDict | None].ok({
                 "detected": True,
                 "type": "generic",
             })
 
         def detect_server_type(
             self,
-            server_info: dict[str, list[str]] | None,
+            server_info: LdapResponseDict | None,
         ) -> FlextLdapModels.LdapServerType | None:
             """Detect LDAP server type from server info.
 
@@ -133,7 +138,12 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
     # SCHEMA DISCOVERY - Automatic LDAP schema discovery and analysis
     # =========================================================================
 
-    class Discovery(FlextHandlers[dict[str, Any] | None, dict[str, Any] | None]):
+    class Discovery(
+        FlextHandlers[
+            LdapResponseDict | None,
+            LdapResponseDict | None,
+        ]
+    ):
         """Schema discovery operations with quirks-aware server detection.
 
         This class provides automatic schema discovery that adapts to different
@@ -162,8 +172,8 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
 
         @override
         def handle(
-            self, message: dict[str, Any] | None
-        ) -> FlextResult[dict[str, Any] | None]:
+            self, message: LdapResponseDict | None
+        ) -> FlextResult[LdapResponseDict | None]:
             """Handle schema discovery message.
 
             Args:
@@ -174,12 +184,12 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
 
             """
             if not message:
-                return FlextResult[dict[str, Any] | None].fail(
+                return FlextResult[LdapResponseDict | None].fail(
                     "Schema discovery message cannot be empty",
                 )
 
             # Return basic schema discovery result
-            return FlextResult[dict[str, Any] | None].ok({"schema_discovered": True})
+            return FlextResult[LdapResponseDict | None].ok({"schema_discovered": True})
 
         def get_schema_subentry_dn(self, server_type: str | None) -> FlextResult[str]:
             """Get schema subentry DN based on server type.
@@ -210,6 +220,8 @@ class FlextLdapSchema(FlextService[dict[str, Any] | None]):
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to get schema subentry DN: {e}")
 
-    def execute(self) -> FlextResult[dict[str, Any] | None]:
+    def execute(
+        self,
+    ) -> FlextResult[LdapResponseDict | None]:
         """Execute the main domain operation (required by FlextService)."""
-        return FlextResult[dict[str, Any] | None].ok(None)
+        return FlextResult[LdapResponseDict | None].ok(None)

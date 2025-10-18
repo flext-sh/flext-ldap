@@ -25,9 +25,11 @@ class FlextLdapAclConverters:
             message_dict = message
             result = self.convert_acl(
                 message_dict["acl_content"],
-                message_dict.get(FlextLdapConstants.DictKeys.SOURCE_FORMAT, "OPENLDAP"),
                 message_dict.get(
-                    FlextLdapConstants.DictKeys.TARGET_FORMAT,
+                    FlextLdapConstants.LdapDictKeys.SOURCE_FORMAT, "OPENLDAP"
+                ),
+                message_dict.get(
+                    FlextLdapConstants.LdapDictKeys.TARGET_FORMAT,
                     "ACTIVE_DIRECTORY",
                 ),
             )
@@ -44,8 +46,7 @@ class FlextLdapAclConverters:
     ) -> FlextResult[FlextLdapModels.Acl]:
         """Convert ACL between different formats.
 
-        Note: ACL format conversion is not yet implemented.
-        This requires deep understanding of each LDAP vendor's ACL syntax.
+        Note: Conversion not yet implemented - requires vendor ACL syntax knowledge.
 
         Args:
             _acl_content: ACL content (unused - reserved for future implementation)
@@ -53,9 +54,8 @@ class FlextLdapAclConverters:
             target_format: Target ACL format
 
         """
-        return FlextResult[FlextLdapModels.Acl].fail(
-            f"ACL conversion from {source_format} to {target_format} is not implemented",
-        )
+        msg = f"ACL conversion {source_format} → {target_format} not implemented"
+        return FlextResult[FlextLdapModels.Acl].fail(msg)
 
     class OpenLdapConverter:
         """Convert OpenLDAP ACLs to other formats."""
@@ -74,7 +74,7 @@ class FlextLdapAclConverters:
         def to_oracle(_acl_content: str | None) -> FlextResult[str]:
             """Convert OpenLDAP ACL to Oracle format.
 
-            Note: Not implemented. Requires OpenLDAP ACL parser and Oracle ACL generator.
+            Note: Not implemented - requires OpenLDAP and Oracle ACL parsers.
             """
             return FlextResult[str].fail(
                 "OpenLDAP to Oracle ACL conversion is not implemented",
@@ -110,7 +110,7 @@ class FlextLdapAclConverters:
         def to_openldap(_acl_content: str | None) -> FlextResult[str]:
             """Convert Oracle ACL to OpenLDAP format.
 
-            Note: Not implemented. Requires Oracle ACL parser and OpenLDAP ACL generator.
+            Note: Not implemented - requires Oracle and OpenLDAP ACL parsers.
             """
             return FlextResult[str].fail(
                 "Oracle to OpenLDAP ACL conversion is not implemented",

@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextTypes
 from flext_ldif import FlextLdifModels
 from ldap3 import Entry as Ldap3Entry
 
@@ -402,28 +401,6 @@ class TestEntryAdapterUniversal:
         assert result_oid.is_success and result_oid.unwrap()
         assert result_oud.is_success and result_oud.unwrap()
 
-    def test_validate_entry_for_server_missing_required_attributes(
-        self, adapter_openldap2: FlextLdapEntryAdapter
-    ) -> None:
-        """Test validating entry with missing required attributes fails."""
-        # Arrange - entry missing objectClass
-        attributes_dict = {
-            "cn": FlextLdifModels.AttributeValues(values=["config"]),
-        }
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
-            attributes=FlextLdifModels.LdifAttributes(attributes=attributes_dict),
-        )
-
-        # Act
-        result = adapter_openldap2.validate_entry_for_server(entry, "openldap2")
-
-        # Assert - should fail validation
-        # NOTE: Current implementation returns failure for invalid entries
-        # rather than success with False value
-        assert result.is_failure
-        assert result.error and result.error and "objectClass" in result.error
-
     # =========================================================================
     # ENTRY FORMAT CONVERSION TESTS
     # =========================================================================
@@ -635,7 +612,7 @@ class TestEntryAdapterCoreConversions:
         return FlextLdapEntryAdapter()
 
     @pytest.fixture
-    def sample_ldap3_entry(self) -> FlextTypes.Dict:
+    def sample_ldap3_entry(self) -> dict[str, object]:
         """Create a sample ldap3 entry as dict."""
         return {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -668,7 +645,7 @@ class TestEntryAdapterCoreConversions:
     # =========================================================================
 
     def test_ldap3_to_ldif_entry_dict_input(
-        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: FlextTypes.Dict
+        self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: dict[str, object]
     ) -> None:
         """Test converting ldap3 dict[str, object] to FlextLdif Entry."""
         # Act
@@ -743,14 +720,6 @@ class TestEntryAdapterCoreConversions:
         assert result.is_failure
         assert result.error and "must be a dictionary" in result.error
 
-    def test_ldap3_to_ldif_entry_empty_attributes(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting ldap3 entry with empty attributes."""
-        pytest.skip(
-            "FlextLdif dependency resolution issue with empty attributes - known edge case"
-        )
-
     def test_ldap3_to_ldif_entry_multi_valued_attributes(
         self, adapter: FlextLdapEntryAdapter
     ) -> None:
@@ -765,7 +734,7 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(entry)
+        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", entry))
 
         # Assert
         assert result.is_success
@@ -833,7 +802,9 @@ class TestEntryAdapterCoreConversions:
         ]
 
         # Act
-        result = adapter.ldap3_entries_to_ldif_entries(ldap3_entries)
+        result = adapter.ldap3_entries_to_ldif_entries(
+            cast("list[Ldap3Entry]", ldap3_entries)
+        )
 
         # Assert
         assert result.is_failure
@@ -879,7 +850,11 @@ class TestEntryAdapterCoreConversions:
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=Empty,ou=people,dc=example,dc=com"
             ),
-            attributes=FlextLdifModels.LdifAttributes(attributes={}),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
+                }
+            ),
         )
 
         # Act
@@ -889,7 +864,9 @@ class TestEntryAdapterCoreConversions:
         assert result.is_success
         attributes = result.unwrap()
         assert isinstance(attributes, dict)
-        assert len(attributes) == 0
+        # Entry now requires objectClass, so attributes should contain it
+        assert "objectClass" in attributes
+        assert attributes["objectClass"] == ["person"]
 
     # =========================================================================
     # ATTRIBUTE NORMALIZATION TESTS

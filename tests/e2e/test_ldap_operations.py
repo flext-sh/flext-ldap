@@ -191,28 +191,19 @@ class TestLdapE2EWithDockerServer:
         # 2. Test domain: dc=flext,dc=local
         # 3. Admin credentials: cn=admin,dc=flext,dc=local / admin123
 
-        FlextLdapClients()
+        api = FlextLdapClients()
 
         # Connection parameters for Docker test server
-
-        # For now, just test the structure
-        user_request = FlextLdapModels.CreateUserRequest(
-            dn="cn=e2etest,ou=users,dc=flext,dc=local",
-            uid="e2etest",
-            cn="E2E Test User",
-            sn="TestUser",
-            given_name="E2E",
-            mail="e2etest@example.com",
-            description=None,
-            telephone_number=None,
-            user_password=None,
-            department=None,
-            organizational_unit=None,
-            title=None,
-            organization=None,
+        # For now, just test the API structure
+        connection_result = api.connect(
+            server_uri="ldap://localhost:3389",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
 
-        assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"
+        # Should handle connection gracefully (will fail without real server)
+        assert connection_result is not None
+        assert hasattr(connection_result, "is_success")
 
     def test_real_ldap_search_operations(self) -> None:
         """Test real LDAP search operations with Docker server."""

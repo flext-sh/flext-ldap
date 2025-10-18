@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextLogger
 
 from flext_ldap import FlextLdap, FlextLdapConstants, FlextLdapModels
 
@@ -378,7 +378,7 @@ def validate_crud_operations(
 
         # Create parent OU if it doesn't exist
         if search_result.is_failure or not search_result.unwrap():
-            ou_attributes: dict[str, str | FlextTypes.StringList] = {
+            ou_attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -398,7 +398,7 @@ def validate_crud_operations(
     # Test 1: Create entry
     try:
         start_time = time.time()
-        attributes: dict[str, str | FlextTypes.StringList] = {
+        attributes: dict[str, str | list[str]] = {
             FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                 FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                 FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
@@ -577,11 +577,11 @@ def validate_batch_operations(
 
     # Test 1: Batch add entries
     try:
-        entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
+        entries: list[tuple[str, dict[str, str | list[str]]]] = []
 
         for i in range(batch_size):
             dn = f"cn=batch-test-{i},ou=users,{base_dn}"
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
