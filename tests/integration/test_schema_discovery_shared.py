@@ -40,8 +40,7 @@ class TestSharedSchemaDiscovery:
 
         # Verify schema data structure
         schema_data = schema_result.value
-        assert isinstance(schema_data, dict)
-        assert len(schema_data) > 0  # Should have some schema information
+        assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
 
     def test_detect_server_type_with_shared_server(
         self,
@@ -54,13 +53,11 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: dict[str, object] = schema_result.value
-        assert "server_type" in schema_data
+        schema_result_obj = schema_result.value
+        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
 
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
-        server_type = schema_data.get(
-            "server_type", FlextLdapModels.LdapServerType.GENERIC
-        )
+        server_type = schema_result_obj.server_type
         assert server_type in {
             FlextLdapModels.LdapServerType.OPENLDAP,
             FlextLdapModels.LdapServerType.GENERIC,
@@ -77,12 +74,12 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: dict[str, object] = schema_result.value
-        assert "server_info" in schema_data
+        schema_result_obj = schema_result.value
+        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
 
         # Verify server info contains expected fields
-        server_info = schema_data["server_info"]
-        assert isinstance(server_info, dict)
+        server_info = schema_result_obj.server_info
+        assert isinstance(server_info, FlextLdapModels.ServerInfo)
 
         # Check for common LDAP server attributes
         expected_attrs = ["vendorName", "description", "supportedLDAPVersion"]
@@ -101,11 +98,11 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: dict[str, object] = schema_result.value
-        assert "server_quirks" in schema_data
+        schema_result_obj = schema_result.value
+        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
 
         # Verify quirks are detected
-        quirks = schema_data["server_quirks"]
+        quirks = schema_result_obj.server_quirks
         assert isinstance(quirks, FlextLdapModels.ServerQuirks)
 
         # Should have quirks object
@@ -123,12 +120,14 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: dict[str, object] = schema_result.value
-        assert "server_info" in schema_data
+        schema_result_obj = schema_result.value
+        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
 
         # Test quirks detector directly
         quirks_detector = FlextLdapSchema.GenericQuirksDetector()
-        server_type = quirks_detector.detect_server_type(schema_data["server_info"])
+        server_type = quirks_detector.detect_server_type(
+            schema_result_obj.server_info.model_dump()
+        )
         # Convert LdapServerType enum to string for get_server_quirks
         server_type_str = server_type.value if server_type else None
         quirks = quirks_detector.get_server_quirks(server_type_str)
@@ -188,7 +187,7 @@ class TestSharedSchemaDiscovery:
 
             schema_data = schema_result.value
             assert schema_data is not None
-            assert isinstance(schema_data, dict)
+            assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
 
         finally:
             client.unbind()
@@ -204,20 +203,21 @@ class TestSharedSchemaDiscovery:
             f"Schema discovery failed: {schema_result.error}"
         )
 
-        schema_data: dict[str, object] = schema_result.value
-        assert schema_data is not None
+        schema_result_obj = schema_result.value
+        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert schema_result_obj is not None
 
         # Verify schema components are discovered
-        assert "object_classes" in schema_data
-        assert "attributes" in schema_data
-        assert "naming_contexts" in schema_data
-        assert "supported_controls" in schema_data
+        assert schema_result_obj.object_classes is not None
+        assert schema_result_obj.attributes is not None
+        assert schema_result_obj.naming_contexts is not None
+        assert schema_result_obj.supported_controls is not None
 
         # Verify we got some schema data (even if minimal for test server)
-        assert isinstance(schema_data["object_classes"], dict)
-        assert isinstance(schema_data["attributes"], dict)
-        assert isinstance(schema_data["naming_contexts"], list)
-        assert isinstance(schema_data["supported_controls"], list)
+        assert isinstance(schema_result_obj.object_classes, dict)
+        assert isinstance(schema_result_obj.attributes, dict)
+        assert isinstance(schema_result_obj.naming_contexts, list)
+        assert isinstance(schema_result_obj.supported_controls, list)
 
     def test_shared_ldap_schema_normalization(
         self,
@@ -232,6 +232,7 @@ class TestSharedSchemaDiscovery:
 
         schema_data = schema_result.value
         assert schema_data is not None
+        assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
 
         # Schema normalization is not implemented yet
         # Note: normalize_schema method is not implemented in the current client
@@ -248,7 +249,7 @@ class TestSharedUniversalOperations:
     ) -> None:
         """Test universal search with shared LDAP server."""
         # Test base search
-        search_result = shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search(
             base_dn=shared_ldap_config["base_dn"],
             filter_str="(objectClass=*)",
             scope="BASE",
@@ -313,7 +314,7 @@ class TestSharedUniversalOperations:
         # Note: Addition might fail if entry already exists
         if not add_result.is_success:
             # Verify the entry exists by searching
-            search_result = shared_ldap_client.search_universal(
+            search_result = shared_ldap_client.search(
                 base_dn=test_dn, filter_str="(objectClass=*)", scope="BASE"
             )
             # If search succeeds, entry exists (which is OK)

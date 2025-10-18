@@ -1,4 +1,18 @@
 # Architecture Decision Record (ADR) 001: Clean Architecture Adoption
+## Table of Contents
+
+- [Architecture Decision Record (ADR) 001: Clean Architecture Adoption](#architecture-decision-record-adr-001-clean-architecture-adoption)
+  - [Status](#status)
+  - [Context](#context)
+  - [Decision](#decision)
+  - [Alternatives Considered](#alternatives-considered)
+  - [Implementation Plan](#implementation-plan)
+  - [Validation](#validation)
+  - [Consequences](#consequences)
+  - [Implementation Status](#implementation-status)
+  - [References](#references)
+  - [ADR Maintenance](#adr-maintenance)
+
 
 ## Status
 
@@ -11,7 +25,8 @@
 ## Context
 
 **Problem Statement**
-FLEXT-LDAP needs a maintainable, testable, and scalable architecture that can evolve with changing business requirements while maintaining high code quality and enabling efficient development workflows.
+FLEXT-LDAP needs a maintainable, testable,
+     and scalable architecture that can evolve with changing business requirements while maintaining high code quality and enabling efficient development workflows.
 
 **Current Situation**
 The initial implementation used a traditional layered architecture with tight coupling between components. This led to:

@@ -51,7 +51,7 @@ from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -198,9 +198,9 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Perform universal search (automatically uses server-specific optimizations)
     logger.info(f"Performing universal search on {BASE_DN}")
-    result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = api.search_universal(
+    result: FlextResult[SearchResult] = api.search(
         base_dn=BASE_DN,
-        filter_str="(objectClass=*)",
+        search_filter="(objectClass=*)",
         attributes=["dn", "objectClass"],
     )
 

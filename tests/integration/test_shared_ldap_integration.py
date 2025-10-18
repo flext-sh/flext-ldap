@@ -33,7 +33,7 @@ class TestSharedLDAPIntegration:
         assert shared_ldap_client is not None
 
         # Test basic search to verify connection
-        search_result = shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search(
             base_dn=str(shared_ldap_config["base_dn"]),
             filter_str="(objectClass=*)",
             scope="BASE",
@@ -182,7 +182,7 @@ class TestSharedLDAPIntegration:
         # Note: Creation might fail if entry already exists, which is OK for shared container
         if not create_result.is_success:
             # If creation failed, try to search for existing entry
-            search_result = shared_ldap_client.search_universal(
+            search_result = shared_ldap_client.search(
                 base_dn=ou_dn, filter_str="(objectClass=*)", scope="BASE"
             )
             assert search_result.is_success, (
@@ -194,7 +194,7 @@ class TestSharedLDAPIntegration:
             )
 
         # Test searching for the entry
-        search_result = shared_ldap_client.search_universal(
+        search_result = shared_ldap_client.search(
             base_dn=ou_dn, filter_str="(objectClass=*)", scope="BASE"
         )
 

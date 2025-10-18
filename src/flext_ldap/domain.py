@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -46,7 +45,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def meets_password_policy(password: str) -> FlextResult[bool]:
-            """Check if password meets domain security requirements - delegates basic validation."""
+            """Check if password meets domain security requirements."""
             # First check basic password validation (length) via FlextLdapValidations
             basic_validation = FlextLdapValidations.validate_password(password)
             if basic_validation.is_failure:
@@ -58,9 +57,8 @@ class FlextLdapDomain:
             has_digit = any(c.isdigit() for c in password)
 
             if not (has_upper and has_lower and has_digit):
-                return FlextResult[bool].fail(
-                    "Password must contain uppercase, lowercase, and numeric characters",
-                )
+                msg = "Password must contain uppercase, lowercase, and digits"
+                return FlextResult[bool].fail(msg)
 
             return FlextResult[bool].ok(True)
 
@@ -79,7 +77,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def can_add_member_to_group(
-            group: FlextLdapModels.Group,
+            group: FlextLdapModels.Entry,
             member_dn: str,
             max_members: int = 1000,
         ) -> FlextResult[bool]:
@@ -160,7 +158,7 @@ class FlextLdapDomain:
         """Domain services implementing business logic."""
 
         @staticmethod
-        def calculate_user_display_name(user: FlextLdapModels.LdapUser) -> str:
+        def calculate_user_display_name(user: FlextLdapModels.Entry) -> str:
             """Calculate display name for user based on domain rules."""
             # Priority: displayName > givenName + sn > cn > uid
             if user.display_name:
@@ -175,7 +173,7 @@ class FlextLdapDomain:
             return user.uid or "Unknown User"
 
         @staticmethod
-        def determine_user_status(user: FlextLdapModels.LdapUser) -> str:
+        def determine_user_status(user: FlextLdapModels.Entry) -> str:
             """Determine user status based on LDAP attributes."""
             # Check for account lock attributes
             lock_attrs = [
@@ -202,8 +200,8 @@ class FlextLdapDomain:
 
         @staticmethod
         def validate_group_membership_rules(
-            user: FlextLdapModels.LdapUser,
-            group: FlextLdapModels.Group,
+            user: FlextLdapModels.Entry,
+            group: FlextLdapModels.Entry,
         ) -> FlextResult[bool]:
             """Validate if user can be member of group based on business rules."""
             # Example business rule: users must have email for certain groups
@@ -213,8 +211,7 @@ class FlextLdapDomain:
                 )
 
             # Example business rule: users must be active
-            is_active_status: bool = cast("bool", user.is_active)
-            if not is_active_status:
+            if not user.is_active():
                 return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups",
                 )
@@ -224,7 +221,7 @@ class FlextLdapDomain:
         @staticmethod
         def generate_unique_username(
             base_name: str,
-            existing_users: list[FlextLdapModels.LdapUser],
+            existing_users: list[FlextLdapModels.Entry],
             max_attempts: int = 100,
         ) -> FlextResult[str]:
             """Generate unique username based on domain rules."""

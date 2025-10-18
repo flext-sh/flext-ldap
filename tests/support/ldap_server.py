@@ -19,7 +19,6 @@ from typing import Protocol, TypedDict, cast
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextTypes,
 )
 from ldap3 import BASE, SIMPLE, Connection, Server
 
@@ -237,9 +236,9 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add_entry(
-                        cast("str", ou_data["dn"]),
-                        object_class_list,
+                    conn.add(
+                        dn=cast("str", ou_data["dn"]),
+                        object_class=object_class_list,
                         attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created OU: %s", ou_data["dn"])
@@ -257,9 +256,9 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add_entry(
-                        cast("str", user_data["dn"]),
-                        object_class_list,
+                    conn.add(
+                        dn=cast("str", user_data["dn"]),
+                        object_class=object_class_list,
                         attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created user: %s", user_data["dn"])
@@ -277,9 +276,9 @@ class LdapTestServer:
                     attrs_without_oc = {
                         k: v for k, v in attrs_dict.items() if k != "objectClass"
                     }
-                    conn.add_entry(
-                        cast("str", group_data["dn"]),
-                        object_class_list,
+                    conn.add(
+                        dn=cast("str", group_data["dn"]),
+                        object_class=object_class_list,
                         attributes=attrs_without_oc or None,
                     )
                     logger.debug("Created group: %s", group_data["dn"])
@@ -314,15 +313,15 @@ class LdapTestServer:
             self.container_name, command
         )
 
-    def get_container_status(self) -> FlextResult[FlextTypes.StringDict]:
+    def get_container_status(self) -> FlextResult[dict[str, str]]:
         """Get container status using FlextTestDocker."""
         status_result = self.docker_manager.get_container_status(self.container_name)
         if status_result.is_failure:
             error_msg = status_result.error or "Unknown error"
-            return FlextResult[FlextTypes.StringDict].fail(error_msg)
+            return FlextResult[dict[str, str]].fail(error_msg)
 
         container_info: ContainerInfo = status_result.value
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextResult[dict[str, str]].ok({
             "name": container_info["name"],
             "status": str(container_info["status"]),  # Convert status to string
             "ports": container_info["ports"],

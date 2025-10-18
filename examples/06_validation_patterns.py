@@ -25,7 +25,7 @@ from __future__ import annotations
 import sys
 from typing import Any, cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import FlextLdapModels, FlextLdapValidations
 
@@ -164,7 +164,7 @@ def demonstrate_search_request_validation() -> None:
     logger.info("\n=== SearchRequest Validation ===")
 
     # Test various SearchRequest configurations
-    test_cases: list[FlextTypes.Dict] = [
+    test_cases: list[dict[str, object]] = [
         {
             "name": "Valid basic search",
             "params": {

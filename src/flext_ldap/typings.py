@@ -12,22 +12,129 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Annotated, Any, Protocol
 
 from flext_core import FlextTypes
+from pydantic import Field
 
-from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.constants import (
+    AclType,
+    AuthenticationMethod,
+    ConnectionState,
+    LdapProjectType,
+    ObjectClassKind,
+    OperationType,
+    SecurityLevel,
+    UpdateStrategy,
+)
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - LDAP Dictionary Types (Consolidated)
+# =========================================================================
+
+# Core LDAP attribute dictionary: attribute_name → attribute_value(s)
+type LdapAttributeDict = dict[str, str | list[str]]
+
+# Entry attributes as dict: attribute_name → values (always list)
+type LdapEntryAttributeDict = dict[str, list[str]]
+
+# Complex LDAP entry with mixed attribute types
+type LdapComplexEntryDict = dict[str, list[str] | str]
+
+# LDAP modify operation: attribute_name → [(operation, values), ...]
+type LdapModifyDict = dict[str, list[tuple[str, list[str]]]]
+
+# LDAP search result entries (compatible with ldap3 response format)
+type LdapSearchResultDict = dict[str, dict[str, list[str]] | str]
+
+# Configuration dictionaries (more flexible than dict[str, object])
+type LdapConfigDict = dict[str, str | int | bool | list[str] | None]
+
+# Schema attribute dictionary
+type LdapSchemaAttributeDict = dict[str, str | list[str] | bool | None]
+
+# LDAP response dictionary from ldap3 operations
+type LdapResponseDict = dict[str, str | int | bool | list[str] | None]
+
+# LDAP entry template for creating entries
+type LdapEntryTemplateDict = dict[str, str | list[str]]
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - LDAP Domain Types (Consolidated)
+# =========================================================================
+
+# Core LDAP attribute and value types
+type AttributeValue = str | list[str]
+type AttributeDict = dict[str, AttributeValue]
+type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+
+# LDAP search and filter types
+type SearchFilter = str
+type SearchResult = list[LdapSearchResultDict]
+
+# LDAP connection and server types
+type ServerURI = str
+type BindDN = str
+type BindPassword = str
+type DistinguishedName = str
+
+# LDAP protocol types
+type ObjectClass = str
+type AttributeName = str
+
+# Complex LDAP operation types
+type BulkOperation = list[dict[str, AttributeValue | OperationType]]
+type SearchConfiguration = dict[str, str | int | list[str]]
+type EntryTemplate = dict[str, AttributeValue | list[ObjectClass]]
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - LDAP Config Types (Consolidated)
+# =========================================================================
+
+# Core configuration types
+type ServerConfig = dict[str, str | int | bool | list[str] | None]
+type ConnectionConfig = dict[str, str | int | bool | list[str] | None]
+type AuthenticationConfig = dict[str, str | bool | list[str] | None]
+type SearchConfig = dict[str, str | int | bool | list[str] | None]
+
+# Advanced configuration types
+type ServerPoolConfig = dict[str, list[str] | int | bool | None]
+type RetryConfig = dict[str, int | float | bool | None]
+type TimeoutConfig = dict[str, int | float | None]
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - LDAP Core Composite Types (Consolidated)
+# =========================================================================
+
+# LDAP-specific configuration value (composite type)
+type LdapConfigValue = (
+    str | int | bool | list[str] | dict[str, str | int | bool | list[str] | None]
+)
+
+# LDAP-specific attribute value (composite type)
+type LdapAttributeValue = str | list[str] | dict[str, str | list[str]]
+
+# LDAP-specific entry value (composite type)
+type LdapEntryValue = dict[str, str | list[str]]
+
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - LDAP Project Types (Consolidated)
+# =========================================================================
+
+type LdapProjectConfig = dict[str, str | int | bool | list[str] | None]
+type DirectoryConfig = dict[str, str | int | bool | list[str]]
+type SyncConfig = dict[str, LdapConfigValue | object]
 
 
 class FlextLdapTypes(FlextTypes):
-    """Unified LDAP types class extending FlextTypes with LDAP-specific type definitions.
+    """LDAP types class extending FlextTypes with LDAP-specific definitions.
 
-    This class extends the base FlextTypes with LDAP-specific type aliases, type variables,
-    complex type definitions, and protocol definitions following FLEXT domain separation patterns.
-    All types are centralized and extend from flext-core to eliminate duplication.
+    Extends base FlextTypes with LDAP-specific aliases, variables,
+    definitions, and protocols following FLEXT domain separation patterns.
+    All types centralized and extend from flext-core.
 
     Following FLEXT standards:
-    - Single unified class per module
+    - Single unified class per module (ONE CLASS PER MODULE)
     - Extends FlextTypes from flext-core
     - No duplicate type definitions
     - Centralized type management
@@ -35,159 +142,116 @@ class FlextLdapTypes(FlextTypes):
     """
 
     # =========================================================================
-    # LDAP3 TYPE ALIASES - Direct type aliases for ldap3 library types
+    # ANNOTATED LDAP TYPES - Pydantic v2 Annotated types with validation
     # =========================================================================
 
-    # Core LDAP3 types - direct use from ldap3, no redeclaration
-    # Infrastructure layer imports ldap3 directly where needed
-    # Use: from ldap3 import Server, Connection
+    class AnnotatedLdap:
+        """LDAP-specific Annotated types with built-in validation constraints.
 
-    # Note: Constants moved to FlextLdapConstants.LiteralTypes
-    # Use FlextLdapConstants.LiteralTypes directly instead of redeclaring here
+        Provides reusable Annotated type definitions for LDAP-specific field patterns,
+        eliminating verbose Field() declarations in LDAP models and services.
 
-    # =========================================================================
-    # LDAP DICTIONARY TYPES - LDAP-specific dict type aliases
-    # =========================================================================
+        Example:
+            from flext_ldap.typings import FlextLdapTypes
+            from pydantic import BaseModel
 
-    class LdapDict:
-        """LDAP-specific dictionary type definitions overriding FlextTypes.Dict restrictions.
+            class LdapConnectionConfig(BaseModel):
+                server_uri: FlextLdapTypes.AnnotatedLdap.ServerUri
+                bind_dn: FlextLdapTypes.AnnotatedLdap.BindDN
+                port: FlextLdapTypes.AnnotatedLdap.LdapPort
+                timeout: FlextLdapTypes.AnnotatedLdap.ConnectionTimeout
 
-        LDAP attributes and operations require more flexible dictionary types than
-        FlextTypes.Dict which is restricted to: dict[str, bool|float|int|str|None].
-        These LDAP-specific aliases support the complex data structures needed for
-        directory operations.
         """
 
-        # Core LDAP attribute dictionary: attribute_name → attribute_value(s)
-        type LdapAttributeDict = dict[str, str | list[str]]
+        # Distinguished Name and Attribute Types
+        DistinguishedName = Annotated[str, Field(min_length=1, max_length=512)]
+        """LDAP Distinguished Name (DN) with length constraints."""
 
-        # Entry attributes as dictionary: attribute_name → attribute_values (always list in LDAP)
-        type LdapEntryAttributeDict = dict[str, list[str]]
+        BindDN = Annotated[str, Field(min_length=1, max_length=512)]
+        """Bind DN for LDAP authentication."""
 
-        # Complex LDAP entry with mixed attribute types
-        type LdapComplexEntryDict = dict[str, list[str] | str]
+        BaseDN = Annotated[str, Field(min_length=1, max_length=512)]
+        """Base DN for LDAP search operations."""
 
-        # LDAP modify operation: attribute_name → [(operation, values), ...]
-        type LdapModifyDict = dict[str, list[tuple[str, list[str]]]]
-
-        # LDAP search result entries (compatible with ldap3 response format)
-        type LdapSearchResultDict = dict[str, dict[str, list[str]] | str]
-
-        # Configuration dictionaries (more flexible than FlextTypes.Dict)
-        type LdapConfigDict = dict[str, str | int | bool | list[str] | None]
-
-        # Schema attribute dictionary
-        type LdapSchemaAttributeDict = dict[str, str | list[str] | bool | None]
-
-        # LDAP response dictionary from ldap3 operations
-        type LdapResponseDict = dict[str, str | int | bool | list[str] | None]
-
-        # LDAP entry template for creating entries
-        type LdapEntryTemplateDict = dict[str, str | list[str]]
-
-    # =========================================================================
-    # LDAP DOMAIN TYPES - LDAP-specific type definitions
-    # =========================================================================
-
-    class LdapDomain:
-        """LDAP domain-specific types extending FlextTypes.Ldap."""
-
-        # Core LDAP attribute and value types
-        type AttributeValue = str | FlextTypes.StringList
-        type AttributeDict = dict[str, AttributeValue]
-        type ModifyChanges = dict[str, list[tuple[str, FlextTypes.StringList]]]
-
-        # LDAP search and filter types
-        type SearchFilter = str
-        type SearchScope = FlextLdapConstants.SearchScope
-        type SearchResult = list[FlextLdapTypes.LdapDict.LdapSearchResultDict]
-
-        # LDAP connection and server types
-        type ServerURI = str
-        type BindDN = str
-        type BindPassword = str
-        type DistinguishedName = str
-
-        # LDAP protocol types
-        type ObjectClass = str
-        type AttributeName = str
-        type ConnectionState = FlextLdapConstants.ConnectionState
-        type OperationType = FlextLdapConstants.OperationType
-        type SecurityLevel = FlextLdapConstants.SecurityLevel
-        type AuthenticationMethod = FlextLdapConstants.AuthenticationMethod
-
-        # Complex LDAP operation types
-        type BulkOperation = list[dict[str, AttributeValue | OperationType]]
-        type SearchConfiguration = dict[str, SearchScope | int | FlextTypes.StringList]
-        type EntryTemplate = dict[str, AttributeValue | list[ObjectClass]]
-
-    # =========================================================================
-    # LDAP CORE TYPES - Domain-specific core types extending FlextTypes
-    # =========================================================================
-
-    class LdapCore:
-        """Core LDAP types extending FlextTypes.
-
-        Use FlextTypes directly for most operations. Only define LDAP-specific
-        composite types that add domain meaning.
-        """
-
-        # LDAP-specific configuration value (composite type)
-        type LdapConfigValue = (
-            str
-            | int
-            | bool
-            | FlextTypes.StringList
-            | FlextLdapTypes.LdapDict.LdapConfigDict
-        )
-
-        # LDAP-specific attribute value (composite type)
-        type LdapAttributeValue = (
-            str | FlextTypes.StringList | FlextLdapTypes.LdapDict.LdapAttributeDict
-        )
-
-        # LDAP-specific entry value (composite type)
-        type LdapEntryValue = dict[str, str | FlextTypes.StringList]
-
-    # Note: Configuration types use FlextLdapTypes.LdapDict for flexibility
-    # Operation types use FlextLdapModels (Command/Query patterns)
-    # Result types use FlextResult[T] from flext-core
-
-    # =========================================================================
-    # LDAP ENTRY TYPES - Entry-specific types
-    # =========================================================================
-
-    class LdapEntries:
-        """LDAP entry-specific types."""
-
-        type EntryAttributeValue = str | FlextTypes.StringList
-        type EntryAttributeDict = dict[str, EntryAttributeValue]
-
-    # =========================================================================
-    # LDAP PROJECT TYPES - Domain-specific project types extending FlextTypes
-    # =========================================================================
-
-    class Project(FlextTypes.Project):
-        """LDAP-specific project types extending FlextTypes.Project.
-
-        Adds LDAP/directory services-specific project types while inheriting
-        generic types from FlextTypes. Follows domain separation principle:
-        LDAP domain owns directory-specific types.
-        """
-
-        # LDAP-specific project types extending the generic ones
-        type LdapProjectType = FlextLdapConstants.LdapProjectType
-
-        # LDAP-specific project configurations
-        type LdapProjectConfig = dict[
+        AttributeName = Annotated[
             str,
-            FlextLdapTypes.LdapCore.LdapConfigValue | object,
+            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*)?$", min_length=1, max_length=128),
         ]
-        type DirectoryConfig = dict[str, str | int | bool | FlextTypes.StringList]
-        type AuthenticationConfig = dict[
-            str, bool | str | FlextLdapTypes.LdapDict.LdapConfigDict
+        """LDAP attribute name with format validation."""
+
+        ObjectClassName = Annotated[
+            str,
+            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*)?$", min_length=1, max_length=64),
         ]
-        type SyncConfig = dict[str, FlextLdapTypes.LdapCore.LdapConfigValue | object]
+        """LDAP objectClass name with format validation."""
+
+        # Search and Filter Types
+        SearchFilter = Annotated[str, Field(min_length=1, max_length=1024)]
+        """LDAP search filter string."""
+
+        SearchScope = Annotated[
+            str, Field(pattern=r"^(BASE|LEVEL|SUBTREE|SUBORDINATE)$")
+        ]
+        """LDAP search scope selector."""
+
+        # Server and Connection Types
+        ServerUri = Annotated[str, Field(min_length=5, max_length=256)]
+        """LDAP server URI (e.g., ldap://localhost:389)."""
+
+        ServerHostname = Annotated[str, Field(min_length=1, max_length=256)]
+        """LDAP server hostname or IP address."""
+
+        LdapPort = Annotated[int, Field(ge=1, le=65535)]
+        """LDAP server port number (valid range: 1-65535)."""
+
+        ConnectionTimeout = Annotated[int, Field(ge=1, le=300)]
+        """LDAP connection timeout in seconds (1-300 seconds)."""
+
+        ReceiveTimeout = Annotated[int, Field(ge=1, le=300)]
+        """LDAP receive timeout in seconds (1-300 seconds)."""
+
+        # Authentication Types
+        BindPassword = Annotated[str, Field(min_length=1, max_length=512)]
+        """Password for LDAP bind operations."""
+
+        AuthMethod = Annotated[str, Field(pattern=r"^(SIMPLE|SASL_DIGEST_MD5|NTLM)$")]
+        """LDAP authentication method."""
+
+        # Operation and Processing Types
+        MaxResults = Annotated[int, Field(ge=1, le=1000000)]
+        """Maximum number of search results (1-1000000)."""
+
+        BatchSize = Annotated[int, Field(ge=1, le=100000)]
+        """Batch processing size for bulk operations (1-100000)."""
+
+        MaxRetries = Annotated[int, Field(ge=0, le=10)]
+        """Maximum number of connection retries (0-10)."""
+
+        RetryInterval = Annotated[int, Field(ge=1, le=60)]
+        """Retry interval in seconds (1-60 seconds)."""
+
+        OperationTimeout = Annotated[int, Field(ge=5, le=600)]
+        """LDAP operation timeout in seconds (5-600 seconds)."""
+
+        # Pool and Connection Management Types
+        PoolSize = Annotated[int, Field(ge=1, le=100)]
+        """Connection pool size (1-100 connections)."""
+
+        MaxConnections = Annotated[int, Field(ge=1, le=500)]
+        """Maximum number of connections (1-500)."""
+
+        # Size and Constraint Types
+        PageSize = Annotated[int, Field(ge=1, le=100000)]
+        """Page size for paged LDAP searches (1-100000)."""
+
+        EntryCount = Annotated[int, Field(ge=0)]
+        """Number of LDIF entries processed."""
+
+        ErrorCount = Annotated[int, Field(ge=0)]
+        """Number of errors encountered."""
+
+        SuccessRate = Annotated[float, Field(ge=0.0, le=100.0)]
+        """Success percentage (0-100%)."""
 
     # =========================================================================
     # LDAP3 TYPE STUBS - Protocol definitions for ldap3 library types
@@ -296,7 +360,7 @@ class FlextLdapTypes(FlextTypes):
                 ...
 
             def __getattr__(self, name: str) -> Any:
-                """Dynamic attribute access for LDAP attributes (uid, cn, mail, etc.)."""
+                """Dynamic attribute access for LDAP attributes."""
                 ...
 
         class Server(Protocol):
@@ -320,8 +384,52 @@ class FlextLdapTypes(FlextTypes):
 # PUBLIC API EXPORTS - FlextLdapTypes and flext-core TypeVars
 # =========================================================================
 
-__all__: FlextTypes.StringList = [
+__all__ = [
+    "AclType",
     "Any",  # Re-export for type stub usage
+    "AttributeDict",
+    "AttributeName",
+    "AttributeValue",
+    "AuthenticationConfig",
+    "AuthenticationMethod",
+    "BindDN",
+    "BindPassword",
+    "BulkOperation",
+    "ConnectionConfig",
+    "ConnectionState",
+    "DirectoryConfig",
+    "DistinguishedName",
+    "EntryTemplate",
     "FlextLdapTypes",
+    "LdapAttributeDict",
+    "LdapAttributeValue",
+    "LdapComplexEntryDict",
+    "LdapConfigDict",
+    "LdapConfigValue",
+    "LdapEntryAttributeDict",
+    "LdapEntryTemplateDict",
+    "LdapEntryValue",
+    "LdapModifyDict",
+    "LdapProjectConfig",
+    "LdapProjectType",
+    "LdapResponseDict",
+    "LdapSchemaAttributeDict",
+    "LdapSearchResultDict",
+    "ModifyChanges",
+    "ObjectClass",
+    "ObjectClassKind",
+    "OperationType",
     "Protocol",  # Re-export for type stub usage
+    "RetryConfig",
+    "SearchConfig",
+    "SearchConfiguration",
+    "SearchFilter",
+    "SearchResult",
+    "SecurityLevel",
+    "ServerConfig",
+    "ServerPoolConfig",
+    "ServerURI",
+    "SyncConfig",
+    "TimeoutConfig",
+    "UpdateStrategy",
 ]

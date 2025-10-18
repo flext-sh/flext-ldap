@@ -14,7 +14,8 @@
 
 ## Overview
 
-The Documentation Maintenance System provides automated tools for maintaining documentation quality, validating content, and ensuring consistency across all documentation files.
+The Documentation Maintenance System provides automated tools for maintaining documentation quality, validating content,
+     and ensuring consistency across all documentation files.
 
 ### Key Features
 

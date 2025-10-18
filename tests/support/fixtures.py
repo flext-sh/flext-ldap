@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from collections.abc import Generator
 
 import pytest
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextLogger
 
 from flext_ldap import (
     FlextLdap,
@@ -97,13 +97,13 @@ def test_group_data() -> dict[str, object]:
 
 
 @pytest.fixture
-def multiple_test_users() -> list[FlextTypes.Dict]:
+def multiple_test_users() -> list[dict[str, object]]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[FlextTypes.Dict]:
+def multiple_test_groups() -> list[dict[str, object]]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
@@ -117,11 +117,11 @@ def test_ldap_config() -> FlextLdapModels.ConnectionConfig:
 @pytest.fixture
 def clean_ldap_container(
     real_ldap_server: LdapTestServer,
-) -> FlextTypes.Dict:
+) -> dict[str, object]:
     """Get clean LDAP container configuration for testing."""
     real_ldap_server.wait_for_ready()
     config = real_ldap_server.get_connection_config()
-    container_info: FlextTypes.Dict = {
+    container_info: dict[str, object] = {
         "server_url": config.server,
         "bind_dn": config.bind_dn,
         "password": config.bind_password,
@@ -148,9 +148,7 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup: FlextTypes.StringList = [
-            str(entry["dn"]) for entry in search_result.value
-        ]
+        dns_to_cleanup: list[str] = [str(entry["dn"]) for entry in search_result.value]
         if dns_to_cleanup:
             cleanup_test_entries(ldap_connection, dns_to_cleanup)
 
@@ -164,7 +162,7 @@ def clean_ldap_state(
     )
 
     if search_result.is_success:
-        dns_to_cleanup_after: FlextTypes.StringList = [
+        dns_to_cleanup_after: list[str] = [
             str(entry["dn"]) for entry in search_result.value
         ]
         if dns_to_cleanup_after:

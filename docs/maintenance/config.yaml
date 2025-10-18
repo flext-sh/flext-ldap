@@ -103,15 +103,16 @@ git:
 # Reporting configuration
 reporting:
   # Output settings
-  output_formats: ["html", "json", "markdown"]
-  include_charts: true
-  chart_style: "seaborn"
+  output_formats:
+    - "markdown"
+  include_charts: false
+  chart_style: "minimal"
 
   # Metrics history
   metrics_history_days: 30
 
   # Dashboard settings
-  dashboard_template: "default"
+  dashboard_template: "markdown-only"
 
   # Quality thresholds for reporting
   thresholds:

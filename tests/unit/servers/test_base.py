@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 from flext_ldif import FlextLdifModels
@@ -170,40 +170,6 @@ class TestFlextLdapServersFactory:
     # FACTORY CREATION TESTS - From Entries
     # =========================================================================
 
-    @pytest.mark.skip(
-        reason="FlextLdif quirks detection unreliable in unit tests - needs Docker integration test"
-    )
-    def test_create_from_entries_openldap1_access_acl(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test detecting OpenLDAP 1.x from entries with 'access' ACL attribute.
-
-        TODO: Replace with Docker integration test using real LDAP entries from flext-openldap-test.
-        FlextLdif quirks detection logic requires more comprehensive entry data for reliable detection.
-        """
-        # Arrange - create entry with OpenLDAP 1.x characteristics
-        attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "access": FlextLdifModels.AttributeValues(
-                values=["access to * by self write by * read"]
-            ),
-        }
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
-            attributes=FlextLdifModels.LdifAttributes(attributes=attributes_dict),
-        )
-
-        # Act
-        result = factory.create_from_entries([entry])
-
-        # Assert
-        assert result.is_success
-        ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersOpenLDAP1Operations)
-        assert ops.server_type == "openldap1"
-
     def test_create_from_entries_openldap2_olcaccess(
         self, factory: FlextLdapServersFactory
     ) -> None:
@@ -260,42 +226,6 @@ class TestFlextLdapServersFactory:
         ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersOIDOperations)
         assert ops.server_type == "oid"
-
-    @pytest.mark.skip(
-        reason="FlextLdif quirks detection unreliable in unit tests - needs Docker integration test"
-    )
-    def test_create_from_entries_oud_ds_privilege(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test detecting Oracle OUD from entries with 'ds-privilege-name' attribute.
-
-        TODO: Replace with Docker integration test using real LDAP entries from Oracle OUD container.
-        FlextLdif quirks detection logic requires more comprehensive entry data for reliable detection.
-        """
-        # Arrange - create entry with Oracle OUD characteristics
-        attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["ds-root-dn-user", "top"]
-            ),
-            "ds-privilege-name": FlextLdifModels.AttributeValues(
-                values=["config-read", "config-write", "password-reset"]
-            ),
-        }
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=Directory Manager,cn=Root DNs,cn=config"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(attributes=attributes_dict),
-        )
-
-        # Act
-        result = factory.create_from_entries([entry])
-
-        # Assert
-        assert result.is_success
-        ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersOUDOperations)
-        assert ops.server_type == "oud"
 
     def test_create_from_entries_ad_object_guid(
         self, factory: FlextLdapServersFactory
@@ -414,111 +344,6 @@ class TestFlextLdapServersFactory:
     # FACTORY CREATION TESTS - From Connection (Root DSE Detection)
     # =========================================================================
 
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_create_from_connection_openldap2_root_dse(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test detecting OpenLDAP 2.x from Root DSE vendorName.
-
-        TODO: Replace with real LDAP server test using flext-openldap-test Docker container.
-        Mocking Root DSE detection is complex and doesn't test real behavior.
-        """
-        # Arrange - mock connection with OpenLDAP Root DSE
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "OpenLDAP"
-        mock_entry.vendorVersion.value = "2.6.3"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.create_from_connection(mock_connection)
-
-        # Assert
-        assert result.is_success
-        ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
-        assert ops.server_type == "openldap2"
-
-        # Verify Root DSE search was called
-        mock_connection.search.assert_called_once()
-        call_args = mock_connection.search.call_args
-        assert not call_args[1]["search_base"]
-        assert "(objectClass=*)" in call_args[1]["search_filter"]
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_create_from_connection_oid_root_dse(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test detecting Oracle OID from Root DSE vendorName."""
-        # Arrange - mock connection with Oracle OID Root DSE
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "Oracle"
-        mock_entry.vendorVersion.value = "Oracle Internet Directory 11.1.1.9.0"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.create_from_connection(mock_connection)
-
-        # Assert
-        assert result.is_success
-        ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersOIDOperations)
-        assert ops.server_type == "oid"
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_create_from_connection_oud_root_dse(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test detecting Oracle OUD from Root DSE vendorName.
-
-        TODO: Replace with real LDAP server test using flext-openldap-test Docker container.
-        Mocking Root DSE detection is complex and doesn't test real behavior.
-        """
-        # Arrange - mock connection with Oracle OUD Root DSE
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        # Create a controlled mock that doesn't have AD attributes
-        mock_entry = MagicMock(spec_set=[])  # Empty spec to start
-        # Manually add OUD attributes
-        type(mock_entry).vendorName = PropertyMock(
-            return_value=MagicMock(value="Oracle")
-        )
-        type(mock_entry).vendorVersion = PropertyMock(
-            return_value=MagicMock(value="Oracle Unified Directory 12.2.1.4.0")
-        )
-        # OUD uses cn=config like OpenLDAP 2.x - configure mock to return proper string
-        mock_config_context = MagicMock()
-        mock_config_context.__str__ = MagicMock(return_value="cn=config")
-        type(mock_entry).configContext = PropertyMock(return_value=mock_config_context)
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.create_from_connection(mock_connection)
-
-        # Assert
-        assert result.is_success
-        ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersOUDOperations)
-        assert ops.server_type == "oud"
-
     def test_create_from_connection_ad_root_dse(
         self, factory: FlextLdapServersFactory
     ) -> None:
@@ -597,107 +422,3 @@ class TestFlextLdapServersFactory:
     # =========================================================================
     # ROOT DSE DETECTION TESTS
     # =========================================================================
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_detect_server_type_from_root_dse_openldap(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test Root DSE detection returns correct server type for OpenLDAP."""
-        # Arrange
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "OpenLDAP"
-        mock_entry.vendorVersion.value = "2.6.3"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.detect_server_type_from_root_dse(mock_connection)
-
-        # Assert
-        assert result.is_success
-        server_type = result.unwrap()
-        assert server_type == "openldap2"
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_detect_server_type_from_root_dse_oid(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test Root DSE detection returns correct server type for Oracle OID."""
-        # Arrange
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "Oracle"
-        mock_entry.vendorVersion.value = "Oracle Internet Directory 11.1.1.9.0"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.detect_server_type_from_root_dse(mock_connection)
-
-        # Assert
-        assert result.is_success
-        server_type = result.unwrap()
-        assert server_type == "oid"
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_detect_server_type_from_root_dse_oud(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test Root DSE detection returns correct server type for Oracle OUD."""
-        # Arrange
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "Oracle"
-        mock_entry.vendorVersion.value = "Oracle Unified Directory 12.2.1.4.0"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.detect_server_type_from_root_dse(mock_connection)
-
-        # Assert
-        assert result.is_success
-        server_type = result.unwrap()
-        assert server_type == "oud"
-
-    @pytest.mark.skip(
-        reason="Requires real LDAP server - mock test incomplete, will be replaced with Docker integration test"
-    )
-    def test_detect_server_type_from_root_dse_generic_fallback(
-        self, factory: FlextLdapServersFactory
-    ) -> None:
-        """Test Root DSE detection falls back to generic for unknown servers."""
-        # Arrange
-        mock_connection = MagicMock()
-        mock_connection.bound = True
-
-        mock_entry = MagicMock()
-        mock_entry.vendorName.value = "Unknown Vendor"
-        mock_entry.vendorVersion.value = "1.0.0"
-
-        mock_connection.entries = [mock_entry]
-        mock_connection.search = MagicMock(return_value=True)
-
-        # Act
-        result = factory.detect_server_type_from_root_dse(mock_connection)
-
-        # Assert
-        assert result.is_success
-        server_type = result.unwrap()
-        assert server_type == "generic"

@@ -11,8 +11,11 @@ import json
 import operator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult, FlextService
+
+from flext_ldap.typings import LdapConfigDict
 
 
 class FlextLdapFailureTracker(FlextService[None]):
@@ -40,7 +43,7 @@ class FlextLdapFailureTracker(FlextService[None]):
         phase: str,
         operation: str,
         error: str,
-        context: dict[str, object] | None = None,
+        context: LdapConfigDict | None = None,
     ) -> FlextResult[None]:
         """Log sync failure to persistent JSONL file.
 
@@ -90,11 +93,13 @@ class FlextLdapFailureTracker(FlextService[None]):
             return FlextResult[list[dict[str, object]]].ok([])
 
         try:
-            failures = []
+            failures: list[dict[str, object]] = []
             with self._failures_file.open("r", encoding="utf-8") as f:
                 for line in f:
-                    failure = json.loads(line)
-                    if failure["phase"] == phase and not failure.get("resolved", False):
+                    failure = cast("dict[str, object]", json.loads(line))
+                    if failure.get("phase") == phase and not failure.get(
+                        "resolved", False
+                    ):
                         failures.append(failure)
 
             return FlextResult[list[dict[str, object]]].ok(failures)
@@ -111,7 +116,9 @@ class FlextLdapFailureTracker(FlextService[None]):
                 f"Unexpected error reading failures: {e}"
             )
 
-    def get_all_failures(self) -> FlextResult[list[dict[str, object]]]:
+    def get_all_failures(
+        self,
+    ) -> FlextResult[list[dict[str, object]]]:
         """Load all unresolved failures across all phases.
 
         Returns:
@@ -122,10 +129,10 @@ class FlextLdapFailureTracker(FlextService[None]):
             return FlextResult[list[dict[str, object]]].ok([])
 
         try:
-            failures = []
+            failures: list[dict[str, object]] = []
             with self._failures_file.open("r", encoding="utf-8") as f:
                 for line in f:
-                    failure = json.loads(line)
+                    failure = cast("dict[str, object]", json.loads(line))
                     if not failure.get("resolved", False):
                         failures.append(failure)
 
@@ -160,12 +167,12 @@ class FlextLdapFailureTracker(FlextService[None]):
         # Read all failures
         all_failures: list[dict[str, object]] = []
         with self._failures_file.open("r", encoding="utf-8") as f:
-            all_failures = [json.loads(line) for line in f]
+            all_failures = [cast("dict[str, object]", json.loads(line)) for line in f]
 
         # Mark matching failures as resolved
         found = False
         for failure in all_failures:
-            if failure["dn"] == dn and failure["phase"] == phase:
+            if failure.get("dn") == dn and failure.get("phase") == phase:
                 failure["resolved"] = True
                 failure["resolved_at"] = datetime.now(tz=UTC).isoformat()
                 found = True
@@ -199,12 +206,12 @@ class FlextLdapFailureTracker(FlextService[None]):
         # Read all failures
         all_failures: list[dict[str, object]] = []
         with self._failures_file.open("r", encoding="utf-8") as f:
-            all_failures = [json.loads(line) for line in f]
+            all_failures = [cast("dict[str, object]", json.loads(line)) for line in f]
 
         # Increment retry count
         found = False
         for failure in all_failures:
-            if failure["dn"] == dn and failure["phase"] == phase:
+            if failure.get("dn") == dn and failure.get("phase") == phase:
                 failure["retry_count"] = int(str(failure.get("retry_count", 0))) + 1
                 failure["last_retry"] = datetime.now(tz=UTC).isoformat()
                 found = True
@@ -229,37 +236,45 @@ class FlextLdapFailureTracker(FlextService[None]):
 
         """
         if not self._failures_file.exists():
-            return FlextResult[dict[str, object]].ok({
-                "total": 0,
-                "by_phase": {},
-                "by_operation": {},
-                "most_common_errors": [],
-            })
+            return FlextResult[dict[str, object]].ok(
+                cast(
+                    "dict[str, object]",
+                    {
+                        "total": 0,
+                        "by_phase": {},
+                        "by_operation": {},
+                        "most_common_errors": [],
+                    },
+                )
+            )
 
-        failures = []
+        failures: list[dict[str, object]] = []
         with self._failures_file.open("r", encoding="utf-8") as f:
             for line in f:
-                failure = json.loads(line)
+                failure = cast("dict[str, object]", json.loads(line))
                 if not failure.get("resolved", False):
                     failures.append(failure)
 
         # Group by phase
         by_phase: dict[str, list[dict[str, object]]] = {}
         for failure in failures:
-            phase = failure["phase"]
-            by_phase.setdefault(phase, []).append(failure)
+            phase = failure.get("phase")
+            if isinstance(phase, str):
+                by_phase.setdefault(phase, []).append(failure)
 
         # Group by operation
         by_operation: dict[str, int] = {}
         for failure in failures:
-            operation = failure["operation"]
-            by_operation[operation] = by_operation.get(operation, 0) + 1
+            operation = failure.get("operation")
+            if isinstance(operation, str):
+                by_operation[operation] = by_operation.get(operation, 0) + 1
 
         # Most common errors
         error_counts: dict[str, int] = {}
         for failure in failures:
-            error = failure["error"]
-            error_counts[error] = error_counts.get(error, 0) + 1
+            error = failure.get("error")
+            if isinstance(error, str):
+                error_counts[error] = error_counts.get(error, 0) + 1
 
         most_common_errors = sorted(
             error_counts.items(),
@@ -267,20 +282,24 @@ class FlextLdapFailureTracker(FlextService[None]):
             reverse=True,
         )[:10]  # Top 10
 
-        report: dict[str, object] = {
-            "total": len(failures),
-            "by_phase": {
-                phase: {
-                    "count": len(items),
-                    "dns": [f["dn"] for f in items],
-                }
-                for phase, items in by_phase.items()
+        report: dict[str, object] = cast(
+            "dict[str, object]",
+            {
+                "total": len(failures),
+                "by_phase": {
+                    phase: {
+                        "count": len(items),
+                        "dns": [f.get("dn") for f in items if f.get("dn") is not None],
+                    }
+                    for phase, items in by_phase.items()
+                },
+                "by_operation": by_operation,
+                "most_common_errors": [
+                    {"error": error, "count": count}
+                    for error, count in most_common_errors
+                ],
             },
-            "by_operation": by_operation,
-            "most_common_errors": [
-                {"error": error, "count": count} for error, count in most_common_errors
-            ],
-        }
+        )
 
         return FlextResult[dict[str, object]].ok(report)
 
@@ -297,7 +316,7 @@ class FlextLdapFailureTracker(FlextService[None]):
         # Read all failures
         all_failures: list[dict[str, object]] = []
         with self._failures_file.open("r", encoding="utf-8") as f:
-            all_failures = [json.loads(line) for line in f]
+            all_failures = [cast("dict[str, object]", json.loads(line)) for line in f]
 
         # Filter out resolved
         unresolved = [f for f in all_failures if not f.get("resolved", False)]

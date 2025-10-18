@@ -1,4 +1,75 @@
 # Troubleshooting Guide
+## Table of Contents
+
+- [Troubleshooting Guide](#troubleshooting-guide)
+  - [Connection Issues](#connection-issues)
+    - [Connection Refused Errors](#connection-refused-errors)
+- [Test LDAP server connectivity](#test-ldap-server-connectivity)
+- [Check if server is listening](#check-if-server-is-listening)
+- [Test with ldapsearch (if available)](#test-with-ldapsearch-if-available)
+    - [SSL/TLS Connection Errors](#ssltls-connection-errors)
+- [Test SSL connection](#test-ssl-connection)
+- [Check certificate validity](#check-certificate-validity)
+- [Test LDAP with StartTLS](#test-ldap-with-starttls)
+- [Disable certificate verification (development only)](#disable-certificate-verification-development-only)
+- [Proper certificate configuration](#proper-certificate-configuration)
+  - [Authentication Issues](#authentication-issues)
+    - [Invalid Credentials](#invalid-credentials)
+    - [DN Format Issues](#dn-format-issues)
+- [❌ WRONG - Spaces around commas](#-wrong---spaces-around-commas)
+- [❌ WRONG - Wrong attribute names](#-wrong---wrong-attribute-names)
+- [✅ CORRECT - Proper RFC 4514 format](#-correct---proper-rfc-4514-format)
+- [✅ CORRECT - Escaped special characters](#-correct---escaped-special-characters)
+- [Test DN validation](#test-dn-validation)
+  - [Search and Query Issues](#search-and-query-issues)
+    - [Search Filter Syntax Errors](#search-filter-syntax-errors)
+- [❌ WRONG - Missing parentheses](#-wrong---missing-parentheses)
+- [❌ WRONG - Invalid operators](#-wrong---invalid-operators)
+- [❌ WRONG - Unescaped special characters](#-wrong---unescaped-special-characters)
+- [✅ CORRECT - Proper LDAP filter syntax](#-correct---proper-ldap-filter-syntax)
+- [✅ CORRECT - Complex filters](#-correct---complex-filters)
+- [Test filters](#test-filters)
+    - [Search Base DN Not Found](#search-base-dn-not-found)
+  - [Performance Issues](#performance-issues)
+    - [Slow Search Operations](#slow-search-operations)
+- [❌ Inefficient - searches entire directory](#-inefficient---searches-entire-directory)
+- [✅ Efficient - searches specific branch](#-efficient---searches-specific-branch)
+- [❌ Inefficient - broad filter](#-inefficient---broad-filter)
+- [✅ Efficient - indexed attribute with specific value](#-efficient---indexed-attribute-with-specific-value)
+- [✅ Efficient - compound filter with indexed attributes](#-efficient---compound-filter-with-indexed-attributes)
+    - [Connection Pool Exhaustion](#connection-pool-exhaustion)
+- [Check connection pool configuration](#check-connection-pool-configuration)
+  - [Configuration Issues](#configuration-issues)
+    - [Environment Variable Problems](#environment-variable-problems)
+    - [Docker Environment Issues](#docker-environment-issues)
+- [docker-compose.yml](#docker-composeyml)
+- [Test from within container](#test-from-within-container)
+  - [Development and Testing Issues](#development-and-testing-issues)
+    - [Import Errors](#import-errors)
+- [Check package installation](#check-package-installation)
+- [Check available imports](#check-available-imports)
+    - [Test Environment Setup](#test-environment-setup)
+- [Check if test server is running](#check-if-test-server-is-running)
+- [Check logs](#check-logs)
+- [Test connectivity](#test-connectivity)
+- [Restart test server](#restart-test-server)
+  - [Error Message Reference](#error-message-reference)
+    - [Common Error Patterns](#common-error-patterns)
+    - [FlextResult Error Handling](#flextresult-error-handling)
+  - [Debugging Tools and Techniques](#debugging-tools-and-techniques)
+    - [Enable Debug Logging](#enable-debug-logging)
+- [Enable debug logging](#enable-debug-logging)
+- [FLEXT logger with debug level](#flext-logger-with-debug-level)
+    - [Network Debugging](#network-debugging)
+- [Monitor LDAP traffic with tcpdump](#monitor-ldap-traffic-with-tcpdump)
+- [Analyze with Wireshark](#analyze-with-wireshark)
+- [Test with different LDAP tools](#test-with-different-ldap-tools)
+    - [Performance Profiling](#performance-profiling)
+- [Run profiling](#run-profiling)
+  - [Getting Help](#getting-help)
+    - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
+    - [Diagnostic Information Collection](#diagnostic-information-collection)
+
 
 **Common issues, diagnostics, and solutions for flext-ldap**
 
@@ -15,7 +86,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 
 **Symptom:**
 
-```
+``` yaml
 ConnectionError: Connection failed: [Errno 111] Connection refused
 ```
 
@@ -44,7 +115,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,
 
 **Symptom:**
 
-```
+``` yaml
 ConnectionError: TLS handshake failed
 ```
 
@@ -97,7 +168,7 @@ config = FlextLdapConfig(
 
 **Symptom:**
 
-```
+``` yaml
 AuthenticationError: Authentication failed: Invalid credentials
 ```
 
@@ -133,7 +204,7 @@ run(diagnose_auth())
 
 **Symptom:**
 
-```
+``` yaml
 SearchError: Invalid DN format
 ```
 
@@ -187,7 +258,7 @@ for test_dn in test_dns:
 
 **Symptom:**
 
-```
+``` yaml
 SearchError: Bad search filter
 ```
 
@@ -244,7 +315,7 @@ for test_filter in test_filters:
 
 **Symptom:**
 
-```
+``` yaml
 SearchError: No such object: ou=users,dc=example,dc=com
 ```
 
@@ -391,7 +462,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 **Symptoms:**
 
-```
+``` yaml
 ConnectionError: Connection pool exhausted
 ```
 

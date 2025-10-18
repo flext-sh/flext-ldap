@@ -187,7 +187,7 @@ class TestFlextLdapAuthenticationUserAuth:
             result = auth_with_context.authenticate_user("testuser", "correctpass")
             assert result.is_success
             user = result.unwrap()
-            assert isinstance(user, FlextLdapModels.LdapUser)
+            assert isinstance(user, FlextLdapModels.Entry)
             assert user.uid == "testuser"
             assert user.cn == "Test User"
 

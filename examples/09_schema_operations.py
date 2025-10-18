@@ -39,7 +39,6 @@ from pydantic import SecretStr
 
 from flext_ldap import (
     FlextLdapConfig,
-    FlextLdapModels,
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
@@ -263,20 +262,21 @@ def demonstrate_schema_search(
 
     logger.info(f"\n1. Searching schema subentry: {schema_dn}")
 
-    # Search for schema subentry
-    search_request = FlextLdapModels.SearchRequest.create(
+    # Search for schema subentry using clients API
+    search_result = client.search(
         base_dn=schema_dn,
         filter_str="(objectClass=*)",
-        attributes=["objectClasses", "attributeTypes", "ldapSyntaxes", "matchingRules"],
-    )
-    result = client.search(
-        search_request.base_dn,
-        search_request.filter_str,
-        search_request.attributes,
+        attributes=[
+            "objectClasses",
+            "attributeTypes",
+            "ldapSyntaxes",
+            "matchingRules",
+        ],
+        scope="BASE",
     )
 
-    if result.is_success:
-        entries = result.unwrap()
+    if search_result.is_success:
+        entries = search_result.unwrap()
 
         if entries:
             entry = entries[0]
@@ -326,7 +326,7 @@ def demonstrate_schema_search(
             logger.info(f"   ℹ Server may not expose schema at {schema_dn}")
 
     else:
-        logger.warning(f"   ⚠️  Schema search failed: {result.error}")
+        logger.warning(f"   ⚠️  Schema search failed: {search_result.error}")
         logger.info("   ℹ Schema may not be accessible or different DN required")
 
 
@@ -436,8 +436,11 @@ def main() -> int:
         finally:
             # Always disconnect
             if client.is_connected:
-                client.unbind()
-                logger.info("\nDisconnected from LDAP server")
+                unbind_result = client.unbind()
+                if hasattr(unbind_result, "is_failure") and unbind_result.is_failure:
+                    logger.warning("Disconnect error: %s", unbind_result.error)
+                else:
+                    logger.info("\nDisconnected from LDAP server")
 
         return 0
 

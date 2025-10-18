@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -43,7 +43,7 @@ class FlextLdapAclParsers:
 
                 # Find "access to" keywords
                 if (
-                    len(parts) < FlextLdapConstants.Parsing.MIN_ACL_PARTS
+                    len(parts) < FlextLdapConstants.MIN_ACL_PARTS
                     or parts[0] != "access"
                     or parts[1] != "to"
                 ):
@@ -110,7 +110,7 @@ class FlextLdapAclParsers:
                 attrs_str = target_str[6:]  # Remove "attrs="
                 attributes = [attr.strip() for attr in attrs_str.split(",")]
                 return FlextLdapModels.AclTarget(
-                    target_type="attributes",  # Explicitly set target type for attributes
+                    target_type="attributes",  # Set for attributes
                     dn_pattern="*",
                     attributes=attributes,
                     filter_expression="",
@@ -168,7 +168,7 @@ class FlextLdapAclParsers:
                 "auth": "auth",
             }
 
-            permissions: FlextTypes.StringList = []
+            permissions: list[str] = []
             for perm in perms_str.split(","):
                 perm_clean = perm.strip().lower()
                 if perm_clean in perm_mapping:
@@ -202,7 +202,7 @@ class FlextLdapAclParsers:
                 # Format: access to <target> by <subject> (<permissions>)
                 parts = acl_string.strip().split()
 
-                if len(parts) < FlextLdapConstants.Parsing.MIN_ACL_PARTS:
+                if len(parts) < FlextLdapConstants.MIN_ACL_PARTS:
                     return FlextResult[FlextLdapModels.Acl].fail(
                         "Invalid Oracle ACL format",
                     )
@@ -295,7 +295,7 @@ class FlextLdapAclParsers:
 
         @staticmethod
         def parse_oracle_subject_permissions(
-            subject_perms: FlextTypes.StringList,
+            subject_perms: list[str],
         ) -> tuple[FlextLdapModels.AclSubject, FlextLdapModels.AclPermissions]:
             """Parse Oracle ACL subject and permissions."""
             if not subject_perms:
@@ -395,10 +395,7 @@ class FlextLdapAclParsers:
                 )
 
             try:
-                # Use already imported re module
-
-                # ACI format: (target="...") (version 3.0; acl "name"; allow/deny (permissions) subject;)
-
+                # ACI: (target)(v3.0; acl "name"; allow/deny (perms) subj;)
                 # Extract target
                 target_match = re.search(r'\(target="([^"]+)"\)', aci)
                 if not target_match:
@@ -583,7 +580,6 @@ class FlextLdapAclParsers:
 
             """
             try:
-                # OpenLDAP format: access to <target> by <subject> <permissions>
                 target_str = (
                     FlextLdapAclParsers.OpenLdapConverter.format_openldap_target(
                         unified_acl.target,
@@ -600,11 +596,8 @@ class FlextLdapAclParsers:
                     )
                 )
 
-                openldap_acl = (
-                    f"access to {target_str} by {subject_str} {permissions_str}"
-                )
-
-                return FlextResult[str].ok(openldap_acl)
+                acl = f"access to {target_str} by {subject_str} {permissions_str}"
+                return FlextResult[str].ok(acl)
 
             except Exception as e:
                 return FlextResult[str].fail(f"OpenLDAP conversion failed: {e}")
@@ -659,7 +652,7 @@ class FlextLdapAclParsers:
 
             """
             try:
-                # ACI format: (target="...")(version 3.0; acl "name"; allow/deny (permissions) subject;)
+                # ACI format: (target)(v3.0; acl "name"; allow/deny (perms) subj;)
                 target_str = FlextLdapAclParsers.AciConverter.format_aci_target(
                     unified_acl.target,
                 )
@@ -671,11 +664,12 @@ class FlextLdapAclParsers:
                         unified_acl.permissions,
                     )
                 )
-                grant_type = unified_acl.permissions.grant_type
-
-                aci_acl = f'(target="{target_str}")(version 3.0; acl "{unified_acl.name}"; {grant_type} ({permissions_str}) {subject_str};)'
-
-                return FlextResult[str].ok(aci_acl)
+                gt = unified_acl.permissions.grant_type
+                nm = unified_acl.name
+                ps = permissions_str
+                ss = subject_str
+                acl = f'(target="{target_str})(v3.0; acl "{nm}"; {gt} ({ps}) {ss};)'
+                return FlextResult[str].ok(acl)
 
             except Exception as e:
                 return FlextResult[str].fail(f"ACI conversion failed: {e}")
@@ -711,10 +705,10 @@ class FlextLdapAclParsers:
                 )
 
             format_type_raw = message.get(
-                FlextLdapConstants.DictKeys.FORMAT,
+                FlextLdapConstants.LdapDictKeys.FORMAT,
                 FlextLdapConstants.AclFormat.AUTO,
             )
-            acl_string_raw = message.get(FlextLdapConstants.DictKeys.ACL_STRING)
+            acl_string_raw = message.get(FlextLdapConstants.LdapDictKeys.ACL_STRING)
 
             format_type: str = (
                 FlextLdapConstants.AclFormat.AUTO

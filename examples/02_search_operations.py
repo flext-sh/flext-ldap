@@ -41,9 +41,9 @@ from flext_ldap import (
     FlextLdapConfig,
     FlextLdapConstants,
     FlextLdapModels,
-    FlextLdapTypes,
     FlextLdapValidations,
 )
+from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -202,7 +202,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     groups_dn = f"ou=groups,{BASE_DN}"
     logger.info(f"Searching for groups in {groups_dn}")
 
-    result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = api.search_groups(
+    result: FlextResult[SearchResult] = api.search_groups(
         search_base=groups_dn,
         attributes=["cn", "member", "description"],
     )
@@ -211,7 +211,7 @@ def demonstrate_group_search(api: FlextLdap) -> None:
         logger.error(f"❌ Group search failed: {result.error}")
         return
 
-    groups: FlextLdapTypes.LdapDomain.SearchResult = result.unwrap()
+    groups: SearchResult = result.unwrap()
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
         logger.info(f"   {i}. Group DN: {group.get('dn', 'N/A')}")
@@ -239,12 +239,10 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     for _scope, description in scopes:
         logger.info(f"\nTesting {description}:")
-        result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = (
-            api.search_entries(
-                base_dn=BASE_DN,
-                filter_str="(objectClass=*)",
-                attributes=["dn"],
-            )
+        result: FlextResult[SearchResult] = api.search_entries(
+            base_dn=BASE_DN,
+            filter_str="(objectClass=*)",
+            attributes=["dn"],
         )
 
         if result.is_success:
@@ -325,7 +323,7 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
 
     # Search with specific attributes
     logger.info("Requesting only 'cn' and 'mail' attributes:")
-    result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = api.search(
+    result: FlextResult[SearchResult] = api.search(
         base_dn=BASE_DN,
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["cn", "mail"],  # Only these attributes

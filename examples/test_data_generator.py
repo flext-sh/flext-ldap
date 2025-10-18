@@ -25,21 +25,21 @@ import sys
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import FlextLdapConstants
 
 logger: FlextLogger = FlextLogger(__name__)
 
 # Test data configuration
-DEPARTMENTS: Final[FlextTypes.StringList] = [
+DEPARTMENTS: Final[list[str]] = [
     "engineering",
     "marketing",
     "sales",
     "support",
     "contractors",
 ]
-PROJECTS: Final[FlextTypes.StringList] = [
+PROJECTS: Final[list[str]] = [
     "alpha",
     "beta",
     "gamma",
@@ -61,7 +61,7 @@ PROJECTS: Final[FlextTypes.StringList] = [
     "tau",
     "upsilon",
 ]
-ROLES: Final[FlextTypes.StringList] = [
+ROLES: Final[list[str]] = [
     "REDACTED_LDAP_BIND_PASSWORD",
     "developer",
     "manager",
@@ -84,7 +84,7 @@ ROLES: Final[FlextTypes.StringList] = [
     "support_l1",
 ]
 
-FIRST_NAMES: Final[FlextTypes.StringList] = [
+FIRST_NAMES: Final[list[str]] = [
     "John",
     "Jane",
     "Michael",
@@ -107,7 +107,7 @@ FIRST_NAMES: Final[FlextTypes.StringList] = [
     "Elizabeth",
 ]
 
-LAST_NAMES: Final[FlextTypes.StringList] = [
+LAST_NAMES: Final[list[str]] = [
     "Smith",
     "Johnson",
     "Williams",
@@ -130,7 +130,7 @@ LAST_NAMES: Final[FlextTypes.StringList] = [
     "Martin",
 ]
 
-SERVICE_NAMES: Final[FlextTypes.StringList] = [
+SERVICE_NAMES: Final[list[str]] = [
     "ldap",
     "database",
     "web",
@@ -148,7 +148,7 @@ SERVICE_NAMES: Final[FlextTypes.StringList] = [
     "vpn",
 ]
 
-COMPUTER_PREFIXES: Final[FlextTypes.StringList] = [
+COMPUTER_PREFIXES: Final[list[str]] = [
     "srv",
     "ws",
     "db",
@@ -176,13 +176,13 @@ class TestDataGenerator:
         super().__init__()
         self.server_type = server_type
         self.base_dn = base_dn
-        self.entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = []
-        self.user_dns: FlextTypes.StringList = []
-        self.group_dns: FlextTypes.StringList = []
+        self.entries: list[tuple[str, dict[str, str | list[str]]]] = []
+        self.user_dns: list[str] = []
+        self.group_dns: list[str] = []
 
     def generate_all_data(
         self,
-    ) -> FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]]:
+    ) -> FlextResult[list[tuple[str, dict[str, str | list[str]]]]]:
         """Generate all test data (~1000 entries).
 
         Returns:
@@ -218,7 +218,7 @@ class TestDataGenerator:
             f"  Others: {len(self.entries) - len(self.user_dns) - len(self.group_dns)}"
         )
 
-        return FlextResult[list[tuple[str, dict[str, str | FlextTypes.StringList]]]].ok(
+        return FlextResult[list[tuple[str, dict[str, str | list[str]]]]].ok(
             self.entries
         )
 
@@ -230,7 +230,7 @@ class TestDataGenerator:
         main_ous = ["users", "groups", "services", "computers", "containers"]
         for ou in main_ous:
             dn = f"ou={ou},{self.base_dn}"
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -287,7 +287,7 @@ class TestDataGenerator:
                 cn = f"{first_name} {last_name}"
                 dn = f"uid={uid},ou={dept},ou=users,{self.base_dn}"
 
-                attributes: dict[str, str | FlextTypes.StringList] = {
+                attributes: dict[str, str | list[str]] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
                         FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
@@ -356,7 +356,7 @@ class TestDataGenerator:
             ]
             members = random.sample(dept_users, min(10, len(dept_users)))
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -419,7 +419,7 @@ class TestDataGenerator:
             cn = f"{service_type}-{instance:02d}"
             dn = f"cn={cn},ou=services,{self.base_dn}"
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "simpleSecurityObject",
                     "applicationProcess",
@@ -440,7 +440,7 @@ class TestDataGenerator:
             cn = f"{prefix}{i:03d}"
             dn = f"cn={cn},ou=computers,{self.base_dn}"
 
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "device",
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -473,7 +473,7 @@ class TestDataGenerator:
         for container_type in container_types:
             # Top level container
             dn = f"ou={container_type},ou=containers,{self.base_dn}"
-            attributes: dict[str, str | FlextTypes.StringList] = {
+            attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                     FlextLdapConstants.ObjectClasses.TOP,
@@ -489,7 +489,7 @@ class TestDataGenerator:
                 sub_dn = (
                     f"ou={sub_name},ou={container_type},ou=containers,{self.base_dn}"
                 )
-                sub_attributes: dict[str, str | FlextTypes.StringList] = {
+                sub_attributes: dict[str, str | list[str]] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                         FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
                         FlextLdapConstants.ObjectClasses.TOP,

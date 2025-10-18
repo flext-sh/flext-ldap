@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 from ldap3 import Connection
@@ -33,13 +33,13 @@ class FlextLdapServersFactory(FlextService[None]):
     - Fallback to generic operations when server type unknown
 
     Server Type Mappings:
-        - "openldap1" → FlextLdapServersOpenLDAP1Operations
-        - "openldap2" → FlextLdapServersOpenLDAP2Operations
-        - "openldap" → FlextLdapServersOpenLDAP2Operations (default to 2.x)
-        - "oid" → FlextLdapServersOIDOperations
-        - "oud" → FlextLdapServersOUDOperations
-        - "ad" → FlextLdapServersGenericOperations (AD support planned - using generic for now)
-        - "generic" → FlextLdapServersGenericOperations (fallback)
+        - "openldap1" → OpenLDAP1Operations
+        - "openldap2" → OpenLDAP2Operations
+        - "openldap" → OpenLDAP2Operations (default to 2.x)
+        - "oid" → OIDOperations
+        - "oud" → OUDOperations
+        - "ad" → GenericOperations (AD support planned)
+        - "generic" → GenericOperations (fallback)
     """
 
     def __init__(self) -> None:
@@ -50,13 +50,13 @@ class FlextLdapServersFactory(FlextService[None]):
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             "openldap1": FlextLdapServersOpenLDAP1Operations,
             "openldap2": FlextLdapServersOpenLDAP2Operations,
-            "openldap": FlextLdapServersOpenLDAP2Operations,  # Default OpenLDAP to 2.x
+            "openldap": FlextLdapServersOpenLDAP2Operations,
             "oid": FlextLdapServersOIDOperations,
-            "oracle_oid": FlextLdapServersOIDOperations,  # Alias for FlextLdif naming convention
+            "oracle_oid": FlextLdapServersOIDOperations,
             "oud": FlextLdapServersOUDOperations,
-            "oracle_oud": FlextLdapServersOUDOperations,  # Alias for FlextLdif naming convention
-            "ad": FlextLdapServersGenericOperations,  # AD support planned - using generic for now
-            "active_directory": FlextLdapServersGenericOperations,  # Alias for FlextLdif naming convention
+            "oracle_oud": FlextLdapServersOUDOperations,
+            "ad": FlextLdapServersGenericOperations,
+            "active_directory": FlextLdapServersGenericOperations,
             "generic": FlextLdapServersGenericOperations,
         }
 
@@ -204,7 +204,7 @@ class FlextLdapServersFactory(FlextService[None]):
 
             # Search for root DSE
             # Use '*' and '+' to get all attributes (standard and operational)
-            # This avoids errors when requesting attributes that don't exist in specific LDAP servers
+            # Avoids errors when requesting attributes that don't exist
             success = connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
@@ -237,7 +237,7 @@ class FlextLdapServersFactory(FlextService[None]):
 
                 self.logger.info(
                     "OpenLDAP detected from root DSE",
-                    extra={"version": vendor_version, "type": detected_type},
+                    extra={"version": vendor_version, "type": str(detected_type)},
                 )
                 return FlextResult[str].ok(detected_type)
 
@@ -327,7 +327,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 f"Server operations creation from connection failed: {e}",
             )
 
-    def get_supported_server_types(self) -> FlextTypes.StringList:
+    def get_supported_server_types(self) -> list[str]:
         """Get list of supported server types.
 
         Returns:
@@ -348,7 +348,7 @@ class FlextLdapServersFactory(FlextService[None]):
         """
         return server_type.lower().strip() in self._server_registry
 
-    def get_server_info(self, server_type: str) -> FlextResult[FlextTypes.Dict]:
+    def get_server_info(self, server_type: str) -> FlextResult[dict[str, object]]:
         """Get information about a server type.
 
         Args:
@@ -360,7 +360,7 @@ class FlextLdapServersFactory(FlextService[None]):
         """
         try:
             if not self.is_server_type_supported(server_type):
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Unsupported server type: {server_type}",
                 )
 
@@ -368,7 +368,7 @@ class FlextLdapServersFactory(FlextService[None]):
             operations_class = self._server_registry[server_type_lower]
             temp_instance = operations_class()
 
-            info: FlextTypes.Dict = {
+            info: dict[str, object] = {
                 "server_type": server_type,
                 "class_name": operations_class.__name__,
                 "default_port": temp_instance.get_default_port(use_ssl=False),
@@ -378,7 +378,9 @@ class FlextLdapServersFactory(FlextService[None]):
                 "schema_dn": temp_instance.get_schema_dn(),
             }
 
-            return FlextResult[FlextTypes.Dict].ok(info)
+            return FlextResult[dict[str, object]].ok(info)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"Failed to get server info: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to get server info: {e}"
+            )

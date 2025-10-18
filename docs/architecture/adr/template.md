@@ -1,4 +1,16 @@
 # Architecture Decision Record (ADR) Template
+## Table of Contents
+
+- [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
+  - [Status](#status)
+  - [Context](#context)
+  - [Decision](#decision)
+  - [Alternatives Considered](#alternatives-considered)
+  - [Implementation Plan](#implementation-plan)
+  - [Validation](#validation)
+  - [References](#references)
+  - [ADR Maintenance](#adr-maintenance)
+
 
 **ADR {number}: {title}**
 

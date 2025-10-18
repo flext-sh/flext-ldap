@@ -1,4 +1,16 @@
 # C4 Model: Container Architecture
+## Table of Contents
+
+- [C4 Model: Container Architecture](#c4-model-container-architecture)
+  - [🏗️ Container Architecture Overview](#-container-architecture-overview)
+  - [📦 Container Descriptions](#-container-descriptions)
+  - [🔄 Container Communication Patterns](#-container-communication-patterns)
+  - [🏗️ Technology Choices](#-technology-choices)
+  - [🚀 Deployment Considerations](#-deployment-considerations)
+  - [📊 Performance Characteristics](#-performance-characteristics)
+  - [🔒 Security Considerations](#-security-considerations)
+  - [🔗 Related Documentation](#-related-documentation)
+
 
 **Level 2: Container Diagram**
 
@@ -6,7 +18,8 @@ This diagram shows the high-level technology choices and how containers communic
 
 ## 🏗️ Container Architecture Overview
 
-FLEXT-LDAP is implemented as a Python library with Clean Architecture patterns, providing LDAP operations through a unified interface while supporting multiple LDAP server implementations.
+FLEXT-LDAP is implemented as a Python library with Clean Architecture patterns,
+     providing LDAP operations through a unified interface while supporting multiple LDAP server implementations.
 
 [Container diagram content would go here]
 

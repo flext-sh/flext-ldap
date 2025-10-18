@@ -20,10 +20,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 
 
-class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
+class FlextLdapSchemaSync(FlextService[dict[str, object]]):
     """Idempotent schema synchronization to LDAP servers.
 
     Features:
@@ -74,10 +74,10 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
         self._base_dn = base_dn
         self._server_type = server_type
         self._use_ssl = use_ssl
-        self._connection: FlextTypes.Dict | None = None
+        self._connection: dict[str, object] | None = None
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute idempotent schema synchronization.
 
         Returns:
@@ -95,7 +95,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
         # Step 1: Parse schema LDIF file
         parse_result = self._parse_schema_ldif()
         if parse_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to parse schema LDIF: {parse_result.error}"
             )
 
@@ -104,14 +104,14 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
         # Step 2: Connect to target server
         connect_result = self._connect_to_server()
         if connect_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to connect to server: {connect_result.error}"
             )
 
         # Step 3: Discover existing schema
         existing_result = self._get_existing_schema()
         if existing_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to get existing schema: {existing_result.error}"
             )
 
@@ -127,14 +127,14 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
             add_result = self._add_schema_definitions(new_definitions)
             if add_result.is_failure:
                 self._disconnect()
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Failed to add schema definitions: {add_result.error}"
                 )
 
         # Step 6: Disconnect and return statistics
         self._disconnect()
 
-        result_dict: FlextTypes.Dict = {
+        result_dict: dict[str, object] = {
             "total_definitions": len(schema_definitions),
             "existing_definitions": len(schema_definitions) - len(new_definitions),
             "new_definitions_added": len(new_definitions),
@@ -145,11 +145,11 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
             "schema_file": str(self._schema_file),
         }
 
-        return FlextResult[FlextTypes.Dict].ok(result_dict)
+        return FlextResult[dict[str, object]].ok(result_dict)
 
     def _parse_schema_ldif(
         self,
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Parse schema LDIF file into structured definitions.
 
         Returns:
@@ -157,7 +157,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
 
         """
         if not self._schema_file.exists():
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Schema file not found: {self._schema_file}"
             )
 
@@ -165,12 +165,12 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
             with self._schema_file.open("r", encoding="utf-8") as f:
                 content = f.read()
         except (OSError, UnicodeDecodeError) as e:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Failed to read schema file: {e}"
             )
 
         # Parse LDIF content into schema definitions
-        definitions: list[FlextTypes.Dict] = []
+        definitions: list[dict[str, object]] = []
 
         # Parse attributeTypes
         for line in content.split("\n"):
@@ -186,7 +186,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
                         oid = tokens[0]
                         name = self._extract_name(definition)
 
-                        entry: FlextTypes.Dict = {
+                        entry: dict[str, object] = {
                             "type": "attributeType",
                             "oid": oid,
                             "name": name,
@@ -209,7 +209,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
                         oid = tokens[0]
                         name = self._extract_name(definition)
 
-                        object_class_entry: FlextTypes.Dict = {
+                        object_class_entry: dict[str, object] = {
                             "type": "objectClass",
                             "oid": oid,
                             "name": name,
@@ -218,7 +218,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
                         }
                         definitions.append(object_class_entry)
 
-        return FlextResult[list[FlextTypes.Dict]].ok(definitions)
+        return FlextResult[list[dict[str, object]]].ok(definitions)
 
     def _extract_name(self, definition: str) -> str:
         """Extract NAME from schema definition.
@@ -268,7 +268,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
 
         return FlextResult[None].ok(None)
 
-    def _get_existing_schema(self) -> FlextResult[FlextTypes.Dict]:
+    def _get_existing_schema(self) -> FlextResult[dict[str, object]]:
         """Discover existing schema definitions on target server.
 
         Returns:
@@ -286,18 +286,18 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
         #   search_result = self._connection.search(schema_dn, ...)
         #   return parse_existing_schema(search_result)
 
-        existing: FlextTypes.Dict = {
+        existing: dict[str, object] = {
             "attributeTypes": {},
             "objectClasses": {},
         }
 
-        return FlextResult[FlextTypes.Dict].ok(existing)
+        return FlextResult[dict[str, object]].ok(existing)
 
     def _filter_new_definitions(
         self,
-        definitions: list[FlextTypes.Dict],
-        existing_schema: FlextTypes.Dict,
-    ) -> list[FlextTypes.Dict]:
+        definitions: list[dict[str, object]],
+        existing_schema: dict[str, object],
+    ) -> list[dict[str, object]]:
         """Filter out existing definitions (idempotent check).
 
         Args:
@@ -308,7 +308,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
             List of new definitions not yet on server
 
         """
-        new_definitions: list[FlextTypes.Dict] = []
+        new_definitions: list[dict[str, object]] = []
 
         for definition in definitions:
             definition_type = definition.get("type", "")
@@ -320,7 +320,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
 
             if definition_type == "attributeType":
                 existing_attrs_raw = existing_schema.get("attributeTypes", {})
-                existing_attrs: FlextTypes.Dict = (
+                existing_attrs: dict[str, object] = (
                     dict[str, object](existing_attrs_raw)
                     if isinstance(existing_attrs_raw, dict)
                     else {}
@@ -337,7 +337,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
 
             elif definition_type == "objectClass":
                 existing_ocs_raw = existing_schema.get("objectClasses", {})
-                existing_ocs: FlextTypes.Dict = (
+                existing_ocs: dict[str, object] = (
                     dict[str, object](existing_ocs_raw)
                     if isinstance(existing_ocs_raw, dict)
                     else {}
@@ -359,7 +359,7 @@ class FlextLdapSchemaSync(FlextService[FlextTypes.Dict]):
         return new_definitions
 
     def _add_schema_definitions(
-        self, _definitions: list[FlextTypes.Dict]
+        self, _definitions: list[dict[str, object]]
     ) -> FlextResult[None]:
         """Add new schema definitions to target server.
 

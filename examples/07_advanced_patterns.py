@@ -35,7 +35,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Final, TypeVar
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -221,9 +221,7 @@ def demonstrate_bulk_operations() -> None:
     try:
         with ldap_connection():
             # Create multiple entries in bulk
-            users_to_create: list[
-                tuple[str, dict[str, str | FlextTypes.StringList]]
-            ] = [
+            users_to_create: list[tuple[str, dict[str, str | list[str]]]] = [
                 (
                     f"cn=user{i},ou=users,{BASE_DN}",
                     {

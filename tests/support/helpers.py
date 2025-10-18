@@ -14,7 +14,6 @@ from typing import Literal, cast
 from flext_core import (
     FlextLogger,
     FlextResult,
-    FlextTypes,
 )
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SIMPLE, SUBTREE
 from ldap3.core.connection import Connection
@@ -33,7 +32,7 @@ ScopeType = Literal["BASE", "LEVEL", "SUBTREE"]
 def create_test_user(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, FlextTypes.StringList],
+    attributes: dict[str, list[str]],
 ) -> FlextResult[bool]:
     """Create a test user in LDAP server."""
     try:
@@ -57,7 +56,9 @@ def create_test_user(
             k: v for k, v in attributes.items() if k != "objectClass"
         }
 
-        success: bool = conn.add_entry(dn, object_class, attributes=attrs_dict or None)
+        success: bool = conn.add(
+            dn=dn, object_class=object_class, attributes=attrs_dict or None
+        )
         conn.unbind()
 
         if success:
@@ -73,7 +74,7 @@ def create_test_user(
 def create_test_group(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-    attributes: dict[str, FlextTypes.StringList],
+    attributes: dict[str, list[str]],
 ) -> FlextResult[bool]:
     """Create a test group in LDAP server."""
     try:
@@ -97,7 +98,9 @@ def create_test_group(
             k: v for k, v in attributes.items() if k != "objectClass"
         }
 
-        success: bool = conn.add_entry(dn, object_class, attributes=attrs_dict or None)
+        success: bool = conn.add(
+            dn=dn, object_class=object_class, attributes=attrs_dict or None
+        )
         conn.unbind()
 
         if success:
@@ -112,7 +115,7 @@ def create_test_group(
 
 def cleanup_test_entries(
     config: FlextLdapModels.ConnectionConfig,
-    dns: FlextTypes.StringList,
+    dns: list[str],
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
     try:
@@ -134,7 +137,7 @@ def cleanup_test_entries(
         for dn in dns:
             try:
                 # ldap3.delete returns a boolean, but mypy doesn't know this
-                if conn.delete_entry(dn):
+                if conn.delete(dn):
                     cleaned_count += 1
                     logger.debug("Cleaned up entry: %s", dn)
                 else:
@@ -189,7 +192,7 @@ def verify_entry_exists(
 def get_entry_attributes(
     config: FlextLdapModels.ConnectionConfig,
     dn: str,
-) -> FlextResult[FlextTypes.Dict]:
+) -> FlextResult[dict[str, object]]:
     """Get attributes of an LDAP entry."""
     try:
         server: Server = Server(
@@ -214,17 +217,17 @@ def get_entry_attributes(
 
         if success and len(conn.entries) > 0:
             entry = conn.entries[0]
-            attributes: FlextTypes.Dict = {
+            attributes: dict[str, object] = {
                 attr: entry[attr].value for attr in entry.entry_attributes
             }
             conn.unbind()
-            return FlextResult[FlextTypes.Dict].ok(attributes)
+            return FlextResult[dict[str, object]].ok(attributes)
         conn.unbind()
-        return FlextResult[FlextTypes.Dict].fail(f"Entry not found: {dn}")
+        return FlextResult[dict[str, object]].fail(f"Entry not found: {dn}")
 
     except Exception as e:
         logger.exception(f"Error getting attributes for {dn}")
-        return FlextResult[FlextTypes.Dict].fail(f"Error getting attributes: {e}")
+        return FlextResult[dict[str, object]].fail(f"Error getting attributes: {e}")
 
 
 def search_entries(
@@ -232,7 +235,7 @@ def search_entries(
     base_dn: str,
     search_filter: str,
     scope: Literal["base", "onelevel", "subtree"] = "subtree",
-) -> FlextResult[list[FlextTypes.Dict]]:
+) -> FlextResult[list[dict[str, object]]]:
     """Search for entries in LDAP server."""
     try:
         server: Server = Server(
@@ -263,10 +266,10 @@ def search_entries(
             search_scope=ldap_scope,
         )
 
-        results: list[FlextTypes.Dict] = []
+        results: list[dict[str, object]] = []
         if success:
             for entry in conn.entries:
-                entry_data: FlextTypes.Dict = {
+                entry_data: dict[str, object] = {
                     "dn": entry.entry_dn,
                     "attributes": {
                         attr: entry[attr].value for attr in entry.entry_attributes
@@ -275,11 +278,11 @@ def search_entries(
                 results.append(entry_data)
 
         conn.unbind()
-        return FlextResult[list[FlextTypes.Dict]].ok(results)
+        return FlextResult[list[dict[str, object]]].ok(results)
 
     except Exception as e:
         logger.exception("Error searching entries")
-        return FlextResult[list[FlextTypes.Dict]].fail(
+        return FlextResult[list[dict[str, object]]].fail(
             f"Error searching entries: {e}",
         )
 
@@ -306,7 +309,7 @@ def modify_entry(
         )
 
         # Convert changes to ldap3 format
-        ldap3_changes: dict[str, list[tuple[Literal["MODIFY_REPLACE"], list[str]]]] = {}
+        ldap3_changes: dict[str, list[tuple[str, list[str]]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
                 ldap3_changes[attr] = [(MODIFY_REPLACE, values)]

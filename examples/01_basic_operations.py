@@ -30,15 +30,15 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
     FlextLdapConstants,
     FlextLdapModels,
-    FlextLdapTypes,
 )
+from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -107,7 +107,7 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     users_dn = f"ou=users,{base_dn}"
     user_dn = f"cn=john.doe,{users_dn}"
 
-    attributes: dict[str, str | FlextTypes.StringList] = {
+    attributes: dict[str, str | list[str]] = {
         FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
             FlextLdapConstants.ObjectClasses.PERSON,
             FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
@@ -183,9 +183,7 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     logger.info(f"Searching users in: {users_dn}")
-    search_result: FlextResult[FlextLdapTypes.LdapDomain.SearchResult] = (
-        api.search_users(users_dn)
-    )
+    search_result: FlextResult[SearchResult] = api.search_users(users_dn)
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
@@ -235,13 +233,13 @@ def demonstrate_batch_operations(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     # OPTIMIZED: Use FlextLdapConstants for object classes and attributes
-    object_classes: FlextTypes.StringList = [
+    object_classes: list[str] = [
         FlextLdapConstants.ObjectClasses.PERSON,
         FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
     ]
 
     # NEW: Batch add multiple users
-    entries: list[tuple[str, dict[str, str | FlextTypes.StringList]]] = [
+    entries: list[tuple[str, dict[str, str | list[str]]]] = [
         (
             f"cn=batch.user1,{users_dn}",
             {
