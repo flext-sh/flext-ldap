@@ -1,11 +1,17 @@
-"""LDAP Constants - Extends FlextLdifConstants with LDAP-specific additions only.
+"""LDAP Constants - Domain-specific constants following FLEXT standardization plan.
 
-Reuses FlextLdifConstants for common patterns:
-- DN patterns, LDAP servers, encoding, objectclasses
-- ACL formats, DN patterns, server quirks
-- Operational attributes
+**Standardization Compliance:**
+- ✅ Layer 0 purity: Only constants, no functions or behavior
+- ✅ No module-level constants: All constants moved to nested classes
+- ✅ Direct FlextConstants inheritance: Clean dependency chain
+- ✅ Final[Type] declarations: Immutable type-safe constants
+- ✅ Nested class organization: Logical constant grouping
 
-Defines ONLY LDAP-specific constants not in flext-ldif.
+**Domain Coverage:**
+- LDAP Protocol (RFC 4511 scopes, ports, connection management)
+- LDAP-specific ACL keywords and parsing constants
+- LDAP operation types and validation
+- Type definitions for strict typing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,144 +25,32 @@ from typing import Final, Literal
 from flext_core import FlextConstants
 from flext_ldif import FlextLdifConstants
 
-# =========================================================================
-# MODULE-LEVEL TYPE ALIASES - Consolidated from LdapLiteralTypes
-# =========================================================================
-
-type SearchScope = Literal["base", "onelevel", "subtree", "children"]
-type ModifyOperation = Literal["add", "delete", "replace"]
-type UpdateStrategy = Literal["merge", "replace"]
-type AclType = Literal["openldap", "oracle", "aci", "active_directory", "auto"]
-type ObjectClassKind = Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
-type ConnectionState = Literal["unbound", "bound", "closed", "error"]
-type OperationType = Literal["search", "add", "modify", "delete", "compare", "extended"]
-type SecurityLevel = Literal["none", "simple", "sasl"]
-type AuthenticationMethod = Literal["simple", "sasl", "external"]
-type ConnectionMode = Literal["sync", "async"]
-type IpMode = Literal[
-    "IP_SYSTEM_DEFAULT",
-    "IP_V4_ONLY",
-    "IP_V4_PREFERRED",
-    "IP_V6_ONLY",
-    "IP_V6_PREFERRED",
-]
-type ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
-type LdapProjectType = Literal[
-    "ldap-service",
-    "directory-service",
-    "ldap-client",
-    "identity-provider",
-    "ldap-sync",
-    "directory-sync",
-    "user-provisioning",
-    "ldap-gateway",
-    "authentication-service",
-    "sso-service",
-    "directory-api",
-    "ldap-proxy",
-    "identity-management",
-    "user-directory",
-    "group-management",
-    "ldap-migration",
-]
-
-# =========================================================================
-# MODULE-LEVEL ACL PERMISSION & SUBJECT TYPE CONSTANTS
-# =========================================================================
-
-# Permission types
-type Permission = Literal[
-    "read",
-    "write",
-    "add",
-    "delete",
-    "search",
-    "compare",
-    "browse",
-    "proxy",
-    "auth",
-    "all",
-    "none",
-]
-
-# ACL subject types
-type SubjectType = Literal[
-    "user", "group", "dn", "self", "anonymous", "authenticated", "anyone"
-]
-
-# ACL target types
-type TargetType = Literal["dn", "attributes", "entry", "filter"]
-
-# ACL format types
-type AclFormat = Literal[
-    "openldap", "oracle", "aci", "active_directory", "unified", "auto"
-]
-
-# =========================================================================
-# MODULE-LEVEL ACL KEYWORD CONSTANTS
-# =========================================================================
-
-# OpenLDAP ACL keywords
-OPENLDAP_ACCESS_TO: Final[str] = "access to"
-OPENLDAP_BY: Final[str] = "by"
-OPENLDAP_ATTRS: Final[str] = "attrs="
-OPENLDAP_DN_EXACT: Final[str] = "dn.exact="
-OPENLDAP_DN_REGEX: Final[str] = "dn.regex="
-OPENLDAP_FILTER: Final[str] = "filter="
-
-# Oracle ACL keywords
-ORACLE_ACCESS_TO: Final[str] = "access to"
-ORACLE_ATTR: Final[str] = "attr="
-ORACLE_ENTRY: Final[str] = "entry"
-ORACLE_BY: Final[str] = "by"
-ORACLE_GROUP: Final[str] = "group="
-ORACLE_USER: Final[str] = "user="
-
-# 389 DS/Apache DS ACI keywords
-ACI_TARGET: Final[str] = "target"
-ACI_TARGETATTR: Final[str] = "targetattr"
-ACI_TARGETFILTER: Final[str] = "targetfilter"
-ACI_VERSION: Final[str] = "version 3.0"
-ACI_ACL: Final[str] = "acl"
-ACI_ALLOW: Final[str] = "allow"
-ACI_DENY: Final[str] = "deny"
-ACI_USERDN: Final[str] = "userdn"
-ACI_GROUPDN: Final[str] = "groupdn"
-
-# =========================================================================
-# MODULE-LEVEL ACL PARSING CONSTANTS
-# =========================================================================
-
-MIN_ACL_PARTS: Final[int] = 4
-ACL_RULE_PARTS: Final[int] = 2
-OPENLDAP_PREFIX_LENGTH: Final[int] = 3
-MIN_OC_LENGTH: Final[int] = 3
-
-# ACL conversion warning messages
-ACL_PERMISSION_NOT_SUPPORTED: Final[str] = "Perm '{permission}' not in {format}"
-ACL_FEATURE_LOSS: Final[str] = "Feature '{feature}' lost in {format}"
-ACL_SYNTAX_MISMATCH: Final[str] = "Syntax not translatable"
+# Type aliases moved to nested classes within FlextLdapConstants
 
 
-class FlextLdapConstants(FlextLdifConstants):
-    """LDAP domain-specific constants extending FlextLdifConstants.
+class FlextLdapConstants(FlextConstants):
+    """LDAP domain-specific constants extending FlextConstants directly.
 
-    Reuses from FlextLdifConstants:
-    - DnPatterns, ObjectClasses, Encoding, LdapServers
-    - AclFormats, OperationalAttributes, EntryType
-    - Schema, Acl, LiteralTypes and all LDIF patterns
+    **Composition Pattern (Standardization Compliance):**
+    - LdifConstants: Reference to FlextLdifConstants for LDIF patterns
+    - Core composition: Direct inheritance from FlextConstants
 
-    Adds ONLY LDAP-specific extensions:
-    - LDAP Protocol (RFC 4511 scopes, ports)
-    - LDAP Connection management
-    - LDAP-specific ACL keywords and formats
+    **Domain Coverage:**
+    - LDAP Protocol (RFC 4511 scopes, ports, connection management)
+    - LDAP-specific ACL keywords and parsing constants
     - LDAP operation types and validation
+    - Type definitions for strict typing
 
-    Dependency Chain:
-    - FlextLdapConstants → FlextLdifConstants → FlextConstants
+    **Dependency Chain (Standardized):**
+    - FlextLdapConstants → FlextConstants (direct inheritance)
+    - FlextLdapConstants.LdifConstants → FlextLdifConstants (composition)
     """
 
-    # Re-export commonly used flext-ldif constants for convenience
+    # =========================================================================
+    # COMPOSITION REFERENCES (Standardization Pattern)
+    # =========================================================================
+
+    # Re-export commonly used flext-ldif constants for convenience (composition pattern)
     DnPatterns = FlextLdifConstants.DnPatterns
     ObjectClasses = FlextLdifConstants.ObjectClasses
     Encoding = FlextLdifConstants.Encoding
@@ -432,6 +326,94 @@ class FlextLdapConstants(FlextLdifConstants):
     DictKeys = LdapDictKeys
 
     # =========================================================================
+    # TYPE DEFINITIONS (moved from module level)
+    # =========================================================================
+
+    class Types:
+        """Type aliases for LDAP domain (moved from module level for Layer 0 compliance)."""
+
+        SearchScope = Literal["base", "onelevel", "subtree", "children"]
+        ModifyOperation = Literal["add", "delete", "replace"]
+        UpdateStrategy = Literal["merge", "replace"]
+        AclType = Literal["openldap", "oracle", "aci", "active_directory", "auto"]
+        ObjectClassKind = Literal["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
+        ConnectionState = Literal["unbound", "bound", "closed", "error"]
+        OperationType = Literal[
+            "search", "add", "modify", "delete", "compare", "extended"
+        ]
+        SecurityLevel = Literal["none", "simple", "sasl"]
+        AuthenticationMethod = Literal["simple", "sasl", "external"]
+        ConnectionMode = Literal["sync", "async"]
+        IpMode = Literal[
+            "IP_SYSTEM_DEFAULT",
+            "IP_V4_ONLY",
+            "IP_V4_PREFERRED",
+            "IP_V6_ONLY",
+            "IP_V6_PREFERRED",
+        ]
+        ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+        LdapProjectType = Literal[
+            "ldap-service",
+            "directory-service",
+            "ldap-client",
+            "identity-provider",
+            "ldap-sync",
+            "directory-sync",
+            "user-provisioning",
+            "ldap-gateway",
+            "authentication-service",
+            "sso-service",
+            "directory-api",
+            "ldap-proxy",
+            "identity-management",
+            "user-directory",
+            "group-management",
+            "ldap-migration",
+        ]
+
+        # ACL type definitions
+        Permission = Literal[
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "browse",
+            "proxy",
+            "auth",
+            "all",
+            "none",
+        ]
+        SubjectType = Literal[
+            "user", "group", "dn", "self", "anonymous", "authenticated", "anyone"
+        ]
+        TargetType = Literal["dn", "attributes", "entry", "filter"]
+        AclFormat = Literal[
+            "openldap", "oracle", "aci", "active_directory", "unified", "auto"
+        ]
+
+    # Re-export AclType for backward compatibility
+    AclType = Types.AclType
+
+    # =========================================================================
+    # ACL PARSING CONSTANTS
+    # =========================================================================
+
+    class AclParsing:
+        """ACL parsing constants."""
+
+        MIN_ACL_PARTS: Final[int] = 4
+        ACL_RULE_PARTS: Final[int] = 2
+        OPENLDAP_PREFIX_LENGTH: Final[int] = 3
+        MIN_OC_LENGTH: Final[int] = 3
+
+        # ACL conversion warning messages
+        ACL_PERMISSION_NOT_SUPPORTED: Final[str] = "Perm '{permission}' not in {format}"
+        ACL_FEATURE_LOSS: Final[str] = "Feature '{feature}' lost in {format}"
+        ACL_SYNTAX_MISMATCH: Final[str] = "Syntax not translatable"
+
+    # =========================================================================
     # VERSION CONSTANTS
     # =========================================================================
 
@@ -452,50 +434,24 @@ class FlextLdapConstants(FlextLdifConstants):
             return cls.VERSION_INFO
 
 
+# Make constants available at module level for backward compatibility
+AclType = FlextLdapConstants.Types.AclType
+AuthenticationMethod = FlextLdapConstants.Types.AuthenticationMethod
+ConnectionState = FlextLdapConstants.Types.ConnectionState
+LdapProjectType = FlextLdapConstants.Types.LdapProjectType
+ObjectClassKind = FlextLdapConstants.Types.ObjectClassKind
+OperationType = FlextLdapConstants.Types.OperationType
+SecurityLevel = FlextLdapConstants.Types.SecurityLevel
+UpdateStrategy = FlextLdapConstants.Types.UpdateStrategy
+
 __all__ = [
-    "ACI_ACL",
-    "ACI_ALLOW",
-    "ACI_DENY",
-    "ACI_GROUPDN",
-    "ACI_TARGET",
-    "ACI_TARGETATTR",
-    "ACI_TARGETFILTER",
-    "ACI_USERDN",
-    "ACI_VERSION",
-    "ACL_FEATURE_LOSS",
-    "ACL_PERMISSION_NOT_SUPPORTED",
-    "ACL_RULE_PARTS",
-    "MIN_ACL_PARTS",
-    "MIN_OC_LENGTH",
-    "OPENLDAP_ACCESS_TO",
-    "OPENLDAP_ATTRS",
-    "OPENLDAP_BY",
-    "OPENLDAP_DN_EXACT",
-    "OPENLDAP_DN_REGEX",
-    "OPENLDAP_FILTER",
-    "OPENLDAP_PREFIX_LENGTH",
-    "ORACLE_ACCESS_TO",
-    "ORACLE_ATTR",
-    "ORACLE_BY",
-    "ORACLE_ENTRY",
-    "ORACLE_GROUP",
-    "ORACLE_USER",
-    "AclFormat",
     "AclType",
     "AuthenticationMethod",
-    "ConnectionInfo",
-    "ConnectionMode",
     "ConnectionState",
     "FlextLdapConstants",
-    "IpMode",
     "LdapProjectType",
-    "ModifyOperation",
     "ObjectClassKind",
     "OperationType",
-    "Permission",
-    "SearchScope",
     "SecurityLevel",
-    "SubjectType",
-    "TargetType",
     "UpdateStrategy",
 ]

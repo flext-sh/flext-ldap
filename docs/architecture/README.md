@@ -1,4 +1,5 @@
 # FLEXT-LDAP Architecture Documentation
+
 ## Table of Contents
 
 - [FLEXT-LDAP Architecture Documentation](#flext-ldap-architecture-documentation)
@@ -19,11 +20,11 @@
 - [Generate all diagrams](#generate-all-diagrams)
 - [Generate specific diagram](#generate-specific-diagram)
 - [Serve interactive diagrams](#serve-interactive-diagrams)
-    - [**Documentation Validation**](#documentation-validation)
+  - [**Documentation Validation**](#documentation-validation)
 - [Validate all architecture docs](#validate-all-architecture-docs)
 - [Check diagram consistency](#check-diagram-consistency)
 - [Validate ADRs](#validate-adrs)
-    - [**Documentation Publishing**](#documentation-publishing)
+  - [**Documentation Publishing**](#documentation-publishing)
 - [Build complete architecture documentation](#build-complete-architecture-documentation)
 - [Deploy to documentation site](#deploy-to-documentation-site)
   - [📊 Architecture Metrics](#-architecture-metrics)
@@ -38,7 +39,6 @@
     - [**Making Architecture Changes**](#making-architecture-changes)
     - [**Review Process**](#review-process)
     - [**Standards Compliance**](#standards-compliance)
-
 
 **Comprehensive Architecture Documentation Framework**
 

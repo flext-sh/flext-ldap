@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import Any, ClassVar, Self, cast
+from typing import Annotated, Any, ClassVar, cast
 
 from dependency_injector import providers
 from flext_core import (
@@ -25,11 +25,52 @@ from flext_core import (
     FlextExceptions,
     FlextResult,
 )
-from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
-from pydantic_settings import SettingsConfigDict
+from pydantic import Field, SecretStr, computed_field, model_validator
+from pydantic.functional_validators import BeforeValidator
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+
+# ============================================================================
+# PYDANTIC V2 BEFOREVALIDATOR FUNCTIONS - Module-level validator functions
+# ============================================================================
+
+
+def _validate_bind_dn(v: str | None) -> str | None:
+    """Validate LDAP bind DN format (Pydantic v2 BeforeValidator).
+
+    Focus on business logic: must contain attribute=value pairs.
+    Pydantic handles length constraints via Field.
+    """
+    if v is None:
+        return v
+
+    # Check for required attribute=value pairs (length already validated by Field)
+    if "=" not in v:
+        msg = f"Invalid LDAP bind DN format: {v}. Must contain attribute=value pairs"
+        raise FlextExceptions.ValidationError(msg, field="ldap_bind_dn", value=v)
+
+    return v
+
+
+def _coerce_int_from_env(v: int | str) -> int:
+    """Coerce LDAP integer fields from environment variables (Pydantic v2 BeforeValidator)."""
+    if isinstance(v, int):
+        return v
+    if isinstance(v, str):
+        return int(v)
+    return int(v)
+
+
+def _coerce_bool_from_env(v: bool | str | int) -> bool:
+    """Coerce LDAP boolean fields from environment variables (Pydantic v2 BeforeValidator)."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        return v.lower() in {"true", "1", "yes", "on"}
+    if isinstance(v, int):
+        return v != 0
+    return bool(v)
 
 
 class FlextLdapConfig(FlextConfig):
@@ -44,8 +85,9 @@ class FlextLdapConfig(FlextConfig):
     factory methods for search/modify/add/delete configs.
 
     **Core Attributes**: ldap_server_uri, ldap_port, ldap_bind_dn, ldap_bind_password, ldap_base_dn,
-    ldap_pool_size, ldap_connection_timeout, ldap_operation_timeout, ldap_cache_ttl, ldap_retry_attempts,
-    ldap_enable_caching, ldap_use_ssl.
+    ldap_pool_size, ldap_connection_timeout, ldap_operation_timeout, ldap_use_ssl.
+
+    **Inherited from FlextConfig**: enable_caching, cache_ttl, max_retry_attempts, retry_delay.
 
     Example:
         >>> config = FlextLdapConfig()
@@ -64,14 +106,7 @@ class FlextLdapConfig(FlextConfig):
 
     # Singleton pattern inherited from FlextConfig - no need to redefine _instances
     # _lock inherited as well
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
-        """Create FlextLdapConfig instance with SecretStr preprocessing."""
-        processed_kwargs = {
-            key: (value.get_secret_value() if isinstance(value, SecretStr) else value)
-            for key, value in kwargs.items()
-        }
-        return super().__new__(cls, *args, **processed_kwargs)
+    # NOTE: Removed __new__ override - Pydantic v2 handles SecretStr natively
 
     # =========================================================================
     # HANDLER CONFIGURATION UTILITIES - Integrated from LdapHandlerConfiguration
@@ -152,26 +187,8 @@ class FlextLdapConfig(FlextConfig):
 
         return config
 
-    model_config = SettingsConfigDict(
-        case_sensitive=False,
-        extra="ignore",  # For LDAP ecosystem compatibility
-        use_enum_values=True,
-        frozen=False,  # Allow runtime updates
-        arbitrary_types_allowed=True,
-        validate_return=True,
-        validate_assignment=True,
-        strict=True,
-        hide_input_in_errors=True,
-        cli_parse_args=False,
-        cli_avoid_json=True,
-        nested_model_default_partial_update=True,
-        str_strip_whitespace=True,
-        str_to_lower=False,
-        json_schema_extra={
-            "title": "FLEXT LDAP Configuration",
-            "description": "Enterprise LDAP config with FlextConfig features",
-        },
-    )
+    # Inherit model_config from FlextConfig (includes debug, trace, all parent fields)
+    # NO model_config override - Pydantic v2 pattern for proper field inheritance
 
     # LDAP Connection Configuration using FlextLdapConstants for defaults
     ldap_server_uri: str = Field(
@@ -180,25 +197,25 @@ class FlextLdapConfig(FlextConfig):
         description="LDAP server URI (ldap:// or ldaps://)",
     )
 
-    ldap_port: int = Field(
+    ldap_port: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
         default=FlextLdapConstants.Protocol.DEFAULT_PORT,
         ge=1,
         le=FlextConstants.Network.MAX_PORT,
         description="LDAP server port",
     )
 
-    ldap_use_ssl: bool = Field(
+    ldap_use_ssl: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=True,
         description="Use SSL/TLS for LDAP connections",
     )
 
-    ldap_verify_certificates: bool = Field(
+    ldap_verify_certificates: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=True,
         description="Verify SSL/TLS certificates",
     )
 
     # Authentication Configuration using SecretStr for sensitive data
-    ldap_bind_dn: str | None = Field(
+    ldap_bind_dn: Annotated[str | None, BeforeValidator(_validate_bind_dn)] = Field(
         default=None,
         min_length=FlextLdapConstants.Validation.MIN_DN_LENGTH,
         max_length=FlextLdapConstants.Validation.MAX_DN_LENGTH,
@@ -228,7 +245,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     # Connection Pooling Configuration using FlextLdapConstants for defaults
-    ldap_pool_size: int = Field(
+    ldap_pool_size: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
         default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
         ge=1,
         le=50,
@@ -271,51 +288,25 @@ class FlextLdapConfig(FlextConfig):
         description="LDAP search time limit in seconds",
     )
 
-    # Caching Configuration using FlextConstants for defaults
-    ldap_enable_caching: bool = Field(
-        default=True,
-        description="Enable LDAP result caching",
-    )
-
-    ldap_cache_ttl: int = Field(
-        default=FlextConstants.Defaults.TIMEOUT * 10,
-        ge=0,
-        le=3600,
-        description="LDAP cache TTL in seconds",
-    )
-
-    # Retry Configuration using FlextConstants for defaults
-    ldap_retry_attempts: int = Field(
-        default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-        ge=0,
-        le=10,
-        description="Number of retry attempts for failed operations",
-    )
-
-    ldap_retry_delay: int = Field(
-        default=int(FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY),
-        ge=0,
-        le=60,
-        description="Delay between retry attempts in seconds",
-    )
+    # NO caching/retry field duplicates - use FlextConfig.enable_caching, cache_ttl, max_retry_attempts, retry_delay
 
     # Logging Configuration using FlextLdapConstants for defaults
-    ldap_enable_debug: bool = Field(
+    ldap_enable_debug: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=False,
         description="Enable LDAP debug logging",
     )
 
-    ldap_enable_trace: bool = Field(
+    ldap_enable_trace: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=False,
         description="Enable LDAP trace logging",
     )
 
-    ldap_log_queries: bool = Field(
+    ldap_log_queries: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=False,
         description="Enable logging of LDAP queries",
     )
 
-    ldap_mask_passwords: bool = Field(
+    ldap_mask_passwords: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
         default=True,
         description="Mask passwords in log messages",
     )
@@ -347,7 +338,7 @@ class FlextLdapConfig(FlextConfig):
             bind_password=self.ldap_bind_password,
             timeout=self.ldap_connection_timeout,
             pool_size=self.ldap_pool_size,
-            pool_keepalive=self.ldap_cache_ttl,
+            pool_keepalive=self.cache_ttl,
             verify_certificates=self.ldap_verify_certificates,
         )
 
@@ -387,20 +378,20 @@ class FlextLdapConfig(FlextConfig):
     def caching_info(self) -> FlextLdapModels.ConfigRuntimeMetadata.Caching:
         """Get LDAP caching configuration information."""
         return FlextLdapModels.ConfigRuntimeMetadata.Caching(
-            caching_enabled=self.ldap_enable_caching,
-            cache_ttl=self.ldap_cache_ttl,
-            cache_ttl_minutes=self.ldap_cache_ttl // 60,
-            cache_effective=self.ldap_enable_caching and self.ldap_cache_ttl > 0,
+            caching_enabled=self.enable_caching,
+            cache_ttl=self.cache_ttl,
+            cache_ttl_minutes=self.cache_ttl // 60,
+            cache_effective=self.enable_caching and self.cache_ttl > 0,
         )
 
     @computed_field
     def retry_info(self) -> FlextLdapModels.ConfigRuntimeMetadata.Retry:
         """Get LDAP retry configuration information."""
         return FlextLdapModels.ConfigRuntimeMetadata.Retry(
-            retry_attempts=self.ldap_retry_attempts,
-            retry_delay=self.ldap_retry_delay,
-            total_retry_time=self.ldap_retry_attempts * self.ldap_retry_delay,
-            retry_enabled=self.ldap_retry_attempts > 0,
+            retry_attempts=self.max_retry_attempts,
+            retry_delay=int(self.retry_delay),
+            total_retry_time=int(self.max_retry_attempts * self.retry_delay),
+            retry_enabled=self.max_retry_attempts > 0,
         )
 
     @computed_field
@@ -408,78 +399,17 @@ class FlextLdapConfig(FlextConfig):
         """Get comprehensive LDAP server capabilities summary."""
         return FlextLdapModels.ConfigCapabilities(
             supports_ssl=self.ldap_use_ssl,
-            supports_caching=self.ldap_enable_caching,
-            supports_retry=self.ldap_retry_attempts > 0,
+            supports_caching=self.enable_caching,
+            supports_retry=self.max_retry_attempts > 0,
             supports_debug=self.ldap_enable_debug or self.ldap_enable_trace,
             has_authentication=self.ldap_bind_dn is not None,
             has_pooling=self.ldap_pool_size > 1,
             is_production_ready=(self.ldap_use_ssl and self.ldap_bind_dn is not None),
         )
 
-    # Pydantic 2.11 field validators
-    # =========================================================================
-    # FIELD VALIDATORS - Enhanced Pydantic 2.11 validation
-    # =========================================================================
-
-    @field_validator("ldap_bind_dn")
-    @classmethod
-    def validate_bind_dn(cls, v: str | None) -> str | None:
-        """Validate LDAP bind DN format (Pydantic handles length constraints via Field).
-
-        Focus on business logic: must contain attribute=value pairs.
-        """
-        if v is None:
-            return v
-
-        # Check for required attribute=value pairs (length already validated by Field)
-        if "=" not in v:
-            msg = (
-                f"Invalid LDAP bind DN format: {v}. Must contain attribute=value pairs"
-            )
-            raise FlextExceptions.ValidationError(msg, field="ldap_bind_dn", value=v)
-
-        return v
-
-    # =========================================================================
-    # ENVIRONMENT VARIABLE TYPE COERCION VALIDATORS
-    # Pydantic 2 strict mode requires explicit type coercion from env var strings
-    # =========================================================================
-
-    @field_validator(
-        "ldap_port",
-        "ldap_pool_size",
-        "ldap_cache_ttl",
-        "ldap_retry_attempts",
-        mode="before",
-    )
-    @classmethod
-    def validate_int_fields_ldap(cls, v: int | str) -> int:
-        """Coerce LDAP integer fields from environment variables.
-
-        Delegates to FlextConfig's validate_int_field for consistency.
-        """
-        return cls.validate_int_field(v)
-
-    @field_validator(
-        "ldap_use_ssl",
-        "ldap_verify_certificates",
-        "ldap_enable_caching",
-        "ldap_enable_debug",
-        "ldap_enable_trace",
-        "ldap_log_queries",
-        "ldap_mask_passwords",
-        mode="before",
-    )
-    @classmethod
-    def validate_bool_fields_ldap(cls, v: bool | str | int) -> bool:
-        """Coerce LDAP boolean fields from environment variables.
-
-        Delegates to FlextConfig's validate_boolean_field for consistency.
-        """
-        return cls.validate_boolean_field(v)
-
     # =========================================================================
     # MODEL VALIDATORS - Cross-field validation with business rules
+    # Pydantic v2: Keep @model_validator for legitimate cross-field validation
     # =========================================================================
 
     @model_validator(mode="after")
@@ -493,7 +423,7 @@ class FlextLdapConfig(FlextConfig):
             )
 
         # Validate caching configuration
-        if self.ldap_enable_caching and self.ldap_cache_ttl <= 0:
+        if self.enable_caching and self.cache_ttl <= 0:
             msg = "Cache TTL must be positive when caching is enabled"
             raise FlextExceptions.ConfigurationError(msg, config_key="ldap_cache_ttl")
 
@@ -586,15 +516,15 @@ class FlextLdapConfig(FlextConfig):
                 case "cache":
                     match prop:
                         case "enabled":
-                            return self.ldap_enable_caching
+                            return self.enable_caching
                         case "ttl":
-                            return self.ldap_cache_ttl
+                            return self.cache_ttl
                 case "retry":
                     match prop:
                         case "attempts":
-                            return self.ldap_retry_attempts
+                            return self.max_retry_attempts
                         case "delay":
-                            return self.ldap_retry_delay
+                            return self.retry_delay
                 case "logging":
                     match prop:
                         case "debug":
@@ -745,6 +675,91 @@ class FlextLdapConfig(FlextConfig):
     # =========================================================================
     # UNIFIED FACTORY METHODS - Pattern-matched configuration creation
     # =========================================================================
+
+    @classmethod
+    def create_from_connection_config_data(
+        cls, data: dict[str, object]
+    ) -> FlextResult[FlextLdapConfig]:
+        """Create FlextLdapConfig from connection config data (wrapper for create_config).
+
+        Args:
+            data: Connection configuration data (server, port, bind_dn, bind_password, etc.)
+
+        Returns:
+            FlextResult[FlextLdapConfig]: Created configuration or error
+
+        Example:
+            >>> config_data = {
+            ...     "server": "ldap://localhost",
+            ...     "port": 389,
+            ...     "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            ...     "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
+            ... }
+            >>> result = FlextLdapConfig.create_from_connection_config_data(config_data)
+            >>> if result.is_success:
+            ...     config = result.unwrap()
+
+        """
+        return cls.create_config("connection", data)
+
+    @classmethod
+    def create_search_config(
+        cls, data: dict[str, object]
+    ) -> FlextResult[FlextLdapModels.SearchConfig]:
+        """Create SearchConfig from search config data (wrapper for create_config)."""
+        return cls.create_config("search", data)
+
+    @classmethod
+    def get_default_search_config(cls) -> FlextResult[FlextLdapModels.SearchConfig]:
+        """Get default SearchConfig (wrapper for create_config with default_search)."""
+        return cls.create_config("default_search")
+
+    @classmethod
+    def create_modify_config(cls, data: dict[str, object]) -> FlextResult[Any]:
+        """Create ModifyConfig from modify config data (wrapper for create_config)."""
+        return cls.create_config("modify", data)
+
+    @classmethod
+    def create_add_config(cls, data: dict[str, object]) -> FlextResult[Any]:
+        """Create AddConfig from add config data (wrapper for create_config)."""
+        return cls.create_config("add", data)
+
+    @classmethod
+    def create_delete_config(cls, data: dict[str, object]) -> FlextResult[Any]:
+        """Create DeleteConfig from delete config data (wrapper for create_config)."""
+        return cls.create_config("delete", data)
+
+    @staticmethod
+    def merge_configs(
+        base_config: dict[str, object], override_config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Merge two configuration dicts (base + overrides).
+
+        Args:
+            base_config: Base configuration dictionary
+            override_config: Override configuration dictionary
+
+        Returns:
+            FlextResult[dict[str, object]]: Merged configuration or error
+
+        Example:
+            >>> base = {"server": "ldap://localhost", "port": 389}
+            >>> override = {"port": 636}
+            >>> result = FlextLdapConfig.merge_configs(base, override)
+            >>> if result.is_success:
+            ...     merged = result.unwrap()  # {"server": "ldap://localhost", "port": 636}
+
+        """
+        try:
+            # Create merged dict with base config
+            merged = dict(base_config)
+            # Update with override values
+            merged.update(override_config)
+            return FlextResult[dict[str, object]].ok(merged)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Config merge failed: {e!s}"
+            )
 
     @classmethod
     def create_config(

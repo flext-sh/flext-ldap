@@ -211,7 +211,7 @@ class FlextLdapDomain:
                 )
 
             # Example business rule: users must be active
-            if not user.is_active():
+            if not user.is_active:
                 return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups",
                 )

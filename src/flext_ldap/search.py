@@ -14,7 +14,7 @@ Note: This file has type checking disabled due to limitations in types-ldap3:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from flext_core import FlextResult, FlextService
 from ldap3 import Connection
@@ -22,8 +22,7 @@ from ldap3.core.exceptions import LDAPAttributeError
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-# Removed: FlextLdapModels.Entry now imported from FlextLdapModels
+from flext_ldap.typings import AttributeValue
 from flext_ldap.validations import FlextLdapValidations
 
 if TYPE_CHECKING:
@@ -111,7 +110,7 @@ class FlextLdapSearch(FlextService[None]):
         base_dn: str,
         filter_str: str,
         attributes: list[str] | None = None,
-        scope: (FlextLdapConstants.SearchScope) = "subtree",  # type: ignore[assignment]
+        scope: str = "subtree",
         page_size: int = 0,
         paged_cookie: bytes | None = None,
     ) -> FlextResult[list[FlextLdapModels.Entry]]:
@@ -278,10 +277,7 @@ class FlextLdapSearch(FlextService[None]):
                 ]  # Fixed: ldap3 uses entry_dn not dn
 
                 entry_model_result = FlextLdapModels.Entry.from_ldap_attributes(
-                    cast(
-                        "dict[str, list[str]]",
-                        attrs_with_dn,
-                    ),
+                    attrs_with_dn,
                 )
 
                 # Handle result (from_ldap_attributes returns FlextResult)
@@ -610,7 +606,7 @@ class FlextLdapSearch(FlextService[None]):
 
         return synthetic_entries
 
-    def _get_ldap3_scope(self, scope: str) -> FlextLdapConstants.SearchScope:
+    def _get_ldap3_scope(self, scope: str) -> Literal["BASE", "LEVEL", "SUBTREE"]:
         """Convert scope string to ldap3 scope constant.
 
         Args:
@@ -626,10 +622,10 @@ class FlextLdapSearch(FlextService[None]):
         # Normalize scope to lowercase for case-insensitive matching
         normalized_scope = scope.lower()
 
-        scope_map: dict[str, FlextLdapConstants.SearchScope] = {
-            "base": "BASE",  # type: ignore[assignment]
-            "level": "LEVEL",  # type: ignore[assignment]
-            "subtree": "SUBTREE",  # type: ignore[assignment]
+        scope_map: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+            "base": "BASE",
+            "level": "LEVEL",
+            "subtree": "SUBTREE",
         }
         if normalized_scope not in scope_map:
             valid_scopes = "base, level, subtree"

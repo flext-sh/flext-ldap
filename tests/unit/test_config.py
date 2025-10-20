@@ -364,7 +364,7 @@ class TestFlextLdapConfig:
         assert (
             result.error is not None
             and result.error
-            and "DN contains invalid characters" in result.error
+            and "DN must contain '=' for proper DN format" in result.error
         )
 
     def test_validate_modify_data_missing_dn(self) -> None:
@@ -398,7 +398,7 @@ class TestFlextLdapConfig:
         assert (
             result.error is not None
             and result.error
-            and "DN contains invalid characters" in result.error
+            and "DN must contain '=' for proper DN format" in result.error
         )
 
     def test_validate_add_data_missing_attributes(self) -> None:
@@ -428,7 +428,7 @@ class TestFlextLdapConfig:
         assert (
             result.error is not None
             and result.error
-            and "DN contains invalid characters" in result.error
+            and "DN must contain '=' for proper DN format" in result.error
         )
 
     def test_validate_delete_data_missing_dn(self) -> None:
@@ -519,7 +519,7 @@ class TestFlextLdapConfig:
         assert (
             result.error is not None
             and result.error
-            and "DN contains invalid characters" in result.error
+            and "DN must contain '=' for proper DN format" in result.error
         )
 
     def test_validate_dn_format_empty(self) -> None:
@@ -620,40 +620,36 @@ class TestFlextLdapConfig:
         assert add_result.is_success
 
     def test_validator_invalid_server_uri(self) -> None:
-        """Test validator with invalid server URI."""
+        """Test validator with invalid server URI (Pydantic v2 pattern validation)."""
         import pytest
-        from flext_core.exceptions import FlextExceptions
+        from pydantic import ValidationError
 
-        with pytest.raises(
-            FlextExceptions.ConfigurationError, match="Invalid LDAP server URI"
-        ):
+        with pytest.raises(ValidationError, match="String should match pattern"):
             FlextLdapConfig(
                 ldap_server_uri="http://localhost",  # Invalid protocol
                 ldap_bind_password=secret("password"),
             )
 
     def test_validator_bind_dn_too_short(self) -> None:
-        """Test validator with bind DN too short."""
+        """Test validator with bind DN too short (triggers = validation first)."""
         import pytest
         from flext_core.exceptions import FlextExceptions
 
         with pytest.raises(
-            FlextExceptions.ValidationError, match="LDAP bind DN too short"
+            FlextExceptions.ValidationError, match="Must contain attribute=value pairs"
         ):
             FlextLdapConfig(
-                ldap_bind_dn="a",  # Too short
+                ldap_bind_dn="a",  # Too short and lacks =
                 ldap_bind_password=secret("password"),
             )
 
     def test_validator_bind_dn_too_long(self) -> None:
-        """Test validator with bind DN too long."""
+        """Test validator with bind DN too long (Pydantic v2 max_length validation)."""
         import pytest
-        from flext_core.exceptions import FlextExceptions
+        from pydantic import ValidationError
 
         long_dn = "cn=" + ("x" * 10000)  # Exceeds MAX_DN_LENGTH
-        with pytest.raises(
-            FlextExceptions.ValidationError, match="LDAP bind DN too long"
-        ):
+        with pytest.raises(ValidationError, match="String should have at most"):
             FlextLdapConfig(ldap_bind_dn=long_dn, ldap_bind_password=secret("password"))
 
     def test_validator_bind_dn_invalid_format(self) -> None:
@@ -672,12 +668,10 @@ class TestFlextLdapConfig:
     def test_validator_base_dn_too_long(self) -> None:
         """Test validator with base DN too long."""
         import pytest
-        from flext_core.exceptions import FlextExceptions
+        from pydantic import ValidationError
 
         long_dn = "dc=" + ("x" * 10000)  # Exceeds MAX_DN_LENGTH
-        with pytest.raises(
-            FlextExceptions.ValidationError, match="LDAP base DN too long"
-        ):
+        with pytest.raises(ValidationError, match="String should have at most"):
             FlextLdapConfig(ldap_base_dn=long_dn)
 
     def test_validator_consistency_bind_password_required(self) -> None:
@@ -701,8 +695,8 @@ class TestFlextLdapConfig:
             match="Cache TTL must be positive",
         ):
             FlextLdapConfig(
-                ldap_enable_caching=True,
-                ldap_cache_ttl=0,  # Invalid TTL
+                enable_caching=True,  # Inherited from FlextConfig
+                cache_ttl=0,  # Invalid TTL
                 ldap_bind_password=secret("password"),
             )
 
@@ -729,16 +723,11 @@ class TestFlextLdapConfig:
 
         # Type cast for computed property type inference issues
         # The computed properties return dict[str, object] but type checker infers Callable
-        from typing import cast
-
-        conn_config = cast("dict[str, object]", config.connection_info)
-        auth_config = cast("dict[str, object]", config.authentication_info)
-
-        # These work correctly at runtime despite type checker issues
-        assert conn_config["server_uri"] == "ldaps://localhost"
-        assert conn_config["port"] == 636
-        assert conn_config["use_ssl"] is True
-        assert auth_config["bind_dn_configured"] is True
+        # Pydantic v2: computed fields return model objects, use attribute access
+        assert config.connection_info.server == "ldaps://localhost"
+        assert config.connection_info.port == 636
+        assert config.connection_info.use_ssl is True
+        assert config.authentication_info.bind_dn_configured is True
 
     # Obsolete test - get_pool_config method no longer exists in optimized API
     # def test_get_pool_config(self) -> None:
@@ -932,12 +921,12 @@ class TestLdapHandlerConfiguration:
 
     def test_resolve_ldap_operation_mode_explicit_valid(self) -> None:
         """Test resolve_ldap_operation_mode with explicit valid mode - covers line 190-191."""
-        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+        result = FlextLdapConfig.resolve_ldap_operation_mode(
             operation_mode="search"
         )
         assert result == "search"
 
-        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+        result = FlextLdapConfig.resolve_ldap_operation_mode(
             operation_mode="modify"
         )
         assert result == "modify"
@@ -948,7 +937,7 @@ class TestLdapHandlerConfiguration:
         class MockConfig:
             operation_type = "authenticate"
 
-        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+        result = FlextLdapConfig.resolve_ldap_operation_mode(
             operation_mode=None, operation_config=MockConfig()
         )
         assert result == "authenticate"
@@ -956,21 +945,21 @@ class TestLdapHandlerConfiguration:
     def test_resolve_ldap_operation_mode_from_dict(self) -> None:
         """Test resolve_ldap_operation_mode from dict[str, object] config - covers lines 202-210."""
         config_dict = {FlextLdapConstants.DictKeys.OPERATION_TYPE: "delete"}
-        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+        result = FlextLdapConfig.resolve_ldap_operation_mode(
             operation_mode=None, operation_config=config_dict
         )
         assert result == "delete"
 
     def test_resolve_ldap_operation_mode_default(self) -> None:
         """Test resolve_ldap_operation_mode default fallback - covers line 213."""
-        result = FlextLdapConfig.LdapHandlerConfiguration.resolve_ldap_operation_mode(
+        result = FlextLdapConfig.resolve_ldap_operation_mode(
             operation_mode=None, operation_config=None
         )
         assert result == "search"
 
     def test_create_ldap_handler_config_full_params(self) -> None:
         """Test create_ldap_handler_config with all parameters - covers lines 243-283."""
-        config = FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config(
+        config = FlextLdapConfig.create_ldap_handler_config(
             operation_mode="search",
             ldap_operation="user_search",
             handler_name="Test Handler",
@@ -993,7 +982,7 @@ class TestLdapHandlerConfiguration:
     def test_create_ldap_handler_config_defaults(self) -> None:
         """Test create_ldap_handler_config with default parameters - covers lines 251-262."""
         config: dict[str, object] = (
-            FlextLdapConfig.LdapHandlerConfiguration.create_ldap_handler_config()
+            FlextLdapConfig.create_ldap_handler_config()
         )
 
         # Defaults should be applied
@@ -1040,27 +1029,39 @@ class TestDirectAccessDotNotation:
         assert config("ldap.operation.time_limit") == 60
 
     def test_call_cache_enabled(self) -> None:
-        """Test __call__ with ldap.cache.enabled."""
+        """Test __call__ with ldap.cache.enabled.
+
+        Now uses inherited enable_caching from FlextConfig (replaces ldap_enable_caching).
+        """
         config = FlextLdapConfig(
-            ldap_enable_caching=False, ldap_bind_password=secret("test")
+            enable_caching=False, ldap_bind_password=secret("test")
         )
         assert config("ldap.cache.enabled") is False
 
     def test_call_cache_ttl(self) -> None:
-        """Test __call__ with ldap.cache.ttl."""
-        config = FlextLdapConfig(ldap_cache_ttl=600, ldap_bind_password=secret("test"))
+        """Test __call__ with ldap.cache.ttl.
+
+        Now uses inherited cache_ttl from FlextConfig (replaces ldap_cache_ttl).
+        """
+        config = FlextLdapConfig(cache_ttl=600, ldap_bind_password=secret("test"))
         assert config("ldap.cache.ttl") == 600
 
     def test_call_retry_attempts(self) -> None:
-        """Test __call__ with ldap.retry.attempts."""
+        """Test __call__ with ldap.retry.attempts.
+
+        Now uses inherited max_retry_attempts from FlextConfig (replaces ldap_retry_attempts).
+        """
         config = FlextLdapConfig(
-            ldap_retry_attempts=5, ldap_bind_password=secret("test")
+            max_retry_attempts=5, ldap_bind_password=secret("test")
         )
         assert config("ldap.retry.attempts") == 5
 
     def test_call_retry_delay(self) -> None:
-        """Test __call__ with ldap.retry.delay."""
-        config = FlextLdapConfig(ldap_retry_delay=5, ldap_bind_password=secret("test"))
+        """Test __call__ with ldap.retry.delay.
+
+        Now uses inherited retry_delay from FlextConfig (replaces ldap_retry_delay).
+        """
+        config = FlextLdapConfig(retry_delay=5, ldap_bind_password=secret("test"))
         assert config("ldap.retry.delay") == 5
 
     def test_call_logging_debug(self) -> None:

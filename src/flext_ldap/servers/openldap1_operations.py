@@ -111,7 +111,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         if rule_stripped:
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
-                            if len(parts) == FlextLdapConstants.ACL_RULE_PARTS:
+                            if len(parts) == FlextLdapConstants.AclParsing.ACL_RULE_PARTS:
                                 rules.append({
                                     "who": parts[0].strip(),
                                     "access": parts[1].strip(),
@@ -228,8 +228,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         continue
                     if oc.startswith("olc"):
                         # Remove olc prefix for 1.x compatibility
-                        prefix_len = FlextLdapConstants.OPENLDAP_PREFIX_LENGTH
-                        min_len = FlextLdapConstants.MIN_OC_LENGTH
+                        prefix_len = FlextLdapConstants.AclParsing.OPENLDAP_PREFIX_LENGTH
+                        min_len = FlextLdapConstants.AclParsing.MIN_OC_LENGTH
                         mapped_classes.append(
                             oc[prefix_len:] if len(oc) > min_len else oc,
                         )

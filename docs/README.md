@@ -1,4 +1,5 @@
 # FLEXT-LDAP Documentation
+
 ## Table of Contents
 
 - [FLEXT-LDAP Documentation](#flext-ldap-documentation)
@@ -35,17 +36,16 @@
     - [Quality Assurance](#quality-assurance)
     - [Innovation and Leadership](#innovation-and-leadership)
 
-
 **FLEXT LDAP Foundation Documentation**
 
 Comprehensive documentation for **FLEXT-LDAP**,
-     a production-ready enterprise LDAP operations library implementing Clean Architecture and Domain-Driven Design patterns. This **21,
-    222-line codebase** with **1,079 tests across 51 test files** (11 passed, 1 failed,
-     7 skipped) demonstrates **35% test coverage** (targeting 90%) with comprehensive server-specific LDAP implementations.
+a production-ready enterprise LDAP operations library implementing Clean Architecture and Domain-Driven Design patterns. This **21,
+222-line codebase** with **1,079 tests across 51 test files** (11 passed, 1 failed,
+7 skipped) demonstrates **35% test coverage** (targeting 90%) with comprehensive server-specific LDAP implementations.
 
 **Enterprise Foundation**: FLEXT-LDAP serves as the authoritative LDAP operations foundation for the entire FLEXT ecosystem,
-     providing universal LDAP interface with complete server implementations for OpenLDAP 1/2, Oracle OID/OUD,
-     and FlextLdif integration for enterprise directory services.
+providing universal LDAP interface with complete server implementations for OpenLDAP 1/2, Oracle OID/OUD,
+and FlextLdif integration for enterprise directory services.
 
 ---
 
@@ -271,4 +271,4 @@ This documentation suite covers every aspect of FLEXT-LDAP from foundational con
 _This documentation is part of the **FLEXT Framework** ecosystem and represents the comprehensive knowledge base for the world-class enterprise LDAP foundation library._
 
 **Mission**: Provide definitive, accurate, and comprehensive documentation that enables developers, architects,
-     and operations teams to successfully implement and maintain enterprise LDAP solutions using FLEXT-LDAP's sophisticated foundation.
+and operations teams to successfully implement and maintain enterprise LDAP solutions using FLEXT-LDAP's sophisticated foundation.

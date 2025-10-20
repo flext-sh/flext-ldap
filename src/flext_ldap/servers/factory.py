@@ -15,6 +15,9 @@ from flext_ldif import FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 from ldap3 import Connection
 
+from flext_ldap.servers.ad_operations import (
+    FlextLdapServersActiveDirectoryOperations,
+)
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
@@ -55,8 +58,8 @@ class FlextLdapServersFactory(FlextService[None]):
             "oracle_oid": FlextLdapServersOIDOperations,
             "oud": FlextLdapServersOUDOperations,
             "oracle_oud": FlextLdapServersOUDOperations,
-            "ad": FlextLdapServersGenericOperations,
-            "active_directory": FlextLdapServersGenericOperations,
+            "ad": FlextLdapServersActiveDirectoryOperations,
+            "active_directory": FlextLdapServersActiveDirectoryOperations,
             "generic": FlextLdapServersGenericOperations,
         }
 

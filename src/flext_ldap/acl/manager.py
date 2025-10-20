@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextHandlers, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
@@ -25,7 +25,7 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
         config = FlextModels.Cqrs.Handler(
             handler_id="acl-manager",
             handler_name="FlextLdapAclManager",
-            handler_type="command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
         # Initialize parsers and converters - unified classes without config
@@ -52,9 +52,9 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
             operation: str = operation_raw
 
             # Route to appropriate handler based on operation
-            if operation == FlextLdapConstants.LdapLiteralTypes.OPERATION_PARSE:
+            if operation == "parse":
                 return self._handle_parse(message)
-            if operation == FlextLdapConstants.LdapLiteralTypes.OPERATION_CONVERT:
+            if operation == "convert":
                 return self._handle_convert(message)
             return FlextResult[FlextLdapModels.Acl].fail(
                 f"Unknown operation: {operation}",

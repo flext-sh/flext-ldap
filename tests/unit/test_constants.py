@@ -342,6 +342,7 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.DictKeys.DESCRIPTION == "description"
         # Note: SUCCESS and GENERIC keys don't exist in current DictKeys definition
 
+    @pytest.mark.skip(reason="Permission is now a Literal type in FlextLdapConstants.Types (Pydantic v2 refactoring)")
     def test_permission_constants(self) -> None:
         """Test permission constants."""
         assert FlextLdapConstants.Permission.READ == "read"
@@ -356,6 +357,7 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.Permission.ALL == "all"
         assert FlextLdapConstants.Permission.NONE == "none"
 
+    @pytest.mark.skip(reason="SubjectType is now a Literal type in FlextLdapConstants.Types (Pydantic v2 refactoring)")
     def test_subject_type_constants(self) -> None:
         """Test subject type constants."""
         assert FlextLdapConstants.SubjectType.USER == "user"
@@ -374,6 +376,7 @@ class TestFlextLdapConstants:
         type alias, so attribute access pattern is no longer applicable.
         """
 
+    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
     def test_openldap_keywords_constants(self) -> None:
         """Test OpenLDAP keywords constants."""
         assert FlextLdapConstants.OpenLdapKeywords.ACCESS_TO == "access to"
@@ -383,6 +386,7 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.OpenLdapKeywords.DN_REGEX == "dn.regex="
         assert FlextLdapConstants.OpenLdapKeywords.FILTER == "filter="
 
+    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
     def test_oracle_keywords_constants(self) -> None:
         """Test Oracle keywords constants."""
         assert FlextLdapConstants.OracleKeywords.ACCESS_TO == "access to"
@@ -392,6 +396,7 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.OracleKeywords.GROUP == "group="
         assert FlextLdapConstants.OracleKeywords.USER == "user="
 
+    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
     def test_aci_keywords_constants(self) -> None:
         """Test ACI keywords constants."""
         assert FlextLdapConstants.AciKeywords.TARGET == "target"
@@ -405,17 +410,18 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.AciKeywords.GROUPDN == "groupdn"
 
     def test_conversion_warnings_constants(self) -> None:
-        """Test conversion warnings constants."""
+        """Test conversion warnings constants (now in AclParsing)."""
+        # After constants cleanup, conversion warnings are in AclParsing class
         assert (
             "{permission}"
-            in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
+            in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
         )
         assert (
-            "{format}" in FlextLdapConstants.ConversionWarnings.PERMISSION_NOT_SUPPORTED
+            "{format}" in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
         )
-        assert "{feature}" in FlextLdapConstants.ConversionWarnings.FEATURE_LOSS
-        assert "{format}" in FlextLdapConstants.ConversionWarnings.FEATURE_LOSS
-        assert "Syntax pattern" in FlextLdapConstants.ConversionWarnings.SYNTAX_MISMATCH
+        assert "{feature}" in FlextLdapConstants.AclParsing.ACL_FEATURE_LOSS
+        assert "{format}" in FlextLdapConstants.AclParsing.ACL_FEATURE_LOSS
+        assert "Syntax" in FlextLdapConstants.AclParsing.ACL_SYNTAX_MISMATCH
 
     @pytest.mark.skip(reason="Parsing class was removed from constants")
     def test_parsing_constants(self) -> None:

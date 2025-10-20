@@ -1284,6 +1284,10 @@ class FlextLdapClients(FlextService[None]):
         user_request: FlextLdapModels._LdapRequest,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Create a new user in LDAP directory."""
+        # Validate DN is provided
+        if user_request.dn is None:
+            return FlextResult[FlextLdapModels.Entry | None].fail("DN is required for user creation")
+
         # Convert CreateUserRequest to attributes dict
         attributes_result = self.build_user_attributes(user_request)
         if attributes_result.is_failure:
@@ -1307,6 +1311,10 @@ class FlextLdapClients(FlextService[None]):
         group_request: FlextLdapModels._LdapRequest,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
         """Create a new group in LDAP directory."""
+        # Validate DN is provided
+        if group_request.dn is None:
+            return FlextResult[FlextLdapModels.Entry | None].fail("DN is required for group creation")
+
         # Convert CreateGroupRequest to attributes dict
         attributes = group_request.to_attributes()
 
@@ -1516,7 +1524,11 @@ class FlextLdapClients(FlextService[None]):
         """Create user from entry (private helper method)."""
         return self._create_user_from_entry_result(entry)
 
-    def _normalize(self, value: object, normalize_type: str = "string") -> object:
+    def _normalize(
+        self,
+        value: str | list[object] | dict[str, object],
+        normalize_type: str = "string"
+    ) -> str | list[object] | dict[str, object]:
         """Unified normalizer using Python 3.13+ pattern matching (ONE METHOD).
 
         Replaces 5 separate normalization methods with single unified handler.
@@ -1531,25 +1543,37 @@ class FlextLdapClients(FlextService[None]):
         """
         match normalize_type, value:
             case "string", str():
-                return value.strip()
+                # Type narrowing for pattern matching (cast for type checker)
+                str_value = cast("str", value)
+                return str_value.strip()
 
             case "attributes", list():
-                return [str(attr).strip() for attr in value]
+                # Type narrowing for pattern matching (cast for type checker)
+                list_value = cast("list[object]", value)
+                return [str(attr).strip() for attr in list_value]
 
             case "entry", dict():
+                # Type narrowing for pattern matching (cast for type checker)
+                dict_value = cast("dict[str, object]", value)
                 return {
                     k: (
                         [str(v).strip() for v in val]
                         if isinstance(val, list)
                         else str(val).strip()
                     )
-                    for k, val in value.items()
+                    for k, val in dict_value.items()
                 }
 
             case "changes", dict():
+                # Type narrowing for pattern matching (cast for type checker)
+                dict_value = cast("dict[str, object]", value)
                 return {
-                    k: [(op, [s.strip() for s in vals]) for op, vals in change_list]
-                    for k, change_list in value.items()
+                    k: (
+                        [(op, [s.strip() for s in vals]) for op, vals in change_list]
+                        if isinstance(change_list, list)
+                        else change_list
+                    )
+                    for k, change_list in dict_value.items()
                 }
 
             case "results", list():

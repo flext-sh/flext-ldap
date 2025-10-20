@@ -37,10 +37,10 @@ FLEXT-LDAP provides **complete server-specific implementations** with automatic 
 - **Oracle OID** - orclaci ACLs, Oracle-specific object classes, VLV support
 - **Oracle OUD** - ds-privilege-name ACLs, 389-based with Oracle extensions
 
-#### **Stub Implementations (Future Development)**
+#### **Complete Implementations (Production-Ready)**
 
-- **Active Directory** - nTSecurityDescriptor ACLs (stub ready for implementation)
 - **Generic LDAP** - RFC-compliant fallback for unknown servers
+- **Active Directory** - nTSecurityDescriptor ACLs, schema discovery, MOCK_SYNC tested
 
 ### **Key Responsibilities**
 
@@ -109,7 +109,7 @@ graph TB
 | **OpenLDAP1Operations**       | OpenLDAP 1.x implementation   | 🟢 Complete |
 | **OracleOIDOperations**       | Oracle OID implementation     | 🟢 Complete |
 | **OracleOUDOperations**       | Oracle OUD implementation     | 🟢 Complete |
-| **ActiveDirectoryOperations** | AD stub                       | 🟡 Stub     |
+| **ActiveDirectoryOperations** | AD operations                 | 🟢 Complete |
 | **GenericServerOperations**   | Generic fallback              | 🟢 Complete |
 
 ---

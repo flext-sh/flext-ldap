@@ -1,4 +1,5 @@
 # Troubleshooting Guide
+
 ## Table of Contents
 
 - [Troubleshooting Guide](#troubleshooting-guide)
@@ -7,7 +8,7 @@
 - [Test LDAP server connectivity](#test-ldap-server-connectivity)
 - [Check if server is listening](#check-if-server-is-listening)
 - [Test with ldapsearch (if available)](#test-with-ldapsearch-if-available)
-    - [SSL/TLS Connection Errors](#ssltls-connection-errors)
+  - [SSL/TLS Connection Errors](#ssltls-connection-errors)
 - [Test SSL connection](#test-ssl-connection)
 - [Check certificate validity](#check-certificate-validity)
 - [Test LDAP with StartTLS](#test-ldap-with-starttls)
@@ -29,7 +30,7 @@
 - [✅ CORRECT - Proper LDAP filter syntax](#-correct---proper-ldap-filter-syntax)
 - [✅ CORRECT - Complex filters](#-correct---complex-filters)
 - [Test filters](#test-filters)
-    - [Search Base DN Not Found](#search-base-dn-not-found)
+  - [Search Base DN Not Found](#search-base-dn-not-found)
   - [Performance Issues](#performance-issues)
     - [Slow Search Operations](#slow-search-operations)
 - [❌ Inefficient - searches entire directory](#-inefficient---searches-entire-directory)
@@ -37,7 +38,7 @@
 - [❌ Inefficient - broad filter](#-inefficient---broad-filter)
 - [✅ Efficient - indexed attribute with specific value](#-efficient---indexed-attribute-with-specific-value)
 - [✅ Efficient - compound filter with indexed attributes](#-efficient---compound-filter-with-indexed-attributes)
-    - [Connection Pool Exhaustion](#connection-pool-exhaustion)
+  - [Connection Pool Exhaustion](#connection-pool-exhaustion)
 - [Check connection pool configuration](#check-connection-pool-configuration)
   - [Configuration Issues](#configuration-issues)
     - [Environment Variable Problems](#environment-variable-problems)
@@ -48,7 +49,7 @@
     - [Import Errors](#import-errors)
 - [Check package installation](#check-package-installation)
 - [Check available imports](#check-available-imports)
-    - [Test Environment Setup](#test-environment-setup)
+  - [Test Environment Setup](#test-environment-setup)
 - [Check if test server is running](#check-if-test-server-is-running)
 - [Check logs](#check-logs)
 - [Test connectivity](#test-connectivity)
@@ -60,16 +61,15 @@
     - [Enable Debug Logging](#enable-debug-logging)
 - [Enable debug logging](#enable-debug-logging)
 - [FLEXT logger with debug level](#flext-logger-with-debug-level)
-    - [Network Debugging](#network-debugging)
+  - [Network Debugging](#network-debugging)
 - [Monitor LDAP traffic with tcpdump](#monitor-ldap-traffic-with-tcpdump)
 - [Analyze with Wireshark](#analyze-with-wireshark)
 - [Test with different LDAP tools](#test-with-different-ldap-tools)
-    - [Performance Profiling](#performance-profiling)
+  - [Performance Profiling](#performance-profiling)
 - [Run profiling](#run-profiling)
   - [Getting Help](#getting-help)
     - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
     - [Diagnostic Information Collection](#diagnostic-information-collection)
-
 
 **Common issues, diagnostics, and solutions for flext-ldap**
 
@@ -86,7 +86,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 
 **Symptom:**
 
-``` yaml
+```yaml
 ConnectionError: Connection failed: [Errno 111] Connection refused
 ```
 
@@ -115,7 +115,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,
 
 **Symptom:**
 
-``` yaml
+```yaml
 ConnectionError: TLS handshake failed
 ```
 
@@ -168,7 +168,7 @@ config = FlextLdapConfig(
 
 **Symptom:**
 
-``` yaml
+```yaml
 AuthenticationError: Authentication failed: Invalid credentials
 ```
 
@@ -204,7 +204,7 @@ run(diagnose_auth())
 
 **Symptom:**
 
-``` yaml
+```yaml
 SearchError: Invalid DN format
 ```
 
@@ -258,7 +258,7 @@ for test_dn in test_dns:
 
 **Symptom:**
 
-``` yaml
+```yaml
 SearchError: Bad search filter
 ```
 
@@ -315,7 +315,7 @@ for test_filter in test_filters:
 
 **Symptom:**
 
-``` yaml
+```yaml
 SearchError: No such object: ou=users,dc=example,dc=com
 ```
 
@@ -462,7 +462,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 **Symptoms:**
 
-``` yaml
+```yaml
 ConnectionError: Connection pool exhausted
 ```
 

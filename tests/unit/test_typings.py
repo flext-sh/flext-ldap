@@ -46,16 +46,19 @@ class TestFlextLdapTypesIntegration:
 
     def test_uses_flextcore_types(self) -> None:
         """Verify FlextLdapTypes uses FlextTypes dependencies."""
-        # Verify list[str] is accessible
-        assert hasattr(FlextTypes, "StringList")
-        # Verify dict[str, object] is accessible
-        assert hasattr(FlextTypes, "Dict")
+        # Verify Pydantic v2 refactoring removed simple type aliases
+        # Now use native Python types: list[str], dict[str, object]
+        # Check for complex types that still exist
+        assert hasattr(FlextTypes, "IntList")
+        assert hasattr(FlextTypes, "FloatList")
+        assert hasattr(FlextTypes, "NestedDict")
 
     def test_uses_flextldap_constants_literal_types(self) -> None:
-        """Verify FlextLdapTypes can access FlextLdapConstants.LiteralTypes class."""
+        """Verify FlextLdapTypes can access FlextLdapConstants.Types class."""
+        # After Pydantic v2 refactoring, all type aliases are in FlextLdapConstants.Types
         # Python 3.13 type aliases are compile-time only, not runtime attributes
-        # We can only verify that the LiteralTypes class exists
-        assert hasattr(FlextLdapConstants, "LiteralTypes")
+        # We can only verify that the Types class exists
+        assert hasattr(FlextLdapConstants, "Types")
 
     def test_no_circular_imports(self) -> None:
         """Verify no circular imports between typings and constants."""

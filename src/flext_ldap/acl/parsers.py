@@ -43,7 +43,7 @@ class FlextLdapAclParsers:
 
                 # Find "access to" keywords
                 if (
-                    len(parts) < FlextLdapConstants.MIN_ACL_PARTS
+                    len(parts) < FlextLdapConstants.AclParsing.MIN_ACL_PARTS
                     or parts[0] != "access"
                     or parts[1] != "to"
                 ):
@@ -202,7 +202,7 @@ class FlextLdapAclParsers:
                 # Format: access to <target> by <subject> (<permissions>)
                 parts = acl_string.strip().split()
 
-                if len(parts) < FlextLdapConstants.MIN_ACL_PARTS:
+                if len(parts) < FlextLdapConstants.AclParsing.MIN_ACL_PARTS:
                     return FlextResult[FlextLdapModels.Acl].fail(
                         "Invalid Oracle ACL format",
                     )
