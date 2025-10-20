@@ -20,6 +20,7 @@ from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from ldap3 import MODIFY_REPLACE, Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.typings import LdapModifyDict, LdapSearchResultDict
 
 
 class FlextLdapEntryAdapter(FlextService[None]):

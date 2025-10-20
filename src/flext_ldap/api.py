@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import threading
 import types
+from collections.abc import Callable
 from typing import ClassVar, Literal, Self, cast, override
 
 from flext_core import (
     FlextConfig,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 from flext_ldif import FlextLdif, FlextLdifModels
 from ldap3 import ALL, BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection, Server
@@ -30,7 +30,6 @@ from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdap(FlextService[None]):
@@ -104,7 +103,7 @@ class FlextLdap(FlextService[None]):
         """Get LDAP configuration."""
         return self._config
 
-    def _lazy_init(self, attr_name: str, factory: callable) -> object:
+    def _lazy_init(self, attr_name: str, factory: Callable[[], object]) -> object:
         """Unified lazy initialization pattern using FlextContainer-like pattern.
 
         Eliminates 4 repetitive lazy-load properties with single unified method.
@@ -253,9 +252,9 @@ class FlextLdap(FlextService[None]):
             self,
             base_dn: str,
             search_filter: str,
-            attributes: FlextTypes.StringList | None = None,
+            attributes: list[str] | None = None,
             scope: str = "subtree",
-        ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+        ) -> FlextResult[FlextLdapModels.SearchResponse]:
             """Perform LDAP search."""
             if not self._connection:
                 return FlextResult.fail("Not connected to LDAP server")
@@ -279,21 +278,30 @@ class FlextLdap(FlextService[None]):
                     ),
                     attributes=attributes or ["*"],
                 )
-                results = [
-                    {
-                        "dn": entry.entry_dn,
-                        "attributes": dict(entry.entry_attributes_as_dict),
-                    }
+                # Convert ldap3 entries to FlextLdapModels.Entry objects
+                entries = [
+                    FlextLdapModels.Entry(
+                        dn=entry.entry_dn,
+                        attributes=dict(entry.entry_attributes_as_dict),
+                    )
                     for entry in self._connection.entries
                 ]
-                return FlextResult.ok(results)
+                # Return SearchResponse with entries
+                return FlextResult.ok(
+                    FlextLdapModels.SearchResponse(
+                        entries=entries,
+                        total_count=len(entries),
+                        entries_returned=len(entries),
+                        result_code=0,  # Success
+                    )
+                )
             except Exception as e:
                 return FlextResult.fail(f"LDAP search failed: {e}")
 
         def add_entry(
             self,
             dn: str,
-            attributes: dict[str, str | FlextTypes.StringList],
+            attributes: dict[str, str | list[str]],
         ) -> FlextResult[bool]:
             """Add new LDAP entry."""
             if not self._connection:
@@ -441,15 +449,15 @@ class FlextLdap(FlextService[None]):
         self,
         base_dn: str,
         search_filter: str,
-        attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+        attributes: list[str] | None = None,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search LDAP directory."""
         return self.client.search(base_dn, search_filter, attributes)
 
     def search_with_request(
         self,
         search_request: FlextLdapModels.SearchRequest,
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search LDAP directory using SearchRequest object."""
         return self.client.search(
             search_request.base_dn,
@@ -460,8 +468,8 @@ class FlextLdap(FlextService[None]):
     def search_groups(
         self,
         search_base: str,
-        attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+        attributes: list[str] | None = None,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for groups (convenience method)."""
         return self.client.search(
             search_base,
@@ -473,31 +481,32 @@ class FlextLdap(FlextService[None]):
         self,
         base_dn: str,
         filter_str: str,
-        attributes: FlextTypes.StringList | None = None,
+        attributes: list[str] | None = None,
         _scope: str = "subtree",
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for entries with custom filter."""
         return self.client.search(base_dn, filter_str, attributes)
 
     def get_group(
         self,
         group_dn: str,
-        attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextTypes.Dict | None]:
+        attributes: list[str] | None = None,
+    ) -> FlextResult[dict[str, object] | None]:
         """Get group information by DN."""
         result = self.client.search(
             group_dn,
             "(objectClass=group)",
             attributes or ["cn", "member", "memberUid"],
         )
-        if result.is_success and result.value:
-            return FlextResult.ok(cast("FlextTypes.Dict", result.value[0]))
+        if result.is_success and result.value and result.value.entries:
+            first_entry = result.value.entries[0]
+            return FlextResult.ok(cast("dict[str, object]", {"dn": first_entry.dn, "attributes": first_entry.attributes}))
         return FlextResult.ok(None)
 
     def update_user_attributes(
         self,
         _dn: str,
-        _attributes: FlextTypes.Dict,
+        _attributes: dict[str, object],
     ) -> FlextResult[None]:
         """Update user attributes."""
         # This would need modify operations - for now return success
@@ -506,7 +515,7 @@ class FlextLdap(FlextService[None]):
     def update_group_attributes(
         self,
         _dn: str,
-        _attributes: FlextTypes.Dict,
+        _attributes: dict[str, object],
     ) -> FlextResult[None]:
         """Update group attributes."""
         # This would need modify operations - for now return success
@@ -522,7 +531,7 @@ class FlextLdap(FlextService[None]):
         # Basic validation - in real implementation would check server connectivity, etc.
         return FlextResult.ok(None)
 
-    def get_server_info(self) -> FlextResult[FlextTypes.Dict]:
+    def get_server_info(self) -> FlextResult[dict[str, object]]:
         """Get server information."""
         return FlextResult.ok({
             "type": self.servers.server_type,
@@ -530,7 +539,7 @@ class FlextLdap(FlextService[None]):
             "supports_starttls": self.servers.supports_start_tls(),
         })
 
-    def get_acl_info(self) -> FlextResult[FlextTypes.Dict]:
+    def get_acl_info(self) -> FlextResult[dict[str, object]]:
         """Get ACL information."""
         return FlextResult.ok({
             "format": self.acl.get_acl_format(),
@@ -553,50 +562,17 @@ class FlextLdap(FlextService[None]):
         if result.is_failure:
             return FlextResult[FlextLdapModels.Entry | None].fail(result.error)
 
-        entries = result.unwrap()
-        if entries:
-            # Convert dict to Entry model
-            entry_dict = entries[0]
-            # Extract DN safely
-            dn_value = entry_dict.get("dn", "")
-            if isinstance(dn_value, str):
-                dn = dn_value
-            else:
-                dn = str(dn_value) if dn_value else ""
-
-            # Convert attributes to proper type
-            def _convert_attribute_value(
-                value: str | FlextTypes.StringList | bytes | list[bytes],
-            ) -> FlextLdapTypes.LdapEntries.EntryAttributeValue:
-                if isinstance(value, list):
-                    # Convert list elements to strings
-                    return [str(item) for item in value]
-                return str(value)
-
-            typed_attributes: dict[
-                str, FlextLdapTypes.LdapEntries.EntryAttributeValue
-            ] = {
-                key: _convert_attribute_value(
-                    cast("str | FlextTypes.StringList | bytes | list[bytes]", value)
-                )
-                for key, value in entry_dict.items()
-                if key != "dn"
-                and not isinstance(value, dict)  # Skip DN and nested dicts
-            }
-
-            return FlextResult.ok(
-                FlextLdapModels.Entry(
-                    dn=dn,
-                    attributes=typed_attributes,
-                )
-            )
+        search_response = result.unwrap()
+        if search_response and search_response.entries:
+            # Return first entry from SearchResponse - it's already an Entry model
+            return FlextResult.ok(search_response.entries[0])
         return FlextResult.ok(None)
 
     def search_users(
         self,
         search_base: str,
-        attributes: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextLdapTypes.LdapDomain.SearchResult]:
+        attributes: list[str] | None = None,
+    ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search for users (convenience method)."""
         return self.client.search(
             search_base,
@@ -608,7 +584,7 @@ class FlextLdap(FlextService[None]):
         self,
         username: str,
         search_base: str | None = None,
-    ) -> FlextResult[FlextTypes.Dict | None]:
+    ) -> FlextResult[dict[str, object] | None]:
         """Find user by username."""
         base = search_base or self.config.ldap_base_dn
         result = self.client.search(
@@ -617,11 +593,12 @@ class FlextLdap(FlextService[None]):
             ["dn", "cn", "mail"],
         )
         if result.is_failure:
-            return FlextResult[FlextTypes.Dict | None].fail(result.error)
+            return FlextResult[dict[str, object] | None].fail(result.error)
 
-        users = result.unwrap()
-        if users:
-            return FlextResult.ok(cast("FlextTypes.Dict", users[0]))
+        search_response = result.unwrap()
+        if search_response and search_response.entries:
+            first_entry = search_response.entries[0]
+            return FlextResult.ok(cast("dict[str, object]", {"dn": first_entry.dn, "attributes": first_entry.attributes}))
         return FlextResult.ok(None)
 
     def search_entries_bulk(
@@ -791,7 +768,7 @@ class FlextLdap(FlextService[None]):
     def add_entry(
         self,
         dn: str,
-        attributes: dict[str, str | FlextTypes.StringList],
+        attributes: dict[str, str | list[str]],
     ) -> FlextResult[bool]:
         """Add new LDAP entry."""
         return self.client.add_entry(dn, attributes)

@@ -1,11 +1,12 @@
 # Integration Guide
+
 ## Table of Contents
 
 - [Integration Guide](#integration-guide)
   - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
     - [Core FLEXT Dependencies](#core-flext-dependencies)
 - [FLEXT-Core integration](#flext-core-integration)
-    - [Configuration Management](#configuration-management)
+  - [Configuration Management](#configuration-management)
 - [Environment-based configuration following FLEXT patterns](#environment-based-configuration-following-flext-patterns)
 - [Usage in FLEXT applications](#usage-in-flext-applications)
   - [FastAPI Integration](#fastapi-integration)
@@ -13,13 +14,13 @@
   - [Django Integration](#django-integration)
     - [Django Authentication Backend](#django-authentication-backend)
 - [settings.py](#settingspy)
-    - [Django User Sync Management Command](#django-user-sync-management-command)
+  - [Django User Sync Management Command](#django-user-sync-management-command)
   - [Flask Integration](#flask-integration)
     - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
   - [Docker Integration](#docker-integration)
     - [Docker Compose Setup](#docker-compose-setup)
 - [docker-compose.yml](#docker-composeyml)
-    - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
+  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
 - [Install system dependencies](#install-system-dependencies)
 - [Install Python dependencies](#install-python-dependencies)
 - [Copy application](#copy-application)
@@ -31,17 +32,16 @@
     - [Entry Format Conversion](#entry-format-conversion)
 - [Convert ldap3 entries to FlextLdif format](#convert-ldap3-entries-to-flextldif-format)
 - [Convert search results to FlextLdif](#convert-search-results-to-flextldif)
-    - [LDIF File Processing](#ldif-file-processing)
-    - [Export to LDIF](#export-to-ldif)
-    - [Server Quirks Detection](#server-quirks-detection)
-    - [Universal LDAP Processor](#universal-ldap-processor)
+  - [LDIF File Processing](#ldif-file-processing)
+  - [Export to LDIF](#export-to-ldif)
+  - [Server Quirks Detection](#server-quirks-detection)
+  - [Universal LDAP Processor](#universal-ldap-processor)
 - [Usage](#usage)
   - [Monitoring and Observability](#monitoring-and-observability)
     - [Prometheus Metrics](#prometheus-metrics)
 - [Metrics](#metrics)
 - [Start metrics server](#start-metrics-server)
-    - [Health Check Endpoints](#health-check-endpoints)
-
+  - [Health Check Endpoints](#health-check-endpoints)
 
 **Integrating flext-ldap with FLEXT ecosystem and external systems**
 

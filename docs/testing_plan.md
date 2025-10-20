@@ -1,4 +1,5 @@
 # FLEXT-LDAP Testing Plan & Status
+
 ## Table of Contents
 
 - [FLEXT-LDAP Testing Plan & Status](#flext-ldap-testing-plan--status)
@@ -8,11 +9,11 @@
 - [Start test server](#start-test-server)
 - [Stop test server](#stop-test-server)
 - [Manual LDAP operations](#manual-ldap-operations)
-    - [Test Categories](#test-categories)
-      - [1. Unit Tests (`tests/unit/`)](#1-unit-tests-testsunit)
-      - [2. Integration Tests (`tests/integration/`)](#2-integration-tests-testsintegration)
-      - [3. E2E Tests (`tests/e2e/`)](#3-e2e-tests-testse2e)
-      - [4. Infrastructure Tests (`tests/infrastructure/`)](#4-infrastructure-tests-testsinfrastructure)
+  - [Test Categories](#test-categories)
+    - [1. Unit Tests (`tests/unit/`)](#1-unit-tests-testsunit)
+    - [2. Integration Tests (`tests/integration/`)](#2-integration-tests-testsintegration)
+    - [3. E2E Tests (`tests/e2e/`)](#3-e2e-tests-testse2e)
+    - [4. Infrastructure Tests (`tests/infrastructure/`)](#4-infrastructure-tests-testsinfrastructure)
   - [Current Test Coverage Analysis](#current-test-coverage-analysis)
     - [Coverage by Module (Priority Order)](#coverage-by-module-priority-order)
     - [Coverage Trend Analysis](#coverage-trend-analysis)
@@ -33,8 +34,7 @@
       - [Quality Gates](#quality-gates)
 - [Coverage requirements](#coverage-requirements)
 - [Docker availability check](#docker-availability-check)
-- [Test stability](#test-stability)
-      - [Automated Testing Pipeline](#automated-testing-pipeline)
+- [Test stability](#test-stability) - [Automated Testing Pipeline](#automated-testing-pipeline)
 - [.github/workflows/test.yml](#githubworkflowstestyml)
   - [Test Development Guidelines](#test-development-guidelines)
     - [Writing Effective Tests](#writing-effective-tests)
@@ -59,7 +59,6 @@
     - [Month 2: Integration & E2E](#month-2-integration--e2e)
     - [Month 3: Advanced Scenarios](#month-3-advanced-scenarios)
   - [Current Status Summary](#current-status-summary)
-
 
 ## Testing Overview
 

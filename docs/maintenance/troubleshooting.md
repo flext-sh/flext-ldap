@@ -61,7 +61,7 @@ except ImportError as e:
 
 **Symptom:**
 
-``` yaml
+```yaml
 ModuleNotFoundError: No module named 'yaml'
 ```
 
@@ -84,7 +84,7 @@ pip install -r docs/maintenance/requirements.txt
 
 **Symptom:**
 
-``` yaml
+```yaml
 PermissionError: [Errno 13] Permission denied: 'docs/README.md'
 ```
 
@@ -143,7 +143,7 @@ except yaml.YAMLError as e:
 
 **Symptom:**
 
-``` yaml
+```yaml
 FileNotFoundError: [Errno 2] No such file or directory: 'docs/README.md'
 ```
 

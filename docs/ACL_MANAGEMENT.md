@@ -1,4 +1,5 @@
 # ACL Management System
+
 ## Table of Contents
 
 - [ACL Management System](#acl-management-system)
@@ -8,20 +9,20 @@
     - [Basic Usage](#basic-usage)
 - [Initialize API](#initialize-api)
 - [Parse an OpenLDAP ACL](#parse-an-openldap-acl)
-    - [Converting ACL Formats](#converting-acl-formats)
+  - [Converting ACL Formats](#converting-acl-formats)
 - [Convert OpenLDAP to Oracle format](#convert-openldap-to-oracle-format)
-    - [Batch Conversion](#batch-conversion)
+  - [Batch Conversion](#batch-conversion)
 - [Convert multiple ACLs at once](#convert-multiple-acls-at-once)
   - [ACL Format Examples](#acl-format-examples)
     - [OpenLDAP Format](#openldap-format)
 - [Simple attribute ACL](#simple-attribute-acl)
 - [DN-based ACL](#dn-based-acl)
 - [Multiple attributes](#multiple-attributes)
-    - [Oracle Directory Format](#oracle-directory-format)
+  - [Oracle Directory Format](#oracle-directory-format)
 - [Attribute ACL](#attribute-acl)
 - [Entry-level ACL](#entry-level-acl)
 - [Multiple attributes](#multiple-attributes)
-    - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds--apache-ds)
+  - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds--apache-ds)
 - [Simple ACI](#simple-aci)
 - [Deny ACL](#deny-acl)
 - [Group-based ACI](#group-based-aci)
@@ -36,15 +37,15 @@
     - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
 - [Parse Oracle ACLs from existing directory](#parse-oracle-acls-from-existing-directory)
 - [Convert to OpenLDAP format](#convert-to-openldap-format)
-    - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
+  - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
 - [Parse OpenLDAP slapd.conf ACLs](#parse-openldap-slapdconf-acls)
 - [Convert to ACI format for 389 DS](#convert-to-aci-format-for-389-ds)
   - [Advanced Features](#advanced-features)
     - [ACL with Conditions](#acl-with-conditions)
 - [Create ACL with time and IP restrictions](#create-acl-with-time-and-ip-restrictions)
-    - [Permission Mapping](#permission-mapping)
+  - [Permission Mapping](#permission-mapping)
 - [Standard permissions across formats](#standard-permissions-across-formats)
-    - [Subject Types](#subject-types)
+  - [Subject Types](#subject-types)
 - [Different subject types](#different-subject-types)
   - [Error Handling](#error-handling)
 - [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
@@ -58,7 +59,6 @@
     - [FlextLdap ACL Methods](#flextldap-acl-methods)
     - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
   - [See Also](#see-also)
-
 
 ## Overview
 

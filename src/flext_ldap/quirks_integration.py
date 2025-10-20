@@ -165,7 +165,9 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
             # Cache the quirks
             self._quirks_cache[target_type] = quirks
 
-            return FlextResult[dict[str, object]].ok(quirks)
+            # Cast registry value from object to dict[str, object] for type safety
+            quirks_typed = cast("dict[str, object]", quirks)
+            return FlextResult[dict[str, object]].ok(quirks_typed)
 
         except Exception as e:
             self.logger.exception(

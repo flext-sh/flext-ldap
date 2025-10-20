@@ -1,4 +1,5 @@
 # C4 Model: System Context
+
 ## Table of Contents
 
 - [C4 Model: System Context](#c4-model-system-context)
@@ -31,7 +32,6 @@
     - [**Performance Benchmarks**](#performance-benchmarks)
     - [**Quality Metrics**](#quality-metrics)
   - [🔗 Related Documentation](#-related-documentation)
-
 
 **Level 1: System Context Diagram**
 

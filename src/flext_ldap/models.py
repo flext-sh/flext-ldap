@@ -41,9 +41,9 @@ from pydantic import (
     ValidationInfo,
     computed_field,
     field_serializer,
-    field_validator,
     model_validator,
 )
+from pydantic.functional_validators import BeforeValidator
 
 from flext_ldap.constants import (
     AclType,
@@ -53,6 +53,158 @@ from flext_ldap.constants import (
 )
 from flext_ldap.typings import AttributeValue
 from flext_ldap.validations import FlextLdapValidations
+
+# ===== PYDANTIC V2 BEFOREVALIDATOR FUNCTIONS =====
+# Module-level validators for Pydantic v2 BeforeValidator pattern
+# Used with Annotated[type, BeforeValidator(func)] on field annotations
+
+
+def _validate_dn_format(v: str) -> str:
+    """Validate Distinguished Name format (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "Distinguished Name cannot be empty"
+        raise FlextExceptions.ValidationError(msg, field="dn", value=v)
+
+    # Enhanced DN validation - check for proper attribute=value pairs
+    if "=" not in v:
+        msg = "Invalid DN format - missing attribute=value pairs"
+        raise FlextExceptions.ValidationError(msg, field="dn", value=v)
+
+    # Check for valid DN components
+    components = v.split(",")
+    for comp in components:
+        component = comp.strip()
+        if "=" not in component:
+            msg = f"Invalid DN component: {component}"
+            raise FlextExceptions.ValidationError(msg, field="dn", value=component)
+
+        attr, value = component.split("=", 1)
+        if not attr.strip() or not value.strip():
+            msg = f"Empty attribute or value in DN component: {component}"
+            raise FlextExceptions.ValidationError(msg, field="dn", value=component)
+
+    return v.strip()
+
+
+def _validate_filter_syntax(v: str) -> str:
+    """Validate LDAP filter syntax (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "LDAP filter cannot be empty"
+        raise FlextExceptions.ValidationError(msg, field="filter", value=v)
+    # Basic filter validation
+    if not (v.startswith("(") and v.endswith(")")):
+        msg = "LDAP filter must be enclosed in parentheses"
+        raise FlextExceptions.ValidationError(msg, field="filter", value=v)
+    return v.strip()
+
+
+def _validate_scope_value(v: str) -> str:
+    """Validate LDAP search scope value (Pydantic v2 BeforeValidator)."""
+    valid_scopes = {"base", "onelevel", "subtree"}
+    if v not in valid_scopes:
+        msg = f"Invalid scope: {v}. Must be one of {valid_scopes}"
+        raise FlextExceptions.ValidationError(msg, field="scope")
+    return v
+
+
+def _set_defaults_from_constants(v: str | None, info: ValidationInfo) -> str | None:
+    """Set defaults from constants for fields if None (Pydantic v2 BeforeValidator)."""
+    if v is not None:
+        return v or None
+    match info.field_name:
+        case "department":
+            return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
+        case "title":
+            return FlextLdapConstants.Defaults.DEFAULT_TITLE
+        case "organization":
+            return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
+        case "status":
+            return FlextLdapConstants.Defaults.DEFAULT_STATUS
+        case _:
+            return None
+
+
+def _validate_dn_field(v: str) -> str:
+    """Validate DN field using centralized validation (Pydantic v2 BeforeValidator)."""
+    return FlextLdapValidations.validate_dn_for_field(v)
+
+
+def _validate_email_field(v: str | None) -> str | None:
+    """Validate email field (Pydantic v2 BeforeValidator)."""
+    return FlextLdapValidations.validate_email_for_field(v)
+
+
+def _validate_object_classes_list(v: list[str]) -> list[str]:
+    """Validate object classes list (Pydantic v2 BeforeValidator)."""
+    if not v:
+        msg = "At least one object class is required"
+        raise FlextExceptions.ValidationError(msg, field="object_classes", value=str(v))
+    return v
+
+
+def _validate_filter_str(v: str) -> str:
+    """Validate LDAP filter format (Pydantic v2 BeforeValidator)."""
+    validation_result: FlextResult[None] = FlextLdapValidations.validate_filter(v).map(
+        lambda _: None
+    )
+    if validation_result.is_failure:
+        error_msg = validation_result.error or "Filter validation failed"
+        raise FlextExceptions.ValidationError(error_msg, field="filter_str", value=v)
+    return v.strip()
+
+
+def _validate_attributes_list(v: list[str] | None) -> list[str] | None:
+    """Validate attribute list (Pydantic v2 BeforeValidator)."""
+    if v is not None:
+        # Remove duplicates and empty strings using set comprehension
+        cleaned_attrs = list({attr.strip() for attr in v if attr.strip()})
+        return cleaned_attrs or None
+    return v
+
+
+def _set_entries_returned(v: int, info: ValidationInfo) -> int:
+    """Auto-calculate entries returned from entries list (Pydantic v2 BeforeValidator)."""
+    try:
+        # Access through proper validation context
+        data = info.data or {}
+        entries = data.get("entries")
+        if isinstance(entries, list):
+            # Type-safe length calculation
+            return len(entries)
+    except (AttributeError, KeyError):
+        pass
+    return v if isinstance(v, int) else 0
+
+
+def _validate_dn_fields(v: str | None) -> str | None:
+    """Validate DN fields (Pydantic v2 BeforeValidator)."""
+    if v is not None:
+        return FlextLdapValidations.validate_dn_for_field(v)
+    return v
+
+
+def _validate_mail_field(v: str | None) -> str | None:
+    """Validate email field (Pydantic v2 BeforeValidator)."""
+    if v is None:
+        return v
+    # Simple email validation
+    if "@" not in v:
+        msg = f"Invalid email: {v}"
+        raise ValueError(msg)
+    return v
+
+
+def _validate_server(v: str) -> str:
+    """Validate server hostname/IP (Pydantic v2 BeforeValidator)."""
+    return FlextLdapValidations.validate_required_string_for_field(v)
+
+
+def _validate_port(v: int) -> int:
+    """Validate port number (Pydantic v2 BeforeValidator)."""
+    if v <= 0 or v > FlextConstants.Network.MAX_PORT:
+        msg = f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}"
+        raise FlextExceptions.ValidationError(msg, field="port", value=str(v))
+    return v
 
 
 class FlextLdapModels(FlextModels):
@@ -201,7 +353,7 @@ class FlextLdapModels(FlextModels):
         Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation.
         """
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_dn_format)] = Field(
             ...,
             min_length=1,
             description="Distinguished Name string",
@@ -211,42 +363,6 @@ class FlextLdapModels(FlextModels):
                 "uid=admin,dc=ldap,dc=local",
             ],
         )
-
-        @field_validator("value")
-        @classmethod
-        def validate_dn_format(cls, v: str) -> str:
-            """Enhanced DN validation with RFC 2253 compliance."""
-            if not v or not v.strip():
-                error_msg = "Distinguished Name cannot be empty"
-                raise FlextExceptions.ValidationError(error_msg, field="dn", value=v)
-
-            # Enhanced DN validation - check for proper attribute=value pairs
-            if "=" not in v:
-                error_msg = "Invalid DN format - missing attribute=value pairs"
-                raise FlextExceptions.ValidationError(error_msg, field="dn", value=v)
-
-            # Check for valid DN components
-            components = v.split(",")
-            for comp in components:
-                component = comp.strip()
-                if "=" not in component:
-                    error_msg = f"Invalid DN component: {component}"
-                    raise FlextExceptions.ValidationError(
-                        error_msg,
-                        field="dn",
-                        value=component,
-                    )
-
-                attr, value = component.split("=", 1)
-                if not attr.strip() or not value.strip():
-                    error_msg = f"Empty attribute or value in DN component: {component}"
-                    raise FlextExceptions.ValidationError(
-                        error_msg,
-                        field="dn",
-                        value=component,
-                    )
-
-            return v.strip()
 
         @model_validator(mode="after")
         def validate_dn_structure(self) -> FlextLdapModels.DistinguishedName:
@@ -378,20 +494,9 @@ class FlextLdapModels(FlextModels):
         Extends FlextModels.Value for proper Pydantic 2 validation and composition.
         """
 
-        expression: str = Field(..., min_length=1, description="LDAP filter expression")
-
-        @field_validator("expression")
-        @classmethod
-        def validate_filter_syntax(cls, v: str) -> str:
-            """Validate LDAP filter syntax and format."""
-            if not v or not v.strip():
-                msg = "LDAP filter cannot be empty"
-                raise FlextExceptions.ValidationError(msg, field="filter", value=v)
-            # Basic filter validation
-            if not (v.startswith("(") and v.endswith(")")):
-                msg = "LDAP filter must be enclosed in parentheses"
-                raise FlextExceptions.ValidationError(msg, field="filter", value=v)
-            return v.strip()
+        expression: Annotated[str, BeforeValidator(_validate_filter_syntax)] = Field(
+            ..., min_length=1, description="LDAP filter expression"
+        )
 
         @classmethod
         def equals(cls, attribute: str, value: str) -> FlextLdapModels.Filter:
@@ -418,21 +523,13 @@ class FlextLdapModels(FlextModels):
         Extends FlextModels.Value for proper Pydantic 2 validation and composition.
         """
 
-        value: str = Field(..., description="LDAP search scope value")
+        value: Annotated[str, BeforeValidator(_validate_scope_value)] = Field(
+            ..., description="LDAP search scope value"
+        )
 
         BASE: ClassVar[str] = "base"
         ONELEVEL: ClassVar[str] = "onelevel"
         SUBTREE: ClassVar[str] = "subtree"
-
-        @field_validator("value")
-        @classmethod
-        def validate_scope_value(cls, v: str) -> str:
-            """Validate LDAP search scope value."""
-            valid_scopes = {cls.BASE, cls.ONELEVEL, cls.SUBTREE}
-            if v not in valid_scopes:
-                msg = f"Invalid scope: {v}. Must be one of {valid_scopes}"
-                raise FlextExceptions.ValidationError(msg, field="scope")
-            return v
 
         @classmethod
         def base(cls) -> FlextLdapModels.Scope:
@@ -619,17 +716,19 @@ class FlextLdapModels(FlextModels):
         # =====================================================================
 
         # Core identification
-        dn: str = Field(..., description="Distinguished Name (unique identifier)")
+        dn: Annotated[str, BeforeValidator(_validate_dn_field)] = Field(
+            ..., description="Distinguished Name (unique identifier)"
+        )
         cn: str | None = Field(default=None, description="Common Name")
 
         # LDAP metadata
-        object_classes: list[str] = Field(
+        object_classes: Annotated[list[str], BeforeValidator(_validate_object_classes_list)] = Field(
             default_factory=list,
             description="LDAP object classes",
         )
 
         # Core enterprise fields
-        status: str | None = Field(
+        status: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
             default=None, description="Entry status (active/disabled/etc)"
         )
         additional_attributes: dict[
@@ -659,14 +758,20 @@ class FlextLdapModels(FlextModels):
         given_name: str | None = Field(
             default=None, description="Given Name (givenName attribute)"
         )
-        mail: str | None = Field(default=None, description="Primary email address")
+        mail: Annotated[str | None, BeforeValidator(_validate_email_field)] = Field(
+            default=None, description="Primary email address"
+        )
         telephone_number: str | None = Field(
             default=None, description="Primary phone number"
         )
         mobile: str | None = Field(default=None, description="Mobile phone number")
-        department: str | None = Field(default=None, description="Department")
-        title: str | None = Field(default=None, description="Job title")
-        organization: str | None = Field(
+        department: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
+            default=None, description="Department"
+        )
+        title: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
+            default=None, description="Job title"
+        )
+        organization: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
             default=None, description="Organization (o attribute)"
         )
         organizational_unit: str | None = Field(
@@ -701,51 +806,6 @@ class FlextLdapModels(FlextModels):
             default_factory=dict,
             description="LDAP entry attributes (for generic/unstructured entries)",
         )
-
-        @field_validator("department", "title", "organization", "status", mode="before")
-        @classmethod
-        def set_defaults_from_constants(
-            cls, v: str | None, info: ValidationInfo
-        ) -> str | None:
-            """Set defaults from constants for fields if None."""
-            if v is not None:
-                return v or None
-            match info.field_name:
-                case "department":
-                    return FlextLdapConstants.Defaults.DEFAULT_DEPARTMENT
-                case "title":
-                    return FlextLdapConstants.Defaults.DEFAULT_TITLE
-                case "organization":
-                    return FlextLdapConstants.Defaults.DEFAULT_ORGANIZATION
-                case "status":
-                    return FlextLdapConstants.Defaults.DEFAULT_STATUS
-                case _:
-                    return None
-
-        @field_validator("dn")
-        @classmethod
-        def validate_dn(cls, v: str) -> str:
-            """Validate Distinguished Name format using centralized validation."""
-            return FlextLdapModels.validate_dn_field(v)
-
-        @field_validator("mail")
-        @classmethod
-        def validate_email(cls, value: str | None) -> str | None:
-            """Validate email format (user entries only)."""
-            return FlextLdapValidations.validate_email_for_field(value)
-
-        @field_validator("object_classes")
-        @classmethod
-        def validate_object_classes(cls, v: list[str]) -> list[str]:
-            """Validate object classes."""
-            if not v:
-                msg = "At least one object class is required"
-                raise FlextExceptions.ValidationError(
-                    msg,
-                    field="object_classes",
-                    value=str(v),
-                )
-            return v
 
         @field_serializer("user_password")
         def serialize_password(self, value: str | SecretStr | None) -> str | None:
@@ -1069,7 +1129,7 @@ class FlextLdapModels(FlextModels):
                     })
 
             try:
-                entry = cls(**entry_data)  # type: ignore[misc]
+                entry = cls(**entry_data)
                 return FlextResult[FlextLdapModels.Entry].ok(entry)
             except Exception as e:
                 return FlextResult[FlextLdapModels.Entry].fail(
@@ -1133,7 +1193,7 @@ class FlextLdapModels(FlextModels):
                     case _:
                         entry_data["object_classes"] = ["top"]
 
-                entry = cls(**entry_data)  # type: ignore[misc]
+                entry = cls(**entry_data)
                 return FlextResult[FlextLdapModels.Entry].ok(entry)
             except Exception as e:
                 return FlextResult[FlextLdapModels.Entry].fail(
@@ -1303,8 +1363,12 @@ class FlextLdapModels(FlextModels):
             return cls.DEFAULT_USER_ATTRIBUTES.copy()
 
         # Search scope
-        base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter")
+        base_dn: Annotated[str, BeforeValidator(_validate_dn_field)] = Field(
+            ..., description="Search base Distinguished Name"
+        )
+        filter_str: Annotated[str, BeforeValidator(_validate_filter_str)] = Field(
+            ..., description="LDAP search filter"
+        )
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
@@ -1312,7 +1376,7 @@ class FlextLdapModels(FlextModels):
         )
 
         # Attribute selection
-        attributes: list[str] | None = Field(
+        attributes: Annotated[list[str] | None, BeforeValidator(_validate_attributes_list)] = Field(
             default=None,
             description="Attributes to return (None = all)",
         )
@@ -1350,41 +1414,6 @@ class FlextLdapModels(FlextModels):
             description="Alias dereferencing: never, searching, finding, always",
             pattern="^(never|searching|finding|always)$",
         )
-
-        @field_validator("base_dn")
-        @classmethod
-        def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN format using centralized validation."""
-            return FlextLdapModels.validate_dn_field(v)
-
-        @field_validator("filter_str")
-        @classmethod
-        def validate_filter_str(cls, v: str) -> str:
-            """Validate LDAP filter format using centralized validation."""
-            validation_result: FlextResult[None] = FlextLdapValidations.validate_filter(
-                v,
-            ).map(lambda _: None)
-            if validation_result.is_failure:
-                error_msg = validation_result.error or "Filter validation failed"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="filter_str",
-                    value=v,
-                )
-            return v.strip()
-
-        @field_validator("attributes")
-        @classmethod
-        def validate_attributes(
-            cls,
-            v: list[str] | None,
-        ) -> list[str] | None:
-            """Validate attribute list."""
-            if v is not None:
-                # Remove duplicates and empty strings using set comprehension
-                cleaned_attrs = list({attr.strip() for attr in v if attr.strip()})
-                return cleaned_attrs or None
-            return v
 
         @model_validator(mode="after")
         def validate_search_consistency(self) -> FlextLdapModels.SearchRequest:
@@ -1604,27 +1633,11 @@ class FlextLdapModels(FlextModels):
         matched_dn: str = Field(default="", description="Matched DN")
         has_more_pages: bool = Field(default=False, description="More pages available")
         next_cookie: bytes | None = Field(default=None, description="Next page cookie")
-        entries_returned: int = Field(
+        entries_returned: Annotated[int, BeforeValidator(_set_entries_returned)] = Field(
             default=0,
             description="Number of entries returned",
         )
         time_elapsed: float = Field(default=0.0, description="Search time in seconds")
-
-        @field_validator("entries_returned", mode="before")
-        @classmethod
-        def set_entries_returned(cls, v: int, info: ValidationInfo) -> int:
-            """Auto-calculate entries returned from entries list."""
-            # Use proper Pydantic 2 ValidationInfo pattern - no .data access
-            try:
-                # Access through proper validation context
-                data = info.data or {}
-                entries = data.get("entries")
-                if isinstance(entries, list):
-                    # Type-safe length calculation
-                    return len(entries)
-            except (AttributeError, KeyError):
-                pass
-            return v if isinstance(v, int) else 0
 
     # =========================================================================
     # GENERIC LDAP REQUEST - Consolidated factory-based implementation
@@ -1646,8 +1659,12 @@ class FlextLdapModels(FlextModels):
         """
 
         # Core DN fields
-        dn: str | None = Field(None, description="Distinguished Name")
-        schema_dn: str | None = Field(None, description="DN of schema subentry")
+        dn: Annotated[str | None, BeforeValidator(_validate_dn_fields)] = Field(
+            None, description="Distinguished Name"
+        )
+        schema_dn: Annotated[str | None, BeforeValidator(_validate_dn_fields)] = Field(
+            None, description="DN of schema subentry"
+        )
 
         # General attributes (for Add, Update, Upsert operations)
         attributes: dict[str, str | list[str]] | None = Field(
@@ -1663,7 +1680,9 @@ class FlextLdapModels(FlextModels):
         uid: str | None = Field(None, description="User ID")
         given_name: str | None = Field(None, description="Given Name")
         user_password: str | None = Field(None, description="User password")
-        mail: str | None = Field(None, description="Email address")
+        mail: Annotated[str | None, BeforeValidator(_validate_mail_field)] = Field(
+            None, description="Email address"
+        )
         owner: str | None = Field(None, description="Group owner")
         member: list[str] = Field(default_factory=list, description="Group members")
 
@@ -1712,26 +1731,6 @@ class FlextLdapModels(FlextModels):
         organization: str | None = None
         organizational_unit: str | None = None
         mobile: str | None = None
-
-        @field_validator("dn", "schema_dn", mode="before")
-        @classmethod
-        def validate_dn_fields(cls, v: str | None) -> str | None:
-            """Validate DN fields."""
-            if v is not None:
-                return FlextLdapModels.validate_dn_field(v)
-            return v
-
-        @field_validator("mail", mode="before")
-        @classmethod
-        def validate_mail_field(cls, v: str | None) -> str | None:
-            """Validate email field."""
-            if v is None:
-                return v
-            # Simple email validation
-            if "@" not in v:
-                msg = f"Invalid email: {v}"
-                raise ValueError(msg)
-            return v
 
         def to_attributes(self) -> dict[str, str | list[str]]:
             """Convert request to LDAP attributes dict."""
@@ -1830,8 +1829,10 @@ class FlextLdapModels(FlextModels):
         """LDAP Connection Information entity."""
 
         # Connection details
-        server: str = Field(default="localhost", description="LDAP server hostname/IP")
-        port: int = Field(
+        server: Annotated[str, BeforeValidator(_validate_server)] = Field(
+            default="localhost", description="LDAP server hostname/IP"
+        )
+        port: Annotated[int, BeforeValidator(_validate_port)] = Field(
             FlextLdapConstants.Protocol.DEFAULT_PORT,
             description="LDAP server port",
             ge=1,
@@ -1873,21 +1874,6 @@ class FlextLdapModels(FlextModels):
             default=None,
             description="CA certificates file path",
         )
-
-        @field_validator("server")
-        @classmethod
-        def validate_server(cls, v: str) -> str:
-            """Validate server hostname/IP."""
-            return FlextLdapValidations.validate_required_string_for_field(v)
-
-        @field_validator("port")
-        @classmethod
-        def validate_port(cls, v: int) -> int:
-            """Validate port number."""
-            if v <= 0 or v > FlextConstants.Network.MAX_PORT:
-                msg = f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}"
-                raise FlextExceptions.ValidationError(msg, field="port", value=str(v))
-            return v
 
     # =========================================================================
     # ERROR AND STATUS ENTITIES

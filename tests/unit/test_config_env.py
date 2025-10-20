@@ -46,7 +46,6 @@ class TestFlextLdapConfigEnvironment:
             "ldap_base_dn": "FLEXT_LDAP_BASE_DN",
             "ldap_pool_size": "FLEXT_LDAP_POOL_SIZE",
             "ldap_connection_timeout": "FLEXT_LDAP_CONNECTION_TIMEOUT",
-            "ldap_enable_caching": "FLEXT_LDAP_ENABLE_CACHING",
             "ldap_retry_attempts": "FLEXT_LDAP_RETRY_ATTEMPTS",
         }
 
@@ -70,7 +69,6 @@ class TestFlextLdapConfigEnvironment:
             "FLEXT_LDAP_CACHE_TTL": "600",
             "FLEXT_LDAP_RETRY_ATTEMPTS": "5",
             "FLEXT_LDAP_USE_SSL": "true",
-            "FLEXT_LDAP_ENABLE_CACHING": "1",
             "FLEXT_LDAP_ENABLE_DEBUG": "yes",
             "FLEXT_LDAP_LOG_QUERIES": "on",
         }

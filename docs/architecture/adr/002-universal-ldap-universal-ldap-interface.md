@@ -1,4 +1,5 @@
 # Architecture Decision Record (ADR) 002-universal-ldap: Universal LDAP Interface
+
 ## Table of Contents
 
 - [Architecture Decision Record (ADR) 002-universal-ldap: Universal LDAP Interface](#architecture-decision-record-adr-002-universal-ldap-universal-ldap-interface)
@@ -10,7 +11,6 @@
   - [Validation](#validation)
   - [Consequences](#consequences)
   - [References](#references)
-
 
 ## Status
 

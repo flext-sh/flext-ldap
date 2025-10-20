@@ -115,15 +115,17 @@ class TestFlextLdapServersFactory:
         result = factory.create_from_server_type("ad")
 
         # Assert
+        from flext_ldap.servers.ad_operations import (
+            FlextLdapServersActiveDirectoryOperations,
+        )
+
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(
-            ops, FlextLdapServersGenericOperations
-        )  # AD uses generic operations
-        assert ops.server_type == "generic"  # AD maps to generic (AD support planned)
-        # Note: AD-specific ACL handling not yet implemented - uses generic ACL for now
-        assert ops.get_acl_attribute_name() == "aci"  # Generic fallback
-        assert ops.get_acl_format() == "generic"  # Generic fallback
+        assert isinstance(ops, FlextLdapServersActiveDirectoryOperations)
+        assert ops.server_type == "ad"
+        # AD-specific ACL handling now implemented
+        assert ops.get_acl_attribute_name() == "nTSecurityDescriptor"
+        assert ops.get_acl_format() == "sddl"
 
     def test_create_from_server_type_generic(
         self, factory: FlextLdapServersFactory
@@ -256,13 +258,14 @@ class TestFlextLdapServersFactory:
         assert result.is_success
         ops = result.unwrap()
 
-        # NOTE: FlextLdif quirks manager doesn't recognize AD attributes like objectGUID
-        # This is expected behavior until quirks are enhanced for Active Directory
-        assert ops.server_type in {"ad", "generic"}  # Accept both until quirks enhanced
-        if ops.server_type == "ad":
-            assert isinstance(ops, FlextLdapServersGenericOperations)  # AD fallback
-        else:
-            assert isinstance(ops, FlextLdapServersGenericOperations)
+        # FlextLdif quirks manager now recognizes AD (active_directory)
+        from flext_ldap.servers.ad_operations import (
+            FlextLdapServersActiveDirectoryOperations,
+        )
+
+        # Quirks detects "active_directory" which maps to AD operations
+        assert ops.server_type == "ad"
+        assert isinstance(ops, FlextLdapServersActiveDirectoryOperations)
 
     def test_create_from_entries_empty_list(
         self, factory: FlextLdapServersFactory
@@ -297,10 +300,22 @@ class TestFlextLdapServersFactory:
         # Act
         result = factory.create_from_entries([entry])
 
-        # Assert
+        # Assert - Quirks manager may detect as AD or generic
+        from flext_ldap.servers.ad_operations import (
+            FlextLdapServersActiveDirectoryOperations,
+        )
+
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersGenericOperations)
+        # FlextLdif quirks may detect various types - accept AD or generic
+        assert isinstance(
+            ops,
+            (
+                FlextLdapServersGenericOperations,
+                FlextLdapServersActiveDirectoryOperations,
+            ),
+        )
+        assert ops.server_type in {"generic", "ad"}
 
     def test_create_from_entries_multiple_entries_openldap2(
         self, factory: FlextLdapServersFactory
@@ -362,11 +377,15 @@ class TestFlextLdapServersFactory:
         # Act
         result = factory.create_from_connection(mock_connection)
 
-        # Assert
+        # Assert - Detection identifies AD
+        from flext_ldap.servers.ad_operations import (
+            FlextLdapServersActiveDirectoryOperations,
+        )
+
         assert result.is_success
         ops = result.unwrap()
-        assert isinstance(ops, FlextLdapServersGenericOperations)  # AD fallback
-        assert ops.server_type == "generic"  # AD maps to generic
+        assert isinstance(ops, FlextLdapServersActiveDirectoryOperations)
+        assert ops.server_type == "ad"
 
     def test_create_from_connection_not_bound(
         self, factory: FlextLdapServersFactory

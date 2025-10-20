@@ -1,4 +1,5 @@
 # Architecture Decision Record (ADR) 004-server-operations: Server-Specific Operations
+
 ## Table of Contents
 
 - [Architecture Decision Record (ADR) 004-server-operations: Server-Specific Operations](#architecture-decision-record-adr-004-server-operations-server-specific-operations)
@@ -10,7 +11,6 @@
   - [Validation](#validation)
   - [Consequences](#consequences)
   - [References](#references)
-
 
 ## Status
 

@@ -527,6 +527,7 @@ class TestFlextLdapClientsComprehensive:
         assert result.error
         assert "not available" in result.error.lower()
 
+    @pytest.mark.skip(reason="Method _normalize_attributes removed during Pydantic v2 refactoring")
     def test_normalize_attributes(self) -> None:
         """Test _normalize_attributes method."""
         client = FlextLdapClients()
@@ -536,6 +537,7 @@ class TestFlextLdapClientsComprehensive:
         result = client._normalize_attributes(attributes)
         assert result == ["cn", "sn", "mail"]
 
+    @pytest.mark.skip(reason="Method _normalize_modify_changes removed during Pydantic v2 refactoring")
     def test_normalize_modify_changes(self) -> None:
         """Test _normalize_modify_changes method."""
         client = FlextLdapClients()

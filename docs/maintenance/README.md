@@ -1,4 +1,5 @@
 # Documentation Maintenance System
+
 ## Table of Contents
 
 - [Documentation Maintenance System](#documentation-maintenance-system)
@@ -8,7 +9,7 @@
     - [Prerequisites](#prerequisites)
 - [Required system dependencies](#required-system-dependencies)
 - [Optional: For advanced features](#optional-for-advanced-features)
-    - [Basic Usage](#basic-usage)
+  - [Basic Usage](#basic-usage)
 - [Run comprehensive audit](#run-comprehensive-audit)
 - [Validate all links](#validate-all-links)
 - [Generate quality report](#generate-quality-report)
@@ -23,7 +24,7 @@
   - [🔧 Configuration](#-configuration)
     - [Main Configuration File](#main-configuration-file)
 - [Documentation Maintenance Configuration](#documentation-maintenance-configuration)
-    - [Custom Style Rules](#custom-style-rules)
+  - [Custom Style Rules](#custom-style-rules)
 - [Custom style rules for documentation](#custom-style-rules-for-documentation)
   - [📈 Quality Metrics](#-quality-metrics)
     - [Content Quality Metrics](#content-quality-metrics)
@@ -40,11 +41,11 @@
     - [Daily Maintenance](#daily-maintenance)
 - [Quick audit (2-5 minutes)](#quick-audit-2-5-minutes)
 - [Style validation](#style-validation)
-    - [Weekly Maintenance](#weekly-maintenance)
+  - [Weekly Maintenance](#weekly-maintenance)
 - [Comprehensive audit (10-15 minutes)](#comprehensive-audit-10-15-minutes)
 - [Link validation](#link-validation)
 - [Generate weekly report](#generate-weekly-report)
-    - [Monthly Maintenance](#monthly-maintenance)
+  - [Monthly Maintenance](#monthly-maintenance)
 - [Content optimization](#content-optimization)
 - [Synchronization check](#synchronization-check)
 - [Comprehensive reporting](#comprehensive-reporting)
@@ -52,26 +53,23 @@
     - [Common Issues](#common-issues)
       - [Link Validation Failures](#link-validation-failures)
 - [Debug specific link](#debug-specific-link)
-- [Skip problematic domains](#skip-problematic-domains)
-      - [Style Validation Errors](#style-validation-errors)
+- [Skip problematic domains](#skip-problematic-domains) - [Style Validation Errors](#style-validation-errors)
 - [Show detailed style violations](#show-detailed-style-violations)
-- [Auto-fix common issues](#auto-fix-common-issues)
-      - [Performance Issues](#performance-issues)
+- [Auto-fix common issues](#auto-fix-common-issues) - [Performance Issues](#performance-issues)
 - [Run with profiling](#run-with-profiling)
 - [Optimize configuration](#optimize-configuration)
 - [Reduce check intervals, increase timeouts](#reduce-check-intervals-increase-timeouts)
-    - [Recovery Procedures](#recovery-procedures)
-      - [Rollback Failed Changes](#rollback-failed-changes)
+  - [Recovery Procedures](#recovery-procedures)
+    - [Rollback Failed Changes](#rollback-failed-changes)
 - [Check what changed](#check-what-changed)
 - [Rollback specific files](#rollback-specific-files)
-- [Complete rollback](#complete-rollback)
-      - [Rebuild Maintenance Database](#rebuild-maintenance-database)
+- [Complete rollback](#complete-rollback) - [Rebuild Maintenance Database](#rebuild-maintenance-database)
 - [Clear maintenance cache](#clear-maintenance-cache)
 - [Rebuild from scratch](#rebuild-from-scratch)
   - [📚 Advanced Usage](#-advanced-usage)
     - [Custom Validation Rules](#custom-validation-rules)
 - [docs/maintenance/custom_validators.py](#docsmaintenancecustom_validatorspy)
-    - [Integration with External Tools](#integration-with-external-tools)
+  - [Integration with External Tools](#integration-with-external-tools)
 - [docs/maintenance/integrations.py](#docsmaintenanceintegrationspy)
   - [🤝 Contributing](#-contributing)
     - [Adding New Validators](#adding-new-validators)
@@ -86,11 +84,10 @@
     - [Community](#community)
     - [Professional Services](#professional-services)
 
-
 **Comprehensive Documentation Quality Assurance and Maintenance Framework**
 
 This system provides automated tools for maintaining documentation quality, validating content,
-     and ensuring consistency across all documentation files.
+and ensuring consistency across all documentation files.
 
 ## 📋 System Overview
 

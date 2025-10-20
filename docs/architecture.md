@@ -1,4 +1,5 @@
 # FLEXT-LDAP Architecture
+
 ## Table of Contents
 
 - [FLEXT-LDAP Architecture](#flext-ldap-architecture)
@@ -30,11 +31,11 @@
     - [**1. Adapter Pattern**](#1-adapter-pattern)
 - [ldap3 → FlextLdif](#ldap3--flextldif)
 - [FlextLdif → ldap3](#flextldif--ldap3)
-    - [**2. Strategy Pattern**](#2-strategy-pattern)
+  - [**2. Strategy Pattern**](#2-strategy-pattern)
 - [Runtime selection based on server type](#runtime-selection-based-on-server-type)
 - [Common interface, different implementations](#common-interface-different-implementations)
-    - [**3. Template Method Pattern**](#3-template-method-pattern)
-    - [**4. Railway-Oriented Programming**](#4-railway-oriented-programming)
+  - [**3. Template Method Pattern**](#3-template-method-pattern)
+  - [**4. Railway-Oriented Programming**](#4-railway-oriented-programming)
 - [Operation chain with early returns](#operation-chain-with-early-returns)
   - [🔐 Security Considerations](#-security-considerations)
     - [**ACL Format Isolation**](#acl-format-isolation)
@@ -47,7 +48,6 @@
     - [**Short Term (1.0.0)**](#short-term-100)
     - [**Long Term (2.0.0+)**](#long-term-200)
   - [📚 References](#-references)
-
 
 **Universal LDAP Interface with Server-Specific Implementations**
 

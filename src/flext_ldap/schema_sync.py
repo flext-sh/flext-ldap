@@ -21,6 +21,9 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextResult, FlextService
+from ldap3 import MODIFY_ADD
+
+from flext_ldap.clients import FlextLdapClients
 
 
 class FlextLdapSchemaSync(FlextService[dict[str, object]]):
@@ -74,7 +77,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         self._base_dn = base_dn
         self._server_type = server_type
         self._use_ssl = use_ssl
-        self._connection: dict[str, object] | None = None
+        self._connection: FlextLdapClients | None = None
 
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
@@ -172,51 +175,86 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         # Parse LDIF content into schema definitions
         definitions: list[dict[str, object]] = []
 
-        # Parse attributeTypes
-        for line in content.split("\n"):
-            if line.strip().startswith("attributeTypes:"):
+        # Split content into lines and process
+        lines = content.split("\n")
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+
+            # Look for attributeTypes or objectClasses definitions
+            if "attributeTypes:" in line:
+                # Extract the definition (may span multiple lines)
+                definition_lines = []
+                j = i
+                # Find the opening parenthesis
                 start_idx = line.find("(")
-                end_idx = line.rfind(")")
+                if start_idx != -1:
+                    # Collect lines until closing parenthesis
+                    while j < len(lines):
+                        current_line = lines[j]
+                        definition_lines.append(current_line)
+                        if ")" in current_line:
+                            break
+                        j += 1
 
-                if start_idx != -1 and end_idx != -1:
-                    definition = line[start_idx + 1 : end_idx].strip()
-                    tokens = definition.split()
+                    full_definition = " ".join(definition_lines)
+                    start_idx = full_definition.find("(")
+                    end_idx = full_definition.rfind(")")
 
-                    if tokens:
-                        oid = tokens[0]
-                        name = self._extract_name(definition)
+                    if start_idx != -1 and end_idx != -1:
+                        definition = full_definition[start_idx + 1 : end_idx].strip()
+                        tokens = definition.split()
 
-                        entry: dict[str, object] = {
-                            "type": "attributeType",
-                            "oid": oid,
-                            "name": name,
-                            "definition": definition,
-                            "raw_line": line.strip(),
-                        }
-                        definitions.append(entry)
+                        if tokens:
+                            oid = tokens[0]
+                            name = self._extract_name(definition)
 
-        # Parse objectClasses
-        for line in content.split("\n"):
-            if line.strip().startswith("objectClasses:"):
+                            entry: dict[str, object] = {
+                                "type": "attributeType",
+                                "oid": oid,
+                                "name": name,
+                                "definition": definition,
+                                "raw_line": full_definition.strip(),
+                            }
+                            definitions.append(entry)
+
+                i = j + 1
+
+            elif "objectClasses:" in line:
+                # Extract the definition (may span multiple lines)
+                definition_lines = []
+                j = i
+                # Find the opening parenthesis
                 start_idx = line.find("(")
-                end_idx = line.rfind(")")
+                if start_idx != -1:
+                    # Collect lines until closing parenthesis
+                    while j < len(lines):
+                        current_line = lines[j]
+                        definition_lines.append(current_line)
+                        if ")" in current_line:
+                            break
+                        j += 1
 
-                if start_idx != -1 and end_idx != -1:
-                    definition = line[start_idx + 1 : end_idx].strip()
-                    tokens = definition.split()
+                    full_definition = " ".join(definition_lines)
+                    start_idx = full_definition.find("(")
+                    end_idx = full_definition.rfind(")")
 
-                    if tokens:
-                        oid = tokens[0]
-                        name = self._extract_name(definition)
+                    if start_idx != -1 and end_idx != -1:
+                        definition = full_definition[start_idx + 1 : end_idx].strip()
+                        tokens = definition.split()
 
-                        object_class_entry: dict[str, object] = {
-                            "type": "objectClass",
-                            "oid": oid,
-                            "name": name,
-                            "definition": definition,
-                            "raw_line": line.strip(),
-                        }
-                        definitions.append(object_class_entry)
+                        if tokens:
+                            oid = tokens[0]
+                            name = self._extract_name(definition)
+
+                            object_class_entry: dict[str, object] = {
+                                "type": "objectClass",
+                                "oid": oid,
+                                "name": name,
+                                "definition": definition,
+                                "raw_line": full_definition.strip(),
+                            }
+                            definitions.append(object_class_entry)
 
         return FlextResult[list[dict[str, object]]].ok(definitions)
 
@@ -245,53 +283,100 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         return definition[start_quote + 1 : end_quote]
 
     def _connect_to_server(self) -> FlextResult[None]:
-        """Connect to target LDAP server.
+        """Connect to target LDAP server using FlextLdapClients.
 
         Returns:
             FlextResult indicating success or failure
 
-        Note:
-            Phase 1 basic implementation - uses placeholder connection.
-            Phase 2 will integrate with FlextLdapClients for real connections.
-
         """
-        # Phase 1: Placeholder for connection
-        # Phase 2 TODO(FLEXT Team): Integrate with FlextLdapClients
-        # Example:
-        #   from flext_ldap.clients import FlextLdapClients
-        #   client_result = FlextLdapClients.create_connection(...)
-        #   if client_result.is_success:
-        #       self._connection = client_result.unwrap()
+        try:
+            # Create client
+            self._connection = FlextLdapClients()
 
-        # For Phase 1, we'll simulate a successful connection
-        self._connection = {"connected": True, "server": self._server_host}
+            # Build server URI
+            protocol = "ldaps" if self._use_ssl else "ldap"
+            server_uri = f"{protocol}://{self._server_host}:{self._server_port}"
 
-        return FlextResult[None].ok(None)
+            # Establish connection
+            connect_result = self._connection.connect(
+                server_uri=server_uri,
+                bind_dn=self._bind_dn or "",
+                password=self._bind_password or "",
+                auto_discover_schema=True,
+            )
+
+            if connect_result.is_failure:
+                return FlextResult[None].fail(
+                    f"Connection failed: {connect_result.error}"
+                )
+
+            self.logger.info(
+                "Connected to LDAP server for schema sync",
+                extra={
+                    "host": self._server_host,
+                    "port": self._server_port,
+                    "server_type": self._server_type,
+                },
+            )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Connection error: {e}")
 
     def _get_existing_schema(self) -> FlextResult[dict[str, object]]:
-        """Discover existing schema definitions on target server.
+        """Discover existing schema using ldap3.Server.schema.
 
         Returns:
             FlextResult containing existing schema dictionary
 
-        Note:
-            Phase 1 basic implementation - returns empty schema.
-            Phase 2 will query actual LDAP server schema.
-
         """
-        # Phase 1: Placeholder returning empty existing schema
-        # Phase 2 TODO(FLEXT Team): Query LDAP server schema
-        # Example:
-        #   schema_dn = self._get_schema_subentry_dn()
-        #   search_result = self._connection.search(schema_dn, ...)
-        #   return parse_existing_schema(search_result)
+        if not self._connection:
+            return FlextResult[dict[str, object]].fail("Not connected to LDAP server")
 
-        existing: dict[str, object] = {
-            "attributeTypes": {},
-            "objectClasses": {},
-        }
+        try:
+            # Get underlying ldap3 connection
+            ldap_conn = self._connection.connection
 
-        return FlextResult[dict[str, object]].ok(existing)
+            if not ldap_conn or not ldap_conn.server:
+                return FlextResult[dict[str, object]].fail(
+                    "LDAP connection or server not available"
+                )
+
+            # Force schema loading if not already loaded
+            if not ldap_conn.server.schema:
+                ldap_conn.server.get_info = "SCHEMA"
+                ldap_conn.bind()
+
+            schema = ldap_conn.server.schema
+
+            # Extract existing attribute types and object classes
+            attr_types_dict: dict[str, str] = {
+                at.name[0]: at.oid for at in schema.attribute_types.values()
+            }
+            obj_classes_dict: dict[str, str] = {
+                oc.name[0]: oc.oid for oc in schema.object_classes.values()
+            }
+
+            existing: dict[str, object] = {
+                "attributeTypes": attr_types_dict,
+                "objectClasses": obj_classes_dict,
+                "server_type": self._server_type,
+                "schema_loaded": True,
+            }
+
+            self.logger.info(
+                "Discovered existing schema",
+                extra={
+                    "attribute_types": len(attr_types_dict),
+                    "object_classes": len(obj_classes_dict),
+                },
+            )
+
+            return FlextResult[dict[str, object]].ok(existing)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Schema discovery failed: {e}")
 
     def _filter_new_definitions(
         self,
@@ -358,10 +443,29 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
 
         return new_definitions
 
+    def _get_schema_dn_for_server(self) -> str:
+        """Get schema DN based on server type.
+
+        Returns:
+            Schema DN for the target server type
+
+        """
+        schema_dns = {
+            "openldap2": "cn=schema",
+            "openldap1": "cn=subschema",
+            "oid": "cn=subschemasubentry",
+            "oracle_oid": "cn=subschemasubentry",
+            "oud": "cn=schema",
+            "oracle_oud": "cn=schema",
+            "ad": "CN=Schema,CN=Configuration",
+            "active_directory": "CN=Schema,CN=Configuration",
+        }
+        return schema_dns.get(self._server_type, "cn=subschema")
+
     def _add_schema_definitions(
-        self, _definitions: list[dict[str, object]]
+        self, definitions: list[dict[str, object]]
     ) -> FlextResult[None]:
-        """Add new schema definitions to target server.
+        """Add new schema definitions using LDAP modify operations.
 
         Args:
             definitions: List of schema definitions to add
@@ -369,34 +473,79 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         Returns:
             FlextResult indicating success or failure
 
-        Note:
-            Phase 1 basic implementation - simulates addition.
-            Phase 2 will use LDAP modify operations.
-
         """
-        # Phase 1: Placeholder for schema addition
-        # Phase 2 TODO(FLEXT Team): Use LDAP modify operations
-        # Example:
-        #   for definition in definitions:
-        #       ldif_entry = self._build_ldif_entry(definition)
-        #       modify_result = self._connection.modify(schema_dn, ldif_entry)
-        #       if modify_result.is_failure:
-        #           return modify_result
+        if not self._connection:
+            return FlextResult[None].fail("Not connected to LDAP server")
 
-        # For Phase 1, simulate successful addition
-        return FlextResult[None].ok(None)
+        try:
+            # Get underlying ldap3 connection
+            ldap_conn = self._connection.connection
+
+            if not ldap_conn:
+                return FlextResult[None].fail("LDAP connection not available")
+
+            # Determine schema DN for this server type
+            schema_dn = self._get_schema_dn_for_server()
+
+            added_count = 0
+            failed_count = 0
+
+            for definition in definitions:
+                def_type = definition.get("type")
+                raw_line = definition.get("raw_line", "")
+                name = definition.get("name", "unknown")
+
+                # Determine attribute name for modification
+                attr_name = (
+                    "attributeTypes" if def_type == "attributeType" else "objectClasses"
+                )
+
+                # Perform LDAP modify to add schema definition
+                success = ldap_conn.modify(
+                    dn=schema_dn, changes={attr_name: [(MODIFY_ADD, [str(raw_line)])]}
+                )
+
+                if not success:
+                    # Schema conflicts are common - log but continue
+                    error_msg = ldap_conn.result.get("description", "Unknown error")
+                    self.logger.warning(
+                        f"Failed to add {def_type} {name}: {error_msg}",
+                        extra={"definition": raw_line},
+                    )
+                    failed_count += 1
+                    continue
+
+                added_count += 1
+                self.logger.debug(f"Added {def_type}: {name}", extra={"dn": schema_dn})
+
+            self.logger.info(
+                "Schema definitions processed",
+                extra={
+                    "added": added_count,
+                    "failed": failed_count,
+                    "total": len(definitions),
+                },
+            )
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Schema addition failed: {e}")
 
     def _disconnect(self) -> None:
-        """Disconnect from LDAP server.
+        """Disconnect from LDAP server using FlextLdapClients."""
+        if self._connection:
+            try:
+                unbind_result = self._connection.unbind()
+                if unbind_result.is_failure:
+                    self.logger.warning(f"Unbind warning: {unbind_result.error}")
 
-        Note:
-            Phase 1 basic implementation - cleans up placeholder connection.
-            Phase 2 will use FlextLdapClients disconnect.
+                self.logger.debug("Disconnected from LDAP server")
 
-        """
-        # Phase 1: Clean up placeholder connection
-        # Phase 2 TODO(FLEXT Team): Use FlextLdapClients.disconnect()
-        self._connection = None
+            except Exception as e:
+                self.logger.warning(f"Disconnect error: {e}")
+            finally:
+                self._connection = None
 
 
 __all__ = ["FlextLdapSchemaSync"]

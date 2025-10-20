@@ -1,4 +1,5 @@
 # Server-Specific Operations Guide
+
 ## Table of Contents
 
 - [Server-Specific Operations Guide](#server-specific-operations-guide)
@@ -13,15 +14,15 @@
 - [Initialize operations](#initialize-operations)
 - [Connection](#connection)
 - [Schema discovery](#schema-discovery)
-    - [**ACL Operations**](#acl-operations)
+  - [**ACL Operations**](#acl-operations)
 - [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry)
 - [Set ACLs](#set-acls)
-    - [**Entry Operations**](#entry-operations)
+  - [**Entry Operations**](#entry-operations)
 - [Create entry](#create-entry)
 - [Add entry](#add-entry)
 - [Modify entry](#modify-entry)
 - [Delete entry](#delete-entry)
-    - [**Paged Search**](#paged-search)
+  - [**Paged Search**](#paged-search)
 - [Large result set with paging](#large-result-set-with-paging)
   - [🔧 OpenLDAP 1.x Operations](#-openldap-1x-operations)
     - [**Features**](#features)
@@ -34,10 +35,10 @@
     - [**Basic Usage**](#basic-usage)
 - [Connection to Oracle OID](#connection-to-oracle-oid)
 - [Schema discovery (Oracle-specific)](#schema-discovery-oracle-specific)
-    - [**Oracle OID ACLs**](#oracle-oid-acls)
+  - [**Oracle OID ACLs**](#oracle-oid-acls)
 - [Get orclaci ACLs](#get-orclaci-acls)
 - [Set orclaci ACLs](#set-orclaci-acls)
-    - [**Oracle-Specific Features**](#oracle-specific-features)
+  - [**Oracle-Specific Features**](#oracle-specific-features)
 - [Get OID defaults](#get-oid-defaults)
 - [Bind mechanisms](#bind-mechanisms)
 - [Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]](#returns-simple-saslexternal-sasldigest-md5)
@@ -46,13 +47,13 @@
     - [**Basic Usage**](#basic-usage)
 - [Connection to Oracle OUD](#connection-to-oracle-oud)
 - [Schema discovery](#schema-discovery)
-    - [**ds-privilege-name ACLs**](#ds-privilege-name-acls)
+  - [**ds-privilege-name ACLs**](#ds-privilege-name-acls)
 - [Get ds-privilege-name ACLs](#get-ds-privilege-name-acls)
 - [Set ds-privilege-name ACLs](#set-ds-privilege-name-acls)
-    - [**OUD-Specific Features**](#oud-specific-features)
+  - [**OUD-Specific Features**](#oud-specific-features)
 - [Extended SASL mechanisms](#extended-sasl-mechanisms)
 - [Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5", "SASL/GSSAPI",
-     "SASL/PLAIN"]](#returns-simple-saslexternal-sasldigest-md5-saslgssapi-saslplain)
+  "SASL/PLAIN"]](#returns-simple-saslexternal-sasldigest-md5-saslgssapi-saslplain)
 - [Schema location](#schema-location)
 - [VLV and paged results](#vlv-and-paged-results)
   - [🔧 Active Directory Operations (Stub)](#-active-directory-operations-stub)
@@ -61,7 +62,7 @@
     - [**Current Usage**](#current-usage)
 - [Available methods (return NotImplementedError)](#available-methods-return-notimplementederror)
 - [Basic info available](#basic-info-available)
-    - [**Contributing AD Implementation**](#contributing-ad-implementation)
+  - [**Contributing AD Implementation**](#contributing-ad-implementation)
   - [🔧 Generic Server Operations](#-generic-server-operations)
     - [**Purpose**](#purpose)
     - [**Features**](#features)
@@ -70,7 +71,7 @@
 - [Basic schema discovery](#basic-schema-discovery)
 - [Basic entry operations (should work on any server)](#basic-entry-operations-should-work-on-any-server)
 - [Paged search (if supported by server)](#paged-search-if-supported-by-server)
-    - [**Limitations**](#limitations)
+  - [**Limitations**](#limitations)
   - [🔄 Entry Adapter Integration](#-entry-adapter-integration)
 - [Search and convert to FlextLdif](#search-and-convert-to-flextldif)
 - [Create FlextLdif entry and convert to ldap3](#create-flextldif-entry-and-convert-to-ldap3)
@@ -88,8 +89,8 @@
     - [**3. Use Entry Adapter**](#3-use-entry-adapter)
 - [ldap3 → FlextLdif](#ldap3--flextldif)
 - [FlextLdif → ldap3](#flextldif--ldap3)
-    - [**4. Server-Specific Normalization**](#4-server-specific-normalization)
-    - [**5. Connection Management**](#5-connection-management)
+  - [**4. Server-Specific Normalization**](#4-server-specific-normalization)
+  - [**5. Connection Management**](#5-connection-management)
 - [Create connection](#create-connection)
   - [🔧 Troubleshooting](#-troubleshooting)
     - [**Common Issues**](#common-issues)
@@ -103,7 +104,6 @@
 - [Verify required object classes and attributes](#verify-required-object-classes-and-attributes)
   - [📚 Additional Resources](#-additional-resources)
 
-
 **Complete guide to using server-specific LDAP operations in flext-ldap**
 
 This document provides detailed information about server-specific implementations, their capabilities, and usage patterns.
@@ -116,7 +116,7 @@ This document provides detailed information about server-specific implementation
 ## 🎯 Overview
 
 FLEXT-LDAP provides complete,
-     server-specific implementations for major LDAP servers with automatic quirks handling and FlextLdif integration.
+server-specific implementations for major LDAP servers with automatic quirks handling and FlextLdif integration.
 
 ### **Available Implementations**
 

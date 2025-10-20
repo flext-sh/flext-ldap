@@ -14,7 +14,13 @@ from __future__ import annotations
 from abc import ABC
 from typing import override
 
-from flext_core import FlextHandlers, FlextModels, FlextResult, FlextService
+from flext_core import (
+    FlextConstants,
+    FlextHandlers,
+    FlextModels,
+    FlextResult,
+    FlextService,
+)
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -57,7 +63,7 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             config = FlextModels.Cqrs.Handler(
                 handler_id="generic-quirks-detector",
                 handler_name="GenericQuirksDetector",
-                handler_type="query",
+                handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
             )
             super().__init__(config=config)
 

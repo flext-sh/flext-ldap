@@ -42,38 +42,26 @@
     version = "0.9.0"
     [[project.authors]]
         email = "team@flext.sh"
-        name  = "FLEXT Team"
+        name = "FLEXT Team"
 
     [[project.maintainers]]
         email = "team@flext.sh"
-        name  = "FLEXT Team"
+        name = "FLEXT Team"
 
     [project.license]
         text = "MIT"
 
     [project.urls]
         Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
-        Homepage      = "https://github.com/flext-sh/flext"
-        Repository    = "https://github.com/flext-sh/flext"
+        Homepage = "https://github.com/flext-sh/flext"
+        Repository = "https://github.com/flext-sh/flext"
 
 [tool.ruff]
     extend = "../ruff-shared.toml"
 
-[tool.bandit]
-    exclude_dirs = [
-        "build",
-        "dist",
-        "tests",
-    ]
-    skips = [
-        "B101",
-        "B601",
-        "B608",
-    ]
-
 [tool.poetry]
     [[tool.poetry.packages]]
-        from    = "src"
+        from = "src"
         include = "flext_ldap"
 
 [tool.deptry]
@@ -82,12 +70,12 @@
     ]
 
     [tool.poetry.dependencies]
-        cryptography      = ">=45.0.5"
-        ldap3             = ">=2.9.1"
-        pydantic          = ">=2.11.7"
+        cryptography = ">=45.0.5"
+        ldap3 = ">=2.9.1"
+        pydantic = ">=2.11.7"
         pydantic-settings = ">=2.10.1"
-        python            = ">=3.13,<3.14"
-        structlog         = ">=25.4.0"
+        python = ">=3.13,<3.14"
+        structlog = ">=25.4.0"
 
 [tool.pytest.ini_options]
     addopts = [
@@ -99,7 +87,7 @@
     filterwarnings = [
         "ignore::DeprecationWarning",
         "ignore::PendingDeprecationWarning",
-    ] 
+    ]
     markers = [
         "benchmark: Benchmark tests",
         "concurrency: Concurrency tests",
@@ -126,37 +114,6 @@
     testpaths = [
         "tests",
     ]
-
-[tool.coverage.run]
-    branch = true
-    omit = [
-        "*/.venv/*",
-        "*/__pycache__/*",
-        "*/test_*",
-        "*/tests/*",
-        "*/venv/*",
-    ]
-
-[tool.coverage.report]
-    exclude_lines = [
-        "@(abc\\.)?abstractmethod",
-        "class .*\\bProtocol\\):",
-        "def __repr__",
-        "if 0:",
-        "if __name__ == .__main__.:",
-        "if self.debug:",
-        "if settings.DEBUG",
-        "pragma: no cover",
-        "raise AssertionError",
-        "raise NotImplementedError",
-    ]
-
-[tool.coverage.html]
-    directory = "reports/coverage"
-
-[tool.coverage.xml]
-    output = "reports/coverage.xml"
-
     [tool.ruff.lint.isort]
         known-first-party = [
             "flext_ldap",
@@ -164,72 +121,53 @@
 
         [tool.poetry.dependencies.flext-ldif]
             develop = true
-            path    = "../flext-ldif"
+            path = "../flext-ldif"
 
     [tool.poetry.group.dev.dependencies]
-        autoflake      = ">=2.3.1"
-        black          = ">=25.1.0"
-        codespell      = ">=2.3.0"
-        commitizen     = ">=4.8.3"
+        autoflake = ">=2.3.1"
+        black = ">=25.1.0"
+        codespell = ">=2.3.0"
+        commitizen = ">=4.8.3"
         detect-secrets = ">=1.5.0"
-        isort          = ">=6.0.1"
-        pre-commit     = ">=4.0.1"
-        pylint         = ">=3.3.0"
-        pyrefly        = "^0.34.0"
-        pyupgrade      = ">=3.19.0"
-        radon          = ">=6.0.1"
-        ruff           = ">=0.12.3"
-        types-ldap3    = ">=2.9.13.20250622"
-        vulture        = ">=2.13"
+        isort = ">=6.0.1"
+        pre-commit = ">=4.0.1"
+        pylint = ">=3.3.0"
+        pyrefly = "^0.34.0"
+        pyupgrade = ">=3.19.0"
+        radon = ">=6.0.1"
+        ruff = ">=0.12.3"
+        types-ldap3 = ">=2.9.13.20250622"
+        vulture = ">=2.13"
 
     [tool.poetry.group.test.dependencies]
-        docker              = ">=7.1.0"
-        factory-boy         = ">=3.3.1"
-        faker               = ">=37.4.0"
-        hypothesis          = ">=6.125.0"
-        pytest              = ">=8.4.0"
-        pytest-benchmark    = ">=5.1.0"
-        pytest-clarity      = ">=1.0.1"
-        pytest-cov          = ">=6.2.0"
+        docker = ">=7.1.0"
+        factory-boy = ">=3.3.1"
+        faker = ">=37.4.0"
+        hypothesis = ">=6.125.0"
+        pytest = ">=8.4.0"
+        pytest-benchmark = ">=5.1.0"
+        pytest-clarity = ">=1.0.1"
+        pytest-cov = ">=6.2.0"
         pytest-deadfixtures = ">=2.2.1"
-        pytest-env          = ">=1.1.5"
-        pytest-mock         = ">=3.14.0"
-        pytest-randomly     = ">=3.16.0"
-        pytest-sugar        = ">=1.0.0"
-        pytest-timeout      = ">=2.4.0"
-        pytest-xdist        = ">=3.8.0"
-        python-ldap         = ">=3.4.4"
+        pytest-env = ">=1.1.5"
+        pytest-mock = ">=3.14.0"
+        pytest-randomly = ">=3.16.0"
+        pytest-sugar = ">=1.0.0"
+        pytest-timeout = ">=2.4.0"
+        pytest-xdist = ">=3.8.0"
+        python-ldap = ">=3.4.4"
 
     [tool.poetry.group.typings.dependencies]
-        types-docker          = "^7.1.0.20250809"
-        types-ldap3           = ">=2.9.13.20250622"
-        types-psutil          = ">=7.0.0"
+        types-docker = "^7.1.0.20250809"
+        types-ldap3 = ">=2.9.13.20250622"
+        types-psutil = ">=7.0.0"
         types-python-dateutil = ">=2.9.0"
-        types-pyyaml          = ">=6.0.12"
-        types-redis           = ">=4.6.0"
-        types-requests        = ">=2.32.4"
-        types-setuptools      = ">=80.9.0"
-        types-toml            = ">=0.10.8.20240310"
+        types-pyyaml = ">=6.0.12"
+        types-redis = ">=4.6.0"
+        types-requests = ">=2.32.4"
+        types-setuptools = ">=80.9.0"
+        types-toml = ">=0.10.8.20240310"
 
     [tool.poetry.group.security.dependencies]
-        bandit    = ">=1.8.0"
+        bandit = ">=1.8.0"
         pip-audit = ">=2.7.3"
-
-[tool.pyrefly]
-    python-version = "3.13"
-    search-path = [
-        "../flext-core/src",
-        "../flext-ldif/src",
-        "examples",
-        "scripts",
-        "src",
-        "tests",
-    ]
-
-
-        # SubConfig: Disable unknown-name error for models.py
-        # This handles forward references to classes defined later in the same file
-        [[tool.pyrefly.sub-config]]
-            matches = "**/models.py"
-            [tool.pyrefly.sub-config.errors]
-                unknown-name = false

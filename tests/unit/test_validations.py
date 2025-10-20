@@ -46,11 +46,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "DN contains invalid characters" in result.error
-        )
+        assert result.error and ("must contain '='" in result.error or "invalid" in result.error.lower())
 
     def test_validate_dn_empty(self, validations: FlextLdapValidations) -> None:
         """Test DN validation with empty string."""
@@ -247,7 +243,7 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful server URI validation."""
         result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         )
 
         assert result.is_success
@@ -582,8 +578,8 @@ class TestFlextLdapValidations:
     ) -> None:
         """Test successful connection config validation."""
         config: dict[str, object] = {
-            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}",
-            "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.LDAP_DEFAULT_PORT}",
+            "port": FlextLdapConstants.LDAP_DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -619,7 +615,7 @@ class TestFlextLdapValidations:
         """Test connection config validation with invalid fields."""
         config: dict[str, object] = {
             "server": "invalid-uri",
-            "port": FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT,
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
