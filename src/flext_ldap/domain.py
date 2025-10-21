@@ -1,12 +1,11 @@
 """Domain logic and specifications for flext-ldap.
 
-This module contains domain services, specifications, and business rules
-that are independent of infrastructure concerns. Implements Clean Architecture
-domain layer patterns with simplified approach focusing on core functionality.
+Domain services, specifications, and business rules independent of
+infrastructure concerns. Clean Architecture domain layer with focus
+on core functionality and business validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -211,7 +210,7 @@ class FlextLdapDomain:
                 )
 
             # Example business rule: users must be active
-            if not user.is_active:
+            if not user.is_active():
                 return FlextResult[bool].fail(
                     "Inactive users cannot be added to groups",
                 )

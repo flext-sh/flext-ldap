@@ -1,12 +1,11 @@
-"""LDAP Schema Discovery and Quirks Handling for Universal Compatibility.
+"""LDAP schema discovery and quirks handling.
 
-This module provides automatic schema discovery and handling of LDAP server
-quirks to ensure compatibility with any LDAP implementation following
-FLEXT architectural patterns with proper domain separation.
+Automatic schema discovery and server quirks handling for universal
+LDAP compatibility following FLEXT architectural patterns with proper
+domain separation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -74,10 +73,10 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Handle quirks detection message.
 
             Args:
-                message: The message to handle (typically server info)
+            message: The message to handle (typically server info)
 
             Returns:
-                FlextResult containing the detection result
+            FlextResult containing the detection result
 
             """
             if not message:
@@ -98,10 +97,10 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Detect LDAP server type from server info.
 
             Args:
-                server_info: Server information object
+            server_info: Server information object
 
             Returns:
-                Detected server type enum or None if detection fails
+            Detected server type enum or None if detection fails
 
             """
             if not server_info:
@@ -117,10 +116,10 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Get server quirks for the specified server type.
 
             Args:
-                server_type: The server type to get quirks for
+            server_type: The server type to get quirks for
 
             Returns:
-                Server quirks object or None if not found
+            Server quirks object or None if not found
 
             """
             if not server_type:
@@ -163,14 +162,14 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Initialize schema discovery with optional quirks adapter.
 
             Args:
-                quirks_adapter: Optional quirks adapter for server-specific handling
+            quirks_adapter: Optional quirks adapter for server-specific handling
 
             """
             # Create handler config
             config = FlextModels.Cqrs.Handler(
                 handler_id="schema-discovery",
                 handler_name="SchemaDiscovery",
-                handler_type="query",
+                handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
             )
             super().__init__(config=config)
             # Note: self.logger is provided by FlextService parent class
@@ -183,10 +182,10 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Handle schema discovery message.
 
             Args:
-                message: Schema discovery request
+            message: Schema discovery request
 
             Returns:
-                FlextResult containing schema information
+            FlextResult containing schema information
 
             """
             if not message:
@@ -201,10 +200,10 @@ class FlextLdapSchema(FlextService[LdapResponseDict | None]):
             """Get schema subentry DN based on server type.
 
             Args:
-                server_type: LDAP server type (openldap, oracle, etc.)
+            server_type: LDAP server type (openldap, oracle, etc.)
 
             Returns:
-                FlextResult containing schema subentry DN
+            FlextResult containing schema subentry DN
 
             """
             try:

@@ -1,11 +1,10 @@
 """Base server operations abstract class for LDAP servers.
 
-This module provides the abstract base class that all server-specific
-LDAP operations implementations must extend.
+Abstract base class defining interface for all server-specific LDAP
+operations implementations with ACL, schema, and entry management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -35,7 +34,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Initialize base server operations.
 
         Args:
-            server_type: LDAP server type identifier (optional)
+        server_type: LDAP server type identifier (optional)
 
         """
         super().__init__()
@@ -60,10 +59,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Get default port for this server type.
 
         Args:
-            use_ssl: Whether SSL is used
+        use_ssl: Whether SSL is used
 
         Returns:
-            Default port number
+        Default port number
 
         """
 
@@ -84,7 +83,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Get schema subentry DN for this server type.
 
         Returns:
-            Schema DN (e.g., 'cn=subschema', 'cn=schema')
+        Schema DN (e.g., 'cn=subschema', 'cn=schema')
 
         """
 
@@ -93,10 +92,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Discover schema from server.
 
         Args:
-            connection: Active LDAP connection
+        connection: Active LDAP connection
 
         Returns:
-            FlextResult containing schema information
+        FlextResult containing schema information
 
         """
 
@@ -107,10 +106,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Parse objectClass definition from schema.
 
         Args:
-            object_class_def: ObjectClass definition string
+        object_class_def: ObjectClass definition string
 
         Returns:
-            FlextResult containing parsed objectClass information
+        FlextResult containing parsed objectClass information
 
         """
 
@@ -121,10 +120,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Parse attributeType definition from schema.
 
         Args:
-            attribute_def: AttributeType definition string
+        attribute_def: AttributeType definition string
 
         Returns:
-            FlextResult containing parsed attribute information
+        FlextResult containing parsed attribute information
 
         """
 
@@ -137,7 +136,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Get ACL attribute name for this server type.
 
         Returns:
-            ACL attribute name (e.g., 'olcAccess', 'aci', 'orclaci')
+        ACL attribute name (e.g., 'olcAccess', 'aci', 'orclaci')
 
         """
 
@@ -146,7 +145,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Get ACL format identifier.
 
         Returns:
-            ACL format (e.g., 'openldap2', 'oracle', '389ds')
+        ACL format (e.g., 'openldap2', 'oracle', '389ds')
 
         """
 
@@ -159,11 +158,11 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Get ACLs for a given DN.
 
         Args:
-            connection: Active LDAP connection
-            dn: Distinguished Name
+        connection: Active LDAP connection
+        dn: Distinguished Name
 
         Returns:
-            FlextResult containing list of ACL entries
+        FlextResult containing list of ACL entries
 
         """
 
@@ -177,12 +176,12 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Set ACLs for a given DN.
 
         Args:
-            connection: Active LDAP connection
-            dn: Distinguished Name
-            acls: List of ACL entries to set
+        connection: Active LDAP connection
+        dn: Distinguished Name
+        acls: List of ACL entries to set
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
 
@@ -191,10 +190,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Parse ACL string to structured format.
 
         Args:
-            acl_string: ACL string in server-specific format
+        acl_string: ACL string in server-specific format
 
         Returns:
-            FlextResult containing parsed ACL structure
+        FlextResult containing parsed ACL structure
 
         """
 
@@ -203,10 +202,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Format ACL structure to server-specific string.
 
         Args:
-            acl_dict: ACL dictionary structure
+        acl_dict: ACL dictionary structure
 
         Returns:
-            FlextResult containing formatted ACL string
+        FlextResult containing formatted ACL string
 
         """
 
@@ -223,11 +222,11 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Add entry to LDAP server.
 
         Args:
-            connection: Active LDAP connection
-            entry: FlextLdif Entry to add
+        connection: Active LDAP connection
+        entry: FlextLdif Entry to add
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
 
@@ -241,12 +240,12 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Modify existing entry.
 
         Args:
-            connection: Active LDAP connection
-            dn: Distinguished Name of entry to modify
-            modifications: Modifications to apply
+        connection: Active LDAP connection
+        dn: Distinguished Name of entry to modify
+        modifications: Modifications to apply
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
 
@@ -255,11 +254,11 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Delete entry from LDAP server.
 
         Args:
-            connection: Active LDAP connection
-            dn: Distinguished Name of entry to delete
+        connection: Active LDAP connection
+        dn: Distinguished Name of entry to delete
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
 
@@ -271,10 +270,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """Normalize entry for this server type.
 
         Args:
-            entry: FlextLdif Entry to normalize
+        entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
 
@@ -376,7 +375,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     def normalize_attribute_name(self, attribute_name: str) -> str:
-        """Normalize LDAP attribute name according to server-specific conventions.
+        """Normalize LDAP attribute name per server conventions.
 
         Args:
             attribute_name: Attribute name to normalize
@@ -388,7 +387,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         return attribute_name.lower()
 
     def normalize_object_class(self, object_class: str) -> str:
-        """Normalize LDAP object class name according to server-specific conventions.
+        """Normalize LDAP object class name per server conventions.
 
         Args:
             object_class: Object class name to normalize
@@ -400,7 +399,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         return object_class.lower()
 
     def normalize_dn(self, dn: str) -> str:
-        """Normalize distinguished name according to server-specific conventions.
+        """Normalize distinguished name per server conventions.
 
         Args:
             dn: DN to normalize

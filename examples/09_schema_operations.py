@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Final, cast
+from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
@@ -280,10 +280,10 @@ def demonstrate_schema_search(
 
         if entries:
             entry = entries[0]
-            logger.info(f"   ✅ Schema entry found: {entry['dn']}")
+            logger.info(f"   ✅ Schema entry found: {entry.dn}")
 
-            # Show available schema attributes
-            attrs = cast("dict[str, Any]", entry["attributes"])
+            # Show available schema attributes (use additional_attributes)
+            attrs = entry.additional_attributes
             logger.info("\n2. Available schema attributes:")
 
             if "objectClasses" in attrs:
@@ -346,24 +346,14 @@ def demonstrate_server_capabilities(client: FlextLdapClients) -> None:
         caps = result.unwrap()
 
         logger.info("\n✅ Server capabilities discovered:")
-        # ServerCapabilities is a Dict, use directly
-        caps_dict = caps
+        # ServerCapabilities is a Pydantic model, access attributes directly
 
-        logger.info(f"   Server type: {caps_dict.get('server_type', 'unknown')}")
-        logger.info(f"   ACL format: {caps_dict.get('acl_format', 'N/A')}")
-        logger.info(f"   ACL attribute: {caps_dict.get('acl_attribute', 'N/A')}")
-        logger.info(f"   Schema DN: {caps_dict.get('schema_dn', 'N/A')}")
-        logger.info(f"   Default port: {caps_dict.get('default_port', 389)}")
-        logger.info(f"   SSL port: {caps_dict.get('default_ssl_port', 636)}")
-        logger.info(
-            f"   StartTLS support: {caps_dict.get('supports_start_tls', False)}"
-        )
-        logger.info(f"   Bind mechanisms: {caps_dict.get('bind_mechanisms', [])}")
-        logger.info(f"   Max page size: {caps_dict.get('max_page_size', 'N/A')}")
-        logger.info(
-            f"   Paged results: {caps_dict.get('supports_paged_results', False)}"
-        )
-        logger.info(f"   VLV support: {caps_dict.get('supports_vlv', False)}")
+        logger.info(f"   SSL support: {caps.supports_ssl}")
+        logger.info(f"   StartTLS support: {caps.supports_starttls}")
+        logger.info(f"   Max page size: {caps.max_page_size}")
+        logger.info(f"   Paged results: {caps.supports_paged_results}")
+        logger.info(f"   VLV support: {caps.supports_vlv}")
+        logger.info(f"   SASL support: {caps.supports_sasl}")
 
         logger.info("\n   ℹ Capabilities inform schema discovery strategy")
 

@@ -19,6 +19,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
@@ -68,10 +69,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Discover schema from Oracle OID.
 
         Args:
-            connection: Active ldap3 connection
+        connection: Active ldap3 connection
 
         Returns:
-            FlextResult containing schema information
+        FlextResult containing schema information
 
         """
         try:
@@ -205,11 +206,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     )
                 formatted_acls.append(format_result.unwrap())
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = connection.modify(
-                dn,
-                {"orclaci": [(MODIFY_REPLACE, formatted_acls)]},
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", {"orclaci": [(MODIFY_REPLACE, formatted_acls)]})
+            success = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -402,11 +402,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 if attr_name != "objectClass":  # Skip objectClass (passed separately)
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.add(
-                str(normalized_entry.dn),
-                object_class,
-                attributes=ldap3_attrs or None,
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            success: bool = typed_conn.add(
+                str(normalized_entry.dn), object_class, attributes=attrs_casted
             )
 
             if not success:
@@ -445,10 +445,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.modify(
-                dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
+            success: bool = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -470,8 +470,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.delete(dn)
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            success: bool = typed_conn.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(
@@ -499,10 +500,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         - Supports Oracle-specific attributes (orclPassword, orclCommonAttribute)
 
         Args:
-            entry: FlextLdif Entry to normalize
+        entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         try:
@@ -602,15 +603,15 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Execute paged search on Oracle OID.
 
         Args:
-            connection: Active LDAP connection
-            base_dn: Search base DN
-            search_filter: LDAP search filter
-            attributes: Attributes to retrieve
-            scope: Search scope (base, level, or subtree)
-            page_size: Page size for results
+        connection: Active LDAP connection
+        base_dn: Search base DN
+        search_filter: LDAP search filter
+        attributes: Attributes to retrieve
+        scope: Search scope (base, level, or subtree)
+        page_size: Page size for results
 
         Returns:
-            FlextResult containing list of entries
+        FlextResult containing list of entries
 
         """
         try:
@@ -672,7 +673,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Check if Oracle-specific extensions are supported.
 
         Returns:
-            True - Oracle OID supports proprietary extensions
+        True - Oracle OID supports proprietary extensions
 
         """
         return True
@@ -681,7 +682,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Get Oracle-specific object classes.
 
         Returns:
-            List of Oracle object classes
+        List of Oracle object classes
 
         """
         return [
@@ -696,7 +697,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Get Oracle-specific attributes.
 
         Returns:
-            List of Oracle attributes
+        List of Oracle attributes
 
         """
         return [
@@ -712,10 +713,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Check if entry is Oracle user (has orclUserV2).
 
         Args:
-            entry: Entry to check
+        entry: Entry to check
 
         Returns:
-            True if entry has Oracle user object class
+        True if entry has Oracle user object class
 
         """
         if "objectClass" in entry.attributes.attributes:
@@ -782,11 +783,11 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         """Normalize entry for Oracle OID server.
 
         Args:
-            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-            target_server_type: Ignored for OID (uses self._server_type)
+        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
+        target_server_type: Ignored for OID (uses self._server_type)
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         try:

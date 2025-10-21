@@ -46,7 +46,7 @@ class TestFlextLdapConfigEnvironment:
             "ldap_base_dn": "FLEXT_LDAP_BASE_DN",
             "ldap_pool_size": "FLEXT_LDAP_POOL_SIZE",
             "ldap_connection_timeout": "FLEXT_LDAP_CONNECTION_TIMEOUT",
-            "ldap_retry_attempts": "FLEXT_LDAP_RETRY_ATTEMPTS",
+            "max_retry_attempts": "FLEXT_MAX_RETRY_ATTEMPTS",
         }
 
         config = FlextLdapConfig()
@@ -74,10 +74,13 @@ class TestFlextLdapConfigEnvironment:
         }
 
         # Save original env vars
-        original_env = {}
+        original_env: dict[str, str | None] = {}
         for key, value in test_env.items():
             original_env[key] = os.environ.get(key)
-            os.environ[key] = value
+            if value is not None:
+                os.environ[key] = str(value)
+            else:
+                os.environ.pop(key, None)
 
         try:
             # Create config - should load from environment variables
@@ -88,25 +91,21 @@ class TestFlextLdapConfigEnvironment:
             assert config.ldap_pool_size == 20, (
                 f"Expected 20, got {config.ldap_pool_size}"
             )
-            assert config.ldap_cache_ttl == 600, (
-                f"Expected 600, got {config.ldap_cache_ttl}"
-            )
-            assert config.ldap_retry_attempts == 5, (
-                f"Expected 5, got {config.ldap_retry_attempts}"
+            assert config.cache_ttl == 600, f"Expected 600, got {config.cache_ttl}"
+            assert config.max_retry_attempts == 5, (
+                f"Expected 5, got {config.max_retry_attempts}"
             )
 
             # Verify boolean fields are properly coerced from various string formats
             assert config.ldap_use_ssl is True, "Expected True from 'true'"
-            assert config.ldap_enable_caching is True, "Expected True from '1'"
+            assert config.enable_caching is True, "Expected True from '1'"
             assert config.ldap_enable_debug is True, "Expected True from 'yes'"
             assert config.ldap_log_queries is True, "Expected True from 'on'"
 
         finally:
             # Restore original environment
             for key, value in original_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
+                if value is not None:
                     os.environ[key] = value
 
     def test_dotenv_file_loading(self) -> None:
@@ -146,7 +145,7 @@ class TestFlextLdapConfigEnvironment:
                 f"Expected 25, got {config.ldap_pool_size}"
             )
             assert config.ldap_use_ssl is False, "Expected False from 'false'"
-            assert config.ldap_enable_caching is False, "Expected False from '0'"
+            assert config.enable_caching is False, "Expected False from '0'"
 
         finally:
             # Clean up temp file
@@ -193,9 +192,9 @@ class TestFlextLdapConfigEnvironment:
             assert config.ldap_pool_size == 25, (
                 f"Expected 25 from .env file, got {config.ldap_pool_size}"
             )
-            # ldap_retry_attempts should be default (no env var, no .env file)
-            assert config.ldap_retry_attempts == 3, (
-                f"Expected default 3, got {config.ldap_retry_attempts}"
+            # max_retry_attempts should be default (no env var, no .env file)
+            assert config.max_retry_attempts == 3, (
+                f"Expected default 3, got {config.max_retry_attempts}"
             )
 
         finally:
@@ -217,10 +216,13 @@ class TestFlextLdapConfigEnvironment:
         }
 
         # Save original env vars
-        original_env = {}
+        original_env: dict[str, str | None] = {}
         for key, value in test_env.items():
             original_env[key] = os.environ.get(key)
-            os.environ[key] = value
+            if value is not None:
+                os.environ[key] = str(value)
+            else:
+                os.environ.pop(key, None)
 
         try:
             # Create config
@@ -235,9 +237,7 @@ class TestFlextLdapConfigEnvironment:
         finally:
             # Restore original environment
             for key, value in original_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
+                if value is not None:
                     os.environ[key] = value
 
     def test_computed_fields_with_environment_configuration(self) -> None:
@@ -254,10 +254,13 @@ class TestFlextLdapConfigEnvironment:
         }
 
         # Save original env vars
-        original_env = {}
+        original_env: dict[str, str | None] = {}
         for key, value in test_env.items():
             original_env[key] = os.environ.get(key)
-            os.environ[key] = value
+            if value is not None:
+                os.environ[key] = str(value)
+            else:
+                os.environ.pop(key, None)
 
         try:
             # Create config
@@ -281,19 +284,22 @@ class TestFlextLdapConfigEnvironment:
             )
 
             # Verify computed fields return expected data (using new typed models API)
-            assert config.connection_info is not None
-            assert hasattr(config.connection_info, "server"), (
+            from typing import cast
+
+            from flext_ldap import FlextLdapModels
+
+            conn_info = cast("FlextLdapModels.ConnectionInfo", config.connection_info)
+            assert conn_info is not None
+            assert hasattr(conn_info, "server"), (
                 "connection_info should have server attribute"
             )
-            assert config.connection_info.server == "ldap://test.example.com"
-            assert config.connection_info.port == 3389
+            assert conn_info.server == "ldap://test.example.com"
+            assert conn_info.port == 3389
 
         finally:
             # Restore original environment
             for key, value in original_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
+                if value is not None:
                     os.environ[key] = value
 
     def test_env_file_minimal_format(self) -> None:

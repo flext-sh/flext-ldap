@@ -79,7 +79,9 @@ def demonstrate_basic_connection_lifecycle() -> None:
 
         if search_result.is_success:
             entries = search_result.unwrap()
-            logger.info(f"   ✅ Connection active - found {len(entries)} entries")
+            logger.info(
+                f"   ✅ Connection active - found {len(entries.entries)} entries"
+            )
         else:
             logger.warning(f"   ⚠️  Search failed: {search_result.error}")
     except Exception:
@@ -225,7 +227,7 @@ def demonstrate_connection_context_manager() -> None:
 
         if search_result.is_success:
             entries = search_result.unwrap()
-            logger.info(f"   ✅ Operations completed - {len(entries)} entries")
+            logger.info(f"   ✅ Operations completed - {len(entries.entries)} entries")
 
     finally:
         # Cleanup guaranteed even if exception occurs

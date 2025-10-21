@@ -1,29 +1,22 @@
 """Idempotent LDAP schema synchronization service.
 
-Provides enterprise-grade idempotent schema synchronization for LDAP migrations.
-Checks existing schema on target server and only adds new definitions, ensuring
-safe and repeatable schema deployments.
-
-Architecture:
-- Phase 1 of MIGRATION_ENHANCEMENT_PLAN.md
-- Uses Railway-Oriented Programming (FlextResult)
-- Integrates with FlextLdap domain services
-- Follows FLEXT domain separation pattern
+Idempotent schema sync for LDAP migrations. Checks existing schema
+and only adds new definitions for safe and repeatable deployments.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextService
-from ldap3 import MODIFY_ADD
+from ldap3 import MODIFY_ADD, Connection
 
 from flext_ldap.clients import FlextLdapClients
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapSchemaSync(FlextService[dict[str, object]]):
@@ -58,14 +51,14 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Initialize idempotent schema sync service.
 
         Args:
-            schema_ldif_file: Path to schema LDIF file (whitelisted/transformed)
-            server_host: Target LDAP server hostname
-            server_port: Target LDAP server port (default: 389)
-            bind_dn: Bind DN for authentication
-            bind_password: Bind password for authentication
-            base_dn: Base DN for schema operations
-            server_type: Target server type (default: oracle_oud)
-            use_ssl: Use SSL/TLS connection (default: False)
+        schema_ldif_file: Path to schema LDIF file (whitelisted/transformed)
+        server_host: Target LDAP server hostname
+        server_port: Target LDAP server port (default: 389)
+        bind_dn: Bind DN for authentication
+        bind_password: Bind password for authentication
+        base_dn: Base DN for schema operations
+        server_type: Target server type (default: oracle_oud)
+        use_ssl: Use SSL/TLS connection (default: False)
 
         """
         super().__init__()
@@ -84,15 +77,15 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Execute idempotent schema synchronization.
 
         Returns:
-            FlextResult containing schema sync statistics
+        FlextResult containing schema sync statistics
 
         Workflow:
-            1. Parse schema LDIF file
-            2. Connect to target LDAP server
-            3. Discover existing schema definitions
-            4. Filter out already-existing definitions (idempotent check)
-            5. Add only new schema definitions
-            6. Return detailed sync statistics
+        1. Parse schema LDIF file
+        2. Connect to target LDAP server
+        3. Discover existing schema definitions
+        4. Filter out already-existing definitions (idempotent check)
+        5. Add only new schema definitions
+        6. Return detailed sync statistics
 
         """
         # Step 1: Parse schema LDIF file
@@ -156,7 +149,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Parse schema LDIF file into structured definitions.
 
         Returns:
-            FlextResult containing list of schema definition dictionaries
+        FlextResult containing list of schema definition dictionaries
 
         """
         if not self._schema_file.exists():
@@ -262,10 +255,10 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Extract NAME from schema definition.
 
         Args:
-            definition: Schema definition string
+        definition: Schema definition string
 
         Returns:
-            Extracted name or empty string
+        Extracted name or empty string
 
         """
         name_idx = definition.find("NAME")
@@ -286,7 +279,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Connect to target LDAP server using FlextLdapClients.
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         try:
@@ -328,7 +321,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Discover existing schema using ldap3.Server.schema.
 
         Returns:
-            FlextResult containing existing schema dictionary
+        FlextResult containing existing schema dictionary
 
         """
         if not self._connection:
@@ -336,19 +329,21 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
 
         try:
             # Get underlying ldap3 connection
-            ldap_conn = self._connection.connection
+            ldap_conn: Connection | None = self._connection.connection
 
             if not ldap_conn or not ldap_conn.server:
                 return FlextResult[dict[str, object]].fail(
                     "LDAP connection or server not available"
                 )
 
+            server = ldap_conn.server
+
             # Force schema loading if not already loaded
-            if not ldap_conn.server.schema:
-                ldap_conn.server.get_info = "SCHEMA"
+            if not hasattr(server, "schema") or not getattr(server, "schema", None):
+                setattr(server, "get_info", "SCHEMA")
                 ldap_conn.bind()
 
-            schema = ldap_conn.server.schema
+            schema = getattr(server, "schema")
 
             # Extract existing attribute types and object classes
             attr_types_dict: dict[str, str] = {
@@ -386,11 +381,11 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Filter out existing definitions (idempotent check).
 
         Args:
-            definitions: Parsed schema definitions to add
-            existing_schema: Existing schema from target server
+        definitions: Parsed schema definitions to add
+        existing_schema: Existing schema from target server
 
         Returns:
-            List of new definitions not yet on server
+        List of new definitions not yet on server
 
         """
         new_definitions: list[dict[str, object]] = []
@@ -447,7 +442,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Get schema DN based on server type.
 
         Returns:
-            Schema DN for the target server type
+        Schema DN for the target server type
 
         """
         schema_dns = {
@@ -468,10 +463,10 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         """Add new schema definitions using LDAP modify operations.
 
         Args:
-            definitions: List of schema definitions to add
+        definitions: List of schema definitions to add
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         if not self._connection:
@@ -501,8 +496,12 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                 )
 
                 # Perform LDAP modify to add schema definition
-                success = ldap_conn.modify(
-                    dn=schema_dn, changes={attr_name: [(MODIFY_ADD, [str(raw_line)])]}
+                # Cast to Protocol type for proper type checking with ldap3
+                typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", ldap_conn)
+                # MODIFY_ADD is an int constant from ldap3 (cast needed due to types-ldap3 stubs issue)
+                changes: dict[str, list[tuple[int, list[str]]]] = {attr_name: [(cast("int", MODIFY_ADD), [str(raw_line)])]}
+                success = typed_conn.modify(
+                    dn=schema_dn, changes=changes
                 )
 
                 if not success:

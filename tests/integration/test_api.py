@@ -293,7 +293,8 @@ class TestLdapServiceRealOperations:
         create_result = client.create_user(user_request)
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
-        default_user = FlextLdapModels.LdapUser(
+        default_user = FlextLdapModels.Entry(
+            entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -319,9 +320,11 @@ class TestLdapServiceRealOperations:
             assert created_user.mail == user_request.mail
 
         # READ: Verify user exists
+        assert user_request.dn is not None, "User DN must not be None"
         get_result = client.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
-        default_user = FlextLdapModels.LdapUser(
+        default_user = FlextLdapModels.Entry(
+            entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -351,6 +354,7 @@ class TestLdapServiceRealOperations:
         }
         update_attributes_raw = create_ldap_attributes(update_attrs_raw)
         update_attributes = cast("dict[str, object]", update_attributes_raw)
+        assert user_request.dn is not None, "User DN must not be None"
         update_result = client.update_user_attributes(
             user_request.dn,
             update_attributes,
@@ -358,9 +362,11 @@ class TestLdapServiceRealOperations:
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
         # Verify update
+        assert user_request.dn is not None, "User DN must not be None"
         updated_get_result = client.get_user(user_request.dn)
         assert updated_get_result.is_success
-        default_user = FlextLdapModels.LdapUser(
+        default_user = FlextLdapModels.Entry(
+            entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -404,10 +410,12 @@ class TestLdapServiceRealOperations:
         assert hasattr(found_user, "uid")
 
         # DELETE: Remove user
+        assert user_request.dn is not None, "User DN must not be None"
         delete_result = client.delete_user(user_request.dn)
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # Verify deletion
+        assert user_request.dn is not None, "User DN must not be None"
         verify_result = client.get_user(user_request.dn)
         assert (
             verify_result.is_success
@@ -476,9 +484,11 @@ class TestLdapServiceRealOperations:
         )
 
         # READ: Verify group exists
+        assert group_request.dn is not None, "Group DN must not be None"
         get_result = client.get_group(group_request.dn)
         assert get_result.is_success, f"Failed to get group: {get_result.error}"
-        default_group = FlextLdapModels.Group(
+        default_group = FlextLdapModels.Entry(
+            entry_type="group",
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
             description="Default test group",
@@ -501,6 +511,7 @@ class TestLdapServiceRealOperations:
             "description": ["Updated group description"],
         }
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
+        assert group_request.dn is not None, "Group DN must not be None"
         update_result = client.update_group_attributes(
             group_request.dn,
             cast("dict[str, object]", update_attributes_5),
@@ -525,12 +536,14 @@ class TestLdapServiceRealOperations:
         )
 
         # Add member
+        assert group_request.dn is not None, "Group DN must not be None"
         add_member_result = client.add_member(group_request.dn, user2_dn)
         assert add_member_result.is_success, (
             f"Failed to add member: {add_member_result.error}"
         )
 
         # Verify member was added
+        assert group_request.dn is not None, "Group DN must not be None"
         members_result = client.get_members(group_request.dn)
         assert members_result.is_success, (
             f"Failed to get members: {members_result.error}"
@@ -543,12 +556,14 @@ class TestLdapServiceRealOperations:
         assert user_dn in members_list
 
         # Remove member
+        assert group_request.dn is not None, "Group DN must not be None"
         remove_member_result = client.remove_member(group_request.dn, user2_dn)
         assert remove_member_result.is_success, (
             f"Failed to remove member: {remove_member_result.error}"
         )
 
         # Verify member was removed
+        assert group_request.dn is not None, "Group DN must not be None"
         members_after_remove = client.get_members(group_request.dn)
         assert members_after_remove.is_success
         default_members_after: list[str] = []
@@ -561,15 +576,17 @@ class TestLdapServiceRealOperations:
         assert user_dn in remaining_members  # Original member should remain
 
         # DELETE: Remove group
+        assert group_request.dn is not None, "Group DN must not be None"
         delete_result = client.delete_entry(group_request.dn)
         assert delete_result.is_success, (
             f"Failed to delete group: {delete_result.error}"
         )
 
         # Verify deletion
+        assert group_request.dn is not None, "Group DN must not be None"
         verify_result = client.get_group(group_request.dn)
         assert verify_result.is_success
-        default_group_verify: FlextLdapModels.Group | None = None
+        default_group_verify: FlextLdapModels.Entry | None = None
         verified_group = (
             verify_result.unwrap() if verify_result.is_success else default_group_verify
         )
@@ -661,7 +678,8 @@ class TestLdapValidationRealOperations:
         )
 
         # Verify the user follows business rules
-        default_user = FlextLdapModels.LdapUser(
+        default_user = FlextLdapModels.Entry(
+            entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -693,6 +711,7 @@ class TestLdapValidationRealOperations:
         # Some LDAP servers might allow overwrites, others might fail - either is valid behavior
 
         # Cleanup
+        assert valid_user_request.dn is not None, "User DN must not be None"
         client.delete_entry(valid_user_request.dn)
         client.delete_entry(ou_dn)
 

@@ -38,7 +38,6 @@ from flext_ldap import (
     FlextLdapConstants,
     FlextLdapModels,
 )
-from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -183,31 +182,23 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
     users_dn = f"ou=users,{base_dn}"
 
     logger.info(f"Searching users in: {users_dn}")
-    search_result: FlextResult[SearchResult] = api.search_users(users_dn)
+    search_result: FlextResult[FlextLdapModels.SearchResponse] = api.search_users(
+        users_dn
+    )
 
     if search_result.is_failure:
         logger.error(f"❌ Search failed: {search_result.error}")
         return
 
-    entries = search_result.unwrap()
-    logger.info(f"✅ Found {len(entries)} users (using DEFAULT_USER_FILTER):")
-    for entry in entries:
-        # API returns dict[str, object], extract attributes
-        if isinstance(entry, dict):
-            attributes = entry.get("attributes", {})
-            if isinstance(attributes, dict):
-                # OPTIMIZED: Use LdapAttributeNames constants for attribute access
-                cn_attr = attributes.get(
-                    FlextLdapConstants.LdapAttributeNames.CN, ["Unknown"]
-                )
-                cn = cn_attr[0] if isinstance(cn_attr, list) else cn_attr
-                mail_attr = attributes.get(
-                    FlextLdapConstants.LdapAttributeNames.MAIL, ["N/A"]
-                )
-                mail = mail_attr[0] if isinstance(mail_attr, list) else mail_attr
-                logger.info(f"   - {cn} ({mail})")
-            else:
-                logger.info("   - (entry has no attributes)")
+    search_response = search_result.unwrap()
+    logger.info(
+        f"✅ Found {len(search_response.entries)} users (using DEFAULT_USER_FILTER):"
+    )
+    for entry in search_response.entries:
+        # Entry is a FlextLdapModels.Entry object with direct attribute access
+        cn = entry.cn or "Unknown"
+        mail = entry.mail or "N/A"
+        logger.info(f"   - {cn} ({mail})")
 
     logger.info("\nFinding specific user with find_user():")
     user_result = api.find_user("john.doe", users_dn)

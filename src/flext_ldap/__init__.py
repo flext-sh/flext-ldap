@@ -1,11 +1,10 @@
-"""FLEXT-LDAP - Consolidated single-class LDAP operations.
+"""FLEXT-LDAP - LDAP operations library.
 
-Enterprise-grade LDAP operations consolidated into one main FlextLdap class
-following FLEXT single-class-per-project standardization.
+Consolidated LDAP operations in FlextLdap main class following
+single-class-per-project pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations

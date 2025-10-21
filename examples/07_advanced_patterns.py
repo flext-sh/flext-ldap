@@ -33,7 +33,7 @@ import sys
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import Final, TypeVar
+from typing import Final, TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
@@ -169,7 +169,7 @@ def demonstrate_context_manager() -> None:
 
             if result.is_success:
                 entries = result.unwrap()
-                logger.info(f"   Found {len(entries)} entries")
+                logger.info(f"   Found {len(entries.entries)} entries")
             else:
                 logger.error(f"   Search failed: {result.error}")
 
@@ -276,7 +276,7 @@ def demonstrate_flext_result_patterns() -> None:
 
             if result.is_success:
                 entries = result.unwrap()
-                logger.info(f"   ✅ Success: {len(entries)} entries")
+                logger.info(f"   ✅ Success: {len(entries.entries)} entries")
             else:
                 logger.error(f"   ❌ Failure: {result.error}")
 
@@ -298,7 +298,7 @@ def demonstrate_flext_result_patterns() -> None:
                     return FlextResult[int].fail(f"Search failed: {err}")
 
                 entries = search_result.unwrap()
-                return FlextResult[int].ok(len(entries))
+                return FlextResult[int].ok(len(entries.entries))
 
             count_result = process_with_early_return()
             if count_result.is_success:
@@ -319,7 +319,10 @@ def demonstrate_flext_result_patterns() -> None:
                     filter_str="(objectClass=*)",
                     attributes=["dn"],
                 )
-                search_result = api.search_with_request(search_request)
+                search_result_raw = api.search_with_request(search_request)
+                search_result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+                    "FlextResult[list[FlextLdapModels.Entry]]", search_result_raw
+                )
 
                 if search_result.is_failure:
                     err = search_result.error
@@ -332,9 +335,7 @@ def demonstrate_flext_result_patterns() -> None:
                 entry = entries[0]
 
                 # Step 3: Process
-                return FlextResult[str].ok(
-                    f"Processed entry: {entry.get('dn', 'unknown')}"
-                )
+                return FlextResult[str].ok(f"Processed entry: {entry.dn}")
 
             chain_result = chain_operations()
             if chain_result.is_success:
@@ -399,7 +400,9 @@ def demonstrate_performance_patterns() -> None:
 
             if result.is_success:
                 entries = result.unwrap()
-                logger.info(f"   ✅ Found {len(entries)} entries in {elapsed:.3f}s")
+                logger.info(
+                    f"   ✅ Found {len(entries.entries)} entries in {elapsed:.3f}s"
+                )
                 logger.info("   Optimization: Requested only 'dn' attribute")
 
             # Pattern 2: Scope limitation
@@ -413,7 +416,7 @@ def demonstrate_performance_patterns() -> None:
 
             if result.is_success:
                 entries = result.unwrap()
-                logger.info(f"   ✅ Found {len(entries)} entries")
+                logger.info(f"   ✅ Found {len(entries.entries)} entries")
                 logger.info("   Optimization: Requested minimal attributes (dn only)")
 
     except ConnectionError:

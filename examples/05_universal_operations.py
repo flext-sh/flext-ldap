@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldif import FlextLdifModels
@@ -51,7 +51,6 @@ from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -198,10 +197,13 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Perform universal search (automatically uses server-specific optimizations)
     logger.info(f"Performing universal search on {BASE_DN}")
-    result: FlextResult[SearchResult] = api.search(
-        base_dn=BASE_DN,
-        search_filter="(objectClass=*)",
-        attributes=["dn", "objectClass"],
+    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
+        api.search(
+            base_dn=BASE_DN,
+            search_filter="(objectClass=*)",
+            attributes=["dn", "objectClass"],
+        ),
     )
 
     if result.is_failure:
@@ -214,7 +216,7 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Show first few entries
     for i, search_entry in enumerate(search_results[:3], 1):
-        dn = str(search_entry.get("dn", "N/A"))
+        dn = search_entry.dn
         logger.info(f"   {i}. {dn}")
 
 

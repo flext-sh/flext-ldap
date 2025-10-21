@@ -1,12 +1,13 @@
-"""LDAP Client - Unified LDAP client with composition-based architecture.
+"""Unified LDAP client with composition-based architecture.
+
+Provides complete LDAP client functionality with server-specific operations,
+connection management, and Clean Architecture separation of concerns.
+
+Note: types-ldap3 package has incomplete type stubs for some methods and
+properties (add, delete, search, modify, conn.entries, entry.entry_dn).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: Type checking disabled due to limitations in types-ldap3 package:
-- Method return types (add, delete, search, modify, unbind) not specified
-- Properties like conn.entries and entry.entry_dn are not fully typed
-- Entry attributes and their values have incomplete type information
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ from flext_ldap.servers.factory import (
 )
 from flext_ldap.typings import (
     AttributeValue,
+    FlextLdapTypes,
     LdapConfigDict,
 )
 from flext_ldap.validations import FlextLdapValidations
@@ -57,17 +59,17 @@ ModeType = Literal[
 class FlextLdapClients(FlextService[None]):
     """FlextLdapClients - Main LDAP client using composition-based architecture.
 
-    **UNIFIED CLASS PATTERN**: Single class per module with composition of components.
+    UNIFIED CLASS PATTERN: Single class per module with composition of components.
 
-    **COMPOSITION ARCHITECTURE**: Uses dedicated components for responsibilities:
+    COMPOSITION ARCHITECTURE: Uses dedicated components for responsibilities:
     - FlextLdapConnectionManager: Connection lifecycle management
     - FlextLdapAuthentication: Authentication operations
     - FlextLdapSearcher: Search operations
 
-    Provides comprehensive LDAP operations interface: connection, auth, search, CRUD.
+    Provides complete LDAP operations interface: connection, auth, search, CRUD.
     Uses ldap3 internally, provides FlextResult-based API with auto-connection.
 
-    **PROTOCOL IMPLEMENTATION**: Implements FlextProtocols.Connection as foundation
+    PROTOCOL IMPLEMENTATION: Implements FlextProtocols.Connection as foundation
     for ALL connection-aware clients across FLEXT ecosystem via structural subtyping:
     - Infrastructure.Connection: test/close/get_string/__call__ methods
     - LdapConnectionProtocol: connect/disconnect/is_connected methods
@@ -154,10 +156,10 @@ class FlextLdapClients(FlextService[None]):
         LDAP connections transparently cleanup when context exits.
 
         Example:
-            >>> with FlextLdapClients() as client:
-            ...     client.connect(server_uri, bind_dn, password)
-            ...     # ... do LDAP operations ...
-            ...     # Automatic unbind on context exit
+        >>> with FlextLdapClients() as client:
+        ... client.connect(server_uri, bind_dn, password)
+        ... #... do LDAP operations...
+        ... # Automatic unbind on context exit
 
         """
         return self
@@ -174,12 +176,12 @@ class FlextLdapClients(FlextService[None]):
         proper resource cleanup even on exceptions.
 
         Args:
-            exc_type: Exception type if an exception occurred
-            exc_val: Exception value if an exception occurred
-            exc_tb: Exception traceback if an exception occurred
+        exc_type: Exception type if an exception occurred
+        exc_val: Exception value if an exception occurred
+        exc_tb: Exception traceback if an exception occurred
 
         Returns:
-            False to propagate exceptions (does not suppress)
+        False to propagate exceptions (does not suppress)
 
         """
         if self.is_connected:
@@ -207,14 +209,14 @@ class FlextLdapClients(FlextService[None]):
         """Connect and bind to LDAP server with universal compatibility.
 
         Args:
-            server_uri: LDAP server URI (e.g., 'ldap://localhost:389').
-            bind_dn: Distinguished Name for binding.
-            password: Password for binding.
-            auto_discover_schema: Whether to automatically discover schema.
-            connection_options: Additional connection options.
+        server_uri: LDAP server URI (e.g., 'ldap://localhost:389').
+        bind_dn: Distinguished Name for binding.
+        password: Password for binding.
+        auto_discover_schema: Whether to automatically discover schema.
+        connection_options: Additional connection options.
 
         Returns:
-            FlextResult[bool]: Success result or error.
+        FlextResult[bool]: Success result or error.
 
         """
         try:
@@ -381,8 +383,11 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[None].ok(None)  # Idempotent
 
             if self._connection.bound:
-                # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.unbind()
+                # Cast to Protocol type for proper type checking with ldap3
+                typed_conn = cast(
+                    "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
+                )
+                typed_conn.unbind()
                 self.logger.info("Unbound from LDAP server")
 
             self._connection = None
@@ -562,9 +567,16 @@ class FlextLdapClients(FlextService[None]):
                         )
                     else:
                         object_class = str(object_class_raw)
-                    # ldap3 has incomplete type stubs
-                    success = self.connection.add(
-                        dn, object_class=object_class, attributes=attempted_attributes
+                    # Cast to Protocol type for proper type checking with ldap3
+                    typed_conn = cast(
+                        "FlextLdapTypes.Ldap3Protocols.Connection", self.connection
+                    )
+                    # Cast attributes to match Protocol signature
+                    attrs = cast(
+                        "dict[str, str | list[str]] | None", attempted_attributes
+                    )
+                    success = typed_conn.add(
+                        dn, object_class=object_class, attributes=attrs
                     )
                     if success:
                         if removed_attributes:
@@ -708,12 +720,14 @@ class FlextLdapClients(FlextService[None]):
                         )
                     ]
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = self.connection.modify(
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast(
+                "FlextLdapTypes.Ldap3Protocols.Connection", self.connection
+            )
+            # Cast changes directly to match Protocol signature
+            success = typed_conn.modify(
                 dn,
-                changes=cast(
-                    "dict[str, list[tuple[int, list[str] | str]]]", ldap3_changes
-                ),
+                changes=cast("dict[str, list[tuple[int, list[str]]]]", ldap3_changes),
             )
             if success:
                 return FlextResult[bool].ok(True)
@@ -731,8 +745,11 @@ class FlextLdapClients(FlextService[None]):
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = self.connection.delete(dn)
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast(
+                "FlextLdapTypes.Ldap3Protocols.Connection", self.connection
+            )
+            success = typed_conn.delete(dn)
             if success:
                 return FlextResult[bool].ok(True)
             return FlextResult[bool].fail(
@@ -947,7 +964,7 @@ class FlextLdapClients(FlextService[None]):
         return self.server_operations.normalize_dn(dn)
 
     def get_server_info(self) -> FlextResult[FlextLdapModels.ServerInfo]:
-        """Get comprehensive server information including capabilities and schema."""
+        """Get server information including capabilities and schema."""
         try:
             if not self.connection:
                 return FlextResult[FlextLdapModels.ServerInfo].fail(
@@ -991,8 +1008,6 @@ class FlextLdapClients(FlextService[None]):
                     "supported_sasl_mechanisms",
                     [],
                 ),
-                supported_features=getattr(server_info, "supported_features", []),
-                schema_entry=getattr(server_info, "schema_entry", ""),
             )
 
             return FlextResult[FlextLdapModels.ServerInfo].ok(server_info_model)
@@ -1046,14 +1061,14 @@ class FlextLdapClients(FlextService[None]):
         Consolidates search_users() and search_groups() into single method.
 
         Args:
-            base_dn: LDAP search base DN
-            entity_type: Type of entity ('user' or 'group')
-            filter_override: Custom filter string
-            cn: Common name for group filtering
-            attributes: List of attributes to retrieve
+        base_dn: LDAP search base DN
+        entity_type: Type of entity ('user' or 'group')
+        filter_override: Custom filter string
+        cn: Common name for group filtering
+        attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult with list of Entry models
+        FlextResult with list of Entry models
 
         """
         # Build filter using pattern matching
@@ -1125,10 +1140,10 @@ class FlextLdapClients(FlextService[None]):
         """Create a Group object from an LDAP entry.
 
         Args:
-            entry: LDAP entry to convert
+        entry: LDAP entry to convert
 
         Returns:
-            Group object
+        Group object
 
         """
         # Extract group information from entry
@@ -1198,12 +1213,12 @@ class FlextLdapClients(FlextService[None]):
         Consolidates update_user_attributes() and update_group_attributes().
 
         Args:
-            dn: Distinguished name of the entity to update
-            attributes: Dictionary of attribute name to new value mappings
-            entity_type: Type of entity ('user' or 'group')
+        dn: Distinguished name of the entity to update
+        attributes: Dictionary of attribute name to new value mappings
+        entity_type: Type of entity ('user' or 'group')
 
         Returns:
-            FlextResult[bool]: Success if attributes were updated
+        FlextResult[bool]: Success if attributes were updated
 
         """
         try:
@@ -1251,10 +1266,10 @@ class FlextLdapClients(FlextService[None]):
         """Delete a user from LDAP directory.
 
         Args:
-            dn: Distinguished name of the user to delete
+        dn: Distinguished name of the user to delete
 
         Returns:
-            FlextResult[None]: Success if user was deleted
+        FlextResult[None]: Success if user was deleted
 
         """
         try:
@@ -1286,7 +1301,9 @@ class FlextLdapClients(FlextService[None]):
         """Create a new user in LDAP directory."""
         # Validate DN is provided
         if user_request.dn is None:
-            return FlextResult[FlextLdapModels.Entry | None].fail("DN is required for user creation")
+            return FlextResult[FlextLdapModels.Entry | None].fail(
+                "DN is required for user creation"
+            )
 
         # Convert CreateUserRequest to attributes dict
         attributes_result = self.build_user_attributes(user_request)
@@ -1313,7 +1330,9 @@ class FlextLdapClients(FlextService[None]):
         """Create a new group in LDAP directory."""
         # Validate DN is provided
         if group_request.dn is None:
-            return FlextResult[FlextLdapModels.Entry | None].fail("DN is required for group creation")
+            return FlextResult[FlextLdapModels.Entry | None].fail(
+                "DN is required for group creation"
+            )
 
         # Convert CreateGroupRequest to attributes dict
         attributes = group_request.to_attributes()
@@ -1380,11 +1399,6 @@ class FlextLdapClients(FlextService[None]):
     def session_id(self) -> str | None:
         """Get session ID for connection tracking."""
         return getattr(self, "_session_id", None)
-
-    @session_id.setter
-    def session_id(self, value: str | None) -> None:
-        """Set session ID for connection tracking."""
-        self._session_id = value
 
     @property
     def server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
@@ -1527,53 +1541,49 @@ class FlextLdapClients(FlextService[None]):
     def _normalize(
         self,
         value: str | list[object] | dict[str, object],
-        normalize_type: str = "string"
+        normalize_type: str = "string",
     ) -> str | list[object] | dict[str, object]:
         """Unified normalizer using Python 3.13+ pattern matching (ONE METHOD).
 
         Replaces 5 separate normalization methods with single unified handler.
 
         Args:
-            value: Value to normalize (str, list, dict, or entries)
-            normalize_type: Type of normalization ('string', 'attributes', 'entry', 'changes', 'results')
+        value: Value to normalize (str, list, dict, or entries)
+        normalize_type: Type of normalization ('string', 'attributes', 'entry', 'changes', 'results')
 
         Returns:
-            Normalized value in original type
+        Normalized value in original type
 
         """
         match normalize_type, value:
             case "string", str():
-                # Type narrowing for pattern matching (cast for type checker)
-                str_value = cast("str", value)
-                return str_value.strip()
+                # Pattern matching already narrows the type
+                return value.strip()
 
             case "attributes", list():
-                # Type narrowing for pattern matching (cast for type checker)
-                list_value = cast("list[object]", value)
-                return [str(attr).strip() for attr in list_value]
+                # Pattern matching already narrows the type
+                return [str(attr).strip() for attr in value]
 
             case "entry", dict():
-                # Type narrowing for pattern matching (cast for type checker)
-                dict_value = cast("dict[str, object]", value)
+                # Pattern matching already narrows the type
                 return {
                     k: (
                         [str(v).strip() for v in val]
                         if isinstance(val, list)
                         else str(val).strip()
                     )
-                    for k, val in dict_value.items()
+                    for k, val in value.items()
                 }
 
             case "changes", dict():
-                # Type narrowing for pattern matching (cast for type checker)
-                dict_value = cast("dict[str, object]", value)
+                # Pattern matching already narrows the type
                 return {
                     k: (
                         [(op, [s.strip() for s in vals]) for op, vals in change_list]
                         if isinstance(change_list, list)
                         else change_list
                     )
-                    for k, change_list in dict_value.items()
+                    for k, change_list in value.items()
                 }
 
             case "results", list():

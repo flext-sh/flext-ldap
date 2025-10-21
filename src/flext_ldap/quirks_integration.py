@@ -1,12 +1,11 @@
-"""Quirks Integration for FlextLdif server-specific handling.
+"""Quirks integration for server-specific LDAP handling.
 
-This module integrates FlextLdif's quirks system into flext-ldap, providing
-server-specific handling for schemas, ACLs, and entries across different
-LDAP server implementations.
+Integrates FlextLdif quirks system providing server-specific handling
+for schemas, ACLs, and entries across different LDAP implementations
+(OpenLDAP, Oracle OID/OUD, Active Directory).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -48,7 +47,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Initialize quirks adapter with Phase 1 context enrichment.
 
         Args:
-            server_type: Optional explicit server type (auto-detected if not provided)
+        server_type: Optional explicit server type (auto-detected if not provided)
 
         """
         super().__init__()
@@ -62,7 +61,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Execute method required by FlextService.
 
         Returns:
-            FlextResult containing quirks adapter status
+        FlextResult containing quirks adapter status
 
         """
         return FlextResult[dict[str, object]].ok({
@@ -88,10 +87,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Detect LDAP server type from entries using FlextLdif quirks.
 
         Args:
-            entries: List of FlextLdifModels.Entry to analyze
+        entries: List of FlextLdifModels.Entry to analyze
 
         Returns:
-            FlextResult containing detected server type string
+        FlextResult containing detected server type string
 
         """
         try:
@@ -132,10 +131,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get server-specific quirks configuration.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing quirks configuration dict
+        FlextResult containing quirks configuration dict
 
         """
         target_type = server_type or self._detected_server_type or "generic"
@@ -183,10 +182,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get ACL attribute name for server type.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing ACL attribute name
+        FlextResult containing ACL attribute name
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -202,10 +201,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get ACL format for server type.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing ACL format string
+        FlextResult containing ACL format string
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -221,10 +220,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get schema subentry DN for server type.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing schema subentry DN
+        FlextResult containing schema subentry DN
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -246,10 +245,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Check if server supports operational attributes.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing boolean support indicator
+        FlextResult containing boolean support indicator
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -268,10 +267,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get maximum page size for paged searches.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing max page size
+        FlextResult containing max page size
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -295,10 +294,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get default timeout for server operations.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing default timeout in seconds
+        FlextResult containing default timeout in seconds
 
         """
         quirks_result = self.get_server_quirks(server_type)
@@ -324,11 +323,11 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Normalize entry for target server type using FlextLdif entry quirks.
 
         Args:
-            entry: FlextLdifModels.Entry to normalize
-            target_server_type: Target server type for normalization
+        entry: FlextLdifModels.Entry to normalize
+        target_server_type: Target server type for normalization
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         try:
@@ -358,10 +357,10 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """Get default connection parameters for server type.
 
         Args:
-            server_type: Server type (uses detected type if not provided)
+        server_type: Server type (uses detected type if not provided)
 
         Returns:
-            FlextResult containing connection defaults
+        FlextResult containing connection defaults
 
         """
         try:

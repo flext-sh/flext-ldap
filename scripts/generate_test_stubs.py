@@ -179,10 +179,10 @@ def main() -> None:
         # Group by file
         by_file: dict[str, list] = {}
         for gap in gaps:
-            file_path = Path(gap.file)
-            if file_path not in by_file:
-                by_file[file_path] = []
-            by_file[file_path].append(gap.function)
+            file_path_str = str(Path(gap.file))
+            if file_path_str not in by_file:
+                by_file[file_path_str] = []
+            by_file[file_path_str].append(gap.function)
 
         # Generate stubs for files with most gaps
         generated_files = []

@@ -648,8 +648,14 @@ class TestEntryAdapterCoreConversions:
         self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: dict[str, object]
     ) -> None:
         """Test converting ldap3 dict[str, object] to FlextLdif Entry."""
+        from typing import cast
+
+        from flext_ldap.typings import LdapSearchResultDict
+
         # Act
-        result = adapter.ldap3_to_ldif_entry(sample_ldap3_entry)
+        result = adapter.ldap3_to_ldif_entry(
+            cast("LdapSearchResultDict", sample_ldap3_entry)
+        )
 
         # Assert
         assert result.is_success
@@ -681,7 +687,13 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
+        from typing import cast
+
+        from flext_ldap.typings import LdapSearchResultDict
+
+        result = adapter.ldap3_to_ldif_entry(
+            cast("LdapSearchResultDict", invalid_entry)
+        )
 
         # Assert
         assert result.is_failure
@@ -697,7 +709,13 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
+        from typing import cast
+
+        from flext_ldap.typings import LdapSearchResultDict
+
+        result = adapter.ldap3_to_ldif_entry(
+            cast("LdapSearchResultDict", invalid_entry)
+        )
 
         # Assert
         assert result.is_failure
@@ -714,7 +732,13 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", invalid_entry))
+        from typing import cast
+
+        from flext_ldap.typings import LdapSearchResultDict
+
+        result = adapter.ldap3_to_ldif_entry(
+            cast("LdapSearchResultDict", invalid_entry)
+        )
 
         # Assert
         assert result.is_failure
@@ -734,7 +758,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.ldap3_to_ldif_entry(cast("dict[str, object]", entry))
+        from typing import cast
+
+        from flext_ldap.typings import LdapSearchResultDict
+
+        result = adapter.ldap3_to_ldif_entry(cast("LdapSearchResultDict", entry))
 
         # Assert
         assert result.is_success
@@ -877,7 +905,7 @@ class TestEntryAdapterCoreConversions:
     ) -> None:
         """Test normalizing attributes with mixed single and list values."""
         # Arrange
-        attributes = {
+        attributes: dict[str, str | list[str]] = {
             "cn": "John Doe",  # Single value
             "objectClass": ["person", "top"],  # List value
             "sn": "Doe",  # Single value
@@ -901,13 +929,17 @@ class TestEntryAdapterCoreConversions:
     ) -> None:
         """Test normalizing attributes that are already lists."""
         # Arrange
+        from typing import cast
+
         attributes: dict[str, object] = {
             "cn": ["John Doe"],
             "objectClass": ["person", "top"],
         }
 
         # Act
-        result = adapter.normalize_attributes_for_add(attributes)
+        result = adapter.normalize_attributes_for_add(
+            cast("dict[str, str | list[str]]", attributes)
+        )
 
         # Assert
         assert result.is_success
@@ -944,7 +976,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.create_modify_changes(modifications)
+        from typing import cast
+
+        from flext_ldap.typings import LdapModifyDict
+
+        result = adapter.create_modify_changes(cast("LdapModifyDict", modifications))
 
         # Assert
         assert result.is_success
@@ -969,7 +1005,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        result = adapter.create_modify_changes(modifications)
+        from typing import cast
+
+        from flext_ldap.typings import LdapModifyDict
+
+        result = adapter.create_modify_changes(cast("LdapModifyDict", modifications))
 
         # Assert
         assert result.is_success

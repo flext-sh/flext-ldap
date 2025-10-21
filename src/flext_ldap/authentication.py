@@ -1,13 +1,10 @@
 """LDAP authentication operations for flext-ldap.
 
-This module provides unified authentication functionality for LDAP operations
-with Clean Architecture patterns and flext-core integration.
+Unified authentication functionality for LDAP operations with Clean
+Architecture patterns and FlextResult[T] railway-oriented programming.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: Proper type annotations with FlextResult[T] for railway patterns.
-All annotations follow FLEXT standards with no workarounds.
 """
 
 from __future__ import annotations
@@ -26,16 +23,13 @@ from flext_ldap.typings import FlextLdapTypes
 class FlextLdapAuthentication(FlextService[None]):
     """Unified LDAP authentication operations class.
 
-    This class provides comprehensive LDAP authentication functionality
-    with Clean Architecture patterns and flext-core integration.
+    Provides LDAP authentication functionality with Clean Architecture
+    patterns and flext-core integration for result handling and logging.
 
-    **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
-    **CLEAN ARCHITECTURE**: Application layer authentication services.
-    **FLEXT INTEGRATION**: Full flext-core service integration.
-
-    Provides LDAP authentication methods:
+    Methods:
     - authenticate_user: Authenticate user with username/password
     - validate_credentials: Validate DN/password credentials
+
     """
 
     def __init__(self) -> None:
@@ -57,9 +51,9 @@ class FlextLdapAuthentication(FlextService[None]):
         """Set the connection context for authentication operations.
 
         Args:
-            connection: LDAP connection object (ldap3.Connection)
-            server: LDAP server object (ldap3.Server)
-            config: LDAP configuration object
+        connection: LDAP connection object (ldap3.Connection)
+        server: LDAP server object (ldap3.Server)
+        config: LDAP configuration object
 
         """
         self._connection = connection
@@ -77,11 +71,11 @@ class FlextLdapAuthentication(FlextService[None]):
         FlextResult[FlextLdapModels.Entry] for richer authentication context.
 
         Args:
-            username: Username to authenticate.
-            password: User password.
+        username: Username to authenticate.
+        password: User password.
 
         Returns:
-            FlextResult containing authenticated user or error.
+        FlextResult containing authenticated user or error.
 
         """
         # Railway pattern: Chain validation -> search -> bind -> create user
@@ -108,27 +102,30 @@ class FlextLdapAuthentication(FlextService[None]):
     def _safe_unbind(self, connection: Connection) -> None:
         """Safely unbind LDAP connection.
 
-            # ldap3 library has incomplete type stubs; external library limitation
+        # ldap3 library has incomplete type stubs; external library limitation
         This helper isolates the ldap3.Connection.unbind() call which lacks
         type stubs. The method is private infrastructure layer.
 
         Args:
-            connection: ldap3 Connection to unbind
+        connection: ldap3 Connection to unbind
 
         """
         with contextlib.suppress(Exception):
-            # ldap3 library has incomplete type stubs; external library limitation
-            connection.unbind()
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_connection = cast(
+                "FlextLdapTypes.Ldap3Protocols.Connection", connection
+            )
+            typed_connection.unbind()
 
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
         """Validate user credentials against LDAP server.
 
         Args:
-            dn: User distinguished name
-            password: User password
+        dn: User distinguished name
+        password: User password
 
         Returns:
-            FlextResult[bool]: Validation success status
+        FlextResult[bool]: Validation success status
 
         """
         # Use existing authenticate_user logic adapted for DN-based validation
@@ -289,10 +286,10 @@ class FlextLdapAuthentication(FlextService[None]):
         """Execute operation from OperationExecutionRequest model.
 
         Args:
-            request: OperationExecutionRequest containing operation settings
+        request: OperationExecutionRequest containing operation settings
 
         Returns:
-            FlextResult[object]: Success with result or failure with error
+        FlextResult[object]: Success with result or failure with error
 
         """
         # Use request parameter to satisfy protocol requirements

@@ -1,8 +1,10 @@
-"""ACL Manager for FLEXT LDAP.
+"""ACL manager for FLEXT LDAP access control operations.
+
+Manages ACL operations with parsing, conversion, and validation across
+different LDAP server implementations (OpenLDAP, Oracle, AD).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from flext_ldap.typings import LdapConfigDict
 
 
 class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
-    """ACL Manager for comprehensive ACL operations."""
+    """ACL Manager for ACL operations."""
 
     def __init__(self) -> None:
         """Initialize ACL Manager."""

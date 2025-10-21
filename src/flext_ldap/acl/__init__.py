@@ -1,6 +1,6 @@
 """ACL Management Module for FLEXT LDAP.
 
-This module provides comprehensive ACL (Access Control List) management
+This module provides complete ACL (Access Control List) management
 capabilities across different LDAP server types including OpenLDAP, Oracle
 Directory, 389 DS, Apache DS, and Active Directory.
 

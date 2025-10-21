@@ -46,7 +46,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and ("must contain '='" in result.error or "invalid" in result.error.lower())
+        assert result.error and (
+            "must contain '='" in result.error or "invalid" in result.error.lower()
+        )
 
     def test_validate_dn_empty(self, validations: FlextLdapValidations) -> None:
         """Test DN validation with empty string."""
@@ -655,7 +657,7 @@ class TestFlextLdapValidations:
         assert attributes_result.is_success
 
         server_uri_result = validations.validate_server_uri(
-            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.LDAP_DEFAULT_PORT}"
+            f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}"
         )
         assert server_uri_result.is_success
 

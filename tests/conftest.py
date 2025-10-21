@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flext_core import FlextContainer, FlextLogger, FlextResult
@@ -273,9 +274,9 @@ def acl_models() -> FlextLdapModels:
 
 
 @pytest.fixture
-def sample_acl_data() -> dict[str, str | list[str]]:
+def sample_acl_data() -> dict[str, object]:
     """Get sample ACL data for testing."""
-    return SAMPLE_ACL_DATA.copy()
+    return cast("dict[str, object]", SAMPLE_ACL_DATA.copy())
 
 
 # =============================================================================
@@ -284,9 +285,10 @@ def sample_acl_data() -> dict[str, str | list[str]]:
 
 
 @pytest.fixture
-def sample_user() -> FlextLdapModels.LdapUser:
+def sample_user() -> FlextLdapModels.Entry:
     """Get sample user entity."""
-    return FlextLdapModels.LdapUser(
+    return FlextLdapModels.Entry(
+        entry_type="user",
         dn="cn=testuser,ou=people,dc=example,dc=com",
         cn="Test User",
         uid="testuser",
@@ -304,9 +306,10 @@ def sample_user() -> FlextLdapModels.LdapUser:
 
 
 @pytest.fixture
-def sample_group() -> FlextLdapModels.Group:
+def sample_group() -> FlextLdapModels.Entry:
     """Get sample group entity."""
-    return FlextLdapModels.Group(
+    return FlextLdapModels.Entry(
+        entry_type="group",
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
         description="Test group",

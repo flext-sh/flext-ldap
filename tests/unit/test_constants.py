@@ -342,31 +342,32 @@ class TestFlextLdapConstants:
         assert FlextLdapConstants.DictKeys.DESCRIPTION == "description"
         # Note: SUCCESS and GENERIC keys don't exist in current DictKeys definition
 
-    @pytest.mark.skip(reason="Permission is now a Literal type in FlextLdapConstants.Types (Pydantic v2 refactoring)")
-    def test_permission_constants(self) -> None:
-        """Test permission constants."""
-        assert FlextLdapConstants.Permission.READ == "read"
-        assert FlextLdapConstants.Permission.WRITE == "write"
-        assert FlextLdapConstants.Permission.ADD == "add"
-        assert FlextLdapConstants.Permission.DELETE == "delete"
-        assert FlextLdapConstants.Permission.SEARCH == "search"
-        assert FlextLdapConstants.Permission.COMPARE == "compare"
-        assert FlextLdapConstants.Permission.BROWSE == "browse"
-        assert FlextLdapConstants.Permission.PROXY == "proxy"
-        assert FlextLdapConstants.Permission.AUTH == "auth"
-        assert FlextLdapConstants.Permission.ALL == "all"
-        assert FlextLdapConstants.Permission.NONE == "none"
+    def test_permission_type_literals(self) -> None:
+        """Test permission type literals are defined in FlextLdapConstants.Types."""
+        # Permission is now a Literal type alias, verify it exists
+        from typing import get_args
 
-    @pytest.mark.skip(reason="SubjectType is now a Literal type in FlextLdapConstants.Types (Pydantic v2 refactoring)")
-    def test_subject_type_constants(self) -> None:
-        """Test subject type constants."""
-        assert FlextLdapConstants.SubjectType.USER == "user"
-        assert FlextLdapConstants.SubjectType.GROUP == "group"
-        assert FlextLdapConstants.SubjectType.DN == "dn"
-        assert FlextLdapConstants.SubjectType.SELF == "self"
-        assert FlextLdapConstants.SubjectType.ANONYMOUS == "anonymous"
-        assert FlextLdapConstants.SubjectType.AUTHENTICATED == "authenticated"
-        assert FlextLdapConstants.SubjectType.ANYONE == "anyone"
+        from flext_ldap.constants import FlextLdapConstants
+
+        # Access the Permission type from Types nested class
+        permission_type = FlextLdapConstants.Types.Permission
+        # Verify the literal values
+        assert "read" in str(get_args(permission_type))
+        assert "write" in str(get_args(permission_type))
+        assert "add" in str(get_args(permission_type))
+
+    def test_subject_type_literals(self) -> None:
+        """Test subject type literals are defined in FlextLdapConstants.Types."""
+        from typing import get_args
+
+        from flext_ldap.constants import FlextLdapConstants
+
+        # Access the SubjectType from Types nested class
+        subject_type = FlextLdapConstants.Types.SubjectType
+        # Verify the literal values exist
+        assert "user" in str(get_args(subject_type))
+        assert "group" in str(get_args(subject_type))
+        assert "dn" in str(get_args(subject_type))
 
     @pytest.mark.skip(reason="TargetType is now a Literal type alias, not a class")
     def test_target_type_constants(self) -> None:
@@ -376,49 +377,24 @@ class TestFlextLdapConstants:
         type alias, so attribute access pattern is no longer applicable.
         """
 
-    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
-    def test_openldap_keywords_constants(self) -> None:
-        """Test OpenLDAP keywords constants."""
-        assert FlextLdapConstants.OpenLdapKeywords.ACCESS_TO == "access to"
-        assert FlextLdapConstants.OpenLdapKeywords.BY == "by"
-        assert FlextLdapConstants.OpenLdapKeywords.ATTRS == "attrs="
-        assert FlextLdapConstants.OpenLdapKeywords.DN_EXACT == "dn.exact="
-        assert FlextLdapConstants.OpenLdapKeywords.DN_REGEX == "dn.regex="
-        assert FlextLdapConstants.OpenLdapKeywords.FILTER == "filter="
+    # AclKeywords classes (OpenLdapKeywords, OracleKeywords, AciKeywords) were removed
+    # as part of constants cleanup. ACL parsing constants are now in AclParsing class.
+    def test_acl_parsing_constants_exist(self) -> None:
+        """Test that ACL parsing constants are available in AclParsing class."""
+        from flext_ldap.constants import FlextLdapConstants
 
-    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
-    def test_oracle_keywords_constants(self) -> None:
-        """Test Oracle keywords constants."""
-        assert FlextLdapConstants.OracleKeywords.ACCESS_TO == "access to"
-        assert FlextLdapConstants.OracleKeywords.ATTR == "attr="
-        assert FlextLdapConstants.OracleKeywords.ENTRY == "entry"
-        assert FlextLdapConstants.OracleKeywords.BY == "by"
-        assert FlextLdapConstants.OracleKeywords.GROUP == "group="
-        assert FlextLdapConstants.OracleKeywords.USER == "user="
-
-    @pytest.mark.skip(reason="AclKeywords class removed as dead code during constants cleanup")
-    def test_aci_keywords_constants(self) -> None:
-        """Test ACI keywords constants."""
-        assert FlextLdapConstants.AciKeywords.TARGET == "target"
-        assert FlextLdapConstants.AciKeywords.TARGETATTR == "targetattr"
-        assert FlextLdapConstants.AciKeywords.TARGETFILTER == "targetfilter"
-        assert FlextLdapConstants.AciKeywords.VERSION == "version 3.0"
-        assert FlextLdapConstants.AciKeywords.ACL == "acl"
-        assert FlextLdapConstants.AciKeywords.ALLOW == "allow"
-        assert FlextLdapConstants.AciKeywords.DENY == "deny"
-        assert FlextLdapConstants.AciKeywords.USERDN == "userdn"
-        assert FlextLdapConstants.AciKeywords.GROUPDN == "groupdn"
+        # Verify AclParsing class exists and has expected constants
+        assert hasattr(FlextLdapConstants, "AclParsing")
+        assert hasattr(FlextLdapConstants.AclParsing, "MIN_ACL_PARTS")
+        assert hasattr(FlextLdapConstants.AclParsing, "ACL_RULE_PARTS")
 
     def test_conversion_warnings_constants(self) -> None:
         """Test conversion warnings constants (now in AclParsing)."""
         # After constants cleanup, conversion warnings are in AclParsing class
         assert (
-            "{permission}"
-            in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
+            "{permission}" in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
         )
-        assert (
-            "{format}" in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
-        )
+        assert "{format}" in FlextLdapConstants.AclParsing.ACL_PERMISSION_NOT_SUPPORTED
         assert "{feature}" in FlextLdapConstants.AclParsing.ACL_FEATURE_LOSS
         assert "{format}" in FlextLdapConstants.AclParsing.ACL_FEATURE_LOSS
         assert "Syntax" in FlextLdapConstants.AclParsing.ACL_SYNTAX_MISMATCH

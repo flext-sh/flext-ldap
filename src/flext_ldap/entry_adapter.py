@@ -1,12 +1,11 @@
-"""Entry Adapter for ldap3 ↔ FlextLdif conversion.
+"""Entry adapter for ldap3 ↔ FlextLdif bidirectional conversion.
 
-This module provides bidirectional conversion between ldap3 Entry objects
-and FlextLdif Entry models, enabling seamless integration between LDAP
-protocol operations and LDIF entry manipulation.
+Provides seamless conversion between ldap3 Entry objects and FlextLdif
+Entry models, enabling integration between LDAP protocol operations and
+LDIF entry manipulation with type safety and error handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -47,7 +46,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
-            server_type: Optional explicit server type (auto-detected if not provided)
+        server_type: Optional explicit server type (auto-detected if not provided)
 
         """
         super().__init__()
@@ -70,10 +69,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Convert ldap3.Entry or dict to FlextLdifModels.Entry.
 
         Args:
-            ldap3_entry: ldap3 Entry object or dict with 'dn' and 'attributes' keys
+        ldap3_entry: ldap3 Entry object or dict with 'dn' and 'attributes' keys
 
         Returns:
-            FlextResult containing FlextLdifModels.Entry or error
+        FlextResult containing FlextLdifModels.Entry or error
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -93,11 +92,16 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 )
 
             dn_str = str(ldap3_entry["dn"])
-            attributes = ldap3_entry["attributes"]
-            if not isinstance(attributes, dict):
+            raw_attributes = ldap3_entry["attributes"]
+            if not isinstance(raw_attributes, dict):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     "Dict entry 'attributes' must be a dictionary",
                 )
+            # Convert dict[str, list[str]] to dict[str, list[object]] for type safety
+            typed_attributes: dict[str, list[object]] = {
+                k: list(v) if isinstance(v, list) else [v]
+                for k, v in raw_attributes.items()
+            }
         elif isinstance(ldap3_entry, Ldap3Entry):
             # Extract DN from ldap3 entry
             dn_str = str(ldap3_entry.entry_dn)
@@ -122,7 +126,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                     # Empty attribute
                     ldap3_attributes[attr_name] = []
             # Assign to attributes variable for unified handling below
-            attributes = ldap3_attributes
+            typed_attributes = ldap3_attributes
         else:
             return FlextResult[FlextLdifModels.Entry].fail("Unsupported entry type")
 
@@ -130,8 +134,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         # Explicit FlextResult error handling - NO try/except
 
         attr_values_dict: dict[str, FlextLdifModels.AttributeValues] = {}
-        # Cast attributes to proper type since we know the structure at this point
-        typed_attributes = cast("dict[str, list[object]]", attributes)
+        # Use the typed_attributes since we know the structure at this point
         for attr_name, attr_value_list in typed_attributes.items():
             # Convert object list to string list for AttributeValues
             str_values: list[str] = [str(value) for value in attr_value_list]
@@ -157,8 +160,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Create DistinguishedName
         try:
-            dn = FlextLdifModels.DistinguishedName(value=dn_str)
-            dn_result = FlextResult[FlextLdifModels.DistinguishedName].ok(dn)
+            dn_obj = FlextLdifModels.DistinguishedName(value=dn_str)
+            dn_result = FlextResult[FlextLdifModels.DistinguishedName].ok(dn_obj)
         except Exception as e:
             dn_result = FlextResult[FlextLdifModels.DistinguishedName].fail(
                 f"Failed to create DistinguishedName: {e}"
@@ -192,10 +195,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Convert multiple ldap3 entries to FlextLdif entries.
 
         Args:
-            ldap3_entries: List of ldap3 Entry objects
+        ldap3_entries: List of ldap3 Entry objects
 
         Returns:
-            FlextResult containing list of FlextLdifModels.Entry or error
+        FlextResult containing list of FlextLdifModels.Entry or error
 
         """
         if not ldap3_entries:
@@ -219,10 +222,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Convert FlextLdifModels.Entry to ldap3 attributes dict.
 
         Args:
-            ldif_entry: FlextLdif Entry model
+        ldif_entry: FlextLdif Entry model
 
         Returns:
-            FlextResult containing attributes dict for ldap3 operations
+        FlextResult containing attributes dict for ldap3 operations
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -248,10 +251,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         Ensures all attribute values are in list format as required by ldap3.
 
         Args:
-            attributes: Attribute dictionary (values may be single or lists)
+        attributes: Attribute dictionary (values may be single or lists)
 
         Returns:
-            FlextResult containing normalized attributes dict
+        FlextResult containing normalized attributes dict
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -274,10 +277,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         expected format: {attr: [(operation, [values])]}
 
         Args:
-            modifications: Dict of {attribute: [(operation, [values]), ...]}
+        modifications: Dict of {attribute: [(operation, [values]),...]}
 
         Returns:
-            FlextResult containing ldap3 modify changes
+        FlextResult containing ldap3 modify changes
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -298,10 +301,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Parse LDIF file and convert to FlextLdif entries using FlextLdif library.
 
         Args:
-            ldif_file_path: Path to LDIF file
+        ldif_file_path: Path to LDIF file
 
         Returns:
-            FlextResult containing list of FlextLdifModels.Entry
+        FlextResult containing list of FlextLdifModels.Entry
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -327,11 +330,11 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Write FlextLdif entries to LDIF file using FlextLdif library.
 
         Args:
-            entries: List of FlextLdifModels.Entry to write
-            output_path: Path for output LDIF file
+        entries: List of FlextLdifModels.Entry to write
+        output_path: Path for output LDIF file
 
         Returns:
-            FlextResult containing output file path or error
+        FlextResult containing output file path or error
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -467,18 +470,18 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         Checks if entry can be safely added to the specified server type
         by verifying:
-            - Required attributes are present
-            - Attribute syntaxes are compatible
-            - Object classes are supported
-            - DN format is valid
-            - No server-incompatible attributes
+        - Required attributes are present
+        - Attribute syntaxes are compatible
+        - Object classes are supported
+        - DN format is valid
+        - No server-incompatible attributes
 
         Args:
-            entry: FlextLdif Entry to validate
-            server_type: Target server type to validate against
+        entry: FlextLdif Entry to validate
+        server_type: Target server type to validate against
 
         Returns:
-            FlextResult[bool] indicating if entry is valid for server
+        FlextResult[bool] indicating if entry is valid for server
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -535,26 +538,26 @@ class FlextLdapEntryAdapter(FlextService[None]):
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Convert entry from source server format to target server format.
 
-        Performs comprehensive conversion including:
-            - ACL format conversion (e.g., orclaci → olcAccess)
-            - Attribute name transformations
-            - Object class mappings
-            - Syntax conversions
-            - DN format adjustments
+        Performs conversion including:
+        - ACL format conversion (e.g., orclaci → olcAccess)
+        - Attribute name transformations
+        - Object class mappings
+        - Syntax conversions
+        - DN format adjustments
 
         Args:
-            entry: FlextLdif Entry to convert
-            source_server_type: Source server type (where entry came from)
-            target_server_type: Target server type (where entry will be added)
+        entry: FlextLdif Entry to convert
+        source_server_type: Source server type (where entry came from)
+        target_server_type: Target server type (where entry will be added)
 
         Returns:
-            FlextResult containing converted entry
+        FlextResult containing converted entry
 
         Examples:
-            Convert Oracle OID entry to OpenLDAP 2.x:
-                - orclaci → olcAccess
-                - orclUserV2 → inetOrgPerson
-                - Oracle-specific attrs → OpenLDAP equivalents
+        Convert Oracle OID entry to OpenLDAP 2.x:
+        - orclaci → olcAccess
+        - orclUserV2 → inetOrgPerson
+        - Oracle-specific attrs → OpenLDAP equivalents
 
         """
         # Explicit FlextResult error handling - NO try/except
@@ -613,17 +616,17 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Get server-specific attribute information from quirks.
 
         Returns configuration like:
-            - ACL attribute name
-            - Schema subentry DN
-            - Operational attributes support
-            - Paging configuration
-            - Timeout defaults
+        - ACL attribute name
+        - Schema subentry DN
+        - Operational attributes support
+        - Paging configuration
+        - Timeout defaults
 
         Args:
-            server_type: Server type to get attributes for
+        server_type: Server type to get attributes for
 
         Returns:
-            FlextResult containing server-specific attribute information
+        FlextResult containing server-specific attribute information
 
         """
         # Explicit FlextResult error handling - NO try/except

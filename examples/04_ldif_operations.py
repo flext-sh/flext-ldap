@@ -40,7 +40,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -188,10 +188,13 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     # Search for entries to export
     logger.info("Searching for entries to export...")
-    search_result = api.search(
-        base_dn=BASE_DN,
-        search_filter="(objectClass=person)",
-        attributes=["cn", "sn", "mail", "uid", "objectClass"],
+    search_result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
+        api.search(
+            base_dn=BASE_DN,
+            search_filter="(objectClass=person)",
+            attributes=["cn", "sn", "mail", "uid", "objectClass"],
+        ),
     )
 
     if search_result.is_failure:
@@ -205,14 +208,13 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     logger.info(f"Found {len(search_entries)} entries to export")
 
-    # Convert search results to LDIF Entry objects for LDIF export
-    adapter = FlextLdapEntryAdapter()
-    entries = []
-    for search_entry in search_entries:
-        # Convert dict to FlextLdifModels.Entry using adapter
-        ldif_entry_result = adapter.ldap3_to_ldif_entry(search_entry)
-        if ldif_entry_result.is_success:
-            entries.append(ldif_entry_result.unwrap())
+    # Convert FlextLdapModels.Entry to FlextLdifModels.Entry
+    ldif_entries = []
+    for ldap_entry in search_entries:
+        # Convert using model_dump and model_validate
+        entry_dict = ldap_entry.model_dump(exclude_none=True)
+        ldif_entry = FlextLdifModels.Entry.model_validate(entry_dict)
+        ldif_entries.append(ldif_entry)
 
     # Create export file path
     temp_dir = tempfile.gettempdir()
@@ -222,13 +224,15 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
     logger.info(f"Exporting to: {export_path}")
 
     ldif_processor = FlextLdif()
-    export_result: FlextResult[str] = ldif_processor.write(entries, Path(export_path))
+    export_result: FlextResult[str] = ldif_processor.write(
+        ldif_entries, Path(export_path)
+    )
 
     if export_result.is_failure:
         logger.error(f"❌ LDIF export failed: {export_result.error}")
         return None
 
-    logger.info(f"✅ Exported {len(entries)} entries to LDIF")
+    logger.info(f"✅ Exported {len(ldif_entries)} entries to LDIF")
     logger.info(f"   File size: {export_path.stat().st_size} bytes")
 
     # Show first few lines of exported file
@@ -295,15 +299,9 @@ def demonstrate_ldif_round_trip() -> None:
         logger.error("Round-trip aborted: Import failed")
         return
 
-    # Step 3: Modify entries (simulate processing)
-    logger.info("Step 3: Modifying imported entries...")
-    for entry in entries:
-        # Add a processed marker
-        entry.attributes.attributes["description"] = FlextLdifModels.AttributeValues(
-            values=[f"Processed by flext-ldap at {Path.cwd()}"]
-        )
-
-    logger.info(f"✅ Modified {len(entries)} entries")
+    # Step 3: Entries are ready for processing
+    logger.info("Step 3: Entries ready for processing...")
+    logger.info(f"✅ Loaded {len(entries)} entries")
 
     # Step 4: Export modified entries
     logger.info("Step 4: Exporting modified entries...")
