@@ -29,7 +29,7 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Initialize failure tracker.
 
         Args:
-            output_dir: Directory for failure logs
+        output_dir: Directory for failure logs
 
         """
         super().__init__()
@@ -48,14 +48,14 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Log sync failure to persistent JSONL file.
 
         Args:
-            dn: Distinguished name of failed entry
-            phase: Phase name (schema, hierarchy, users, groups, acl)
-            operation: Operation type (create, update, delete)
-            error: Error message
-            context: Optional context information
+        dn: Distinguished name of failed entry
+        phase: Phase name (schema, hierarchy, users, groups, acl)
+        operation: Operation type (create, update, delete)
+        error: Error message
+        context: Optional context information
 
         Returns:
-            FlextResult[None]: Success or failure of logging operation
+        FlextResult[None]: Success or failure of logging operation
 
         """
         try:
@@ -83,10 +83,10 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Load all unresolved failures for specific phase.
 
         Args:
-            phase: Phase name to filter by
+        phase: Phase name to filter by
 
         Returns:
-            FlextResult containing list of failure records for phase
+        FlextResult containing list of failure records for phase
 
         """
         if not self._failures_file.exists():
@@ -122,7 +122,7 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Load all unresolved failures across all phases.
 
         Returns:
-            FlextResult containing list of all failure records
+        FlextResult containing list of all failure records
 
         """
         if not self._failures_file.exists():
@@ -154,11 +154,11 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Mark failure as resolved (remove from active failures).
 
         Args:
-            dn: Distinguished name of resolved entry
-            phase: Phase name
+        dn: Distinguished name of resolved entry
+        phase: Phase name
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         if not self._failures_file.exists():
@@ -193,11 +193,11 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Increment retry count for failure.
 
         Args:
-            dn: Distinguished name
-            phase: Phase name
+        dn: Distinguished name
+        phase: Phase name
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         if not self._failures_file.exists():
@@ -229,10 +229,10 @@ class FlextLdapFailureTracker(FlextService[None]):
         return FlextResult[None].ok(None)
 
     def generate_report(self) -> FlextResult[dict[str, object]]:
-        """Generate comprehensive failure summary report.
+        """Generate failure summary report.
 
         Returns:
-            FlextResult containing report dict
+        FlextResult containing report dict
 
         """
         if not self._failures_file.exists():
@@ -307,7 +307,7 @@ class FlextLdapFailureTracker(FlextService[None]):
         """Remove resolved failures from log file.
 
         Returns:
-            FlextResult containing count of removed failures
+        FlextResult containing count of removed failures
 
         """
         if not self._failures_file.exists():

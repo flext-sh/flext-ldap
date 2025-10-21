@@ -1,21 +1,13 @@
-"""LDAP Constants - Domain-specific constants following FLEXT standardization plan.
+"""LDAP domain constants following FLEXT standardization.
 
-**Standardization Compliance:**
-- ✅ Layer 0 purity: Only constants, no functions or behavior
-- ✅ No module-level constants: All constants moved to nested classes
-- ✅ Direct FlextConstants inheritance: Clean dependency chain
-- ✅ Final[Type] declarations: Immutable type-safe constants
-- ✅ Nested class organization: Logical constant grouping
+Layer 0 pure constants with nested class organization, FlextConstants
+inheritance, and Final[Type] declarations for type-safe immutability.
 
-**Domain Coverage:**
-- LDAP Protocol (RFC 4511 scopes, ports, connection management)
-- LDAP-specific ACL keywords and parsing constants
-- LDAP operation types and validation
-- Type definitions for strict typing
+Domain coverage includes LDAP Protocol (RFC 4511), ACL keywords, operation
+types, validation patterns, and type definitions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -24,8 +16,6 @@ from typing import Final, Literal
 
 from flext_core import FlextConstants
 from flext_ldif import FlextLdifConstants
-
-# Type aliases moved to nested classes within FlextLdapConstants
 
 
 class FlextLdapConstants(FlextConstants):

@@ -1,12 +1,10 @@
-"""FlextLdap - Consolidated single-class LDAP operations with FLEXT integration.
+"""Consolidated LDAP operations with FLEXT integration.
 
-Enterprise-grade LDAP operations consolidated into one main class following
-FLEXT single-class-per-project standardization. All LDAP functionality unified
-into FlextLdap with nested classes for complex subsystems.
+LDAP operations unified into FlextLdap main class following
+single-class-per-project pattern with nested subsystems.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -30,33 +28,24 @@ from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdap(FlextService[None]):
-    """Consolidated single-class LDAP operations with FLEXT ecosystem integration.
+    """Consolidated LDAP operations with FLEXT integration.
 
-    Enterprise-grade LDAP operations consolidated into one main class following
-    FLEXT single-class-per-project standardization. All LDAP functionality unified
-    into FlextLdap with nested classes for complex subsystems.
+    Main class providing LDAP functionality with nested subsystems for
+    complex operations following single-class-per-project pattern.
 
-    **SINGLE-CLASS ARCHITECTURE**: Everything consolidated into one main class
-    - No separate module files - all functionality integrated
-    - Nested classes for complex subsystems (Config, Client, Servers, Acl)
-    - Clean facade API with rich internal organization
-
-    **COMPREHENSIVE LDAP OPERATIONS**:
+    Features:
     - Connection management and authentication
     - Search, add, modify, delete operations
     - Server-specific operations (OpenLDAP, Oracle OID/OUD, AD)
     - ACL management and schema operations
-    - Entry validation and adaptation
-    - LDIF integration and migration
+    - Entry validation and LDIF integration
 
-    **FLEXT INTEGRATION**:
-    - FlextResult[T] for railway-oriented error handling
-    - FlextService for dependency injection and lifecycle
-    - FlextLogger for structured logging
-    - FlextContainer for service management
+    Uses FlextResult[T] for error handling, FlextService for dependency
+    injection, and FlextLogger for structured logging.
     """
 
     # Singleton pattern
@@ -67,7 +56,7 @@ class FlextLdap(FlextService[None]):
         """Initialize consolidated LDAP operations.
 
         Args:
-            config: Optional LDAP configuration. If not provided, uses default instance.
+        config: Optional LDAP configuration. If not provided, uses default instance.
 
         """
         super().__init__()
@@ -179,7 +168,7 @@ class FlextLdap(FlextService[None]):
             """Initialize LDAP client with configuration.
 
             Args:
-                config: LDAP configuration instance.
+            config: LDAP configuration instance.
 
             """
             super().__init__()
@@ -241,8 +230,9 @@ class FlextLdap(FlextService[None]):
             """Unbind and close LDAP connection."""
             try:
                 if self._connection is not None:
-                    # ldap3 library has incomplete type stubs; external library limitation
-                    self._connection.unbind()
+                    # Cast to Protocol type for proper type checking with ldap3
+                    typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", self._connection)
+                    typed_conn.unbind()
                     self._connection = None
                 return FlextResult.ok(None)
             except Exception as e:
@@ -323,10 +313,11 @@ class FlextLdap(FlextService[None]):
                     else:
                         ldap3_attributes[key] = [value]
 
-                # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.add(
-                    dn, object_class, attributes=ldap3_attributes or None
-                )
+                # Cast to Protocol type for proper type checking with ldap3
+                typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", self._connection)
+                # Cast attributes to match Protocol signature
+                attrs = cast("dict[str, str | list[str]] | None", ldap3_attributes or None)
+                typed_conn.add(dn, object_class, attributes=attrs)
                 return FlextResult.ok(True)
             except Exception as e:
                 return FlextResult.fail(f"LDAP add failed: {e}")
@@ -352,8 +343,11 @@ class FlextLdap(FlextService[None]):
                     else:
                         modifications[attr] = [(MODIFY_REPLACE, [value])]
 
-                # ldap3 library has incomplete type stubs; external library limitation
-                self._connection.modify(dn, modifications)
+                # Cast to Protocol type for proper type checking with ldap3
+                typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", self._connection)
+                # Cast modifications to match Protocol signature
+                mods = cast("dict[str, list[tuple[int, list[str]]]]", modifications)
+                typed_conn.modify(dn, mods)
                 return FlextResult.ok(True)
             except Exception as e:
                 return FlextResult.fail(f"LDAP modify failed: {e}")
@@ -367,9 +361,9 @@ class FlextLdap(FlextService[None]):
             # No assert needed - type checker understands the flow
 
             try:
-                # ldap3 delete() is untyped; wrap with cast for type safety
-                # ldap3 library has incomplete type stubs; external library limitation
-                cast("type[bool]", self._connection.delete(dn))
+                # Cast to Protocol type for proper type checking with ldap3
+                typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", self._connection)
+                typed_conn.delete(dn)
                 return FlextResult.ok(True)
             except Exception as e:
                 return FlextResult.fail(f"LDAP delete failed: {e}")
@@ -389,7 +383,7 @@ class FlextLdap(FlextService[None]):
             """Initialize server operations with server type.
 
             Args:
-                server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic).
+            server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic).
 
             """
             super().__init__()
@@ -500,7 +494,12 @@ class FlextLdap(FlextService[None]):
         )
         if result.is_success and result.value and result.value.entries:
             first_entry = result.value.entries[0]
-            return FlextResult.ok(cast("dict[str, object]", {"dn": first_entry.dn, "attributes": first_entry.attributes}))
+            return FlextResult.ok(
+                cast(
+                    "dict[str, object]",
+                    {"dn": first_entry.dn, "attributes": first_entry.attributes},
+                )
+            )
         return FlextResult.ok(None)
 
     def update_user_attributes(
@@ -598,7 +597,12 @@ class FlextLdap(FlextService[None]):
         search_response = result.unwrap()
         if search_response and search_response.entries:
             first_entry = search_response.entries[0]
-            return FlextResult.ok(cast("dict[str, object]", {"dn": first_entry.dn, "attributes": first_entry.attributes}))
+            return FlextResult.ok(
+                cast(
+                    "dict[str, object]",
+                    {"dn": first_entry.dn, "attributes": first_entry.attributes},
+                )
+            )
         return FlextResult.ok(None)
 
     def search_entries_bulk(
@@ -776,7 +780,7 @@ class FlextLdap(FlextService[None]):
     def get_server_capabilities(
         self,
     ) -> FlextResult[FlextLdapModels.ServerCapabilities]:
-        """Get comprehensive server capabilities."""
+        """Get server capabilities information."""
         return FlextResult.ok(
             FlextLdapModels.ServerCapabilities(
                 supports_ssl=True,

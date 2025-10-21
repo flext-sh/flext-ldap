@@ -19,6 +19,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
@@ -213,12 +214,10 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 if attr_name != "objectClass":  # Skip objectClass (passed separately)
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = connection.add(
-                str(entry.dn),
-                object_class,
-                attributes=ldap3_attrs or None,
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            ldap3_attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            success = typed_conn.add(str(entry.dn), object_class, attributes=ldap3_attrs_casted)
 
             if not success:
                 error_msg = connection.result.get(
@@ -256,10 +255,10 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = connection.modify(
-                dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
+            success = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -285,8 +284,9 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = connection.delete(dn)
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            success = typed_conn.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(
@@ -341,15 +341,15 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         """Execute paged search on generic LDAP server.
 
         Args:
-            connection: Active LDAP connection
-            base_dn: Search base DN
-            search_filter: LDAP search filter
-            attributes: Attributes to retrieve
-            scope: Search scope (base, level, or subtree)
-            page_size: Page size for results
+        connection: Active LDAP connection
+        base_dn: Search base DN
+        search_filter: LDAP search filter
+        attributes: Attributes to retrieve
+        scope: Search scope (base, level, or subtree)
+        page_size: Page size for results
 
         Returns:
-            FlextResult containing list of entries
+        FlextResult containing list of entries
 
         """
         try:
@@ -396,7 +396,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
             )
 
     # =========================================================================
-    # ROOT DSE OPERATIONS
+    # Root DSE OPERATIONS
     # =========================================================================
 
     @override
@@ -492,11 +492,11 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         """Normalize entry for generic server.
 
         Args:
-            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-            target_server_type: Target server type (unused for generic)
+        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
+        target_server_type: Target server type (unused for generic)
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         try:

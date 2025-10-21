@@ -11,10 +11,7 @@ Note: This file has type checking disabled due to limitations in the official ty
 
 from typing import Literal, cast
 
-from flext_core import (
-    FlextLogger,
-    FlextResult,
-)
+from flext_core import FlextLogger, FlextResult
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SIMPLE, SUBTREE
 from ldap3.core.connection import Connection
 from ldap3.core.server import Server
@@ -252,13 +249,13 @@ def search_entries(
             authentication=cast("AuthType", SIMPLE),
         )
 
-        ldap_scope: str
+        ldap_scope: Literal["BASE", "LEVEL", "SUBTREE"]
         if scope == "base":
-            ldap_scope = BASE
+            ldap_scope = cast("Literal['BASE', 'LEVEL', 'SUBTREE']", BASE)
         elif scope == "onelevel":
-            ldap_scope = LEVEL
+            ldap_scope = cast("Literal['BASE', 'LEVEL', 'SUBTREE']", LEVEL)
         else:
-            ldap_scope = SUBTREE
+            ldap_scope = cast("Literal['BASE', 'LEVEL', 'SUBTREE']", SUBTREE)
 
         success: bool = conn.search(
             search_base=base_dn,
@@ -309,12 +306,14 @@ def modify_entry(
         )
 
         # Convert changes to ldap3 format
+        # MODIFY_REPLACE is a string constant from ldap3
+        modify_op = cast("str", MODIFY_REPLACE)
         ldap3_changes: dict[str, list[tuple[str, list[str]]]] = {}
         for attr, values in changes.items():
             if isinstance(values, list):
-                ldap3_changes[attr] = [(MODIFY_REPLACE, values)]
+                ldap3_changes[attr] = [(modify_op, values)]
             else:
-                ldap3_changes[attr] = [(MODIFY_REPLACE, [values])]
+                ldap3_changes[attr] = [(modify_op, [values])]
 
         # ldap3.modify returns a boolean, but mypy doesn't know this
         success: bool = conn.modify(dn, ldap3_changes)

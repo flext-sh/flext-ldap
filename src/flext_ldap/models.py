@@ -1,16 +1,13 @@
-"""Unified LDAP models - ALL consolidated into FlextLdapModels.
+"""Unified LDAP models consolidated into FlextLdapModels.
 
-Consolidates models, entities, and value objects (one-class-per-module pattern).
-Eliminates previous triple system (models.py + entities.py + value_objects.py).
+Consolidates models, entities, and value objects into single class
+following one-class-per-module pattern.
+
+Note: Some type checker limitations exist (architectural, no runtime
+impact) related to generic type inference and optional overrides.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Known Type Checker Issues (architectural, no runtime impact):
-- DistinguishedName.create(): Generic type inference limitation (Lines 243,255,257,261)
-- LdapUser.created_at: Optional override design decision (Line 609)
-- Entry.attributes: Runtime type narrowing via LDAP protocol (Line 951)
-- Config.validate(): Explicit pattern for FlextResult (Lines 2406,2430,2453,2475)
 """
 
 from __future__ import annotations
@@ -208,18 +205,15 @@ def _validate_port(v: int) -> int:
 
 
 class FlextLdapModels(FlextModels):
-    """Unified LDAP models class consolidating ALL models, entities, and value objects.
+    """Unified LDAP models class consolidating models, entities, and values.
 
-    This class consolidates:
-    - Previous FlextLdapModels (legacy models)
-    - Previous FlextLdapEntities (domain entities)
-    - Previous FlextLdapValueObjects (value objects)
+    Consolidates previous separate model classes into single unified class:
+    - Data models for LDAP operations
+    - Domain entities for business logic
+    - Value objects for immutable data
 
-    Into a single unified class following FLEXT patterns. ALL LDAP data structures
-    are now available as nested classes within FlextLdapModels.
-
-    Enhanced with advanced Pydantic 2.11 features for LDAP validation.
-    NO legacy compatibility - clean consolidated implementation.
+    All LDAP data structures available as nested classes within
+    FlextLdapModels using Pydantic 2.11 validation features.
     """
 
     # Enhanced base configuration for all LDAP models
@@ -244,7 +238,7 @@ class FlextLdapModels(FlextModels):
         },
         json_schema_extra={
             "title": "FlextLdapModels",
-            "description": "Unified LDAP models with comprehensive validation",
+            "description": "Unified LDAP models with validation",
         },
     )
 
@@ -329,7 +323,7 @@ class FlextLdapModels(FlextModels):
         return value
 
     # =========================================================================
-    # NOTE: Removed StrictModel and FlexibleModel wrappers
+    # Note: Removed StrictModel and FlexibleModel wrappers
     # Use FlextModels.ArbitraryTypesModel directly with model_config overrides
     # =========================================================================
 
@@ -350,7 +344,7 @@ class FlextLdapModels(FlextModels):
         """LDAP Distinguished Name value object with RFC 2253 compliance.
 
         Extends FlextValue for immutable value object behavior with strict validation.
-        Enhanced with advanced Pydantic 2.11 features for LDAP-specific validation.
+        Uses Pydantic 2.11 features for LDAP-specific validation.
         """
 
         value: Annotated[str, BeforeValidator(_validate_dn_format)] = Field(
@@ -400,10 +394,10 @@ class FlextLdapModels(FlextModels):
             """Create a DistinguishedName instance from a string.
 
             Args:
-                dn_string: The DN string to create from
+            dn_string: The DN string to create from
 
             Returns:
-                DistinguishedName: A new DistinguishedName instance
+            DistinguishedName: A new DistinguishedName instance
 
             """
             return cls(value=dn_string)
@@ -650,7 +644,7 @@ class FlextLdapModels(FlextModels):
     class Base(FlextModels.ArbitraryTypesModel):
         """Base model - dynamic LDAP schema support.
 
-        **DYNAMIC LDAP SCHEMA**: Accepts arbitrary attributes for varying
+        DYNAMIC LDAP SCHEMA: Accepts arbitrary attributes for varying
         server schemas (OpenLDAP, AD, OID/OUD, 389 DS, etc.)
         """
 
@@ -685,7 +679,7 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
     # CORE LDAP ENTITIES - Primary Domain Objects (Consolidated into Entry)
     # =========================================================================
-    # NOTE: LdapUser and Group classes have been consolidated into the unified
+    # Note: LdapUser and Group classes have been consolidated into the unified
     # polymorphic Entry model using Pydantic 2.11 discriminated unions.
     # All functionality is now available through FlextLdapModels.Entry with
     # entry_type discriminator (user, group, organizationalUnit, device, etc.)
@@ -722,14 +716,16 @@ class FlextLdapModels(FlextModels):
         cn: str | None = Field(default=None, description="Common Name")
 
         # LDAP metadata
-        object_classes: Annotated[list[str], BeforeValidator(_validate_object_classes_list)] = Field(
+        object_classes: Annotated[
+            list[str], BeforeValidator(_validate_object_classes_list)
+        ] = Field(
             default_factory=list,
             description="LDAP object classes",
         )
 
-        # Core enterprise fields
-        status: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
-            default=None, description="Entry status (active/disabled/etc)"
+        # Core fields
+        status: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = (
+            Field(default=None, description="Entry status (active/disabled/etc)")
         )
         additional_attributes: dict[
             str,
@@ -765,15 +761,15 @@ class FlextLdapModels(FlextModels):
             default=None, description="Primary phone number"
         )
         mobile: str | None = Field(default=None, description="Mobile phone number")
-        department: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
-            default=None, description="Department"
+        department: Annotated[
+            str | None, BeforeValidator(_set_defaults_from_constants)
+        ] = Field(default=None, description="Department")
+        title: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = (
+            Field(default=None, description="Job title")
         )
-        title: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
-            default=None, description="Job title"
-        )
-        organization: Annotated[str | None, BeforeValidator(_set_defaults_from_constants)] = Field(
-            default=None, description="Organization (o attribute)"
-        )
+        organization: Annotated[
+            str | None, BeforeValidator(_set_defaults_from_constants)
+        ] = Field(default=None, description="Organization (o attribute)")
         organizational_unit: str | None = Field(
             default=None, description="Organizational Unit (ou attribute)"
         )
@@ -827,7 +823,6 @@ class FlextLdapModels(FlextModels):
         # =====================================================================
 
         @computed_field
-        @property
         def full_name(self) -> str | None:
             """Full name for user entries: givenName sn → givenName → sn → cn."""
             if self.entry_type != "user":
@@ -843,7 +838,6 @@ class FlextLdapModels(FlextModels):
                     return self.cn
 
         @computed_field
-        @property
         def is_active(self) -> bool:
             """Active if status is None or 'active', not 'disabled' (user entries)."""
             if self.entry_type != "user":
@@ -853,7 +847,6 @@ class FlextLdapModels(FlextModels):
             return self.status in {None, "active"} or self.status != "disabled"
 
         @computed_field
-        @property
         def has_contact_info(self) -> bool:
             """User has email AND (phone OR mobile) - user entries only."""
             if self.entry_type != "user":
@@ -861,7 +854,6 @@ class FlextLdapModels(FlextModels):
             return bool(self.mail and (self.telephone_number or self.mobile))
 
         @computed_field
-        @property
         def organizational_path(self) -> str | None:
             """Full org hierarchy: org > ou > dept - user entries only."""
             if self.entry_type != "user":
@@ -874,13 +866,11 @@ class FlextLdapModels(FlextModels):
             return " > ".join(parts) if parts else "No organization"
 
         @computed_field
-        @property
         def rdn(self) -> str:
             """Computed field for Relative Distinguished Name (all entries)."""
             return self.dn.split(",")[0] if "," in self.dn else self.dn
 
         @computed_field
-        @property
         def has_members(self) -> bool:
             """Group has members - group entries only."""
             if self.entry_type != "group":
@@ -1129,7 +1119,11 @@ class FlextLdapModels(FlextModels):
                     })
 
             try:
-                entry = cls(**entry_data)
+                # Cast entry_data from dict[str, object] to Any to allow unpacking
+                # The dictionary is built correctly above with proper types
+                from typing import cast
+
+                entry = cls(**cast("dict[str, Any]", entry_data))
                 return FlextResult[FlextLdapModels.Entry].ok(entry)
             except Exception as e:
                 return FlextResult[FlextLdapModels.Entry].fail(
@@ -1193,7 +1187,11 @@ class FlextLdapModels(FlextModels):
                     case _:
                         entry_data["object_classes"] = ["top"]
 
-                entry = cls(**entry_data)
+                # Cast entry_data from dict[str, object] to Any to allow unpacking
+                # The dictionary is built correctly above with proper types
+                from typing import cast
+
+                entry = cls(**cast("dict[str, Any]", entry_data))
                 return FlextResult[FlextLdapModels.Entry].ok(entry)
             except Exception as e:
                 return FlextResult[FlextLdapModels.Entry].fail(
@@ -1335,7 +1333,7 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     class SearchRequest(BaseModel):
-        """LDAP Search Request with comprehensive parameters and Pydantic 2.11."""
+        """LDAP Search Request with parameters and Pydantic 2.11 validation."""
 
         # Default attribute constants
         DEFAULT_USER_ATTRIBUTES: ClassVar[list[str]] = [
@@ -1357,7 +1355,7 @@ class FlextLdapModels(FlextModels):
             """Get default user attributes for search requests.
 
             Returns:
-                List of default user attributes.
+            List of default user attributes.
 
             """
             return cls.DEFAULT_USER_ATTRIBUTES.copy()
@@ -1376,7 +1374,9 @@ class FlextLdapModels(FlextModels):
         )
 
         # Attribute selection
-        attributes: Annotated[list[str] | None, BeforeValidator(_validate_attributes_list)] = Field(
+        attributes: Annotated[
+            list[str] | None, BeforeValidator(_validate_attributes_list)
+        ] = Field(
             default=None,
             description="Attributes to return (None = all)",
         )
@@ -1404,7 +1404,7 @@ class FlextLdapModels(FlextModels):
             description="Paging cookie for continuation",
         )
 
-        # Advanced options
+        # Additional options
         types_only: bool = Field(
             default=False,
             description="Return attribute types only (no values)",
@@ -1633,9 +1633,11 @@ class FlextLdapModels(FlextModels):
         matched_dn: str = Field(default="", description="Matched DN")
         has_more_pages: bool = Field(default=False, description="More pages available")
         next_cookie: bytes | None = Field(default=None, description="Next page cookie")
-        entries_returned: Annotated[int, BeforeValidator(_set_entries_returned)] = Field(
-            default=0,
-            description="Number of entries returned",
+        entries_returned: Annotated[int, BeforeValidator(_set_entries_returned)] = (
+            Field(
+                default=0,
+                description="Number of entries returned",
+            )
         )
         time_elapsed: float = Field(default=0.0, description="Search time in seconds")
 
@@ -1660,39 +1662,39 @@ class FlextLdapModels(FlextModels):
 
         # Core DN fields
         dn: Annotated[str | None, BeforeValidator(_validate_dn_fields)] = Field(
-            None, description="Distinguished Name"
+            default=None, description="Distinguished Name"
         )
         schema_dn: Annotated[str | None, BeforeValidator(_validate_dn_fields)] = Field(
-            None, description="DN of schema subentry"
+            default=None, description="DN of schema subentry"
         )
 
         # General attributes (for Add, Update, Upsert operations)
         attributes: dict[str, str | list[str]] | None = Field(
-            None, description="Entry attributes"
+            default=None, description="Entry attributes"
         )
         object_classes: list[str] | None = Field(
-            None, description="LDAP object classes"
+            default=None, description="LDAP object classes"
         )
 
         # User/Group specific fields
-        cn: str | None = Field(None, description="Common Name")
-        sn: str | None = Field(None, description="Surname")
-        uid: str | None = Field(None, description="User ID")
-        given_name: str | None = Field(None, description="Given Name")
-        user_password: str | None = Field(None, description="User password")
+        cn: str | None = Field(default=None, description="Common Name")
+        sn: str | None = Field(default=None, description="Surname")
+        uid: str | None = Field(default=None, description="User ID")
+        given_name: str | None = Field(default=None, description="Given Name")
+        user_password: str | None = Field(default=None, description="User password")
         mail: Annotated[str | None, BeforeValidator(_validate_mail_field)] = Field(
-            None, description="Email address"
+            default=None, description="Email address"
         )
-        owner: str | None = Field(None, description="Group owner")
+        owner: str | None = Field(default=None, description="Group owner")
         member: list[str] = Field(default_factory=list, description="Group members")
 
         # ACL operations
-        acl_rules: list[str] | None = Field(None, description="ACL rules")
+        acl_rules: list[str] | None = Field(default=None, description="ACL rules")
         acl_type: AclType = "auto"
 
         # Schema attribute fields
-        name: str | None = Field(None, description="Schema element name")
-        syntax: str | None = Field(None, description="LDAP syntax OID")
+        name: str | None = Field(default=None, description="Schema element name")
+        syntax: str | None = Field(default=None, description="LDAP syntax OID")
         single_value: bool = False
         equality_match: str | None = None
         ordering_match: str | None = None
@@ -1700,10 +1702,10 @@ class FlextLdapModels(FlextModels):
 
         # Schema changes/elements
         changes: dict[str, str | list[str]] | None = Field(
-            None, description="Schema changes"
+            default=None, description="Schema changes"
         )
         schema_element: dict[str, str | list[str]] | None = Field(
-            None, description="Schema element"
+            default=None, description="Schema element"
         )
 
         # Object class definition fields
@@ -1977,7 +1979,7 @@ class FlextLdapModels(FlextModels):
             """Validate the configuration business rules and return FlextResult.
 
             Returns:
-                FlextResult[None] indicating validation success or failure
+            FlextResult[None] indicating validation success or failure
 
             """
             try:
@@ -2050,14 +2052,14 @@ class FlextLdapModels(FlextModels):
             Factory method for creating AclTarget with FlextResult error handling.
 
             Args:
-                target_type: Target type (entry, attr, etc.)
-                dn_pattern: DN pattern for target matching
-                attributes: Target attributes (empty means all)
-                filter_expression: LDAP filter for target matching
-                scope: Search scope for target
+            target_type: Target type (entry, attr, etc.)
+            dn_pattern: DN pattern for target matching
+            attributes: Target attributes (empty means all)
+            filter_expression: LDAP filter for target matching
+            scope: Search scope for target
 
             Returns:
-                FlextResult[AclTarget] containing the created instance
+            FlextResult[AclTarget] containing the created instance
 
             """
             # Explicit FlextResult error handling - NO try/except

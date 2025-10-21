@@ -43,7 +43,6 @@ from flext_ldap import (
     FlextLdapModels,
     FlextLdapValidations,
 )
-from flext_ldap.typings import SearchResult
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -88,8 +87,8 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
 
     # Simple search for all person entries
     logger.info(f"Searching for person objects in {BASE_DN}")
-    result = cast(
-        "FlextResult[list[dict[str, object]]]",
+    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
         api.search_entries(
             base_dn=BASE_DN,
             filter_str="(objectClass=person)",
@@ -104,9 +103,8 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
     entries = result.unwrap()
     logger.info(f"✅ Found {len(entries)} person entries")
     for i, entry in enumerate(entries[:5], 1):  # Show first 5
-        cn = entry.get("cn", ["N/A"])
-        cn_str = cn[0] if isinstance(cn, list) else cn
-        logger.info(f"   {i}. {cn_str} (DN: {entry.get('dn', 'N/A')})")
+        cn = entry.cn or "N/A"
+        logger.info(f"   {i}. {cn} (DN: {entry.dn})")
 
 
 def demonstrate_search_one(api: FlextLdap) -> None:
@@ -167,9 +165,9 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     logger.info(f"   Scope: {search_request.scope}")
     logger.info(f"   Size Limit: {search_request.size_limit}")
 
-    # Execute search using search_entries (returns SearchResponse)
-    result = cast(
-        "FlextResult[list[dict[str, object]]]",
+    # Execute search using search_entries (returns list of entries)
+    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
         api.search_entries(
             base_dn=search_request.base_dn,
             filter_str=search_request.filter_str,  # Access the actual field name
@@ -184,9 +182,8 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     entries = result.unwrap()
     logger.info(f"✅ Found {len(entries)} organizational units")
     for i, entry in enumerate(entries, 1):
-        ou = entry.get("ou", ["N/A"])
-        ou_str = ou[0] if isinstance(ou, list) else ou
-        logger.info(f"   {i}. OU: {ou_str}")
+        ou = entry.organizational_unit or "N/A"
+        logger.info(f"   {i}. OU: {ou}")
 
 
 def demonstrate_group_search(api: FlextLdap) -> None:
@@ -202,23 +199,26 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     groups_dn = f"ou=groups,{BASE_DN}"
     logger.info(f"Searching for groups in {groups_dn}")
 
-    result: FlextResult[SearchResult] = api.search_groups(
-        search_base=groups_dn,
-        attributes=["cn", "member", "description"],
+    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
+        api.search_groups(
+            search_base=groups_dn,
+            attributes=["cn", "member", "description"],
+        ),
     )
 
     if result.is_failure:
         logger.error(f"❌ Group search failed: {result.error}")
         return
 
-    groups: SearchResult = result.unwrap()
+    groups = result.unwrap()
     logger.info(f"✅ Found {len(groups)} groups")
     for i, group in enumerate(groups[:3], 1):  # Show first 3
-        logger.info(f"   {i}. Group DN: {group.get('dn', 'N/A')}")
-        # Access attributes through the dictionary
-        cn_value = group.get("cn", "N/A")
-        member_dns = group.get("member", [])
-        member_count = len(member_dns) if isinstance(member_dns, list) else 1
+        logger.info(f"   {i}. Group DN: {group.dn}")
+        # Access attributes directly from Entry object
+        cn_value = group.cn or "N/A"
+        member_dns = group.member_dns or []
+        member_count = len(member_dns)
         logger.info(f"      CN: {cn_value}, Members: {member_count}")
 
 
@@ -239,10 +239,13 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     for _scope, description in scopes:
         logger.info(f"\nTesting {description}:")
-        result: FlextResult[SearchResult] = api.search_entries(
-            base_dn=BASE_DN,
-            filter_str="(objectClass=*)",
-            attributes=["dn"],
+        result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+            "FlextResult[list[FlextLdapModels.Entry]]",
+            api.search_entries(
+                base_dn=BASE_DN,
+                filter_str="(objectClass=*)",
+                attributes=["dn"],
+            ),
         )
 
         if result.is_success:
@@ -323,10 +326,13 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
 
     # Search with specific attributes
     logger.info("Requesting only 'cn' and 'mail' attributes:")
-    result: FlextResult[SearchResult] = api.search(
-        base_dn=BASE_DN,
-        search_filter="(objectClass=inetOrgPerson)",
-        attributes=["cn", "mail"],  # Only these attributes
+    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
+        "FlextResult[list[FlextLdapModels.Entry]]",
+        api.search(
+            base_dn=BASE_DN,
+            search_filter="(objectClass=inetOrgPerson)",
+            attributes=["cn", "mail"],  # Only these attributes
+        ),
     )
 
     if result.is_failure:
@@ -337,7 +343,9 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
     if entries:
         logger.info(f"✅ Found {len(entries)} entries")
         entry = entries[0]
-        logger.info(f"   First entry attributes: {list(entry.keys())}")
+        logger.info(
+            f"   First entry DN: {entry.dn}, CN: {entry.cn}, Mail: {entry.mail}"
+        )
     else:
         logger.info("⚠️  No entries found")
 

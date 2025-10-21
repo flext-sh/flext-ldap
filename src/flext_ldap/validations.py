@@ -1,11 +1,11 @@
-"""FLEXT-LDAP Centralized Validations - Break circular dependency.
+"""Centralized LDAP validations breaking circular dependencies.
 
-Extracted from domain.py to eliminate circular import between models.py and domain.py.
-This module provides centralized validation logic used by Pydantic validators.
+Extracted from domain.py to eliminate circular imports. Provides
+centralized validation logic for Pydantic validators with DN format,
+filter syntax, and attribute validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -218,8 +218,6 @@ class FlextLdapValidations:
     @staticmethod
     def validate_dn_for_field(dn: str) -> str:
         """DN validation for Pydantic field validators - raises exception on failure."""
-        # Import here to avoid circular dependency
-
         # Clean DN first to handle OID export quirks
         cleaned_dn = DnService.clean_dn(dn)
 

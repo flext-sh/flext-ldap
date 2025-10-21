@@ -19,6 +19,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
@@ -70,10 +71,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Discover schema from OpenLDAP 2.x server.
 
         Args:
-            connection: Active ldap3 connection
+        connection: Active ldap3 connection
 
         Returns:
-            FlextResult containing schema information
+        FlextResult containing schema information
 
         """
         try:
@@ -131,10 +132,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Parse OpenLDAP objectClass definition.
 
         Args:
-            object_class_def: ObjectClass definition string
+        object_class_def: ObjectClass definition string
 
         Returns:
-            FlextResult containing parsed objectClass
+        FlextResult containing parsed objectClass
 
         """
         # Basic parsing - would need full RFC 4512 parser for production
@@ -154,10 +155,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Parse OpenLDAP attributeType definition.
 
         Args:
-            attribute_def: AttributeType definition string
+        attribute_def: AttributeType definition string
 
         Returns:
-            FlextResult containing parsed attribute
+        FlextResult containing parsed attribute
 
         """
         try:
@@ -192,11 +193,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Get olcAccess ACLs from OpenLDAP 2.x.
 
         Args:
-            connection: Active ldap3 connection
-            dn: DN of config entry (e.g., olcDatabase={1}mdb,cn=config)
+        connection: Active ldap3 connection
+        dn: DN of config entry (e.g., olcDatabase={1}mdb,cn=config)
 
         Returns:
-            FlextResult containing list of ACLs
+        FlextResult containing list of ACLs
 
         """
         try:
@@ -239,12 +240,12 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Set olcAccess ACLs on OpenLDAP 2.x.
 
         Args:
-            connection: Active ldap3 connection
-            dn: DN of config entry
-            acls: List of ACL dictionaries
+        connection: Active ldap3 connection
+        dn: DN of config entry
+        acls: List of ACL dictionaries
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
         try:
@@ -262,11 +263,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 formatted_acls.append(format_result.unwrap())
 
             # Modify entry with new ACLs
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.modify(
-                dn,
-                {"olcAccess": [(MODIFY_REPLACE, formatted_acls)]},
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", {"olcAccess": [(MODIFY_REPLACE, formatted_acls)]})
+            success: bool = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -292,10 +292,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         {0}to * by self write by anonymous auth by * read
 
         Args:
-            acl_string: olcAccess ACL string
+        acl_string: olcAccess ACL string
 
         Returns:
-            FlextResult containing parsed ACL
+        FlextResult containing parsed ACL
 
         """
         try:
@@ -330,10 +330,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Format ACL dict[str, object] to olcAccess string.
 
         Args:
-            acl_dict: ACL dictionary
+        acl_dict: ACL dictionary
 
         Returns:
-            FlextResult containing formatted ACL string
+        FlextResult containing formatted ACL string
 
         """
         try:
@@ -371,11 +371,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Add entry to OpenLDAP 2.x server.
 
         Args:
-            connection: Active ldap3 connection
-            entry: FlextLdif Entry to add
+        connection: Active ldap3 connection
+        entry: FlextLdif Entry to add
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
         try:
@@ -404,11 +404,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
             # Add entry using ldap3
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.add(
-                str(normalized_entry.dn),
-                object_class,
-                attributes=ldap3_attrs or None,
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            success: bool = typed_conn.add(
+                str(normalized_entry.dn), object_class, attributes=attrs_casted
             )
 
             if not success:
@@ -437,12 +437,12 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Modify entry in OpenLDAP 2.x.
 
         Args:
-            connection: Active ldap3 connection
-            dn: DN of entry to modify
-            modifications: Dict of attribute modifications
+        connection: Active ldap3 connection
+        dn: DN of entry to modify
+        modifications: Dict of attribute modifications
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
         try:
@@ -460,10 +460,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success = connection.modify(
-                dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
+            success = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -486,19 +486,20 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Delete entry from OpenLDAP 2.x.
 
         Args:
-            connection: Active ldap3 connection
-            dn: DN of entry to delete
+        connection: Active ldap3 connection
+        dn: DN of entry to delete
 
         Returns:
-            FlextResult indicating success
+        FlextResult indicating success
 
         """
         try:
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.delete(dn)
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            success: bool = typed_conn.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(
@@ -524,10 +525,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Normalize entry for OpenLDAP 2.x.
 
         Args:
-            entry: FlextLdif Entry to normalize
+        entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         # OpenLDAP 2.x generally uses standard LDAP conventions
@@ -566,15 +567,15 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Execute paged search on OpenLDAP 2.x.
 
         Args:
-            connection: Active ldap3 connection
-            base_dn: Search base DN
-            search_filter: LDAP search filter
-            attributes: Attributes to retrieve
-            scope: Search scope (base, level, or subtree)
-            page_size: Page size for results
+        connection: Active ldap3 connection
+        base_dn: Search base DN
+        search_filter: LDAP search filter
+        attributes: Attributes to retrieve
+        scope: Search scope (base, level, or subtree)
+        page_size: Page size for results
 
         Returns:
-            FlextResult containing list of entries
+        FlextResult containing list of entries
 
         """
         try:
@@ -638,10 +639,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Get Root DSE attributes for OpenLDAP 2.x server.
 
         Args:
-            connection: Active ldap3 connection
+        connection: Active ldap3 connection
 
         Returns:
-            FlextResult containing Root DSE attributes
+        FlextResult containing Root DSE attributes
 
         """
         try:
@@ -711,10 +712,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """Get supported controls for OpenLDAP 2.x server.
 
         Args:
-            connection: Active ldap3 connection
+        connection: Active ldap3 connection
 
         Returns:
-            FlextResult containing list of supported control OIDs
+        FlextResult containing list of supported control OIDs
 
         """
         try:
@@ -768,11 +769,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         - Normalizes attribute names to lowercase
 
         Args:
-            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-            target_server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
+        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
+        target_server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         # Convert FlextLdapModels.Entry to FlextLdifModels.Entry if needed
@@ -812,11 +813,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         - ObjectClass values are valid for OpenLDAP 2.x
 
         Args:
-            entry: Entry to validate
-            server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
+        entry: Entry to validate
+        server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
 
         Returns:
-            FlextResult[bool] indicating validation success
+        FlextResult[bool] indicating validation success
 
         """
         try:

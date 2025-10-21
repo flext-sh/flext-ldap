@@ -1,11 +1,10 @@
-"""Server Operations Factory for dynamic server type instantiation.
+"""Server operations factory for dynamic instantiation.
 
-This module provides a factory for creating appropriate server operations
-instances based on server type detection from connections or entries.
+Factory for creating appropriate server operations instances based on
+detected server type from connections or entries with auto-detection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -131,10 +130,10 @@ class FlextLdapServersFactory(FlextService[None]):
         determine the appropriate server operations class.
 
         Args:
-            entries: List of FlextLdif entries to analyze
+        entries: List of FlextLdif entries to analyze
 
         Returns:
-            FlextResult containing server operations instance
+        FlextResult containing server operations instance
 
         """
         try:
@@ -293,10 +292,10 @@ class FlextLdapServersFactory(FlextService[None]):
         appropriate server operations class.
 
         Args:
-            connection: Active ldap3 connection
+        connection: Active ldap3 connection
 
         Returns:
-            FlextResult containing server operations instance
+        FlextResult containing server operations instance
 
         """
         try:
@@ -334,7 +333,7 @@ class FlextLdapServersFactory(FlextService[None]):
         """Get list of supported server types.
 
         Returns:
-            List of server type identifiers
+        List of server type identifiers
 
         """
         return list(self._server_registry.keys())
@@ -343,10 +342,10 @@ class FlextLdapServersFactory(FlextService[None]):
         """Check if server type is supported.
 
         Args:
-            server_type: Server type identifier
+        server_type: Server type identifier
 
         Returns:
-            True if server type is supported
+        True if server type is supported
 
         """
         return server_type.lower().strip() in self._server_registry
@@ -355,10 +354,10 @@ class FlextLdapServersFactory(FlextService[None]):
         """Get information about a server type.
 
         Args:
-            server_type: Server type identifier
+        server_type: Server type identifier
 
         Returns:
-            FlextResult containing server information dict
+        FlextResult containing server information dict
 
         """
         try:

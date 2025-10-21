@@ -1,18 +1,16 @@
-"""LDAP domain type exports - centralized in FlextTypes.Ldap.
+"""LDAP domain type definitions centralized in FlextLdapTypes.
 
-This module consolidates all type aliases, type definitions, and protocol
-definitions used throughout the flext-ldap domain. Following FLEXT standards,
-all types are organized under a single FlextLdapTypes class and extend
-centralized types from flext-core.
+Consolidated type aliases, definitions, and protocols for flext-ldap.
+All types organized under FlextLdapTypes class extending flext-core
+centralized types per FLEXT standards.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Protocol
+from typing import Annotated, Protocol
 
 from flext_core import FlextTypes
 from pydantic import Field
@@ -97,7 +95,7 @@ type ConnectionConfig = dict[str, str | int | bool | list[str] | None]
 type AuthenticationConfig = dict[str, str | bool | list[str] | None]
 type SearchConfig = dict[str, str | int | bool | list[str] | None]
 
-# Advanced configuration types
+# Configuration types
 type ServerPoolConfig = dict[str, list[str] | int | bool | None]
 type RetryConfig = dict[str, int | float | bool | None]
 type TimeoutConfig = dict[str, int | float | None]
@@ -152,14 +150,14 @@ class FlextLdapTypes(FlextTypes):
         eliminating verbose Field() declarations in LDAP models and services.
 
         Example:
-            from flext_ldap.typings import FlextLdapTypes
-            from pydantic import BaseModel
+        from flext_ldap.typings import FlextLdapTypes
+        from pydantic import BaseModel
 
-            class LdapConnectionConfig(BaseModel):
-                server_uri: FlextLdapTypes.AnnotatedLdap.ServerUri
-                bind_dn: FlextLdapTypes.AnnotatedLdap.BindDN
-                port: FlextLdapTypes.AnnotatedLdap.LdapPort
-                timeout: FlextLdapTypes.AnnotatedLdap.ConnectionTimeout
+        class LdapConnectionConfig(BaseModel):
+        server_uri: FlextLdapTypes.AnnotatedLdap.ServerUri
+        bind_dn: FlextLdapTypes.AnnotatedLdap.BindDN
+        port: FlextLdapTypes.AnnotatedLdap.LdapPort
+        timeout: FlextLdapTypes.AnnotatedLdap.ConnectionTimeout
 
         """
 
@@ -276,7 +274,7 @@ class FlextLdapTypes(FlextTypes):
 
             # Properties
             @property
-            def entries(self) -> list[Any]:
+            def entries(self) -> list[object]:
                 """List of Entry objects from last search operation."""
                 ...
 
@@ -286,12 +284,12 @@ class FlextLdapTypes(FlextTypes):
                 ...
 
             @property
-            def result(self) -> dict[str, Any]:
+            def result(self) -> dict[str, object]:
                 """Result of last LDAP operation."""
                 ...
 
             @property
-            def response(self) -> list[dict[str, Any]]:
+            def response(self) -> list[dict[str, object]]:
                 """Response from last LDAP operation."""
                 ...
 
@@ -310,7 +308,7 @@ class FlextLdapTypes(FlextTypes):
                 search_filter: str,
                 search_scope: str | int,
                 attributes: list[str] | None = None,
-                **kwargs: Any,
+                **kwargs: object,
             ) -> bool:
                 """Execute LDAP search. Returns True if successful."""
                 ...
@@ -319,8 +317,8 @@ class FlextLdapTypes(FlextTypes):
                 self,
                 dn: str,
                 object_class: str | list[str] | None = None,
-                attributes: dict[str, Any] | None = None,
-                **kwargs: Any,
+                attributes: dict[str, str | list[str]] | None = None,
+                **kwargs: object,
             ) -> bool:
                 """Add LDAP entry. Returns True if successful."""
                 ...
@@ -328,13 +326,13 @@ class FlextLdapTypes(FlextTypes):
             def modify(
                 self,
                 dn: str,
-                changes: dict[str, Any],
-                **kwargs: Any,
+                changes: dict[str, list[tuple[int, list[str]]]],
+                **kwargs: object,
             ) -> bool:
                 """Modify LDAP entry. Returns True if successful."""
                 ...
 
-            def delete(self, dn: str, **kwargs: Any) -> bool:
+            def delete(self, dn: str, **kwargs: object) -> bool:
                 """Delete LDAP entry. Returns True if successful."""
                 ...
 
@@ -351,7 +349,7 @@ class FlextLdapTypes(FlextTypes):
                 ...
 
             @property
-            def entry_attributes_as_dict(self) -> dict[str, Any]:
+            def entry_attributes_as_dict(self) -> dict[str, list[str]]:
                 """Entry attributes as dictionary."""
                 ...
 
@@ -359,7 +357,7 @@ class FlextLdapTypes(FlextTypes):
                 """Convert entry to JSON string."""
                 ...
 
-            def __getattr__(self, name: str) -> Any:
+            def __getattr__(self, name: str) -> object:
                 """Dynamic attribute access for LDAP attributes."""
                 ...
 
@@ -386,7 +384,6 @@ class FlextLdapTypes(FlextTypes):
 
 __all__ = [
     "AclType",
-    "Any",  # Re-export for type stub usage
     "AttributeDict",
     "AttributeName",
     "AttributeValue",
@@ -419,7 +416,6 @@ __all__ = [
     "ObjectClass",
     "ObjectClassKind",
     "OperationType",
-    "Protocol",  # Re-export for type stub usage
     "RetryConfig",
     "SearchConfig",
     "SearchConfiguration",

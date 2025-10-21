@@ -29,7 +29,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     - slapd.conf static configuration (not cn=config)
     - access ACL attribute (not olcAccess)
     - Inherits most operations from OpenLDAP 2.x
-    - Different ACL syntax (access to ... by ...)
+    - Different ACL syntax (access to... by...)
     - Legacy objectClass support
     - Different replication mechanisms (slurpd vs syncrepl)
     """
@@ -111,7 +111,10 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         if rule_stripped:
                             # Each rule is "<who> <access>"
                             parts = rule.rsplit(" ", 1)
-                            if len(parts) == FlextLdapConstants.AclParsing.ACL_RULE_PARTS:
+                            if (
+                                len(parts)
+                                == FlextLdapConstants.AclParsing.ACL_RULE_PARTS
+                            ):
                                 rules.append({
                                     "who": parts[0].strip(),
                                     "access": parts[1].strip(),
@@ -200,10 +203,10 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         - Schema extensions via slapd.conf include directives
 
         Args:
-            entry: FlextLdif Entry to normalize
+        entry: FlextLdif Entry to normalize
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         try:
@@ -228,7 +231,9 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                         continue
                     if oc.startswith("olc"):
                         # Remove olc prefix for 1.x compatibility
-                        prefix_len = FlextLdapConstants.AclParsing.OPENLDAP_PREFIX_LENGTH
+                        prefix_len = (
+                            FlextLdapConstants.AclParsing.OPENLDAP_PREFIX_LENGTH
+                        )
                         min_len = FlextLdapConstants.AclParsing.MIN_OC_LENGTH
                         mapped_classes.append(
                             oc[prefix_len:] if len(oc) > min_len else oc,
@@ -282,7 +287,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         OpenLDAP 1.x uses static slapd.conf, not cn=config.
 
         Returns:
-            False - requires restart for config changes
+        False - requires restart for config changes
 
         """
         return False
@@ -375,11 +380,11 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         - Remove cn=config specific attributes
 
         Args:
-            entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-            target_server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
+        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
+        target_server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
 
         Returns:
-            FlextResult containing normalized entry
+        FlextResult containing normalized entry
 
         """
         # Convert FlextLdapModels.Entry to FlextLdifModels.Entry if needed
@@ -420,11 +425,11 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         - No cn=config attributes
 
         Args:
-            entry: Entry to validate
-            server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
+        entry: Entry to validate
+        server_type: Ignored for OpenLDAP 1.x (uses self._server_type)
 
         Returns:
-            FlextResult[bool] indicating validation success
+        FlextResult[bool] indicating validation success
 
         """
         try:

@@ -18,6 +18,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
@@ -78,12 +79,14 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         ldap3 does all RFC 4512 parsing automatically!
         """
         try:
-            if not connection.server.schema:
+            # Access Server's schema attribute dynamically (ldap3 Server has runtime attributes)
+            server = connection.server
+            if not hasattr(server, "schema") or not getattr(server, "schema", None):
                 # Force schema loading
-                connection.server.get_info = "SCHEMA"
+                setattr(server, "get_info", "SCHEMA")
                 connection.bind()
 
-            schema = connection.server.schema
+            schema = getattr(server, "schema")
 
             # Handle case where schema is None (not loaded)
             if schema is None:
@@ -324,11 +327,11 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                 if attr_name != "objectClass":
                     ldap3_attrs[attr_name] = [str(v) for v in attr_value.values]
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.add(
-                str(normalized_entry.dn),
-                object_class,
-                attributes=ldap3_attrs or None,
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            success: bool = typed_conn.add(
+                str(normalized_entry.dn), object_class, attributes=attrs_casted
             )
 
             if not success:
@@ -366,10 +369,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                     [(MODIFY_REPLACE, str_values)],
                 )
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.modify(
-                dn, cast("dict[str, list[tuple[int, list[str] | str]]]", ldap3_mods)
-            )
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
+            success: bool = typed_conn.modify(dn, mods)
 
             if not success:
                 error_msg = connection.result.get(
@@ -391,8 +394,9 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            # ldap3 library has incomplete type stubs; external library limitation
-            success: bool = connection.delete(dn)
+            # Cast to Protocol type for proper type checking with ldap3
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            success: bool = typed_conn.delete(dn)
 
             if not success:
                 error_msg = connection.result.get(

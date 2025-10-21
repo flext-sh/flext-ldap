@@ -1,8 +1,10 @@
-"""ACL Converters for FLEXT LDAP.
+"""ACL converters between different LDAP server formats.
+
+Converts ACL representations between OpenLDAP, Oracle, Active Directory,
+and unified internal formats with format detection and normalization.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -49,9 +51,9 @@ class FlextLdapAclConverters:
         Note: Conversion not yet implemented - requires vendor ACL syntax knowledge.
 
         Args:
-            _acl_content: ACL content (unused - reserved for future implementation)
-            source_format: Source ACL format
-            target_format: Target ACL format
+        _acl_content: ACL content (unused - reserved for future implementation)
+        source_format: Source ACL format
+        target_format: Target ACL format
 
         """
         msg = f"ACL conversion {source_format} → {target_format} not implemented"

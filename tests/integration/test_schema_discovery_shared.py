@@ -82,10 +82,11 @@ class TestSharedSchemaDiscovery:
         assert isinstance(server_info, FlextLdapModels.ServerInfo)
 
         # Check for common LDAP server attributes
-        expected_attrs = ["vendorName", "description", "supportedLDAPVersion"]
+        expected_attrs = ["vendor_name", "description", "supported_ldap_version"]
         for attr in expected_attrs:
-            if attr in server_info:
-                assert server_info[attr] is not None
+            if hasattr(server_info, attr):
+                attr_value = getattr(server_info, attr, None)
+                assert attr_value is not None
 
     def test_get_server_quirks_with_shared_server(
         self,

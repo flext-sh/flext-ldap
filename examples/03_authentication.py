@@ -35,7 +35,6 @@ from flext_core import FlextLogger, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
-from flext_ldap.typings import LdapAttributeValue
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -209,7 +208,7 @@ class DemoLdapApi:
 
     def authenticate_user(
         self, username: str, password: str
-    ) -> FlextResult[FlextLdapModels.LdapUser]:
+    ) -> FlextResult[FlextLdapModels.Entry]:
         """Authenticate user with username and password.
 
         Args:
@@ -217,22 +216,22 @@ class DemoLdapApi:
             password: Password for authentication
 
         Returns:
-            Success result with LdapUser or error result
+            Success result with Entry or error result
 
         """
         success, error = DemoAuthScenarios.authenticate(username, password)
         if success:
-            # Create a mock LdapUser for demo purposes
-            user = FlextLdapModels.LdapUser(
+            # Create a mock Entry for demo purposes
+            user = FlextLdapModels.Entry(
+                entry_type="user",
                 dn=f"cn={username},{BASE_DN}",
                 cn=username,
                 uid=username,
                 sn=username,
+                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
             )
-            return FlextResult[FlextLdapModels.LdapUser].ok(user)
-        return FlextResult[FlextLdapModels.LdapUser].fail(
-            error or "Authentication failed"
-        )
+            return FlextResult[FlextLdapModels.Entry].ok(user)
+        return FlextResult[FlextLdapModels.Entry].fail(error or "Authentication failed")
 
     @property
     def authentication(self) -> DemoLdapApi:
@@ -262,7 +261,7 @@ class DemoLdapApi:
         if attributes is None:
             return FlextResult[FlextLdapModels.Entry | None].ok(None)
         # Convert attributes to correct type
-        typed_attributes: dict[str, LdapAttributeValue] = {}
+        typed_attributes: dict[str, str | list[str]] = {}
         if attributes:
             for key, value in attributes.items():
                 if isinstance(value, list):

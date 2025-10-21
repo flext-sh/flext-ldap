@@ -34,7 +34,9 @@ class TestFlextLdapSearch:
 
     def test_search_initialization_with_parent(self) -> None:
         """Test search service initialization with parent."""
-        parent = object()
+        from flext_ldap import FlextLdapClients
+
+        parent = FlextLdapClients()
         search = FlextLdapSearch(parent=parent)
         assert search is not None
         assert hasattr(search, "_parent")

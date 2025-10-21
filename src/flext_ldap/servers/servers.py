@@ -1,12 +1,10 @@
-"""Unified LDAP server operations for flext-ldap domain.
+"""Unified LDAP server operations consolidation.
 
-This module provides a single FlextLdapServers class that consolidates all
-server-specific LDAP operations into one unified interface following FLEXT
-single-class-per-module pattern.
+Single FlextLdapServers class consolidating all server-specific LDAP
+operations with unified interface following FLEXT patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -28,10 +26,10 @@ class FlextLdapServers(FlextService[None]):
     different server types (OpenLDAP, Oracle OID/OUD, Active Directory, etc.)
     following FLEXT single-class-per-module pattern.
 
-    **UNIFIED SERVER OPERATIONS**: One class handles all server types through
+    UNIFIED SERVER OPERATIONS: One class handles all server types through
     internal factory pattern and server-specific implementations.
 
-    **PROTOCOL COMPLIANCE**: Implements server-specific protocols through
+    PROTOCOL COMPLIANCE: Implements server-specific protocols through
     structural subtyping and factory-based delegation.
     """
 
@@ -39,7 +37,7 @@ class FlextLdapServers(FlextService[None]):
         """Initialize unified server operations with Phase 1 context enrichment.
 
         Args:
-            server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic)
+        server_type: LDAP server type (openldap1, openldap2, oid, oud, ad, generic)
 
         """
         super().__init__()
@@ -70,10 +68,10 @@ class FlextLdapServers(FlextService[None]):
         """Factory method to create operations instance for server type.
 
         Args:
-            server_type: Server type identifier
+        server_type: Server type identifier
 
         Returns:
-            Server operations instance
+        Server operations instance
 
         """
         factory = FlextLdapServersFactory()

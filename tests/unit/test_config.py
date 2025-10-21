@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextExceptions, FlextTypes
+from flext_core import FlextExceptions
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -48,7 +48,7 @@ class TestFlextLdapConfig:
 
     def test_create_connection_config_success(
         self,
-        ldap_server_config: FlextTypes.Dict,
+        ldap_server_config: dict[str, object],
     ) -> None:
         """Test successful connection config creation."""
         configs = FlextLdapConfig()
@@ -72,7 +72,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with minimal config data - should succeed with defaults
-        minimal_config: FlextTypes.Dict = {
+        minimal_config: dict[str, object] = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -124,7 +124,7 @@ class TestFlextLdapConfig:
         """Test successful search config creation."""
         configs = FlextLdapConfig()
 
-        search_data: FlextTypes.Dict = {
+        search_data: dict[str, object] = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -143,7 +143,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause Pydantic validation to fail
-        invalid_data: FlextTypes.Dict = {
+        invalid_data: dict[str, object] = {
             "base_dn": None,
             "filter_str": None,
             "attributes": "invalid",
@@ -160,7 +160,7 @@ class TestFlextLdapConfig:
         """Test successful modify config creation."""
         configs = FlextLdapConfig()
 
-        modify_data: FlextTypes.Dict = {
+        modify_data: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "operation": "replace",
             "attribute": "cn",
@@ -181,7 +181,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: FlextTypes.Dict = {
+        data_with_types: dict[str, object] = {
             "dn": None,
             "operation": None,
             "attribute": None,
@@ -200,7 +200,7 @@ class TestFlextLdapConfig:
         """Test successful add config creation."""
         configs = FlextLdapConfig()
 
-        add_data: FlextTypes.Dict = {
+        add_data: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": [
@@ -228,7 +228,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with data that needs type conversion
-        data_with_types: FlextTypes.Dict = {"dn": None, "attributes": "invalid"}
+        data_with_types: dict[str, object] = {"dn": None, "attributes": "invalid"}
         result = configs.create_add_config(data_with_types)
 
         # The method should succeed with proper type conversion
@@ -242,7 +242,7 @@ class TestFlextLdapConfig:
         """Test successful delete config creation."""
         configs = FlextLdapConfig()
 
-        delete_data: FlextTypes.Dict = {
+        delete_data: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com"
         }
 
@@ -257,7 +257,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test with invalid data that would cause an exception
-        invalid_data: FlextTypes.Dict = {"dn": None}
+        invalid_data: dict[str, object] = {"dn": None}
         result = configs.create_delete_config(invalid_data)
 
         # The method should still succeed as it uses defaults and str() conversion
@@ -266,7 +266,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_success(
         self,
-        ldap_server_config: FlextTypes.Dict,
+        ldap_server_config: dict[str, object],
     ) -> None:
         """Test successful connection data validation."""
         # Update the config to use the expected field names
@@ -283,7 +283,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
-        invalid_data: FlextTypes.Dict = {"invalid": "data"}
+        invalid_data: dict[str, object] = {"invalid": "data"}
         result = FlextLdapValidations.validate_connection_config(invalid_data)
 
         assert result.is_failure
@@ -295,7 +295,7 @@ class TestFlextLdapConfig:
 
     def test_validate_connection_data_missing_required_fields(self) -> None:
         """Test connection data validation with missing required fields."""
-        incomplete_data: FlextTypes.Dict = {
+        incomplete_data: dict[str, object] = {
             "server": "localhost"
             # Missing port, bind_dn, bind_password
         }
@@ -457,23 +457,24 @@ class TestFlextLdapConfig:
         result = FlextLdapConfig.get_default_search_config()
 
         assert result.is_success
-        assert isinstance(result.unwrap(), dict)
-        assert "base_dn" in result.unwrap()
-        assert "filter_str" in result.unwrap()
-        assert "attributes" in result.unwrap()
+        search_config = result.unwrap()
+        # Check that the SearchConfig model has the expected attributes
+        assert hasattr(search_config, "base_dn")
+        assert hasattr(search_config, "filter_str")
+        assert hasattr(search_config, "attributes")
 
     def test_merge_configs_success(self) -> None:
         """Test successful config merging."""
         configs = FlextLdapConfig()
 
-        base_config: FlextTypes.Dict = {
+        base_config: dict[str, object] = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
             "password": "admin123",
             "base_dn": "dc=example,dc=com",
         }
 
-        override_config: FlextTypes.Dict = {
+        override_config: dict[str, object] = {
             "server_uri": f"ldap://newserver:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "connection_timeout": 60,
         }
@@ -492,7 +493,7 @@ class TestFlextLdapConfig:
         """Test config merging with empty override."""
         configs = FlextLdapConfig()
 
-        base_config: FlextTypes.Dict = {
+        base_config: dict[str, object] = {
             "server_uri": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
             "bind_dn": "cn=admin,dc=example,dc=com",
         }
@@ -594,7 +595,7 @@ class TestFlextLdapConfig:
         configs = FlextLdapConfig()
 
         # Test complete workflow with valid data
-        conn_config: FlextTypes.Dict = {
+        conn_config: dict[str, object] = {
             "server": "ldap://localhost",
             "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
@@ -604,7 +605,7 @@ class TestFlextLdapConfig:
         conn_result = configs.create_from_connection_config_data(conn_config)
         assert conn_result.is_success
 
-        search_config: FlextTypes.Dict = {
+        search_config: dict[str, object] = {
             "base_dn": "dc=example,dc=com",
             "filter_str": "(objectClass=person)",
             "attributes": ["cn", "sn", "mail"],
@@ -612,7 +613,7 @@ class TestFlextLdapConfig:
         search_result = configs.create_search_config(search_config)
         assert search_result.is_success
 
-        add_config: FlextTypes.Dict = {
+        add_config: dict[str, object] = {
             "dn": "uid=testuser,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
@@ -721,13 +722,18 @@ class TestFlextLdapConfig:
             ldap_bind_password=secret("secret"),
         )
 
-        # Type cast for computed property type inference issues
-        # The computed properties return dict[str, object] but type checker infers Callable
-        # Pydantic v2: computed fields return model objects, use attribute access
-        assert config.connection_info.server == "ldaps://localhost"
-        assert config.connection_info.port == 636
-        assert config.connection_info.use_ssl is True
-        assert config.authentication_info.bind_dn_configured is True
+        # Get connection and authentication info from config
+        from typing import cast
+
+        conn_info = cast("FlextLdapModels.ConnectionInfo", config.connection_info)
+        auth_info = cast(
+            "FlextLdapModels.ConfigRuntimeMetadata.Authentication",
+            config.authentication_info,
+        )
+        assert conn_info.server == "ldaps://localhost"
+        assert conn_info.port == 636
+        assert conn_info.use_ssl is True
+        assert auth_info.bind_dn_configured is True
 
     # Obsolete test - get_pool_config method no longer exists in optimized API
     # def test_get_pool_config(self) -> None:
@@ -821,19 +827,20 @@ class TestFlextLdapConfig:
 
     def test_get_default_search_config_returns_dict(self) -> None:
         """Test get_default_search_config returns proper dictionary."""
-        configs = FlextLdapConfig()
-        result = configs.get_default_search_config()
+        result = FlextLdapConfig.get_default_search_config()
 
         assert result.is_success
-        assert "base_dn" in result.unwrap()
-        assert "filter_str" in result.unwrap()
-        assert "scope" in result.unwrap()
+        search_config = result.unwrap()
+        # Check that the SearchConfig model has the expected attributes
+        assert hasattr(search_config, "base_dn")
+        assert hasattr(search_config, "filter_str")
+        assert hasattr(search_config, "attributes")
 
     def test_merge_configs(self) -> None:
         """Test merge_configs method."""
         configs = FlextLdapConfig()
-        base_config: FlextTypes.Dict = {"server": "ldap://localhost", "port": 389}
-        override_config: FlextTypes.Dict = {"port": 636, "use_ssl": True}
+        base_config: dict[str, object] = {"server": "ldap://localhost", "port": 389}
+        override_config: dict[str, object] = {"port": 636, "use_ssl": True}
 
         result = configs.merge_configs(base_config, override_config)
 
@@ -921,14 +928,10 @@ class TestLdapHandlerConfiguration:
 
     def test_resolve_ldap_operation_mode_explicit_valid(self) -> None:
         """Test resolve_ldap_operation_mode with explicit valid mode - covers line 190-191."""
-        result = FlextLdapConfig.resolve_ldap_operation_mode(
-            operation_mode="search"
-        )
+        result = FlextLdapConfig.resolve_ldap_operation_mode(operation_mode="search")
         assert result == "search"
 
-        result = FlextLdapConfig.resolve_ldap_operation_mode(
-            operation_mode="modify"
-        )
+        result = FlextLdapConfig.resolve_ldap_operation_mode(operation_mode="modify")
         assert result == "modify"
 
     def test_resolve_ldap_operation_mode_from_config_attribute(self) -> None:
@@ -981,9 +984,7 @@ class TestLdapHandlerConfiguration:
 
     def test_create_ldap_handler_config_defaults(self) -> None:
         """Test create_ldap_handler_config with default parameters - covers lines 251-262."""
-        config: dict[str, object] = (
-            FlextLdapConfig.create_ldap_handler_config()
-        )
+        config: dict[str, object] = FlextLdapConfig.create_ldap_handler_config()
 
         # Defaults should be applied
         assert "handler_id" in config

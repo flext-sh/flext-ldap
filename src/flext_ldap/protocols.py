@@ -1,12 +1,11 @@
 """LDAP protocol definitions for flext-ldap domain.
 
-This module contains all protocol interfaces and abstract base classes
-used throughout the flext-ldap domain. Following FLEXT standards, all
-protocols are organized under a single FlextLdapProtocols class.
+Protocol interfaces and abstract base classes for flext-ldap domain.
+All protocols organized under single FlextLdapProtocols class per
+FLEXT standardization.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -167,12 +166,12 @@ class FlextLdapProtocols(FlextProtocols):
                 """Establish LDAP connection.
 
                 Args:
-                    server_uri: LDAP server URI
-                    bind_dn: Distinguished name for binding
-                    password: Authentication password
+                server_uri: LDAP server URI
+                bind_dn: Distinguished name for binding
+                password: Authentication password
 
                 Returns:
-                    FlextResult[bool]: Connection success status
+                FlextResult[bool]: Connection success status
 
                 """
                 ...
@@ -181,7 +180,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Close LDAP connection.
 
                 Returns:
-                    FlextResult[None]: Disconnect success status
+                FlextResult[None]: Disconnect success status
 
                 """
                 ...
@@ -190,7 +189,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Check if LDAP connection is active.
 
                 Returns:
-                    FlextResult[bool]: Connection status
+                FlextResult[bool]: Connection status
 
                 """
                 ...
@@ -208,12 +207,12 @@ class FlextLdapProtocols(FlextProtocols):
                 """Perform LDAP search operation.
 
                 Args:
-                    search_base: LDAP search base DN
-                    filter_str: LDAP search filter
-                    attributes: List of attributes to retrieve
+                search_base: LDAP search base DN
+                filter_str: LDAP search filter
+                attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[list[FlextLdapModels.Entry]]: Search results
+                FlextResult[list[FlextLdapModels.Entry]]: Search results
 
                 """
                 ...
@@ -227,12 +226,12 @@ class FlextLdapProtocols(FlextProtocols):
                 """Perform LDAP search for single entry.
 
                 Args:
-                    search_base: LDAP search base DN
-                    filter_str: LDAP search filter
-                    attributes: List of attributes to retrieve
+                search_base: LDAP search base DN
+                filter_str: LDAP search filter
+                attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[dict[str, object] | None]: Single search result or None
+                FlextResult[dict[str, object] | None]: Single search result or None
 
                 """
                 ...
@@ -249,11 +248,11 @@ class FlextLdapProtocols(FlextProtocols):
                 """Add new LDAP entry.
 
                 Args:
-                    dn: Distinguished name for new entry
-                    attributes: Entry attributes
+                dn: Distinguished name for new entry
+                attributes: Entry attributes
 
                 Returns:
-                    FlextResult[bool]: Add operation success status
+                FlextResult[bool]: Add operation success status
 
                 """
                 ...
@@ -266,11 +265,11 @@ class FlextLdapProtocols(FlextProtocols):
                 """Modify existing LDAP entry.
 
                 Args:
-                    dn: Distinguished name of entry to modify
-                    changes: Attribute changes to apply
+                dn: Distinguished name of entry to modify
+                changes: Attribute changes to apply
 
                 Returns:
-                    FlextResult[bool]: Modify operation success status
+                FlextResult[bool]: Modify operation success status
 
                 """
                 ...
@@ -279,10 +278,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Delete LDAP entry.
 
                 Args:
-                    dn: Distinguished name of entry to delete
+                dn: Distinguished name of entry to delete
 
                 Returns:
-                    FlextResult[bool]: Delete operation success status
+                FlextResult[bool]: Delete operation success status
 
                 """
                 ...
@@ -299,11 +298,11 @@ class FlextLdapProtocols(FlextProtocols):
                 """Authenticate user against LDAP.
 
                 Args:
-                    username: Username for authentication
-                    password: Password for authentication
+                username: Username for authentication
+                password: Password for authentication
 
                 Returns:
-                    FlextResult[FlextLdapModels.Entry]: Auth result
+                FlextResult[FlextLdapModels.Entry]: Auth result
 
                 """
                 ...
@@ -312,11 +311,11 @@ class FlextLdapProtocols(FlextProtocols):
                 """Validate user credentials against LDAP.
 
                 Args:
-                    dn: User distinguished name
-                    password: User password
+                dn: User distinguished name
+                password: User password
 
                 Returns:
-                    FlextResult[bool]: Validation success status
+                FlextResult[bool]: Validation success status
 
                 """
                 ...
@@ -330,9 +329,9 @@ class FlextLdapProtocols(FlextProtocols):
                 """Set the connection context for authentication operations.
 
                 Args:
-                    connection: LDAP connection object
-                    server: LDAP server object
-                    config: LDAP configuration object
+                connection: LDAP connection object
+                server: LDAP server object
+                config: LDAP configuration object
 
                 """
                 ...
@@ -345,10 +344,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Validate distinguished name format.
 
                 Args:
-                    dn: Distinguished name to validate
+                dn: Distinguished name to validate
 
                 Returns:
-                    FlextResult[bool]: Validation success status
+                FlextResult[bool]: Validation success status
 
                 """
                 ...
@@ -357,10 +356,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Validate LDAP entry structure.
 
                 Args:
-                    entry: LDAP entry to validate
+                entry: LDAP entry to validate
 
                 Returns:
-                    FlextResult[bool]: Validation success status
+                FlextResult[bool]: Validation success status
 
                 """
                 ...
@@ -386,12 +385,12 @@ class FlextLdapProtocols(FlextProtocols):
                 """Establish LDAP connection.
 
                 Args:
-                    server_uri: LDAP server URI
-                    bind_dn: Bind DN for authentication
-                    password: Password for authentication
+                server_uri: LDAP server URI
+                bind_dn: Bind DN for authentication
+                password: Password for authentication
 
                 Returns:
-                    FlextResult[bool]: Connection success status
+                FlextResult[bool]: Connection success status
 
                 """
                 ...
@@ -400,11 +399,11 @@ class FlextLdapProtocols(FlextProtocols):
                 """Bind to LDAP server.
 
                 Args:
-                    bind_dn: Distinguished name for binding
-                    password: Authentication password
+                bind_dn: Distinguished name for binding
+                password: Authentication password
 
                 Returns:
-                    FlextResult[bool]: Bind success status
+                FlextResult[bool]: Bind success status
 
                 """
                 ...
@@ -413,7 +412,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Unbind from LDAP server.
 
                 Returns:
-                    FlextResult[None]: Unbind success status
+                FlextResult[None]: Unbind success status
 
                 """
                 ...
@@ -422,7 +421,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Disconnect from LDAP server.
 
                 Returns:
-                    FlextResult[None]: Disconnect success status
+                FlextResult[None]: Disconnect success status
 
                 """
                 ...
@@ -431,7 +430,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Check if connected to LDAP server.
 
                 Returns:
-                    bool: Connection status
+                bool: Connection status
 
                 """
                 ...
@@ -440,7 +439,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Test LDAP connection.
 
                 Returns:
-                    FlextResult[bool]: Connection test success status
+                FlextResult[bool]: Connection test success status
 
                 """
                 ...
@@ -449,7 +448,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Close LDAP connection.
 
                 Returns:
-                    FlextResult[None]: Close operation success status
+                FlextResult[None]: Close operation success status
 
                 """
                 ...
@@ -458,7 +457,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Get connection string.
 
                 Returns:
-                    str: Connection string
+                str: Connection string
 
                 """
                 ...
@@ -476,12 +475,12 @@ class FlextLdapProtocols(FlextProtocols):
                 """Search for single LDAP entry.
 
                 Args:
-                    search_base: LDAP search base DN
-                    filter_str: LDAP search filter
-                    attributes: List of attributes to retrieve
+                search_base: LDAP search base DN
+                filter_str: LDAP search filter
+                attributes: List of attributes to retrieve
 
                 Returns:
-                    FlextResult[FlextLdapModels.Entry | None]: Result or None
+                FlextResult[FlextLdapModels.Entry | None]: Result or None
 
                 """
                 ...
@@ -498,15 +497,15 @@ class FlextLdapProtocols(FlextProtocols):
                 """Search for LDAP entries.
 
                 Args:
-                    base_dn: LDAP search base DN
-                    filter_str: LDAP search filter
-                    attributes: List of attributes to retrieve
-                    scope: Search scope (BASE, LEVEL, SUBTREE)
-                    page_size: Page size for paged results
-                    paged_cookie: Cookie for paged results continuation
+                base_dn: LDAP search base DN
+                filter_str: LDAP search filter
+                attributes: List of attributes to retrieve
+                scope: Search scope (BASE, LEVEL, SUBTREE)
+                page_size: Page size for paged results
+                paged_cookie: Cookie for paged results continuation
 
                 Returns:
-                    FlextResult[list[FlextLdapModels.Entry]]: Search results
+                FlextResult[list[FlextLdapModels.Entry]]: Search results
 
                 """
                 ...
@@ -515,10 +514,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Get user by DN.
 
                 Args:
-                    dn: User distinguished name
+                dn: User distinguished name
 
                 Returns:
-                    FlextResult[FlextLdapModels.Entry | None]: User object or None
+                FlextResult[FlextLdapModels.Entry | None]: User object or None
 
                 """
                 ...
@@ -527,7 +526,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """Set the connection context for search operations.
 
                 Args:
-                    connection: LDAP connection object
+                connection: LDAP connection object
 
                 """
                 ...
@@ -536,10 +535,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Get group by DN.
 
                 Args:
-                    dn: Group distinguished name
+                dn: Group distinguished name
 
                 Returns:
-                    FlextResult[FlextLdapModels.Entry | None]: Group object or None
+                FlextResult[FlextLdapModels.Entry | None]: Group object or None
 
                 """
                 ...
@@ -548,10 +547,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Check if user exists.
 
                 Args:
-                    dn: User distinguished name
+                dn: User distinguished name
 
                 Returns:
-                    FlextResult[bool]: True if user exists
+                FlextResult[bool]: True if user exists
 
                 """
                 ...
@@ -560,10 +559,10 @@ class FlextLdapProtocols(FlextProtocols):
                 """Check if group exists.
 
                 Args:
-                    dn: Group distinguished name
+                dn: Group distinguished name
 
                 Returns:
-                    FlextResult[bool]: True if group exists
+                FlextResult[bool]: True if group exists
 
                 """
                 ...

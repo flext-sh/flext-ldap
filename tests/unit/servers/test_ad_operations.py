@@ -10,11 +10,45 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Protocol
+
+import ldap3
 import pytest
 from hypothesis import given, strategies as st
-from ldap3 import MOCK_SYNC, Connection, Server
+from ldap3 import Connection, Server
 
 from flext_ldap.servers.ad_operations import FlextLdapServersActiveDirectoryOperations
+
+MOCK_SYNC: str = getattr(ldap3, "MOCK_SYNC")
+
+
+# Protocol for ldap3 mock strategy (incomplete type stubs in ldap3)
+class MockStrategy(Protocol):
+    """Protocol for ldap3 MOCK_SYNC strategy."""
+
+    def add_entry(self, dn: str, attributes: dict[str, str | list[str]]) -> bool:
+        """Add entry to mock directory."""
+        ...
+
+
+# Protocol for ldap3 Connection with mock strategy
+class MockableConnection(Protocol):
+    """Protocol for ldap3 Connection with mock capabilities."""
+
+    server: Server
+    strategy: MockStrategy
+
+    def open(self) -> bool:
+        """Open connection."""
+        ...
+
+    def bind(self) -> bool:
+        """Bind connection."""
+        ...
+
+    def unbind(self) -> bool:
+        """Unbind connection."""
+        ...
 
 
 @pytest.fixture
@@ -26,6 +60,8 @@ def mock_ad_server() -> Server:
 @pytest.fixture
 def mock_ad_connection(mock_ad_server: Server) -> Connection:
     """Create mock AD connection using ldap3.MOCK_SYNC."""
+    from typing import cast
+
     connection = Connection(
         mock_ad_server,
         user="CN=Administrator,CN=Users,DC=example,DC=com",
@@ -33,11 +69,14 @@ def mock_ad_connection(mock_ad_server: Server) -> Connection:
         client_strategy=MOCK_SYNC,
     )
 
+    # Cast to MockableConnection to access mock-specific attributes
+    mock_conn = cast("MockableConnection", connection)
+
     # Open connection and add admin user first
-    connection.open()
+    mock_conn.open()
 
     # Add admin user to mock directory
-    connection.strategy.add_entry(
+    mock_conn.strategy.add_entry(
         "CN=Administrator,CN=Users,DC=example,DC=com",
         {
             "objectClass": ["top", "person", "user"],
@@ -50,13 +89,13 @@ def mock_ad_connection(mock_ad_server: Server) -> Connection:
     connection.bind()
 
     # Add mock schema entry
-    connection.strategy.add_entry(
+    mock_conn.strategy.add_entry(
         "CN=Schema,CN=Configuration,DC=example,DC=com",
         {"objectClass": ["top", "container"], "cn": "Schema"},
     )
 
     # Add mock user entry
-    connection.strategy.add_entry(
+    mock_conn.strategy.add_entry(
         "CN=TestUser,CN=Users,DC=example,DC=com",
         {
             "objectClass": ["top", "person", "user"],

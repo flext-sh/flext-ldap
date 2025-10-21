@@ -11,16 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from pydantic import SecretStr
 
 from flext_ldap.clients import FlextLdapClients
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapAttributeValue
-
-# Disable strict pyright checks for this comprehensive test module. These tests
-# intentionally exercise protected helpers and use lightweight mocks which
-# trigger static-analysis false-positives (private usage, argument-type and
-# call-signature checks). Narrowly disable those pyright rules here.
-# pyright: reportPrivateUsage=false, reportArgumentType=false, reportCallIssue=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportIndexIssue=false
 
 
 class TestFlextLdapClientsComprehensive:
@@ -127,15 +123,6 @@ class TestFlextLdapClientsComprehensive:
                 super().__init__()
                 self.value = value
 
-        class MockEntry:
-            def __init__(self) -> None:
-                super().__init__()
-                self.entry_dn = "cn=testuser,dc=test,dc=com"
-                self.entry_attributes = {"cn": ["testuser"]}
-
-            def __getitem__(self, key: str) -> MockAttribute:
-                return MockAttribute(self.entry_attributes.get(key, []))
-
         result = client.authenticate_user("testuser", "testpass")
         assert result.is_failure
         assert result.error is not None
@@ -227,7 +214,7 @@ class TestFlextLdapClientsComprehensive:
         """Test add_user_to_ldap when not connected."""
         client = FlextLdapClients()
 
-        attributes = {
+        attributes: dict[str, str | list[str]] = {
             "cn": ["Test User"],
             "sn": ["User"],
             "uid": ["testuser"],
@@ -253,7 +240,7 @@ class TestFlextLdapClientsComprehensive:
             dn="cn=testgroup,dc=test,dc=com",
             cn="Test Group",
             description="Test group",
-            members=["cn=user1,dc=test,dc=com"],
+            member=["cn=user1,dc=test,dc=com"],
         )
 
         result = client.create_group(group_request)
@@ -427,7 +414,8 @@ class TestFlextLdapClientsComprehensive:
         """Test modify when not connected."""
         client = FlextLdapClients()
 
-        changes = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        changes_dict = {"cn": [("MODIFY_REPLACE", ["Updated User"])]}
+        changes = FlextLdapModels.EntryChanges(**changes_dict)
         result = client.modify_entry("cn=testuser,dc=test,dc=com", changes)
         assert result.is_failure
         assert result.error is not None
@@ -527,31 +515,19 @@ class TestFlextLdapClientsComprehensive:
         assert result.error
         assert "not available" in result.error.lower()
 
-    @pytest.mark.skip(reason="Method _normalize_attributes removed during Pydantic v2 refactoring")
+    @pytest.mark.skip(
+        reason="Method _normalize_attributes removed during Pydantic v2 refactoring"
+    )
     def test_normalize_attributes(self) -> None:
         """Test _normalize_attributes method."""
-        client = FlextLdapClients()
+        # Method removed - test skipped
 
-        # Test with whitespace - normalization trims whitespace
-        attributes = ["  cn  ", "  sn  ", "mail"]
-        result = client._normalize_attributes(attributes)
-        assert result == ["cn", "sn", "mail"]
-
-    @pytest.mark.skip(reason="Method _normalize_modify_changes removed during Pydantic v2 refactoring")
+    @pytest.mark.skip(
+        reason="Method _normalize_modify_changes removed during Pydantic v2 refactoring"
+    )
     def test_normalize_modify_changes(self) -> None:
         """Test _normalize_modify_changes method."""
-        client = FlextLdapClients()
-
-        changes: dict[str, object] = {
-            "cn": [("MODIFY_REPLACE", ["  Test User  "])],
-            "sn": [("MODIFY_REPLACE", ["User"])],
-        }
-
-        result = client._normalize_modify_changes(changes)
-        assert result == {
-            "cn": [("MODIFY_REPLACE", ["Test User"])],
-            "sn": [("MODIFY_REPLACE", ["User"])],
-        }
+        # Method removed - test skipped
 
 
 class TestFlextLdapClientsConnection:
@@ -565,12 +541,12 @@ class TestFlextLdapClientsConnection:
 
     def test_client_initialization_with_config(self) -> None:
         """Test client initialization with configuration."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://localhost:3390",
-            port=3390,
-            bind_dn="cn=admin,dc=flext,dc=local",
-            bind_password="admin123",
-            use_ssl=False,
+        config = FlextLdapConfig(
+            ldap_server_uri="ldap://localhost:3390",
+            ldap_port=3390,
+            ldap_bind_dn="cn=admin,dc=flext,dc=local",
+            ldap_bind_password=SecretStr("admin123"),
+            ldap_use_ssl=False,
         )
         client = FlextLdapClients(config=config)
         assert client is not None
@@ -867,12 +843,12 @@ class TestFlextLdapClientsConnectionEdgeCases:
     ) -> None:
         """Test connect parameters override config object."""
         # Create config with wrong credentials
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://wrong-server:389",
-            port=389,
-            bind_dn="cn=wrong,dc=example,dc=com",
-            bind_password="wrong",
-            use_ssl=False,
+        config = FlextLdapConfig(
+            ldap_server_uri="ldap://wrong-server:389",
+            ldap_port=389,
+            ldap_bind_dn="cn=wrong,dc=example,dc=com",
+            ldap_bind_password=SecretStr("wrong"),
+            ldap_use_ssl=False,
         )
         client = FlextLdapClients(config=config)
 
@@ -1242,7 +1218,8 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search_users with UID filter."""
         result = authenticated_client.search_users(
-            base_dn=str(clean_ldap_container["base_dn"]), uid="nonexistentuser"
+            base_dn=str(clean_ldap_container["base_dn"]),
+            filter_str="(uid=nonexistentuser)",
         )
 
         assert result.is_success

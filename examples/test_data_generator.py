@@ -232,8 +232,8 @@ class TestDataGenerator:
             dn = f"ou={ou},{self.base_dn}"
             attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "organizationalUnit",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: ou,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{ou.title()} organizational unit",
@@ -245,8 +245,8 @@ class TestDataGenerator:
             dn = f"ou={dept},ou=users,{self.base_dn}"
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "organizationalUnit",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: dept,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{dept.title()} department",
@@ -258,8 +258,8 @@ class TestDataGenerator:
             dn = f"ou={category},ou=groups,{self.base_dn}"
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "organizationalUnit",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: category,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{category.title()} groups",
@@ -289,10 +289,10 @@ class TestDataGenerator:
 
                 attributes: dict[str, str | list[str]] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                        FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
-                        FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
-                        FlextLdapConstants.ObjectClasses.PERSON,
-                        FlextLdapConstants.ObjectClasses.TOP,
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
                     ],
                     FlextLdapConstants.LdapAttributeNames.UID: uid,
                     FlextLdapConstants.LdapAttributeNames.CN: cn,
@@ -359,7 +359,7 @@ class TestDataGenerator:
             attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{dept.title()} department group",
@@ -380,7 +380,7 @@ class TestDataGenerator:
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"Project {project} team",
@@ -400,7 +400,7 @@ class TestDataGenerator:
             attributes = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"Role: {role}",
@@ -423,7 +423,7 @@ class TestDataGenerator:
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "simpleSecurityObject",
                     "applicationProcess",
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"Service account for {service_type}",
@@ -443,7 +443,7 @@ class TestDataGenerator:
             attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
                     "device",
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: cn,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"Computer {cn}",
@@ -475,8 +475,8 @@ class TestDataGenerator:
             dn = f"ou={container_type},ou=containers,{self.base_dn}"
             attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "organizationalUnit",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: container_type,
                 FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"{container_type.title()} container",
@@ -491,8 +491,8 @@ class TestDataGenerator:
                 )
                 sub_attributes: dict[str, str | list[str]] = {
                     FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                        FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                        FlextLdapConstants.ObjectClasses.TOP,
+                        "organizationalUnit",
+                        "top",
                     ],
                     FlextLdapConstants.LdapAttributeNames.OU: sub_name,
                     FlextLdapConstants.LdapAttributeNames.DESCRIPTION: f"Sub-container {i}",

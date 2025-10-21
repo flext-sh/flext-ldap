@@ -1,20 +1,18 @@
 """LDAP search operations for flext-ldap.
 
-This module provides unified search functionality for LDAP operations
-with Clean Architecture patterns and flext-core integration.
+Unified search functionality with Clean Architecture patterns and
+FlextResult railway-oriented programming for composable operations.
+
+Note: types-ldap3 has incomplete type stubs for search methods,
+connection properties, and entry attributes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: This file has type checking disabled due to limitations in types-ldap3:
-- Method return types (add, delete, search, modify, unbind) not specified
-- Properties like conn.entries and entry.entry_dn not fully typed
-- Entry attributes and their values have incomplete type information
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Literal
 
 from flext_core import FlextResult, FlextService
 from ldap3 import Connection
@@ -32,14 +30,10 @@ if TYPE_CHECKING:
 class FlextLdapSearch(FlextService[None]):
     """Unified LDAP search operations class.
 
-    This class provides comprehensive LDAP search functionality
-    with Clean Architecture patterns and flext-core integration.
+    Provides LDAP search functionality with Clean Architecture patterns
+    and flext-core integration for result handling and logging.
 
-    **UNIFIED CLASS PATTERN**: One class per module with nested helpers only.
-    **CLEAN ARCHITECTURE**: Application layer search services.
-    **FLEXT INTEGRATION**: Full flext-core service integration.
-
-    Provides LDAP search operations:
+    Operations:
     - search: Perform LDAP search operations
     - search_one: Search for single entry
     - user_exists: Check if user exists
@@ -52,7 +46,7 @@ class FlextLdapSearch(FlextService[None]):
         """Initialize LDAP search service with Phase 1 context enrichment.
 
         Args:
-            parent: Optional parent client for shared state access
+        parent: Optional parent client for shared state access
 
         """
         super().__init__()
@@ -70,7 +64,7 @@ class FlextLdapSearch(FlextService[None]):
         """Set the connection context for search operations.
 
         Args:
-            connection: LDAP connection object
+        connection: LDAP connection object
 
         """
         self._connection = connection
@@ -84,12 +78,12 @@ class FlextLdapSearch(FlextService[None]):
         """Perform LDAP search for single entry - implements LdapSearchProtocol.
 
         Args:
-            search_base: LDAP search base DN
-            filter_str: LDAP search filter
-            attributes: List of attributes to retrieve
+        search_base: LDAP search base DN
+        filter_str: LDAP search filter
+        attributes: List of attributes to retrieve
 
         Returns:
-            FlextResult[FlextLdapModels.Entry | None]: Single Entry or None
+        FlextResult[FlextLdapModels.Entry | None]: Single Entry or None
 
         """
         # Use existing search method and return first result
@@ -315,10 +309,10 @@ class FlextLdapSearch(FlextService[None]):
         """Check if user exists in LDAP directory.
 
         Args:
-            dn: User Distinguished Name.
+        dn: User Distinguished Name.
 
         Returns:
-            FlextResult containing True if user exists, False otherwise.
+        FlextResult containing True if user exists, False otherwise.
 
         """
         try:
@@ -342,10 +336,10 @@ class FlextLdapSearch(FlextService[None]):
         """Check if group exists in LDAP directory.
 
         Args:
-            dn: Group Distinguished Name.
+        dn: Group Distinguished Name.
 
         Returns:
-            FlextResult containing True if group exists, False otherwise.
+        FlextResult containing True if group exists, False otherwise.
 
         """
         try:
@@ -362,10 +356,10 @@ class FlextLdapSearch(FlextService[None]):
         """Get user by Distinguished Name.
 
         Args:
-            dn: Distinguished Name of the user.
+        dn: Distinguished Name of the user.
 
         Returns:
-            FlextResult containing user or None if not found.
+        FlextResult containing user or None if not found.
 
         """
         try:
@@ -416,11 +410,11 @@ class FlextLdapSearch(FlextService[None]):
                 if hasattr(ldap3_entry, "entry_attributes_as_dict")
                 else {}
             )
-            attrs_with_dn = dict(entry_attrs)
+            attrs_with_dn: dict[str, list[str]] = dict(entry_attrs)
             attrs_with_dn["dn"] = [str(ldap3_entry.entry_dn)]
 
             user_result = FlextLdapModels.Entry.from_ldap_attributes(
-                cast("dict[str, list[str]]", attrs_with_dn),
+                attrs_with_dn,
                 entry_type="user",
             )
             if user_result.is_success:
@@ -441,10 +435,10 @@ class FlextLdapSearch(FlextService[None]):
         """Get group by Distinguished Name.
 
         Args:
-            dn: Distinguished Name of the group.
+        dn: Distinguished Name of the group.
 
         Returns:
-            FlextResult containing group or None if not found.
+        FlextResult containing group or None if not found.
 
         """
         try:
@@ -494,11 +488,11 @@ class FlextLdapSearch(FlextService[None]):
                 if hasattr(ldap3_entry, "entry_attributes_as_dict")
                 else {}
             )
-            attrs_with_dn = dict(entry_attrs)
+            attrs_with_dn: dict[str, list[str]] = dict(entry_attrs)
             attrs_with_dn["dn"] = [str(ldap3_entry.entry_dn)]
 
             group_result = FlextLdapModels.Entry.from_ldap_attributes(
-                cast("dict[str, list[str]]", attrs_with_dn),
+                attrs_with_dn,
                 entry_type="group",
             )
             if group_result.is_success:
@@ -644,10 +638,10 @@ class FlextLdapSearch(FlextService[None]):
         """Execute operation using OperationExecutionRequest model.
 
         Args:
-            request: OperationExecutionRequest with operation settings
+        request: OperationExecutionRequest with operation settings
 
         Returns:
-            FlextResult[object]: Success with result or failure with error
+        FlextResult[object]: Success with result or failure with error
 
         """
         # For search operations, we execute the base service operation

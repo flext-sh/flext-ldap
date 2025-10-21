@@ -1,15 +1,13 @@
-"""Configuration management for flext-ldap with advanced FlextConfig features.
+"""Configuration management with FlextConfig features.
 
-This module provides enterprise-grade LDAP configuration management with environment
-variable support, validation, computed fields, and infrastructure protocols.
+LDAP configuration with environment variables, validation, computed
+fields, and infrastructure protocols.
+
+Note: ldap3 type stubs have incomplete method return types and property
+annotations (conn.entries, entry_dn, entry attributes).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Note: ldap3 type stubs have limitations:
-- Method return types not specified in official stubs
-- Properties not fully typed (conn.entries, entry_dn)
-- Entry attributes have incomplete type information
 """
 
 from __future__ import annotations
@@ -74,29 +72,22 @@ def _coerce_bool_from_env(v: bool | str | int) -> bool:
 
 
 class FlextLdapConfig(FlextConfig):
-    """Enterprise LDAP configuration with FlextConfig features.
+    """LDAP configuration with FlextConfig features.
 
-    Extends FlextConfig with LDAP-specific settings, computed fields, infrastructure
-    protocols, and validation. Provides centralized configuration management for FLEXT LDAP operations.
+    Extends FlextConfig with LDAP-specific settings including:
+    - Connection parameters (server URI, port, credentials)
+    - Operation settings (timeouts, pool size, SSL)
+    - Computed fields for connection info and capabilities
+    - Validation for runtime and business requirements
 
-    **Features**: Computed fields (connection, auth, pooling, operation limits, caching, retry, capabilities),
-    infrastructure protocols (configure, validate_runtime_requirements, validate_business_rules),
-    dot notation access (config("ldap.connection.port")), field/model validators, dependency injection,
-    factory methods for search/modify/add/delete configs.
-
-    **Core Attributes**: ldap_server_uri, ldap_port, ldap_bind_dn, ldap_bind_password, ldap_base_dn,
-    ldap_pool_size, ldap_connection_timeout, ldap_operation_timeout, ldap_use_ssl.
-
-    **Inherited from FlextConfig**: enable_caching, cache_ttl, max_retry_attempts, retry_delay.
+    Inherited from FlextConfig: enable_caching, cache_ttl,
+    max_retry_attempts, retry_delay.
 
     Example:
         >>> config = FlextLdapConfig()
-        >>> port = config("ldap.connection.port")  # Dot notation access
-        >>> info = config.connection_info  # Computed field
-        >>> result = config.validate_ldap_requirements()  # Validation
-        >>> factory_result = FlextLdapConfig.create_config(
-        ...     "search", {...}
-        ... )  # Factory method
+        >>> port = config("ldap.connection.port")
+        >>> info = config.connection_info
+        >>> result = config.validate_ldap_requirements()
 
     """
 
@@ -106,7 +97,7 @@ class FlextLdapConfig(FlextConfig):
 
     # Singleton pattern inherited from FlextConfig - no need to redefine _instances
     # _lock inherited as well
-    # NOTE: Removed __new__ override - Pydantic v2 handles SecretStr natively
+    # Note: Removed __new__ override - Pydantic v2 handles SecretStr natively
 
     # =========================================================================
     # HANDLER CONFIGURATION UTILITIES - Integrated from LdapHandlerConfiguration
@@ -209,7 +200,9 @@ class FlextLdapConfig(FlextConfig):
         description="Use SSL/TLS for LDAP connections",
     )
 
-    ldap_verify_certificates: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldap_verify_certificates: Annotated[
+        bool, BeforeValidator(_coerce_bool_from_env)
+    ] = Field(
         default=True,
         description="Verify SSL/TLS certificates",
     )
@@ -306,9 +299,11 @@ class FlextLdapConfig(FlextConfig):
         description="Enable logging of LDAP queries",
     )
 
-    ldap_mask_passwords: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
-        default=True,
-        description="Mask passwords in log messages",
+    ldap_mask_passwords: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
+        Field(
+            default=True,
+            description="Mask passwords in log messages",
+        )
     )
 
     # JSON serialization options
@@ -328,7 +323,7 @@ class FlextLdapConfig(FlextConfig):
 
     @computed_field
     def connection_info(self) -> FlextLdapModels.ConnectionInfo:
-        """Get comprehensive LDAP connection information."""
+        """Get LDAP connection information."""
         return FlextLdapModels.ConnectionInfo(
             server=self.ldap_server_uri,
             port=self.ldap_port,
@@ -396,7 +391,7 @@ class FlextLdapConfig(FlextConfig):
 
     @computed_field
     def ldap_capabilities(self) -> FlextLdapModels.ConfigCapabilities:
-        """Get comprehensive LDAP server capabilities summary."""
+        """Get LDAP server capabilities summary."""
         return FlextLdapModels.ConfigCapabilities(
             supports_ssl=self.ldap_use_ssl,
             supports_caching=self.enable_caching,
@@ -554,10 +549,10 @@ class FlextLdapConfig(FlextConfig):
         LDAP configuration updates with validation.
 
         Args:
-            config: Configuration dictionary with LDAP settings
+        config: Configuration dictionary with LDAP settings
 
         Returns:
-            FlextResult[None]: Success if configuration valid, failure otherwise
+        FlextResult[None]: Success if configuration valid, failure otherwise
 
         """
         try:
@@ -579,7 +574,7 @@ class FlextLdapConfig(FlextConfig):
         validation beyond basic Pydantic validation.
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error details
+        FlextResult[None]: Success if valid, failure with error details
 
         """
         # Run standard FlextConfig validation first
@@ -597,7 +592,7 @@ class FlextLdapConfig(FlextConfig):
         business rule validation.
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error details
+        FlextResult[None]: Success if valid, failure with error details
 
         """
         return FlextResult[None].ok(None)
@@ -609,11 +604,11 @@ class FlextLdapConfig(FlextConfig):
     def validate_ldap_requirements(self) -> FlextResult[None]:
         """Validate LDAP-specific configuration requirements.
 
-        Comprehensive validation for LDAP configuration beyond basic
+        Extended validation for LDAP configuration beyond basic
         Pydantic validation, including business rules and consistency checks.
 
         Returns:
-            FlextResult[None]: Success if all LDAP requirements met
+        FlextResult[None]: Success if all LDAP requirements met
 
         """
         # Run business rules validation
@@ -747,7 +742,9 @@ class FlextLdapConfig(FlextConfig):
             >>> override = {"port": 636}
             >>> result = FlextLdapConfig.merge_configs(base, override)
             >>> if result.is_success:
-            ...     merged = result.unwrap()  # {"server": "ldap://localhost", "port": 636}
+            ...     merged = (
+            ...         result.unwrap()
+            ...     )  # {"server": "ldap://localhost", "port": 636}
 
         """
         try:
@@ -757,9 +754,7 @@ class FlextLdapConfig(FlextConfig):
             merged.update(override_config)
             return FlextResult[dict[str, object]].ok(merged)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Config merge failed: {e!s}"
-            )
+            return FlextResult[dict[str, object]].fail(f"Config merge failed: {e!s}")
 
     @classmethod
     def create_config(
@@ -771,12 +766,12 @@ class FlextLdapConfig(FlextConfig):
         """Unified config factory using Python 3.13+ pattern matching.
 
         Args:
-            config_type: Type of config (connection, search, modify, add, delete, default_search, merge)
-            data: Configuration data for creation
-            override_data: Override data for merge operations
+        config_type: Type of config (connection, search, modify, add, delete, default_search, merge)
+        data: Configuration data for creation
+        override_data: Override data for merge operations
 
         Returns:
-            FlextResult: Created configuration or error
+        FlextResult: Created configuration or error
 
         """
         if data is None:

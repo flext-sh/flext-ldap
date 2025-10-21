@@ -175,12 +175,14 @@ def demonstrate_group_specification() -> None:
     logger.info("\n3. Member Addition Business Rules:")
 
     # Create a sample group
-    group = FlextLdapModels.Group(
+    group = FlextLdapModels.Entry(
+        entry_type="group",
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
         description="Test group for demonstration",
         member_dns=["cn=user1,ou=users,dc=example,dc=com"],
         unique_member_dns=[],
+        object_classes=["groupOfNames", "top"],
     )
 
     logger.info(f"   Group: {group.cn}")
@@ -293,30 +295,39 @@ def demonstrate_domain_services() -> None:
     user_scenarios = [
         {
             "name": "User with display name",
-            "user": FlextLdapModels.LdapUser(
+            "user": FlextLdapModels.Entry(
+                entry_type="user",
                 dn="cn=john,dc=example,dc=com",
                 uid="john",
                 cn="john",
                 sn="Doe",
                 display_name="John Doe (Executive)",
+                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
             ),
             "expected": "John Doe (Executive)",
         },
         {
             "name": "User with given name and surname",
-            "user": FlextLdapModels.LdapUser(
+            "user": FlextLdapModels.Entry(
+                entry_type="user",
                 dn="cn=jane,dc=example,dc=com",
                 uid="jane",
                 cn="jane",
                 sn="Smith",
                 given_name="Jane",
+                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
             ),
             "expected": "Jane Smith",
         },
         {
             "name": "User with only CN",
-            "user": FlextLdapModels.LdapUser(
-                dn="cn=admin,dc=example,dc=com", uid="admin", cn="admin", sn="Admin"
+            "user": FlextLdapModels.Entry(
+                entry_type="user",
+                dn="cn=admin,dc=example,dc=com",
+                uid="admin",
+                cn="admin",
+                sn="Admin",
+                object_classes=["person", "organizationalPerson", "inetOrgPerson"],
             ),
             "expected": "admin",
         },
@@ -324,9 +335,9 @@ def demonstrate_domain_services() -> None:
 
     for scenario in user_scenarios:
         user = scenario["user"]
-        if not isinstance(user, FlextLdapModels.LdapUser):
+        if not isinstance(user, FlextLdapModels.Entry):
             logger.error(
-                f"Invalid user type in scenario '{scenario['name']}': expected LdapUser, got {type(user)}"
+                f"Invalid user type in scenario '{scenario['name']}': expected Entry, got {type(user)}"
             )
             continue
         display_name = FlextLdapDomain.DomainServices.calculate_user_display_name(user)

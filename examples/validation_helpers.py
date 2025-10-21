@@ -217,10 +217,12 @@ def validate_search_operations(
             metrics.add_result(
                 f"{test_name} - Basic Search",
                 "pass",
-                f"Found {len(entries)} entries",
+                f"Found {len(entries.entries)} entries",
                 duration,
             )
-            logger.info(f"✅ Basic search: {len(entries)} entries ({duration:.2f}s)")
+            logger.info(
+                f"✅ Basic search: {len(entries.entries)} entries ({duration:.2f}s)"
+            )
 
     except Exception as e:
         duration = time.time() - start_time
@@ -259,11 +261,11 @@ def validate_search_operations(
                 metrics.add_result(
                     f"{test_name} - Scope {scope_name}",
                     "pass",
-                    f"Found {len(entries)} entries",
+                    f"Found {len(entries.entries)} entries",
                     duration,
                 )
                 logger.info(
-                    f"✅ Search scope {scope_name}: {len(entries)} entries ({duration:.2f}s)"
+                    f"✅ Search scope {scope_name}: {len(entries.entries)} entries ({duration:.2f}s)"
                 )
 
         except Exception as e:
@@ -293,10 +295,12 @@ def validate_search_operations(
             metrics.add_result(
                 f"{test_name} - Search Users",
                 "pass",
-                f"Found {len(users)} users",
+                f"Found {len(users.entries)} users",
                 duration,
             )
-            logger.info(f"✅ Search users: {len(users)} users ({duration:.2f}s)")
+            logger.info(
+                f"✅ Search users: {len(users.entries)} users ({duration:.2f}s)"
+            )
 
     except Exception as e:
         duration = time.time() - start_time
@@ -325,10 +329,12 @@ def validate_search_operations(
             metrics.add_result(
                 f"{test_name} - Search Groups",
                 "pass",
-                f"Found {len(groups)} groups",
+                f"Found {len(groups.entries)} groups",
                 duration,
             )
-            logger.info(f"✅ Search groups: {len(groups)} groups ({duration:.2f}s)")
+            logger.info(
+                f"✅ Search groups: {len(groups.entries)} groups ({duration:.2f}s)"
+            )
 
     except Exception as e:
         duration = time.time() - start_time
@@ -380,8 +386,8 @@ def validate_crud_operations(
         if search_result.is_failure or not search_result.unwrap():
             ou_attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_UNIT,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "organizationalUnit",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: "users",
             }
@@ -400,10 +406,10 @@ def validate_crud_operations(
         start_time = time.time()
         attributes: dict[str, str | list[str]] = {
             FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
-                FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
-                FlextLdapConstants.ObjectClasses.PERSON,
-                FlextLdapConstants.ObjectClasses.TOP,
+                "inetOrgPerson",
+                "organizationalPerson",
+                "person",
+                "top",
             ],
             FlextLdapConstants.LdapAttributeNames.CN: "test-crud-user",
             FlextLdapConstants.LdapAttributeNames.SN: "CrudUser",
@@ -583,10 +589,10 @@ def validate_batch_operations(
             dn = f"cn=batch-test-{i},ou=users,{base_dn}"
             attributes: dict[str, str | list[str]] = {
                 FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    FlextLdapConstants.ObjectClasses.INET_ORG_PERSON,
-                    FlextLdapConstants.ObjectClasses.ORGANIZATIONAL_PERSON,
-                    FlextLdapConstants.ObjectClasses.PERSON,
-                    FlextLdapConstants.ObjectClasses.TOP,
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
                 ],
                 FlextLdapConstants.LdapAttributeNames.CN: f"batch-test-{i}",
                 FlextLdapConstants.LdapAttributeNames.SN: f"BatchTest{i}",

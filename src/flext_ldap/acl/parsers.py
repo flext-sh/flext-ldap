@@ -1,8 +1,10 @@
-"""ACL Parsers for FLEXT LDAP.
+"""ACL parsers for multiple LDAP server formats.
+
+Parses ACL strings from OpenLDAP, Oracle OID/OUD, and Active Directory
+formats into unified internal ACL representations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -26,10 +28,10 @@ class FlextLdapAclParsers:
             """Parse OpenLDAP ACL string to unified ACL format.
 
             Args:
-                acl: OpenLDAP ACL string to parse.
+            acl: OpenLDAP ACL string to parse.
 
             Returns:
-                FlextResult containing parsed ACL or error.
+            FlextResult containing parsed ACL or error.
 
             """
             if not acl or not acl.strip():
@@ -383,10 +385,10 @@ class FlextLdapAclParsers:
             """Parse ACI string to unified ACL format.
 
             Args:
-                aci: ACI string to parse.
+            aci: ACI string to parse.
 
             Returns:
-                FlextResult containing parsed ACL or error.
+            FlextResult containing parsed ACL or error.
 
             """
             if not aci or not aci.strip():
@@ -505,10 +507,10 @@ class FlextLdapAclParsers:
             """Convert unified ACL to Microsoft AD format.
 
             Args:
-                unified_acl: Unified ACL representation
+            unified_acl: Unified ACL representation
 
             Returns:
-                FlextResult containing AD format string or error
+            FlextResult containing AD format string or error
 
             """
             try:
@@ -573,10 +575,10 @@ class FlextLdapAclParsers:
             """Convert unified ACL to OpenLDAP format.
 
             Args:
-                unified_acl: Unified ACL representation
+            unified_acl: Unified ACL representation
 
             Returns:
-                FlextResult containing OpenLDAP format string or error
+            FlextResult containing OpenLDAP format string or error
 
             """
             try:
@@ -645,10 +647,10 @@ class FlextLdapAclParsers:
             """Convert unified ACL to ACI format.
 
             Args:
-                unified_acl: Unified ACL representation
+            unified_acl: Unified ACL representation
 
             Returns:
-                FlextResult containing ACI format string or error
+            FlextResult containing ACI format string or error
 
             """
             try:
