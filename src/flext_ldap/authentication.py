@@ -263,9 +263,9 @@ class FlextLdapAuthentication(FlextService[None]):
                 sn=getattr(user_entry, "sn", [""])[0]
                 if hasattr(user_entry, "sn")
                 else "",
-                mail=getattr(user_entry, "mail", [""])[0]
+                mail=getattr(user_entry, "mail", [""])
                 if hasattr(user_entry, "mail")
-                else "",
+                else [""],
                 entry_type="user",
                 object_classes=["person", "inetOrgPerson", "top"],
             )

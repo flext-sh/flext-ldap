@@ -208,7 +208,10 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            mods = cast("dict[str, list[tuple[int, list[str]]]]", {"orclaci": [(MODIFY_REPLACE, formatted_acls)]})
+            mods = cast(
+                "dict[str, list[tuple[int, list[str]]]]",
+                {"orclaci": [(MODIFY_REPLACE, formatted_acls)]},
+            )
             success = typed_conn.modify(dn, mods)
 
             if not success:
@@ -404,7 +407,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            attrs_casted = cast(
+                "dict[str, str | list[str]] | None", ldap3_attrs or None
+            )
             success: bool = typed_conn.add(
                 str(normalized_entry.dn), object_class, attributes=attrs_casted
             )

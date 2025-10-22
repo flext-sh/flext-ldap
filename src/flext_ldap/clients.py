@@ -54,6 +54,16 @@ ModeType = Literal[
     "IP_V4_PREFERRED",
     "IP_V6_PREFERRED",
 ]
+QuirksMode = Literal["automatic", "server", "rfc", "relaxed"]
+"""
+Quirks modes for LDAP operations:
+- automatic: Auto-detect server type and apply server-specific quirks
+- server: Use explicit server type with quirks (requires server_type parameter)
+- rfc: RFC-compliant only, no server-specific extensions
+- relaxed: Permissive mode, accept anything (most flexible)
+"""
+
+__all__ = ["FlextLdapClients", "GetInfoType", "ModeType", "QuirksMode"]
 
 
 class FlextLdapClients(FlextService[None]):
@@ -79,12 +89,24 @@ class FlextLdapClients(FlextService[None]):
     - LdapValidationProtocol: validate_dn/validate_entry methods
     """
 
-    def __init__(self, config: FlextLdapConfig | None = None) -> None:
-        """Initialize LDAP client - consolidated implementation without bloat."""
+    def __init__(
+        self,
+        config: FlextLdapConfig | None = None,
+        *,
+        quirks_mode: QuirksMode = "automatic",
+    ) -> None:
+        """Initialize LDAP client - consolidated implementation without bloat.
+
+        Args:
+            config: Optional LDAP configuration
+            quirks_mode: Quirks handling mode (automatic, server, rfc, relaxed)
+
+        """
         super().__init__()
 
         # Core configuration and logging
         self._ldap_config = config
+        self._quirks_mode: QuirksMode = quirks_mode
 
         # Direct connection state (no delegation layer)
         self._connection: Connection | None = None
@@ -136,6 +158,22 @@ class FlextLdapClients(FlextService[None]):
     def connection(self) -> Connection | None:
         """Get the current LDAP connection."""
         return self._connection
+
+    @property
+    def quirks_mode(self) -> QuirksMode:
+        """Get current quirks mode for LDAP operations."""
+        return self._quirks_mode
+
+    @property
+    def quirks_mode_description(self) -> str:
+        """Get human-readable description of current quirks mode."""
+        descriptions = {
+            "automatic": "Auto-detect server type and apply quirks",
+            "server": "Use explicit server type with quirks",
+            "rfc": "RFC-compliant only, no extensions",
+            "relaxed": "Permissive mode, accept anything",
+        }
+        return descriptions.get(self._quirks_mode, "Unknown")
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -205,6 +243,7 @@ class FlextLdapClients(FlextService[None]):
         *,
         auto_discover_schema: bool = True,
         connection_options: LdapConfigDict | None = None,
+        quirks_mode: QuirksMode | None = None,
     ) -> FlextResult[bool]:
         """Connect and bind to LDAP server with universal compatibility.
 
@@ -214,6 +253,7 @@ class FlextLdapClients(FlextService[None]):
         password: Password for binding.
         auto_discover_schema: Whether to automatically discover schema.
         connection_options: Additional connection options.
+        quirks_mode: Override default quirks mode for this connection.
 
         Returns:
         FlextResult[bool]: Success result or error.
@@ -240,6 +280,11 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail(
                     password_validation.error or "Password validation failed",
                 )
+
+            # Store quirks mode if provided, otherwise use default
+            if quirks_mode is not None:
+                self._quirks_mode = quirks_mode
+                self.logger.debug("Quirks mode updated to: %s", quirks_mode)
 
             self.logger.info("Connecting to LDAP server: %s", server_uri)
 
@@ -493,10 +538,54 @@ class FlextLdapClients(FlextService[None]):
         scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
         page_size: int = 0,
         paged_cookie: bytes | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
-        """Perform LDAP search - delegates to searcher."""
-        return self._get_searcher().search(
+        *,
+        single: bool = False,
+        quirks_mode: QuirksMode | None = None,
+    ) -> FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]:
+        """Perform LDAP search - delegates to searcher.
+
+        Args:
+            base_dn: Search base DN
+            filter_str: LDAP filter string
+            attributes: Attributes to retrieve
+            scope: Search scope (BASE, LEVEL, SUBTREE)
+            page_size: Page size for paged results
+            paged_cookie: Cookie for paged results continuation
+            single: If True, return first entry only. If False, return list of entries.
+            quirks_mode: Override default quirks mode for this search
+
+        Returns:
+            FlextResult with list of entries or single entry based on single parameter.
+
+        """
+        # Use provided quirks_mode or fall back to instance quirks_mode
+        effective_quirks_mode = quirks_mode or self._quirks_mode
+
+        # Pass quirks information to searcher if it supports it
+        searcher = self._get_searcher()
+        if hasattr(searcher, "set_quirks_mode"):
+            searcher.set_quirks_mode(effective_quirks_mode)
+
+        search_result = searcher.search(
             base_dn, filter_str, attributes, scope, page_size, paged_cookie
+        )
+
+        if search_result.is_failure:
+            return cast(
+                "FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]",
+                search_result,
+            )
+
+        # Handle single result request
+        if single:
+            entries = search_result.unwrap()
+            if entries and len(entries) > 0:
+                return FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None].ok(entries[0])
+            return FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None].ok(None)
+
+        return cast(
+            "FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]",
+            search_result,
         )
 
     def search_one(
@@ -504,9 +593,30 @@ class FlextLdapClients(FlextService[None]):
         search_base: str,
         filter_str: str,
         attributes: list[str] | None = None,
+        *,
+        quirks_mode: QuirksMode | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | None]:
-        """Search for single entry - delegates to searcher."""
-        return self._get_searcher().search_one(search_base, filter_str, attributes)
+        """Search for single entry - delegates to searcher.
+
+        Args:
+            search_base: Search base DN
+            filter_str: LDAP filter string
+            attributes: Attributes to retrieve
+            quirks_mode: Override default quirks mode for this search
+
+        Returns:
+            FlextResult with single entry or None
+
+        """
+        # Use provided quirks_mode or fall back to instance quirks_mode
+        effective_quirks_mode = quirks_mode or self._quirks_mode
+
+        # Pass quirks information to searcher if it supports it
+        searcher = self._get_searcher()
+        if hasattr(searcher, "set_quirks_mode"):
+            searcher.set_quirks_mode(effective_quirks_mode)
+
+        return searcher.search_one(search_base, filter_str, attributes)
 
     def get_user(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
         """Get user by DN - delegates to searcher."""
@@ -532,15 +642,29 @@ class FlextLdapClients(FlextService[None]):
         self,
         dn: str,
         attributes: dict[str, str | list[str]],
+        *,
+        quirks_mode: QuirksMode | None = None,
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
 
         Handles undefined attributes gracefully by filtering them out and retrying.
         This makes the API extensible to work with any LDAP schema without limitations.
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+            quirks_mode: Override default quirks mode for this operation
+
+        Returns:
+            FlextResult[bool]: Success if entry was added
+
         """
         try:
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
+
+            # Use provided quirks_mode or fall back to instance quirks_mode
+            effective_quirks_mode = quirks_mode or self._quirks_mode
 
             # Convert attributes to ldap3 format
             ldap3_attributes = {}
@@ -554,8 +678,15 @@ class FlextLdapClients(FlextService[None]):
             success = False
             attempted_attributes = ldap3_attributes.copy()
             removed_attributes: list[str] = []
-            max_retries = 20  # Limit retries to avoid infinite loops
+            # Limit retries unless in "relaxed" mode
+            max_retries = 1 if effective_quirks_mode == "rfc" else 20
             retry_count = 0
+
+            self.logger.debug(
+                "Adding entry with quirks_mode: %s (effective: %s)",
+                quirks_mode,
+                effective_quirks_mode,
+            )
 
             while not success and retry_count < max_retries:
                 try:
@@ -645,12 +776,35 @@ class FlextLdapClients(FlextService[None]):
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
     def modify_entry(
-        self, dn: str, changes: FlextLdapModels.EntryChanges
+        self,
+        dn: str,
+        changes: FlextLdapModels.EntryChanges,
+        *,
+        quirks_mode: QuirksMode | None = None,
     ) -> FlextResult[bool]:
-        """Modify existing LDAP entry - implements LdapModifyProtocol."""
+        """Modify existing LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to modify
+            changes: Entry changes to apply
+            quirks_mode: Override default quirks mode for this operation
+
+        Returns:
+            FlextResult[bool]: Success if entry was modified
+
+        """
         try:
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
+
+            # Use provided quirks_mode or fall back to instance quirks_mode
+            effective_quirks_mode = quirks_mode or self._quirks_mode
+
+            self.logger.debug(
+                "Modifying entry with quirks_mode: %s (effective: %s)",
+                quirks_mode,
+                effective_quirks_mode,
+            )
 
             # Convert changes to ldap3 format
             # ldap3 expects: {'attr': [(MODIFY_OP, [values])]}
@@ -720,6 +874,16 @@ class FlextLdapClients(FlextService[None]):
                         )
                     ]
 
+            # Use server operations if available (applies server-specific quirks)
+            if self._server_operations:
+                # Convert ldap3 format to simple dict for server operations
+                simple_mods: dict[str, object] = dict(ldap3_changes)
+
+                return self._server_operations.modify_entry(
+                    self.connection, dn, simple_mods
+                )
+
+            # Fallback to direct ldap3 modify if no server operations
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast(
                 "FlextLdapTypes.Ldap3Protocols.Connection", self.connection
@@ -739,11 +903,34 @@ class FlextLdapClients(FlextService[None]):
             self.logger.exception("Modify entry failed")
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
-    def delete_entry(self, dn: str) -> FlextResult[bool]:
-        """Delete LDAP entry - implements LdapModifyProtocol."""
+    def delete_entry(
+        self,
+        dn: str,
+        *,
+        quirks_mode: QuirksMode | None = None,
+    ) -> FlextResult[bool]:
+        """Delete LDAP entry - implements LdapModifyProtocol.
+
+        Args:
+            dn: Distinguished name of entry to delete
+            quirks_mode: Override default quirks mode for this operation
+
+        Returns:
+            FlextResult[bool]: Success if entry was deleted
+
+        """
         try:
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
+
+            # Use provided quirks_mode or fall back to instance quirks_mode
+            effective_quirks_mode = quirks_mode or self._quirks_mode
+
+            self.logger.debug(
+                "Deleting entry with quirks_mode: %s (effective: %s)",
+                quirks_mode,
+                effective_quirks_mode,
+            )
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast(
@@ -773,23 +960,47 @@ class FlextLdapClients(FlextService[None]):
             )
         return FlextResult[bool].ok(True)
 
-    def validate_entry(self, entry: FlextLdapModels.Entry) -> FlextResult[bool]:
-        """Validate LDAP entry structure - implements LdapValidationProtocol."""
+    def validate_entry(
+        self,
+        entry: FlextLdapModels.Entry,
+        *,
+        quirks_mode: QuirksMode | None = None,
+    ) -> FlextResult[bool]:
+        """Validate LDAP entry structure - implements LdapValidationProtocol.
+
+        Args:
+            entry: Entry to validate
+            quirks_mode: Override default quirks mode for validation
+
+        Returns:
+            FlextResult[bool]: Success if entry is valid
+
+        """
         try:
-            # Basic validation
-            if not entry.dn:
-                return FlextResult[bool].fail("Entry DN cannot be empty")
+            # Use provided quirks_mode or fall back to instance quirks_mode
+            effective_quirks_mode = quirks_mode or self._quirks_mode
 
-            if not entry.attributes:
-                return FlextResult[bool].fail("Entry attributes cannot be empty")
+            self.logger.debug(
+                "Validating entry with quirks_mode: %s (effective: %s)",
+                quirks_mode,
+                effective_quirks_mode,
+            )
 
-            # DN format validation
-            dn_validation = self.validate_dn(entry.dn)
-            if dn_validation.is_failure:
-                return dn_validation
+            # Basic validation (skip in relaxed mode)
+            if effective_quirks_mode != "relaxed":
+                if not entry.dn:
+                    return FlextResult[bool].fail("Entry DN cannot be empty")
 
-            # Object class validation
-            if not entry.object_classes:
+                if not entry.attributes:
+                    return FlextResult[bool].fail("Entry attributes cannot be empty")
+
+                # DN format validation (skip in relaxed mode)
+                dn_validation = self.validate_dn(entry.dn)
+                if dn_validation.is_failure:
+                    return dn_validation
+
+            # Object class validation (skip in relaxed mode)
+            if effective_quirks_mode != "relaxed" and not entry.object_classes:
                 return FlextResult[bool].fail("Entry must have object classes")
 
             return FlextResult[bool].ok(True)
@@ -1093,7 +1304,13 @@ class FlextLdapClients(FlextService[None]):
 
         # Post-process based on entity type using FlextResult composition
         if entity_type == "group":
-            entries = search_result.unwrap()
+            result_value = search_result.unwrap()
+            if not isinstance(result_value, list):
+                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                    "Expected list of entries for group processing"
+                )
+
+            entries = result_value
 
             # Define processor function wrapping group conversion with FlextResult
             def process_group_entry(
@@ -1113,7 +1330,13 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(groups)
 
-        return search_result
+        # For non-group entities, ensure we return a list
+        result_value = search_result.unwrap()
+        if isinstance(result_value, list):
+            return FlextResult[list[FlextLdapModels.Entry]].ok(result_value)
+        if result_value is not None:
+            return FlextResult[list[FlextLdapModels.Entry]].ok([result_value])
+        return FlextResult[list[FlextLdapModels.Entry]].ok([])
 
     def search_users(
         self,
@@ -1192,7 +1415,16 @@ class FlextLdapClients(FlextService[None]):
                 search_result.error or "Search failed",
             )
 
-        entries = search_result.unwrap()
+        result_value = search_result.unwrap()
+        # Ensure we have a list for SearchResponse
+        if isinstance(result_value, list):
+            entries = result_value
+        elif result_value is not None:
+            # Single entry, wrap in list
+            entries = [result_value]
+        else:
+            entries = []
+
         response = FlextLdapModels.SearchResponse(
             entries=entries,
             total_count=len(entries),
@@ -1555,40 +1787,45 @@ class FlextLdapClients(FlextService[None]):
         Normalized value in original type
 
         """
-        match normalize_type, value:
-            case "string", str():
-                # Pattern matching already narrows the type
-                return value.strip()
+        match normalize_type:
+            case "string":
+                if isinstance(value, str):
+                    return value.strip()
+                return str(value)
 
-            case "attributes", list():
-                # Pattern matching already narrows the type
-                return [str(attr).strip() for attr in value]
+            case "attributes":
+                if isinstance(value, list):
+                    return [str(attr).strip() for attr in value]
+                return [str(value)]
 
-            case "entry", dict():
-                # Pattern matching already narrows the type
-                return {
-                    k: (
-                        [str(v).strip() for v in val]
-                        if isinstance(val, list)
-                        else str(val).strip()
-                    )
-                    for k, val in value.items()
-                }
+            case "entry":
+                if isinstance(value, dict):
+                    return {
+                        k: (
+                            [str(v).strip() for v in val]
+                            if isinstance(val, list)
+                            else str(val).strip()
+                        )
+                        for k, val in value.items()
+                    }
+                return {}
 
-            case "changes", dict():
-                # Pattern matching already narrows the type
-                return {
-                    k: (
-                        [(op, [s.strip() for s in vals]) for op, vals in change_list]
-                        if isinstance(change_list, list)
-                        else change_list
-                    )
-                    for k, change_list in value.items()
-                }
+            case "changes":
+                if isinstance(value, dict):
+                    return {
+                        k: (
+                            [(op, [s.strip() for s in vals]) for op, vals in change_list]
+                            if isinstance(change_list, list) and all(isinstance(op, tuple) and len(op) == FlextLdapConstants.AclParsing.MODIFY_OPERATION_TUPLE_LENGTH for op in change_list)
+                            else change_list
+                        )
+                        for k, change_list in value.items()
+                    }
+                return {}
 
-            case "results", list():
-                # Search results pass through as-is
-                return value
+            case "results":
+                if isinstance(value, list):
+                    return value
+                return [value] if value is not None else []
 
             case _:
                 # Default: return unchanged

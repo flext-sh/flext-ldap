@@ -159,7 +159,7 @@ class TestLdapLdifExport:
         assert "dn: cn=testuser0,ou=testusers,dc=flext,dc=local" in ldif_content
         assert "cn: testuser0" in ldif_content
         assert "sn: User0" in ldif_content
-        assert "mail: testuser0@flext.local" in ldif_content
+        assert "mail: testuser0@example.com" in ldif_content
 
     def test_export_ldap_entries_to_ldif_file(
         self,
@@ -322,7 +322,7 @@ sn: FileUser
             ldap_client.delete_entry("ou=fileimport,dc=flext,dc=local")
 
             # Parse LDIF file using flext-ldif
-            parse_result = ldif_api.parse_ldif_file(ldif_file)
+            parse_result = ldif_api.parse(ldif_file)
             assert parse_result.is_success, f"LDIF parse failed: {parse_result.error}"
             ldif_entries = parse_result.unwrap()
 

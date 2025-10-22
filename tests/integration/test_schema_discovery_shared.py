@@ -58,10 +58,14 @@ class TestSharedSchemaDiscovery:
 
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
         server_type = schema_result_obj.server_type
-        assert server_type in {
+        expected_types = {
             FlextLdapModels.LdapServerType.OPENLDAP,
             FlextLdapModels.LdapServerType.GENERIC,
-        }, f"Unexpected server type: {server_type}"
+            # Also accept string values (Pydantic may serialize enums to strings)
+            FlextLdapModels.LdapServerType.OPENLDAP.value,
+            FlextLdapModels.LdapServerType.GENERIC.value,
+        }
+        assert server_type in expected_types, f"Unexpected server type: {server_type}"
 
     def test_discover_server_capabilities_with_shared_server(
         self,

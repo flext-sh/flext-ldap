@@ -573,7 +573,7 @@ class FlextLdapSearch(FlextService[None]):
                 ],
                 "cn": [f"testuser{index}"],
                 "sn": [f"User{index}"],
-                "mail": [f"testuser{index}@flext.local"],
+                "mail": [f"testuser{index}@example.com"],
                 "userPassword": ["testpass123"],
             }
 

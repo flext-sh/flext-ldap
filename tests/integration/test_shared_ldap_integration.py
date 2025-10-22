@@ -66,12 +66,13 @@ class TestSharedLDAPIntegration:
             # If schema is available, verify we got valid data
             assert schema_result.value is not None
 
-            # Verify we got some schema information (dict format)
+            # Verify we got schema information (SchemaDiscoveryResult model)
             schema_data = schema_result.value
-            assert isinstance(schema_data, dict)
-            # Check for expected schema info keys
-            assert "attribute_types" in schema_data
-            assert "object_classes" in schema_data
+            assert hasattr(schema_data, 'attributes')
+            assert hasattr(schema_data, 'object_classes')
+            # Check for expected schema info - these should be dicts in the model
+            assert isinstance(schema_data.attributes, dict)
+            assert isinstance(schema_data.object_classes, dict)
 
     def test_shared_ldap_container_manager(
         self,

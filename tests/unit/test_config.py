@@ -1124,6 +1124,7 @@ class TestDirectAccessDotNotation:
         config = FlextLdapConfig(
             ldap_server_uri="ldaps://test.local",
             ldap_port=636,
+            ldap_use_ssl=True,
             ldap_bind_password=secret("test"),
         )
         assert config("ldap.connection.uri") == "ldaps://test.local:636"

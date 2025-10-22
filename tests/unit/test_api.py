@@ -107,42 +107,44 @@ class TestFlextLdap:
         """Test API search methods."""
         api = FlextLdap()
 
-        # Test search_groups method (convenience method with smart defaults)
-        result = api.search_groups(
-            search_base="dc=test,dc=com",
+        # Test search method for groups (filtering with objectClass=groupOfNames)
+        result = api.search(
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=groupOfNames)",
             attributes=["cn", "member"],
         )
         assert isinstance(result, FlextResult)
 
-        # Test search_entries method
-        result = api.search_entries(
+        # Test search method for general searches
+        result = api.search(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=*)",
-            _scope="subtree",
             attributes=["cn", "mail"],
         )
         assert isinstance(result, FlextResult)
 
-        # Test get_group method
-        get_group_result = api.get_group("cn=testgroup,dc=test,dc=com")
-        assert isinstance(get_group_result, FlextResult)
-        assert get_group_result.is_failure  # Should fail without connection
+        # Test search with single=True parameter
+        search_one_result = api.search(
+            base_dn="dc=test,dc=com", filter_str="(objectClass=person)", single=True
+        )
+        assert isinstance(search_one_result, FlextResult)
+        assert search_one_result.is_failure  # Should fail without connection
 
     def test_api_update_methods(self) -> None:
         """Test API update methods."""
         api = FlextLdap()
 
-        # Test update_user_attributes method
-        result = api.update_user_attributes(
-            _dn="cn=testuser,dc=test,dc=com",
-            _attributes={"cn": "newcn", "mail": "newmail@example.com"},
+        # Test modify method for user attributes
+        result = api.modify(
+            dn="cn=testuser,dc=test,dc=com",
+            changes={"cn": "newcn", "mail": "newmail@example.com"},
         )
         assert isinstance(result, FlextResult)
 
-        # Test update_group_attributes method
-        result = api.update_group_attributes(
-            _dn="cn=testgroup,dc=test,dc=com",
-            _attributes={"cn": "newgroup", "description": "Updated group"},
+        # Test modify method for group attributes
+        result = api.modify(
+            dn="cn=testgroup,dc=test,dc=com",
+            changes={"cn": "newgroup", "description": "Updated group"},
         )
         assert isinstance(result, FlextResult)
 
@@ -150,18 +152,16 @@ class TestFlextLdap:
         """Test API delete methods."""
         api = FlextLdap()
 
-        # Test delete_user method
-        result = api.delete_user("cn=testuser,dc=test,dc=com")
+        # Test delete_entry method
+        result = api.delete_entry("cn=testuser,dc=test,dc=com")
         assert isinstance(result, FlextResult)
 
     def test_api_validation_methods(self) -> None:
         """Test API validation methods."""
         api = FlextLdap()
 
-        # Test validate_configuration_consistency method
-        config_result = api.validate_configuration_consistency()
-        assert isinstance(config_result, FlextResult)
-        assert config_result.is_success
+        # Verify API initialized correctly
+        assert api is not None
 
         # Test validate_dn method - now via FlextLdapValidations
         dn_result = FlextLdapValidations.validate_dn("cn=testuser,dc=test,dc=com")
@@ -329,9 +329,8 @@ class TestFlextLdap:
         api = FlextLdap()
 
         # Test complete workflow
-        # 1. Validate configuration
-        config_result = api.validate_configuration_consistency()
-        assert isinstance(config_result, FlextResult)
+        # 1. Validate configuration exists
+        assert api.config is not None
 
         # 2. Validate DN
         dn_result = FlextLdapValidations.validate_dn("cn=testuser,dc=test,dc=com")
@@ -423,12 +422,10 @@ class TestFlextLdapComprehensive:
         """Test configuration consistency validation."""
         api = FlextLdap()
 
-        result = api.validate_configuration_consistency()
-        assert isinstance(result, FlextResult)
-        # In unit tests, connection will fail due to no LDAP server running
-        # This is correct - function validates both config and connectivity
-        # result can be either success or failure depending on server availability
-        assert result.is_success or result.is_failure
+        # Configuration should be properly initialized
+        config = api.config
+        assert isinstance(config, FlextLdapConfig)
+        assert config is not None
 
     def test_validate_dn_valid_format(self) -> None:
         """Test DN validation with valid format."""
@@ -499,24 +496,14 @@ class TestFlextLdapComprehensive:
         assert api is not None
 
         # Test configuration with test data
-        config_result = api.validate_configuration_consistency()
-        assert isinstance(config_result, FlextResult)
+        config = api.config
+        assert isinstance(config, FlextLdapConfig)
 
     def test_api_error_handling_consistency(self) -> None:
         """Test consistent error handling across API methods."""
-        api = FlextLdap()
+        # Test that validation methods return FlextResult
+        dn_result = FlextLdapValidations.validate_dn("cn=test,dc=test,dc=com")
+        assert isinstance(dn_result, FlextResult)
 
-        # All methods should return FlextResult
-        methods_to_test = [
-            api.validate_configuration_consistency,
-            # REMOVED: validate_dn and validate_filter from API
-            # Use FlextLdapValidations directly instead:
-            # lambda: FlextLdapValidations.validate_dn("invalid"),
-            # lambda: FlextLdapValidations.validate_filter("invalid"),
-        ]
-
-        for method in methods_to_test:
-            result = method()
-            assert isinstance(result, FlextResult)
-            # Should either succeed or fail, but always return a result
-            assert result.is_success or result.is_failure
+        filter_result = FlextLdapValidations.validate_filter("(objectClass=*)")
+        assert isinstance(filter_result, FlextResult)

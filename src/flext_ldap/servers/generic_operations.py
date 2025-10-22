@@ -216,8 +216,12 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            ldap3_attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
-            success = typed_conn.add(str(entry.dn), object_class, attributes=ldap3_attrs_casted)
+            ldap3_attrs_casted = cast(
+                "dict[str, str | list[str]] | None", ldap3_attrs or None
+            )
+            success = typed_conn.add(
+                str(entry.dn), object_class, attributes=ldap3_attrs_casted
+            )
 
             if not success:
                 error_msg = connection.result.get(

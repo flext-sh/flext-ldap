@@ -307,7 +307,7 @@ class TestFlextLdapAuthenticationHelpers:
         assert user.uid == "testuser"
         assert user.cn == "Test User"
         assert user.sn == "User"
-        assert user.mail == "test@example.com"
+        assert user.mail == ["test@example.com"]
 
     def test_create_user_from_entry_error_handling(
         self, auth_service: FlextLdapAuthentication

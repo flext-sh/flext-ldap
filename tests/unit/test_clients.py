@@ -195,7 +195,11 @@ class TestFlextLdapClientsComprehensive:
         """Test get_group when not connected."""
         client = FlextLdapClients()
 
-        result = client.get_group("cn=testgroup,dc=test,dc=com")
+        result = client.search(
+            base_dn="cn=testgroup,dc=test,dc=com",
+            filter_str="(objectClass=groupOfNames)",
+            single=True,
+        )
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -375,7 +379,7 @@ class TestFlextLdapClientsComprehensive:
         """Test delete_user when not connected."""
         client = FlextLdapClients()
 
-        result = client.delete_user("cn=testuser,dc=test,dc=com")
+        result = client.delete_entry("cn=testuser,dc=test,dc=com")
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -1089,7 +1093,9 @@ class TestFlextLdapClientsSearchUnit:
         """Test search_users fails when not connected."""
         client = FlextLdapClients()
 
-        result = client.search_users(base_dn="ou=users,dc=flext,dc=local")
+        result = client.search(
+            base_dn="ou=users,dc=flext,dc=local", filter_str="(objectClass=person)"
+        )
 
         assert result.is_failure
         assert (
@@ -1100,7 +1106,10 @@ class TestFlextLdapClientsSearchUnit:
         """Test search_groups fails when not connected."""
         client = FlextLdapClients()
 
-        result = client.search_groups(base_dn="ou=groups,dc=flext,dc=local")
+        result = client.search(
+            base_dn="ou=groups,dc=flext,dc=local",
+            filter_str="(objectClass=groupOfNames)",
+        )
 
         assert result.is_failure
         assert (
@@ -1202,8 +1211,10 @@ class TestFlextLdapClientsSearchIntegration:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test search_users retrieves all users."""
-        result = authenticated_client.search_users(
-            base_dn=str(clean_ldap_container["base_dn"])
+        result = authenticated_client.search(
+            base_dn=str(
+                clean_ldap_container["base_dn"], filter_str="(objectClass=person)"
+            )
         )
 
         assert result.is_success
@@ -1217,8 +1228,10 @@ class TestFlextLdapClientsSearchIntegration:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test search_users with UID filter."""
-        result = authenticated_client.search_users(
-            base_dn=str(clean_ldap_container["base_dn"]),
+        result = authenticated_client.search(
+            base_dn=str(
+                clean_ldap_container["base_dn"], filter_str="(objectClass=person)"
+            ),
             filter_str="(uid=nonexistentuser)",
         )
 
@@ -1234,8 +1247,10 @@ class TestFlextLdapClientsSearchIntegration:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test search_groups retrieves all groups."""
-        result = authenticated_client.search_groups(
-            base_dn=str(clean_ldap_container["base_dn"])
+        result = authenticated_client.search(
+            base_dn=str(
+                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
+            )
         )
 
         assert result.is_success
@@ -1249,8 +1264,11 @@ class TestFlextLdapClientsSearchIntegration:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test search_groups with CN filter."""
-        result = authenticated_client.search_groups(
-            base_dn=str(clean_ldap_container["base_dn"]), cn="nonexistentgroup"
+        result = authenticated_client.search(
+            base_dn=str(
+                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
+            ),
+            cn="nonexistentgroup",
         )
 
         assert result.is_success
@@ -1382,7 +1400,9 @@ class TestFlextLdapClientsSearchEdgeCases:
         self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test search_users with empty base DN."""
-        result = authenticated_client.search_users(base_dn="")
+        result = authenticated_client.search(
+            base_dn="", filter_str="(objectClass=person)"
+        )
 
         # Method allows empty base DN and searches from root
         # Returns success with empty or full results depending on LDAP server
@@ -1396,8 +1416,11 @@ class TestFlextLdapClientsSearchEdgeCases:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test search_groups with special characters in CN."""
-        result = authenticated_client.search_groups(
-            base_dn=str(clean_ldap_container["base_dn"]), cn="group-with-dashes"
+        result = authenticated_client.search(
+            base_dn=str(
+                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
+            ),
+            cn="group-with-dashes",
         )
 
         # Should handle special characters gracefully

@@ -211,7 +211,10 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            mods = cast("dict[str, list[tuple[int, list[str]]]]", {"ds-privilege-name": [(MODIFY_REPLACE, formatted_acls)]})
+            mods = cast(
+                "dict[str, list[tuple[int, list[str]]]]",
+                {"ds-privilege-name": [(MODIFY_REPLACE, formatted_acls)]},
+            )
             success = typed_conn.modify(dn, mods)
 
             if not success:
@@ -359,7 +362,9 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            attrs_casted = cast(
+                "dict[str, str | list[str]] | None", ldap3_attrs or None
+            )
             success = typed_conn.add(
                 str(normalized_entry.dn), object_class, attributes=attrs_casted
             )
@@ -384,20 +389,48 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         dn: str,
         modifications: dict[str, object],
     ) -> FlextResult[bool]:
-        """Modify entry in Oracle OUD."""
+        """Modify entry in Oracle OUD.
+
+        Applies OUD-specific quirks:
+        - Schema modifications (cn=schema) use lowercase attribute names
+        - OID format conversions to OUD format
+
+        """
         try:
             if not connection or not connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
+            # Apply OUD schema quirk: lowercase attribute names for cn=schema
+            is_schema_mod = dn.lower() == "cn=schema"
+
             # Convert modifications to ldap3 format
             ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
             for attr, value in modifications.items():
-                values = value if isinstance(value, list) else [value]
-                # Convert all values to strings
-                str_values: list[str] | str = [str(v) for v in values]
-                ldap3_mods[attr] = cast(
+                # Apply schema quirk: convert camelCase to lowercase for schema
+                attr_name = attr
+                if is_schema_mod:
+                    # OUD schema attributes must be lowercase
+                    if attr.lower() == "attributetypes":
+                        attr_name = "attributetypes"
+                    elif attr.lower() == "objectclasses":
+                        attr_name = "objectclasses"
+
+                # Handle tuple format (operation, values) - preserve operation type
+                if isinstance(value, list) and value and isinstance(value[0], tuple):
+                    # Already in (operation, values) format - preserve it
+                    operation, val_list = value[0]
+                    values = val_list if isinstance(val_list, list) else [val_list]
+                else:
+                    # Simple value format - use MODIFY_REPLACE as default
+                    operation = MODIFY_REPLACE
+                    values = value if isinstance(value, list) else [value]
+
+                # Convert all values to strings (transformations already done via quirks)
+                str_values = [str(v) for v in values]
+
+                ldap3_mods[attr_name] = cast(
                     "list[tuple[object, list[str] | str]]",
-                    [(MODIFY_REPLACE, str_values)],
+                    [(operation, str_values)],
                 )
 
             # Cast to Protocol type for proper type checking with ldap3

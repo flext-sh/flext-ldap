@@ -15,7 +15,6 @@ from unittest.mock import MagicMock
 import pytest
 from flext_ldif import FlextLdifModels
 
-# AD operations removed - using generic operations as fallback
 from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations

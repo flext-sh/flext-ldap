@@ -171,9 +171,10 @@ class TestUniversalLdapIntegration:
         assert hasattr(ldap_api, "convert_entry_between_servers")
         assert hasattr(ldap_api, "detect_entry_server_type")
         assert hasattr(ldap_api, "validate_entry_for_server")
-        # Search and entry operations via entry_adapter (not direct API methods)
-        assert hasattr(ldap_api, "search_entries")
-        assert hasattr(ldap_api, "search_groups")
+        # Unified search, add, modify methods (consolidated API)
+        assert hasattr(ldap_api, "search")
+        assert hasattr(ldap_api, "add")
+        assert hasattr(ldap_api, "modify")
 
     def test_api_server_type_detection_without_connection(
         self, ldap_api: FlextLdap
