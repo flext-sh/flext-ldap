@@ -72,9 +72,9 @@ class TestFlextLdapModels:
             cn="John Doe",
             sn="Doe",
             given_name="John",
-            mail="john@example.com",
-            telephone_number="+1-555-0100",
-            mobile="+1-555-0101",
+            mail=["john@example.com"],
+            telephone_number=["+1-555-0100"],
+            mobile=["+1-555-0101"],
             department="Engineering",
             organizational_unit="Engineering",  # Required when department is set
             title="Software Engineer",
@@ -93,11 +93,11 @@ class TestFlextLdapModels:
             uid="jane",
             cn="Jane Smith",
             sn="Smith",
-            mail="jane@example.com",  # mail is required
+            mail=["jane@example.com"],  # mail is required
             object_classes=["person", "inetOrgPerson"],
         )
         assert minimal_user.uid == "jane"
-        assert minimal_user.mail == "jane@example.com"
+        assert minimal_user.mail == ["jane@example.com"]
         assert minimal_user.given_name is None
         assert minimal_user.telephone_number is None  # Depends on rules
 
@@ -138,15 +138,17 @@ class TestFlextLdapModels:
             object_classes=["person", "organizationalPerson", "inetOrgPerson"],
         )
 
-        # Test single-valued attribute access
-        assert entry.attributes["uid"] == ["testuser"]
-        assert entry.attributes["cn"] == ["Test User"]
+        # Test single-valued attribute access (extracted from lists)
+        assert entry.uid == "testuser"
+        assert entry.cn == "Test User"
 
-        # Test multi-valued attribute access
-        assert len(entry.attributes["mail"]) == 2
-        assert "testuser@example.com" in entry.attributes["mail"]
+        # Test multi-valued attribute access (remains as list)
+        assert isinstance(entry.mail, list)
+        assert len(entry.mail) == 2
+        assert "testuser@example.com" in entry.mail
+        assert "test.user@example.com" in entry.mail
 
-        # Test objectClass access
+        # Test objectClass access (multi-valued)
         assert len(entry.object_classes) == 3
         assert "inetOrgPerson" in entry.object_classes
 
@@ -369,9 +371,9 @@ class TestFlextLdapModels:
             uid="jdoe",
             sn="Doe",
             given_name="John",
-            mail="jdoe@example.com",
-            telephone_number="+1-555-0100",
-            mobile="+1-555-0199",
+            mail=["jdoe@example.com"],
+            telephone_number=["+1-555-0100"],
+            mobile=["+1-555-0199"],
             department="Engineering",
             title="Senior Engineer",
             organization="Example Corp",
@@ -427,9 +429,9 @@ class TestFlextLdapModels:
         assert user.uid == "testuser"
         assert user.sn == "User"
         assert user.given_name == "Test"
-        assert user.mail == "testuser@example.com"
-        assert user.telephone_number == "+1-555-0200"
-        assert user.mobile == "+1-555-0299"
+        assert user.mail == ["testuser@example.com"]
+        assert user.telephone_number == ["+1-555-0200"]
+        assert user.mobile == ["+1-555-0299"]
         assert user.department == "QA"
         assert user.title == "QA Engineer"
         assert user.organization == "Test Corp"
@@ -451,7 +453,7 @@ class TestFlextLdapModels:
         user = result.unwrap()
         assert user.dn == "cn=minuser,dc=example,dc=com"
         assert user.cn == "Minimal User"
-        assert user.mail == "minuser@example.com"
+        assert user.mail == ["minuser@example.com"]
 
     def test_ldap_user_from_ldap_attributes_missing_dn(self) -> None:
         """Test LdapUser.from_ldap_attributes() fails without DN."""
@@ -874,7 +876,7 @@ class TestFlextLdapModels:
             uid="jdoe",
             sn="Doe",
             given_name="John",
-            mail="jdoe@example.com",
+            mail=["jdoe@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -889,7 +891,7 @@ class TestFlextLdapModels:
             uid="john",
             sn="",
             given_name="John",
-            mail="john@example.com",
+            mail=["john@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -903,7 +905,7 @@ class TestFlextLdapModels:
             cn="Doe",
             uid="doe",
             sn="Doe",
-            mail="doe@example.com",
+            mail=["doe@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -917,7 +919,7 @@ class TestFlextLdapModels:
             cn="Test User",
             uid="testuser",
             sn="",
-            mail="test@example.com",
+            mail=["test@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -931,7 +933,7 @@ class TestFlextLdapModels:
             cn="Active User",
             uid="active",
             sn="User",
-            mail="active@example.com",
+            mail=["active@example.com"],
             status="active",
             object_classes=["person", "inetOrgPerson"],
         )
@@ -946,7 +948,7 @@ class TestFlextLdapModels:
             cn="Disabled User",
             uid="disabled",
             sn="User",
-            mail="disabled@example.com",
+            mail=["disabled@example.com"],
             status="disabled",
             object_classes=["person", "inetOrgPerson"],
         )
@@ -961,7 +963,7 @@ class TestFlextLdapModels:
             cn="No Status User",
             uid="nostatus",
             sn="User",
-            mail="nostatus@example.com",
+            mail=["nostatus@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -975,9 +977,9 @@ class TestFlextLdapModels:
             cn="Complete User",
             uid="complete",
             sn="User",
-            mail="complete@example.com",
-            telephone_number="555-1234",
-            mobile="555-5678",
+            mail=["complete@example.com"],
+            telephone_number=["555-1234"],
+            mobile=["555-5678"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -991,8 +993,8 @@ class TestFlextLdapModels:
             cn="Phone User",
             uid="phone",
             sn="User",
-            mail="phone@example.com",
-            telephone_number="555-1234",
+            mail=["phone@example.com"],
+            telephone_number=["555-1234"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -1006,7 +1008,7 @@ class TestFlextLdapModels:
             cn="Incomplete User",
             uid="incomplete",
             sn="User",
-            mail="incomplete@example.com",
+            mail=["incomplete@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -1020,7 +1022,7 @@ class TestFlextLdapModels:
             cn="Org User",
             uid="org",
             sn="User",
-            mail="org@example.com",
+            mail=["org@example.com"],
             organization="ACME Corp",
             organizational_unit="Engineering",
             department="Software Development",
@@ -1039,7 +1041,7 @@ class TestFlextLdapModels:
             cn="Partial User",
             uid="partial",
             sn="User",
-            mail="partial@example.com",
+            mail=["partial@example.com"],
             organization="ACME Corp",
             organizational_unit="Engineering",  # Required when department is set
             department="IT",
@@ -1049,19 +1051,19 @@ class TestFlextLdapModels:
         assert user.organizational_path == "ACME Corp > Engineering > IT"
 
     def test_ldap_user_organizational_path_empty(self) -> None:
-        """Test LdapUser.organizational_path with defaults from constants."""
+        """Test LdapUser.organizational_path when no org fields provided."""
         user = FlextLdapModels.Entry(
             entry_type="user",
             dn="uid=noorg,ou=users,dc=example,dc=com",
             cn="No Org User",
             uid="noorg",
             sn="User",
-            mail="noorg@example.com",
+            mail=["noorg@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
-        # Model applies defaults from FlextLdapConstants.Defaults
-        assert user.organizational_path == "Company > IT"
+        # When no organization fields provided, returns fallback message
+        assert user.organizational_path == "No organization"
 
     def test_ldap_user_rdn_extraction(self) -> None:
         """Test LdapUser.rdn computed field."""
@@ -1071,7 +1073,7 @@ class TestFlextLdapModels:
             cn="Test User",
             uid="testuser",
             sn="User",
-            mail="test@example.com",
+            mail=["test@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -1085,7 +1087,7 @@ class TestFlextLdapModels:
             cn="Root",
             uid="root",
             sn="Root",
-            mail="root@example.com",
+            mail=["root@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
 
@@ -1116,7 +1118,7 @@ class TestFlextLdapModels:
             cn="Test User",
             uid="test",
             sn="User",
-            mail="test@example.com",
+            mail=["test@example.com"],
             user_password=None,  # None password
             object_classes=["person", "inetOrgPerson", "top"],
         )
@@ -1132,7 +1134,7 @@ class TestFlextLdapModels:
             cn="Test User",
             uid="test",
             sn="User",
-            mail="test@example.com",
+            mail=["test@example.com"],
             user_password="secret123",  # Will be converted to SecretStr
             object_classes=["person", "inetOrgPerson"],
         )
@@ -1148,7 +1150,7 @@ class TestFlextLdapModels:
             cn="Minimal User",
             uid="minimal",
             sn="User",
-            mail="minimal@example.com",
+            mail=["minimal@example.com"],
             object_classes=["person", "inetOrgPerson"],
         )
         ldap_dict = user.to_ldap_attributes()
@@ -1170,9 +1172,9 @@ class TestFlextLdapModels:
             uid="complete",
             sn="User",
             given_name="Complete",
-            mail="complete@example.com",
-            telephone_number="555-1111",
-            mobile="555-2222",
+            mail=["complete@example.com"],
+            telephone_number=["555-1111"],
+            mobile=["555-2222"],
             department="Engineering",
             title="Senior Engineer",
             organization="ACME Corp",
@@ -1208,7 +1210,7 @@ class TestFlextLdapModels:
             cn="Extra User",
             uid="extra",
             sn="User",
-            mail="extra@example.com",
+            mail=["extra@example.com"],
             additional_attributes={
                 "customAttr": "value1",
                 "listAttr": ["value2", "value3"],
@@ -1229,14 +1231,14 @@ class TestFlextLdapModels:
             dn="uid=factory,ou=users,dc=example,dc=com",
             cn="Factory User",
             entry_type="user",
-            mail="factory@example.com",  # Required for email validation
+            mail=["factory@example.com"],  # Required for email validation
         )
 
         assert result.is_success
         user = result.unwrap()
         assert user.dn == "uid=factory,ou=users,dc=example,dc=com"
         assert user.cn == "Factory User"
-        assert user.mail == "factory@example.com"
+        assert user.mail == ["factory@example.com"]
         assert not user.uid  # Default empty string
         assert not user.sn  # Default empty string
         assert user.object_classes == [
@@ -1252,7 +1254,7 @@ class TestFlextLdapModels:
             cn="Factory User 2",
             entry_type="user",
             uid="factory2",
-            mail="factory2@example.com",
+            mail=["factory2@example.com"],
         )
 
         assert result.is_success
@@ -1268,9 +1270,9 @@ class TestFlextLdapModels:
             uid="full",
             sn="User",
             given_name="Full",
-            mail="full@example.com",
-            telephone_number="555-3333",
-            mobile="555-4444",
+            mail=["full@example.com"],
+            telephone_number=["555-3333"],
+            mobile=["555-4444"],
             department="Sales",
             title="Sales Manager",
             organization="ACME Inc",
@@ -1282,9 +1284,9 @@ class TestFlextLdapModels:
         user = result.unwrap()
         assert user.sn == "User"
         assert user.given_name == "Full"
-        assert user.mail == "full@example.com"
-        assert user.telephone_number == "555-3333"
-        assert user.mobile == "555-4444"
+        assert user.mail == ["full@example.com"]
+        assert user.telephone_number == ["555-3333"]
+        assert user.mobile == ["555-4444"]
         assert user.department == "Sales"
         assert user.title == "Sales Manager"
         assert user.organization == "ACME Inc"
@@ -1297,7 +1299,7 @@ class TestFlextLdapModels:
             dn="uid=nopass,ou=users,dc=example,dc=com",
             cn="No Password User",
             entry_type="user",
-            mail="nopass@example.com",
+            mail=["nopass@example.com"],
             user_password=None,
         )
 

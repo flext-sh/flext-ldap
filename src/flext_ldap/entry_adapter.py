@@ -313,13 +313,14 @@ class FlextLdapEntryAdapter(FlextService[None]):
             ldif_content = f.read()
 
         # Parse using FlextLdif (which handles RFC compliance)
+        # Note: parse() returns union type but without pagination it returns list[Entry]
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"LDIF parsing failed: {parse_result.error}",
             )
 
-        entries = parse_result.unwrap()
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def write_entries_to_ldif_file(
@@ -455,7 +456,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             extra={
                 "dn": str(entry.dn),
                 "target_server": target_server_type,
-                "attributes_count": len(entry.attributes.attributes),
+                "attributes_count": len(entry.attributes) if hasattr(entry, 'attributes') and isinstance(entry.attributes, (dict, list)) else 0,
             },
         )
 
@@ -463,7 +464,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def validate_entry_for_server(
         self,
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry,  # Entry to validate for server compatibility
         server_type: str,
     ) -> FlextResult[bool]:
         """Validate entry compatibility with target server type.
@@ -507,7 +508,13 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[bool].fail("Entry has invalid DN")
 
         # Validate has object classes
-        object_classes = entry.get_attribute_values("objectClass")
+        if hasattr(entry, 'get_attribute_values'):
+            # FlextLdifModels.Entry interface
+            object_classes = entry.get_attribute_values("objectClass")
+        else:
+            # FlextLdapModels.Entry interface - cast to access object_classes
+            object_classes = cast("list[str]", getattr(entry, 'object_classes', []))
+
         if not object_classes:
             return FlextResult[bool].fail(
                 "Entry missing required objectClass attribute",

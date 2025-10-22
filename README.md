@@ -367,6 +367,7 @@ make ldap-test-server-stop   # Stop test container
 
 ## 📚 Documentation
 
+- **[Architecture Standards](ARCHITECTURE_STANDARDS.md)** - LDAP protocol operations responsibility, ldap3 usage, compliance rules
 - **[Getting Started](docs/getting-started.md)** - Installation and basic usage
 - **[Architecture](docs/architecture.md)** - Universal LDAP architecture and layers
 - **[Server Operations](docs/server-operations.md)** - Server-specific implementations

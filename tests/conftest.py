@@ -67,7 +67,7 @@ SAMPLE_GROUP_ENTRY = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
         "cn": ["testgroup"],
-        "objectClass": ["groupOfNames", "top"],
+        "object_classes": ["groupOfNames", "top"],
         "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
     },
 }
@@ -80,7 +80,7 @@ SAMPLE_USER_ENTRY = {
         "givenName": ["Test"],
         "uid": ["testuser"],
         "mail": ["testuser@internal.invalid"],
-        "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+        "object_classes": ["inetOrgPerson", "organizationalPerson", "person", "top"],
         "userPassword": ["test123"],
     },
 }
@@ -114,6 +114,199 @@ TEST_USERS = [
         "mail": "testuser2@test.com",
     },
 ]
+
+# =============================================================================
+# COMPREHENSIVE RFC-COMPLIANT TEST DATA (Real-World Fixtures)
+# =============================================================================
+
+# RFC 2891 Compliant LDAP Entries
+RFC_TEST_ENTRIES = {
+    "person_example": {
+        "dn": "cn=John Doe,ou=people,dc=example,dc=com",
+        "object_classes": ["person", "top"],
+        "cn": ["John Doe"],
+        "sn": ["Doe"],
+        "userPassword": ["{MD5}lEG5ZyxzKzsBcqk82vWLqw=="],  # RFC 2307
+    },
+    "inetorgperson_example": {
+        "dn": "uid=jsmith,ou=people,dc=example,dc=com",
+        "object_classes": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+        "uid": ["jsmith"],
+        "cn": ["John Smith"],
+        "sn": ["Smith"],
+        "givenName": ["John"],
+        "mail": ["john.smith@example.com"],
+        "telephoneNumber": ["+1 408 555 4798"],
+        "mobile": ["+1 650 506 7588"],
+        "departmentNumber": ["Engineering"],
+        "title": ["Senior Software Engineer"],
+        "o": ["Example Organization"],
+        "l": ["San Francisco"],
+        "st": ["California"],
+        "postalCode": ["94105"],
+    },
+    "organizationalunit_example": {
+        "dn": "ou=people,dc=example,dc=com",
+        "object_classes": ["organizationalUnit", "top"],
+        "ou": ["people"],
+        "description": ["People in organization"],
+    },
+    "groupofnames_example": {
+        "dn": "cn=engineering,ou=groups,dc=example,dc=com",
+        "object_classes": ["groupOfNames", "top"],
+        "cn": ["engineering"],
+        "description": ["Engineering team"],
+        "member": [
+            "uid=jsmith,ou=people,dc=example,dc=com",
+            "uid=ajones,ou=people,dc=example,dc=com",
+        ],
+    },
+    "domaincomponent_example": {
+        "dn": "dc=example,dc=com",
+        "object_classes": ["dcObject", "organization", "top"],
+        "dc": ["example"],
+        "o": ["Example Inc."],
+        "description": ["Example organization"],
+    },
+}
+
+# OpenLDAP 2.x Specific Entries
+OPENLDAP2_TEST_ENTRIES = {
+    "config_database": {
+        "dn": "olcDatabase={1}mdb,cn=config",
+        "object_classes": ["olcDatabaseConfig", "olcMdbConfig", "top"],
+        "olcDatabase": ["{1}mdb"],
+        "olcDbMaxSize": ["1073741824"],  # 1GB
+        "olcAccess": [
+            "{0}to * by self write by anonymous auth",
+            '{1}to * by dn.exact="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write',
+        ],
+        "olcSuffix": ["dc=example,dc=com"],
+        "olcRootDN": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
+    },
+    "REDACTED_LDAP_BIND_PASSWORD_user": {
+        "dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        "object_classes": ["simpleSecurityObject", "organizationalRole", "top"],
+        "cn": ["REDACTED_LDAP_BIND_PASSWORD"],
+        "userPassword": ["{SSHA}p6VQzL3h4gFUKlIJ+DhESt7OClNpQMLEVCaM4A=="],
+    },
+}
+
+# Oracle OID/OUD Specific Entries
+ORACLE_OID_TEST_ENTRIES = {
+    "root_dn_user": {
+        "dn": "cn=Directory Manager",
+        "object_classes": ["ds-root-dn-user", "top"],
+        "cn": ["Directory Manager"],
+        "ds-privilege-name": ["config-read", "config-write", "data-read", "data-write"],
+    },
+    "container": {
+        "dn": "cn=custom,dc=example,dc=com",
+        "object_classes": ["orclContainer", "top"],
+        "cn": ["custom"],
+        "orclaci": [
+            '(targetattr="*")(version 3.0;acl "full access";allow (all) groupdn="ldap:///cn=Admins,dc=example,dc=com";)',
+        ],
+    },
+}
+
+# Oracle OUD Specific Entries (RFC-based but with OUD extensions)
+ORACLE_OUD_TEST_ENTRIES = {
+    "REDACTED_LDAP_BIND_PASSWORD_user": {
+        "dn": "uid=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        "object_classes": ["inetOrgPerson", "ds-root-dn-user", "top"],
+        "uid": ["REDACTED_LDAP_BIND_PASSWORD"],
+        "cn": ["Directory Administrator"],
+        "sn": ["Administrator"],
+        "ds-privilege-name": ["config-read", "config-write", "data-read", "data-write"],
+    },
+}
+
+# Active Directory Specific Entries
+ACTIVE_DIRECTORY_TEST_ENTRIES = {
+    "user": {
+        "dn": "CN=John Smith,OU=Users,DC=example,DC=com",
+        "object_classes": ["top", "person", "organizationalPerson", "user"],
+        "cn": ["John Smith"],
+        "sn": ["Smith"],
+        "givenName": ["John"],
+        "displayName": ["Smith, John"],
+        "sAMAccountName": ["jsmith"],
+        "userPrincipalName": ["jsmith@example.com"],
+        "mail": ["john.smith@example.com"],
+        "telephoneNumber": ["555-0100"],
+        "mobile": ["555-0101"],
+        "accountExpires": ["132805700000000000"],
+    },
+    "group": {
+        "dn": "CN=Engineering,OU=Groups,DC=example,DC=com",
+        "object_classes": ["top", "group"],
+        "cn": ["Engineering"],
+        "sAMAccountName": ["Engineering"],
+        "member": ["CN=John Smith,OU=Users,DC=example,DC=com"],
+        "description": ["Engineering team"],
+    },
+}
+
+# Edge Case Entries (International chars, special chars, etc.)
+EDGE_CASE_ENTRIES = {
+    "international_chars": {
+        "dn": "cn=Müller José García,ou=people,dc=example,dc=com",
+        "object_classes": ["inetOrgPerson", "top"],
+        "cn": ["Müller José García"],
+        "sn": ["García"],
+        "givenName": ["José"],
+        "mail": ["jose@example.com"],
+    },
+    "special_characters": {
+        "dn": "cn=Smith\\, John Jr.,ou=people,dc=example,dc=com",
+        "object_classes": ["inetOrgPerson", "top"],
+        "cn": ["Smith, John Jr."],
+        "sn": ["Smith"],
+        "givenName": ["John"],
+    },
+    "long_attribute_value": {
+        "dn": "cn=user-with-long-values,ou=people,dc=example,dc=com",
+        "object_classes": ["inetOrgPerson", "top"],
+        "cn": ["user-with-long-values"],
+        "sn": ["UserWithLongValues"],
+        "description": [
+            "This is a very long description that spans multiple lines and contains various "
+            "special characters like @#$%^&*() and unicode characters like émojis 🎉🔥 to test "
+            "attribute handling with complex values"
+        ],
+    },
+}
+
+# Test Data for Search Operations
+SEARCH_TEST_DATA = {
+    "all_entries": [
+        RFC_TEST_ENTRIES["person_example"],
+        RFC_TEST_ENTRIES["inetorgperson_example"],
+        RFC_TEST_ENTRIES["groupofnames_example"],
+    ],
+    "people_only": [
+        RFC_TEST_ENTRIES["person_example"],
+        RFC_TEST_ENTRIES["inetorgperson_example"],
+    ],
+    "groups_only": [
+        RFC_TEST_ENTRIES["groupofnames_example"],
+    ],
+}
+
+# Test Data for Modification Operations
+MODIFY_TEST_DATA = {
+    "basic_modify": {
+        "mail": ["newemail@example.com"],
+        "telephoneNumber": ["+1 650 506 7590"],
+    },
+    "multi_valued_add": {
+        "mail": ["email1@example.com", "email2@example.com"],
+    },
+    "remove_attribute": {
+        "description": [],
+    },
+}
 
 
 # Temporary mock implementation until FlextTestDocker is available in flext-core

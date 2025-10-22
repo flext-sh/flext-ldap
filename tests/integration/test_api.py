@@ -347,15 +347,15 @@ class TestLdapServiceRealOperations:
         assert retrieved_user.uid == user_request.uid
         assert retrieved_user.cn == user_request.cn
 
-        # UPDATE: Modify user attributes
+        # UPDATE: Modify user attributes (using consolidated modify_entry)
         update_attrs_raw = {
             "mail": ["updated-real@example.com"],
             "description": ["Updated via service"],
         }
-        update_attributes_raw = create_ldap_attributes(update_attrs_raw)
-        update_attributes = cast("dict[str, object]", update_attributes_raw)
+        update_attributes = create_ldap_attributes(update_attrs_raw)
+        _ = cast("dict[str, object]", update_attributes)
         assert user_request.dn is not None, "User DN must not be None"
-        update_result = client.update_user_attributes(
+        update_result = client.modify_entry(
             user_request.dn,
             update_attributes,
         )
@@ -392,10 +392,10 @@ class TestLdapServiceRealOperations:
         assert updated_user is not None
         assert updated_user.mail == "updated-real@example.com"
 
-        # SEARCH: Find user via search
-        search_result = client.search_users(
+        # SEARCH: Find user via search (using consolidated search method)
+        search_result = client.search(
             ou_dn,
-            user_request.uid,
+            f"(uid={user_request.uid})",
         )
         assert search_result.is_success, (
             f"Failed to search users: {search_result.error}"
@@ -411,7 +411,7 @@ class TestLdapServiceRealOperations:
 
         # DELETE: Remove user
         assert user_request.dn is not None, "User DN must not be None"
-        delete_result = client.delete_user(user_request.dn)
+        delete_result = client.delete_entry(user_request.dn)
         assert delete_result.is_success, f"Failed to delete user: {delete_result.error}"
 
         # Verify deletion
@@ -506,13 +506,13 @@ class TestLdapServiceRealOperations:
         assert retrieved_group.cn == group_request.cn
         assert user_dn in retrieved_group.member_dns
 
-        # UPDATE: Modify group description
+        # UPDATE: Modify group description (using consolidated modify_entry)
         update_attrs_raw_5 = {
             "description": ["Updated group description"],
         }
         update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
         assert group_request.dn is not None, "Group DN must not be None"
-        update_result = client.update_group_attributes(
+        update_result = client.modify_entry(
             group_request.dn,
             cast("dict[str, object]", update_attributes_5),
         )

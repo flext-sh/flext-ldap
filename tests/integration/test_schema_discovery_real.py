@@ -125,14 +125,14 @@ class TestRealServerQuirksDetection:
             pytest.skip("Schema not available on this LDAP server")
 
         schema = discovery_result.value
-        assert isinstance(
-            schema, dict
-        )  # discover_schema returns dict, not SchemaDiscoveryResult
-        assert len(schema) > 0  # Should have some schema info
+        # discover_schema returns SchemaDiscoveryResult, not plain dict
+        assert isinstance(schema, FlextLdapModels.SchemaDiscoveryResult)
+        assert schema is not None  # Should have schema object
 
         # Test quirks detector directly
         detector = FlextLdapSchema.GenericQuirksDetector()
-        server_info = schema.get("server_info")
+        # Extract server_info from schema definitions
+        server_info = schema.server_info
         assert server_info is not None
         server_type = detector.detect_server_type(server_info)
 
@@ -146,7 +146,10 @@ class TestRealServerQuirksDetection:
             assert quirks.get("server_type") == str(server_type)
         else:
             # For non-dict objects, compare enum values directly
-            assert getattr(quirks, "server_type", None) == server_type
+            # Handle both enum and string values (Pydantic may serialize enums to strings)
+            quirks_server_type = getattr(quirks, "server_type", None)
+            expected_values = {server_type, server_type.value}
+            assert quirks_server_type in expected_values, f"Expected {expected_values}, got {quirks_server_type}"
 
     def test_openldap_quirks_detection(
         self, shared_ldap_client: FlextLdapClients

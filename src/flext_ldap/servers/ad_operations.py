@@ -329,7 +329,9 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
 
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            attrs_casted = cast("dict[str, str | list[str]] | None", ldap3_attrs or None)
+            attrs_casted = cast(
+                "dict[str, str | list[str]] | None", ldap3_attrs or None
+            )
             success: bool = typed_conn.add(
                 str(normalized_entry.dn), object_class, attributes=attrs_casted
             )

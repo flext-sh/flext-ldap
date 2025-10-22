@@ -83,39 +83,7 @@ def demonstrate_user_specification() -> None:
             else f"   {status} '{username}': Should be rejected"
         )
 
-    logger.info("\n3. Email Validation:")
-
-    # Test valid emails
-    valid_emails = [
-        "user@example.com",
-        "john.doe@company.org",
-        "test+tag@domain.co.uk",
-    ]
-
-    for email in valid_emails:
-        is_valid = FlextLdapDomain.UserSpecification.is_valid_email(email)
-        status = "✅" if is_valid else "❌"
-        logger.info(f"   {status} '{email}': {'Valid' if is_valid else 'Invalid'}")
-
-    # Test invalid emails
-    logger.info("\n4. Invalid Emails:")
-    invalid_emails = [
-        "notanemail",
-        "missing@domain",
-        "@nodomain.com",
-        "spaces in@email.com",
-    ]
-
-    for email in invalid_emails:
-        is_valid = FlextLdapDomain.UserSpecification.is_valid_email(email)
-        status = "✅" if not is_valid else "❌"
-        logger.info(
-            f"   {status} '{email}': Correctly rejected"
-            if not is_valid
-            else f"   {status} '{email}': Should be rejected"
-        )
-
-    logger.info("\n5. Password Policy Validation:")
+    logger.info("\n3. Password Policy Validation:")
 
     # Test valid passwords
     valid_passwords = ["Passw0rd123", "SecureP@ss1", "MyP@ssw0rd"]

@@ -61,16 +61,6 @@ class FlextLdapDomain:
 
             return FlextResult[bool].ok(True)
 
-        @staticmethod
-        def is_valid_email(email: str) -> bool:
-            """Check if email address meets domain requirements."""
-            if not email or "@" not in email:
-                return False
-
-            # Basic email pattern validation
-            email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-            return bool(re.match(email_pattern, email))
-
     class GroupSpecification:
         """Specification for group-related business rules."""
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import Annotated, Any, ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from dependency_injector import providers
 from flext_core import (
@@ -22,53 +22,14 @@ from flext_core import (
     FlextConstants,
     FlextExceptions,
     FlextResult,
+    PortNumber,
+    TimeoutSeconds,
 )
-from pydantic import Field, SecretStr, computed_field, model_validator
-from pydantic.functional_validators import BeforeValidator
+from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
+from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-# ============================================================================
-# PYDANTIC V2 BEFOREVALIDATOR FUNCTIONS - Module-level validator functions
-# ============================================================================
-
-
-def _validate_bind_dn(v: str | None) -> str | None:
-    """Validate LDAP bind DN format (Pydantic v2 BeforeValidator).
-
-    Focus on business logic: must contain attribute=value pairs.
-    Pydantic handles length constraints via Field.
-    """
-    if v is None:
-        return v
-
-    # Check for required attribute=value pairs (length already validated by Field)
-    if "=" not in v:
-        msg = f"Invalid LDAP bind DN format: {v}. Must contain attribute=value pairs"
-        raise FlextExceptions.ValidationError(msg, field="ldap_bind_dn", value=v)
-
-    return v
-
-
-def _coerce_int_from_env(v: int | str) -> int:
-    """Coerce LDAP integer fields from environment variables (Pydantic v2 BeforeValidator)."""
-    if isinstance(v, int):
-        return v
-    if isinstance(v, str):
-        return int(v)
-    return int(v)
-
-
-def _coerce_bool_from_env(v: bool | str | int) -> bool:
-    """Coerce LDAP boolean fields from environment variables (Pydantic v2 BeforeValidator)."""
-    if isinstance(v, bool):
-        return v
-    if isinstance(v, str):
-        return v.lower() in {"true", "1", "yes", "on"}
-    if isinstance(v, int):
-        return v != 0
-    return bool(v)
 
 
 class FlextLdapConfig(FlextConfig):
@@ -90,6 +51,25 @@ class FlextLdapConfig(FlextConfig):
         >>> result = config.validate_ldap_requirements()
 
     """
+
+    # Override model_config with LDAP-specific env_prefix for environment variable loading
+    model_config = SettingsConfigDict(
+        case_sensitive=False,
+        env_prefix="FLEXT_",
+        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
+        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
+        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
+        extra="ignore",
+        use_enum_values=False,
+        frozen=False,
+        arbitrary_types_allowed=True,
+        validate_return=True,
+        validate_assignment=True,
+        validate_default=True,
+        str_strip_whitespace=True,
+        str_to_lower=False,
+        strict=False,
+    )
 
     # Dependency Injection integration (v1.1.0+)
     _di_config_provider: ClassVar[providers.Configuration | None] = None
@@ -188,29 +168,24 @@ class FlextLdapConfig(FlextConfig):
         description="LDAP server URI (ldap:// or ldaps://)",
     )
 
-    ldap_port: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    ldap_port: PortNumber = Field(
         default=FlextLdapConstants.Protocol.DEFAULT_PORT,
-        ge=1,
-        le=FlextConstants.Network.MAX_PORT,
         description="LDAP server port",
     )
 
-    ldap_use_ssl: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldap_use_ssl: bool = Field(
         default=True,
         description="Use SSL/TLS for LDAP connections",
     )
 
-    ldap_verify_certificates: Annotated[
-        bool, BeforeValidator(_coerce_bool_from_env)
-    ] = Field(
+    ldap_verify_certificates: bool = Field(
         default=True,
         description="Verify SSL/TLS certificates",
     )
 
     # Authentication Configuration using SecretStr for sensitive data
-    ldap_bind_dn: Annotated[str | None, BeforeValidator(_validate_bind_dn)] = Field(
+    ldap_bind_dn: str | None = Field(
         default=None,
-        min_length=FlextLdapConstants.Validation.MIN_DN_LENGTH,
         max_length=FlextLdapConstants.Validation.MAX_DN_LENGTH,
         description="LDAP bind distinguished name for authentication",
     )
@@ -238,25 +213,21 @@ class FlextLdapConfig(FlextConfig):
     )
 
     # Connection Pooling Configuration using FlextLdapConstants for defaults
-    ldap_pool_size: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    ldap_pool_size: int = Field(
         default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
         ge=1,
         le=50,
         description="LDAP connection pool size",
     )
 
-    ldap_pool_timeout: int = Field(
+    ldap_pool_timeout: TimeoutSeconds = Field(
         default=FlextConstants.Network.DEFAULT_TIMEOUT,
-        ge=1,
-        le=300,
         description="LDAP connection pool timeout in seconds",
     )
 
     # Operation Configuration using FlextLdapConstants for defaults
-    ldap_connection_timeout: int = Field(
+    ldap_connection_timeout: TimeoutSeconds = Field(
         default=FlextConstants.Network.DEFAULT_TIMEOUT,
-        ge=1,
-        le=300,
         description="LDAP connection timeout in seconds",
     )
 
@@ -284,26 +255,24 @@ class FlextLdapConfig(FlextConfig):
     # NO caching/retry field duplicates - use FlextConfig.enable_caching, cache_ttl, max_retry_attempts, retry_delay
 
     # Logging Configuration using FlextLdapConstants for defaults
-    ldap_enable_debug: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldap_enable_debug: bool = Field(
         default=False,
         description="Enable LDAP debug logging",
     )
 
-    ldap_enable_trace: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldap_enable_trace: bool = Field(
         default=False,
         description="Enable LDAP trace logging",
     )
 
-    ldap_log_queries: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldap_log_queries: bool = Field(
         default=False,
         description="Enable logging of LDAP queries",
     )
 
-    ldap_mask_passwords: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=True,
-            description="Mask passwords in log messages",
-        )
+    ldap_mask_passwords: bool = Field(
+        default=True,
+        description="Mask passwords in log messages",
     )
 
     # JSON serialization options
@@ -316,6 +285,28 @@ class FlextLdapConfig(FlextConfig):
         default=True,
         description="Sort JSON keys during serialization",
     )
+
+    # =========================================================================
+    # FIELD VALIDATORS - Business logic validation
+    # =========================================================================
+
+    @field_validator("ldap_bind_dn")
+    @classmethod
+    def validate_bind_dn(cls, v: str | None) -> str | None:
+        """Validate LDAP bind DN contains attribute=value pairs (business logic)."""
+        if v is None:
+            return v
+        # Check format first (must contain =)
+        if "=" not in v:
+            msg = (
+                f"Invalid LDAP bind DN format: {v}. Must contain attribute=value pairs"
+            )
+            raise FlextExceptions.ValidationError(msg, field="ldap_bind_dn", value=v)
+        # Then check length
+        if len(v) < FlextLdapConstants.Validation.MIN_DN_LENGTH:
+            msg = f"Invalid LDAP bind DN: string too short (minimum {FlextLdapConstants.Validation.MIN_DN_LENGTH} characters)"
+            raise FlextExceptions.ValidationError(msg, field="ldap_bind_dn", value=v)
+        return v
 
     # =========================================================================
     # COMPUTED FIELDS - Derived LDAP configuration properties
@@ -331,7 +322,7 @@ class FlextLdapConfig(FlextConfig):
             use_tls=False,
             bind_dn=self.ldap_bind_dn,
             bind_password=self.ldap_bind_password,
-            timeout=self.ldap_connection_timeout,
+            timeout=int(self.ldap_connection_timeout),
             pool_size=self.ldap_pool_size,
             pool_keepalive=self.cache_ttl,
             verify_certificates=self.ldap_verify_certificates,
@@ -354,7 +345,7 @@ class FlextLdapConfig(FlextConfig):
         """Get LDAP connection pooling information."""
         return FlextLdapModels.ConfigRuntimeMetadata.Pooling(
             pool_size=self.ldap_pool_size,
-            pool_timeout=self.ldap_pool_timeout,
+            pool_timeout=int(self.ldap_pool_timeout),
             pool_utilization=f"{self.ldap_pool_size}/50",
         )
 
@@ -365,8 +356,10 @@ class FlextLdapConfig(FlextConfig):
             operation_timeout=self.ldap_operation_timeout,
             size_limit=self.ldap_size_limit,
             time_limit=self.ldap_time_limit,
-            connection_timeout=self.ldap_connection_timeout,
-            total_timeout=self.ldap_operation_timeout + self.ldap_connection_timeout,
+            connection_timeout=int(self.ldap_connection_timeout),
+            total_timeout=int(
+                self.ldap_operation_timeout + self.ldap_connection_timeout
+            ),
         )
 
     @computed_field
@@ -896,19 +889,16 @@ class FlextLdapConfig(FlextConfig):
                     return FlextResult[dict[str, str]].ok(del_cfg)
 
                 case "default_search":
-                    def_cfg: dict[str, str | int | list[str]] = {
-                        "base_dn": FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
-                        "filter_str": FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                        "scope": FlextLdapConstants.Scopes.SUBTREE,
-                        "attributes": [
+                    search_config = FlextLdapModels.SearchConfig(
+                        base_dn=FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
+                        filter_str=FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
+                        attributes=[
                             FlextLdapConstants.LdapAttributeNames.COMMON_NAME,
                             FlextLdapConstants.LdapAttributeNames.SURNAME,
                             FlextLdapConstants.LdapAttributeNames.MAIL,
                         ],
-                        "size_limit": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-                        "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
-                    }
-                    return FlextResult[dict[str, str | int | list[str]]].ok(def_cfg)
+                    )
+                    return FlextResult[FlextLdapModels.SearchConfig].ok(search_config)
 
                 case "merge":
                     merged: dict[str, object] = data.copy()

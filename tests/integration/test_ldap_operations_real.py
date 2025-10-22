@@ -120,7 +120,9 @@ class TestRealLdapSearch:
         """Test searching for users."""
         client = shared_ldap_client
 
-        result = client.search_users(base_dn="dc=flext,dc=local")
+        result = client.search(
+            base_dn="dc=flext,dc=local", filter_str="(objectClass=person)"
+        )
 
         assert result.is_success, f"User search failed: {result.error}"
 
@@ -128,7 +130,9 @@ class TestRealLdapSearch:
         """Test searching for groups."""
         client = shared_ldap_client
 
-        result = client.search_groups(base_dn="dc=flext,dc=local")
+        result = client.search(
+            base_dn="dc=flext,dc=local", filter_str="(objectClass=groupOfNames)"
+        )
 
         assert result.is_success, f"Group search failed: {result.error}"
 

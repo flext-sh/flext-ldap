@@ -66,8 +66,9 @@ class TestFlextLdapConfigEnvironment:
         test_env = {
             "FLEXT_LDAP_PORT": "3389",
             "FLEXT_LDAP_POOL_SIZE": "20",
-            "FLEXT_LDAP_CACHE_TTL": "600",
-            "FLEXT_LDAP_RETRY_ATTEMPTS": "5",
+            "FLEXT_CACHE_TTL": "600",
+            "FLEXT_ENABLE_CACHING": "1",
+            "FLEXT_MAX_RETRY_ATTEMPTS": "5",
             "FLEXT_LDAP_USE_SSL": "true",
             "FLEXT_LDAP_ENABLE_DEBUG": "yes",
             "FLEXT_LDAP_LOG_QUERIES": "on",
@@ -120,7 +121,7 @@ class TestFlextLdapConfigEnvironment:
             f.write("FLEXT_LDAP_PORT=3390\n")
             f.write("FLEXT_LDAP_POOL_SIZE=25\n")
             f.write("FLEXT_LDAP_USE_SSL=false\n")
-            f.write("FLEXT_LDAP_ENABLE_CACHING=0\n")
+            f.write("FLEXT_ENABLE_CACHING=0\n")
             env_file_path = f.name
 
         try:

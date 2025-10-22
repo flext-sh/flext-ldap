@@ -51,13 +51,14 @@ class TestLdapE2EOperations:
         user_request = FlextLdapModels.Entry(
             entry_type="user",
             dn="cn=testuser,ou=users,dc=flext,dc=local",
+            object_classes=["inetOrgPerson", "organizationalPerson", "person", "top"],
             uid="testuser",
             cn="Test User",
             sn="User",
             given_name="Test",
-            mail="testuser@example.com",
+            mail=["testuser@example.com"],
             description="Test User Description",
-            telephone_number="123-456-7890",
+            telephone_number=["123-456-7890"],
             user_password="password123",
             department="IT",
             organizational_unit="Engineering",
@@ -70,7 +71,8 @@ class TestLdapE2EOperations:
         assert user_request.uid == "testuser"
         assert user_request.cn == "Test User"
         assert user_request.sn == "User"
-        assert user_request.mail == "testuser@example.com"
+        assert user_request.mail == ["testuser@example.com"]
+        assert user_request.telephone_number == ["123-456-7890"]
 
     def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""

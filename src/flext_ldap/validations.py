@@ -10,8 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions, FlextResult, FlextUtilities
-from flext_ldif import DnService
+import re
+
+from flext_core import FlextExceptions, FlextResult
+from flext_ldif import FlextLdifDnService
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -34,13 +36,9 @@ class FlextLdapValidations:
                 f"{context} must contain '=' for proper DN format"
             )
 
-        # Use FlextUtilities for regex pattern validation (RFC 2253 format)
-        # DN format: attribute=value[,attribute=value]*
-        dn_pattern_result = FlextUtilities.Validation.validate_string_pattern(
-            dn_stripped,
-            r"^[a-zA-Z0-9=,\s\-\._]+$",
-        )
-        if dn_pattern_result.is_failure:
+        # Use regex for pattern validation (RFC 2253 format with OpenLDAP extensions)
+        # DN format: attribute=value[,attribute=value]* - allows curly braces for OpenLDAP config
+        if not re.match(r"^[a-zA-Z0-9=,\s\-\._\{\}]+$", dn_stripped):
             return FlextResult[bool].fail(f"{context} contains invalid characters")
 
         return FlextResult[bool].ok(True)
@@ -53,13 +51,9 @@ class FlextLdapValidations:
         if not filter_str or not filter_str.strip():
             return FlextResult[bool].fail("Filter cannot be empty")
 
-        # Use FlextUtilities for regex pattern validation
+        # Use regex for pattern validation
         # LDAP filters must be enclosed in parentheses: (filter)
-        filter_pattern_result = FlextUtilities.Validation.validate_string_pattern(
-            filter_str.strip(),
-            r"^\(.*\)$",
-        )
-        if filter_pattern_result.is_failure:
+        if not re.match(r"^\(.*\)$", filter_str.strip()):
             return FlextResult[bool].fail("Filter must be enclosed in parentheses")
 
         return FlextResult[bool].ok(True)
@@ -76,13 +70,9 @@ class FlextLdapValidations:
             if not attr or not attr.strip():
                 return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
 
-            # Use FlextUtilities for regex pattern validation
+            # Use regex for pattern validation
             # LDAP attribute names: start with letter, followed by alphanumeric or hyphen
-            attr_pattern_result = FlextUtilities.Validation.validate_string_pattern(
-                attr.strip(),
-                r"^[a-zA-Z][a-zA-Z0-9\-]*$",
-            )
-            if attr_pattern_result.is_failure:
+            if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attr.strip()):
                 return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
 
         return FlextResult[bool].ok(True)
@@ -97,13 +87,9 @@ class FlextLdapValidations:
 
         server_uri_stripped = server_uri.strip()
 
-        # Use FlextUtilities for regex pattern validation
+        # Use regex for pattern validation
         # LDAP URIs must start with ldap:// or ldaps://
-        uri_pattern_result = FlextUtilities.Validation.validate_string_pattern(
-            server_uri_stripped,
-            r"^ldaps?://",
-        )
-        if uri_pattern_result.is_failure:
+        if not re.match(r"^ldaps?://", server_uri_stripped):
             return FlextResult[bool].fail("URI must start with ldap:// or ldaps://")
 
         return FlextResult[bool].ok(True)
@@ -114,11 +100,8 @@ class FlextLdapValidations:
         if timeout is None:
             return FlextResult[bool].fail("Timeout cannot be None")
 
-        # Use FlextUtilities for non-negative integer validation
-        timeout_result = FlextUtilities.Validation.validate_non_negative_integer(
-            timeout
-        )
-        if timeout_result.is_failure:
+        # Validate non-negative using Pydantic v2 Field constraint pattern
+        if timeout < 0:
             return FlextResult[bool].fail("Timeout must be non-negative")
 
         return FlextResult[bool].ok(True)
@@ -129,11 +112,8 @@ class FlextLdapValidations:
         if size_limit is None:
             return FlextResult[bool].fail("Size limit cannot be None")
 
-        # Use FlextUtilities for non-negative integer validation
-        size_limit_result = FlextUtilities.Validation.validate_non_negative_integer(
-            size_limit
-        )
-        if size_limit_result.is_failure:
+        # Validate non-negative using Pydantic v2 Field constraint pattern
+        if size_limit < 0:
             return FlextResult[bool].fail("Size limit must be non-negative")
 
         return FlextResult[bool].ok(True)
@@ -219,7 +199,7 @@ class FlextLdapValidations:
     def validate_dn_for_field(dn: str) -> str:
         """DN validation for Pydantic field validators - raises exception on failure."""
         # Clean DN first to handle OID export quirks
-        cleaned_dn = DnService.clean_dn(dn)
+        cleaned_dn = FlextLdifDnService.clean_dn(dn)
 
         validation_result = FlextLdapValidations.validate_dn(cleaned_dn).map(
             lambda _: None
@@ -228,20 +208,6 @@ class FlextLdapValidations:
             error_msg = validation_result.error or "DN validation failed"
             raise FlextExceptions.ValidationError(error_msg, field="dn", value=dn)
         return cleaned_dn.strip()
-
-    @staticmethod
-    def validate_email_for_field(email: str | None) -> str | None:
-        """Email field validator - raises on failure."""
-        if email is None:
-            return None
-
-        # Import here to avoid circular dependency
-
-        validation_result = FlextUtilities.Validation.validate_email(email)
-        if validation_result.is_failure:
-            error_msg = validation_result.error or "Email validation failed"
-            raise FlextExceptions.ValidationError(error_msg, field="email", value=email)
-        return email
 
     @staticmethod
     def validate_password_for_field(password: str | None) -> str | None:

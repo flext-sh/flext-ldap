@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 
 from flext_ldap import FlextLdapClients
@@ -155,17 +157,16 @@ class TestRealLdifImport:
         """Test importing organizational unit from LDIF-like data."""
         client = shared_ldap_client
 
-        dn_to_add = "ou=imported,dc=flext,dc=local"
-
-        # Cleanup first (idempotent) - ignore errors if entry doesn't exist
-        client.delete_entry(dn=dn_to_add)  # Ignore result
-        # Ignore delete errors - entry may not exist yet
+        # Use unique DN to avoid conflicts with previous test runs
+        test_id = str(uuid.uuid4())[:8]
+        dn_to_add = f"ou=imported_{test_id},dc=flext,dc=local"
+        ou_name = f"imported_{test_id}"
 
         # LDIF-like data structure
         ldif_entry = {
             "dn": dn_to_add,
             "objectClass": ["organizationalUnit"],
-            "ou": "imported",
+            "ou": ou_name,
         }
 
         # Import from LDIF structure
@@ -177,19 +178,20 @@ class TestRealLdifImport:
             attributes={k: v for k, v in ldif_entry.items() if k != "dn"},
         )
 
-        assert result.is_success
+        assert result.is_success, f"Add entry failed: {result.error}"
 
         # Verify import
         search_result = client.search(
-            base_dn="ou=imported,dc=flext,dc=local",
+            base_dn=dn_to_add,
             filter_str="(objectClass=organizationalUnit)",
         )
 
-        assert search_result.is_success
+        assert search_result.is_success, f"Search failed: {search_result.error}"
         assert len(search_result.value) > 0
 
-        # Cleanup
-        client.delete_entry(dn=dn_to_add)  # Ignore result
+        # Cleanup - ensure delete succeeds for cleanup
+        cleanup_result = client.delete_entry(dn=dn_to_add)
+        assert cleanup_result.is_success, f"Cleanup delete failed: {cleanup_result.error}"
 
     @pytest.mark.xfail(
         reason="Entry conversion from LDAP data fails - needs debugging",

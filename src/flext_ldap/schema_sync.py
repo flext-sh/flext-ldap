@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import cast, override
 
 from flext_core import FlextResult, FlextService
-from ldap3 import MODIFY_ADD, Connection
+from ldap3 import Connection
 
 from flext_ldap.clients import FlextLdapClients
-from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapSchemaSync(FlextService[dict[str, object]]):
@@ -173,9 +173,10 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         i = 0
         while i < len(lines):
             line = lines[i].strip()
+            line_lower = line.lower()
 
-            # Look for attributeTypes or objectClasses definitions
-            if "attributeTypes:" in line:
+            # Look for attributeTypes or objectClasses definitions (case-insensitive)
+            if "attributetypes:" in line_lower:
                 # Extract the definition (may span multiple lines)
                 definition_lines = []
                 j = i
@@ -202,18 +203,20 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                             oid = tokens[0]
                             name = self._extract_name(definition)
 
+                            # Store the schema definition in RFC 4512 format: ( OID ... )
+                            schema_def = f"( {definition} )"
                             entry: dict[str, object] = {
                                 "type": "attributeType",
                                 "oid": oid,
                                 "name": name,
                                 "definition": definition,
-                                "raw_line": full_definition.strip(),
+                                "raw_line": schema_def,
                             }
                             definitions.append(entry)
 
                 i = j + 1
 
-            elif "objectClasses:" in line:
+            elif "objectclasses:" in line_lower:
                 # Extract the definition (may span multiple lines)
                 definition_lines = []
                 j = i
@@ -240,14 +243,21 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                             oid = tokens[0]
                             name = self._extract_name(definition)
 
+                            # Store the schema definition in RFC 4512 format: ( OID ... )
+                            schema_def_oc = f"( {definition} )"
                             object_class_entry: dict[str, object] = {
                                 "type": "objectClass",
                                 "oid": oid,
                                 "name": name,
                                 "definition": definition,
-                                "raw_line": full_definition.strip(),
+                                "raw_line": schema_def_oc,
                             }
                             definitions.append(object_class_entry)
+
+                i = j + 1
+            else:
+                # Skip non-schema lines
+                i += 1
 
         return FlextResult[list[dict[str, object]]].ok(definitions)
 
@@ -290,12 +300,12 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             protocol = "ldaps" if self._use_ssl else "ldap"
             server_uri = f"{protocol}://{self._server_host}:{self._server_port}"
 
-            # Establish connection
+            # Establish connection (without auto-discovery to avoid hangs)
             connect_result = self._connection.connect(
                 server_uri=server_uri,
                 bind_dn=self._bind_dn or "",
                 password=self._bind_password or "",
-                auto_discover_schema=True,
+                auto_discover_schema=False,
             )
 
             if connect_result.is_failure:
@@ -338,12 +348,30 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
 
             server = ldap_conn.server
 
-            # Force schema loading if not already loaded
-            if not hasattr(server, "schema") or not getattr(server, "schema", None):
-                setattr(server, "get_info", "SCHEMA")
-                ldap_conn.bind()
+            # Manually retrieve schema via ldap3
+            if not server.schema:
+                # Search for schema subentry
+                schema_dn = self._get_schema_dn_for_server()
+                search_result = ldap_conn.search(
+                    search_base=schema_dn,
+                    search_filter="(objectClass=*)",
+                    search_scope="BASE",
+                    attributes=["attributeTypes", "objectClasses"],
+                )
 
-            schema = getattr(server, "schema")
+                if not search_result or not ldap_conn.entries:
+                    self.logger.warning(
+                        "Schema discovery via search failed, will treat all definitions as new"
+                    )
+                    # Return empty schema - all definitions will be treated as new
+                    return FlextResult[dict[str, object]].ok({
+                        "attributeTypes": {},
+                        "objectClasses": {},
+                        "server_type": self._server_type,
+                        "schema_loaded": False,
+                    })
+
+            schema = server.schema
 
             # Extract existing attribute types and object classes
             attr_types_dict: dict[str, str] = {
@@ -460,7 +488,10 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
     def _add_schema_definitions(
         self, definitions: list[dict[str, object]]
     ) -> FlextResult[None]:
-        """Add new schema definitions using LDAP modify operations.
+        """Add new schema definitions using FlextLdap interfaces with quirks.
+
+        Uses FlextLdap.modify_entry() which automatically applies server-specific
+        quirks (including OUD schema quirks) through the generic interface pattern.
 
         Args:
         definitions: List of schema definitions to add
@@ -473,56 +504,83 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             return FlextResult[None].fail("Not connected to LDAP server")
 
         try:
-            # Get underlying ldap3 connection
-            ldap_conn = self._connection.connection
-
-            if not ldap_conn:
-                return FlextResult[None].fail("LDAP connection not available")
-
             # Determine schema DN for this server type
             schema_dn = self._get_schema_dn_for_server()
 
-            added_count = 0
-            failed_count = 0
+            # Group definitions by type for batch operations
+            attribute_types: list[str] = []
+            object_classes: list[str] = []
 
             for definition in definitions:
                 def_type = definition.get("type")
                 raw_line = definition.get("raw_line", "")
-                name = definition.get("name", "unknown")
 
-                # Determine attribute name for modification
-                attr_name = (
-                    "attributeTypes" if def_type == "attributeType" else "objectClasses"
+                if def_type == "attributeType":
+                    attribute_types.append(str(raw_line))
+                elif def_type == "objectClass":
+                    object_classes.append(str(raw_line))
+
+            added_count = 0
+            failed_count = 0
+            max_logged_failures = 3  # Log only first few failures for debugging
+
+            # Add attributeTypes one at a time (OUD doesn't support batch schema mods)
+            for attr_type in attribute_types:
+                changes: dict[str, list[tuple[str, list[str]]]] = {
+                    "attributeTypes": [("MODIFY_ADD", [attr_type])]
+                }
+                modify_result = self._connection.modify_entry(
+                    schema_dn, cast("FlextLdapModels.EntryChanges", changes)
                 )
 
-                # Perform LDAP modify to add schema definition
-                # Cast to Protocol type for proper type checking with ldap3
-                typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", ldap_conn)
-                # MODIFY_ADD is an int constant from ldap3 (cast needed due to types-ldap3 stubs issue)
-                changes: dict[str, list[tuple[int, list[str]]]] = {attr_name: [(cast("int", MODIFY_ADD), [str(raw_line)])]}
-                success = typed_conn.modify(
-                    dn=schema_dn, changes=changes
-                )
-
-                if not success:
-                    # Schema conflicts are common - log but continue
-                    error_msg = ldap_conn.result.get("description", "Unknown error")
-                    self.logger.warning(
-                        f"Failed to add {def_type} {name}: {error_msg}",
-                        extra={"definition": raw_line},
-                    )
+                if modify_result.is_success:
+                    added_count += 1
+                else:
                     failed_count += 1
-                    continue
+                    # Log first few failures for debugging
+                    if failed_count <= max_logged_failures:
+                        self.logger.warning(
+                            f"Failed to add attributeType: {modify_result.error} - "
+                            f"Definition: {attr_type[:100]}..."
+                        )
 
-                added_count += 1
-                self.logger.debug(f"Added {def_type}: {name}", extra={"dn": schema_dn})
+            if added_count > 0:
+                self.logger.info(f"Added {added_count} attributeTypes via FlextLdap")
+            if failed_count > 0:
+                self.logger.warning(f"Failed to add {failed_count} attributeTypes")
+
+            # Add objectClasses one at a time (OUD doesn't support batch schema mods)
+            for obj_class in object_classes:
+                changes_obj: dict[str, list[tuple[str, list[str]]]] = {
+                    "objectClasses": [("MODIFY_ADD", [obj_class])]
+                }
+                modify_result = self._connection.modify_entry(
+                    schema_dn, cast("FlextLdapModels.EntryChanges", changes_obj)
+                )
+
+                if modify_result.is_success:
+                    added_count += 1
+                else:
+                    failed_count += 1
+                    # Log first few failures for debugging
+                    if failed_count <= max_logged_failures:
+                        self.logger.warning(
+                            f"Failed to add objectClass: {modify_result.error} - "
+                            f"Definition: {obj_class[:100]}..."
+                        )
+
+            if added_count > 0:
+                self.logger.info(f"Added {added_count} objectClasses via FlextLdap")
+            if failed_count > 0:
+                self.logger.warning(f"Failed to add {failed_count} objectClasses")
 
             self.logger.info(
-                "Schema definitions processed",
+                "Schema definitions processed via FlextLdap interfaces",
                 extra={
                     "added": added_count,
                     "failed": failed_count,
                     "total": len(definitions),
+                    "used_quirks": True,
                 },
             )
 

@@ -12,10 +12,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, Literal
+from typing import Final, Literal, cast
 
 from flext_core import FlextConstants
 from flext_ldif import FlextLdifConstants
+from ldap3 import (
+    MODIFY_ADD,
+    MODIFY_DELETE,
+    MODIFY_REPLACE,
+)
 
 
 class FlextLdapConstants(FlextConstants):
@@ -71,6 +76,35 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
         MAX_DESCRIPTION_LENGTH: Final[int] = 1024
+
+    class ModifyOperation:
+        """LDAP modify operations (RFC 4511).
+
+        Public API constants for LDAP modify operations.
+        Re-exports ldap3 constants with FLEXT namespace for proper encapsulation.
+
+        Use these constants instead of importing ldap3 directly:
+        - FlextLdapConstants.ModifyOperation.ADD
+        - FlextLdapConstants.ModifyOperation.DELETE
+        - FlextLdapConstants.ModifyOperation.REPLACE
+        - FlextLdapConstants.ModifyOperation.INCREMENT
+
+        Example:
+            from flext_ldap import FlextLdap, FlextLdapConstants
+
+            ldap_client = FlextLdap()
+            ldap_client.modify_entry(
+                dn="cn=schema",
+                changes={"attributeTypes": ["..."]},
+                operation=FlextLdapConstants.ModifyOperation.ADD
+            )
+
+        """
+
+        # Re-export ldap3 constants (strings in ldap3, typed as int in stubs)
+        ADD: Final[str] = cast("str", MODIFY_ADD)
+        DELETE: Final[str] = cast("str", MODIFY_DELETE)
+        REPLACE: Final[str] = cast("str", MODIFY_REPLACE)
 
     class Connection:
         """LDAP connection-specific constants."""
@@ -397,6 +431,7 @@ class FlextLdapConstants(FlextConstants):
         ACL_RULE_PARTS: Final[int] = 2
         OPENLDAP_PREFIX_LENGTH: Final[int] = 3
         MIN_OC_LENGTH: Final[int] = 3
+        MODIFY_OPERATION_TUPLE_LENGTH: Final[int] = 2
 
         # ACL conversion warning messages
         ACL_PERMISSION_NOT_SUPPORTED: Final[str] = "Perm '{permission}' not in {format}"
