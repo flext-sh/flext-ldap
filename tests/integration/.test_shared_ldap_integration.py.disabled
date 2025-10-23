@@ -68,8 +68,8 @@ class TestSharedLDAPIntegration:
 
             # Verify we got schema information (SchemaDiscoveryResult model)
             schema_data = schema_result.value
-            assert hasattr(schema_data, 'attributes')
-            assert hasattr(schema_data, 'object_classes')
+            assert hasattr(schema_data, "attributes")
+            assert hasattr(schema_data, "object_classes")
             # Check for expected schema info - these should be dicts in the model
             assert isinstance(schema_data.attributes, dict)
             assert isinstance(schema_data.object_classes, dict)

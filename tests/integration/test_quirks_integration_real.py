@@ -102,7 +102,9 @@ class TestServerTypeDetectionReal:
             if ldap_entry.attributes and isinstance(ldap_entry.attributes, dict):
                 for attr_name, attr_values in ldap_entry.attributes.items():
                     if isinstance(attr_values, list):
-                        values_list = [str(v) if v is not None else "" for v in attr_values]
+                        values_list = [
+                            str(v) if v is not None else "" for v in attr_values
+                        ]
                         attrs_dict[str(attr_name)] = FlextLdifModels.AttributeValues(
                             values=values_list
                         )
@@ -573,7 +575,9 @@ class TestEntryNormalization:
             "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
         }
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="uid=user,ou=people,dc=test,dc=com"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="uid=user,ou=people,dc=test,dc=com"
+            ),
             attributes=FlextLdifModels.LdifAttributes(attributes=attributes_dict),
         )
 

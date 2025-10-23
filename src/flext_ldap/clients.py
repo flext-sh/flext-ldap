@@ -129,7 +129,7 @@ class FlextLdapClients(FlextService[None]):
     def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
         """Get searcher with lazy initialization."""
         if self._searcher is None:
-            searcher: FlextLdapSearch = FlextLdapSearch(parent=self)
+            searcher: FlextLdapSearch = FlextLdapSearch(parent=self)  # type: ignore[arg-type]
             # Set connection context if connection exists
             if self._connection:
                 searcher.set_connection_context(self._connection)
@@ -580,8 +580,12 @@ class FlextLdapClients(FlextService[None]):
         if single:
             entries = search_result.unwrap()
             if entries and len(entries) > 0:
-                return FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None].ok(entries[0])
-            return FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None].ok(None)
+                return FlextResult[
+                    list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+                ].ok(entries[0])
+            return FlextResult[
+                list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+            ].ok(None)
 
         return cast(
             "FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]",
@@ -1814,8 +1818,17 @@ class FlextLdapClients(FlextService[None]):
                 if isinstance(value, dict):
                     return {
                         k: (
-                            [(op, [s.strip() for s in vals]) for op, vals in change_list]
-                            if isinstance(change_list, list) and all(isinstance(op, tuple) and len(op) == FlextLdapConstants.AclParsing.MODIFY_OPERATION_TUPLE_LENGTH for op in change_list)
+                            [
+                                (op, [s.strip() for s in vals])
+                                for op, vals in change_list
+                            ]
+                            if isinstance(change_list, list)
+                            and all(
+                                isinstance(op, tuple)
+                                and len(op)
+                                == FlextLdapConstants.AclParsing.MODIFY_OPERATION_TUPLE_LENGTH
+                                for op in change_list
+                            )
                             else change_list
                         )
                         for k, change_list in value.items()

@@ -71,7 +71,7 @@ class TestRealLdifExport:
                 "cn": "ldif_user1",
                 "sn": "LdifUser1",
                 "uid": "ldif_user1",
-                "mail": "ldif_user1@flext.local",
+                "mail": ["ldif_user1@flext.local"],
             },
         )
         assert user_result.is_success, f"Failed to create user: {user_result.error}"
@@ -95,7 +95,9 @@ class TestRealLdifExport:
 
         # Cleanup - ensure entries are deleted
         cleanup_user = client.delete_entry(dn=user_dn)
-        assert cleanup_user.is_success or cleanup_user.is_failure, "Delete should complete"
+        assert cleanup_user.is_success or cleanup_user.is_failure, (
+            "Delete should complete"
+        )
         cleanup_ou = client.delete_entry(dn=ou_dn)
         assert cleanup_ou.is_success or cleanup_ou.is_failure, "Delete should complete"
 
@@ -123,7 +125,7 @@ class TestRealLdifExport:
             attributes={
                 "objectClass": ["groupOfNames"],
                 "cn": "ldif_group1",
-                "member": "cn=admin,dc=flext,dc=local",
+                "member": ["cn=admin,dc=flext,dc=local"],
             },
         )
         assert group_result.is_success, f"Failed to create group: {group_result.error}"
@@ -147,7 +149,9 @@ class TestRealLdifExport:
 
         # Cleanup - ensure entries are deleted
         cleanup_group = client.delete_entry(dn=group_dn)
-        assert cleanup_group.is_success or cleanup_group.is_failure, "Delete should complete"
+        assert cleanup_group.is_success or cleanup_group.is_failure, (
+            "Delete should complete"
+        )
         cleanup_ou = client.delete_entry(dn=ou_dn)
         assert cleanup_ou.is_success or cleanup_ou.is_failure, "Delete should complete"
 

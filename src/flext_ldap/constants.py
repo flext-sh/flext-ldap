@@ -279,7 +279,7 @@ class FlextLdapConstants(FlextConstants):
         DEFAULT_STATUS: Final[str] = "active"
         ERROR_SUMMARY_MAX_ITEMS: Final[int] = 3
         MIN_USERNAME_LENGTH: Final[int] = 3
-        MIN_GROUP_NAME_LENGTH: Final[int] = 2
+        MIN_GROUP_NAME_LENGTH: Final[int] = 3
         MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
         MAX_DESCRIPTION_LENGTH: Final[int] = 500
         MIN_CONNECTION_ARGS: Final[int] = 3

@@ -34,7 +34,9 @@ class TestFlextLdapSearchBasicOperations:
         assert search_service._connection is None  # No connection initially
         assert search_service._parent is None
 
-    def test_search_with_parent_client(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_parent_client(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test FlextLdapSearch with parent client."""
         search_service = FlextLdapSearch(parent=shared_ldap_client)
 
@@ -73,7 +75,9 @@ class TestFlextLdapSearchBasicOperations:
 class TestFlextLdapSearchRealOperations:
     """Test FlextLdapSearch operations against real LDAP server."""
 
-    def test_search_base_dn_real_data(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_base_dn_real_data(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test searching for base DN with real LDAP data."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -91,7 +95,9 @@ class TestFlextLdapSearchRealOperations:
         # Base DN should be in results
         assert any("dc=flext,dc=local" in entry.dn for entry in entries)
 
-    def test_search_with_subtree_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_subtree_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with subtree scope."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -124,7 +130,9 @@ class TestFlextLdapSearchRealOperations:
         assert len(entries) == 1  # Base scope returns only base DN
         assert entries[0].dn == "dc=flext,dc=local"
 
-    def test_search_with_level_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_level_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with level scope (one level below base)."""
         # First create an OU to search
         shared_ldap_client.delete_entry("ou=testlevel,dc=flext,dc=local")
@@ -152,7 +160,9 @@ class TestFlextLdapSearchRealOperations:
         # Cleanup
         shared_ldap_client.delete_entry("ou=testlevel,dc=flext,dc=local")
 
-    def test_search_with_specific_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_specific_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search requesting specific attributes."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -171,7 +181,9 @@ class TestFlextLdapSearchRealOperations:
         for entry in entries:
             assert entry.attributes is not None
 
-    def test_search_with_all_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_all_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search requesting all attributes with '*'."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -199,7 +211,9 @@ class TestFlextLdapSearchRealOperations:
         assert result.is_failure
         assert "LDAP connection not established" in (result.error or "")
 
-    def test_search_with_invalid_base_dn(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_search_with_invalid_base_dn(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with non-existent base DN."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -214,8 +228,12 @@ class TestFlextLdapSearchRealOperations:
         assert result.is_failure
         assert result.error is not None
 
-    @pytest.mark.xfail(reason="Docker LDAP test setup issue - connection lifecycle problem")
-    def test_search_with_filter_matching_nothing(self, shared_ldap_client: FlextLdapClients) -> None:
+    @pytest.mark.xfail(
+        reason="Docker LDAP test setup issue - connection lifecycle problem"
+    )
+    def test_search_with_filter_matching_nothing(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with filter that matches nothing."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is None:
@@ -256,8 +274,12 @@ class TestFlextLdapSearchOneOperation:
         assert entry is not None
         assert entry.dn == "dc=flext,dc=local"
 
-    @pytest.mark.xfail(reason="Connection lifecycle issue with Docker LDAP fixture - connection not established in search context")
-    def test_search_one_returns_none_when_not_found(self, shared_ldap_client: FlextLdapClients) -> None:
+    @pytest.mark.xfail(
+        reason="Connection lifecycle issue with Docker LDAP fixture - connection not established in search context"
+    )
+    def test_search_one_returns_none_when_not_found(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search_one returns None when no match."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is None:
@@ -293,7 +315,9 @@ class TestFlextLdapSearchOneOperation:
 class TestFlextLdapUserOperations:
     """Test user-specific operations with real LDAP data."""
 
-    @pytest.mark.xfail(reason="Docker LDAP entry validation - inetOrgPerson requires person object class in LDAP response")
+    @pytest.mark.xfail(
+        reason="Docker LDAP entry validation - inetOrgPerson requires person object class in LDAP response"
+    )
     def test_get_user_existing_user(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test getting existing user by DN."""
         # Create test user
@@ -329,8 +353,12 @@ class TestFlextLdapUserOperations:
         shared_ldap_client.delete_entry("cn=getuser,ou=users,dc=flext,dc=local")
         shared_ldap_client.delete_entry("ou=users,dc=flext,dc=local")
 
-    @pytest.mark.xfail(reason="Docker LDAP fixture teardown issue - entries from previous tests still present")
-    def test_get_user_nonexistent_user(self, shared_ldap_client: FlextLdapClients) -> None:
+    @pytest.mark.xfail(
+        reason="Docker LDAP fixture teardown issue - entries from previous tests still present"
+    )
+    def test_get_user_nonexistent_user(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test getting nonexistent user returns None."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -363,7 +391,9 @@ class TestFlextLdapUserOperations:
         assert "LDAP connection not established" in (result.error or "")
 
     @pytest.mark.xfail(reason="Docker LDAP setup may not have admin user populated")
-    def test_user_exists_for_existing_user(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_user_exists_for_existing_user(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test user_exists returns True for existing user using Docker LDAP admin."""
         # Use the pre-existing admin user from Docker LDAP setup
         # Docker LDAP creates: cn=admin,dc=flext,dc=local by default
@@ -384,7 +414,9 @@ class TestFlextLdapUserOperations:
         assert result.is_success, f"user_exists should succeed: {result.error}"
         assert result.unwrap() is True, f"user_exists should return True for {user_dn}"
 
-    def test_user_exists_for_nonexistent_user(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_user_exists_for_nonexistent_user(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test user_exists returns False for nonexistent user."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -395,7 +427,9 @@ class TestFlextLdapUserOperations:
         assert result.is_success
         assert result.unwrap() is False
 
-    def test_user_exists_with_invalid_dn(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_user_exists_with_invalid_dn(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test user_exists with invalid DN."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -411,7 +445,9 @@ class TestFlextLdapUserOperations:
 class TestFlextLdapGroupOperations:
     """Test group-specific operations with real LDAP data."""
 
-    def test_get_group_existing_group(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_get_group_existing_group(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test getting existing group by DN."""
         # Create test group
         shared_ldap_client.delete_entry("cn=testgetgroup,ou=groups,dc=flext,dc=local")
@@ -445,11 +481,14 @@ class TestFlextLdapGroupOperations:
         shared_ldap_client.delete_entry("cn=testgetgroup,ou=groups,dc=flext,dc=local")
         shared_ldap_client.delete_entry("ou=groups,dc=flext,dc=local")
 
-    def test_get_group_nonexistent_group(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_get_group_nonexistent_group(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test getting nonexistent group returns None."""
         # Use a unique OU name to avoid conflicts with previous test runs
         # This ensures we don't have stale connection errors from previous failed operations
         import uuid
+
         test_id = str(uuid.uuid4())[:8]
         ou_dn = f"ou=testgroup{test_id},dc=flext,dc=local"
         group_dn = f"cn=nonexistentgroup,{ou_dn}"
@@ -458,11 +497,16 @@ class TestFlextLdapGroupOperations:
             # Create the organizational unit for this test
             add_result = shared_ldap_client.add_entry(
                 dn=ou_dn,
-                attributes={"objectClass": ["organizationalUnit"], "ou": f"testgroup{test_id}"},
+                attributes={
+                    "objectClass": ["organizationalUnit"],
+                    "ou": f"testgroup{test_id}",
+                },
             )
 
             # Verify add succeeded - if it fails, skip the test rather than testing with bad state
-            assert add_result.is_success, f"Failed to create test OU: {add_result.error}"
+            assert add_result.is_success, (
+                f"Failed to create test OU: {add_result.error}"
+            )
 
             search_service = FlextLdapSearch()
             if shared_ldap_client._connection is not None:
@@ -498,7 +542,9 @@ class TestFlextLdapGroupOperations:
         assert result.is_failure
         assert "LDAP connection not established" in (result.error or "")
 
-    def test_group_exists_for_existing_group(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_group_exists_for_existing_group(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test group_exists returns True for existing group."""
         # Create test group
         shared_ldap_client.delete_entry("cn=existsgroup,ou=groups,dc=flext,dc=local")
@@ -521,7 +567,9 @@ class TestFlextLdapGroupOperations:
         if shared_ldap_client._connection is not None:
             search_service.set_connection_context(shared_ldap_client._connection)
 
-        result = search_service.group_exists("cn=existsgroup,ou=groups,dc=flext,dc=local")
+        result = search_service.group_exists(
+            "cn=existsgroup,ou=groups,dc=flext,dc=local"
+        )
 
         assert result.is_success
         assert result.unwrap() is True
@@ -530,7 +578,9 @@ class TestFlextLdapGroupOperations:
         shared_ldap_client.delete_entry("cn=existsgroup,ou=groups,dc=flext,dc=local")
         shared_ldap_client.delete_entry("ou=groups,dc=flext,dc=local")
 
-    def test_group_exists_for_nonexistent_group(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_group_exists_for_nonexistent_group(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test group_exists returns False for nonexistent group."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -562,7 +612,9 @@ class TestFlextLdapSearchScopeHandling:
 
         assert scope == "LEVEL"
 
-    def test_get_ldap3_scope_subtree(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_get_ldap3_scope_subtree(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test _get_ldap3_scope with 'subtree' scope."""
         search_service = FlextLdapSearch()
 
@@ -570,7 +622,9 @@ class TestFlextLdapSearchScopeHandling:
 
         assert scope == "SUBTREE"
 
-    def test_get_ldap3_scope_case_insensitive(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_get_ldap3_scope_case_insensitive(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test _get_ldap3_scope is case insensitive."""
         search_service = FlextLdapSearch()
 
@@ -579,7 +633,9 @@ class TestFlextLdapSearchScopeHandling:
         assert search_service._get_ldap3_scope("SUBTREE") == "SUBTREE"
         assert search_service._get_ldap3_scope("Subtree") == "SUBTREE"
 
-    def test_get_ldap3_scope_invalid_scope_raises_valueerror(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_get_ldap3_scope_invalid_scope_raises_valueerror(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test _get_ldap3_scope with invalid scope raises ValueError."""
         search_service = FlextLdapSearch()
 

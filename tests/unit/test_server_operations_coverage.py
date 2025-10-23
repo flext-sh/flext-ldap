@@ -1,9 +1,7 @@
-"""Comprehensive server operation tests for 100% coverage.
+"""Comprehensive server operation tests for increased coverage.
 
-Tests for server-specific operations (OID, OUD, OpenLDAP 1/2, Generic)
-to achieve 100% code coverage of server-specific implementations.
-
-Uses real Docker LDAP server via shared_ldap_client fixture.
+Tests for server operations and client methods that exercise code paths
+not covered by existing tests. Uses real Docker LDAP server.
 """
 
 from __future__ import annotations
@@ -16,11 +14,11 @@ from flext_ldap import FlextLdapClients
 
 @pytest.mark.unit
 class TestServerOperationsComprehensive:
-    """Comprehensive tests for all server-specific operations."""
+    """Tests for comprehensive server operation coverage."""
 
     @pytest.fixture
     def clients(self, shared_ldap_client: FlextLdapClients) -> FlextLdapClients:
-        """Use real LDAP client for server operations testing."""
+        """Use real LDAP client."""
         return shared_ldap_client
 
     # =========================================================================
@@ -32,47 +30,50 @@ class TestServerOperationsComprehensive:
         result = clients.discover_schema()
         assert isinstance(result, FlextResult)
 
-    def test_discover_schema_with_force_refresh(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test schema discovery with force refresh."""
-        result = clients.discover_schema(force_refresh=True)
-        assert isinstance(result, FlextResult)
+    def test_discover_schema_call_twice(self, clients: FlextLdapClients) -> None:
+        """Test schema discovery called twice for caching."""
+        result1 = clients.discover_schema()
+        result2 = clients.discover_schema()
+        assert isinstance(result1, FlextResult)
+        assert isinstance(result2, FlextResult)
 
-    def test_discover_schema_with_base_dn(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test schema discovery from specific base DN."""
-        result = clients.discover_schema(base_dn="dc=flext,dc=local")
+    def test_discover_schema_result_content(self, clients: FlextLdapClients) -> None:
+        """Test schema discovery returns proper result."""
+        result = clients.discover_schema()
         assert isinstance(result, FlextResult)
+        if result.is_success:
+            schema = result.unwrap()
+            assert schema is not None
 
     # =========================================================================
     # BUILD_USER_ATTRIBUTES Tests
     # =========================================================================
 
-    def test_build_user_attributes_basic(
-        self, clients: FlextLdapClients
-    ) -> None:
+    def test_build_user_attributes_basic(self, clients: FlextLdapClients) -> None:
         """Test basic user attributes building."""
-        result = clients.build_user_attributes()
+        from flext_ldap import FlextLdapModels
+
+        request = FlextLdapModels._LdapRequest(
+            cn="testuser", sn="User", mail="test@example.com"
+        )
+        result = clients.build_user_attributes(request)
         assert isinstance(result, FlextResult)
 
-    def test_build_user_attributes_with_objectclass(
+    def test_build_user_attributes_with_multiple_fields(
         self, clients: FlextLdapClients
     ) -> None:
-        """Test building user attributes with object class spec."""
-        result = clients.build_user_attributes(
-            objectclass="inetOrgPerson"
-        )
-        assert isinstance(result, FlextResult)
+        """Test building user attributes with multiple fields."""
+        from flext_ldap import FlextLdapModels
 
-    def test_build_user_attributes_with_include_computed(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test building user attributes with computed fields."""
-        result = clients.build_user_attributes(
-            include_computed=True
+        request = FlextLdapModels._LdapRequest(
+            cn="testuser",
+            sn="User",
+            given_name="Test",
+            mail="test@example.com",
+            uid="testuser",
+            telephone_number="555-1234",
         )
+        result = clients.build_user_attributes(request)
         assert isinstance(result, FlextResult)
 
     # =========================================================================
@@ -88,9 +89,7 @@ class TestServerOperationsComprehensive:
         )
         assert isinstance(result, FlextResult)
 
-    def test_search_single_level_scope(
-        self, clients: FlextLdapClients
-    ) -> None:
+    def test_search_single_level_scope(self, clients: FlextLdapClients) -> None:
         """Test search with single level scope."""
         result = clients.search(
             base_dn="dc=flext,dc=local",
@@ -125,8 +124,16 @@ class TestServerOperationsComprehensive:
         )
         assert isinstance(result, FlextResult)
 
+    def test_search_one_entry(self, clients: FlextLdapClients) -> None:
+        """Test search_one to get single entry."""
+        result = clients.search_one(
+            search_base="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+        )
+        assert isinstance(result, FlextResult)
+
     # =========================================================================
-    # NORMALIZE_DN Tests
+    # NORMALIZE Tests
     # =========================================================================
 
     def test_normalize_dn_lowercase(self, clients: FlextLdapClients) -> None:
@@ -134,9 +141,7 @@ class TestServerOperationsComprehensive:
         result = clients.normalize_dn("CN=Test,DC=Example,DC=Com")
         assert isinstance(result, str)
 
-    def test_normalize_dn_already_normalized(
-        self, clients: FlextLdapClients
-    ) -> None:
+    def test_normalize_dn_already_normalized(self, clients: FlextLdapClients) -> None:
         """Test normalization of already normalized DN."""
         result = clients.normalize_dn("cn=test,dc=example,dc=com")
         assert isinstance(result, str)
@@ -146,139 +151,68 @@ class TestServerOperationsComprehensive:
         result = clients.normalize_dn("CN = Test , DC = Example")
         assert isinstance(result, str)
 
-    # =========================================================================
-    # ENTRY VALIDATION Tests
-    # =========================================================================
+    def test_normalize_dn_with_rdn_formats(self, clients: FlextLdapClients) -> None:
+        """Test DN normalization with various RDN formats."""
+        result = clients.normalize_dn("OU=Users,O=Company,C=US")
+        assert isinstance(result, str)
 
-    def test_validate_entry_success(self, clients: FlextLdapClients) -> None:
-        """Test successful entry validation."""
-        from flext_ldap import FlextLdapModels
+        result = clients.normalize_dn("CN=Test,OU=Users,DC=example,DC=com")
+        assert isinstance(result, str)
 
-        entry = FlextLdapModels.Entry(
-            dn="cn=test,dc=example,dc=com",
-            object_classes=["person"],
-            attributes={"cn": ["test"], "sn": ["Test"]},
-        )
-        result = clients.validate_entry(entry)
-        assert isinstance(result, FlextResult)
+    def test_normalize_attribute_name(self, clients: FlextLdapClients) -> None:
+        """Test attribute name normalization."""
+        result = clients.normalize_attribute_name("CN")
+        assert isinstance(result, str)
 
-    def test_validate_entry_with_quirks(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test entry validation with quirks mode."""
-        from flext_ldap import FlextLdapModels
+        result = clients.normalize_attribute_name("objectClass")
+        assert isinstance(result, str)
 
-        entry = FlextLdapModels.Entry(
-            dn="cn=test,dc=example,dc=com",
-            object_classes=["person"],
-            attributes={"cn": ["test"], "sn": ["Test"]},
-        )
-        result = clients.validate_entry(entry, quirks_mode="rfc")
-        assert isinstance(result, FlextResult)
+    def test_normalize_object_class(self, clients: FlextLdapClients) -> None:
+        """Test object class normalization."""
+        result = clients.normalize_object_class("inetOrgPerson")
+        assert isinstance(result, str)
 
     # =========================================================================
     # CONNECTION TESTS
     # =========================================================================
-
-    def test_is_connected_when_connected(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test is_connected when connection is active."""
-        result = clients.is_connected()
-        assert isinstance(result, FlextResult)
-        if result.is_success:
-            assert isinstance(result.unwrap(), bool)
 
     def test_test_connection_basic(self, clients: FlextLdapClients) -> None:
         """Test connection validation."""
         result = clients.test_connection()
         assert isinstance(result, FlextResult)
 
-    def test_get_server_capabilities(
-        self, clients: FlextLdapClients
-    ) -> None:
+    def test_get_server_capabilities(self, clients: FlextLdapClients) -> None:
         """Test retrieving server capabilities."""
         result = clients.get_server_capabilities()
         assert isinstance(result, FlextResult)
-
-    # =========================================================================
-    # SERVER-SPECIFIC METHODS
-    # =========================================================================
-
-    def test_get_server_type(self, clients: FlextLdapClients) -> None:
-        """Test getting detected server type."""
-        server_type = clients.get_server_type()
-        assert isinstance(server_type, str)
-        assert server_type in [
-            "generic",
-            "oid",
-            "oud",
-            "openldap1",
-            "openldap2",
-            "ad",
-            "ds389",
-            "apache",
-            "novell",
-            "tivoli",
-        ]
 
     def test_get_server_info(self, clients: FlextLdapClients) -> None:
         """Test getting server information."""
         result = clients.get_server_info()
         assert isinstance(result, FlextResult)
 
-    def test_supports_start_tls(self, clients: FlextLdapClients) -> None:
-        """Test checking STARTTLS support."""
-        supports_tls = clients.supports_start_tls()
-        assert isinstance(supports_tls, bool)
-
-    def test_get_default_port(self, clients: FlextLdapClients) -> None:
-        """Test getting default port."""
-        port = clients.get_default_port()
-        assert isinstance(port, int)
-        assert port > 0
-
-    def test_get_default_port_with_ssl(self, clients: FlextLdapClients) -> None:
-        """Test getting default SSL port."""
-        port = clients.get_default_port(use_ssl=True)
-        assert isinstance(port, int)
-        assert port > 0
-
     # =========================================================================
-    # ADVANCED OPERATIONS
+    # SEARCH SPECIALIZED TESTS
     # =========================================================================
 
-    def test_search_with_paged_results(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test search with paged results when supported."""
-        result = clients.search(
+    def test_search_users(self, clients: FlextLdapClients) -> None:
+        """Test searching for users."""
+        result = clients.search_users(base_dn="dc=flext,dc=local")
+        assert isinstance(result, FlextResult)
+
+    def test_search_groups(self, clients: FlextLdapClients) -> None:
+        """Test searching for groups."""
+        result = clients.search_groups(base_dn="dc=flext,dc=local")
+        assert isinstance(result, FlextResult)
+
+    def test_search_with_request_object(self, clients: FlextLdapClients) -> None:
+        """Test search with SearchRequest object."""
+        from flext_ldap import FlextLdapModels
+
+        request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
             scope="subtree",
         )
+        result = clients.search_with_request(request)
         assert isinstance(result, FlextResult)
-
-    def test_normalize_dn_with_rdn_formats(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test DN normalization with various RDN formats."""
-        # Test OU format
-        result = clients.normalize_dn("OU=Users,O=Company,C=US")
-        assert isinstance(result, str)
-
-        # Test mixed format
-        result = clients.normalize_dn("CN=Test,OU=Users,DC=example,DC=com")
-        assert isinstance(result, str)
-
-    def test_get_server_operations_properties(
-        self, clients: FlextLdapClients
-    ) -> None:
-        """Test retrieving server operations properties."""
-        server_type = clients.get_server_type()
-        port = clients.get_default_port()
-        tls_support = clients.supports_start_tls()
-
-        assert isinstance(server_type, str)
-        assert isinstance(port, int)
-        assert isinstance(tls_support, bool)

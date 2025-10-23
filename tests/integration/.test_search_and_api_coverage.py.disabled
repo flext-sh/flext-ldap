@@ -141,9 +141,7 @@ class TestClientOperationsRealCoverage:
         result = client.test_connection()
         assert result.is_success
 
-    def test_client_search_with_pagination(
-        self, client: FlextLdapClients
-    ) -> None:
+    def test_client_search_with_pagination(self, client: FlextLdapClients) -> None:
         """Test search with pagination support."""
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
@@ -154,9 +152,7 @@ class TestClientOperationsRealCoverage:
         result = client.search_with_request(search_request)
         assert result.is_success
 
-    def test_client_search_with_time_limit(
-        self, client: FlextLdapClients
-    ) -> None:
+    def test_client_search_with_time_limit(self, client: FlextLdapClients) -> None:
         """Test search with time limit."""
         search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
@@ -198,9 +194,7 @@ class TestClientOperationsRealCoverage:
                 # Clean up - delete the entry
                 client.delete_entry(test_dn)
 
-    def test_client_delete_entry_nonexistent(
-        self, client: FlextLdapClients
-    ) -> None:
+    def test_client_delete_entry_nonexistent(self, client: FlextLdapClients) -> None:
         """Test deleting non-existent entry returns error result."""
         result = client.delete_entry("cn=does_not_exist,dc=flext,dc=local")
         # Should return a FlextResult (success or failure)

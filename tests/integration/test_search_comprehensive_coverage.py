@@ -156,9 +156,7 @@ class TestSearchAttributeFiltering:
 class TestSearchScopes:
     """Test search with different LDAP scopes."""
 
-    def test_search_subtree_scope(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_subtree_scope(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test search with SUBTREE scope (default)."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -174,9 +172,7 @@ class TestSearchScopes:
         entries = result.unwrap()
         assert isinstance(entries, list)
 
-    def test_search_base_scope(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_base_scope(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test search with BASE scope (single entry only)."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -215,9 +211,7 @@ class TestSearchFiltering:
         entries = result.unwrap()
         assert isinstance(entries, list)
 
-    def test_search_with_cn_filter(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_with_cn_filter(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test search with cn attribute filter."""
         search_service = FlextLdapSearch()
         if shared_ldap_client._connection is not None:
@@ -347,9 +341,7 @@ class TestGetUserAndGroupByDN:
         if shared_ldap_client._connection is not None:
             search_service.set_connection_context(shared_ldap_client._connection)
 
-        result = search_service.get_user(
-            "uid=nonexistent,ou=people,dc=flext,dc=local"
-        )
+        result = search_service.get_user("uid=nonexistent,ou=people,dc=flext,dc=local")
 
         assert result.is_success
         user = result.unwrap()
@@ -415,9 +407,7 @@ class TestSearchServiceInitialization:
         assert search_service is not None
         assert isinstance(search_service, FlextLdapSearch)
 
-    def test_set_connection_context(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_set_connection_context(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test setting connection context."""
         search_service = FlextLdapSearch()
 

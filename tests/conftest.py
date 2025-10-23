@@ -487,9 +487,9 @@ def sample_user() -> FlextLdapModels.Entry:
         uid="testuser",
         sn="User",
         given_name="Test",
-        mail="testuser@example.com",
-        telephone_number="+1234567890",
-        mobile="+0987654321",
+        mail=["testuser@example.com"],
+        telephone_number=["+1234567890"],
+        mobile=["+0987654321"],
         department="IT",
         title="Software Engineer",
         organization="Example Corp",
@@ -506,6 +506,7 @@ def sample_group() -> FlextLdapModels.Entry:
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
         description="Test group",
+        object_classes=["top", "groupOfNames"],
         gid_number=1000,
         member_dns=["uid=testuser,ou=people,dc=example,dc=com"],
     )
@@ -708,6 +709,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
         port=3390,
         bind_dn="cn=admin,dc=flext,dc=local",
         bind_password="admin123",
+        base_dn="dc=flext,dc=local",
         use_ssl=False,
         timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
     )
@@ -799,11 +801,32 @@ def skip_if_no_docker() -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_ldap_state() -> None:
-    """Clean LDAP state between tests."""
-    # Pre-test cleanup
-    return
-    # Post-test cleanup
+def clean_ldap_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Clean LDAP state between tests with proper environment isolation.
+
+    This fixture:
+    1. Isolates environment variables per test (monkeypatch)
+    2. Clears any module-level caches
+    3. Resets shared state between tests
+    """
+    import os
+
+    # Pre-test: Save original environment state
+    original_env = dict(os.environ)
+
+    # Clear LDAP_* environment variables to prevent pollution
+    ldap_env_vars = [key for key in os.environ if key.startswith(("LDAP_", "FLEXT_LDAP_"))]
+    for var in ldap_env_vars:
+        monkeypatch.delenv(var, raising=False)
+
+    yield  # Test runs here
+
+    # Post-test: Restore original environment (via monkeypatch)
+    for var in ldap_env_vars:
+        if var in original_env:
+            monkeypatch.setenv(var, original_env[var])
+        else:
+            monkeypatch.delenv(var, raising=False)
 
 
 # =============================================================================
