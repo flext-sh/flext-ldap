@@ -1,4 +1,4 @@
-"""100% Code Coverage Tests for FlextLdap
+"""100% Code Coverage Tests for FlextLdap.
 
 Comprehensive real Docker LDAP tests to achieve 100% coverage of all modules.
 Uses only REAL operations via Docker container - NO MOCKS.
@@ -26,12 +26,11 @@ class TestComprehensiveCoverageApi:
 
     def test_api_search_methods(self, api: FlextLdap) -> None:
         """Test all search method variations."""
-        # search with different scopes
+        # search with attributes
         result = api.search(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
             attributes=["cn", "sn"],
-            scope="subtree",
         )
         assert isinstance(result, FlextResult)
 
@@ -130,9 +129,7 @@ class TestComprehensiveCoverageClients:
         result = clients.get_server_capabilities()
         assert isinstance(result, FlextResult)
 
-    def test_clients_connection_lifecycle(
-        self, clients: FlextLdapClients
-    ) -> None:
+    def test_clients_connection_lifecycle(self, clients: FlextLdapClients) -> None:
         """Test complete connection lifecycle."""
         # test_connection
         result = clients.test_connection()

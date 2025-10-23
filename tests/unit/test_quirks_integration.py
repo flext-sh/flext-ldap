@@ -498,7 +498,15 @@ class TestFlextLdapQuirksIntegration:
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test that all major server types are supported."""
-        server_types = ["openldap1", "openldap2", "oid", "oud", "389ds", "ad", "generic"]
+        server_types = [
+            "openldap1",
+            "openldap2",
+            "oid",
+            "oud",
+            "389ds",
+            "ad",
+            "generic",
+        ]
 
         for server_type in server_types:
             result = quirks_adapter.get_connection_defaults(server_type)

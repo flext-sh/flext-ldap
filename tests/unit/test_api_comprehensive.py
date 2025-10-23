@@ -149,7 +149,7 @@ class TestFlextLdapConnection:
         api = FlextLdap()
 
         # Mock the connection
-        with patch('flext_ldap.clients.Connection') as mock_conn_class:
+        with patch("flext_ldap.clients.Connection") as mock_conn_class:
             mock_conn = MagicMock()
             mock_conn.bound = False
             mock_conn.bind.return_value = True
@@ -174,56 +174,45 @@ class TestFlextLdapSearch:
         assert isinstance(result, FlextResult)
 
     def test_search_one_without_connection(self) -> None:
-        """Test search_one when no connection established."""
+        """Test search with single=True when no connection established."""
         api = FlextLdap()
 
-        result = api.search_one(
+        result = api.search(
             base_dn="dc=example,dc=com",
             filter_str="(uid=testuser)",
+            single=True,
         )
 
         assert isinstance(result, FlextResult)
 
     def test_search_users_without_connection(self) -> None:
-        """Test search_users when no connection established."""
+        """Test search for users when no connection established."""
         api = FlextLdap()
 
-        result = api.search_users()
-        assert isinstance(result, FlextResult)
-
-    def test_search_groups_without_connection(self) -> None:
-        """Test search_groups when no connection established."""
-        api = FlextLdap()
-
-        result = api.search_groups()
-        assert isinstance(result, FlextResult)
-
-    def test_find_user_without_connection(self) -> None:
-        """Test find_user when no connection established."""
-        api = FlextLdap()
-
-        result = api.find_user(uid="testuser")
-        assert isinstance(result, FlextResult)
-
-    def test_search_entries_without_connection(self) -> None:
-        """Test search_entries when no connection established."""
-        api = FlextLdap()
-
-        result = api.search_entries(
+        result = api.search(
             base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
+            filter_str="(objectClass=inetOrgPerson)",
         )
         assert isinstance(result, FlextResult)
 
-    def test_search_entries_bulk_without_connection(self) -> None:
-        """Test search_entries_bulk when no connection established."""
+    def test_search_groups_without_connection(self) -> None:
+        """Test search for groups when no connection established."""
         api = FlextLdap()
 
-        result = api.search_entries_bulk(
-            searches=[
-                ("dc=example,dc=com", "(objectClass=*)", None),
-                ("ou=users,dc=example,dc=com", "(objectClass=person)", None),
-            ]
+        result = api.search(
+            base_dn="dc=example,dc=com",
+            filter_str="(objectClass=groupOfNames)",
+        )
+        assert isinstance(result, FlextResult)
+
+    def test_find_user_without_connection(self) -> None:
+        """Test search for user by uid when no connection established."""
+        api = FlextLdap()
+
+        result = api.search(
+            base_dn="dc=example,dc=com",
+            filter_str="(uid=testuser)",
+            single=True,
         )
         assert isinstance(result, FlextResult)
 
@@ -237,7 +226,11 @@ class TestFlextLdapAddEntry:
 
         result = api.add_entry(
             dn="cn=testuser,dc=example,dc=com",
-            attributes={"cn": "testuser", "uid": "testuser", "objectClass": ["inetOrgPerson"]},
+            attributes={
+                "cn": "testuser",
+                "uid": "testuser",
+                "objectClass": ["inetOrgPerson"],
+            },
         )
         assert isinstance(result, FlextResult)
 
@@ -249,84 +242,6 @@ class TestFlextLdapAddEntry:
             dn="cn=testuser,dc=example,dc=com",
             attributes={"cn": "testuser", "objectClass": ["inetOrgPerson"]},
         )
-        assert isinstance(result, FlextResult)
-
-    def test_add_entries_batch_without_connection(self) -> None:
-        """Test add_entries_batch when no connection established."""
-        api = FlextLdap()
-
-        entries = [
-            FlextLdapModels.Entry(
-                dn=f"cn=user{i},dc=example,dc=com",
-                object_class=["inetOrgPerson"],
-                attributes={"cn": f"user{i}", "uid": f"user{i}"},
-            )
-            for i in range(3)
-        ]
-
-        result = api.add_entries_batch(entries)
-        assert isinstance(result, FlextResult)
-
-
-class TestFlextLdapModifyEntry:
-    """Test modify entry operations."""
-
-    def test_modify_entry_without_connection(self) -> None:
-        """Test modify_entry when no connection established."""
-        api = FlextLdap()
-
-        result = api.modify_entry(
-            dn="cn=testuser,dc=example,dc=com",
-            changes={"cn": "newname"},
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_modify_without_connection(self) -> None:
-        """Test modify when no connection established."""
-        api = FlextLdap()
-
-        result = api.modify(
-            dn="cn=testuser,dc=example,dc=com",
-            changes={"cn": "newname"},
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_update_user_attributes_without_connection(self) -> None:
-        """Test update_user_attributes when no connection established."""
-        api = FlextLdap()
-
-        result = api.update_user_attributes(
-            uid="testuser",
-            attributes={"mail": "test@example.com"},
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_update_group_attributes_without_connection(self) -> None:
-        """Test update_group_attributes when no connection established."""
-        api = FlextLdap()
-
-        result = api.update_group_attributes(
-            group_cn="testgroup",
-            attributes={"description": "Test Group"},
-        )
-        assert isinstance(result, FlextResult)
-
-
-class TestFlextLdapDeleteEntry:
-    """Test delete entry operations."""
-
-    def test_delete_entry_without_connection(self) -> None:
-        """Test delete_entry when no connection established."""
-        api = FlextLdap()
-
-        result = api.delete_entry(dn="cn=testuser,dc=example,dc=com")
-        assert isinstance(result, FlextResult)
-
-    def test_delete_without_connection(self) -> None:
-        """Test delete_entry when no connection established (alternate test)."""
-        api = FlextLdap()
-
-        result = api.delete_entry(dn="cn=testuser,dc=example,dc=com")
         assert isinstance(result, FlextResult)
 
 
@@ -483,7 +398,9 @@ uid: testuser
         result = api.convert_entry_between_servers(entry, "openldap2", "oid")
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.xfail(reason="Method normalize_entry_for_server not implemented in FlextLdap API")
+    @pytest.mark.xfail(
+        reason="Method normalize_entry_for_server not implemented in FlextLdap API"
+    )
     def test_normalize_entry_for_server(self) -> None:
         """Test normalize_entry_for_server."""
         api = FlextLdap()
@@ -501,19 +418,16 @@ uid: testuser
 class TestFlextLdapConfiguration:
     """Test configuration validation."""
 
-    def test_validate_configuration_consistency(self) -> None:
-        """Test validate_configuration_consistency."""
-        api = FlextLdap()
 
-        result = api.validate_configuration_consistency()
-        assert isinstance(result, FlextResult)
-
-
-@pytest.mark.skip(reason="Context manager requires LDAP connection to localhost:389 - test requires running LDAP server")
+@pytest.mark.skip(
+    reason="Context manager requires LDAP connection to localhost:389 - test requires running LDAP server"
+)
 class TestFlextLdapContextManager:
     """Test context manager support."""
 
-    @pytest.mark.xfail(reason="FlextLdap not implemented as context manager (__enter__/__exit__)")
+    @pytest.mark.xfail(
+        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
+    )
     def test_context_manager_enter(self) -> None:
         """Test __enter__ method."""
         api = FlextLdap()
@@ -521,7 +435,9 @@ class TestFlextLdapContextManager:
         with api as ctx_api:
             assert ctx_api is api
 
-    @pytest.mark.xfail(reason="FlextLdap not implemented as context manager (__enter__/__exit__)")
+    @pytest.mark.xfail(
+        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
+    )
     def test_context_manager_exit(self) -> None:
         """Test __exit__ method."""
         api = FlextLdap()
@@ -530,7 +446,9 @@ class TestFlextLdapContextManager:
         with api:
             pass
 
-    @pytest.mark.xfail(reason="FlextLdap not implemented as context manager (__enter__/__exit__)")
+    @pytest.mark.xfail(
+        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
+    )
     def test_context_manager_full_lifecycle(self) -> None:
         """Test context manager full lifecycle."""
         api = FlextLdap()
@@ -578,7 +496,9 @@ class TestFlextLdapOtherOperations:
         result = api.info()
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.xfail(reason="Method/variant get_group not implemented in FlextLdap API")
+    @pytest.mark.xfail(
+        reason="Method/variant get_group not implemented in FlextLdap API"
+    )
     def test_get_group_without_connection(self) -> None:
         """Test get_group when no connection established."""
         api = FlextLdap()

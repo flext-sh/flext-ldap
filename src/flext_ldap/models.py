@@ -34,7 +34,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Discriminator,
-    EmailStr,
     Field,
     SecretStr,
     computed_field,
@@ -382,7 +381,9 @@ class FlextLdapModels(FlextModels):
     class ServerQuirks(FlextModels.Value):
         """LDAP server-specific quirks and behaviors - Pydantic Value Object."""
 
-        server_type: FlextLdapModels.LdapServerType = Field(description="LDAP server type for quirks")
+        server_type: FlextLdapModels.LdapServerType = Field(
+            description="LDAP server type for quirks"
+        )
         case_sensitive_dns: bool = True
         case_sensitive_attributes: bool = True
         supports_paged_results: bool = True
@@ -405,7 +406,9 @@ class FlextLdapModels(FlextModels):
         # Note: Cannot use frozen=True with Entity (has default timestamp fields)
 
         server_info: FlextLdapModels.ServerInfo
-        server_type: FlextLdapModels.LdapServerType = Field(description="Detected LDAP server type")
+        server_type: FlextLdapModels.LdapServerType = Field(
+            description="Detected LDAP server type"
+        )
         server_quirks: FlextLdapModels.ServerQuirks
         attributes: dict[str, FlextLdapModels.SchemaAttribute]
         object_classes: dict[str, FlextLdapModels.SchemaObjectClass]
@@ -532,11 +535,15 @@ class FlextLdapModels(FlextModels):
         given_name: str | None = Field(
             default=None, description="Given Name (givenName attribute)"
         )
-        mail: list[EmailStr] | None = Field(default=None, description="Email addresses (multi-valued)")
+        mail: list[str] | None = Field(
+            default=None, description="Email addresses (multi-valued)"
+        )
         telephone_number: list[str] | None = Field(
             default=None, description="Phone numbers (multi-valued)"
         )
-        mobile: list[str] | None = Field(default=None, description="Mobile numbers (multi-valued)")
+        mobile: list[str] | None = Field(
+            default=None, description="Mobile numbers (multi-valued)"
+        )
         department: str | None = Field(default=None, description="Department")
         title: str | None = Field(default=None, description="Job title")
         organization: str | None = Field(
@@ -651,9 +658,7 @@ class FlextLdapModels(FlextModels):
 
         @model_validator(mode="before")
         @classmethod
-        def extract_attributes_to_fields(
-            cls, data: dict[str, Any]
-        ) -> dict[str, Any]:
+        def extract_attributes_to_fields(cls, data: dict[str, Any]) -> dict[str, Any]:
             """Extract LDAP attributes to their corresponding fields."""
             if not isinstance(data, dict):
                 return data
@@ -677,12 +682,27 @@ class FlextLdapModels(FlextModels):
 
             # Extract single-valued attributes from direct data (but keep in data)
             # Only convert truly single-valued attributes to strings
-            single_valued_attrs = ["cn", "sn", "given_name", "uid", "user_password",
-                                   "description", "status", "display_name", "department",
-                                   "title", "organization", "organizational_unit"]
+            single_valued_attrs = [
+                "cn",
+                "sn",
+                "given_name",
+                "uid",
+                "user_password",
+                "description",
+                "status",
+                "display_name",
+                "department",
+                "title",
+                "organization",
+                "organizational_unit",
+            ]
 
             for attr_name in single_valued_attrs:
-                if attr_name in data and isinstance(data[attr_name], list) and len(data[attr_name]) > 0:
+                if (
+                    attr_name in data
+                    and isinstance(data[attr_name], list)
+                    and len(data[attr_name]) > 0
+                ):
                     # Convert list to string for the field
                     data[attr_name] = str(data[attr_name][0])
                     # But also keep the original list in attributes if not already there
@@ -694,7 +714,11 @@ class FlextLdapModels(FlextModels):
             multi_valued_attrs = ["mail", "telephone_number", "mobile"]
 
             for attr_name in multi_valued_attrs:
-                if attr_name in data and isinstance(data[attr_name], list) and len(data[attr_name]) > 0:
+                if (
+                    attr_name in data
+                    and isinstance(data[attr_name], list)
+                    and len(data[attr_name]) > 0
+                ):
                     # Keep as list for multi-valued fields
                     pass  # Already in correct format
                 elif "attributes" in data and attr_name in data["attributes"]:
@@ -718,7 +742,9 @@ class FlextLdapModels(FlextModels):
                         else:
                             data["object_classes"] = [str(obj_classes)]
                         # Remove from attributes to avoid duplication
-                        attributes = {k: v for k, v in attributes.items() if k != "objectClass"}
+                        attributes = {
+                            k: v for k, v in attributes.items() if k != "objectClass"
+                        }
                     elif "object_classes" in attributes:
                         obj_classes = attributes["object_classes"]
                         if isinstance(obj_classes, list):
@@ -726,7 +752,9 @@ class FlextLdapModels(FlextModels):
                         else:
                             data["object_classes"] = [str(obj_classes)]
                         # Remove from attributes to avoid duplication
-                        attributes = {k: v for k, v in attributes.items() if k != "object_classes"}
+                        attributes = {
+                            k: v for k, v in attributes.items() if k != "object_classes"
+                        }
 
                 # Extract single-valued attributes to their fields (but keep in attributes)
                 # Map camelCase LDAP attributes to snake_case fields
@@ -775,7 +803,9 @@ class FlextLdapModels(FlextModels):
                 # Default object classes based on entry type detection
                 if data.get("entry_type") == "user" or ("uid" in data or "cn" in data):
                     data["object_classes"] = ["person", "top"]
-                elif data.get("entry_type") == "group" or ("member" in data or "uniqueMember" in data):
+                elif data.get("entry_type") == "group" or (
+                    "member" in data or "uniqueMember" in data
+                ):
                     data["object_classes"] = ["groupOfNames", "top"]
                 else:
                     data["object_classes"] = ["top"]
@@ -787,9 +817,10 @@ class FlextLdapModels(FlextModels):
             """Model validator for polymorphic validation and business rules."""
             match self.entry_type:
                 case "user":
-                    # User entries must have person object class
-                    if "person" not in self.object_classes:
-                        msg = "User must have 'person' object class"
+                    # User entries must have person-like object class
+                    person_classes = {"person", "inetOrgPerson", "organizationalPerson"}
+                    if not any(cls in self.object_classes for cls in person_classes):
+                        msg = f"User must have one of {person_classes} object class"
                         raise FlextExceptions.ValidationError(
                             msg,
                             field="object_classes",
@@ -837,9 +868,10 @@ class FlextLdapModels(FlextModels):
             """Validate entry business rules with polymorphic error handling."""
             match self.entry_type:
                 case "user":
-                    if "person" not in self.object_classes:
+                    person_classes = {"person", "inetOrgPerson", "organizationalPerson"}
+                    if not any(cls in self.object_classes for cls in person_classes):
                         return FlextResult[None].fail(
-                            "User must have 'person' object class"
+                            f"User must have one of {person_classes} object class"
                         )
                     if not self.cn:
                         return FlextResult[None].fail("User must have a Common Name")
@@ -931,7 +963,7 @@ class FlextLdapModels(FlextModels):
             # Helper to extract all attribute values (for multi-valued attributes)
             def _attr_list(k: str) -> list[str] | None:
                 v = ldap_attributes.get(k)
-                return v if v else None
+                return v or None
 
             # Auto-detect entry_type if not provided
             detected_type = entry_type or "entry"
@@ -997,7 +1029,9 @@ class FlextLdapModels(FlextModels):
                         "telephone_number": _attr_list(
                             FlextLdapConstants.LdapAttributeNames.TELEPHONE_NUMBER
                         ),
-                        "mobile": _attr_list(FlextLdapConstants.LdapAttributeNames.MOBILE),
+                        "mobile": _attr_list(
+                            FlextLdapConstants.LdapAttributeNames.MOBILE
+                        ),
                         "department": _attr(
                             FlextLdapConstants.LdapAttributeNames.DEPARTMENT
                         ),
@@ -1291,6 +1325,7 @@ class FlextLdapModels(FlextModels):
                 error_msg = "Filter string cannot be empty"
                 raise ValueError(error_msg)
             return v
+
         scope: str = Field(
             default="subtree",
             description="Search scope: base, onelevel, subtree",
@@ -1590,7 +1625,7 @@ class FlextLdapModels(FlextModels):
         uid: str | None = Field(default=None, description="User ID")
         given_name: str | None = Field(default=None, description="Given Name")
         user_password: str | None = Field(default=None, description="User password")
-        mail: EmailStr | None = Field(default=None, description="Email address")
+        mail: str | None = Field(default=None, description="Email address")
         owner: str | None = Field(default=None, description="Group owner")
         member: list[str] = Field(default_factory=list, description="Group members")
 
@@ -1861,6 +1896,7 @@ class FlextLdapModels(FlextModels):
         use_ssl: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
+        base_dn: str = ""
         timeout: int = FlextConstants.Network.DEFAULT_TIMEOUT
 
         @computed_field  # Pydantic v2 computed field - no @property needed
@@ -1873,11 +1909,6 @@ class FlextLdapModels(FlextModels):
         def password(self) -> str | None:
             """Get bind password."""
             return self.bind_password
-
-        @computed_field  # Pydantic v2 computed field - no @property needed
-        def base_dn(self) -> str:
-            """Get base DN (default empty)."""
-            return ""
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate the configuration business rules and return FlextResult.

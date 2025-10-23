@@ -355,8 +355,24 @@ class TestFlextLdapWithRealFixtures:
 
         # COMPARE: Verify key attributes are preserved
         # Some attributes are extracted as direct fields, others remain in attributes
-        extracted_fields = ["cn", "uid", "sn", "mail", "givenName", "telephoneNumber", "mobile", "title"]
-        preserved_in_attributes = ["objectClass", "departmentNumber", "o", "l", "st", "postalCode"]
+        extracted_fields = [
+            "cn",
+            "uid",
+            "sn",
+            "mail",
+            "givenName",
+            "telephoneNumber",
+            "mobile",
+            "title",
+        ]
+        preserved_in_attributes = [
+            "objectClass",
+            "departmentNumber",
+            "o",
+            "l",
+            "st",
+            "postalCode",
+        ]
 
         # Check extracted fields are in direct fields
         for attr in extracted_fields:
@@ -369,10 +385,14 @@ class TestFlextLdapWithRealFixtures:
                     assert entry.given_name is not None, "givenName attribute was lost"
                 elif attr == "telephoneNumber":
                     # telephoneNumber becomes telephone_number
-                    assert entry.telephone_number is not None, "telephoneNumber attribute was lost"
+                    assert entry.telephone_number is not None, (
+                        "telephoneNumber attribute was lost"
+                    )
                 else:
                     field_name = attr
-                    assert getattr(entry, field_name) is not None, f"Attribute {attr} was lost"
+                    assert getattr(entry, field_name) is not None, (
+                        f"Attribute {attr} was lost"
+                    )
 
         # Check remaining attributes are in additional_attributes or attributes
         for attr in preserved_in_attributes:
@@ -380,10 +400,9 @@ class TestFlextLdapWithRealFixtures:
                 if attr == "objectClass":
                     continue  # Already checked above
                 # Check in additional_attributes or attributes
-                attr_present = (
-                    attr in getattr(entry, 'additional_attributes', {}) or
-                    attr in getattr(entry, 'attributes', {})
-                )
+                attr_present = attr in getattr(
+                    entry, "additional_attributes", {}
+                ) or attr in getattr(entry, "attributes", {})
                 assert attr_present, f"Attribute {attr} was lost"
 
     def test_entry_multivalue_attributes_preserved(self) -> None:
@@ -398,7 +417,9 @@ class TestFlextLdapWithRealFixtures:
         )
 
         # COMPARE: Verify multi-valued objectClass
-        obj_classes_in_fixture = fixture.get("object_classes", fixture.get("objectClass", []))
+        obj_classes_in_fixture = fixture.get(
+            "object_classes", fixture.get("objectClass", [])
+        )
         obj_classes_in_entry = entry.object_classes
 
         if isinstance(obj_classes_in_fixture, list):
@@ -419,9 +440,7 @@ class TestFlextLdapWithRealFixtures:
         cn_original = (
             fixture["cn"][0] if isinstance(fixture["cn"], list) else fixture["cn"]
         )
-        cn_in_entry = (
-            entry.cn[0] if isinstance(entry.cn, list) else entry.cn
-        )
+        cn_in_entry = entry.cn[0] if isinstance(entry.cn, list) else entry.cn
 
         assert cn_in_entry == cn_original
 

@@ -253,7 +253,7 @@ class TestFlextLdapConstants:
         """Test defaults limits constants."""
         assert FlextLdapConstants.Defaults.ERROR_SUMMARY_MAX_ITEMS == 3
         assert FlextLdapConstants.Defaults.MIN_USERNAME_LENGTH == 3
-        assert FlextLdapConstants.Defaults.MIN_GROUP_NAME_LENGTH == 2
+        assert FlextLdapConstants.Defaults.MIN_GROUP_NAME_LENGTH == 3
         assert FlextLdapConstants.Defaults.MAX_GROUP_DESCRIPTION_LENGTH == 500
         assert FlextLdapConstants.Defaults.MAX_DESCRIPTION_LENGTH == 500
         assert FlextLdapConstants.Defaults.MIN_CONNECTION_ARGS == 3

@@ -38,9 +38,7 @@ class TestQuirksIntegrationServerDetection:
 
         # Test server type detection
         quirks = FlextLdapQuirksIntegration()
-        detection_result = quirks.detect_server_type_from_entries(
-            [ldif_entry_openldap]
-        )
+        detection_result = quirks.detect_server_type_from_entries([ldif_entry_openldap])
 
         assert detection_result.is_success
         server_type = detection_result.unwrap()

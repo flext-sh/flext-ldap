@@ -275,29 +275,13 @@ class FlextLdapSearch(FlextService[None]):
                 )
 
                 # Handle result (from_ldap_attributes returns FlextResult)
-                if entry_model_result.is_success:
-                    entry_model = entry_model_result.unwrap()
-                    entries.append(entry_model)
-                else:
-                    # If entry creation fails, log and skip
-                    dn_trunc = str(entry.entry_dn)[:40]
-                    err_trunc = str(entry_model_result.error)[:30]
-                    self.logger.warning(
-                        f"Entry creation failed {dn_trunc}: {err_trunc}"
+                # NO BYPASS: fail immediately on entry creation error
+                if entry_model_result.is_failure:
+                    return FlextResult[list[FlextLdapModels.Entry]].fail(
+                        f"Entry creation failed for {entry.entry_dn}: {entry_model_result.error}"
                     )
-
-            if not entries:
-                synthetic_entries = self._synthetic_entries_if_applicable(
-                    base_dn,
-                    filter_str,
-                    attributes,
-                    error_message=last_error_text,
-                    allow_without_error=True,
-                )
-                if synthetic_entries is not None:
-                    return FlextResult[list[FlextLdapModels.Entry]].ok(
-                        synthetic_entries,
-                    )
+                entry_model = entry_model_result.unwrap()
+                entries.append(entry_model)
 
             return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
 
@@ -347,6 +331,13 @@ class FlextLdapSearch(FlextService[None]):
             if result.is_success:
                 exists = result.unwrap() is not None
                 return FlextResult[bool].ok(exists)
+            # Propagate connection errors, return False for not found
+            error_message = result.error or "Unknown error"
+            if (
+                "LDAP connection not established" in error_message
+                or "DN cannot be empty" in error_message
+            ):
+                return FlextResult[bool].fail(error_message)
             return FlextResult[bool].ok(False)
 
         except Exception as e:

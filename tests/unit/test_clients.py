@@ -325,8 +325,8 @@ class TestFlextLdapClientsComprehensive:
         client = FlextLdapClients()
 
         result = client.group_exists("cn=testgroup,dc=test,dc=com")
-        assert result.is_success
-        assert result.unwrap() is False
+        assert result.is_failure
+        assert "LDAP connection not established" in str(result.error)
 
     def test_search_not_connected(self) -> None:
         """Test search when not connected."""

@@ -98,10 +98,7 @@ class TestGenericSchemaDiscovery:
         """Test parsing object class."""
         ops = FlextLdapServersGenericOperations()
 
-        text = (
-            "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL "
-            "MUST ( sn $ cn ) )"
-        )
+        text = "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
         result = ops.parse_object_class(text)
         assert result.is_success or result.is_failure
 
@@ -157,9 +154,7 @@ class TestGenericEntryOperations:
         dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         modifications = {"description": ("MODIFY_REPLACE", ["Updated"])}
 
-        result = ops.modify_entry(
-            shared_ldap_client._connection, dn, modifications
-        )
+        result = ops.modify_entry(shared_ldap_client._connection, dn, modifications)
         assert result.is_success or result.is_failure
 
     def test_delete_entry_with_connection(
@@ -265,9 +260,7 @@ class TestGenericPaging:
         assert isinstance(page_size, int)
         assert page_size > 0
 
-    def test_search_with_paging(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_with_paging(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test paged search."""
         ops = FlextLdapServersGenericOperations()
 
@@ -319,9 +312,7 @@ class TestGenericRootDSE:
 class TestGenericControls:
     """Test controls support."""
 
-    def test_get_supported_controls(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_get_supported_controls(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test discovering controls."""
         ops = FlextLdapServersGenericOperations()
 
@@ -341,9 +332,7 @@ class TestGenericEntryNormalization:
         ops = FlextLdapServersGenericOperations()
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),

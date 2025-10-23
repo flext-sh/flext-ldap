@@ -152,9 +152,7 @@ class TestFlextLdapDeleteEntry:
         """Test delete_entry fails without connection."""
         api = FlextLdap()
 
-        result = api.client.delete_entry(
-            dn="cn=testuser,dc=example,dc=com"
-        )
+        result = api.client.delete_entry(dn="cn=testuser,dc=example,dc=com")
         assert result.is_failure or result.is_success
 
 

@@ -111,8 +111,9 @@ class FlextLdapDomain:
 
             # Check for potentially dangerous patterns
             dangerous_patterns = [
-                r"\*[\*]*",  # Multiple consecutive asterisks
-                r"[\(\)]\s*[\(\)]",  # Nested parentheses without content
+                r"\*[\*]+",  # Multiple consecutive asterisks (**, ***, etc.)
+                r"\(\s*\)",  # Empty parentheses: ()
+                r"\(\s*\*+\s*\)",  # Parentheses with only asterisks: (*), (**), etc.
             ]
 
             for pattern in dangerous_patterns:

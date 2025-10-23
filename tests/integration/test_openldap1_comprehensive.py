@@ -192,9 +192,7 @@ class TestOpenLDAP1EntryOperations:
         dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         modifications = {"description": ("MODIFY_REPLACE", ["Updated"])}
 
-        result = ops.modify_entry(
-            shared_ldap_client._connection, dn, modifications
-        )
+        result = ops.modify_entry(shared_ldap_client._connection, dn, modifications)
         assert result.is_success or result.is_failure
 
     def test_delete_entry_with_real_connection(
@@ -266,9 +264,7 @@ class TestOpenLDAP1ACLOperations:
         """Test parsing complex ACL."""
         ops = FlextLdapServersOpenLDAP1Operations()
 
-        acl_string = (
-            "to * by self write by * read"
-        )
+        acl_string = "to * by self write by * read"
         result = ops.parse_acl(acl_string)
         assert result.is_success or result.is_failure
 
@@ -307,9 +303,7 @@ class TestOpenLDAP1PagingAndSearch:
         assert isinstance(page_size, int)
         assert page_size > 0
 
-    def test_search_with_paging(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_with_paging(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test search with paging."""
         ops = FlextLdapServersOpenLDAP1Operations()
 
@@ -340,9 +334,7 @@ class TestOpenLDAP1ErrorHandling:
     def test_missing_required_attributes(self) -> None:
         """Test handling missing attributes."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        result = ops.validate_entry_for_server(
-            "cn=test,dc=example,dc=com", {}
-        )
+        result = ops.validate_entry_for_server("cn=test,dc=example,dc=com", {})
         assert result.is_success or result.is_failure
 
     def test_parse_malformed_acl(self) -> None:
@@ -361,9 +353,7 @@ class TestOpenLDAP1WithLdifModels:
         ops = FlextLdapServersOpenLDAP1Operations()
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
@@ -382,15 +372,11 @@ class TestOpenLDAP1WithLdifModels:
         ops = FlextLdapServersOpenLDAP1Operations()
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["person"]
-                    ),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -408,9 +394,7 @@ class TestOpenLDAP1WithLdifModels:
 class TestOpenLDAP1ControlsSupport:
     """Test LDAP controls support with OpenLDAP 1.x."""
 
-    def test_get_supported_controls(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_get_supported_controls(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test discovering supported controls."""
         ops = FlextLdapServersOpenLDAP1Operations()
 

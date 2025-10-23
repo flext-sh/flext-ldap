@@ -1066,11 +1066,12 @@ class FlextLdap(FlextService[None]):
             )
 
         if single:
-            search_response = result.unwrap()
-            if search_response and search_response.entries:
+            entries = result.unwrap()
+            # Client returns list of entries, not SearchResponse
+            if isinstance(entries, list) and len(entries) > 0:
                 return cast(
                     "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
-                    FlextResult.ok(search_response.entries[0]),
+                    FlextResult.ok(entries[0]),
                 )
             return cast(
                 "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",

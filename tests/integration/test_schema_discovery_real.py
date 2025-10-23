@@ -149,7 +149,9 @@ class TestRealServerQuirksDetection:
             # Handle both enum and string values (Pydantic may serialize enums to strings)
             quirks_server_type = getattr(quirks, "server_type", None)
             expected_values = {server_type, server_type.value}
-            assert quirks_server_type in expected_values, f"Expected {expected_values}, got {quirks_server_type}"
+            assert quirks_server_type in expected_values, (
+                f"Expected {expected_values}, got {quirks_server_type}"
+            )
 
     def test_openldap_quirks_detection(
         self, shared_ldap_client: FlextLdapClients

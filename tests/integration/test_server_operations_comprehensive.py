@@ -267,9 +267,7 @@ class TestOpenLDAP2PagingAndSearch:
         assert isinstance(page_size, int)
         assert page_size > 0
 
-    def test_search_with_paging(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_with_paging(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test search with paging."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
@@ -326,9 +324,7 @@ class TestOpenLDAP1Operations:
 class TestOIDAdvancedOperations:
     """Test advanced Oracle OID operations."""
 
-    def test_oid_discover_schema(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_discover_schema(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test schema discovery for Oracle OID."""
         ops = FlextLdapServersOIDOperations()
 
@@ -338,9 +334,7 @@ class TestOIDAdvancedOperations:
         result = ops.discover_schema(shared_ldap_client._connection)
         assert result.is_success or result.is_failure
 
-    def test_oid_get_root_dse(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_get_root_dse(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test Root DSE retrieval for Oracle OID."""
         ops = FlextLdapServersOIDOperations()
 
@@ -379,9 +373,7 @@ class TestOIDAdvancedOperations:
 class TestOUDAdvancedOperations:
     """Test advanced Oracle UDO operations."""
 
-    def test_oud_discover_schema(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_discover_schema(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test schema discovery for Oracle UDO."""
         ops = FlextLdapServersOUDOperations()
 
@@ -403,9 +395,7 @@ class TestOUDAdvancedOperations:
         result = ops.get_root_dse_attributes(shared_ldap_client._connection)
         assert result.is_success or result.is_failure
 
-    def test_oud_supported_controls(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_supported_controls(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test control support for Oracle UDO."""
         ops = FlextLdapServersOUDOperations()
 
@@ -447,9 +437,7 @@ class TestServerOperationsErrorHandling:
     def test_missing_required_attributes(self) -> None:
         """Test handling of missing required attributes."""
         ops = FlextLdapServersOpenLDAP2Operations()
-        result = ops.validate_entry_for_server(
-            "cn=test,dc=example,dc=com", {}
-        )
+        result = ops.validate_entry_for_server("cn=test,dc=example,dc=com", {})
         # Should detect missing required attributes
         assert result.is_success or result.is_failure
 
@@ -477,9 +465,7 @@ class TestServerOperationsWithEntryModels:
         ops = FlextLdapServersOpenLDAP2Operations()
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
@@ -498,15 +484,11 @@ class TestServerOperationsWithEntryModels:
         ops = FlextLdapServersOIDOperations()
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["person"]
-                    ),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )

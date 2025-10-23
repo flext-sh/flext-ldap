@@ -177,9 +177,7 @@ class TestFlextLdapFacadeRealCoverage:
             delete_result = ldap.delete_entry(test_dn)
             assert isinstance(delete_result, FlextResult)
 
-    def test_flext_ldap_test_connection_via_facade(
-        self, ldap: FlextLdap
-    ) -> None:
+    def test_flext_ldap_test_connection_via_facade(self, ldap: FlextLdap) -> None:
         """Test connection test via facade."""
         result = ldap.test_connection()
         assert isinstance(result, FlextResult)

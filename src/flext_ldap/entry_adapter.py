@@ -19,6 +19,7 @@ from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 from ldap3 import MODIFY_REPLACE, Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapModifyDict, LdapSearchResultDict
 
 
@@ -456,7 +457,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
             extra={
                 "dn": str(entry.dn),
                 "target_server": target_server_type,
-                "attributes_count": len(entry.attributes) if hasattr(entry, 'attributes') and isinstance(entry.attributes, (dict, list)) else 0,
+                "attributes_count": len(entry.attributes)
+                if hasattr(entry, "attributes")
+                and isinstance(entry.attributes, (dict, list))
+                else 0,
             },
         )
 
@@ -464,7 +468,8 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
     def validate_entry_for_server(
         self,
-        entry: FlextLdifModels.Entry,  # Entry to validate for server compatibility
+        entry: FlextLdapModels.Entry
+        | FlextLdifModels.Entry,  # Entry to validate for server compatibility
         server_type: str,
     ) -> FlextResult[bool]:
         """Validate entry compatibility with target server type.
@@ -478,7 +483,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         - No server-incompatible attributes
 
         Args:
-        entry: FlextLdif Entry to validate
+        entry: FlextLdap or FlextLdif Entry to validate
         server_type: Target server type to validate against
 
         Returns:
@@ -508,12 +513,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[bool].fail("Entry has invalid DN")
 
         # Validate has object classes
-        if hasattr(entry, 'get_attribute_values'):
+        if hasattr(entry, "get_attribute_values"):
             # FlextLdifModels.Entry interface
             object_classes = entry.get_attribute_values("objectClass")
         else:
             # FlextLdapModels.Entry interface - cast to access object_classes
-            object_classes = cast("list[str]", getattr(entry, 'object_classes', []))
+            object_classes = cast("list[str]", getattr(entry, "object_classes", []))
 
         if not object_classes:
             return FlextResult[bool].fail(
