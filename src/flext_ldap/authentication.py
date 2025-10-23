@@ -14,6 +14,18 @@ from typing import cast
 
 from flext_core import FlextModels, FlextResult, FlextService
 from ldap3 import SUBTREE, Connection, Server
+from ldap3.core.exceptions import (
+    LDAPBindError,
+    LDAPCommunicationError,
+    LDAPInvalidDnError,
+    LDAPInvalidFilterError,
+    LDAPInvalidScopeError,
+    LDAPPasswordIsMandatoryError,
+    LDAPResponseTimeoutError,
+    LDAPSocketOpenError,
+    LDAPUserNameIsMandatoryError,
+)
+from pydantic import ValidationError
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
@@ -152,7 +164,13 @@ class FlextLdapAuthentication(FlextService[None]):
                 return FlextResult[bool].fail(
                     "No connection context available for credential validation",
                 )
-        except Exception as e:
+        except (
+            LDAPSocketOpenError,
+            LDAPCommunicationError,
+            LDAPBindError,
+            LDAPPasswordIsMandatoryError,
+            LDAPUserNameIsMandatoryError,
+        ) as e:
             return FlextResult[bool].fail(f"Credential validation failed: {e}")
 
     def _validate_connection(self) -> FlextResult[None]:
@@ -203,7 +221,13 @@ class FlextLdapAuthentication(FlextService[None]):
                 ),
             )
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPResponseTimeoutError,
+            LDAPInvalidFilterError,
+            LDAPInvalidScopeError,
+            LDAPInvalidDnError,
+        ) as e:
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                 f"User search failed: {e}",
             )
@@ -239,7 +263,12 @@ class FlextLdapAuthentication(FlextService[None]):
             self._safe_unbind(test_connection)
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].ok(user_entry)
 
-        except Exception as e:
+        except (
+            LDAPSocketOpenError,
+            LDAPCommunicationError,
+            LDAPBindError,
+            LDAPPasswordIsMandatoryError,
+        ) as e:
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                 f"Authentication failed: {e}",
             )
@@ -250,27 +279,45 @@ class FlextLdapAuthentication(FlextService[None]):
     ) -> FlextResult[FlextLdapModels.Entry]:
         """Create user from LDAP entry using railway pattern."""
         try:
+            # Safe attribute getters for different attribute types
+            def get_single_attr(obj: object, attr: str, default: str = "") -> str:
+                """Get single-valued attribute from LDAP entry."""
+                val = getattr(obj, attr, None)
+                if val is None:
+                    return default
+                if isinstance(val, (list, tuple)):
+                    return str(val[0]) if len(val) > 0 else default
+                return str(val)
+
+            def get_multi_attr(
+                obj: object, attr: str, default: list[str] | None = None
+            ) -> list[str]:
+                """Get multi-valued attribute from LDAP entry."""
+                if default is None:
+                    default = []
+                val = getattr(obj, attr, None)
+                if val is None:
+                    return default
+                if isinstance(val, (list, tuple)):
+                    return list(val) if len(val) > 0 else default
+                return [str(val)]
+
             # Create user from entry - simplified for now
             # ldap3 Entry uses entry_dn, not dn
             user = FlextLdapModels.Entry(
                 dn=str(user_entry.entry_dn),
-                uid=getattr(user_entry, "uid", [""])[0]
-                if hasattr(user_entry, "uid")
-                else "",
-                cn=getattr(user_entry, "cn", [""])[0]
-                if hasattr(user_entry, "cn")
-                else "",
-                sn=getattr(user_entry, "sn", [""])[0]
-                if hasattr(user_entry, "sn")
-                else "",
-                mail=getattr(user_entry, "mail", [""])
-                if hasattr(user_entry, "mail")
-                else [""],
+                uid=get_single_attr(user_entry, "uid", ""),
+                cn=get_single_attr(user_entry, "cn", ""),
+                sn=get_single_attr(user_entry, "sn", ""),
+                mail=get_multi_attr(user_entry, "mail", [""]),
                 entry_type="user",
                 object_classes=["person", "inetOrgPerson", "top"],
             )
             return FlextResult[FlextLdapModels.Entry].ok(user)
-        except Exception as e:
+        except (
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[FlextLdapModels.Entry].fail(
                 f"User creation failed: {e}",
             )

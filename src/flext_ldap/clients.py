@@ -26,6 +26,25 @@ from ldap3 import (
     Connection,
     Server,
 )
+from ldap3.core.exceptions import (
+    LDAPAttributeError,
+    LDAPBindError,
+    LDAPChangeError,
+    LDAPCommunicationError,
+    LDAPInvalidDnError,
+    LDAPInvalidFilterError,
+    LDAPInvalidScopeError,
+    LDAPObjectClassError,
+    LDAPObjectError,
+    LDAPOperationsErrorResult,
+    LDAPPasswordIsMandatoryError,
+    LDAPResponseTimeoutError,
+    LDAPSchemaError,
+    LDAPSocketOpenError,
+    LDAPStartTLSError,
+    LDAPUserNameIsMandatoryError,
+)
+from pydantic import ValidationError
 
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.config import FlextLdapConfig
@@ -391,7 +410,14 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (
+            LDAPSocketOpenError,
+            LDAPCommunicationError,
+            LDAPBindError,
+            LDAPStartTLSError,
+            LDAPResponseTimeoutError,
+            ValidationError,
+        ) as e:
             self.logger.exception("Connection failed")
             return FlextResult[bool].fail(f"Connection failed: {e}")
 
@@ -417,7 +443,12 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (
+            LDAPBindError,
+            LDAPPasswordIsMandatoryError,
+            LDAPUserNameIsMandatoryError,
+            LDAPCommunicationError,
+        ) as e:
             self.logger.exception("Bind operation failed")
             return FlextResult[bool].fail(f"Bind failed: {e}")
 
@@ -439,7 +470,7 @@ class FlextLdapClients(FlextService[None]):
             self._server = None
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except LDAPCommunicationError as e:
             self.logger.exception("Unbind failed")
             return FlextResult[None].fail(f"Unbind failed: {e}")
 
@@ -462,7 +493,12 @@ class FlextLdapClients(FlextService[None]):
                     attributes=["objectClass"],
                 )
             return FlextResult[bool].ok(True)
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPResponseTimeoutError,
+            LDAPInvalidFilterError,
+            LDAPInvalidScopeError,
+        ) as e:
             return FlextResult[bool].fail(f"Connection test failed: {e}")
 
     @property
@@ -744,7 +780,10 @@ class FlextLdapClients(FlextService[None]):
                         f"Add entry failed: {self.connection.last_error}",
                     )
 
-                except Exception as e:
+                except (
+                    LDAPAttributeError,
+                    LDAPObjectClassError,
+                ) as e:
                     # Some LDAP servers raise exceptions for undefined attributes
                     error_str = str(e).lower()
                     if (
@@ -775,7 +814,15 @@ class FlextLdapClients(FlextService[None]):
                 f"Add entry failed: {self.connection.last_error}",
             )
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPAttributeError,
+            LDAPInvalidDnError,
+            LDAPObjectError,
+            LDAPObjectClassError,
+            LDAPOperationsErrorResult,
+            ValidationError,
+        ) as e:
             self.logger.exception("Add entry failed")
             return FlextResult[bool].fail(f"Add entry failed: {e}")
 
@@ -903,7 +950,14 @@ class FlextLdapClients(FlextService[None]):
                 f"Modify entry failed: {self.connection.last_error}",
             )
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPChangeError,
+            LDAPInvalidDnError,
+            LDAPAttributeError,
+            LDAPOperationsErrorResult,
+            ValidationError,
+        ) as e:
             self.logger.exception("Modify entry failed")
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
@@ -940,14 +994,20 @@ class FlextLdapClients(FlextService[None]):
             typed_conn = cast(
                 "FlextLdapTypes.Ldap3Protocols.Connection", self.connection
             )
-            success = typed_conn.delete(dn)
+            # Ensure DN is a string (may be a Pydantic model)
+            dn_str = str(dn) if not isinstance(dn, str) else dn
+            success = typed_conn.delete(dn_str)
             if success:
                 return FlextResult[bool].ok(True)
             return FlextResult[bool].fail(
                 f"Delete entry failed: {self.connection.last_error}",
             )
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPInvalidDnError,
+            LDAPOperationsErrorResult,
+        ) as e:
             self.logger.exception("Delete entry failed")
             return FlextResult[bool].fail(f"Delete entry failed: {e}")
 
@@ -1009,7 +1069,7 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except ValidationError as e:
             return FlextResult[bool].fail(f"Entry validation failed: {e}")
 
     # =========================================================================
@@ -1150,7 +1210,11 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[FlextLdapModels.SchemaDiscoveryResult].ok(schema_result)
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            LDAPSchemaError,
+            AttributeError,
+        ) as e:
             self.logger.exception("Schema discovery failed")
             return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
                 f"Schema discovery failed: {e}"
@@ -1227,7 +1291,11 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[FlextLdapModels.ServerInfo].ok(server_info_model)
 
-        except Exception as e:
+        except (
+            LDAPCommunicationError,
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[FlextLdapModels.ServerInfo].fail(
                 f"Failed to get server info: {e}"
             )
@@ -1254,7 +1322,10 @@ class FlextLdapClients(FlextService[None]):
 
             return FlextResult[FlextLdapModels.ServerCapabilities].ok(capabilities)
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[FlextLdapModels.ServerCapabilities].fail(
                 f"Failed to get server capabilities: {e}",
             )
@@ -1477,7 +1548,7 @@ class FlextLdapClients(FlextService[None]):
             changes = FlextLdapModels.EntryChanges(**changes_dict)
             return self.modify_entry(dn, changes)
 
-        except Exception as e:
+        except ValidationError as e:
             error_msg = f"Update {entity_type} attributes failed"
             self.logger.exception(error_msg, error=str(e), dn=dn)
             return FlextResult[bool].fail(f"{error_msg}: {e}")
@@ -1526,7 +1597,7 @@ class FlextLdapClients(FlextService[None]):
             self.logger.info("User deleted successfully", user_dn=dn)
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except ValidationError as e:
             self.logger.exception("Delete user failed", error=str(e), dn=dn)
             return FlextResult[None].fail(f"Delete user failed: {e}")
 
@@ -1715,7 +1786,7 @@ class FlextLdapClients(FlextService[None]):
             # Construct Entry with type-checking
             user = FlextLdapModels.Entry.model_validate(user_data)
             return FlextResult.ok(user)
-        except Exception as e:
+        except ValidationError as e:
             return FlextResult.fail(f"User creation failed: {e}")
 
     def _validate_search_request(
@@ -1765,7 +1836,7 @@ class FlextLdapClients(FlextService[None]):
             attributes["objectClass"] = object_classes
 
             return FlextResult.ok(attributes)
-        except Exception as e:
+        except ValidationError as e:
             return FlextResult.fail(f"Attribute building failed: {e}")
 
     def _create_user_from_entry(

@@ -15,7 +15,6 @@ from collections.abc import Callable
 from typing import ClassVar, Literal, Self, cast, override
 
 from flext_core import (
-    FlextConfig,
     FlextResult,
     FlextService,
 )
@@ -28,8 +27,22 @@ from ldap3 import (
     Connection,
     Server,
 )
-from pydantic import Field, SecretStr
-from pydantic_settings import SettingsConfigDict
+from ldap3.core.exceptions import (
+    LDAPAttributeError,
+    LDAPBindError,
+    LDAPChangeError,
+    LDAPCommunicationError,
+    LDAPInvalidDnError,
+    LDAPInvalidFilterError,
+    LDAPInvalidScopeError,
+    LDAPObjectClassError,
+    LDAPObjectError,
+    LDAPOperationsErrorResult,
+    LDAPResponseTimeoutError,
+    LDAPSocketOpenError,
+    LDAPStartTLSError,
+)
+from pydantic import SecretStr, ValidationError
 
 from flext_ldap.authentication import FlextLdapAuthentication
 from flext_ldap.clients import FlextLdapClients, QuirksMode
@@ -153,29 +166,6 @@ class FlextLdap(FlextService[None]):
     # NESTED CLASSES - Consolidated subsystems
     # =========================================================================
 
-    class Config(FlextConfig):
-        """Consolidated LDAP configuration management."""
-
-        # LDAP-specific configuration fields
-        ldap_server_uri: str = Field(default="ldap://localhost:389")
-        ldap_port: int = Field(default=389)
-        ldap_use_ssl: bool = Field(default=False)
-        ldap_bind_dn: str | None = Field(default=None)
-        ldap_bind_password: SecretStr | None = Field(default=None)
-        ldap_base_dn: str = Field(default="")
-
-        model_config = SettingsConfigDict(
-            env_prefix="LDAP_",
-            env_file=".env",
-            extra="ignore",
-        )
-
-        @property
-        def connection_string(self) -> str:
-            """Get LDAP connection string."""
-            protocol = "ldaps" if self.ldap_use_ssl else "ldap"
-            return f"{protocol}://{self.ldap_server_uri}:{self.ldap_port}"
-
     class Client(FlextService[None]):
         """Consolidated LDAP client operations."""
 
@@ -238,7 +228,14 @@ class FlextLdap(FlextService[None]):
                 )
                 self._connection = connection
                 return FlextResult.ok(connection)
-            except Exception as e:
+            except (
+                LDAPSocketOpenError,
+                LDAPCommunicationError,
+                LDAPBindError,
+                LDAPStartTLSError,
+                LDAPResponseTimeoutError,
+                ValidationError,
+            ) as e:
                 return FlextResult.fail(f"LDAP connection failed: {e}")
 
         def unbind(self) -> FlextResult[None]:
@@ -252,7 +249,7 @@ class FlextLdap(FlextService[None]):
                     typed_conn.unbind()
                     self._connection = None
                 return FlextResult.ok(None)
-            except Exception as e:
+            except LDAPCommunicationError as e:
                 return FlextResult[None].fail(f"LDAP unbind failed: {e}")
 
         def search(
@@ -302,7 +299,14 @@ class FlextLdap(FlextService[None]):
                         result_code=0,  # Success
                     )
                 )
-            except Exception as e:
+            except (
+                LDAPCommunicationError,
+                LDAPResponseTimeoutError,
+                LDAPInvalidFilterError,
+                LDAPInvalidScopeError,
+                LDAPInvalidDnError,
+                ValidationError,
+            ) as e:
                 return FlextResult.fail(f"LDAP search failed: {e}")
 
         def add_entry(
@@ -359,7 +363,15 @@ class FlextLdap(FlextService[None]):
                     )
 
                 return FlextResult.ok(True)
-            except Exception as e:
+            except (
+                LDAPCommunicationError,
+                LDAPAttributeError,
+                LDAPInvalidDnError,
+                LDAPObjectError,
+                LDAPObjectClassError,
+                LDAPOperationsErrorResult,
+                ValidationError,
+            ) as e:
                 return FlextResult.fail(f"LDAP add failed: {e}")
 
         def modify_entry(
@@ -424,7 +436,14 @@ class FlextLdap(FlextService[None]):
                     )
 
                 return FlextResult.ok(True)
-            except Exception as e:
+            except (
+                LDAPCommunicationError,
+                LDAPChangeError,
+                LDAPInvalidDnError,
+                LDAPAttributeError,
+                LDAPOperationsErrorResult,
+                ValidationError,
+            ) as e:
                 return FlextResult.fail(f"LDAP modify failed: {e}")
 
         def delete_entry(self, dn: str) -> FlextResult[bool]:
@@ -461,7 +480,11 @@ class FlextLdap(FlextService[None]):
                     )
 
                 return FlextResult.ok(True)
-            except Exception as e:
+            except (
+                LDAPCommunicationError,
+                LDAPInvalidDnError,
+                LDAPOperationsErrorResult,
+            ) as e:
                 return FlextResult.fail(f"LDAP delete failed: {e}")
 
         def validate_entry(
@@ -1066,12 +1089,16 @@ class FlextLdap(FlextService[None]):
             )
 
         if single:
-            entries = result.unwrap()
-            # Client returns list of entries, not SearchResponse
-            if isinstance(entries, list) and len(entries) > 0:
+            response = result.unwrap()
+            # Client returns SearchResponse object, extract entries field
+            if (
+                isinstance(response, FlextLdapModels.SearchResponse)
+                and response.entries
+                and len(response.entries) > 0
+            ):
                 return cast(
                     "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
-                    FlextResult.ok(entries[0]),
+                    FlextResult.ok(response.entries[0]),
                 )
             return cast(
                 "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
@@ -1248,7 +1275,10 @@ class FlextLdap(FlextService[None]):
                 self._entry_adapter = FlextLdapEntryAdapter()
 
             return self._entry_adapter.detect_entry_server_type(entry)
-        except Exception as e:
+        except (
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[str].fail(f"Entry server type detection failed: {e}")
 
     def normalize_entry_for_server(
@@ -1274,7 +1304,10 @@ class FlextLdap(FlextService[None]):
                 self._entry_adapter = FlextLdapEntryAdapter()
 
             return self._entry_adapter.validate_entry_for_server(entry, server_type)
-        except Exception as e:
+        except (
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[bool].fail(f"Entry validation failed: {e}")
 
     def convert_entry_between_servers(
@@ -1292,7 +1325,10 @@ class FlextLdap(FlextService[None]):
             return self._entry_adapter.convert_entry_format(
                 entry, from_server, to_server
             )
-        except Exception as e:
+        except (
+            AttributeError,
+            ValidationError,
+        ) as e:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Entry conversion failed: {e}"
             )
@@ -1393,8 +1429,16 @@ class FlextLdap(FlextService[None]):
         return FlextResult.ok(server_type if server_type != "generic" else None)
 
     def __enter__(self) -> Self:
-        """Enter context manager - establish connection."""
-        self.client.connect()
+        """Enter context manager - establish connection using config.
+
+        Raises:
+            ConnectionError: If connection fails
+
+        """
+        result = self.client.connect()
+        if result.is_failure:
+            error_msg = f"Failed to connect to LDAP server: {result.error}"
+            raise ConnectionError(error_msg)
         return self
 
     def __exit__(

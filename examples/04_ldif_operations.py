@@ -280,12 +280,7 @@ def demonstrate_entry_conversion() -> None:
 
 
 def demonstrate_ldif_round_trip() -> None:
-    """Demonstrate complete LDIF round-trip (import → modify → export).
-
-    Args:
-        api: Connected FlextLdap instance (currently unused for LDIF operations)
-
-    """
+    """Demonstrate complete LDIF round-trip (import → modify → export)."""
     logger.info("\n=== LDIF Round-Trip Operations ===")
 
     # Step 1: Create and import from LDIF

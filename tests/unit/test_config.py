@@ -628,7 +628,7 @@ class TestFlextLdapConfig:
         import pytest
         from pydantic import ValidationError
 
-        with pytest.raises(ValidationError, match="String should match pattern"):
+        with pytest.raises(ValidationError, match="Invalid LDAP server URI format"):
             FlextLdapConfig(
                 ldap_server_uri="http://localhost",  # Invalid protocol
                 ldap_bind_password=secret("password"),
@@ -1267,3 +1267,37 @@ class TestDependencyInjection:
         # Second call should return same provider
         provider2 = FlextLdapConfig.get_di_config_provider()
         assert provider is provider2
+
+
+class TestLdapServerUriValidation:
+    """Tests for LDAP server URI validation and normalization."""
+
+    def test_uri_with_ldap_scheme(self) -> None:
+        """Test URI with explicit ldap:// scheme is preserved."""
+        config = FlextLdapConfig(ldap_server_uri="ldap://localhost:389")
+        assert config.ldap_server_uri == "ldap://localhost:389"
+
+    def test_uri_with_ldaps_scheme(self) -> None:
+        """Test URI with explicit ldaps:// scheme is preserved."""
+        config = FlextLdapConfig(ldap_server_uri="ldaps://server.example.com:636")
+        assert config.ldap_server_uri == "ldaps://server.example.com:636"
+
+    def test_uri_localhost_no_scheme(self) -> None:
+        """Test localhost without scheme gets ldap:// prefix auto-added."""
+        config = FlextLdapConfig(ldap_server_uri="localhost")
+        assert config.ldap_server_uri == "ldap://localhost"
+
+    def test_uri_hostname_no_scheme(self) -> None:
+        """Test hostname without scheme gets ldap:// prefix auto-added."""
+        config = FlextLdapConfig(ldap_server_uri="server.example.com")
+        assert config.ldap_server_uri == "ldap://server.example.com"
+
+    def test_uri_localhost_with_port_no_scheme(self) -> None:
+        """Test localhost:port without scheme gets ldap:// prefix auto-added."""
+        config = FlextLdapConfig(ldap_server_uri="localhost:3389")
+        assert config.ldap_server_uri == "ldap://localhost:3389"
+
+    def test_uri_with_whitespace_stripped(self) -> None:
+        """Test URI with surrounding whitespace is stripped and normalized."""
+        config = FlextLdapConfig(ldap_server_uri="  localhost  ")
+        assert config.ldap_server_uri == "ldap://localhost"

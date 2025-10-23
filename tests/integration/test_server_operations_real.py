@@ -619,7 +619,7 @@ class TestFlextLdapServersFacade:
     def test_servers_generic_factory(self) -> None:
         """Test generic server factory method."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         assert servers is not None
         assert servers.server_type == "generic"
@@ -627,7 +627,7 @@ class TestFlextLdapServersFacade:
     def test_servers_for_openldap1(self) -> None:
         """Test OpenLDAP 1.x factory method."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.for_openldap1()
         assert servers is not None
         assert servers.server_type == "openldap1"
@@ -635,7 +635,7 @@ class TestFlextLdapServersFacade:
     def test_servers_for_openldap2(self) -> None:
         """Test OpenLDAP 2.x factory method."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.for_openldap2()
         assert servers is not None
         assert servers.server_type == "openldap2"
@@ -667,7 +667,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_acl_format_generic(self) -> None:
         """Test ACL format for generic server."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         acl_format = servers.get_acl_format()
         assert isinstance(acl_format, str)
@@ -675,7 +675,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_acl_attribute_name_generic(self) -> None:
         """Test ACL attribute name for generic server."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         attr_name = servers.get_acl_attribute_name()
         assert isinstance(attr_name, str)
@@ -683,7 +683,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_schema_dn_generic(self) -> None:
         """Test schema DN for generic server."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         schema_dn = servers.get_schema_dn()
         assert isinstance(schema_dn, str)
@@ -691,7 +691,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_default_port_no_ssl(self) -> None:
         """Test default port without SSL."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         port = servers.get_default_port(use_ssl=False)
         assert isinstance(port, int)
@@ -700,7 +700,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_default_port_with_ssl(self) -> None:
         """Test default port with SSL."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         port = servers.get_default_port(use_ssl=True)
         assert isinstance(port, int)
@@ -709,14 +709,14 @@ class TestFlextLdapServersFacade:
     def test_servers_supports_start_tls(self) -> None:
         """Test STARTTLS support."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         assert isinstance(servers.supports_start_tls(), bool)
 
     def test_servers_get_bind_mechanisms(self) -> None:
         """Test bind mechanisms."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         mechanisms = servers.get_bind_mechanisms()
         assert isinstance(mechanisms, list)
@@ -725,7 +725,7 @@ class TestFlextLdapServersFacade:
     def test_servers_get_max_page_size(self) -> None:
         """Test max page size."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         max_size = servers.get_max_page_size()
         assert isinstance(max_size, int)
@@ -734,21 +734,21 @@ class TestFlextLdapServersFacade:
     def test_servers_supports_paged_results(self) -> None:
         """Test paged results support."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         assert isinstance(servers.supports_paged_results(), bool)
 
     def test_servers_supports_vlv(self) -> None:
         """Test VLV support."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         assert isinstance(servers.supports_vlv(), bool)
 
     def test_servers_detect_server_type_from_root_dse(self) -> None:
         """Test server type detection from Root DSE."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         root_dse: dict[str, object] = {
             "vendorName": ["OpenLDAP"],
@@ -760,7 +760,7 @@ class TestFlextLdapServersFacade:
     def test_servers_normalize_entry_for_server_generic(self) -> None:
         """Test entry normalization for generic server."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         dn_str = "cn=test,dc=example,dc=com"
         attrs: dict[str, FlextLdifModels.AttributeValues] = {
@@ -778,7 +778,7 @@ class TestFlextLdapServersFacade:
     def test_servers_validate_entry_for_server(self) -> None:
         """Test entry validation for server."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.generic()
         dn_str = "cn=test,dc=example,dc=com"
         attrs: dict[str, FlextLdifModels.AttributeValues] = {
@@ -796,21 +796,21 @@ class TestFlextLdapServersFacade:
     def test_servers_initialization_with_server_type(self) -> None:
         """Test servers initialization with specific server type."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers("openldap2")
         assert servers.server_type == "openldap2"
 
     def test_servers_initialization_default(self) -> None:
         """Test servers initialization with default server type."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers()
         assert servers.server_type == "generic"
 
     def test_servers_operations_property(self) -> None:
         """Test operations property returns correct instance."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers("openldap2")
         ops = servers.operations
         assert ops is not None
@@ -827,7 +827,7 @@ class TestFlextLdapServersFacade:
     def test_servers_openldap2_delegation(self) -> None:
         """Test OpenLDAP 2.x server type delegation."""
         from flext_ldap.servers.servers import FlextLdapServers
-        
+
         servers = FlextLdapServers.for_openldap2()
         port = servers.get_default_port(use_ssl=False)
         assert port == 389  # OpenLDAP default
