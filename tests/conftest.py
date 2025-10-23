@@ -715,11 +715,15 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def shared_ldap_client(
     shared_ldap_config: dict[str, str], shared_ldap_container: str
 ) -> Generator[FlextLdapClients]:
-    """Shared LDAP client for integration tests using centralized container."""
+    """Shared LDAP client for integration tests using centralized container.
+
+    Function-scoped (not session-scoped) to ensure proper test isolation.
+    Each test gets a fresh connection to avoid state corruption from other tests.
+    """
     # Ensure container is running by depending on shared_ldap_container
     _ = shared_ldap_container  # Container dependency ensures it's started
 
@@ -738,7 +742,7 @@ def shared_ldap_client(
 
     yield client
 
-    # Disconnect when done
+    # Disconnect when done - CRITICAL for test isolation
     try:
         client.unbind()
     except Exception as e:
@@ -815,7 +819,9 @@ def clean_ldap_state(monkeypatch: pytest.MonkeyPatch) -> None:
     original_env = dict(os.environ)
 
     # Clear LDAP_* environment variables to prevent pollution
-    ldap_env_vars = [key for key in os.environ if key.startswith(("LDAP_", "FLEXT_LDAP_"))]
+    ldap_env_vars = [
+        key for key in os.environ if key.startswith(("LDAP_", "FLEXT_LDAP_"))
+    ]
     for var in ldap_env_vars:
         monkeypatch.delenv(var, raising=False)
 

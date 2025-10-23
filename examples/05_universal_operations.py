@@ -475,7 +475,7 @@ def demonstrate_acl_quirks(_server_type: str | None) -> None:
     """Demonstrate ACL-related quirks for different servers.
 
     Args:
-        server_type: Detected server type
+        _server_type: Detected server type
 
     """
     logger.info("\n=== ACL Quirks for Different Servers ===")
@@ -507,7 +507,7 @@ def demonstrate_paging_quirks(_server_type: str | None) -> None:
     """Demonstrate paging and pagination quirks.
 
     Args:
-        server_type: Detected server type
+        _server_type: Detected server type
 
     """
     logger.info("\n=== Paging Quirks ===")
@@ -529,7 +529,7 @@ def demonstrate_timeout_quirks(_server_type: str | None) -> None:
     """Demonstrate timeout quirks for different servers.
 
     Args:
-        server_type: Detected server type
+        _server_type: Detected server type
 
     """
     logger.info("\n=== Timeout Quirks ===")
@@ -551,7 +551,7 @@ def demonstrate_operational_attributes_quirks(_server_type: str | None) -> None:
     """Demonstrate operational attributes support quirks.
 
     Args:
-        server_type: Detected server type
+        _server_type: Detected server type
 
     """
     logger.info("\n=== Operational Attributes Quirks ===")

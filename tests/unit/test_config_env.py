@@ -57,7 +57,9 @@ class TestFlextLdapConfigEnvironment:
                 f"Field {field_name} not found in FlextLdapConfig"
             )
 
-    def test_environment_variable_loading(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_environment_variable_loading(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test environment variable loading (highest precedence).
 
         Now works with strict=True using explicit field validators for type coercion.
@@ -84,9 +86,7 @@ class TestFlextLdapConfigEnvironment:
 
         # Verify integer fields are properly coerced from strings
         assert config.ldap_port == 3389, f"Expected 3389, got {config.ldap_port}"
-        assert config.ldap_pool_size == 20, (
-            f"Expected 20, got {config.ldap_pool_size}"
-        )
+        assert config.ldap_pool_size == 20, f"Expected 20, got {config.ldap_pool_size}"
         assert config.cache_ttl == 600, f"Expected 600, got {config.cache_ttl}"
         assert config.max_retry_attempts == 5, (
             f"Expected 5, got {config.max_retry_attempts}"

@@ -259,7 +259,7 @@ def demonstrate_filter_validation(_api: FlextLdap) -> None:
     """Demonstrate LDAP filter validation.
 
     Args:
-        api: Connected FlextLdap instance
+        _api: Connected FlextLdap instance
 
     """
     logger.info("\n=== Filter Validation ===")

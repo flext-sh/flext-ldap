@@ -11,7 +11,6 @@ Comprehensive tool for generating architecture documentation including:
 
 import argparse
 import shutil
-import subprocess  # nosec S404 - Required for PlantUML diagram generation
 import traceback
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -19,6 +18,12 @@ from pathlib import Path
 from typing import Any, cast
 
 import yaml
+
+# Optional imports for PlantUML support
+try:
+    from plantuml import PlantUML
+except ImportError:
+    PlantUML = None  # type: ignore[assignment]
 
 # Constants
 MAX_DISPLAY_ITEMS = 10
@@ -888,40 +893,77 @@ This document describes the {attribute.lower()} characteristics and requirements
         return self._get_plantuml_command() is not None
 
     def _generate_diagram_from_puml(self, puml_file: str) -> None:
-        """Generate diagram from PlantUML file."""
+        """Generate diagram from PlantUML file using Python API."""
         try:
-            plantuml_cmd = self._get_plantuml_command()
-            if plantuml_cmd:
-                # Use plantuml command with input validation
-                generation_config = cast("dict[str, object]", self.config["generation"])
-                formats = cast(
-                    "list[str]", generation_config.get("diagram_formats", ["png"])
-                )
-                # Validate formats to prevent command injection using constant
+            # Read PlantUML source file
+            puml_path = Path(puml_file)
+            if not puml_path.exists():
+                if self.verbose:
+                    print(f"PlantUML file not found: {puml_file}")
+                return
+
+            puml_content = puml_path.read_text(encoding="utf-8")
+
+            # Get generation config
+            generation_config = cast("dict[str, object]", self.config["generation"])
+            formats = cast(
+                "list[str]", generation_config.get("diagram_formats", ["png"])
+            )
+
+            # Ensure output directory exists
+            output_dir = Path(self.diagrams_dir) / "generated"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Try to use plantuml Python library
+            try:
+                if PlantUML is None:
+                    msg = "plantuml library not installed"
+                    raise ImportError(msg)
+
+                base_name = puml_path.stem
+
+                # Generate diagrams for each format
                 for fmt in formats:
+                    # Validate format to prevent injection
                     if fmt not in PLANTUML_ALLOWED_FORMATS:
-                        continue  # Skip invalid formats
-                    # Security: Use full path and validated arguments only
-                    subprocess.run(  # nosec S603 - PlantUML command with controlled arguments and full path
-                        [
-                            plantuml_cmd,
-                            puml_file,
-                            f"-t{fmt}",
-                            "-o",
-                            f"{self.diagrams_dir}/generated",
-                        ],
-                        check=True,
-                        shell=False,  # Explicitly disable shell for security
-                        cwd=self.working_dir,  # Use working directory for safety
-                    )
-        except subprocess.CalledProcessError:
-            # Log the error for debugging
-            if self.verbose:
-                pass
-        except Exception:
+                        continue
+
+                    try:
+                        if fmt == "png":
+                            puml_gen = PlantUML(
+                                url="http://www.plantuml.com/plantuml/img/"
+                            )
+                        elif fmt == "svg":
+                            puml_gen = PlantUML(
+                                url="http://www.plantuml.com/plantuml/svg/"
+                            )
+                        else:
+                            # For other formats, use PNG endpoint as fallback
+                            puml_gen = PlantUML(
+                                url="http://www.plantuml.com/plantuml/img/"
+                            )
+
+                        # Generate diagram
+                        image_data = puml_gen.processes(puml_content)
+                        if image_data:
+                            output_file = output_dir / f"{base_name}.{fmt}"
+                            output_file.write_bytes(image_data)
+                            if self.verbose:
+                                print(f"Generated diagram: {output_file}")
+
+                    except Exception as e:
+                        if self.verbose:
+                            print(f"Could not generate {fmt} for {puml_file}: {e}")
+
+            except ImportError:
+                if self.verbose:
+                    print("plantuml library not available")
+                    print("Install with: pip install plantuml")
+
+        except Exception as e:
             # Log unexpected errors
             if self.verbose:
-                pass
+                print(f"Error generating diagram from {puml_file}: {e}")
 
     def generate_navigation(self) -> dict[str, list[str]]:
         """Generate navigation and index files."""

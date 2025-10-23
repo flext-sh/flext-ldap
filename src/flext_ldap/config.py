@@ -164,8 +164,7 @@ class FlextLdapConfig(FlextConfig):
     # LDAP Connection Configuration using FlextLdapConstants for defaults
     ldap_server_uri: str = Field(
         default=FlextLdapConstants.Protocol.DEFAULT_SERVER_URI,
-        pattern=r"^ldaps?://",  # Must start with ldap:// or ldaps://
-        description="LDAP server URI (ldap:// or ldaps://)",
+        description="LDAP server URI (ldap://, ldaps://, or hostname/IP for auto-prefix)",
     )
 
     ldap_port: PortNumber = Field(
@@ -289,6 +288,45 @@ class FlextLdapConfig(FlextConfig):
     # =========================================================================
     # FIELD VALIDATORS - Business logic validation
     # =========================================================================
+
+    @field_validator("ldap_server_uri", mode="before")
+    @classmethod
+    def validate_and_normalize_server_uri(cls, v: str) -> str:
+        """Normalize LDAP server URI by adding scheme if missing.
+
+        Allows simplified URIs like 'localhost', 'server.example.com', or
+        'localhost:3389' and automatically prefixes them with 'ldap://' scheme.
+
+        Args:
+            v: LDAP server URI (may be with or without scheme)
+
+        Returns:
+            Normalized URI with scheme (ldap:// or ldaps://)
+
+        Raises:
+            ValidationError: If URI is invalid
+
+        """
+        import re
+
+        if not isinstance(v, str):
+            return v
+
+        v = v.strip()
+
+        # If already has scheme, return as-is; otherwise, prefix with ldap://
+        normalized = v if v.startswith(("ldap://", "ldaps://")) else f"ldap://{v}"
+
+        # Validate normalized URI matches pattern
+        pattern = r"^(ldaps?://)?([a-zA-Z0-9.-]+|localhost)(:\d+)?$"
+        if not re.match(pattern, normalized):
+            error_msg = (
+                f"Invalid LDAP server URI format: {normalized}. "
+                f"Expected: ldap://host[:port] or ldaps://host[:port]"
+            )
+            raise ValueError(error_msg)
+
+        return normalized
 
     @field_validator("ldap_bind_dn")
     @classmethod

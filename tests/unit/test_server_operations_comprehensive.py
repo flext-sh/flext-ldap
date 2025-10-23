@@ -180,7 +180,9 @@ class TestAllServerOperationsTLS:
 
         for server in servers:
             supports_tls = server.supports_start_tls()
-            assert supports_tls is True, f"{server.server_type} should support START_TLS"
+            assert supports_tls is True, (
+                f"{server.server_type} should support START_TLS"
+            )
             assert isinstance(supports_tls, bool)
 
 

@@ -22,7 +22,9 @@ from flext_ldap import FlextLdapClients
 class TestClientsConnectionOperations:
     """Test FlextLdapClients connection operations with real LDAP."""
 
-    def test_clients_connect_success(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_connect_success(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test successful LDAP connection."""
         assert shared_ldap_client is not None
         # Connection should be established via fixture
@@ -32,12 +34,16 @@ class TestClientsConnectionOperations:
             # Fixture may have cleaned up connection
             pytest.skip("Connection fixture not available")
 
-    def test_clients_connection_has_bound_dn(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_connection_has_bound_dn(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test connection has bound DN."""
         assert shared_ldap_client is not None
         # Should be bound to LDAP server
 
-    def test_clients_unbind_operation(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_unbind_operation(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test LDAP unbind operation."""
         # Client is already bound via fixture
         try:
@@ -47,7 +53,9 @@ class TestClientsConnectionOperations:
             # May fail if already unbound
             pass
 
-    def test_clients_connection_properties(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_connection_properties(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test connection object has expected properties."""
         try:
             assert shared_ldap_client._connection is not None
@@ -98,7 +106,9 @@ class TestClientsSearchOperations:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_invalid_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_invalid_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with invalid filter."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -167,7 +177,9 @@ class TestClientsErrorHandling:
             # May raise exception, which is ok
             pass
 
-    def test_clients_invalid_search_request(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_invalid_search_request(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test with invalid search request."""
         # Create request with invalid data
         result = shared_ldap_client.search(
@@ -184,7 +196,9 @@ class TestClientsErrorHandling:
 class TestClientsSearchScopes:
     """Test FlextLdapClients search scope handling."""
 
-    def test_clients_search_base_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_base_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test BASE scope search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -193,7 +207,9 @@ class TestClientsSearchScopes:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_onelevel_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_onelevel_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test ONELEVEL scope search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -202,7 +218,9 @@ class TestClientsSearchScopes:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_subtree_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_subtree_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test SUBTREE scope search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -217,7 +235,9 @@ class TestClientsSearchScopes:
 class TestClientsFilterOperations:
     """Test FlextLdapClients filter handling."""
 
-    def test_clients_search_simple_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_simple_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test simple filter search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -226,7 +246,9 @@ class TestClientsFilterOperations:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_complex_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_complex_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test complex filter search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -235,7 +257,9 @@ class TestClientsFilterOperations:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_or_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_or_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OR filter search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -244,7 +268,9 @@ class TestClientsFilterOperations:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_not_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_not_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test NOT filter search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -259,7 +285,9 @@ class TestClientsFilterOperations:
 class TestClientsAttributeHandling:
     """Test FlextLdapClients attribute handling."""
 
-    def test_clients_search_no_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_no_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search with no attributes specified."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -268,7 +296,9 @@ class TestClientsAttributeHandling:
         )
         assert isinstance(result, FlextResult)
 
-    def test_clients_search_all_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_clients_search_all_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test search requesting all attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",

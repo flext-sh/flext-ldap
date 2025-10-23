@@ -718,7 +718,7 @@ class TestFlextLdapComprehensive:
         mock_connection.search.return_value = True
         mock_connection.entries = [
             Mock(dn="cn=test1,dc=test,dc=com", entry_dn="cn=test1,dc=test,dc=com"),
-            Mock(dn="cn=test2,dc=test,dc=com", entry_dn="cn=test2,dc=test,dc=com")
+            Mock(dn="cn=test2,dc=test,dc=com", entry_dn="cn=test2,dc=test,dc=com"),
         ]
         mock_connection.result = {"result": 0, "description": "success"}
 
@@ -738,16 +738,15 @@ class TestFlextLdapComprehensive:
         assert result.is_success
         assert result.unwrap() is None
 
-    @pytest.mark.skip(reason="execute() method does not accept message arguments - test mismatch")
+    @pytest.mark.skip(
+        reason="execute() method does not accept message arguments - test mismatch"
+    )
     def test_api_execute_comprehensive(self) -> None:
         """Test API execute method comprehensively."""
         api = FlextLdap()
 
         # Test execute with delete operation
-        delete_message = {
-            "operation": "delete",
-            "dn": "cn=test,dc=com"
-        }
+        delete_message = {"operation": "delete", "dn": "cn=test,dc=com"}
         result = api.execute(delete_message)
         assert isinstance(result, FlextResult)
 
@@ -755,7 +754,7 @@ class TestFlextLdapComprehensive:
         add_message = {
             "operation": "add",
             "dn": "cn=test,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["test"]}
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
         }
         result = api.execute(add_message)
         assert isinstance(result, FlextResult)
@@ -764,7 +763,7 @@ class TestFlextLdapComprehensive:
         modify_message = {
             "operation": "modify",
             "dn": "cn=test,dc=com",
-            "changes": {"description": ["test description"]}
+            "changes": {"description": ["test description"]},
         }
         result = api.execute(modify_message)
         assert isinstance(result, FlextResult)
@@ -774,13 +773,15 @@ class TestFlextLdapComprehensive:
             "operation": "batch_add",
             "entries": [
                 {"dn": "cn=test1,dc=com", "attributes": {"objectClass": ["person"]}},
-                {"dn": "cn=test2,dc=com", "attributes": {"objectClass": ["person"]}}
-            ]
+                {"dn": "cn=test2,dc=com", "attributes": {"objectClass": ["person"]}},
+            ],
         }
         result = api.execute(batch_message)
         assert isinstance(result, FlextResult)
 
-    @pytest.mark.skip(reason="Entry model structure has changed - test needs refactoring")
+    @pytest.mark.skip(
+        reason="Entry model structure has changed - test needs refactoring"
+    )
     def test_api_validate_entries_comprehensive(self) -> None:
         """Test API validate_entries method comprehensively."""
         api = FlextLdap()
@@ -794,6 +795,7 @@ class TestFlextLdapComprehensive:
 
         # Test validation with entry
         from flext_ldap.models import FlextLdapModels
+
         entry = FlextLdapModels.Entry(
             dn="cn=test,dc=com",
             entry_type="user",
@@ -801,8 +803,8 @@ class TestFlextLdapComprehensive:
             attributes={
                 "cn": ["Test User"],
                 "sn": ["User"],
-                "mail": ["test@example.com"]
-            }
+                "mail": ["test@example.com"],
+            },
         )
         result = api.validate_entries(entry)
         assert result.is_success
