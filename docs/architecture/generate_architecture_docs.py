@@ -23,7 +23,7 @@ import yaml
 try:
     from plantuml import PlantUML
 except ImportError:
-    PlantUML = None  # type: ignore[assignment]
+    PlantUML = None
 
 # Constants
 MAX_DISPLAY_ITEMS = 10

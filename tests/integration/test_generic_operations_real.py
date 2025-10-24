@@ -151,7 +151,7 @@ class TestGenericOperationsComprehensive:
         """Test Generic schema discovery fails without connection."""
         ops = FlextLdapServersGenericOperations()
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -228,7 +228,7 @@ class TestGenericOperationsErrorHandling:
         """Test Generic schema discovery with None connection."""
         ops = FlextLdapServersGenericOperations()
         try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
+            result = ops.discover_schema(None)
             if isinstance(result, FlextResult):
                 assert result.is_failure
         except (AttributeError, TypeError):

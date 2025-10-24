@@ -275,21 +275,21 @@ class TestServerOperationsErrorHandling:
     def test_oid_discover_schema_without_connection(self) -> None:
         """Test OID schema discovery fails without connection."""
         oid = FlextLdapServersOIDOperations()
-        result = oid.discover_schema(None)  # type: ignore[arg-type]
+        result = oid.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
     def test_oud_discover_schema_without_connection(self) -> None:
         """Test OUD schema discovery fails without connection."""
         oud = FlextLdapServersOUDOperations()
-        result = oud.discover_schema(None)  # type: ignore[arg-type]
+        result = oud.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
     def test_openldap2_discover_schema_without_connection(self) -> None:
         """Test OpenLDAP2 schema discovery fails without connection."""
         ldap2 = FlextLdapServersOpenLDAP2Operations()
-        result = ldap2.discover_schema(None)  # type: ignore[arg-type]
+        result = ldap2.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 

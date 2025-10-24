@@ -32,7 +32,7 @@ class TestOIDServerDiscoveryCapabilities:
     ) -> None:
         """Test OID schema discovery with bound connection."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.discover_schema(shared_ldap_client._connection)  # type: ignore[arg-type]
+        result = ops.discover_schema(shared_ldap_client._connection)
         assert isinstance(result, FlextResult)
         # May succeed or fail depending on server schema availability
         if result.is_success:
@@ -122,9 +122,7 @@ class TestOIDServerDiscoveryCapabilities:
                     "objectClass": FlextLdifModels.AttributeValues(
                         values=["orclUserV2", "person"]
                     ),
-                    "cn": FlextLdifModels.AttributeValues(
-                        values=["oracle_user"]
-                    ),
+                    "cn": FlextLdifModels.AttributeValues(values=["oracle_user"]),
                     "orclUserStatus": FlextLdifModels.AttributeValues(
                         values=["ACTIVE"]
                     ),
@@ -148,9 +146,7 @@ class TestOIDServerDiscoveryCapabilities:
                     "objectClass": FlextLdifModels.AttributeValues(
                         values=["orclUserV2"]
                     ),
-                    "cn": FlextLdifModels.AttributeValues(
-                        values=["oracle_validate"]
-                    ),
+                    "cn": FlextLdifModels.AttributeValues(values=["oracle_validate"]),
                 }
             ),
         )
@@ -165,17 +161,13 @@ class TestOIDServerDiscoveryCapabilities:
         attr_name = ops.get_acl_attribute_name()
         assert attr_name == "orclaci"
 
-    def test_oid_get_acl_format(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_get_acl_format(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID ACL format."""
         ops = FlextLdapServersOIDOperations()
         acl_format = ops.get_acl_format()
         assert acl_format == "oracle"
 
-    def test_oid_parse_acl_valid(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_parse_acl_valid(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID parse valid ACL."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to entry by * : browse"
@@ -196,7 +188,7 @@ class TestOIDServerDiscoveryCapabilities:
             "subject": "*",
             "permissions": ["browse"],
         }
-        result = ops.format_acl(acl_dict)  # type: ignore[arg-type]
+        result = ops.format_acl(acl_dict)
         assert result.is_success
         acl_str = result.unwrap()
         assert isinstance(acl_str, str)
@@ -218,7 +210,7 @@ class TestOUDServerDiscoveryCapabilities:
     ) -> None:
         """Test OUD schema discovery with bound connection."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.discover_schema(shared_ldap_client._connection)  # type: ignore[arg-type]
+        result = ops.discover_schema(shared_ldap_client._connection)
         assert isinstance(result, FlextResult)
         if result.is_success:
             schema = result.unwrap()
@@ -330,9 +322,7 @@ class TestOUDServerDiscoveryCapabilities:
                     "objectClass": FlextLdifModels.AttributeValues(
                         values=["inetOrgPerson"]
                     ),
-                    "cn": FlextLdifModels.AttributeValues(
-                        values=["oud_validate"]
-                    ),
+                    "cn": FlextLdifModels.AttributeValues(values=["oud_validate"]),
                     "ds-pwp-account-disabled": FlextLdifModels.AttributeValues(
                         values=["true"]
                     ),
@@ -351,9 +341,7 @@ class TestOUDServerDiscoveryCapabilities:
         assert isinstance(attr_name, str)
         assert len(attr_name) > 0
 
-    def test_oud_get_acl_format(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_get_acl_format(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD ACL format."""
         ops = FlextLdapServersOUDOperations()
         acl_format = ops.get_acl_format()
@@ -367,9 +355,7 @@ class TestOUDServerDiscoveryCapabilities:
         ops = FlextLdapServersOUDOperations()
         assert ops.server_type == "oud"
 
-    def test_oud_parse_acl_valid(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_parse_acl_valid(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD parse valid ACL."""
         ops = FlextLdapServersOUDOperations()
         acl_str = "access to entry by * read"
@@ -410,8 +396,8 @@ class TestServerConsistencyComparison:
         oid_ops = FlextLdapServersOIDOperations()
         oud_ops = FlextLdapServersOUDOperations()
 
-        oid_result = oid_ops.discover_schema(shared_ldap_client._connection)  # type: ignore[arg-type]
-        oud_result = oud_ops.discover_schema(shared_ldap_client._connection)  # type: ignore[arg-type]
+        oid_result = oid_ops.discover_schema(shared_ldap_client._connection)
+        oud_result = oud_ops.discover_schema(shared_ldap_client._connection)
 
         assert isinstance(oid_result, FlextResult)
         assert isinstance(oud_result, FlextResult)

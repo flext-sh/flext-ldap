@@ -45,7 +45,7 @@ from ldap3.core.exceptions import (
 from pydantic import SecretStr, ValidationError
 
 from flext_ldap.authentication import FlextLdapAuthentication
-from flext_ldap.clients import FlextLdapClients, QuirksMode
+from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
@@ -89,7 +89,9 @@ class FlextLdap(FlextService[None]):
         )
         self._ldif: FlextLdif | None = None
         self._entry_adapter: FlextLdapEntryAdapter | None = None
-        self._quirks_mode: QuirksMode = "automatic"  # Default quirks mode
+        self._quirks_mode: FlextLdapConstants.Types.QuirksMode = (
+            FlextLdapConstants.Types.QuirksMode.AUTOMATIC
+        )
 
         # Lazy-loaded subsystems
         self._client: FlextLdap.Client | None = None
@@ -153,7 +155,7 @@ class FlextLdap(FlextService[None]):
         )
 
     @property
-    def quirks_mode(self) -> QuirksMode:
+    def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
         """Get current quirks mode."""
         return self._quirks_mode
 
@@ -415,7 +417,7 @@ class FlextLdap(FlextService[None]):
                 )
                 # ldap3 accepts string constants (MODIFY_ADD, etc.) in modification tuples
                 # Type checker expects int but ldap3 runtime accepts str constants
-                success = typed_conn.modify(dn, modifications)  # type: ignore[arg-type]
+                success = typed_conn.modify(dn, modifications)
 
                 # CRITICAL FIX: Check ldap3 result - result is a dictionary
                 if not success:
@@ -491,7 +493,7 @@ class FlextLdap(FlextService[None]):
             self,
             entry: FlextLdapModels.Entry,
             *,
-            quirks_mode: QuirksMode | None = None,
+            quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
         ) -> FlextResult[bool]:
             """Validate LDAP entry structure.
 
@@ -582,7 +584,7 @@ class FlextLdap(FlextService[None]):
         bind_dn: str | None = None,
         password: SecretStr | str | None = None,
         *,
-        quirks_mode: QuirksMode = "automatic",
+        quirks_mode: FlextLdapConstants.Types.QuirksMode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
     ) -> FlextResult[bool]:
         """Connect to LDAP server with optional configuration and quirks control.
 
@@ -607,7 +609,7 @@ class FlextLdap(FlextService[None]):
 
         Examples:
             # Connect with default config
-            result = ldap.connect(quirks_mode="automatic")
+            result = ldap.connect(quirks_mode=FlextLdapConstants.Types.QuirksMode.AUTOMATIC)
 
             # Connect with explicit credentials
             result = ldap.connect(
@@ -644,7 +646,7 @@ class FlextLdap(FlextService[None]):
         attributes: list[str] | None = None,
         *,
         single: bool = False,
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]:
         """Unified query method (search consolidation) with quirks support.
 
@@ -705,7 +707,7 @@ class FlextLdap(FlextService[None]):
         atomic: bool = False,
         batch: bool = False,
         modifications: list[tuple[str, dict[str, str | list[str]]]] | None = None,
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[bool | list[bool]]:
         """Universal CRUD apply_changes method with quirks support.
 
@@ -820,7 +822,7 @@ class FlextLdap(FlextService[None]):
         *,
         server_type: str | None = None,
         mode: Literal["schema", "business", "all"] = "all",
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[dict[str, object]]:
         """Validation method with quirks support.
 
@@ -879,7 +881,7 @@ class FlextLdap(FlextService[None]):
         source_server: str | None = None,
         target_server: str | None = None,
         *,
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[FlextLdapModels.Entry | list[FlextLdapModels.Entry]]:
         """Entry conversion method with quirks support.
 
@@ -947,7 +949,7 @@ class FlextLdap(FlextService[None]):
         *,
         data_format: Literal["ldif", "json", "csv"] = "ldif",
         direction: Literal["import", "export"] = "import",
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[str | list[FlextLdapModels.Entry]]:
         """Data exchange method for import/export with quirks support.
 
@@ -996,7 +998,7 @@ class FlextLdap(FlextService[None]):
         self,
         *,
         detail_level: Literal["basic", "full", "diagnostic"] = "basic",
-        quirks_mode: QuirksMode | None = None,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[dict[str, object]]:
         """Server information method with quirks support.
 

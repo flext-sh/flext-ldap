@@ -278,7 +278,7 @@ class TestServerOperationsErrorHandling:
         ]
 
         for server in servers:
-            result = server.discover_schema(None)  # type: ignore[arg-type]
+            result = server.discover_schema(None)
             assert isinstance(result, FlextResult)
             assert result.is_failure
 

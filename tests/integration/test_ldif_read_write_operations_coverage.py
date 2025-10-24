@@ -19,9 +19,7 @@ from flext_ldap import FlextLdapClients, FlextLdapModels
 class TestLdapReadWriteBasic:
     """Basic LDAP read/write operations with correct API usage."""
 
-    def test_add_entry_basic(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_add_entry_basic(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test adding a basic entry with correct API signature."""
         result = shared_ldap_client.add_entry(
             dn="ou=testou1,dc=flext,dc=local",
@@ -64,9 +62,7 @@ class TestLdapReadWriteBasic:
         )
         assert isinstance(result, FlextResult)
 
-    def test_search_after_add(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_search_after_add(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test searching for added entry."""
         # First add an entry
         add_result = shared_ldap_client.add_entry(
@@ -114,9 +110,7 @@ class TestLdapReadWriteBasic:
             )
             assert isinstance(modify_result, FlextResult)
 
-    def test_delete_entry(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_delete_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test deleting an entry."""
         # First add an entry
         add_result = shared_ldap_client.add_entry(
@@ -169,9 +163,7 @@ class TestLdapAttributeHandling:
         )
         assert isinstance(result, FlextResult)
 
-    def test_empty_string_attribute(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_empty_string_attribute(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test handling of potentially empty attributes."""
         # LDAP doesn't allow empty attributes, so this tests error handling
         result = shared_ldap_client.add_entry(
@@ -190,9 +182,7 @@ class TestLdapAttributeHandling:
 class TestLdapErrorHandling:
     """Test LDAP operation error handling."""
 
-    def test_duplicate_entry_error(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_duplicate_entry_error(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test handling of duplicate entry error."""
         dn = "cn=duptest1,dc=flext,dc=local"
 
@@ -236,9 +226,7 @@ class TestLdapErrorHandling:
         assert isinstance(result, FlextResult)
         # May fail or succeed depending on server strictness
 
-    def test_invalid_dn_format(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_invalid_dn_format(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test handling of invalid DN format."""
         result = shared_ldap_client.add_entry(
             dn="invalid-dn-format",
@@ -301,7 +289,5 @@ class TestLdapFlexResultPattern:
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test delete_entry returns FlextResult."""
-        result = shared_ldap_client.delete_entry(
-            dn="cn=nonexistent,dc=flext,dc=local"
-        )
+        result = shared_ldap_client.delete_entry(dn="cn=nonexistent,dc=flext,dc=local")
         assert isinstance(result, FlextResult)

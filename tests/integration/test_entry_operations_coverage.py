@@ -86,7 +86,7 @@ class TestOIDEntryOperations:
                 }
             ),
         )
-        result = ops.add_entry(None, entry)  # type: ignore[arg-type]
+        result = ops.add_entry(None, entry)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -95,7 +95,7 @@ class TestOIDEntryOperations:
     ) -> None:
         """Test OID modify_entry with None connection fails."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.modify_entry(None, "cn=test,dc=example,dc=com", {})  # type: ignore[arg-type]
+        result = ops.modify_entry(None, "cn=test,dc=example,dc=com", {})
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -104,7 +104,7 @@ class TestOIDEntryOperations:
     ) -> None:
         """Test OID delete_entry with None connection fails."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.delete_entry(None, "cn=test,dc=example,dc=com")  # type: ignore[arg-type]
+        result = ops.delete_entry(None, "cn=test,dc=example,dc=com")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -178,7 +178,7 @@ class TestOUDEntryOperations:
                 }
             ),
         )
-        result = ops.add_entry(None, entry)  # type: ignore[arg-type]
+        result = ops.add_entry(None, entry)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -187,7 +187,7 @@ class TestOUDEntryOperations:
     ) -> None:
         """Test OUD modify_entry with None connection fails."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.modify_entry(None, "cn=test,dc=example,dc=com", {})  # type: ignore[arg-type]
+        result = ops.modify_entry(None, "cn=test,dc=example,dc=com", {})
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -196,7 +196,7 @@ class TestOUDEntryOperations:
     ) -> None:
         """Test OUD delete_entry with None connection fails."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.delete_entry(None, "cn=test,dc=example,dc=com")  # type: ignore[arg-type]
+        result = ops.delete_entry(None, "cn=test,dc=example,dc=com")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -274,7 +274,7 @@ class TestOpenLDAP1EntryOperations:
                 }
             ),
         )
-        result = ops.add_entry(None, entry)  # type: ignore[arg-type]
+        result = ops.add_entry(None, entry)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -352,7 +352,7 @@ class TestOpenLDAP2EntryOperations:
                 }
             ),
         )
-        result = ops.add_entry(None, entry)  # type: ignore[arg-type]
+        result = ops.add_entry(None, entry)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -421,7 +421,10 @@ class TestSearchWithPagingOperations:
         """Test OID search_with_paging with None connection fails."""
         ops = FlextLdapServersOIDOperations()
         result = ops.search_with_paging(
-            None, "dc=flext,dc=local", "(objectClass=*)", page_size=100  # type: ignore[arg-type]
+            None,
+            "dc=flext,dc=local",
+            "(objectClass=*)",
+            page_size=100,
         )
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -498,6 +501,6 @@ class TestRootDSEAndControlsOperations:
     ) -> None:
         """Test OID get_root_dse_attributes with None connection fails."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.get_root_dse_attributes(None)  # type: ignore[arg-type]
+        result = ops.get_root_dse_attributes(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure

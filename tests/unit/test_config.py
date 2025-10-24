@@ -18,7 +18,6 @@ from flext_ldap import (
     FlextLdapConfig,
     FlextLdapConstants,
     FlextLdapModels,
-    FlextLdapValidations,
 )
 
 
@@ -276,7 +275,7 @@ class TestFlextLdapConfig:
             f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
         )
 
-        result = FlextLdapValidations.validate_connection_config(config)
+        result = FlextLdapModels.Validations.validate_connection_config(config)
 
         assert result.is_success
         assert result.unwrap() is True
@@ -284,7 +283,7 @@ class TestFlextLdapConfig:
     def test_validate_connection_data_failure(self) -> None:
         """Test connection data validation failure."""
         invalid_data: dict[str, object] = {"invalid": "data"}
-        result = FlextLdapValidations.validate_connection_config(invalid_data)
+        result = FlextLdapModels.Validations.validate_connection_config(invalid_data)
 
         assert result.is_failure
         assert (
@@ -299,7 +298,7 @@ class TestFlextLdapConfig:
             "server": "localhost"
             # Missing port, bind_dn, bind_password
         }
-        result = FlextLdapValidations.validate_connection_config(incomplete_data)
+        result = FlextLdapModels.Validations.validate_connection_config(incomplete_data)
 
         assert result.is_failure
         assert (
@@ -311,13 +310,15 @@ class TestFlextLdapConfig:
     def test_validate_search_data_success(self) -> None:
         """Test successful search data validation."""
         # Test individual components using static methods
-        dn_result = FlextLdapValidations.validate_dn("dc=example,dc=com")
+        dn_result = FlextLdapModels.Validations.validate_dn("dc=example,dc=com")
         assert dn_result.is_success
 
-        filter_result = FlextLdapValidations.validate_filter("(objectClass=person)")
+        filter_result = FlextLdapModels.Validations.validate_filter(
+            "(objectClass=person)"
+        )
         assert filter_result.is_success
 
-        attributes_result = FlextLdapValidations.validate_attributes([
+        attributes_result = FlextLdapModels.Validations.validate_attributes([
             "cn",
             "sn",
             "mail",
@@ -327,7 +328,7 @@ class TestFlextLdapConfig:
     def test_validate_search_data_failure(self) -> None:
         """Test search data validation failure."""
         # Test invalid filter with invalid characters
-        result = FlextLdapValidations.validate_filter(
+        result = FlextLdapModels.Validations.validate_filter(
             "invalid@filter#with$invalid%chars"
         )
         assert result.is_failure
@@ -340,7 +341,7 @@ class TestFlextLdapConfig:
     def test_validate_search_data_missing_base_dn(self) -> None:
         """Test search data validation with missing base DN."""
         # Test empty DN
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
         assert result.is_failure
         assert (
             result.error is not None
@@ -351,7 +352,7 @@ class TestFlextLdapConfig:
     def test_validate_modify_data_success(self) -> None:
         """Test successful modify data validation."""
         # Test DN validation
-        dn_result = FlextLdapValidations.validate_dn(
+        dn_result = FlextLdapModels.Validations.validate_dn(
             "uid=testuser,ou=people,dc=example,dc=com"
         )
         assert dn_result.is_success
@@ -359,7 +360,7 @@ class TestFlextLdapConfig:
     def test_validate_modify_data_failure(self) -> None:
         """Test modify data validation failure."""
         # Test invalid DN
-        result = FlextLdapValidations.validate_dn("invalid-dn")
+        result = FlextLdapModels.Validations.validate_dn("invalid-dn")
         assert result.is_failure
         assert (
             result.error is not None
@@ -370,7 +371,7 @@ class TestFlextLdapConfig:
     def test_validate_modify_data_missing_dn(self) -> None:
         """Test modify data validation with missing DN."""
         # Test empty DN
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
         assert result.is_failure
         assert (
             result.error is not None
@@ -381,19 +382,22 @@ class TestFlextLdapConfig:
     def test_validate_add_data_success(self) -> None:
         """Test successful add data validation."""
         # Test DN validation
-        dn_result = FlextLdapValidations.validate_dn(
+        dn_result = FlextLdapModels.Validations.validate_dn(
             "uid=testuser,ou=people,dc=example,dc=com"
         )
         assert dn_result.is_success
 
         # Test attributes validation
-        attributes_result = FlextLdapValidations.validate_attributes(["cn", "sn"])
+        attributes_result = FlextLdapModels.Validations.validate_attributes([
+            "cn",
+            "sn",
+        ])
         assert attributes_result.is_success
 
     def test_validate_add_data_failure(self) -> None:
         """Test add data validation failure."""
         # Test invalid DN
-        result = FlextLdapValidations.validate_dn("invalid-dn")
+        result = FlextLdapModels.Validations.validate_dn("invalid-dn")
         assert result.is_failure
         assert (
             result.error is not None
@@ -404,7 +408,7 @@ class TestFlextLdapConfig:
     def test_validate_add_data_missing_attributes(self) -> None:
         """Test add data validation with missing attributes."""
         # Test empty attributes
-        result = FlextLdapValidations.validate_attributes([])
+        result = FlextLdapModels.Validations.validate_attributes([])
         assert result.is_failure
         assert (
             result.error is not None
@@ -415,7 +419,7 @@ class TestFlextLdapConfig:
     def test_validate_delete_data_success(self) -> None:
         """Test successful delete data validation."""
         # Test DN validation
-        result = FlextLdapValidations.validate_dn(
+        result = FlextLdapModels.Validations.validate_dn(
             "uid=testuser,ou=people,dc=example,dc=com"
         )
         assert result.is_success
@@ -423,7 +427,7 @@ class TestFlextLdapConfig:
     def test_validate_delete_data_failure(self) -> None:
         """Test delete data validation failure."""
         # Test invalid DN
-        result = FlextLdapValidations.validate_dn("invalid-dn")
+        result = FlextLdapModels.Validations.validate_dn("invalid-dn")
         assert result.is_failure
         assert (
             result.error is not None
@@ -434,7 +438,7 @@ class TestFlextLdapConfig:
     def test_validate_delete_data_missing_dn(self) -> None:
         """Test delete data validation with missing DN."""
         # Test empty DN
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
         assert result.is_failure
         assert (
             result.error is not None
@@ -508,7 +512,7 @@ class TestFlextLdapConfig:
 
     def test_validate_dn_format_valid(self) -> None:
         """Test validating valid DN format."""
-        result = FlextLdapValidations.validate_dn(
+        result = FlextLdapModels.Validations.validate_dn(
             "uid=testuser,ou=people,dc=example,dc=com"
         )
 
@@ -517,7 +521,7 @@ class TestFlextLdapConfig:
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test validating invalid DN format."""
-        result = FlextLdapValidations.validate_dn("invalid-dn-format")
+        result = FlextLdapModels.Validations.validate_dn("invalid-dn-format")
 
         assert result.is_failure
         assert (
@@ -528,7 +532,7 @@ class TestFlextLdapConfig:
 
     def test_validate_dn_format_empty(self) -> None:
         """Test validating empty DN format."""
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
 
         assert result.is_failure
         assert (
@@ -539,14 +543,14 @@ class TestFlextLdapConfig:
 
     def test_validate_filter_format_valid(self) -> None:
         """Test validating valid filter format."""
-        result = FlextLdapValidations.validate_filter("(objectClass=person)")
+        result = FlextLdapModels.Validations.validate_filter("(objectClass=person)")
 
         assert result.is_success
         assert result.unwrap() is True
 
     def test_validate_filter_format_invalid(self) -> None:
         """Test validating invalid filter format."""
-        result = FlextLdapValidations.validate_filter("invalid-filter")
+        result = FlextLdapModels.Validations.validate_filter("invalid-filter")
 
         assert result.is_failure
         assert (
@@ -557,7 +561,7 @@ class TestFlextLdapConfig:
 
     def test_validate_filter_format_empty(self) -> None:
         """Test validating empty filter format."""
-        result = FlextLdapValidations.validate_filter("")
+        result = FlextLdapModels.Validations.validate_filter("")
 
         assert result.is_failure
         assert (

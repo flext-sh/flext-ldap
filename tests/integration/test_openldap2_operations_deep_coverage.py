@@ -178,7 +178,7 @@ class TestOpenLDAP2OperationsErrors:
     ) -> None:
         """Test OpenLDAP2 discover_schema with None connection."""
         ops = FlextLdapServersOpenLDAP2Operations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert result.is_failure
 
 
