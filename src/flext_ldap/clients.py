@@ -17,12 +17,9 @@ from typing import Literal, Self, cast, override
 
 from flext_core import FlextResult, FlextService
 from ldap3 import (
-    ALL,
-    DSA,
     MODIFY_ADD,
     MODIFY_DELETE,
     MODIFY_REPLACE,
-    SCHEMA,
     Connection,
     Server,
 )
@@ -51,7 +48,6 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
 )
@@ -65,24 +61,10 @@ from flext_ldap.typings import (
 )
 from flext_ldap.validations import FlextLdapValidations
 
-GetInfoType = Literal["NO_INFO", "DSA", "SCHEMA", "ALL"]
-ModeType = Literal[
-    "IP_SYSTEM_DEFAULT",
-    "IP_V4_ONLY",
-    "IP_V6_ONLY",
-    "IP_V4_PREFERRED",
-    "IP_V6_PREFERRED",
-]
-QuirksMode = Literal["automatic", "server", "rfc", "relaxed"]
-"""
-Quirks modes for LDAP operations:
-- automatic: Auto-detect server type and apply server-specific quirks
-- server: Use explicit server type with quirks (requires server_type parameter)
-- rfc: RFC-compliant only, no server-specific extensions
-- relaxed: Permissive mode, accept anything (most flexible)
-"""
-
-__all__ = ["FlextLdapClients", "GetInfoType", "ModeType", "QuirksMode"]
+# Type definitions moved to FlextLdapConstants for standardization
+GetInfoType = FlextLdapConstants.Types.GetInfoType
+ModeType = FlextLdapConstants.Types.ModeType
+QuirksMode = FlextLdapConstants.Types.QuirksMode
 
 
 class FlextLdapClients(FlextService[None]):
@@ -112,7 +94,7 @@ class FlextLdapClients(FlextService[None]):
         self,
         config: FlextLdapConfig | None = None,
         *,
-        quirks_mode: QuirksMode = "automatic",
+        quirks_mode: QuirksMode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
     ) -> None:
         """Initialize LDAP client - consolidated implementation without bloat.
 
@@ -125,7 +107,9 @@ class FlextLdapClients(FlextService[None]):
 
         # Core configuration and logging
         self._ldap_config = config
-        self._quirks_mode: QuirksMode = quirks_mode
+        self._quirks_mode: QuirksMode = (
+            quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC
+        )
 
         # Direct connection state (no delegation layer)
         self._connection: Connection | None = None
@@ -148,7 +132,10 @@ class FlextLdapClients(FlextService[None]):
     def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
         """Get searcher with lazy initialization."""
         if self._searcher is None:
-            searcher: FlextLdapSearch = FlextLdapSearch(parent=self)  # type: ignore[arg-type]
+            # Import here to avoid circular dependency
+            from flext_ldap.search import FlextLdapSearch
+
+            searcher = FlextLdapSearch(parent=self)
             # Set connection context if connection exists
             if self._connection:
                 searcher.set_connection_context(self._connection)
@@ -312,7 +299,9 @@ class FlextLdapClients(FlextService[None]):
                 # Build Server constructor arguments with proper typing
                 port: int | None = None
                 use_ssl: bool = False
-                get_info: GetInfoType = cast("GetInfoType", SCHEMA)
+                get_info: GetInfoType = cast(
+                    "GetInfoType", FlextLdapConstants.Types.GetInfoType.SCHEMA
+                )
 
                 for key, value in connection_options.items():
                     if key == "port" and value is not None:
@@ -322,15 +311,26 @@ class FlextLdapClients(FlextService[None]):
                     elif key == "get_info" and value is not None:
                         str_value = str(value)
                         if str_value == "ALL":
-                            get_info = cast("GetInfoType", ALL)
+                            get_info = cast(
+                                "GetInfoType", FlextLdapConstants.Types.GetInfoType.ALL
+                            )
                         elif str_value == "SCHEMA":
-                            get_info = cast("GetInfoType", SCHEMA)
+                            get_info = cast(
+                                "GetInfoType",
+                                FlextLdapConstants.Types.GetInfoType.SCHEMA,
+                            )
                         elif str_value == "DSA":
-                            get_info = cast("GetInfoType", DSA)
+                            get_info = cast(
+                                "GetInfoType", FlextLdapConstants.Types.GetInfoType.DSA
+                            )
 
                 # Set get_info to ALL if auto_discover_schema and not set
-                if auto_discover_schema and get_info == cast("GetInfoType", SCHEMA):
-                    get_info = cast("GetInfoType", ALL)
+                if auto_discover_schema and get_info == cast(
+                    "GetInfoType", FlextLdapConstants.Types.GetInfoType.SCHEMA
+                ):
+                    get_info = cast(
+                        "GetInfoType", FlextLdapConstants.Types.GetInfoType.ALL
+                    )
 
                 # Create server with the collected arguments
                 if port is not None:
@@ -338,17 +338,27 @@ class FlextLdapClients(FlextService[None]):
                         server_uri,
                         port=port,
                         use_ssl=use_ssl,
-                        get_info=get_info,
+                        get_info=cast(
+                            "Literal['NO_INFO', 'DSA', 'SCHEMA', 'ALL']", get_info.value
+                        ),
                     )
                 else:
                     self._server = Server(
                         server_uri,
                         use_ssl=use_ssl,
-                        get_info=get_info,
+                        get_info=cast(
+                            "Literal['NO_INFO', 'DSA', 'SCHEMA', 'ALL']", get_info.value
+                        ),
                     )
             # Set get_info to ALL if auto_discover_schema is True
             elif auto_discover_schema:
-                self._server = Server(server_uri, get_info=ALL)
+                self._server = Server(
+                    server_uri,
+                    get_info=cast(
+                        "Literal['NO_INFO', 'DSA', 'SCHEMA', 'ALL']",
+                        FlextLdapConstants.Types.GetInfoType.ALL.value,
+                    ),
+                )
             else:
                 self._server = Server(server_uri)
 
@@ -597,10 +607,9 @@ class FlextLdapClients(FlextService[None]):
         # Use provided quirks_mode or fall back to instance quirks_mode
         effective_quirks_mode = quirks_mode or self._quirks_mode
 
-        # Pass quirks information to searcher if it supports it
+        # Pass quirks information to searcher
         searcher = self._get_searcher()
-        if hasattr(searcher, "set_quirks_mode"):
-            searcher.set_quirks_mode(effective_quirks_mode)
+        searcher.set_quirks_mode(effective_quirks_mode)
 
         search_result = searcher.search(
             base_dn, filter_str, attributes, scope, page_size, paged_cookie
@@ -651,10 +660,9 @@ class FlextLdapClients(FlextService[None]):
         # Use provided quirks_mode or fall back to instance quirks_mode
         effective_quirks_mode = quirks_mode or self._quirks_mode
 
-        # Pass quirks information to searcher if it supports it
+        # Pass quirks information to searcher
         searcher = self._get_searcher()
-        if hasattr(searcher, "set_quirks_mode"):
-            searcher.set_quirks_mode(effective_quirks_mode)
+        searcher.set_quirks_mode(effective_quirks_mode)
 
         return searcher.search_one(search_base, filter_str, attributes)
 
@@ -1914,3 +1922,6 @@ class FlextLdapClients(FlextService[None]):
             case _:
                 # Default: return unchanged
                 return value
+
+
+__all__ = ["FlextLdapClients", "GetInfoType", "ModeType", "QuirksMode"]

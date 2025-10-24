@@ -18,6 +18,7 @@ from flext_ldif import FlextLdifModels
 from ldap3 import Connection, Server
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 
@@ -561,6 +562,17 @@ class FlextLdapProtocols(FlextProtocols):
 
                 Returns:
                 FlextResult[bool]: True if group exists
+
+                """
+                ...
+
+            def set_quirks_mode(
+                self, quirks_mode: FlextLdapConstants.Types.QuirksMode
+            ) -> None:
+                """Set quirks mode for search operations.
+
+                Args:
+                quirks_mode: Quirks mode to set (automatic, server, rfc, relaxed)
 
                 """
                 ...

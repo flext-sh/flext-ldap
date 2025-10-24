@@ -15,7 +15,6 @@ from flext_ldap import (
     FlextLdapClients,
     FlextLdapConfig,
     FlextLdapModels,
-    FlextLdapValidations,
 )
 
 # Import shared LDAP fixtures from docker directory
@@ -188,9 +187,9 @@ def flext_ldap_config() -> Generator[FlextLdapConfig]:
 
 
 @pytest.fixture
-def flext_ldap_validations() -> type[FlextLdapValidations]:
-    """Get FlextLdapValidations class for testing."""
-    return FlextLdapValidations
+def flext_ldap_validations() -> type[FlextLdapModels.Validations]:
+    """Get FlextLdapModels.Validations class for testing."""
+    return FlextLdapModels.Validations
 
 
 @pytest.fixture

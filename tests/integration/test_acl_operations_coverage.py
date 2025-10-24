@@ -121,7 +121,7 @@ class TestOIDACLOperations:
     ) -> None:
         """Test OID get_acls with None connection fails properly."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.get_acls(None, "dc=flext,dc=local")  # type: ignore[arg-type]
+        result = ops.get_acls(None, "dc=flext,dc=local")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -225,7 +225,7 @@ class TestOUDACLOperations:
     ) -> None:
         """Test OUD get_acls with None connection fails properly."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.get_acls(None, "dc=flext,dc=local")  # type: ignore[arg-type]
+        result = ops.get_acls(None, "dc=flext,dc=local")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -244,7 +244,7 @@ class TestOUDACLOperations:
     ) -> None:
         """Test OUD set_acls with None connection fails."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.set_acls(None, "dc=flext,dc=local", [])  # type: ignore[arg-type]
+        result = ops.set_acls(None, "dc=flext,dc=local", [])
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -265,7 +265,7 @@ class TestSchemaDiscoveryExceptionHandling:
         """Test OID discover_schema exception handling."""
         ops = FlextLdapServersOIDOperations()
         # Pass None connection to trigger exception path
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -275,7 +275,7 @@ class TestSchemaDiscoveryExceptionHandling:
         """Test OUD discover_schema exception handling."""
         ops = FlextLdapServersOUDOperations()
         # Pass None connection to trigger exception path
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 

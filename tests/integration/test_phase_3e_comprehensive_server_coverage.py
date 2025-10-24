@@ -84,9 +84,7 @@ class TestOIDServerOperationsCoverage:
         assert isinstance(schema_dn, str)
         assert len(schema_dn) > 0
 
-    def test_oid_supports_start_tls(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_supports_start_tls(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID START_TLS support."""
         ops = FlextLdapServersOIDOperations()
         supports = ops.supports_start_tls()
@@ -106,18 +104,14 @@ class TestOIDServerOperationsCoverage:
         supports = ops.supports_paged_results()
         assert isinstance(supports, bool)
 
-    def test_oid_get_max_page_size(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_get_max_page_size(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID max page size is positive."""
         ops = FlextLdapServersOIDOperations()
         max_size = ops.get_max_page_size()
         assert isinstance(max_size, int)
         assert max_size > 0
 
-    def test_oid_parse_object_class(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_parse_object_class(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID parse_object_class method."""
         ops = FlextLdapServersOIDOperations()
         result = ops.parse_object_class("inetOrgPerson")
@@ -135,15 +129,11 @@ class TestOIDServerOperationsCoverage:
         data = result.unwrap()
         assert data["server_type"] == "oid"
 
-    def test_oid_normalize_entry(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_normalize_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID normalize_entry_for_server."""
         ops = FlextLdapServersOIDOperations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -156,15 +146,11 @@ class TestOIDServerOperationsCoverage:
         result = ops.normalize_entry_for_server(entry)
         assert isinstance(result, FlextResult)
 
-    def test_oid_validate_entry(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_validate_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID validate_entry_for_server."""
         ops = FlextLdapServersOIDOperations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -177,9 +163,7 @@ class TestOIDServerOperationsCoverage:
         result = ops.validate_entry_for_server(entry)
         assert isinstance(result, FlextResult)
 
-    def test_oid_discover_schema(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oid_discover_schema(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID discover_schema with valid connection."""
         ops = FlextLdapServersOIDOperations()
         result = ops.discover_schema(shared_ldap_client._connection)
@@ -190,7 +174,7 @@ class TestOIDServerOperationsCoverage:
     ) -> None:
         """Test OID discover_schema error handling with None."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert result.is_failure
 
 
@@ -221,9 +205,7 @@ class TestOUDServerOperationsCoverage:
         assert isinstance(attr, str)
         assert len(attr) > 0
 
-    def test_oud_get_acl_format(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_get_acl_format(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD ACL format."""
         ops = FlextLdapServersOUDOperations()
         fmt = ops.get_acl_format()
@@ -251,9 +233,7 @@ class TestOUDServerOperationsCoverage:
         assert isinstance(schema_dn, str)
         assert len(schema_dn) > 0
 
-    def test_oud_supports_start_tls(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_supports_start_tls(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD START_TLS support."""
         ops = FlextLdapServersOUDOperations()
         supports = ops.supports_start_tls()
@@ -273,18 +253,14 @@ class TestOUDServerOperationsCoverage:
         supports = ops.supports_paged_results()
         assert isinstance(supports, bool)
 
-    def test_oud_get_max_page_size(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_get_max_page_size(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD max page size."""
         ops = FlextLdapServersOUDOperations()
         max_size = ops.get_max_page_size()
         assert isinstance(max_size, int)
         assert max_size > 0
 
-    def test_oud_parse_object_class(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_parse_object_class(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD parse_object_class."""
         ops = FlextLdapServersOUDOperations()
         result = ops.parse_object_class("person")
@@ -298,15 +274,11 @@ class TestOUDServerOperationsCoverage:
         result = ops.parse_attribute_type("cn")
         assert result.is_success
 
-    def test_oud_normalize_entry(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_normalize_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD normalize_entry_for_server."""
         ops = FlextLdapServersOUDOperations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -319,15 +291,11 @@ class TestOUDServerOperationsCoverage:
         result = ops.normalize_entry_for_server(entry)
         assert isinstance(result, FlextResult)
 
-    def test_oud_validate_entry(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_validate_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD validate_entry_for_server."""
         ops = FlextLdapServersOUDOperations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -340,9 +308,7 @@ class TestOUDServerOperationsCoverage:
         result = ops.validate_entry_for_server(entry)
         assert isinstance(result, FlextResult)
 
-    def test_oud_discover_schema(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_oud_discover_schema(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD discover_schema with valid connection."""
         ops = FlextLdapServersOUDOperations()
         result = ops.discover_schema(shared_ldap_client._connection)
@@ -353,7 +319,7 @@ class TestOUDServerOperationsCoverage:
     ) -> None:
         """Test OUD discover_schema error handling."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert result.is_failure
 
 
@@ -375,9 +341,7 @@ class TestOpenLDAP2ServerOperationsCoverage:
         assert ops.get_default_port(use_ssl=False) == 389
         assert ops.get_default_port(use_ssl=True) == 636
 
-    def test_openldap2_server_type(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_openldap2_server_type(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OpenLDAP2 server_type."""
         ops = FlextLdapServersOpenLDAP2Operations()
         assert ops.server_type == "openldap2"
@@ -414,9 +378,7 @@ class TestOpenLDAP2ServerOperationsCoverage:
         """Test OpenLDAP2 normalize_entry_for_server."""
         ops = FlextLdapServersOpenLDAP2Operations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -435,9 +397,7 @@ class TestOpenLDAP2ServerOperationsCoverage:
         """Test OpenLDAP2 validate_entry_for_server."""
         ops = FlextLdapServersOpenLDAP2Operations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -469,9 +429,7 @@ class TestOpenLDAP1ServerOperationsCoverage:
         assert ops.get_default_port(use_ssl=False) == 389
         assert ops.get_default_port(use_ssl=True) == 636
 
-    def test_openldap1_server_type(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_openldap1_server_type(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OpenLDAP1 server_type."""
         ops = FlextLdapServersOpenLDAP1Operations()
         assert ops.server_type == "openldap1"
@@ -499,9 +457,7 @@ class TestOpenLDAP1ServerOperationsCoverage:
         """Test OpenLDAP1 normalize_entry_for_server."""
         ops = FlextLdapServersOpenLDAP1Operations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -520,9 +476,7 @@ class TestOpenLDAP1ServerOperationsCoverage:
         """Test OpenLDAP1 validate_entry_for_server."""
         ops = FlextLdapServersOpenLDAP1Operations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(
@@ -597,4 +551,4 @@ class TestServerFactoryCoverage:
         """Test factory error handling for unsupported type."""
         factory = FlextLdapServersFactory()
         with pytest.raises(ValueError):
-            factory.create_operations("unsupported_type")  # type: ignore[arg-type]
+            factory.create_operations("unsupported_type")

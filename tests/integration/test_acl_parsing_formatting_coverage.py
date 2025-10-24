@@ -66,7 +66,7 @@ class TestOpenLdapAclParsing:
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test parsing None ACL fails properly."""
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(None)  # type: ignore[arg-type]
+        result = FlextLdapAclParsers.OpenLdapAclParser.parse(None)
         assert result.is_failure
 
     def test_parse_openldap_acl_whitespace_only_fails(
@@ -126,7 +126,7 @@ class TestAclFormatConversion:
         """Test ACL manager parse_acl with basic ACL."""
         manager = FlextLdapAclManager()
         acl_str = "access to * by * read"
-        result = manager.parse_acl(acl_str, "openldap")  # type: ignore[arg-type]
+        result = manager.parse_acl(acl_str, "openldap")
         assert isinstance(result, FlextResult)
 
     def test_acl_manager_convert_acl(
@@ -135,7 +135,7 @@ class TestAclFormatConversion:
         """Test ACL manager convert_acl converts between formats."""
         manager = FlextLdapAclManager()
         acl_str = "access to * by * read"
-        result = manager.convert_acl(acl_str, "openldap", "oid")  # type: ignore[arg-type]
+        result = manager.convert_acl(acl_str, "openldap", "oid")
         assert isinstance(result, FlextResult)
 
     def test_acl_manager_validate_syntax(
@@ -144,7 +144,7 @@ class TestAclFormatConversion:
         """Test ACL manager validate_acl_syntax validates format."""
         manager = FlextLdapAclManager()
         acl_str = "access to * by * read"
-        result = manager.validate_acl_syntax(acl_str, "openldap")  # type: ignore[arg-type]
+        result = manager.validate_acl_syntax(acl_str, "openldap")
         assert isinstance(result, FlextResult)
 
     def test_acl_manager_batch_convert(
@@ -156,7 +156,7 @@ class TestAclFormatConversion:
             "access to * by * read",
             "access to cn=REDACTED_LDAP_BIND_PASSWORD by REDACTED_LDAP_BIND_PASSWORD write",
         ]
-        result = manager.batch_convert(acls, "openldap", "oid")  # type: ignore[arg-type]
+        result = manager.batch_convert(acls, "openldap", "oid")
         assert isinstance(result, FlextResult)
 
 
@@ -196,9 +196,7 @@ class TestOIDServerAclParsing:
         """Test OID normalize entry with ACL attributes."""
         ops = FlextLdapServersOIDOperations()
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=acl_test,dc=flext,dc=local"
-            ),
+            dn=FlextLdifModels.DistinguishedName(value="cn=acl_test,dc=flext,dc=local"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": FlextLdifModels.AttributeValues(

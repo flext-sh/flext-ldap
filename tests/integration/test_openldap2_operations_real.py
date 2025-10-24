@@ -151,7 +151,7 @@ class TestOpenLDAP2OperationsComprehensive:
         """Test OpenLDAP2 schema discovery fails without connection."""
         ops = FlextLdapServersOpenLDAP2Operations()
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -222,7 +222,7 @@ class TestOpenLDAP2OperationsErrorHandling:
         """Test OpenLDAP2 schema discovery with None connection."""
         ops = FlextLdapServersOpenLDAP2Operations()
         try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
+            result = ops.discover_schema(None)
             if isinstance(result, FlextResult):
                 assert result.is_failure
         except (AttributeError, TypeError):

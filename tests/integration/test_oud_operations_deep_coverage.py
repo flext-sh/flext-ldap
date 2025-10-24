@@ -280,7 +280,7 @@ class TestOUDOperationsDeepCoverage:
     ) -> None:
         """Test OUD schema discovery error handling with None connection."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         # Should return failure for None connection
         assert result.is_failure

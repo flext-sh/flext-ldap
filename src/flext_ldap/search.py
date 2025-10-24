@@ -21,7 +21,6 @@ from ldap3.core.exceptions import LDAPAttributeError
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import AttributeValue
-from flext_ldap.validations import FlextLdapValidations
 
 if TYPE_CHECKING:
     from flext_ldap.clients import FlextLdapClients
@@ -68,6 +67,17 @@ class FlextLdapSearch(FlextService[None]):
 
         """
         self._connection = connection
+
+    def set_quirks_mode(self, quirks_mode: FlextLdapConstants.Types.QuirksMode) -> None:
+        """Set quirks mode for search operations.
+
+        Args:
+        quirks_mode: Quirks mode to set (automatic, server, rfc, relaxed)
+
+        """
+        # For now, we store the quirks mode but don't use it in search operations
+        # This method is provided for protocol compliance and future extensibility
+        self._quirks_mode = quirks_mode
 
     def search_one(
         self,
@@ -355,7 +365,7 @@ class FlextLdapSearch(FlextService[None]):
         """
         try:
             # Validate DN using centralized validation
-            dn_validation = FlextLdapValidations.validate_dn(dn)
+            dn_validation = FlextLdapModels.Validations.validate_dn(dn)
             if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.Entry | None].fail(
                     dn_validation.error or "DN validation failed",
@@ -434,7 +444,7 @@ class FlextLdapSearch(FlextService[None]):
         """
         try:
             # Validate DN using centralized validation
-            dn_validation = FlextLdapValidations.validate_dn(dn)
+            dn_validation = FlextLdapModels.Validations.validate_dn(dn)
             if dn_validation.is_failure:
                 return FlextResult[FlextLdapModels.Entry | None].fail(
                     dn_validation.error or "DN validation failed",

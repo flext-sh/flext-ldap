@@ -12,13 +12,10 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.validations import FlextLdapValidations
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdapDomain:
@@ -45,8 +42,8 @@ class FlextLdapDomain:
         @staticmethod
         def meets_password_policy(password: str) -> FlextResult[bool]:
             """Check if password meets domain security requirements."""
-            # First check basic password validation (length) via FlextLdapValidations
-            basic_validation = FlextLdapValidations.validate_password(password)
+            # First check basic password validation (length) via FlextLdapModels.Validations
+            basic_validation = FlextLdapModels.Validations.validate_password(password)
             if basic_validation.is_failure:
                 return basic_validation  # Return the validation error
 

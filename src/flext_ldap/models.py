@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import re
 from datetime import datetime
 from enum import Enum
 from typing import (
@@ -49,7 +50,6 @@ from flext_ldap.constants import (
     UpdateStrategy,
 )
 from flext_ldap.typings import AttributeValue
-from flext_ldap.validations import FlextLdapValidations
 
 
 class FlextLdapModels(FlextModels):
@@ -106,7 +106,7 @@ class FlextLdapModels(FlextModels):
     @staticmethod
     def validate_dn_field(value: str) -> str:
         """Consolidated DN validator used by all request models."""
-        return FlextLdapValidations.validate_dn_for_field(value)
+        return FlextLdapModels.Validations.validate_dn_for_field(value)
 
     # =========================================================================
     # VALUE OBJECTS - Immutable LDAP value objects
@@ -2495,6 +2495,206 @@ class FlextLdapModels(FlextModels):
         )
         vendor_name: str | None = Field(default=None, description="Vendor name")
         vendor_version: str | None = Field(default=None, description="Vendor version")
+
+    # =========================================================================
+    # VALIDATIONS - LDAP-specific validation logic (from validations.py)
+    # =========================================================================
+
+    class Validations:
+        """LDAP-specific validation rules (consolidated from validations.py).
+
+        Provides centralized validation logic for LDAP operations. Generic
+        validations (timeout, size_limit) removed - use Pydantic native types.
+        """
+
+        @staticmethod
+        def validate_dn(dn: str | None, context: str = "DN") -> FlextResult[bool]:
+            """Centralized DN validation (RFC 2253 format)."""
+            if dn is None:
+                return FlextResult[bool].fail(f"{context} cannot be None")
+            if not dn or not dn.strip():
+                return FlextResult[bool].fail(f"{context} cannot be empty")
+
+            # Validate DN must contain = for proper DN format
+            dn_stripped = dn.strip()
+            if "=" not in dn_stripped:
+                return FlextResult[bool].fail(
+                    f"{context} must contain '=' for proper DN format"
+                )
+
+            # RFC 2253 format with OpenLDAP extensions (allows curly braces)
+            if not re.match(r"^[a-zA-Z0-9=,\s\-\._\{\}]+$", dn_stripped):
+                return FlextResult[bool].fail(f"{context} contains invalid characters")
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_filter(filter_str: str | None) -> FlextResult[bool]:
+            """Centralized LDAP filter validation."""
+            if filter_str is None:
+                return FlextResult[bool].fail("Filter cannot be None")
+            if not filter_str or not filter_str.strip():
+                return FlextResult[bool].fail("Filter cannot be empty")
+
+            # LDAP filters must be enclosed in parentheses
+            if not re.match(r"^\(.*\)$", filter_str.strip()):
+                return FlextResult[bool].fail("Filter must be enclosed in parentheses")
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_attributes(attributes: list[str] | None) -> FlextResult[bool]:
+            """Centralized LDAP attributes validation."""
+            if attributes is None or not attributes:
+                return FlextResult[bool].fail("Attributes list cannot be empty")
+
+            for attr in attributes:
+                if not attr or not attr.strip():
+                    return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
+
+                # LDAP attribute names: start with letter, alphanumeric or hyphen
+                if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attr.strip()):
+                    return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_server_uri(server_uri: str | None) -> FlextResult[bool]:
+            """Centralized server URI validation."""
+            if server_uri is None:
+                return FlextResult[bool].fail("URI cannot be None")
+            if not server_uri or not server_uri.strip():
+                return FlextResult[bool].fail("URI cannot be empty")
+
+            server_uri_stripped = server_uri.strip()
+
+            # LDAP URIs must start with ldap:// or ldaps://
+            if not re.match(r"^ldaps?://", server_uri_stripped):
+                return FlextResult[bool].fail("URI must start with ldap:// or ldaps://")
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_scope(scope: str | None) -> FlextResult[bool]:
+            """Centralized LDAP scope validation."""
+            if scope is None:
+                return FlextResult[bool].fail("Scope cannot be None")
+
+            valid_scopes = {"base", "onelevel", "subtree"}
+            if scope.lower() not in valid_scopes:
+                scopes_str = ", ".join(sorted(valid_scopes))
+                error_msg = f"Invalid scope: {scope}. Must be one of {scopes_str}"
+                return FlextResult[bool].fail(error_msg)
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_modify_operation(operation: str | None) -> FlextResult[bool]:
+            """Centralized LDAP modify operation validation."""
+            if operation is None:
+                return FlextResult[bool].fail("Operation cannot be None")
+
+            valid_operations = {"add", "delete", "replace"}
+            if operation.lower() not in valid_operations:
+                ops_str = ", ".join(sorted(valid_operations))
+                error_msg = f"Invalid operation: {operation}. Must be one of {ops_str}"
+                return FlextResult[bool].fail(error_msg)
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_object_class(object_class: str | None) -> FlextResult[bool]:
+            """Centralized LDAP object class validation."""
+            if object_class is None:
+                return FlextResult[bool].fail("Object class cannot be None")
+
+            if not object_class or not object_class.strip():
+                return FlextResult[bool].fail("Object class cannot be empty")
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_password(password: str | None) -> FlextResult[bool]:
+            """Centralized password validation."""
+            if password is None:
+                return FlextResult[bool].fail("Password cannot be None")
+
+            min_length = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
+            max_length = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
+
+            if len(password) < min_length:
+                return FlextResult[bool].fail(
+                    f"Password must be at least {min_length} characters"
+                )
+
+            if len(password) > max_length:
+                return FlextResult[bool].fail(
+                    f"Password must be no more than {max_length} characters"
+                )
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_connection_config(
+            config: dict[str, object] | None,
+        ) -> FlextResult[bool]:
+            """Centralized connection config validation."""
+            if config is None:
+                return FlextResult[bool].fail("Config cannot be None")
+
+            required_fields = ["server", "port", "bind_dn", "bind_password"]
+            for field in required_fields:
+                if field not in config or config[field] is None:
+                    return FlextResult[bool].fail(f"Missing required field: {field}")
+
+            return FlextResult[bool].ok(True)
+
+        # Pydantic field validators (raise exceptions)
+
+        @staticmethod
+        def validate_dn_for_field(dn: str) -> str:
+            """DN validation for Pydantic field validators."""
+            # Import here to avoid circular dependency
+            from flext_ldif import FlextLdifDnService
+
+            cleaned_dn = FlextLdifDnService.clean_dn(dn)
+
+            validation_result = FlextLdapModels.Validations.validate_dn(cleaned_dn).map(
+                lambda _: None
+            )
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "DN validation failed"
+                from flext_core import FlextExceptions
+
+                raise FlextExceptions.ValidationError(error_msg, field="dn", value=dn)
+            return cleaned_dn.strip()
+
+        @staticmethod
+        def validate_password_for_field(password: str | None) -> str | None:
+            """Password field validator."""
+            validation_result = FlextLdapModels.Validations.validate_password(
+                str(password) if password is not None else ""
+            ).map(lambda _: None)
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "Password validation failed"
+                from flext_core import FlextExceptions
+
+                raise FlextExceptions.ValidationError(
+                    error_msg, field="password", value="***"
+                )
+            return password
+
+        @staticmethod
+        def validate_required_string_for_field(value: str) -> str:
+            """Required string field validator."""
+            if not value or not value.strip():
+                error_msg = "Required field cannot be empty"
+                from flext_core import FlextExceptions
+
+                raise FlextExceptions.ValidationError(
+                    error_msg, field="required_string", value=value
+                )
+            return value.strip()
 
     # =========================================================================
     # REQUEST MODELS - High-level API request objects

@@ -160,7 +160,7 @@ class TestOpenLDAP1OperationsComprehensive:
         ops = FlextLdapServersOpenLDAP1Operations()
         # Test that method exists or explicitly handle signature
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -214,7 +214,7 @@ class TestOpenLDAP1OperationsErrorHandling:
         ops = FlextLdapServersOpenLDAP1Operations()
         # Test that method exists or explicitly raise
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         if isinstance(result, FlextResult):
             assert result.is_failure
 

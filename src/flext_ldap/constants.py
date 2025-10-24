@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Final, Literal, cast
 
 from flext_core import FlextConstants
@@ -376,6 +377,33 @@ class FlextLdapConstants(FlextConstants):
             "IP_V6_PREFERRED",
         ]
         ConnectionInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+
+        # LDAP Connection and Configuration Enums
+        class GetInfoType(StrEnum):
+            """LDAP get_info parameter values for connection establishment."""
+
+            NO_INFO = "NO_INFO"
+            DSA = "DSA"
+            SCHEMA = "SCHEMA"
+            ALL = "ALL"
+
+        class ModeType(StrEnum):
+            """LDAP IP mode values for connection configuration."""
+
+            IP_SYSTEM_DEFAULT = "IP_SYSTEM_DEFAULT"
+            IP_V4_ONLY = "IP_V4_ONLY"
+            IP_V6_ONLY = "IP_V6_ONLY"
+            IP_V4_PREFERRED = "IP_V4_PREFERRED"
+            IP_V6_PREFERRED = "IP_V6_PREFERRED"
+
+        class QuirksMode(StrEnum):
+            """LDAP quirks mode values for server compatibility handling."""
+
+            AUTOMATIC = "automatic"
+            SERVER = "server"
+            RFC = "rfc"
+            RELAXED = "relaxed"
+
         LdapProjectType = Literal[
             "ldap-service",
             "directory-service",

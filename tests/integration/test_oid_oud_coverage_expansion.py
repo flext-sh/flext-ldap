@@ -198,7 +198,7 @@ class TestOIDOperationsCoverageExpansion:
     def test_oid_discover_schema_with_invalid_connection(self) -> None:
         """Test OID schema discovery with invalid connection."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -370,7 +370,7 @@ class TestOUDOperationsCoverageExpansion:
     def test_oud_discover_schema_with_invalid_connection(self) -> None:
         """Test OUD schema discovery with invalid connection."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 

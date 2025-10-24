@@ -22,7 +22,6 @@ from flext_ldap import (
     FlextLdap,
     FlextLdapClients,
     FlextLdapModels,
-    FlextLdapValidations,
 )
 from flext_ldap.acl import (
     FlextLdapAclConverters,
@@ -556,9 +555,9 @@ def multiple_test_groups() -> list[dict[str, object]]:
 
 
 @pytest.fixture
-def validations() -> FlextLdapValidations:
-    """Get validations instance."""
-    return FlextLdapValidations()
+def validations() -> type[FlextLdapModels.Validations]:
+    """Get validations class (all static methods)."""
+    return FlextLdapModels.Validations
 
 
 @pytest.fixture

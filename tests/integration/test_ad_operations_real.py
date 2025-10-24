@@ -157,7 +157,7 @@ class TestADOperationsComprehensive:
         """Test AD schema discovery fails without connection."""
         ops = FlextLdapServersActiveDirectoryOperations()
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -210,7 +210,7 @@ class TestADOperationsErrorHandling:
         """Test AD schema discovery with None connection."""
         ops = FlextLdapServersActiveDirectoryOperations()
         assert hasattr(ops, "discover_schema"), "discover_schema method not found"
-        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        result = ops.discover_schema(None)
         if isinstance(result, FlextResult):
             assert result.is_failure
 

@@ -21,7 +21,7 @@ from flext_ldap import (
     FlextLdap,
     FlextLdapConfig,
     FlextLdapConstants,
-    FlextLdapValidations,
+    FlextLdapModels,
 )
 from flext_ldap.clients import FlextLdapClients
 
@@ -79,7 +79,7 @@ class TestFlextLdap:
 
         # REMOVED: Property accessors for namespace classes
         # Users should import directly:
-        # from flext_ldap import FlextLdapModels, FlextLdapTypes, FlextLdapProtocols, FlextLdapValidations
+        # from flext_ldap import FlextLdapModels, FlextLdapTypes, FlextLdapProtocols, FlextLdapModels.Validations
 
     def test_api_connection_methods(self) -> None:
         """Test API connection methods."""
@@ -255,13 +255,15 @@ class TestFlextLdap:
         # Verify API initialized correctly
         assert api is not None
 
-        # Test validate_dn method - now via FlextLdapValidations
-        dn_result = FlextLdapValidations.validate_dn("cn=testuser,dc=test,dc=com")
+        # Test validate_dn method - now via FlextLdapModels.Validations
+        dn_result = FlextLdapModels.Validations.validate_dn(
+            "cn=testuser,dc=test,dc=com"
+        )
         assert isinstance(dn_result, FlextResult)
         assert dn_result.is_success
 
-        # Test validate_filter method - now via FlextLdapValidations
-        filter_result = FlextLdapValidations.validate_filter("(objectClass=*)")
+        # Test validate_filter method - now via FlextLdapModels.Validations
+        filter_result = FlextLdapModels.Validations.validate_filter("(objectClass=*)")
         assert isinstance(filter_result, FlextResult)
         assert filter_result.is_success
 
@@ -270,12 +272,12 @@ class TestFlextLdap:
         FlextLdap()
 
         # Test validate_dn with invalid DN
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
         # Test validate_filter with invalid filter
-        result = FlextLdapValidations.validate_filter("")
+        result = FlextLdapModels.Validations.validate_filter("")
         assert isinstance(result, FlextResult)
         assert result.is_failure
 
@@ -302,13 +304,13 @@ class TestFlextLdap:
         FlextLdap()
 
         # Test with invalid DN
-        result = FlextLdapValidations.validate_dn("invalid-dn")
+        result = FlextLdapModels.Validations.validate_dn("invalid-dn")
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert result.error is not None
 
         # Test with invalid filter
-        result = FlextLdapValidations.validate_filter("invalid-filter")
+        result = FlextLdapModels.Validations.validate_filter("invalid-filter")
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert result.error is not None
@@ -322,7 +324,9 @@ class TestFlextLdap:
         results = []
 
         def validate_dn() -> None:
-            result = FlextLdapValidations.validate_dn("cn=testuser,dc=test,dc=com")
+            result = FlextLdapModels.Validations.validate_dn(
+                "cn=testuser,dc=test,dc=com"
+            )
             results.append(result)
 
         threads = []
@@ -346,7 +350,9 @@ class TestFlextLdap:
         # Test multiple operations
         results = []
         for i in range(10):
-            result = FlextLdapValidations.validate_dn(f"cn=testuser{i},dc=test,dc=com")
+            result = FlextLdapModels.Validations.validate_dn(
+                f"cn=testuser{i},dc=test,dc=com"
+            )
             results.append(result)
 
         # Verify operations are performed without memory leaks
@@ -366,7 +372,9 @@ class TestFlextLdap:
         # Test validation performance
         start_time = time.time()
         for i in range(100):
-            result = FlextLdapValidations.validate_dn(f"cn=testuser{i},dc=test,dc=com")
+            result = FlextLdapModels.Validations.validate_dn(
+                f"cn=testuser{i},dc=test,dc=com"
+            )
             assert isinstance(result, FlextResult)
         end_time = time.time()
 
@@ -425,11 +433,13 @@ class TestFlextLdap:
         assert api.config is not None
 
         # 2. Validate DN
-        dn_result = FlextLdapValidations.validate_dn("cn=testuser,dc=test,dc=com")
+        dn_result = FlextLdapModels.Validations.validate_dn(
+            "cn=testuser,dc=test,dc=com"
+        )
         assert isinstance(dn_result, FlextResult)
 
         # 3. Validate filter
-        filter_result = FlextLdapValidations.validate_filter("(objectClass=*)")
+        filter_result = FlextLdapModels.Validations.validate_filter("(objectClass=*)")
         assert isinstance(filter_result, FlextResult)
 
         # 4. Execute main operation
@@ -524,7 +534,7 @@ class TestFlextLdapComprehensive:
         FlextLdap()
 
         valid_dn = "cn=testuser,ou=users,dc=example,dc=com"
-        result = FlextLdapValidations.validate_dn(valid_dn)
+        result = FlextLdapModels.Validations.validate_dn(valid_dn)
 
         assert isinstance(result, FlextResult)
         assert result.is_success
@@ -534,7 +544,7 @@ class TestFlextLdapComprehensive:
         FlextLdap()
 
         invalid_dn = "invalid-dn-format"
-        result = FlextLdapValidations.validate_dn(invalid_dn)
+        result = FlextLdapModels.Validations.validate_dn(invalid_dn)
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -543,7 +553,7 @@ class TestFlextLdapComprehensive:
         """Test DN validation with empty string."""
         FlextLdap()
 
-        result = FlextLdapValidations.validate_dn("")
+        result = FlextLdapModels.Validations.validate_dn("")
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -553,7 +563,7 @@ class TestFlextLdapComprehensive:
         FlextLdap()
 
         valid_filter = "(objectClass=person)"
-        result = FlextLdapValidations.validate_filter(valid_filter)
+        result = FlextLdapModels.Validations.validate_filter(valid_filter)
 
         assert isinstance(result, FlextResult)
         assert result.is_success
@@ -563,7 +573,7 @@ class TestFlextLdapComprehensive:
         FlextLdap()
 
         invalid_filter = "invalid@filter#with$invalid%chars"
-        result = FlextLdapValidations.validate_filter(invalid_filter)
+        result = FlextLdapModels.Validations.validate_filter(invalid_filter)
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -572,7 +582,7 @@ class TestFlextLdapComprehensive:
         """Test filter validation with empty string."""
         FlextLdap()
 
-        result = FlextLdapValidations.validate_filter("")
+        result = FlextLdapModels.Validations.validate_filter("")
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -594,10 +604,10 @@ class TestFlextLdapComprehensive:
     def test_api_error_handling_consistency(self) -> None:
         """Test consistent error handling across API methods."""
         # Test that validation methods return FlextResult
-        dn_result = FlextLdapValidations.validate_dn("cn=test,dc=test,dc=com")
+        dn_result = FlextLdapModels.Validations.validate_dn("cn=test,dc=test,dc=com")
         assert isinstance(dn_result, FlextResult)
 
-        filter_result = FlextLdapValidations.validate_filter("(objectClass=*)")
+        filter_result = FlextLdapModels.Validations.validate_filter("(objectClass=*)")
         assert isinstance(filter_result, FlextResult)
 
     @pytest.mark.skip(
