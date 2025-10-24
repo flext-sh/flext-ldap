@@ -45,7 +45,9 @@ class TestOIDOperationsFullCoverage:
         )
         assert result.is_success or not result.is_success
 
-    def test_oid_search_with_base_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_with_base_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OID with BASE scope."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -54,7 +56,9 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_search_with_one_level_scope(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_with_one_level_scope(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OID with ONE_LEVEL scope."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(objectClass=*)", scope="ONE_LEVEL"
@@ -71,7 +75,9 @@ class TestOIDOperationsFullCoverage:
         result = shared_ldap_client.discover_schema()
         assert result.is_success or not result.is_success
 
-    def test_oid_search_operational_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_operational_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search with operational attributes in OID."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -81,7 +87,9 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_search_with_page_size(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_with_page_size(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OID with page size."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -91,7 +99,9 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_search_with_paged_cookie(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_with_paged_cookie(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OID with paged results cookie."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -106,7 +116,9 @@ class TestOIDOperationsFullCoverage:
         result = shared_ldap_client.test_connection()
         assert result.is_success
 
-    def test_oid_complex_filter_and_logic(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_complex_filter_and_logic(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID complex filters with AND logic."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -115,14 +127,18 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_complex_filter_or_logic(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_complex_filter_or_logic(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID complex filters with OR logic."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(|(cn=*)(uid=*))", scope="SUBTREE"
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_complex_filter_not_logic(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_complex_filter_not_logic(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID complex filters with NOT logic."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -141,7 +157,9 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_search_with_quirks_mode(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_with_quirks_mode(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID search with quirks mode parameter."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -156,7 +174,9 @@ class TestOIDOperationsFullCoverage:
         result = shared_ldap_client.validate_dn("dc=example,dc=com")
         assert isinstance(result, (bool, FlextResult))
 
-    def test_oid_search_nonexistent_base(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_nonexistent_base(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID search with nonexistent base DN."""
         result = shared_ldap_client.search(
             base_dn="cn=nonexistent,dc=example,dc=com",
@@ -166,7 +186,9 @@ class TestOIDOperationsFullCoverage:
         # Should handle gracefully, not crash
         assert result is not None
 
-    def test_oid_search_invalid_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_search_invalid_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OID with invalid filter syntax."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(invalid filter", scope="SUBTREE"
@@ -208,7 +230,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_search_organizational_units(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_search_organizational_units(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD organizational units."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -227,7 +251,9 @@ class TestOUDOperationsFullCoverage:
         result = shared_ldap_client.discover_schema()
         assert isinstance(result, FlextResult)
 
-    def test_oud_search_with_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_search_with_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD with specific attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -247,7 +273,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_search_nested_ou_structure(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_search_nested_ou_structure(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD nested OU structure."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -279,7 +307,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_one_level_scope_search(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_one_level_scope_search(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD with ONE_LEVEL scope."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(objectClass=*)", scope="ONE_LEVEL"
@@ -293,7 +323,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_operational_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_operational_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD operational attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -303,7 +335,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_REDACTED_LDAP_BIND_PASSWORD_operations_search(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_REDACTED_LDAP_BIND_PASSWORD_operations_search(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test OUD REDACTED_LDAP_BIND_PASSWORD operations search."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -312,7 +346,9 @@ class TestOUDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oud_search_all_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_search_all_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Search OUD with all attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -331,7 +367,9 @@ class TestOUDOperationsFullCoverage:
 class TestOIDOUDQuirksAndFeatures:
     """Test Oracle OID/OUD specific quirks and features."""
 
-    def test_oracle_attribute_normalization(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_attribute_normalization(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle attribute normalization."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -340,7 +378,9 @@ class TestOIDOUDQuirksAndFeatures:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oracle_dn_case_sensitivity(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_dn_case_sensitivity(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle DN case handling."""
         base_dn_lower = ("dc=flext,dc=local").lower()
         result = shared_ldap_client.search(
@@ -348,7 +388,9 @@ class TestOIDOUDQuirksAndFeatures:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oracle_special_characters_in_values(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_special_characters_in_values(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle handling of special characters."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -357,7 +399,9 @@ class TestOIDOUDQuirksAndFeatures:
         )
         assert result is not None
 
-    def test_oracle_multi_valued_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_multi_valued_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle multi-valued attribute handling."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -367,7 +411,9 @@ class TestOIDOUDQuirksAndFeatures:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oracle_binary_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_binary_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle binary attribute handling."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -377,14 +423,18 @@ class TestOIDOUDQuirksAndFeatures:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oracle_empty_attribute_values(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_empty_attribute_values(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle empty attribute values."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(description=)", scope="SUBTREE"
         )
         assert result is not None
 
-    def test_oracle_schema_dn_detection(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oracle_schema_dn_detection(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """Test Oracle schema DN detection."""
         server_info = shared_ldap_client.get_server_info()
         assert server_info is not None

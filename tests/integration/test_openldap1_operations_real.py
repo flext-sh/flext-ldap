@@ -121,54 +121,48 @@ class TestOpenLDAP1OperationsComprehensive:
     def test_openldap1_get_acl_attribute_name(self) -> None:
         """Test OpenLDAP1 ACL attribute name."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            attr = ops.get_acl_attribute_name()
-            assert isinstance(attr, str)
-        except AttributeError:
-            # Method may not exist
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "get_acl_attribute_name"), (
+            "get_acl_attribute_name method not found"
+        )
+        attr = ops.get_acl_attribute_name()
+        assert isinstance(attr, str)
 
     def test_openldap1_supports_vlv(self) -> None:
         """Test OpenLDAP1 VLV support."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            supports = ops.supports_vlv()
-            assert isinstance(supports, bool)
-        except AttributeError:
-            # Method may not exist
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "supports_vlv"), "supports_vlv method not found"
+        supports = ops.supports_vlv()
+        assert isinstance(supports, bool)
 
     def test_openldap1_get_max_page_size(self) -> None:
         """Test OpenLDAP1 maximum page size."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            max_size = ops.get_max_page_size()
-            assert isinstance(max_size, int)
-            assert max_size > 0
-        except AttributeError:
-            # Method may not exist
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "get_max_page_size"), "get_max_page_size method not found"
+        max_size = ops.get_max_page_size()
+        assert isinstance(max_size, int)
+        assert max_size > 0
 
     def test_openldap1_supports_paged_results(self) -> None:
         """Test OpenLDAP1 paged results support."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            supports = ops.supports_paged_results()
-            assert isinstance(supports, bool)
-        except AttributeError:
-            # Method may not exist
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "supports_paged_results"), (
+            "supports_paged_results method not found"
+        )
+        supports = ops.supports_paged_results()
+        assert isinstance(supports, bool)
 
     def test_openldap1_discover_schema_without_connection(self) -> None:
         """Test OpenLDAP1 schema discovery fails without connection."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
-            assert isinstance(result, FlextResult)
-            assert result.is_failure
-        except (AttributeError, TypeError):
-            # Method may not exist or have different signature
-            pass
+        # Test that method exists or explicitly handle signature
+        assert hasattr(ops, "discover_schema"), "discover_schema method not found"
+        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
 
     def test_openldap1_normalize_entry(self) -> None:
         """Test OpenLDAP1 entry normalization."""
@@ -178,11 +172,12 @@ class TestOpenLDAP1OperationsComprehensive:
             "objectClass": ["person"],
             "cn": ["test"],
         }
-        try:
-            result = ops.normalize_entry_for_server(entry_dict)
-            assert result is not None
-        except (AttributeError, TypeError):
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "normalize_entry_for_server"), (
+            "normalize_entry_for_server method not found"
+        )
+        result = ops.normalize_entry_for_server(entry_dict)
+        assert result is not None
 
     def test_openldap1_validate_entry(self) -> None:
         """Test OpenLDAP1 entry validation."""
@@ -192,11 +187,12 @@ class TestOpenLDAP1OperationsComprehensive:
             "objectClass": ["person"],
             "cn": ["test"],
         }
-        try:
-            result = ops.validate_entry_for_server(entry_dict)
-            assert result is not None
-        except (AttributeError, TypeError):
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "validate_entry_for_server"), (
+            "validate_entry_for_server method not found"
+        )
+        result = ops.validate_entry_for_server(entry_dict)
+        assert result is not None
 
 
 @pytest.mark.integration
@@ -216,12 +212,11 @@ class TestOpenLDAP1OperationsErrorHandling:
     def test_openldap1_discover_schema_none_connection(self) -> None:
         """Test OpenLDAP1 schema discovery with None connection."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
-            if isinstance(result, FlextResult):
-                assert result.is_failure
-        except (AttributeError, TypeError):
-            pass
+        # Test that method exists or explicitly raise
+        assert hasattr(ops, "discover_schema"), "discover_schema method not found"
+        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        if isinstance(result, FlextResult):
+            assert result.is_failure
 
 
 @pytest.mark.integration

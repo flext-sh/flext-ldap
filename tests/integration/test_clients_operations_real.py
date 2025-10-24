@@ -28,11 +28,10 @@ class TestClientsConnectionOperations:
         """Test successful LDAP connection."""
         assert shared_ldap_client is not None
         # Connection should be established via fixture
-        try:
-            assert shared_ldap_client._connection is not None
-        except AssertionError:
-            # Fixture may have cleaned up connection
+        # Test that connection object exists or explicitly skip
+        if shared_ldap_client._connection is None:
             pytest.skip("Connection fixture not available")
+        assert shared_ldap_client._connection is not None
 
     def test_clients_connection_has_bound_dn(
         self, shared_ldap_client: FlextLdapClients
@@ -46,27 +45,24 @@ class TestClientsConnectionOperations:
     ) -> None:
         """Test LDAP unbind operation."""
         # Client is already bound via fixture
-        try:
-            shared_ldap_client.unbind()
-            # Unbind should succeed
-        except Exception:
-            # May fail if already unbound
-            pass
+        # Unbind should succeed or fail gracefully (no exception suppression)
+        assert hasattr(shared_ldap_client, "unbind"), "unbind method not found"
+        # Call unbind - if it raises, let it propagate for visibility
+        shared_ldap_client.unbind()
 
     def test_clients_connection_properties(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test connection object has expected properties."""
-        try:
-            assert shared_ldap_client._connection is not None
-            conn = shared_ldap_client._connection
-            assert hasattr(conn, "search")
-            assert hasattr(conn, "add")
-            assert hasattr(conn, "modify")
-            assert hasattr(conn, "delete")
-        except (AssertionError, AttributeError):
-            # Connection may not be available in all test orders
+        # Test that connection exists or explicitly skip
+        if shared_ldap_client._connection is None:
             pytest.skip("Connection fixture state not available")
+
+        conn = shared_ldap_client._connection
+        assert hasattr(conn, "search"), "Connection missing search method"
+        assert hasattr(conn, "add"), "Connection missing add method"
+        assert hasattr(conn, "modify"), "Connection missing modify method"
+        assert hasattr(conn, "delete"), "Connection missing delete method"
 
 
 @pytest.mark.integration
@@ -165,17 +161,17 @@ class TestClientsErrorHandling:
             scope="SUBTREE",
         )
         assert result.is_failure
-        assert "connected" in result.error.lower() or result.error
+        assert result.error is not None
+        assert "connection" in result.error.lower()
 
     def test_clients_unbind_no_connection(self) -> None:
         """Test unbind without connection."""
         client = FlextLdapClients()
         # Unbind without connection should not crash
-        try:
-            client.unbind()
-        except Exception:
-            # May raise exception, which is ok
-            pass
+        # Verify method exists
+        assert hasattr(client, "unbind"), "unbind method not found"
+        # Unbind should handle missing connection gracefully
+        client.unbind()
 
     def test_clients_invalid_search_request(
         self, shared_ldap_client: FlextLdapClients

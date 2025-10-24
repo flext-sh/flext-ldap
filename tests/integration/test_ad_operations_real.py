@@ -123,54 +123,43 @@ class TestADOperationsComprehensive:
     def test_ad_get_acl_attribute_name(self) -> None:
         """Test AD ACL attribute name."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            attr = ops.get_acl_attribute_name()
-            assert isinstance(attr, str)
-        except AttributeError:
-            # Method may not exist
-            pass
+        assert hasattr(ops, "get_acl_attribute_name"), (
+            "get_acl_attribute_name method not found"
+        )
+        attr = ops.get_acl_attribute_name()
+        assert isinstance(attr, str)
 
     def test_ad_supports_vlv(self) -> None:
         """Test AD VLV support."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            supports = ops.supports_vlv()
-            assert isinstance(supports, bool)
-        except AttributeError:
-            # Method may not exist
-            pass
+        assert hasattr(ops, "supports_vlv"), "supports_vlv method not found"
+        supports = ops.supports_vlv()
+        assert isinstance(supports, bool)
 
     def test_ad_get_max_page_size(self) -> None:
         """Test AD maximum page size."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            max_size = ops.get_max_page_size()
-            assert isinstance(max_size, int)
-            assert max_size > 0
-        except AttributeError:
-            # Method may not exist
-            pass
+        assert hasattr(ops, "get_max_page_size"), "get_max_page_size method not found"
+        max_size = ops.get_max_page_size()
+        assert isinstance(max_size, int)
+        assert max_size > 0
 
     def test_ad_supports_paged_results(self) -> None:
         """Test AD paged results support."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            supports = ops.supports_paged_results()
-            assert isinstance(supports, bool)
-        except AttributeError:
-            # Method may not exist
-            pass
+        assert hasattr(ops, "supports_paged_results"), (
+            "supports_paged_results method not found"
+        )
+        supports = ops.supports_paged_results()
+        assert isinstance(supports, bool)
 
     def test_ad_discover_schema_without_connection(self) -> None:
         """Test AD schema discovery fails without connection."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
-            assert isinstance(result, FlextResult)
-            assert result.is_failure
-        except (AttributeError, TypeError):
-            # Method may not exist or have different signature
-            pass
+        assert hasattr(ops, "discover_schema"), "discover_schema method not found"
+        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
 
     def test_ad_normalize_entry(self) -> None:
         """Test AD entry normalization."""
@@ -181,11 +170,11 @@ class TestADOperationsComprehensive:
             "cn": ["testuser"],
             "sAMAccountName": ["testuser"],
         }
-        try:
-            result = ops.normalize_entry_for_server(entry_dict)
-            assert result is not None
-        except (AttributeError, TypeError):
-            pass
+        assert hasattr(ops, "normalize_entry_for_server"), (
+            "normalize_entry_for_server method not found"
+        )
+        result = ops.normalize_entry_for_server(entry_dict)
+        assert result is not None
 
     def test_ad_validate_entry(self) -> None:
         """Test AD entry validation."""
@@ -196,11 +185,11 @@ class TestADOperationsComprehensive:
             "cn": ["testuser"],
             "sAMAccountName": ["testuser"],
         }
-        try:
-            result = ops.validate_entry_for_server(entry_dict)
-            assert result is not None
-        except (AttributeError, TypeError):
-            pass
+        assert hasattr(ops, "validate_entry_for_server"), (
+            "validate_entry_for_server method not found"
+        )
+        result = ops.validate_entry_for_server(entry_dict)
+        assert result is not None
 
 
 @pytest.mark.integration
@@ -220,12 +209,10 @@ class TestADOperationsErrorHandling:
     def test_ad_discover_schema_none_connection(self) -> None:
         """Test AD schema discovery with None connection."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        try:
-            result = ops.discover_schema(None)  # type: ignore[arg-type]
-            if isinstance(result, FlextResult):
-                assert result.is_failure
-        except (AttributeError, TypeError):
-            pass
+        assert hasattr(ops, "discover_schema"), "discover_schema method not found"
+        result = ops.discover_schema(None)  # type: ignore[arg-type]
+        if isinstance(result, FlextResult):
+            assert result.is_failure
 
 
 @pytest.mark.integration

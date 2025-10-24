@@ -21,7 +21,9 @@ class TestFlextLDAPAPIFullCoverage:
     # Basic Search Operations
     # ========================================================================
 
-    def test_api_search_subtree_all_entries(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_subtree_all_entries(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search SUBTREE for all entries."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(objectClass=*)", scope="SUBTREE"
@@ -42,7 +44,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_attributes_list(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_attributes_list(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with specific attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -52,7 +56,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_all_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_all_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with all user attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -62,7 +68,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_operational_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_operational_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with operational attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -72,7 +80,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_all_and_operational(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_all_and_operational(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with user and operational attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -82,7 +92,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_no_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_no_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with no attributes (DN only)."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -121,7 +133,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_complex_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_complex_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with complex nested filter."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -130,14 +144,18 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_wildcard_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_wildcard_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with wildcard."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(cn=*REDACTED_LDAP_BIND_PASSWORD*)", scope="SUBTREE"
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_invalid_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_invalid_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with invalid filter syntax."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="(invalid", scope="SUBTREE"
@@ -149,7 +167,9 @@ class TestFlextLDAPAPIFullCoverage:
     # Paging and Limits
     # ========================================================================
 
-    def test_api_search_with_page_size(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_page_size(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with page size for pagination."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -159,7 +179,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_paged_cookie(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_paged_cookie(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with paged results cookie."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -169,7 +191,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_paged_size(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_paged_size(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with pagination."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -193,7 +217,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_empty_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_empty_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with empty attributes list (DN only)."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -203,7 +229,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_with_specific_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_specific_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search returning only specific attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -217,7 +245,9 @@ class TestFlextLDAPAPIFullCoverage:
     # Search One Operations
     # ========================================================================
 
-    def test_api_search_one_existing_entry(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_one_existing_entry(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: search_one for existing entry."""
         # Search for first matching entry
         result = shared_ldap_client.search_one(
@@ -229,7 +259,9 @@ class TestFlextLDAPAPIFullCoverage:
             # Result data can be None or an Entry object (dict-like)
             assert result.data is None or hasattr(result.data, "dn")
 
-    def test_api_search_one_nonexistent(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_one_nonexistent(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: search_one for nonexistent entry."""
         result = shared_ldap_client.search_one(
             search_base="dc=flext,dc=local", filter_str="(cn=nonexistent_entry_12345)"
@@ -257,7 +289,9 @@ class TestFlextLDAPAPIFullCoverage:
         result = shared_ldap_client.get_server_info()
         assert result is not None
 
-    def test_api_get_server_capabilities(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_get_server_capabilities(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Get server capabilities."""
         result = shared_ldap_client.get_server_capabilities()
         assert isinstance(result, FlextResult)
@@ -278,7 +312,9 @@ class TestFlextLDAPAPIFullCoverage:
         result = shared_ldap_client.validate_dn("dc=example,dc=com")
         assert isinstance(result, (bool, FlextResult))
 
-    def test_api_validate_dn_invalid(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_validate_dn_invalid(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Validate invalid DN."""
         result = shared_ldap_client.validate_dn("invalid dn format")
         assert isinstance(result, (bool, FlextResult))
@@ -319,7 +355,9 @@ class TestFlextLDAPAPIFullCoverage:
     # Entry Operations
     # ========================================================================
 
-    def test_api_search_for_entry_data(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_for_entry_data(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search and retrieve entry data."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -329,7 +367,9 @@ class TestFlextLDAPAPIFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_api_search_entry_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_entry_attributes(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search and extract entry attributes."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",
@@ -343,7 +383,9 @@ class TestFlextLDAPAPIFullCoverage:
     # Error Handling
     # ========================================================================
 
-    def test_api_search_nonexistent_base_dn(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_nonexistent_base_dn(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with nonexistent base DN."""
         result = shared_ldap_client.search(
             base_dn="cn=nonexistent,dc=invalid,dc=tld",
@@ -353,7 +395,9 @@ class TestFlextLDAPAPIFullCoverage:
         # Should handle gracefully
         assert result is not None
 
-    def test_api_search_with_empty_filter(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_api_search_with_empty_filter(
+        self, shared_ldap_client: FlextLdapClients
+    ) -> None:
         """API: Search with empty filter string."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local", filter_str="", scope="SUBTREE"
