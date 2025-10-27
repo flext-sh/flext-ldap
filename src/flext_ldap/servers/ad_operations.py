@@ -83,10 +83,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             server = connection.server
             if not hasattr(server, "schema") or not getattr(server, "schema", None):
                 # Force schema loading
-                setattr(server, "get_info", "SCHEMA")
+                server.get_info = "SCHEMA"
                 connection.bind()
 
-            schema = getattr(server, "schema")
+            schema = server.schema
 
             # Handle case where schema is None (not loaded)
             if schema is None:

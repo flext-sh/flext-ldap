@@ -19,7 +19,7 @@ from ldap3 import Connection, Server
 
 from flext_ldap.servers.ad_operations import FlextLdapServersActiveDirectoryOperations
 
-MOCK_SYNC: str = getattr(ldap3, "MOCK_SYNC")
+MOCK_SYNC: str = ldap3.MOCK_SYNC
 
 
 # Protocol for ldap3 mock strategy (incomplete type stubs in ldap3)

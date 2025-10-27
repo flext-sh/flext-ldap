@@ -48,6 +48,7 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers.base_operations import (
     FlextLdapServersBaseOperations as BaseServerOperations,
 )
@@ -132,9 +133,6 @@ class FlextLdapClients(FlextService[None]):
     def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
         """Get searcher with lazy initialization."""
         if self._searcher is None:
-            # Import here to avoid circular dependency
-            from flext_ldap.search import FlextLdapSearch
-
             searcher = FlextLdapSearch(parent=self)
             # Set connection context if connection exists
             if self._connection:

@@ -1197,12 +1197,6 @@ class TestInfrastructureProtocols:
 
         assert result.is_failure
 
-    def test_validate_runtime_requirements(self) -> None:
-        """Test validate_runtime_requirements() - covers lines 765-770."""
-        config = FlextLdapConfig(ldap_bind_password=secret("test"))
-        result = config.validate_runtime_requirements()
-        assert result.is_success
-
     def test_validate_business_rules(self) -> None:
         """Test validate_business_rules() - covers line 782."""
         config = FlextLdapConfig(ldap_bind_password=secret("test"))

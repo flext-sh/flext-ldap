@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from pydantic import ValidationError
 
 from flext_ldap import FlextLdap, FlextLdapModels
 from tests.conftest import (
@@ -490,7 +491,7 @@ class TestFlextLdapWithRealFixtures:
     def test_validation_fails_on_empty_dn(self, api: FlextLdap) -> None:
         """Test that Entry model correctly rejects empty DN at creation time."""
         # SETUP & EXECUTE: Try to create entry with empty DN
-        with pytest.raises(Exception):  # Should fail at creation time
+        with pytest.raises(ValidationError):  # Should fail at creation time
             FlextLdapModels.Entry(
                 dn="",  # Invalid - empty DN
                 object_classes=["top"],

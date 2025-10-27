@@ -597,25 +597,6 @@ class FlextLdapConfig(FlextConfig):
         except Exception as e:
             return FlextResult[None].fail(f"LDAP configuration failed: {e}")
 
-    # Infrastructure.ConfigValidator protocol methods
-    def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate LDAP configuration meets runtime requirements.
-
-        Implements Infrastructure.ConfigValidator protocol with LDAP-specific
-        validation beyond basic Pydantic validation.
-
-        Returns:
-        FlextResult[None]: Success if valid, failure with error details
-
-        """
-        # Run standard FlextConfig validation first
-        base_validation = super().validate_runtime_requirements()
-        if base_validation.is_failure:
-            return base_validation
-
-        # Additional LDAP-specific runtime validation
-        return self.validate_ldap_requirements()
-
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDAP business rules for configuration consistency.
 

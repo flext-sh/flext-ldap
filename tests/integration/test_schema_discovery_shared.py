@@ -277,11 +277,7 @@ class TestSharedUniversalOperations:
         # Test modifying the base DN description
         # Create EntryChanges with proper type annotation
         changes = FlextLdapModels.EntryChanges()
-        setattr(
-            changes,
-            "description",
-            ["FLEXT Shared Test Organization - Modified by Test"],
-        )
+        changes.description = ["FLEXT Shared Test Organization - Modified by Test"]
         modify_result = shared_ldap_client.modify_entry(
             dn=base_dn,
             changes=changes,
