@@ -363,7 +363,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
     ) -> FlextResult[str]:
         """Detect LDAP server type from entry attributes and object classes.
 
-        Uses FlextLdif quirks system to analyze entry characteristics and
+        Uses FlextLdif detection system to analyze entry characteristics and
         determine the originating server type.
 
         Args:
@@ -385,8 +385,20 @@ class FlextLdapEntryAdapter(FlextService[None]):
         if not entry:
             return FlextResult[str].fail("Entry cannot be None")
 
-        # Use quirks manager to detect from single entry
-        detection_result = self._quirks_manager.detect_server_type([entry])
+        # Convert entry to LDIF content using flext-ldif
+        ldif_write_result = self._ldif.write([entry])
+        if ldif_write_result.is_failure:
+            self.logger.warning(
+                "Entry to LDIF conversion failed, defaulting to generic",
+                extra={"dn": str(entry.dn), "error": ldif_write_result.error},
+            )
+            return FlextResult[str].ok("generic")
+
+        ldif_content = ldif_write_result.unwrap()
+
+        # Use new FlextLdif API to detect server type from LDIF content
+        api = FlextLdif()
+        detection_result = api.detect_server_type(ldif_content=ldif_content)
         if detection_result.is_failure:
             self.logger.warning(
                 "Server detection failed, defaulting to generic",
@@ -394,7 +406,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
             )
             return FlextResult[str].ok("generic")
 
-        detected_type = detection_result.unwrap()
+        detected_result = detection_result.unwrap()
+        detected_type = detected_result.detected_server_type
+
         self._detected_server_type = detected_type  # Private attribute
 
         self.logger.debug(

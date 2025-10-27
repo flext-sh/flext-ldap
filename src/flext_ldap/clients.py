@@ -56,7 +56,6 @@ from flext_ldap.servers.factory import (
     FlextLdapServersFactory as ServerOperationsFactory,
 )
 from flext_ldap.typings import (
-    AttributeValue,
     FlextLdapTypes,
     LdapConfigDict,
 )
@@ -1739,13 +1738,20 @@ class FlextLdapClients(FlextService[None]):
         try:
             # Convert to Entry field types
             def extract_first_value(
-                value: AttributeValue | None,
+                value: str | list[str] | None,
             ) -> str | None:
-                """Extract first value from EntryAttributeValue (str | list[str])."""
+                """Extract first value from LDAP attributes.
+
+                Handles dict[str, list[str]].get() results and converts to string.
+                """
                 if value is None:
                     return None
                 if isinstance(value, list):
-                    return value[0] if value else None
+                    # For lists, extract first element
+                    if not value:
+                        return None
+                    return value[0]
+                # For string values, return as-is
                 return value
 
             # Build user data with proper type conversion and defaults

@@ -62,7 +62,9 @@ type LdapEntryTemplateDict = dict[str, str | list[str]]
 # =========================================================================
 
 # Core LDAP attribute and value types
-type AttributeValue = str | list[str]
+# FIXED: Accept mixed types from LDAP servers (bool, int returned as-is by ldap3)
+# then coerce to strings for LDAP operations
+type AttributeValue = str | int | bool | list[str | int | bool]
 type AttributeDict = dict[str, AttributeValue]
 type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
 

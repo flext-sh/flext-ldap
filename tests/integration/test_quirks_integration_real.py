@@ -699,4 +699,5 @@ class TestPropertyAccess:
         assert manager is not None
         # Should be FlextLdifQuirksManager instance
         assert hasattr(manager, "quirks_registry")
-        assert hasattr(manager, "detect_server_type")
+        # NOTE: detect_server_type was removed from FlextLdif in recent updates
+        # Only check for quirks_registry which is the actual API

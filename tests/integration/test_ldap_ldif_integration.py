@@ -404,9 +404,11 @@ class TestEntryConversion:
         # Compare attributes (ldif_entry.attributes is LdifAttributes, ldap_entry.attributes is dict)
         # LdifAttributes.attributes is dict[str, AttributeValues]
         assert "objectClass" in ldif_entry.attributes.attributes
-        # Use .get() method which returns StringList | None
-        object_classes = ldif_entry.attributes.get("objectClass")
-        assert object_classes is not None
+        # Use .attributes dict access which returns AttributeValues
+        attribute_values = ldif_entry.attributes.attributes.get("objectClass")
+        assert attribute_values is not None
+        # AttributeValues has .values attribute containing the list
+        object_classes = attribute_values.values
         assert isinstance(object_classes, list)
         assert "person" in object_classes
 

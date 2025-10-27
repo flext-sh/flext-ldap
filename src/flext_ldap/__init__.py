@@ -26,6 +26,7 @@ from flext_ldap.schema import FlextLdapSchema
 from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers import FlextLdapServers
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.upsert_service import FlextLdapUpsertService
 
 __all__ = [
     "FlextExceptions",
@@ -43,6 +44,7 @@ __all__ = [
     "FlextLdapSearch",
     "FlextLdapServers",
     "FlextLdapTypes",
+    "FlextLdapUpsertService",
     "__version__",
     "__version_info__",
 ]
