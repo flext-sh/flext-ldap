@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextContainer, FlextLogger, FlextResult
-from ldap3 import Server
+from ldap3 import Connection, Server
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -30,6 +30,7 @@ from flext_ldap.acl import (
 )
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
+from tests.support.test_data_loader import LdapTestDataLoader
 
 logger = FlextLogger(__name__)
 
@@ -308,33 +309,6 @@ MODIFY_TEST_DATA = {
 }
 
 
-# Temporary mock implementation until FlextTestDocker is available in flext-core
-class FlextTestDocker:
-    """Mock implementation of FlextTestDocker for testing."""
-
-    def get_container_status(self, container_name: str) -> FlextResult[object]:
-        """Mock container status check."""
-
-        # Mock implementation - assume container is not running
-        class MockContainerStatus:
-            def __init__(self) -> None:
-                super().__init__()
-                self.value = "not_running"
-
-        class MockValue:
-            def __init__(self) -> None:
-                super().__init__()
-                self.status = MockContainerStatus()
-
-        # Return as FlextResult.ok with mock value
-        return FlextResult.ok(MockValue())
-
-    def compose_up(self, compose_file: str, service: str) -> FlextResult[object]:
-        """Mock compose up."""
-        # Mock implementation - assume failure
-        return FlextResult.fail("Mock implementation - Docker not available")
-
-
 # =============================================================================
 # CORE FLEXT INFRASTRUCTURE FIXTURES
 # =============================================================================
@@ -358,16 +332,18 @@ def flext_logger() -> FlextLogger:
 
 
 @pytest.fixture
-def ldap_config() -> FlextLdapConfig:
+def ldap_config(clean_ldap_container: dict[str, object]) -> FlextLdapConfig:
     """Get standard LDAP connection configuration."""
-    config = FlextLdapConfig()
-    config.ldap_server_uri = "ldap://localhost"
-    config.ldap_port = FlextLdapConstants.Protocol.DEFAULT_PORT
-    config.ldap_use_ssl = False
-    config.ldap_bind_dn = "cn=admin,dc=example,dc=com"
-    config.ldap_bind_password = secret("admin123")
-    config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
-    return config
+    # Use dict-based initialization to avoid validation issues with Pydantic v2
+    config_dict = {
+        "ldap_server_uri": str(clean_ldap_container["server_url"]),
+        "ldap_port": int(clean_ldap_container["port"]),
+        "ldap_use_ssl": False,
+        "ldap_bind_dn": str(clean_ldap_container["bind_dn"]),
+        "ldap_bind_password": secret(str(clean_ldap_container["password"])),
+        "ldap_connection_timeout": FlextLdapConstants.DEFAULT_TIMEOUT,
+    }
+    return FlextLdapConfig(**config_dict)
 
 
 @pytest.fixture
@@ -637,36 +613,42 @@ def mock_error_result() -> FlextResult[None]:
 
 
 @pytest.fixture(scope="session")
-def docker_control() -> FlextTestDocker:
-    """Centralized Docker control using FlextTestDocker from flext-core."""
-    return FlextTestDocker()
+def clean_ldap_container() -> dict[str, object]:
+    r"""Session-scoped LDAP container configuration.
 
-
-@pytest.fixture(scope="session")
-def clean_ldap_container(
-    docker_control: FlextTestDocker,
-) -> dict[str, object]:
-    """Session-scoped LDAP container using centralized FlextTestDocker.
-
-    Uses ~/flext/docker/docker-compose.openldap.yml configuration.
+    Provides connection parameters for OpenLDAP test container.
     Container name: flext-openldap-test (port 3390).
+
+    Note: Container must be running before tests start:
+        docker run -d --name flext-openldap-test -p 3390:389 \
+            -e LDAP_ORGANISATION="FLEXT" \
+            -e LDAP_DOMAIN="flext.local" \
+            -e LDAP_ADMIN_PASSWORD="admin123" \
+            osixia/openldap:1.5.0
     """
+    import socket
+    from time import sleep
+
     container_name = "flext-openldap-test"
+    max_retries = 10
+    retry_count = 0
 
-    # Start the container using FlextTestDocker
-    # The container is managed by docker-compose.openldap.yml
-    status = docker_control.get_container_status(container_name)
-
-    if (
-        status.is_failure
-        or getattr(getattr(status.value, "status", None), "value", None) != "running"
-    ):
-        # Container not running - start it via docker-compose
-        compose_file = "..docker/docker-compose.openldap.yml"
-        start_result = docker_control.compose_up(compose_file, "openldap")
-
-        if start_result.is_failure:
-            pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+    # Wait for container to be ready
+    while retry_count < max_retries:
+        try:
+            sock = socket.create_connection(("localhost", 3390), timeout=2)
+            sock.close()
+            break  # Container is ready
+        except (TimeoutError, ConnectionRefusedError):
+            retry_count += 1
+            if retry_count >= max_retries:
+                pytest.skip(
+                    f"LDAP container {container_name} not running on port 3390. "
+                    "Please start with: docker run -d --name flext-openldap-test "
+                    "-p 3390:389 -e LDAP_ORGANISATION=FLEXT -e LDAP_DOMAIN=flext.local "
+                    "-e LDAP_ADMIN_PASSWORD=admin123 osixia/openldap:1.5.0"
+                )
+            sleep(1)
 
     # Provide connection info
     container_info: dict[str, object] = {
@@ -679,9 +661,6 @@ def clean_ldap_container(
     }
 
     return container_info
-
-    # Cleanup handled by FlextTestDocker dirty state tracking
-    # Container stays running for next test
 
 
 # =============================================================================
@@ -770,6 +749,61 @@ def shared_ldap_container_manager() -> dict[str, str | bool]:
     }
 
 
+# =============================================================================
+# TEST DATA MANAGEMENT FIXTURES
+# =============================================================================
+
+
+@pytest.fixture(scope="session")
+def ldap_test_data_loader(
+    shared_ldap_config: dict[str, str],
+) -> Generator[LdapTestDataLoader]:
+    """Session-scoped test data loader for LDAP integration tests.
+
+    Creates real LDAP connection and initializes comprehensive test data.
+    Test data is cleaned up after all tests complete.
+
+    Provides access to:
+    - Standard test users (testuser, testuser2, testuser3)
+    - Standard test groups (testgroup, testgroup2)
+    - System entries (testadmin)
+    - Organizational units (people, groups, system)
+    """
+    try:
+        # Create connection to LDAP server
+        server = Server("ldap://localhost:3390", get_info="ALL")
+        connection = Connection(
+            server,
+            user="cn=admin,dc=flext,dc=local",
+            password="admin123",
+            auto_bind=True,
+            auto_referrals=False,
+        )
+
+        # Create data loader and initialize test data
+        loader = LdapTestDataLoader(connection)
+
+        # Load all test data
+        load_result = loader.load_all_test_data()
+        if load_result.is_failure:
+            logger.warning(f"Test data loading partial: {load_result.error}")
+
+        yield loader
+
+        # Cleanup after all tests
+        cleanup_result = loader.cleanup_all_test_data()
+        if cleanup_result.is_failure:
+            logger.warning(f"Test data cleanup partial: {cleanup_result.error}")
+
+        # Close connection
+        if connection.bound:
+            connection.unbind()
+
+    except Exception as e:
+        logger.exception("Failed to initialize test data loader")
+        pytest.skip(f"Test data loader initialization failed: {e!s}")
+
+
 @pytest.fixture
 def shared_ldif_data() -> str:
     """Shared LDIF test data."""
@@ -846,7 +880,6 @@ __all__ = [
     "acl_parsers",
     "clean_ldap_container",  # FlextTestDocker session-scoped fixture
     "clean_ldap_state",
-    "docker_control",  # FlextTestDocker instance
     "flext_container",
     "flext_logger",
     "ldap_api",

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextService
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifQuirksManager
 from ldap3 import Connection
 
@@ -48,6 +48,7 @@ class FlextLdapServersFactory(FlextService[None]):
         """Initialize server operations factory with Phase 1 context enrichment."""
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
+        self._ldif = FlextLdif()
         self._quirks_manager = FlextLdifQuirksManager()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             "openldap1": FlextLdapServersOpenLDAP1Operations,
@@ -126,7 +127,7 @@ class FlextLdapServersFactory(FlextService[None]):
     ) -> FlextResult[FlextLdapServersBaseOperations]:
         """Create server operations instance by detecting server type from entries.
 
-        Uses FlextLdif quirks system to analyze entry characteristics and
+        Uses FlextLdif detection system to analyze entry characteristics and
         determine the appropriate server operations class.
 
         Args:
@@ -136,41 +137,46 @@ class FlextLdapServersFactory(FlextService[None]):
         FlextResult containing server operations instance
 
         """
-        try:
-            if not entries:
-                self.logger.warning("No entries provided, using generic operations")
-                return FlextResult[FlextLdapServersBaseOperations].ok(
-                    FlextLdapServersGenericOperations(),
-                )
-
-            # Use quirks manager to detect server type
-            detection_result = self._quirks_manager.detect_server_type(entries)
-            if detection_result.is_failure:
-                self.logger.warning(
-                    "Server type detection failed, using generic operations",
-                    extra={"error": detection_result.error},
-                )
-                return FlextResult[FlextLdapServersBaseOperations].ok(
-                    FlextLdapServersGenericOperations(),
-                )
-
-            detected_type = detection_result.unwrap()
-            self.logger.info(
-                "Server type detected from entries",
-                extra={"server_type": detected_type, "entry_count": len(entries)},
+        if not entries:
+            self.logger.warning("No entries provided, using generic operations")
+            return FlextResult[FlextLdapServersBaseOperations].ok(
+                FlextLdapServersGenericOperations(),
             )
 
-            # Create operations instance for detected type
-            return self.create_from_server_type(detected_type)
+        # Convert entries to LDIF content
+        ldif_write_result = self._ldif.write(entries)
+        if ldif_write_result.is_failure:
+            self.logger.warning(
+                "Entries to LDIF conversion failed, using generic operations",
+                extra={"error": ldif_write_result.error},
+            )
+            return FlextResult[FlextLdapServersBaseOperations].ok(
+                FlextLdapServersGenericOperations(),
+            )
 
-        except Exception as e:
-            self.logger.exception(
-                "Failed to create server operations from entries",
-                extra={"entry_count": len(entries) if entries else 0, "error": str(e)},
+        ldif_content = ldif_write_result.unwrap()
+
+        # Use FlextLdif API to detect server type
+        api = FlextLdif()
+        detection_result = api.detect_server_type(ldif_content=ldif_content)
+        if detection_result.is_failure:
+            self.logger.warning(
+                "Server type detection failed, using generic operations",
+                extra={"error": detection_result.error},
             )
-            return FlextResult[FlextLdapServersBaseOperations].fail(
-                f"Server operations creation from entries failed: {e}",
+            return FlextResult[FlextLdapServersBaseOperations].ok(
+                FlextLdapServersGenericOperations(),
             )
+
+        detected_result = detection_result.unwrap()
+        detected_type = detected_result.detected_server_type
+        self.logger.info(
+            "Server type detected from entries",
+            extra={"server_type": detected_type, "entry_count": len(entries)},
+        )
+
+        # Create operations instance for detected type
+        return self.create_from_server_type(detected_type)
 
     def detect_server_type_from_root_dse(
         self,

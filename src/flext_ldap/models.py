@@ -577,10 +577,65 @@ class FlextLdapModels(FlextModels):
         # GENERIC ENTRY FIELDS (for unstructured attribute access)
         # =====================================================================
 
-        attributes: dict[str, AttributeValue] = Field(
+        attributes: dict[str, Any] = Field(
             default_factory=dict,
             description="LDAP entry attributes (for generic/unstructured entries)",
         )
+
+        @model_validator(mode="before")
+        @classmethod
+        def coerce_attributes_to_strings(cls, data: object) -> object:
+            """Coerce all LDAP attribute values to strings for LDAP operations.
+
+            Oracle OUD and other LDAP servers may return attribute values as:
+            - bool: orclisvisible=TRUE → "TRUE"
+            - int: gidnumber=1000 → "1000"
+            - str: cn="John" → "John"
+            - list: mail=["a@b.com", "c@d.com"] → ["a@b.com", "c@d.com"]
+
+            This validator normalizes all to list[str] format required by LDAP.
+            Runs at model level BEFORE any field validation.
+
+            CRITICAL: Must convert ALL values to strings before Pydantic sees them,
+            because Pydantic's field validator runs AFTER this and will reject non-strings.
+            """
+            if not isinstance(data, dict):
+                return data
+
+            if "attributes" not in data:
+                return data
+
+            attrs = data.get("attributes")
+            if not isinstance(attrs, dict):
+                return data
+
+            # MUST convert to list[str] immediately - Pydantic will reject any non-string values
+            result: dict[str, list[str]] = {}
+            for attr_name, attr_value in attrs.items():
+                if attr_value is None:
+                    continue
+
+                # Convert EVERYTHING to strings first, then to lists
+                if isinstance(attr_value, list):
+                    # Convert each element in list to string
+                    str_list = []
+                    for v in attr_value:
+                        if isinstance(
+                            v, bool
+                        ):  # Must check bool before int (bool is subclass of int)
+                            str_list.append("TRUE" if v else "FALSE")
+                        elif isinstance(v, int) or v is not None:
+                            str_list.append(str(v))
+                    if str_list:
+                        result[attr_name] = str_list
+                # Single value - convert to string, then wrap in list
+                elif isinstance(attr_value, bool):  # Must check bool before int
+                    result[attr_name] = ["TRUE" if attr_value else "FALSE"]
+                elif isinstance(attr_value, int) or attr_value is not None:
+                    result[attr_name] = [str(attr_value)]
+
+            data["attributes"] = result
+            return data
 
         @field_serializer("user_password")
         def serialize_password(self, value: str | SecretStr | None) -> str | None:
@@ -1182,7 +1237,7 @@ class FlextLdapModels(FlextModels):
         def __getitem__(
             self,
             key: str,
-        ) -> AttributeValue | dict[str, AttributeValue] | None:
+        ) -> str | list[str] | dict[str, list[str]] | None:
             """Dict-like access to attributes."""
             if key == "dn":
                 return self.dn
@@ -1207,8 +1262,8 @@ class FlextLdapModels(FlextModels):
         def get(
             self,
             key: str,
-            default: (AttributeValue | dict[str, AttributeValue] | None) = None,
-        ) -> AttributeValue | dict[str, AttributeValue] | None:
+            default: (str | list[str] | dict[str, list[str]] | None) = None,
+        ) -> str | list[str] | dict[str, list[str]] | None:
             """Dict-like get method with default value."""
             if key == "dn":
                 return self.dn or default
@@ -1218,11 +1273,11 @@ class FlextLdapModels(FlextModels):
                 return self.object_classes or default
             return self.attributes.get(key, default)
 
-        def get_attribute(self, name: str) -> AttributeValue | None:
+        def get_attribute(self, name: str) -> list[str] | None:
             """Get a single attribute value by name."""
             return self.attributes.get(name)
 
-        def set_attribute(self, name: str, value: AttributeValue) -> None:
+        def set_attribute(self, name: str, value: list[str]) -> None:
             """Set a single attribute value by name."""
             self.attributes[name] = value
 
@@ -1253,19 +1308,12 @@ class FlextLdapModels(FlextModels):
                 dn_value = FlextLdifModels.DistinguishedName(value=str(self.dn))
 
             ldif_attributes: dict[str, FlextLdifModels.AttributeValues] = {}
+            # Note: self.attributes is dict[str, list[str]], so values are always lists
             for attr_name, attr_values in self.attributes.items():
-                if isinstance(attr_values, str):
-                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
-                        values=[attr_values],
-                    )
-                elif isinstance(attr_values, list):
-                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
-                        values=[str(v) for v in attr_values],
-                    )
-                else:
-                    ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
-                        values=[str(attr_values)],
-                    )
+                # attr_values is always list[str], convert each element to ensure strings
+                ldif_attributes[attr_name] = FlextLdifModels.AttributeValues(
+                    values=[str(v) for v in attr_values],
+                )
 
             return FlextLdifModels.Entry(
                 dn=dn_value,

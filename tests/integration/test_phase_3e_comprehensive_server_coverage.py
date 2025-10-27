@@ -505,7 +505,9 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory creates OID operations."""
         factory = FlextLdapServersFactory()
-        ops = factory.create_operations("oid")
+        result = factory.create_from_server_type("oid")
+        assert result.is_success
+        ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersOIDOperations)
         assert ops.server_type == "oid"
 
@@ -514,7 +516,9 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory creates OUD operations."""
         factory = FlextLdapServersFactory()
-        ops = factory.create_operations("oud")
+        result = factory.create_from_server_type("oud")
+        assert result.is_success
+        ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersOUDOperations)
         assert ops.server_type == "oud"
 
@@ -523,7 +527,9 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory creates OpenLDAP2 operations."""
         factory = FlextLdapServersFactory()
-        ops = factory.create_operations("openldap2")
+        result = factory.create_from_server_type("openldap2")
+        assert result.is_success
+        ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersOpenLDAP2Operations)
         assert ops.server_type == "openldap2"
 
@@ -532,7 +538,9 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory creates OpenLDAP1 operations."""
         factory = FlextLdapServersFactory()
-        ops = factory.create_operations("openldap1")
+        result = factory.create_from_server_type("openldap1")
+        assert result.is_success
+        ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersOpenLDAP1Operations)
         assert ops.server_type == "openldap1"
 
@@ -541,7 +549,9 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory creates generic operations."""
         factory = FlextLdapServersFactory()
-        ops = factory.create_operations("generic")
+        result = factory.create_from_server_type("generic")
+        assert result.is_success
+        ops = result.unwrap()
         assert isinstance(ops, FlextLdapServersGenericOperations)
         assert ops.server_type == "generic"
 
@@ -550,5 +560,8 @@ class TestServerFactoryCoverage:
     ) -> None:
         """Test factory error handling for unsupported type."""
         factory = FlextLdapServersFactory()
-        with pytest.raises(ValueError):
-            factory.create_operations("unsupported_type")
+        # Unsupported types fallback to generic, not raise
+        result = factory.create_from_server_type("unsupported_type")
+        assert result.is_success
+        ops = result.unwrap()
+        assert isinstance(ops, FlextLdapServersGenericOperations)

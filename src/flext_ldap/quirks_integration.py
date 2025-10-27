@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextResult, FlextService
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks, FlextLdifQuirksManager
 
 from flext_ldap.constants import FlextLdapConstants
@@ -52,6 +52,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
+        self._ldif = FlextLdif()
         self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
         self._entry_quirks = FlextLdifEntryQuirks()
         self._detected_server_type: str | None = server_type
@@ -84,7 +85,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[str]:
-        """Detect LDAP server type from entries using FlextLdif quirks.
+        """Detect LDAP server type from entries using FlextLdif detection.
 
         Args:
         entries: List of FlextLdifModels.Entry to analyze
@@ -93,36 +94,41 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing detected server type string
 
         """
-        try:
-            if not entries:
-                self.logger.warning("No entries provided for server detection")
-                return FlextResult[str].ok("generic")
+        if not entries:
+            self.logger.warning("No entries provided for server detection")
+            return FlextResult[str].ok("generic")
 
-            # Use FlextLdif quirks manager for detection
-            detection_result = self._quirks_manager.detect_server_type(entries)
-            if detection_result.is_failure:
-                self.logger.warning(
-                    "Server detection failed, using generic",
-                    extra={"error": detection_result.error},
-                )
-                return FlextResult[str].ok("generic")
-
-            detected_type = detection_result.unwrap()
-            self._detected_server_type = detected_type
-
-            self.logger.info(
-                "Server type detected",
-                extra={"server_type": detected_type},
+        # Convert entries to LDIF content
+        ldif_write_result = self._ldif.write(entries)
+        if ldif_write_result.is_failure:
+            self.logger.warning(
+                "Entries to LDIF conversion failed, using generic",
+                extra={"error": ldif_write_result.error},
             )
+            return FlextResult[str].ok("generic")
 
-            return FlextResult[str].ok(detected_type)
+        ldif_content = ldif_write_result.unwrap()
 
-        except Exception as e:
-            self.logger.exception(
-                "Server type detection error",
-                extra={"error": str(e)},
+        # Use FlextLdif API for server detection
+        api = FlextLdif()
+        detection_result = api.detect_server_type(ldif_content=ldif_content)
+        if detection_result.is_failure:
+            self.logger.warning(
+                "Server detection failed, using generic",
+                extra={"error": detection_result.error},
             )
-            return FlextResult[str].fail(f"Server detection failed: {e}")
+            return FlextResult[str].ok("generic")
+
+        detected_result = detection_result.unwrap()
+        detected_type = detected_result.detected_server_type
+        self._detected_server_type = detected_type
+
+        self.logger.info(
+            "Server type detected",
+            extra={"server_type": detected_type},
+        )
+
+        return FlextResult[str].ok(detected_type)
 
     def get_server_quirks(
         self,

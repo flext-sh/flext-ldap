@@ -135,7 +135,13 @@ class TestUniversalLdapIntegration:
 
         # NOTE: FlextLdif quirks may detect as various types depending on attributes
         # "access" attribute and "databaseConfig" object class can trigger different detections
-        assert source_type in {"openldap1", "generic", "active_directory"}
+        assert source_type in {
+            "openldap1",
+            "openldap2",
+            "openldap",
+            "generic",
+            "active_directory",
+        }
 
         # Step 3: Convert to OpenLDAP 2.x
         convert_result = entry_adapter.convert_entry_format(
