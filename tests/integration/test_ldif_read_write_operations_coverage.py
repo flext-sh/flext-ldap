@@ -103,7 +103,7 @@ class TestLdapReadWriteBasic:
         if add_result.is_success or add_result.is_failure:
             # If added or already exists, try to modify
             changes = FlextLdapModels.EntryChanges()
-            setattr(changes, "mail", ["test@example.com"])
+            changes.mail = ["test@example.com"]
             modify_result = shared_ldap_client.modify_entry(
                 dn="cn=modifytest1,dc=flext,dc=local",
                 changes=changes,
@@ -278,7 +278,7 @@ class TestLdapFlexResultPattern:
     ) -> None:
         """Test modify_entry returns FlextResult."""
         changes = FlextLdapModels.EntryChanges()
-        setattr(changes, "description", ["Modified"])
+        changes.description = ["Modified"]
         result = shared_ldap_client.modify_entry(
             dn="cn=admin,dc=flext,dc=local",
             changes=changes,

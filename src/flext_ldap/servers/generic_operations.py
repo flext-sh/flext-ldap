@@ -532,7 +532,8 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 return FlextResult[bool].fail("Entry must have attributes")
 
             # Check for required attributes based on object classes
-            object_classes = entry.attributes.get("objectClass", [])
+            object_classes_result = entry.attributes.get_attribute("objectClass")
+            object_classes = object_classes_result or None
             if not object_classes:
                 return FlextResult[bool].fail("Entry must have objectClass attribute")
 

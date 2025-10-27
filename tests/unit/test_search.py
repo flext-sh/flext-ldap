@@ -51,7 +51,7 @@ class TestFlextLdapSearch:
         """Test search service has connection context setter."""
         search = FlextLdapSearch()
         assert hasattr(search, "set_connection_context")
-        assert callable(getattr(search, "set_connection_context"))
+        assert callable(search.set_connection_context)
 
     def test_search_connection_initially_none(self) -> None:
         """Test search service connection is initially None."""
@@ -69,7 +69,7 @@ class TestFlextLdapSearch:
         search = FlextLdapSearch()
         # Should have FlextService methods
         assert hasattr(search, "execute")
-        assert callable(getattr(search, "execute"))
+        assert callable(search.execute)
 
     def test_search_execute_method(self) -> None:
         """Test search service execute method."""
@@ -89,37 +89,37 @@ class TestFlextLdapSearch:
         """Test search service has search method."""
         search = FlextLdapSearch()
         assert hasattr(search, "search")
-        assert callable(getattr(search, "search"))
+        assert callable(search.search)
 
     def test_search_has_search_one_method(self) -> None:
         """Test search service has search_one method."""
         search = FlextLdapSearch()
         assert hasattr(search, "search_one")
-        assert callable(getattr(search, "search_one"))
+        assert callable(search.search_one)
 
     def test_search_has_user_exists_method(self) -> None:
         """Test search service has user_exists method."""
         search = FlextLdapSearch()
         assert hasattr(search, "user_exists")
-        assert callable(getattr(search, "user_exists"))
+        assert callable(search.user_exists)
 
     def test_search_has_group_exists_method(self) -> None:
         """Test search service has group_exists method."""
         search = FlextLdapSearch()
         assert hasattr(search, "group_exists")
-        assert callable(getattr(search, "group_exists"))
+        assert callable(search.group_exists)
 
     def test_search_has_get_user_method(self) -> None:
         """Test search service has get_user method."""
         search = FlextLdapSearch()
         assert hasattr(search, "get_user")
-        assert callable(getattr(search, "get_user"))
+        assert callable(search.get_user)
 
     def test_search_has_get_group_method(self) -> None:
         """Test search service has get_group method."""
         search = FlextLdapSearch()
         assert hasattr(search, "get_group")
-        assert callable(getattr(search, "get_group"))
+        assert callable(search.get_group)
 
     # =========================================================================
     # CONNECTION CONTEXT TESTS

@@ -18,8 +18,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.acl import FlextLdifAclParser
+from flext_ldif import FlextLdif, FlextLdifAclParser, FlextLdifModels
 
 from flext_ldap import FlextLdapClients, FlextLdapModels
 

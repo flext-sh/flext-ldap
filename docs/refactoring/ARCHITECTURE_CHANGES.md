@@ -945,8 +945,8 @@ class MyService(FlextService[None]):
 
 ```bash
 # 1. Code Quality
-make lint        # Ruff: 0 violations
-make type-check  # Pyrefly: 0 errors
+make lint      
+make type-check
 make security    # Bandit: 0 issues
 
 # 2. Functionality

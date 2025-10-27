@@ -339,7 +339,6 @@ class FlextLdapConstants(FlextConstants):
         BASE_DN: Final[str] = "base_dn"
         SERVER: Final[str] = "server"
         TARGET_TYPE: Final[str] = "target_type"
-        SUBJECT: Final[str] = "subject"
         ORGANIZATION: Final[str] = "organization"
         TITLE: Final[str] = "title"
         DEPARTMENT: Final[str] = "department"

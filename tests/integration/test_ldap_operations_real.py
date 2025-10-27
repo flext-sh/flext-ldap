@@ -197,7 +197,7 @@ class TestRealLdapCRUD:
 
         # Modify user
         changes = FlextLdapModels.EntryChanges()
-        setattr(changes, "mail", ["newemail@flext.local"])
+        changes.mail = ["newemail@flext.local"]
         modify_result = client.modify_entry(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             changes=changes,
