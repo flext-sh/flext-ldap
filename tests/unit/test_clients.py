@@ -146,11 +146,7 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_with_request(request)
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_search_users_not_connected(self) -> None:
         """Test search_users when not connected."""
@@ -159,11 +155,7 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_users("dc=test,dc=com", "(objectClass=person)")
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups when not connected."""
@@ -172,11 +164,7 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_groups("dc=test,dc=com", "(objectClass=group)")
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_get_user_not_connected(self) -> None:
         """Test get_user when not connected."""
@@ -202,11 +190,7 @@ class TestFlextLdapClientsComprehensive:
         )
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_create_user_not_connected(self) -> None:
         """Test create_user when not connected."""
@@ -339,11 +323,7 @@ class TestFlextLdapClientsComprehensive:
         )
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error
-            and result.error
-            and "LDAP connection not established" in result.error
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_update_user_attributes_not_connected(self) -> None:
         """Test update_user_attributes when not connected."""
@@ -1098,9 +1078,7 @@ class TestFlextLdapClientsSearchUnit:
         )
 
         assert result.is_failure
-        assert (
-            result.error and result.error and "not established" in result.error.lower()
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups fails when not connected."""
@@ -1112,9 +1090,7 @@ class TestFlextLdapClientsSearchUnit:
         )
 
         assert result.is_failure
-        assert (
-            result.error and result.error and "not established" in result.error.lower()
-        )
+        assert "connection" in result.error.lower() and "available" in result.error.lower()
 
 
 @pytest.mark.integration
@@ -1212,9 +1188,8 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search_users retrieves all users."""
         result = authenticated_client.search(
-            base_dn=str(
-                clean_ldap_container["base_dn"], filter_str="(objectClass=person)"
-            )
+            base_dn=str(clean_ldap_container["base_dn"]),
+            filter_str="(objectClass=person)",
         )
 
         assert result.is_success
@@ -1229,9 +1204,7 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search_users with UID filter."""
         result = authenticated_client.search(
-            base_dn=str(
-                clean_ldap_container["base_dn"], filter_str="(objectClass=person)"
-            ),
+            base_dn=str(clean_ldap_container["base_dn"]),
             filter_str="(uid=nonexistentuser)",
         )
 
@@ -1248,9 +1221,8 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search_groups retrieves all groups."""
         result = authenticated_client.search(
-            base_dn=str(
-                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
-            )
+            base_dn=str(clean_ldap_container["base_dn"]),
+            filter_str="(objectClass=groupOfNames)",
         )
 
         assert result.is_success
@@ -1265,10 +1237,8 @@ class TestFlextLdapClientsSearchIntegration:
     ) -> None:
         """Test search_groups with CN filter."""
         result = authenticated_client.search(
-            base_dn=str(
-                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
-            ),
-            cn="nonexistentgroup",
+            base_dn=str(clean_ldap_container["base_dn"]),
+            filter_str="(&(objectClass=groupOfNames)(cn=nonexistentgroup))",
         )
 
         assert result.is_success
@@ -1417,10 +1387,8 @@ class TestFlextLdapClientsSearchEdgeCases:
     ) -> None:
         """Test search_groups with special characters in CN."""
         result = authenticated_client.search(
-            base_dn=str(
-                clean_ldap_container["base_dn"], filter_str="(objectClass=groupOfNames)"
-            ),
-            cn="group-with-dashes",
+            base_dn=str(clean_ldap_container["base_dn"]),
+            filter_str="(&(objectClass=groupOfNames)(cn=group-with-dashes))",
         )
 
         # Should handle special characters gracefully

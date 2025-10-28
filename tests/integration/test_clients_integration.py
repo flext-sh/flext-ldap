@@ -126,10 +126,10 @@ class TestFlextLdapClientsSearch:
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
-        yield client
-
-        # Cleanup: unbind after test completes
-        if client.is_connected:
+        try:
+            yield client
+        finally:
+            # Cleanup: unbind after test completes
             try:
                 client.unbind()
             except Exception:

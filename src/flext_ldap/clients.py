@@ -475,6 +475,13 @@ class FlextLdapClients(FlextService[None]):
 
             self._connection = None
             self._server = None
+
+            # CRITICAL: Reset cached components to prevent them from using stale connections
+            # The searcher and authenticator cache their own connection references
+            # If we don't reset them, they'll try to use the closed connection
+            self._searcher = None
+            self._authenticator = None
+
             return FlextResult[None].ok(None)
 
         except LDAPCommunicationError as e:
@@ -604,12 +611,26 @@ class FlextLdapClients(FlextService[None]):
         # Use provided quirks_mode or fall back to instance quirks_mode
         effective_quirks_mode = quirks_mode or self._quirks_mode
 
-        # Pass quirks information to searcher
+        # Get or create searcher with FRESH connection context for each search
+        # This ensures we always have the current connection state and prevents stale references
         searcher = self._get_searcher()
+
+        # CRITICAL: Always refresh connection context before search
+        # Connection state can change between calls, so we must verify it's current
+        if self._connection is not None:
+            searcher.set_connection_context(self._connection)
+        else:
+            return FlextResult[
+                list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+            ].fail("No LDAP connection available for search operation")
+
         searcher.set_quirks_mode(effective_quirks_mode)
 
+        # Convert scope to lowercase for searcher compatibility
+        normalized_scope = scope.lower() if isinstance(scope, str) else scope
+
         search_result = searcher.search(
-            base_dn, filter_str, attributes, scope, page_size, paged_cookie
+            base_dn, filter_str, attributes, normalized_scope, page_size, paged_cookie  # type: ignore[arg-type]
         )
 
         if search_result.is_failure:

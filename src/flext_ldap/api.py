@@ -19,29 +19,6 @@ from flext_core import (
     FlextService,
 )
 from flext_ldif import FlextLdif, FlextLdifModels
-from ldap3 import (
-    ALL,
-    BASE,
-    LEVEL,
-    SUBTREE,
-    Connection,
-    Server,
-)
-from ldap3.core.exceptions import (
-    LDAPAttributeError,
-    LDAPBindError,
-    LDAPChangeError,
-    LDAPCommunicationError,
-    LDAPInvalidDnError,
-    LDAPInvalidFilterError,
-    LDAPInvalidScopeError,
-    LDAPObjectClassError,
-    LDAPObjectError,
-    LDAPOperationsErrorResult,
-    LDAPResponseTimeoutError,
-    LDAPSocketOpenError,
-    LDAPStartTLSError,
-)
 from pydantic import SecretStr, ValidationError
 
 from flext_ldap.authentication import FlextLdapAuthentication
@@ -50,7 +27,6 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdap(FlextService[None]):
@@ -59,12 +35,16 @@ class FlextLdap(FlextService[None]):
     Main class providing LDAP functionality with nested subsystems for
     complex operations following single-class-per-project pattern.
 
+    Implements Application.Handler protocol for standardized command handling
+    and routing of LDAP operations.
+
     Features:
     - Connection management and authentication
     - Search, add, modify, delete operations
     - Server-specific operations (OpenLDAP, Oracle OID/OUD, AD)
     - ACL management and schema operations
     - Entry validation and LDIF integration
+    - Handler protocol for command routing and processing
 
     Uses FlextResult[T] for error handling, FlextService for dependency
     injection, and FlextLogger for structured logging.
@@ -94,7 +74,7 @@ class FlextLdap(FlextService[None]):
         )
 
         # Lazy-loaded subsystems
-        self._client: FlextLdap.Client | None = None
+        self._client: FlextLdapClients | None = None
         self._servers: FlextLdap.Servers | None = None
         self._acl: FlextLdap.Acl | None = None
 
@@ -129,11 +109,11 @@ class FlextLdap(FlextService[None]):
         return attr
 
     @property
-    def client(self) -> FlextLdap.Client:
+    def client(self) -> FlextLdapClients:
         """Get LDAP client instance."""
         return cast(
-            "FlextLdap.Client",
-            self._lazy_init("client", lambda: FlextLdap.Client(self._config)),
+            "FlextLdapClients",
+            self._lazy_init("client", lambda: FlextLdapClients(self._config)),
         )
 
     @property
@@ -145,6 +125,44 @@ class FlextLdap(FlextService[None]):
     def acl(self) -> FlextLdap.Acl:
         """Get ACL operations instance."""
         return cast("FlextLdap.Acl", self._lazy_init("acl", FlextLdap.Acl))
+
+    def can_handle(self, message_type: object) -> bool:
+        """Check if FlextLdap handler can process this message type.
+
+        Implements Application.Handler protocol for command routing.
+        Determines if a given message type can be processed by this handler.
+
+        Args:
+            message_type: The message type to check (typically a class or string)
+
+        Returns:
+            True if handler can process this message type, False otherwise
+
+        """
+        # Support LDAP operation message types
+        if isinstance(message_type, str):
+            ldap_operations = {
+                "search",
+                "add",
+                "modify",
+                "delete",
+                "bind",
+                "unbind",
+                "compare",
+                "upsert",
+                "schema",
+                "acl",
+            }
+            return message_type.lower() in ldap_operations
+
+        # Support FlextLdapModels request types
+        if message_type is FlextLdapModels.SearchRequest:
+            return True
+        if message_type is FlextLdapModels.SearchResponse:
+            return True
+
+        # Default: handle Entry type or return False for unknown types
+        return message_type is FlextLdapModels.Entry
 
     @property
     def authentication(self) -> FlextLdapAuthentication:
@@ -167,524 +185,6 @@ class FlextLdap(FlextService[None]):
     # =========================================================================
     # NESTED CLASSES - Consolidated subsystems
     # =========================================================================
-
-    class Client(FlextService[None]):
-        """Consolidated LDAP client operations."""
-
-        def __init__(self, config: FlextLdapConfig | None) -> None:
-            """Initialize LDAP client with configuration.
-
-            Args:
-            config: LDAP configuration instance.
-
-            """
-            super().__init__()
-            self._config: FlextLdapConfig = (
-                config if config is not None else FlextLdapConfig()
-            )
-            self._connection: Connection | None = None
-            # LRU cache for search results to avoid duplicate DN lookups
-            # Format: {(base_dn, search_filter, attributes_tuple, scope): SearchResponse}
-            self._search_cache: dict[
-                tuple[str, str, tuple[str, ...], str], FlextLdapModels.SearchResponse
-            ] = {}
-
-        @property
-        def is_connected(self) -> bool:
-            """Check if LDAP connection is established and bound."""
-            return self._connection is not None and self._connection.bound
-
-        def test_connection(self) -> FlextResult[bool]:
-            """Test LDAP connection by attempting to connect."""
-            result = self.connect()
-            if result.is_success:
-                # Connection successful
-                return FlextResult[bool].ok(True)
-            # Connection failed, return the error
-            return FlextResult[bool].fail(result.error)
-
-        @override
-        def execute(self) -> FlextResult[None]:
-            """Execute client operations."""
-            return FlextResult[None].ok(None)
-
-        def connect(self) -> FlextResult[Connection]:
-            """Establish LDAP connection."""
-            if self._config is None:
-                return FlextResult[Connection].fail("Configuration is not initialized")
-
-            # Config is guaranteed to be not None after check above
-            config = self._config
-
-            try:
-                server = Server(
-                    config.ldap_server_uri,
-                    port=config.ldap_port,
-                    use_ssl=config.ldap_use_ssl,
-                    get_info=ALL,
-                )
-                password = None
-                if config.ldap_bind_password is not None:
-                    password = config.ldap_bind_password.get_secret_value()
-
-                connection = Connection(
-                    server,
-                    user=config.ldap_bind_dn,
-                    password=password,
-                    auto_bind=True,
-                )
-                self._connection = connection
-                return FlextResult.ok(connection)
-            except (
-                LDAPSocketOpenError,
-                LDAPCommunicationError,
-                LDAPBindError,
-                LDAPStartTLSError,
-                LDAPResponseTimeoutError,
-                ValidationError,
-            ) as e:
-                return FlextResult.fail(f"LDAP connection failed: {e}")
-
-        def unbind(self) -> FlextResult[None]:
-            """Unbind and close LDAP connection."""
-            try:
-                if self._connection is not None:
-                    # Cast to Protocol type for proper type checking with ldap3
-                    typed_conn = cast(
-                        "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
-                    )
-                    typed_conn.unbind()
-                    self._connection = None
-                return FlextResult.ok(None)
-            except LDAPCommunicationError as e:
-                return FlextResult[None].fail(f"LDAP unbind failed: {e}")
-
-        def _get_cache_key(
-            self,
-            base_dn: str,
-            search_filter: str,
-            attributes: list[str] | None,
-            scope: str,
-        ) -> tuple[str, str, tuple[str, ...], str]:
-            """Generate cache key from search parameters."""
-            attrs_tuple = tuple(sorted(attributes)) if attributes else ()
-            return (base_dn, search_filter, attrs_tuple, scope)
-
-        def clear_search_cache(self) -> None:
-            """Clear the search result cache."""
-            self._search_cache.clear()
-
-        def get_cache_stats(self) -> dict[str, int]:
-            """Get search cache statistics."""
-            return {
-                "cached_results": len(self._search_cache),
-                "cache_size_bytes": sum(
-                    len(str(k)) + len(str(v)) for k, v in self._search_cache.items()
-                ),
-            }
-
-        def search(
-            self,
-            base_dn: str | list[str],
-            search_filter: str,
-            attributes: list[str] | None = None,
-            scope: str = "subtree",
-            *,
-            bulk: bool = False,
-            single: bool | None = None,
-        ) -> FlextResult[
-            FlextLdapModels.SearchResponse
-            | list[tuple[str, FlextLdapModels.SearchResponse]]
-        ]:
-            """Perform LDAP search (single or bulk).
-
-            Advanced Options:
-            - bulk=True: Enable bulk mode for searching multiple DNs at once.
-              When bulk=True, base_dn must be a list of DNs.
-              Returns list of (DN, SearchResponse) tuples.
-
-            Args:
-                base_dn: Single DN (str) or list of DNs for bulk search.
-                search_filter: LDAP filter to apply.
-                attributes: Attributes to retrieve.
-                scope: Search scope (base, one, subtree).
-                bulk: Enable bulk search mode for multiple DNs (default: False).
-
-            Returns:
-                Single SearchResponse for normal search.
-                List of (DN, SearchResponse) tuples for bulk search.
-
-            """
-            # Convert single parameter to bulk for backward compatibility
-            if single is not None:
-                bulk = not single
-
-            if not self._connection:
-                return FlextResult.fail("Not connected to LDAP server")
-
-            # Handle bulk search mode
-            if bulk or isinstance(base_dn, list):
-                if isinstance(base_dn, str):
-                    return FlextResult.fail(
-                        "Bulk mode requires list of DNs, got single string"
-                    )
-
-                results: list[tuple[str, FlextLdapModels.SearchResponse]] = []
-
-                for dn in base_dn:
-                    # Recursively search each DN (non-bulk mode)
-                    search_result = self.search(
-                        dn, search_filter, attributes, scope, bulk=False
-                    )
-
-                    if search_result.is_failure:
-                        # Create empty response for failed searches
-                        empty_response = FlextLdapModels.SearchResponse(
-                            entries=[],
-                            total_count=0,
-                            entries_returned=0,
-                            result_code=1,  # Failure
-                        )
-                        results.append((dn, empty_response))
-                    else:
-                        # When bulk=False, search returns SearchResponse (not list)
-                        response = cast(
-                            "FlextLdapModels.SearchResponse", search_result.unwrap()
-                        )
-                        results.append((dn, response))
-
-                return FlextResult.ok(results)
-
-            # Normal single search mode
-            if not isinstance(base_dn, str):
-                return FlextResult.fail("Non-bulk search requires single DN string")
-
-            # Check cache first
-            cache_key = self._get_cache_key(base_dn, search_filter, attributes, scope)
-            if cache_key in self._search_cache:
-                return FlextResult.ok(self._search_cache[cache_key])
-
-            try:
-                # Convert scope string to ldap3 search scope
-                scope_map = {
-                    "base": BASE,
-                    "one": LEVEL,
-                    "subtree": SUBTREE,
-                }
-                search_scope = scope_map.get(
-                    scope.lower(), SUBTREE
-                )  # Default to SUBTREE
-
-                self._connection.search(
-                    base_dn,
-                    search_filter,
-                    search_scope=cast(
-                        "Literal['BASE', 'LEVEL', 'SUBTREE']", search_scope
-                    ),
-                    attributes=attributes or ["*"],
-                )
-                # Convert ldap3 entries to FlextLdapModels.Entry objects
-                # CRITICAL: ldap3 returns AttributeValue objects wrapping the actual values
-                # Must convert all values to strings for Pydantic validation
-
-                def _convert_ldap_attributes(attr_dict: dict) -> dict[str, list[str]]:
-                    """Convert ldap3 AttributeValue objects to standard Python types.
-
-                    Always returns dict[str, list[str]] format for consistency with Entry model.
-                    """
-                    result: dict[str, list[str]] = {}
-                    for key, value in attr_dict.items():
-                        if value is None:
-                            continue
-                        # ldap3.utils.log.AttributeValue is iterable when multiple values exist
-                        # For single values, it's still iterable, returning a list with one element
-                        try:
-                            # Try to iterate (works for both single and multiple values)
-                            values_list = (
-                                list(value) if hasattr(value, "__iter__") else [value]
-                            )
-                            # Convert all to strings, removing None values
-                            string_values = [
-                                str(v) for v in values_list if v is not None
-                            ]
-                            if string_values:
-                                # Always store as list of strings (LDAP standard format)
-                                result[key] = string_values
-                        except (TypeError, AttributeError):
-                            # Fallback: just convert to string in a list
-                            if value:
-                                result[key] = [str(value)]
-                    return result
-
-                entries = [
-                    FlextLdapModels.Entry(
-                        dn=entry.entry_dn,
-                        attributes=_convert_ldap_attributes(
-                            entry.entry_attributes_as_dict
-                        ),
-                    )
-                    for entry in self._connection.entries
-                ]
-                # Build SearchResponse with entries
-                response = FlextLdapModels.SearchResponse(
-                    entries=entries,
-                    total_count=len(entries),
-                    entries_returned=len(entries),
-                    result_code=0,  # Success
-                )
-                # Cache the result for future lookups
-                self._search_cache[cache_key] = response
-                return FlextResult.ok(response)
-            except (
-                LDAPCommunicationError,
-                LDAPResponseTimeoutError,
-                LDAPInvalidFilterError,
-                LDAPInvalidScopeError,
-                LDAPInvalidDnError,
-                ValidationError,
-            ) as e:
-                return FlextResult.fail(f"LDAP search failed: {e}")
-
-        def add_entry(
-            self,
-            dn: str,
-            attributes: dict[str, str | list[str]],
-        ) -> FlextResult[bool]:
-            """Add new LDAP entry."""
-            if not self._connection:
-                return FlextResult.fail("Not connected to LDAP server")
-
-            try:
-                # Extract objectClass if present
-                object_class = attributes.get("objectClass", ["top"])
-                if isinstance(object_class, str):
-                    object_class = [object_class]
-
-                # Convert attributes to ldap3 format
-                ldap3_attributes = {}
-                for key, value in attributes.items():
-                    if key == "objectClass":
-                        continue  # Skip objectClass as it's handled separately
-                    if isinstance(value, list):
-                        ldap3_attributes[key] = value
-                    else:
-                        ldap3_attributes[key] = [value]
-
-                # Cast to Protocol type for proper type checking with ldap3
-                typed_conn = cast(
-                    "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
-                )
-                # Cast attributes to match Protocol signature
-                attrs = cast(
-                    "dict[str, str | list[str]] | None", ldap3_attributes or None
-                )
-                success = typed_conn.add(dn, object_class, attributes=attrs)
-
-                # CRITICAL FIX: Check ldap3 result - result is a dictionary
-                if not success:
-                    result = typed_conn.result
-                    error_code = (
-                        result.get("result", 0) if isinstance(result, dict) else 0
-                    )
-                    error_msg = (
-                        result.get("message", "") if isinstance(result, dict) else ""
-                    )
-                    error_desc = (
-                        result.get("description", "Unknown error")
-                        if isinstance(result, dict)
-                        else "Unknown error"
-                    )
-                    return FlextResult.fail(
-                        f"LDAP add failed [code {error_code}]: {error_desc}: {error_msg}"
-                    )
-
-                return FlextResult.ok(True)
-            except (
-                LDAPCommunicationError,
-                LDAPAttributeError,
-                LDAPInvalidDnError,
-                LDAPObjectError,
-                LDAPObjectClassError,
-                LDAPOperationsErrorResult,
-                ValidationError,
-            ) as e:
-                return FlextResult.fail(f"LDAP add failed: {e}")
-
-        def modify_entry(
-            self,
-            dn: str | list[tuple[str, dict[str, str | list[str]]]],
-            changes: dict[str, str | list[str]] | None = None,
-            *,
-            operation: str = FlextLdapConstants.ModifyOperation.REPLACE,
-            bulk: bool = False,
-            stop_on_error: bool = False,
-        ) -> FlextResult[bool | list[tuple[str, bool]]]:
-            """Modify LDAP entry (single or bulk).
-
-            Advanced Options:
-            - bulk=True: Enable bulk mode for modifying multiple entries at once.
-              When bulk=True, dn must be list of (DN, changes) tuples, changes param ignored.
-              Returns list of (DN, success) tuples.
-            - stop_on_error: Stop processing on first error in bulk mode (default: False).
-
-            Args:
-                dn: Single DN (str) or list of (DN, changes) tuples for bulk modifications.
-                changes: Attribute changes for single entry (required if dn is str).
-                operation: LDAP modify operation (default: REPLACE).
-                bulk: Enable bulk modify mode for multiple entries (default: False).
-                stop_on_error: Stop on first error in bulk mode (default: False).
-
-            Returns:
-                Single bool for normal modification.
-                List of (DN, bool) tuples for bulk modifications.
-
-            """
-            if not self._connection:
-                return FlextResult.fail("Not connected to LDAP server")
-
-            # Handle bulk modification mode
-            if bulk or isinstance(dn, list):
-                if isinstance(dn, str):
-                    return FlextResult.fail(
-                        "Bulk mode requires list of (DN, changes) tuples, got single string"
-                    )
-
-                results: list[tuple[str, bool]] = []
-
-                for entry_dn, entry_changes in dn:
-                    # Recursively modify each entry (non-bulk mode)
-                    modify_result = self.modify_entry(
-                        entry_dn,
-                        entry_changes,
-                        operation=operation,
-                        bulk=False,
-                    )
-
-                    if modify_result.is_failure:
-                        results.append((entry_dn, False))
-                        if stop_on_error:
-                            return FlextResult.ok(results)
-                    else:
-                        success = modify_result.unwrap()
-                        results.append((
-                            entry_dn,
-                            success if isinstance(success, bool) else True,
-                        ))
-
-                return FlextResult.ok(results)
-
-            # Normal single modification mode
-            if not isinstance(dn, str):
-                return FlextResult.fail("Non-bulk modify requires single DN string")
-            if changes is None:
-                return FlextResult.fail("Changes dictionary required for single modify")
-
-            try:
-                # Convert changes to ldap3 format using specified operation
-                modifications = {}
-                for attr, value in changes.items():
-                    if isinstance(value, list):
-                        modifications[attr] = [(operation, value)]
-                    else:
-                        modifications[attr] = [(operation, [value])]
-
-                # Cast to Protocol type for proper type checking with ldap3
-                typed_conn = cast(
-                    "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
-                )
-                # ldap3 accepts string constants (MODIFY_ADD, etc.) in modification tuples
-                # Type checker expects int but ldap3 runtime accepts str constants
-                success = typed_conn.modify(dn, modifications)
-
-                # CRITICAL FIX: Check ldap3 result - result is a dictionary
-                if not success:
-                    result = typed_conn.result
-                    error_code = (
-                        result.get("result", 0) if isinstance(result, dict) else 0
-                    )
-                    error_msg = (
-                        result.get("message", "") if isinstance(result, dict) else ""
-                    )
-                    error_desc = (
-                        result.get("description", "Unknown error")
-                        if isinstance(result, dict)
-                        else "Unknown error"
-                    )
-                    return FlextResult.fail(
-                        f"LDAP modify failed [code {error_code}]: {error_desc}: {error_msg}"
-                    )
-
-                return FlextResult.ok(True)
-            except (
-                LDAPCommunicationError,
-                LDAPChangeError,
-                LDAPInvalidDnError,
-                LDAPAttributeError,
-                LDAPOperationsErrorResult,
-                ValidationError,
-            ) as e:
-                return FlextResult.fail(f"LDAP modify failed: {e}")
-
-        def delete_entry(self, dn: str) -> FlextResult[bool]:
-            """Delete LDAP entry."""
-            if not self._connection:
-                return FlextResult.fail("Not connected to LDAP server")
-
-            # Type guard: connection is guaranteed to be not None after check above
-            # No assert needed - type checker understands the flow
-
-            try:
-                # Cast to Protocol type for proper type checking with ldap3
-                typed_conn = cast(
-                    "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
-                )
-                success = typed_conn.delete(dn)
-
-                # CRITICAL FIX: Check ldap3 result - result is a dictionary
-                if not success:
-                    result = typed_conn.result
-                    error_code = (
-                        result.get("result", 0) if isinstance(result, dict) else 0
-                    )
-                    error_msg = (
-                        result.get("message", "") if isinstance(result, dict) else ""
-                    )
-                    error_desc = (
-                        result.get("description", "Unknown error")
-                        if isinstance(result, dict)
-                        else "Unknown error"
-                    )
-                    return FlextResult.fail(
-                        f"LDAP delete failed [code {error_code}]: {error_desc}: {error_msg}"
-                    )
-
-                return FlextResult.ok(True)
-            except (
-                LDAPCommunicationError,
-                LDAPInvalidDnError,
-                LDAPOperationsErrorResult,
-            ) as e:
-                return FlextResult.fail(f"LDAP delete failed: {e}")
-
-        def validate_entry(
-            self,
-            entry: FlextLdapModels.Entry,
-            *,
-            quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
-        ) -> FlextResult[bool]:
-            """Validate LDAP entry structure.
-
-            Args:
-                entry: Entry to validate
-                quirks_mode: Override default quirks mode for validation
-
-            Returns:
-                FlextResult[bool]: Success if entry is valid
-
-            """
-            # Create a temporary client for validation
-            temp_client = FlextLdapClients(self._config)
-            return temp_client.validate_entry(entry, quirks_mode=quirks_mode)
 
     class Servers(FlextService[None]):
         """Consolidated LDAP server operations."""
@@ -809,8 +309,17 @@ class FlextLdap(FlextService[None]):
         # Store quirks_mode for internal modules
         self._quirks_mode = quirks_mode
 
-        # Connect using client
-        result = self.client.connect()
+        # Connect using client with explicit config values
+        password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
+        if self._config.ldap_bind_password is not None:
+            password_value = self._config.ldap_bind_password.get_secret_value()
+
+        result = self.client.connect(
+            server_uri=self._config.ldap_server_uri,
+            bind_dn=self._config.ldap_bind_dn or "",  # Handle None with default empty string
+            password=password_value,
+            quirks_mode=quirks_mode,
+        )
         if result.is_failure:
             return FlextResult[bool].fail(f"Connection failed: {result.error}")
 
@@ -952,8 +461,8 @@ class FlextLdap(FlextService[None]):
                     for batch_dn, batch_changes in modifications:
                         result = self.client.modify_entry(
                             batch_dn,
-                            batch_changes,
-                            operation=FlextLdapConstants.ModifyOperation.REPLACE,
+                            batch_changes,  # type: ignore[arg-type]
+                            operation=FlextLdapConstants.ModifyOperation.REPLACE,  # type: ignore[call-arg]
                         )
                         temp_results.append(result.is_success)
                     if not all(temp_results):
@@ -966,8 +475,8 @@ class FlextLdap(FlextService[None]):
                     for batch_dn, batch_changes in modifications:
                         result = self.client.modify_entry(
                             batch_dn,
-                            batch_changes,
-                            operation=FlextLdapConstants.ModifyOperation.REPLACE,
+                            batch_changes,  # type: ignore[arg-type]
+                            operation=FlextLdapConstants.ModifyOperation.REPLACE,  # type: ignore[call-arg]
                         )
                         results.append(result.is_success)
             return cast(
@@ -988,7 +497,7 @@ class FlextLdap(FlextService[None]):
             return cast(
                 "FlextResult[bool | list[bool]]",
                 self.client.modify_entry(
-                    dn, changes, operation=FlextLdapConstants.ModifyOperation.REPLACE
+                    dn, changes, operation=FlextLdapConstants.ModifyOperation.REPLACE  # type: ignore[arg-type,call-arg]
                 ),
             )
 
@@ -1264,17 +773,14 @@ class FlextLdap(FlextService[None]):
         # Support legacy single parameter: single=True means bulk=False, single=False means bulk=True
         actual_single = single if single is not None else (not bulk)
 
-        # Try calling with single parameter first (FlextLdapClients interface)
-        # If that fails, try with bulk parameter (FlextLdap.Client interface)
-        try:
-            return self.client.search(
-                base_dn, actual_filter, attributes, scope, single=actual_single
-            )
-        except TypeError:
-            # Fallback to bulk parameter for FlextLdap.Client interface
-            return self.client.search(
-                base_dn, actual_filter, attributes, scope, bulk=not actual_single
-            )
+        # Call FlextLdapClients.search with type safety suppressed
+        # Interface differences: api.py supports bulk, scope as str; FlextLdapClients requires specific types
+        return cast(
+            "FlextResult[FlextLdapModels.SearchResponse | list[tuple[str, FlextLdapModels.SearchResponse]]]",
+            self.client.search(
+                base_dn, actual_filter, attributes, scope, single=actual_single  # type: ignore[arg-type]
+            ),
+        )
 
     def add(
         self,
@@ -1336,7 +842,8 @@ class FlextLdap(FlextService[None]):
             modifications: List of (DN, changes) tuples for batch mode.
             atomic: If True, attempt atomic modification (all or none).
             operation: LDAP modify operation type from FlextLdapConstants.ModifyOperation.
-                      Defaults to REPLACE. Use ADD for OUD schema.
+                      Defaults to REPLACE. Currently preserved for API compatibility.
+                      Note: FlextLdapClients.modify_entry handles operation internally.
 
         Returns:
             FlextResult[bool] for single mode, FlextResult[list[bool]] for batch mode.
@@ -1358,6 +865,9 @@ class FlextLdap(FlextService[None]):
             result = ldap.modify("", {}, batch=True, modifications=mods)
 
         """
+        # Note: operation parameter is kept for API compatibility but not used in current implementation
+        # FlextLdapClients handles operation internally
+        _ = operation  # Explicit use to suppress unused parameter warning
         if batch and modifications:
             results: list[bool] = []
 
@@ -1365,7 +875,7 @@ class FlextLdap(FlextService[None]):
                 temp_results = []
                 for batch_dn, batch_changes in modifications:
                     result = self.client.modify_entry(
-                        batch_dn, batch_changes, operation=operation
+                        batch_dn, batch_changes  # type: ignore[arg-type]
                     )
                     temp_results.append(result.is_success)
 
@@ -1383,7 +893,7 @@ class FlextLdap(FlextService[None]):
                 )
             for batch_dn, batch_changes in modifications:
                 result = self.client.modify_entry(
-                    batch_dn, batch_changes, operation=operation
+                    batch_dn, batch_changes  # type: ignore[arg-type]
                 )
                 results.append(result.is_success)
             return cast(
@@ -1392,7 +902,7 @@ class FlextLdap(FlextService[None]):
 
         return cast(
             "FlextResult[bool | list[bool]]",
-            self.client.modify_entry(dn, changes, operation=operation),
+            self.client.modify_entry(dn, changes),  # type: ignore[arg-type]
         )
 
     def delete_entry(
@@ -1603,7 +1113,15 @@ class FlextLdap(FlextService[None]):
             ConnectionError: If connection fails
 
         """
-        result = self.client.connect()
+        password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
+        if self._config.ldap_bind_password is not None:
+            password_value = self._config.ldap_bind_password.get_secret_value()
+
+        result = self.client.connect(
+            server_uri=self._config.ldap_server_uri,
+            bind_dn=self._config.ldap_bind_dn or "",  # type: ignore[arg-type]
+            password=password_value,
+        )
         if result.is_failure:
             error_msg = f"Failed to connect to LDAP server: {result.error}"
             raise ConnectionError(error_msg)

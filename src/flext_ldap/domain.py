@@ -16,6 +16,7 @@ from flext_core import FlextResult
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.domain_service import DomainServices
 
 
 class FlextLdapDomain:
@@ -24,6 +25,9 @@ class FlextLdapDomain:
     Contains domain services, specifications, and business rules that
     implement LDAP-specific domain logic independent of infrastructure.
     """
+
+    # Backward compatibility: DomainServices is now in services module
+    DomainServices = DomainServices
 
     class UserSpecification:
         """Specification for user-related business rules."""
@@ -140,105 +144,6 @@ class FlextLdapDomain:
                     )
 
             return FlextResult[bool].ok(True)
-
-    class DomainServices:
-        """Domain services implementing business logic."""
-
-        @staticmethod
-        def calculate_user_display_name(user: FlextLdapModels.Entry) -> str:
-            """Calculate display name for user based on domain rules."""
-            # Priority: displayName > givenName + sn > cn > uid
-            if user.display_name:
-                return user.display_name
-
-            if user.given_name and user.sn:
-                return f"{user.given_name} {user.sn}"
-
-            if user.cn:
-                return user.cn
-
-            return user.uid or "Unknown User"
-
-        @staticmethod
-        def determine_user_status(user: FlextLdapModels.Entry) -> str:
-            """Determine user status based on LDAP attributes."""
-            # Check for account lock attributes
-            lock_attrs = [
-                "nsAccountLock",
-                "userAccountControl",
-                "ds-pwp-account-disabled",
-            ]
-
-            for attr in lock_attrs:
-                value = user.additional_attributes.get(attr)
-                if value:
-                    if isinstance(value, str) and value.lower() in {"true", "1", "yes"}:
-                        return "locked"
-                    if isinstance(value, int) and value & 2:  # ADS_UF_ACCOUNTDISABLE
-                        return "disabled"
-
-            # Check password expiry
-            pwd_expiry = user.additional_attributes.get("pwdChangedTime")
-            if pwd_expiry:
-                # Simplified check - in real implementation would compare with policy
-                return "active"
-
-            return "active"  # Default to active
-
-        @staticmethod
-        def validate_group_membership_rules(
-            user: FlextLdapModels.Entry,
-            group: FlextLdapModels.Entry,
-        ) -> FlextResult[bool]:
-            """Validate if user can be member of group based on business rules."""
-            # Example business rule: users must have email for certain groups
-            if group.cn and "REDACTED_LDAP_BIND_PASSWORD" in group.cn.lower() and not user.mail:
-                return FlextResult[bool].fail(
-                    "Admin group members must have email addresses",
-                )
-
-            # Example business rule: users must be active
-            if not user.is_active():
-                return FlextResult[bool].fail(
-                    "Inactive users cannot be added to groups",
-                )
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def generate_unique_username(
-            base_name: str,
-            existing_users: list[FlextLdapModels.Entry],
-            max_attempts: int = 100,
-        ) -> FlextResult[str]:
-            """Generate unique username based on domain rules."""
-            if not base_name:
-                return FlextResult[str].fail("Base name cannot be empty")
-
-            # Normalize base name
-            username = base_name.lower().replace(" ", "_")
-
-            # Remove invalid characters
-
-            username = re.sub(r"[^a-zA-Z0-9_-]", "", username)
-
-            if not username:
-                return FlextResult[str].fail("Base name contains no valid characters")
-
-            # Check if base username is available
-            existing_uids = {u.uid for u in existing_users if u.uid}
-            if username not in existing_uids:
-                return FlextResult[str].ok(username)
-
-            # Generate unique username with number suffix
-            for i in range(1, max_attempts):
-                candidate = f"{username}{i}"
-                if candidate not in existing_uids:
-                    return FlextResult[str].ok(candidate)
-
-            return FlextResult[str].fail(
-                f"Could not generate unique username after {max_attempts} attempts",
-            )
 
 
 __all__ = [
