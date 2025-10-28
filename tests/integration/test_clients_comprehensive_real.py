@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 
 @pytest.mark.docker
@@ -96,7 +97,7 @@ class TestClientsCRUDOperations:
 
     def test_modify_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test modifying entry."""
-        changes = FlextLdapModels.EntryChanges(description=["Updated description"])
+        changes = FlextLdifModels.EntryChanges(description=["Updated description"])
         result = shared_ldap_client.modify_entry(
             dn="cn=admin,dc=flext,dc=local",
             changes=changes,

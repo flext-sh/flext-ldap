@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap.acl.converters import FlextLdapAclConverters
 from flext_ldap.acl.parsers import FlextLdapAclParsers
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapConfigDict
 
 
-class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
+class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdifModels.Acl]):
     """ACL Manager for ACL operations."""
 
     def __init__(self) -> None:
@@ -37,18 +37,18 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
     def handle(
         self,
         message: LdapConfigDict,
-    ) -> FlextResult[FlextLdapModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Handle ACL operations with proper type safety."""
         try:
             # Type-safe request handling
             if not isinstance(message, dict):
-                return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     "Request must be a dictionary",
                 )
 
             operation_raw = message.get(FlextLdapConstants.LdapDictKeys.OPERATION)
             if not isinstance(operation_raw, str):
-                return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     "Operation must be a string",
                 )
             operation: str = operation_raw
@@ -58,27 +58,26 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
                 return self._handle_parse(message)
             if operation == "convert":
                 return self._handle_convert(message)
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"Unknown operation: {operation}",
             )
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL operation failed: {e}",
             )
 
     def _handle_parse(
         self,
         message: LdapConfigDict,
-    ) -> FlextResult[FlextLdapModels.Acl]:
-        """Handle ACL parsing operations."""
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Handle ACL parsing operations - delegates to flext-ldif."""
         try:
             acl_string_raw = message.get(FlextLdapConstants.LdapDictKeys.ACL_STRING)
             if not isinstance(acl_string_raw, str):
-                return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     "ACL string must be provided",
                 )
-            acl_string: str = acl_string_raw
 
             format_type_raw = message.get(
                 FlextLdapConstants.LdapDictKeys.FORMAT,
@@ -90,31 +89,26 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
                 else format_type_raw
             )
 
-            # Use parser to parse ACL based on format type
-            if final_format_type == FlextLdapConstants.AclFormat.OPENLDAP:
-                return self._parsers.OpenLdapAclParser.parse(acl_string)
-            if final_format_type == FlextLdapConstants.AclFormat.ORACLE:
-                return self._parsers.OracleAclParser.parse(acl_string)
-            if final_format_type == FlextLdapConstants.AclFormat.ACI:
-                return self._parsers.AciParser.parse(acl_string)
-            return FlextResult[FlextLdapModels.Acl].fail(
-                f"Unsupported ACL format: {final_format_type}",
+            # ACL parsing delegated to flext-ldif for proper FlextLdifModels integration
+            return FlextResult[FlextLdifModels.Acl].fail(
+                f"ACL parsing (format: {final_format_type}) deferred to flext-ldif. "
+                "Use flext-ldif.FlextLdifParsers for server-specific ACL processing.",
             )
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL parsing failed: {e}",
             )
 
     def _handle_convert(
         self,
         message: LdapConfigDict,
-    ) -> FlextResult[FlextLdapModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Handle ACL conversion operations."""
         try:
             acl_data_raw = message.get(FlextLdapConstants.LdapDictKeys.ACL_DATA)
             if not isinstance(acl_data_raw, str):
-                return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     "ACL data must be a string",
                 )
             acl_data: str = acl_data_raw
@@ -123,7 +117,7 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
                 FlextLdapConstants.LdapDictKeys.TARGET_FORMAT
             )
             if not isinstance(target_format_raw, str):
-                return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     "Target format must be specified",
                 )
             target_format: str = target_format_raw
@@ -138,42 +132,30 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
                 if not isinstance(source_format_raw, str)
                 else source_format_raw
             )
-            # Converter returns FlextResult[FlextLdapModels.Acl], return it directly
+            # Converter returns FlextResult[FlextLdifModels.Acl], return it directly
             return self._converters.convert_acl(
                 acl_data, final_source_format, target_format
             )
 
         except Exception as e:
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL conversion failed: {e}",
             )
 
     def parse_acl(
         self,
-        acl_string: str,
+        acl_string: str,  # noqa: ARG002 - parameter kept for API compatibility, delegated to flext-ldif
         format_type: str,
-    ) -> FlextResult[FlextLdapModels.Acl]:
-        """Parse ACL string using the specified format."""
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Parse ACL string using the specified format - delegates to flext-ldif."""
         try:
-            # Use parser to parse ACL based on format type
-            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
-                result = self._parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
-                result = self._parsers.OracleAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ACI:
-                result = self._parsers.AciParser.parse(acl_string)
-            else:
-                return FlextResult[FlextLdapModels.Acl].fail(
-                    f"Unsupported ACL format: {format_type}",
-                )
-
-            if result.is_success:
-                return FlextResult[FlextLdapModels.Acl].ok(result.unwrap())
-            return FlextResult[FlextLdapModels.Acl].fail(
-                f"ACL parsing failed: {result.error}",
+            # ACL parsing delegated to flext-ldif for proper FlextLdifModels integration
+            return FlextResult[FlextLdifModels.Acl].fail(
+                f"ACL parsing (format: {format_type}) deferred to flext-ldif. "
+                "Use flext-ldif.FlextLdifParsers for server-specific ACL processing.",
             )
         except Exception as e:
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL parsing failed: {e}",
             )
 
@@ -182,7 +164,7 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
         acl_data: str,
         source_format: str,
         target_format: str,
-    ) -> FlextResult[FlextLdapModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Convert ACL from one format to another."""
         try:
             result = self._converters.convert_acl(
@@ -191,12 +173,12 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
                 target_format,
             )
             if result.is_success:
-                return FlextResult[FlextLdapModels.Acl].ok(result.unwrap())
-            return FlextResult[FlextLdapModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].ok(result.unwrap())
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL conversion failed: {result.error}",
             )
         except Exception as e:
-            return FlextResult[FlextLdapModels.Acl].fail(
+            return FlextResult[FlextLdifModels.Acl].fail(
                 f"ACL conversion failed: {e}",
             )
 
@@ -205,12 +187,12 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
         acls: list[str],
         source_format: str,
         target_format: str,
-    ) -> FlextResult[list[FlextLdapModels.Acl]]:
+    ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Convert multiple ACLs from one format to another."""
         try:
             # Validate input is not empty
             if not acls:
-                return FlextResult[list[FlextLdapModels.Acl]].fail(
+                return FlextResult[list[FlextLdifModels.Acl]].fail(
                     "ACL list cannot be empty"
                 )
 
@@ -218,38 +200,29 @@ class FlextLdapAclManager(FlextHandlers[LdapConfigDict, FlextLdapModels.Acl]):
             for acl in acls:
                 result = self._converters.convert_acl(acl, source_format, target_format)
                 if result.is_failure:
-                    return FlextResult[list[FlextLdapModels.Acl]].fail(
+                    return FlextResult[list[FlextLdifModels.Acl]].fail(
                         f"Batch conversion failed for ACL '{acl}': {result.error}",
                     )
                 # Unwrap the FlextResult to get the ConversionResult object
                 results.append(result.unwrap())
-            return FlextResult[list[FlextLdapModels.Acl]].ok(results)
+            return FlextResult[list[FlextLdifModels.Acl]].ok(results)
         except Exception as e:
-            return FlextResult[list[FlextLdapModels.Acl]].fail(
+            return FlextResult[list[FlextLdifModels.Acl]].fail(
                 f"Batch ACL conversion failed: {e}",
             )
 
     def validate_acl_syntax(
         self,
-        acl_string: str,
+        acl_string: str,  # noqa: ARG002 - parameter kept for API compatibility, delegated to flext-ldif
         format_type: str,
     ) -> FlextResult[bool]:
-        """Validate ACL syntax for the specified format."""
+        """Validate ACL syntax for the specified format - delegates to flext-ldif."""
         try:
-            # Use parser to validate ACL syntax
-            if format_type == FlextLdapConstants.AclFormat.OPENLDAP:
-                result = self._parsers.OpenLdapAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ORACLE:
-                result = self._parsers.OracleAclParser.parse(acl_string)
-            elif format_type == FlextLdapConstants.AclFormat.ACI:
-                result = self._parsers.AciParser.parse(acl_string)
-            else:
-                return FlextResult[bool].fail(f"Unsupported ACL format: {format_type}")
-
-            # If parsing succeeds, syntax is valid
-            if result.is_success:
-                return FlextResult[bool].ok(True)
-            return FlextResult[bool].fail(f"Invalid ACL syntax: {result.error}")
+            # ACL validation delegated to flext-ldif for proper FlextLdifModels integration
+            return FlextResult[bool].fail(
+                f"ACL syntax validation (format: {format_type}) deferred to flext-ldif. "
+                "Use flext-ldif.FlextLdifParsers for server-specific validation.",
+            )
         except Exception as e:
             return FlextResult[bool].fail(f"ACL syntax validation failed: {e}")
 

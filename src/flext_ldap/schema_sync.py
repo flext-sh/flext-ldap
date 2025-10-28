@@ -360,7 +360,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                 )
 
                 if not search_result or not ldap_conn.entries:
-                    self.logger.warning(
+                    self.logger.info(
                         "Schema discovery via search failed, will treat all definitions as new"
                     )
                     # Return empty schema - all definitions will be treated as new

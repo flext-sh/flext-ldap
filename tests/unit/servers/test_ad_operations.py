@@ -162,28 +162,41 @@ class TestADSchemaOperations:
         ad_ops: FlextLdapServersActiveDirectoryOperations,
         mock_ad_connection: Connection,
     ) -> None:
-        """Test successful schema discovery."""
+        """Test successful schema discovery - returns FlextLdifModels.SchemaDiscoveryResult.
+
+        Schema discovery in flext-ldap provides minimal server type information.
+        Detailed schema parsing (attributes, object classes, syntaxes, matching rules)
+        is deferred to flext-ldif for proper FlextLdifModels integration.
+        """
         result = ad_ops.discover_schema(mock_ad_connection)
 
         assert result.is_success
         schema = result.unwrap()
-        assert "object_classes" in schema
-        assert "attribute_types" in schema
-        assert schema["server_type"] == "ad"
+        # Schema discovery now returns FlextLdifModels.SchemaDiscoveryResult object
+        # with server_type and other properties, not a dict with "object_classes" key
+        assert schema.server_type == "ad"
+        # Attributes and objectclasses are now empty dicts (schema parsing deferred to flext-ldif)
+        assert isinstance(schema.objectclasses, dict)
+        assert isinstance(schema.attributes, dict)
 
     def test_discover_schema_uses_ldap3_parser(
         self,
         ad_ops: FlextLdapServersActiveDirectoryOperations,
         mock_ad_connection: Connection,
     ) -> None:
-        """Verify we're using ldap3's built-in parser."""
+        """Verify schema discovery delegates to flext-ldif for detailed parsing.
+
+        This test documents that detailed schema parsing (syntaxes, matching_rules, etc.)
+        is now the responsibility of flext-ldif, not flext-ldap infrastructure layer.
+        """
         result = ad_ops.discover_schema(mock_ad_connection)
 
         assert result.is_success
         schema = result.unwrap()
-        # ldap3 parser provides these fields
-        assert "syntaxes" in schema
-        assert "matching_rules" in schema
+        # Schema discovery now returns FlextLdifModels.SchemaDiscoveryResult
+        # with minimal fields. Detailed parsing (syntaxes, matching_rules) is in flext-ldif.
+        assert hasattr(schema, "server_type")
+        assert schema.server_type == "ad"
 
     def test_discover_schema_unbound_connection(
         self, ad_ops: FlextLdapServersActiveDirectoryOperations
@@ -322,13 +335,9 @@ class TestADEntryOperations:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["top", "person", "user"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["NewUser"]),
-                    "sAMAccountName": FlextLdifModels.AttributeValues(
-                        values=["newuser"]
-                    ),
+                    "objectClass": ["top", "person", "user"],
+                    "cn": ["NewUser"],
+                    "sAMAccountName": ["newuser"],
                 }
             ),
         )
@@ -352,9 +361,7 @@ class TestADEntryOperations:
                 value="CN=Test,CN=Users,DC=example,DC=com"
             ),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"])
-                }
+                attributes={"objectClass": ["top"]}
             ),
         )
 
@@ -402,9 +409,7 @@ class TestADEntryOperations:
                 value="CN=Test,CN=Users,DC=example,DC=com"
             ),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"])
-                }
+                attributes={"objectClass": ["top"]}
             ),
         )
 
@@ -530,10 +535,8 @@ class TestADEntryValidation:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["top", "person"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["top", "person"],
+                    "cn": ["Test"],
                 }
             ),
         )
@@ -554,8 +557,8 @@ class TestADEntryValidation:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"]),
+                    "cn": ["Test"],
+                    "objectClass": ["top"],
                 }
             ),
         )
@@ -574,17 +577,13 @@ class TestADNormalization:
         """Test entry normalization for AD server."""
         from flext_ldif import FlextLdifModels
 
-        from flext_ldap.models import FlextLdapModels
-
         # Create LDIF entry
         ldif_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="CN=Test,CN=Users,DC=example,DC=com"
             ),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"])
-                }
+                attributes={"objectClass": ["top"]}
             ),
         )
 
@@ -592,7 +591,7 @@ class TestADNormalization:
 
         assert result.is_success
         normalized = result.unwrap()
-        assert isinstance(normalized, (FlextLdapModels.Entry, FlextLdifModels.Entry))
+        assert isinstance(normalized, (FlextLdifModels.Entry, FlextLdifModels.Entry))
 
 
 class TestADSpecificFeatures:

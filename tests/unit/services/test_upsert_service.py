@@ -1,13 +1,15 @@
-"""Unit tests for FlextLdapUpsertService with real functionality.
+"""Unit tests for FlextLdapUpsertService interface and compliance.
 
-Comprehensive unit tests for FlextLdapUpsertService logic testing:
+Comprehensive unit tests for FlextLdapUpsertService without external dependencies:
 - Service instantiation
 - Skip attributes functionality
 - Return value structure and statistics
 - Error handling patterns
 - FlextResult railway pattern compliance
+- Type annotations and documentation
 
-These tests validate the service logic without requiring Docker/LDAP server.
+These tests validate the service interface without requiring Docker/LDAP server.
+Integration tests with real Docker LDAP operations are in tests/integration/.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

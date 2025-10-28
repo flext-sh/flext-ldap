@@ -15,6 +15,7 @@ import time
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -111,7 +112,7 @@ class TestFlextLdap:
         # Test search method for groups (filtering with objectClass=groupOfNames)
         result = api.search(
             base_dn="dc=test,dc=com",
-            filter_str="(objectClass=groupOfNames)",
+            search_filter="(objectClass=groupOfNames)",
             attributes=["cn", "member"],
         )
         assert isinstance(result, FlextResult)
@@ -119,34 +120,34 @@ class TestFlextLdap:
         # Test search method for general searches
         result = api.search(
             base_dn="dc=test,dc=com",
-            filter_str="(objectClass=*)",
+            search_filter="(objectClass=*)",
             attributes=["cn", "mail"],
         )
         assert isinstance(result, FlextResult)
 
-        # Test search with single=True parameter
+        # Test search with bulk=False parameter
         search_one_result = api.search(
-            base_dn="dc=test,dc=com", filter_str="(objectClass=person)", single=True
+            base_dn="dc=test,dc=com", search_filter="(objectClass=person)", bulk=False
         )
         assert isinstance(search_one_result, FlextResult)
         assert search_one_result.is_failure  # Should fail without connection
 
     @pytest.mark.docker
     @pytest.mark.integration
-    def test_api_search_with_real_connection_single_true(
+    def test_api_search_with_real_connection_bulk_false(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
-        """Test search with single=True using real LDAP connection from Docker."""
+        """Test search with bulk=False using real LDAP connection from Docker."""
         api = FlextLdap()
 
         # Use real client from fixture (connected to Docker LDAP)
         api._client = shared_ldap_client
 
-        # Test successful search with single=True
+        # Test successful search with bulk=False
         result = api.search(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=inetOrgPerson)",
-            single=True,
+            search_filter="(objectClass=inetOrgPerson)",
+            bulk=False,
         )
         assert isinstance(result, FlextResult)
         # Result might be success with entry or None if no entries exist
@@ -155,10 +156,10 @@ class TestFlextLdap:
 
     @pytest.mark.docker
     @pytest.mark.integration
-    def test_api_search_with_real_connection_single_true_no_results(
+    def test_api_search_with_real_connection_bulk_false_no_results(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
-        """Test search with single=True and no results using real Docker LDAP."""
+        """Test search with bulk=False and no results using real Docker LDAP."""
         api = FlextLdap()
 
         # Use real client from fixture (connected to Docker LDAP)
@@ -167,8 +168,8 @@ class TestFlextLdap:
         # Search for non-existent entries
         result = api.search(
             base_dn="dc=flext,dc=local",
-            filter_str="(cn=nonexistent_entry_12345)",
-            single=True,
+            search_filter="(cn=nonexistent_entry_12345)",
+            bulk=False,
         )
         assert isinstance(result, FlextResult)
         # Should succeed but return None (no results)
@@ -643,7 +644,7 @@ class TestFlextLdapComprehensive:
             result = api.client.connect(
                 server_uri="ldap://localhost:389",
                 bind_dn="cn=admin,dc=example,dc=com",
-                password="password"
+                password="password",
             )
             # The connect will proceed since parameters are valid,
             # but will fail on actual connection attempt (no LDAP server)
@@ -813,9 +814,8 @@ class TestFlextLdapComprehensive:
         assert len(validation_data["issues"]) == 0
 
         # Test validation with entry
-        from flext_ldap.models import FlextLdapModels
 
-        entry = FlextLdapModels.Entry(
+        entry = FlextLdifModels.Entry(
             dn="cn=test,dc=com",
             entry_type="user",
             object_classes=["person"],

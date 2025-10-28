@@ -181,11 +181,6 @@ class FlextLdapConstants(FlextConstants):
             "memberOf",
         ]
 
-        @classmethod
-        def get_group_attributes(cls) -> list[str]:
-            """Get all standard group attributes."""
-            return cls.ALL_GROUP_ATTRS.copy()
-
     # =========================================================================
     # SEARCH FILTERS - Consolidated from Filters class
     # =========================================================================
@@ -346,9 +341,6 @@ class FlextLdapConstants(FlextConstants):
         GIVEN_NAME: Final[str] = "given_name"
         USER_PASSWORD: Final[str] = "user_password"
 
-    # Alias for backward compatibility
-    DictKeys = LdapDictKeys
-
     # =========================================================================
     # TYPE DEFINITIONS (moved from module level)
     # =========================================================================
@@ -444,9 +436,6 @@ class FlextLdapConstants(FlextConstants):
             "openldap", "oracle", "aci", "active_directory", "unified", "auto"
         ]
 
-    # Re-export AclType for backward compatibility
-    AclType = Types.AclType
-
     # =========================================================================
     # ACL PARSING CONSTANTS
     # =========================================================================
@@ -475,18 +464,10 @@ class FlextLdapConstants(FlextConstants):
         CURRENT_VERSION: Final[str] = "0.9.0"
         VERSION_INFO: Final[tuple[int | str, ...]] = (0, 9, 0)
 
-        @classmethod
-        def get_version(cls) -> str:
-            """Get current version."""
-            return cls.CURRENT_VERSION
 
-        @classmethod
-        def get_version_info(cls) -> tuple[int | str, ...]:
-            """Get version info tuple."""
-            return cls.VERSION_INFO
-
-
-# Make constants available at module level for backward compatibility
+# =========================================================================
+# MODULE-LEVEL TYPE ALIASES - Convenient imports from FlextLdapConstants.Types
+# =========================================================================
 AclType = FlextLdapConstants.Types.AclType
 AuthenticationMethod = FlextLdapConstants.Types.AuthenticationMethod
 ConnectionState = FlextLdapConstants.Types.ConnectionState
@@ -495,6 +476,7 @@ ObjectClassKind = FlextLdapConstants.Types.ObjectClassKind
 OperationType = FlextLdapConstants.Types.OperationType
 SecurityLevel = FlextLdapConstants.Types.SecurityLevel
 UpdateStrategy = FlextLdapConstants.Types.UpdateStrategy
+
 
 __all__ = [
     "AclType",

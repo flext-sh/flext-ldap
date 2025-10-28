@@ -92,11 +92,11 @@ class FlextLdapServersFactory(FlextService[None]):
             if server_type_lower in self._server_registry:
                 operations_class = self._server_registry[server_type_lower]
                 operations_instance = operations_class()
-                self.logger.info(
+                self.logger.debug(
                     "Server operations created",
                     extra={
                         "server_type": server_type_lower,
-                        "class": operations_class.__name__,
+                        "class_name": operations_class.__name__,
                     },
                 )
                 return FlextResult[FlextLdapServersBaseOperations].ok(
@@ -104,7 +104,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 )
 
             # Fallback to generic
-            self.logger.warning(
+            self.logger.debug(
                 "Unknown server type, using generic operations",
                 extra={"server_type": server_type_lower},
             )
@@ -138,7 +138,7 @@ class FlextLdapServersFactory(FlextService[None]):
 
         """
         if not entries:
-            self.logger.warning("No entries provided, using generic operations")
+            self.logger.debug("No entries provided, using generic operations")
             return FlextResult[FlextLdapServersBaseOperations].ok(
                 FlextLdapServersGenericOperations(),
             )
@@ -146,9 +146,9 @@ class FlextLdapServersFactory(FlextService[None]):
         # Convert entries to LDIF content
         ldif_write_result = self._ldif.write(entries)
         if ldif_write_result.is_failure:
-            self.logger.warning(
+            self.logger.debug(
                 "Entries to LDIF conversion failed, using generic operations",
-                extra={"error": ldif_write_result.error},
+                extra={"error": str(ldif_write_result.error)},
             )
             return FlextResult[FlextLdapServersBaseOperations].ok(
                 FlextLdapServersGenericOperations(),
@@ -160,9 +160,9 @@ class FlextLdapServersFactory(FlextService[None]):
         api = FlextLdif()
         detection_result = api.detect_server_type(ldif_content=ldif_content)
         if detection_result.is_failure:
-            self.logger.warning(
+            self.logger.debug(
                 "Server type detection failed, using generic operations",
-                extra={"error": detection_result.error},
+                extra={"error": str(detection_result.error)},
             )
             return FlextResult[FlextLdapServersBaseOperations].ok(
                 FlextLdapServersGenericOperations(),
@@ -170,7 +170,7 @@ class FlextLdapServersFactory(FlextService[None]):
 
         detected_result = detection_result.unwrap()
         detected_type = detected_result.detected_server_type
-        self.logger.info(
+        self.logger.debug(
             "Server type detected from entries",
             extra={"server_type": detected_type, "entry_count": len(entries)},
         )
@@ -224,9 +224,7 @@ class FlextLdapServersFactory(FlextService[None]):
             )
 
             if not success or not connection.entries:
-                self.logger.warning(
-                    "Root DSE query failed, unable to detect server type",
-                )
+                self.logger.debug("Root DSE query failed, unable to detect server type")
                 return FlextResult[str].ok("generic")
 
             entry = connection.entries[0]
@@ -243,9 +241,9 @@ class FlextLdapServersFactory(FlextService[None]):
                 else:
                     detected_type = "openldap2"  # Default to 2.x
 
-                self.logger.info(
+                self.logger.debug(
                     "OpenLDAP detected from root DSE",
-                    extra={"version": vendor_version, "type": str(detected_type)},
+                    extra={"version": vendor_version, "detected_type": detected_type},
                 )
                 return FlextResult[str].ok(detected_type)
 
@@ -260,9 +258,9 @@ class FlextLdapServersFactory(FlextService[None]):
                 else:
                     detected_type = "oid"  # OID uses traditional structure
 
-                self.logger.info(
+                self.logger.debug(
                     "Oracle directory server detected from root DSE",
-                    extra={"vendor": vendor_name, "type": detected_type},
+                    extra={"vendor": vendor_name, "detected_type": detected_type},
                 )
                 return FlextResult[str].ok(detected_type)
 
@@ -271,11 +269,11 @@ class FlextLdapServersFactory(FlextService[None]):
                 entry,
                 "defaultNamingContext",
             ):
-                self.logger.info("Active Directory detected from root DSE")
+                self.logger.debug("Active Directory detected from root DSE")
                 return FlextResult[str].ok("ad")
 
             # Generic fallback
-            self.logger.info(
+            self.logger.debug(
                 "Generic LDAP server detected",
                 extra={"vendor": vendor_name or "unknown"},
             )
@@ -313,9 +311,9 @@ class FlextLdapServersFactory(FlextService[None]):
             # Detect server type from root DSE
             detection_result = self.detect_server_type_from_root_dse(connection)
             if detection_result.is_failure:
-                self.logger.warning(
+                self.logger.debug(
                     "Server detection from connection failed, using generic",
-                    extra={"error": detection_result.error},
+                    extra={"error": str(detection_result.error)},
                 )
                 return FlextResult[FlextLdapServersBaseOperations].ok(
                     FlextLdapServersGenericOperations(),

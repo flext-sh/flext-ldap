@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextProtocols
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap, FlextLdapModels
 
@@ -57,7 +58,9 @@ class TestFlextLdapHandlerProtocol:
         ]
 
         for operation in ldap_operations:
-            assert api.can_handle(operation) is True, f"Should handle '{operation}' operation"
+            assert api.can_handle(operation) is True, (
+                f"Should handle '{operation}' operation"
+            )
 
     def test_can_handle_with_uppercase_operations(self) -> None:
         """Test can_handle() is case-insensitive for string operations."""
@@ -85,11 +88,11 @@ class TestFlextLdapHandlerProtocol:
         assert api.can_handle(FlextLdapModels.SearchResponse) is True
 
     def test_can_handle_with_entry_model(self) -> None:
-        """Test can_handle() with FlextLdapModels.Entry type."""
+        """Test can_handle() with FlextLdifModels.Entry type."""
         api = FlextLdap()
 
-        # Test FlextLdapModels.Entry
-        assert api.can_handle(FlextLdapModels.Entry) is True
+        # Test FlextLdifModels.Entry
+        assert api.can_handle(FlextLdifModels.Entry) is True
 
     def test_can_handle_with_unknown_string_operation(self) -> None:
         """Test can_handle() returns False for unknown string operations."""
@@ -131,12 +134,14 @@ class TestFlextLdapHandlerProtocol:
         assert "message_type" in params
 
         # Should return bool
-        assert method_sig.return_annotation in (bool, "bool", None)
+        assert method_sig.return_annotation in {bool, "bool", None}
 
     def test_handler_protocol_inheritance(self) -> None:
         """Test that FlextLdap implements Handler protocol."""
         # Due to runtime protocol behavior, check if it implements the protocol interface
-        assert hasattr(FlextLdap, "can_handle"), "FlextLdap should define can_handle method"
+        assert hasattr(FlextLdap, "can_handle"), (
+            "FlextLdap should define can_handle method"
+        )
 
         # Check that it's a method
         api = FlextLdap()
@@ -190,7 +195,7 @@ class TestFlextLdapHandlerProtocol:
 
         # Should be castable to Handler protocol
         handler: FlextProtocols.Handler[object] = cast(
-            FlextProtocols.Handler[object], api
+            "FlextProtocols.Handler[object]", api
         )
 
         # Should have can_handle method
@@ -208,8 +213,8 @@ class TestFlextLdapHandlerProtocol:
 
         # Both should handle same operations
         assert api1.can_handle("search") == api2.can_handle("search")
-        assert api1.can_handle(FlextLdapModels.Entry) == api2.can_handle(
-            FlextLdapModels.Entry
+        assert api1.can_handle(FlextLdifModels.Entry) == api2.can_handle(
+            FlextLdifModels.Entry
         )
 
 

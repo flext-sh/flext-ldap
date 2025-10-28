@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap.clients import FlextLdapClients
@@ -146,7 +147,9 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_with_request(request)
         assert result.is_failure
         assert result.error is not None
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_search_users_not_connected(self) -> None:
         """Test search_users when not connected."""
@@ -155,7 +158,9 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_users("dc=test,dc=com", "(objectClass=person)")
         assert result.is_failure
         assert result.error is not None
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups when not connected."""
@@ -164,7 +169,9 @@ class TestFlextLdapClientsComprehensive:
         result = client.search_groups("dc=test,dc=com", "(objectClass=group)")
         assert result.is_failure
         assert result.error is not None
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_get_user_not_connected(self) -> None:
         """Test get_user when not connected."""
@@ -190,7 +197,9 @@ class TestFlextLdapClientsComprehensive:
         )
         assert result.is_failure
         assert result.error is not None
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_create_user_not_connected(self) -> None:
         """Test create_user when not connected."""
@@ -323,7 +332,9 @@ class TestFlextLdapClientsComprehensive:
         )
         assert result.is_failure
         assert result.error is not None
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_update_user_attributes_not_connected(self) -> None:
         """Test update_user_attributes when not connected."""
@@ -445,11 +456,17 @@ class TestFlextLdapClientsComprehensive:
         """
         client = FlextLdapClients()
 
-        # Create a proper FlextLdapModels.Entry with required fields populated
-        entry = FlextLdapModels.Entry(
-            dn="cn=testuser,dc=test,dc=com",
-            attributes={"cn": ["Test User"], "uid": ["testuser"], "sn": ["User"]},
-            object_classes=["person"],
+        # Create a proper FlextLdifModels.Entry with required fields populated
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=test,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["Test User"],
+                    "uid": ["testuser"],
+                    "sn": ["User"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         # This should return a successful result
@@ -461,21 +478,24 @@ class TestFlextLdapClientsComprehensive:
         client = FlextLdapClients()
 
         # Mock entry with empty attributes
-        # The mock must properly simulate FlextLdapModels.Entry behavior
-        class MockEntry(FlextLdapModels.Entry):
-            """Mock Entry that behaves like FlextLdapModels.Entry."""
+        # The mock must properly simulate FlextLdifModels.Entry behavior
+        class MockEntry(FlextLdifModels.Entry):
+            """Mock Entry that behaves like FlextLdifModels.Entry."""
 
             def __init__(self) -> None:
-                # Initialize with minimal required data
+                # Initialize with minimal required data using modern API
                 super().__init__(
-                    dn="cn=testgroup,dc=test,dc=com",
-                    attributes={},
-                    object_classes=["groupOfNames"],
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=testgroup,dc=test,dc=com"
+                    ),
+                    attributes=FlextLdifModels.LdifAttributes(
+                        attributes={"objectClass": ["groupOfNames"]}
+                    ),
                 )
 
             def __getitem__(self, key: str) -> LdapAttributeValue | None:
                 """Return attribute value or empty list/string."""
-                value = self.attributes.get(key, [])
+                value = self.attributes.attributes.get(key, [])
                 # Return empty string for single-value attributes like 'cn'
                 if key == "cn":
                     return "" if not value else value[0]
@@ -485,9 +505,13 @@ class TestFlextLdapClientsComprehensive:
         group = client._create_group_from_entry(MockEntry())
 
         assert group is not None
-        assert group.dn == "cn=testgroup,dc=test,dc=com"
-        assert not group.cn  # Should be empty string when not in attributes
-        assert group.member_dns == []  # Should be empty list when not in attributes
+        assert group.dn.value == "cn=testgroup,dc=test,dc=com"
+        # Modern Entry API: verify attributes using attributes.attributes dict
+        assert (
+            group.attributes.attributes.get("cn") == [""]
+            or group.attributes.attributes.get("cn") == []
+        )
+        assert group.attributes.attributes.get("member") == []
 
     def test_get_server_capabilities_not_connected(self) -> None:
         """Test get_server_capabilities when not connected."""
@@ -1078,7 +1102,9 @@ class TestFlextLdapClientsSearchUnit:
         )
 
         assert result.is_failure
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
     def test_search_groups_not_connected(self) -> None:
         """Test search_groups fails when not connected."""
@@ -1090,7 +1116,9 @@ class TestFlextLdapClientsSearchUnit:
         )
 
         assert result.is_failure
-        assert "connection" in result.error.lower() and "available" in result.error.lower()
+        assert (
+            "connection" in result.error.lower() and "available" in result.error.lower()
+        )
 
 
 @pytest.mark.integration

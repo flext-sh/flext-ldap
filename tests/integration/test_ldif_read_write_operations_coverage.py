@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 
 @pytest.mark.integration
@@ -102,7 +103,7 @@ class TestLdapReadWriteBasic:
         # Then modify it
         if add_result.is_success or add_result.is_failure:
             # If added or already exists, try to modify
-            changes = FlextLdapModels.EntryChanges()
+            changes = FlextLdifModels.EntryChanges()
             changes.mail = ["test@example.com"]
             modify_result = shared_ldap_client.modify_entry(
                 dn="cn=modifytest1,dc=flext,dc=local",
@@ -277,7 +278,7 @@ class TestLdapFlexResultPattern:
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test modify_entry returns FlextResult."""
-        changes = FlextLdapModels.EntryChanges()
+        changes = FlextLdifModels.EntryChanges()
         changes.description = ["Modified"]
         result = shared_ldap_client.modify_entry(
             dn="cn=admin,dc=flext,dc=local",

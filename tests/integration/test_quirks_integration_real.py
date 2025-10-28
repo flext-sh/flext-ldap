@@ -86,10 +86,10 @@ class TestServerTypeDetectionReal:
         ldif_entries: list[FlextLdifModels.Entry] = []
 
         for ldap_entry in search_result.value:
-            # ldap_entry is a FlextLdapModels.Entry object
+            # ldap_entry is a FlextLdifModels.Entry object
             dn_str = str(ldap_entry.dn)
 
-            # Build attribute dict for FlextLdif entry using FlextLdapModels.Entry attributes
+            # Build attribute dict for FlextLdif entry using FlextLdifModels.Entry attributes
             attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
 
             # Add objectClass from the Entry's object_classes attribute

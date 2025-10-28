@@ -14,6 +14,7 @@ from __future__ import annotations
 import time
 
 import pytest
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapSchema
 
@@ -40,7 +41,7 @@ class TestSharedSchemaDiscovery:
 
         # Verify schema data structure
         schema_data = schema_result.value
-        assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_data, FlextLdifModels.SchemaDiscoveryResult)
 
     def test_detect_server_type_with_shared_server(
         self,
@@ -54,7 +55,7 @@ class TestSharedSchemaDiscovery:
         )
 
         schema_result_obj = schema_result.value
-        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
 
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
         server_type = schema_result_obj.server_type
@@ -79,7 +80,7 @@ class TestSharedSchemaDiscovery:
         )
 
         schema_result_obj = schema_result.value
-        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
 
         # Verify server info contains expected fields
         server_info = schema_result_obj.server_info
@@ -104,7 +105,7 @@ class TestSharedSchemaDiscovery:
         )
 
         schema_result_obj = schema_result.value
-        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
 
         # Verify quirks are detected
         quirks = schema_result_obj.server_quirks
@@ -126,7 +127,7 @@ class TestSharedSchemaDiscovery:
         )
 
         schema_result_obj = schema_result.value
-        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
 
         # Test quirks detector directly
         quirks_detector = FlextLdapSchema.GenericQuirksDetector()
@@ -192,7 +193,7 @@ class TestSharedSchemaDiscovery:
 
             schema_data = schema_result.value
             assert schema_data is not None
-            assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
+            assert isinstance(schema_data, FlextLdifModels.SchemaDiscoveryResult)
 
         finally:
             client.unbind()
@@ -209,7 +210,7 @@ class TestSharedSchemaDiscovery:
         )
 
         schema_result_obj = schema_result.value
-        assert isinstance(schema_result_obj, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
         assert schema_result_obj is not None
 
         # Verify schema components are discovered
@@ -237,7 +238,7 @@ class TestSharedSchemaDiscovery:
 
         schema_data = schema_result.value
         assert schema_data is not None
-        assert isinstance(schema_data, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema_data, FlextLdifModels.SchemaDiscoveryResult)
 
         # Schema normalization is not implemented yet
         # Note: normalize_schema method is not implemented in the current client
@@ -276,7 +277,7 @@ class TestSharedUniversalOperations:
 
         # Test modifying the base DN description
         # Create EntryChanges with proper type annotation
-        changes = FlextLdapModels.EntryChanges()
+        changes = FlextLdifModels.EntryChanges()
         changes.description = ["FLEXT Shared Test Organization - Modified by Test"]
         modify_result = shared_ldap_client.modify_entry(
             dn=base_dn,

@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapAclConverters:
@@ -21,7 +21,7 @@ class FlextLdapAclConverters:
     def handle(
         self,
         message: object,
-    ) -> FlextResult[FlextResult[FlextLdapModels.Acl]]:
+    ) -> FlextResult[FlextResult[FlextLdifModels.Acl]]:
         """Handle ACL conversion request."""
         if isinstance(message, dict) and "acl_content" in message:
             message_dict = message
@@ -35,8 +35,8 @@ class FlextLdapAclConverters:
                     "ACTIVE_DIRECTORY",
                 ),
             )
-            return FlextResult[FlextResult[FlextLdapModels.Acl]].ok(result)
-        return FlextResult[FlextResult[FlextLdapModels.Acl]].fail(
+            return FlextResult[FlextResult[FlextLdifModels.Acl]].ok(result)
+        return FlextResult[FlextResult[FlextLdifModels.Acl]].fail(
             "Invalid ACL conversion request",
         )
 
@@ -45,7 +45,7 @@ class FlextLdapAclConverters:
         _acl_content: str | None,
         source_format: str | None,
         target_format: str | None,
-    ) -> FlextResult[FlextLdapModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Convert ACL between different formats.
 
         Note: Conversion not yet implemented - requires vendor ACL syntax knowledge.
@@ -57,7 +57,7 @@ class FlextLdapAclConverters:
 
         """
         msg = f"ACL conversion {source_format} → {target_format} not implemented"
-        return FlextResult[FlextLdapModels.Acl].fail(msg)
+        return FlextResult[FlextLdifModels.Acl].fail(msg)
 
     class OpenLdapConverter:
         """Convert OpenLDAP ACLs to other formats."""

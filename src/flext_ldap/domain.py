@@ -13,10 +13,10 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.services.domain_service import DomainServices
 
 
 class FlextLdapDomain:
@@ -25,9 +25,6 @@ class FlextLdapDomain:
     Contains domain services, specifications, and business rules that
     implement LDAP-specific domain logic independent of infrastructure.
     """
-
-    # Backward compatibility: DomainServices is now in services module
-    DomainServices = DomainServices
 
     class UserSpecification:
         """Specification for user-related business rules."""
@@ -67,7 +64,7 @@ class FlextLdapDomain:
 
         @staticmethod
         def can_add_member_to_group(
-            group: FlextLdapModels.Entry,
+            group: FlextLdifModels.Entry,
             member_dn: str,
             max_members: int = 1000,
         ) -> FlextResult[bool]:
@@ -76,14 +73,19 @@ class FlextLdapDomain:
                 return FlextResult[bool].fail("Member DN cannot be empty")
 
             # Check current member count
-            member_count = len(group.member_dns) + len(group.unique_member_dns)
+            member_dns = group.attributes.get("member") if group.attributes else []
+            unique_member_dns = (
+                group.attributes.get("uniqueMember") if group.attributes else []
+            )
+            member_count = len(member_dns or []) + len(unique_member_dns or [])
             if member_count >= max_members:
                 return FlextResult[bool].fail(
                     f"Group exceeds maximum members ({max_members})",
                 )
 
             # Check if already a member
-            if group.has_member(member_dn):
+            all_members = (member_dns or []) + (unique_member_dns or [])
+            if member_dn in all_members:
                 return FlextResult[bool].fail("Member is already in the group")
 
             return FlextResult[bool].ok(True)

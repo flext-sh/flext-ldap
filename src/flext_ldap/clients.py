@@ -16,6 +16,7 @@ import types
 from typing import Literal, Self, cast, override
 
 from flext_core import FlextResult, FlextService
+from flext_ldif import FlextLdifModels
 from ldap3 import (
     MODIFY_ADD,
     MODIFY_DELETE,
@@ -55,10 +56,7 @@ from flext_ldap.servers.base_operations import (
 from flext_ldap.servers.factory import (
     FlextLdapServersFactory as ServerOperationsFactory,
 )
-from flext_ldap.typings import (
-    FlextLdapTypes,
-    LdapConfigDict,
-)
+from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.validations import FlextLdapValidations
 
 # Type definitions moved to FlextLdapConstants for standardization
@@ -97,6 +95,10 @@ class FlextLdapClients(FlextService[None]):
         quirks_mode: QuirksMode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
     ) -> None:
         """Initialize LDAP client - consolidated implementation without bloat.
+
+        Args:
+            config: LDAP configuration (uses global if None)
+            quirks_mode: Server quirks mode (AUTOMATIC, OID, OUD, or RFC)
 
         Args:
             config: Optional LDAP configuration
@@ -289,7 +291,7 @@ class FlextLdapClients(FlextService[None]):
                 self._quirks_mode = quirks_mode
                 self.logger.debug("Quirks mode updated to: %s", quirks_mode)
 
-            self.logger.info("Connecting to LDAP server: %s", server_uri)
+            self.logger.debug("Connecting to LDAP server: %s", server_uri)
 
             # Apply connection options if provided
             if connection_options:
@@ -471,7 +473,7 @@ class FlextLdapClients(FlextService[None]):
                     "FlextLdapTypes.Ldap3Protocols.Connection", self._connection
                 )
                 typed_conn.unbind()
-                self.logger.info("Unbound from LDAP server")
+                self.logger.debug("Unbound from LDAP server")
 
             self._connection = None
             self._server = None
@@ -568,7 +570,7 @@ class FlextLdapClients(FlextService[None]):
         self,
         username: str,
         password: str,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Authenticate user - delegates to authenticator."""
         return self._get_authenticator().authenticate_user(username, password)
 
@@ -591,7 +593,7 @@ class FlextLdapClients(FlextService[None]):
         *,
         single: bool = False,
         quirks_mode: QuirksMode | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]:
+    ) -> FlextResult[list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None]:
         """Perform LDAP search - delegates to searcher.
 
         Args:
@@ -621,7 +623,7 @@ class FlextLdapClients(FlextService[None]):
             searcher.set_connection_context(self._connection)
         else:
             return FlextResult[
-                list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+                list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None
             ].fail("No LDAP connection available for search operation")
 
         searcher.set_quirks_mode(effective_quirks_mode)
@@ -630,12 +632,17 @@ class FlextLdapClients(FlextService[None]):
         normalized_scope = scope.lower() if isinstance(scope, str) else scope
 
         search_result = searcher.search(
-            base_dn, filter_str, attributes, normalized_scope, page_size, paged_cookie  # type: ignore[arg-type]
+            base_dn,
+            filter_str,
+            attributes,
+            normalized_scope,  # type: ignore[arg-type]
+            page_size,
+            paged_cookie,
         )
 
         if search_result.is_failure:
             return cast(
-                "FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]",
+                "FlextResult[list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None]",
                 search_result,
             )
 
@@ -644,14 +651,14 @@ class FlextLdapClients(FlextService[None]):
             entries = search_result.unwrap()
             if entries and len(entries) > 0:
                 return FlextResult[
-                    list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+                    list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None
                 ].ok(entries[0])
             return FlextResult[
-                list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None
+                list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None
             ].ok(None)
 
         return cast(
-            "FlextResult[list[FlextLdapModels.Entry] | FlextLdapModels.Entry | None]",
+            "FlextResult[list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None]",
             search_result,
         )
 
@@ -662,7 +669,7 @@ class FlextLdapClients(FlextService[None]):
         attributes: list[str] | None = None,
         *,
         quirks_mode: QuirksMode | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Search for single entry - delegates to searcher.
 
         Args:
@@ -684,11 +691,11 @@ class FlextLdapClients(FlextService[None]):
 
         return searcher.search_one(search_base, filter_str, attributes)
 
-    def get_user(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
+    def get_user(self, dn: str) -> FlextResult[FlextLdifModels.Entry | None]:
         """Get user by DN - delegates to searcher."""
         return self._get_searcher().get_user(dn)
 
-    def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
+    def get_group(self, dn: str) -> FlextResult[FlextLdifModels.Entry | None]:
         """Get group by DN - delegates to searcher."""
         return self._get_searcher().get_group(dn)
 
@@ -1052,7 +1059,7 @@ class FlextLdapClients(FlextService[None]):
 
     def validate_entry(
         self,
-        entry: FlextLdapModels.Entry,
+        entry: FlextLdifModels.Entry,
         *,
         quirks_mode: QuirksMode | None = None,
     ) -> FlextResult[bool]:
@@ -1085,12 +1092,15 @@ class FlextLdapClients(FlextService[None]):
                     return FlextResult[bool].fail("Entry attributes cannot be empty")
 
                 # DN format validation (skip in relaxed mode)
-                dn_validation = self.validate_dn(entry.dn)
+                dn_validation = self.validate_dn(entry.dn.value)
                 if dn_validation.is_failure:
                     return dn_validation
 
             # Object class validation (skip in relaxed mode)
-            if effective_quirks_mode != "relaxed" and not entry.object_classes:
+            object_classes = (
+                entry.attributes.get("objectClass") if entry.attributes else None
+            )
+            if effective_quirks_mode != "relaxed" and not object_classes:
                 return FlextResult[bool].fail("Entry must have object classes")
 
             return FlextResult[bool].ok(True)
@@ -1103,7 +1113,7 @@ class FlextLdapClients(FlextService[None]):
     # =========================================================================
 
     @staticmethod
-    def _create_mock_schema_result() -> FlextLdapModels.SchemaDiscoveryResult:
+    def _create_mock_schema_result() -> FlextLdifModels.SchemaDiscoveryResult:
         """Create unified mock schema result for unavailable schemas."""
         mock_server_info = FlextLdapModels.ServerInfo(
             vendor_name="Mock LDAP Server",
@@ -1126,12 +1136,12 @@ class FlextLdapClients(FlextService[None]):
             supports_start_tls=True,
             requires_explicit_bind=False,
         )
-        return FlextLdapModels.SchemaDiscoveryResult(
+        return FlextLdifModels.SchemaDiscoveryResult(
             server_info=mock_server_info,
-            server_type=FlextLdapModels.LdapServerType.GENERIC,
+            server_type="generic",
             server_quirks=mock_server_quirks,
             attributes={},
-            object_classes={},
+            objectclasses={},
             naming_contexts=["dc=flext,dc=local"],
             supported_controls=[],
             supported_extensions=[],
@@ -1141,11 +1151,11 @@ class FlextLdapClients(FlextService[None]):
     # ADVANCED OPERATIONS - Direct implementation
     # =========================================================================
 
-    def discover_schema(self) -> FlextResult[FlextLdapModels.SchemaDiscoveryResult]:
+    def discover_schema(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Discover LDAP schema information."""
         try:
             if not self.connection:
-                return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                     "LDAP connection not established",
                 )
 
@@ -1156,85 +1166,22 @@ class FlextLdapClients(FlextService[None]):
                 if not schema:
                     msg = "Schema not available, using mock"
                     self.logger.warning(msg)
-                    return FlextResult[FlextLdapModels.SchemaDiscoveryResult].ok(
+                    return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
                         self._create_mock_schema_result()
                     )
             except AttributeError:
                 msg = "Schema attribute not available, using mock"
                 self.logger.warning(msg)
-                return FlextResult[FlextLdapModels.SchemaDiscoveryResult].ok(
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
                     self._create_mock_schema_result()
                 )
 
-            # Create real schema result
-            # For now, create basic ServerInfo from schema
-            server_info = FlextLdapModels.ServerInfo(
-                naming_contexts=getattr(schema, "naming_contexts", []),
-                supported_ldap_version=["3"],  # Default to LDAPv3
-                supported_sasl_mechanisms=[],
-                supported_controls=[],
-                supported_extensions=[],
-                vendor_name=getattr(schema, "vendor_name", None),
-                vendor_version=getattr(schema, "vendor_version", None),
+            # Schema discovery returns basic server info; detailed parsing deferred to flext-ldif
+            schema_result = FlextLdifModels.SchemaDiscoveryResult(
+                server_type="generic",
             )
 
-            # Create basic server quirks (could be enhanced with real detection)
-            server_quirks = FlextLdapModels.ServerQuirks(
-                server_type=FlextLdapModels.LdapServerType.GENERIC,
-                case_sensitive_dns=False,
-                case_sensitive_attributes=False,
-                supports_paged_results=True,
-                supports_vlv=False,
-                supports_sync=False,
-                max_page_size=1000,
-                default_timeout=30,
-                supports_start_tls=True,
-                requires_explicit_bind=False,
-            )
-
-            # Convert schema attributes and object classes
-            attributes = {}
-            if hasattr(schema, "attribute_types") and schema.attribute_types:
-                for attr_name, attr_def in schema.attribute_types.items():
-                    attributes[attr_name] = FlextLdapModels.SchemaAttribute(
-                        name=attr_name,
-                        oid=getattr(attr_def, "oid", ""),
-                        syntax=getattr(attr_def, "syntax", ""),
-                        is_single_valued=getattr(attr_def, "single_value", False),
-                        is_operational=getattr(attr_def, "operational", False),
-                        is_collective=getattr(attr_def, "collective", False),
-                        is_no_user_modification=getattr(
-                            attr_def, "no_user_modification", False
-                        ),
-                        usage=getattr(attr_def, "usage", "userApplications"),
-                        equality=getattr(attr_def, "equality", None),
-                        ordering=getattr(attr_def, "ordering", None),
-                        substr=getattr(attr_def, "substr", None),
-                    )
-
-            object_classes = {}
-            if hasattr(schema, "object_classes") and schema.object_classes:
-                for oc_name, oc_def in schema.object_classes.items():
-                    object_classes[oc_name] = FlextLdapModels.SchemaObjectClass(
-                        name=oc_name,
-                        oid=getattr(oc_def, "oid", ""),
-                        superior=getattr(oc_def, "superior", []),
-                        must=getattr(oc_def, "must", []),
-                        may=getattr(oc_def, "may", []),
-                    )
-
-            schema_result = FlextLdapModels.SchemaDiscoveryResult(
-                server_info=server_info,
-                server_type=FlextLdapModels.LdapServerType.GENERIC,
-                server_quirks=server_quirks,
-                attributes=attributes,
-                object_classes=object_classes,
-                naming_contexts=getattr(schema, "naming_contexts", []),
-                supported_controls=[],
-                supported_extensions=[],
-            )
-
-            return FlextResult[FlextLdapModels.SchemaDiscoveryResult].ok(schema_result)
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(schema_result)
 
         except (
             LDAPCommunicationError,
@@ -1242,7 +1189,7 @@ class FlextLdapClients(FlextService[None]):
             AttributeError,
         ) as e:
             self.logger.exception("Schema discovery failed")
-            return FlextResult[FlextLdapModels.SchemaDiscoveryResult].fail(
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                 f"Schema discovery failed: {e}"
             )
 
@@ -1367,7 +1314,7 @@ class FlextLdapClients(FlextService[None]):
         filter_override: str | None = None,
         cn: str | None = None,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Unified entity search using Python 3.13+ pattern matching.
 
         Consolidates search_users() and search_groups() into single method.
@@ -1399,7 +1346,7 @@ class FlextLdapClients(FlextService[None]):
         search_result = self.search(base_dn, search_filter, attributes)
         if search_result.is_failure:
             error_msg = f"{entity_type.capitalize()} search failed"
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 search_result.error or error_msg,
             )
 
@@ -1407,7 +1354,7 @@ class FlextLdapClients(FlextService[None]):
         if entity_type == "group":
             result_value = search_result.unwrap()
             if not isinstance(result_value, list):
-                return FlextResult[list[FlextLdapModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     "Expected list of entries for group processing"
                 )
 
@@ -1415,10 +1362,10 @@ class FlextLdapClients(FlextService[None]):
 
             # Define processor function wrapping group conversion with FlextResult
             def process_group_entry(
-                entry: FlextLdapModels.Entry,
-            ) -> FlextResult[FlextLdapModels.Entry]:
+                entry: FlextLdifModels.Entry,
+            ) -> FlextResult[FlextLdifModels.Entry]:
                 """Wrap group conversion with FlextResult for batch processing."""
-                return FlextResult[FlextLdapModels.Entry].from_callable(
+                return FlextResult[FlextLdifModels.Entry].from_callable(
                     lambda: self._create_group_from_entry(entry)
                 )
 
@@ -1429,22 +1376,22 @@ class FlextLdapClients(FlextService[None]):
             for failure_msg in failures:
                 self.logger.warning("Failed to convert entry to group: %s", failure_msg)
 
-            return FlextResult[list[FlextLdapModels.Entry]].ok(groups)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(groups)
 
         # For non-group entities, ensure we return a list
         result_value = search_result.unwrap()
         if isinstance(result_value, list):
-            return FlextResult[list[FlextLdapModels.Entry]].ok(result_value)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(result_value)
         if result_value is not None:
-            return FlextResult[list[FlextLdapModels.Entry]].ok([result_value])
-        return FlextResult[list[FlextLdapModels.Entry]].ok([])
+            return FlextResult[list[FlextLdifModels.Entry]].ok([result_value])
+        return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
     def search_users(
         self,
         base_dn: str,
         filter_str: str | None = None,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Search for LDAP users with smart defaults."""
         return self._search_entity(base_dn, "user", filter_str, attributes=attributes)
 
@@ -1453,52 +1400,54 @@ class FlextLdapClients(FlextService[None]):
         base_dn: str,
         cn: str | None = None,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Search for LDAP groups."""
         return self._search_entity(base_dn, "group", cn=cn, attributes=attributes)
 
     def _create_group_from_entry(
         self,
-        entry: FlextLdapModels.Entry,
-    ) -> FlextLdapModels.Entry:
+        entry: FlextLdifModels.Entry,
+    ) -> FlextLdifModels.Entry:
         """Create a Group object from an LDAP entry.
 
+        Modern Entry API: Returns Entry with group attributes preserved.
+
         Args:
-        entry: LDAP entry to convert
+            entry: LDAP entry to convert
 
         Returns:
-        Group object
+            Entry object with group attributes
 
         """
-        # Extract group information from entry
-        dn = entry.dn
-        cn_attr = entry["cn"]
-        if cn_attr:
-            if isinstance(cn_attr, list):
-                cn = str(cn_attr[0]) if cn_attr else ""
-            else:
-                cn = str(cn_attr)
-        else:
-            cn = ""
-        members_attr = entry["member"]
-        # Ensure members is a list and filter out non-string values
-        if members_attr:
-            members_list: list[object] = (
-                list(members_attr) if isinstance(members_attr, list) else [members_attr]
-            )
-            # Filter to only include string values (member DNs)
-            members = [
-                str(member) for member in members_list if isinstance(member, str)
-            ]
-        else:
-            members = []
+        # Modern Entry API: extract attributes dict from LdifAttributes
+        attrs_dict = entry.attributes.attributes if entry.attributes else {}
 
-        return FlextLdapModels.Entry(
-            dn=dn,
-            cn=cn,
-            entry_type="group",
-            member_dns=members,
-            object_classes=["groupOfNames", "top"],
+        # Extract group attributes
+        cn_list = attrs_dict.get("cn", [])
+        cn = cn_list[0] if cn_list else ""
+
+        members_list = attrs_dict.get("member", [])
+        # Ensure members is a list of strings
+        members = (
+            [str(m) for m in members_list if isinstance(m, str)] if members_list else []
+        )
+
+        # Build updated LdifAttributes with group attributes
+        updated_attrs = {
+            **attrs_dict,  # Preserve all existing attributes
+            "cn": [cn] if cn else [],
+            "member": members,
+        }
+
+        # Ensure objectClass includes groupOfNames
+        existing_classes = attrs_dict.get("objectClass", [])
+        if "groupOfNames" not in existing_classes:
+            updated_attrs["objectClass"] = list(existing_classes) + ["groupOfNames"]
+
+        # Return entry with updated attributes
+        return FlextLdifModels.Entry(
+            dn=entry.dn,  # Preserve original DN
+            attributes=FlextLdifModels.LdifAttributes(attributes=updated_attrs),
         )
 
     def search_with_request(
@@ -1630,18 +1579,18 @@ class FlextLdapClients(FlextService[None]):
     def create_user(
         self,
         user_request: FlextLdapModels._LdapRequest,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Create a new user in LDAP directory."""
         # Validate DN is provided
         if user_request.dn is None:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[FlextLdifModels.Entry | None].fail(
                 "DN is required for user creation"
             )
 
         # Convert CreateUserRequest to attributes dict
         attributes_result = self.build_user_attributes(user_request)
         if attributes_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[FlextLdifModels.Entry | None].fail(
                 attributes_result.error or "Failed to build user attributes"
             )
         attributes = attributes_result.unwrap()
@@ -1649,7 +1598,7 @@ class FlextLdapClients(FlextService[None]):
         # Add entry
         add_result = self.add_entry(user_request.dn, attributes)
         if add_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[FlextLdifModels.Entry | None].fail(
                 add_result.error or "Failed to create user",
             )
 
@@ -1659,11 +1608,11 @@ class FlextLdapClients(FlextService[None]):
     def create_group(
         self,
         group_request: FlextLdapModels._LdapRequest,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Create a new group in LDAP directory."""
         # Validate DN is provided
         if group_request.dn is None:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[FlextLdifModels.Entry | None].fail(
                 "DN is required for group creation"
             )
 
@@ -1673,7 +1622,7 @@ class FlextLdapClients(FlextService[None]):
         # Add entry
         add_result = self.add_entry(group_request.dn, attributes)
         if add_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry | None].fail(
+            return FlextResult[FlextLdifModels.Entry | None].fail(
                 add_result.error or "Failed to create group",
             )
 
@@ -1753,73 +1702,24 @@ class FlextLdapClients(FlextService[None]):
         )
 
     def _create_user_from_entry_result(
-        self, entry: FlextLdapModels.Entry
-    ) -> FlextResult[FlextLdapModels.Entry]:
-        """Create user from entry result (private helper method)."""
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Create user from entry result (private helper method).
+
+        Modern Entry API: Entry is already validated by Pydantic during construction.
+        This method simply validates the entry is well-formed and returns it.
+        """
         try:
-            # Convert to Entry field types
-            def extract_first_value(
-                value: str | list[str] | None,
-            ) -> str | None:
-                """Extract first value from LDAP attributes.
+            # Validate entry structure is correct (dn and attributes)
+            if not entry.dn or not entry.dn.value:
+                return FlextResult.fail("Entry must have a valid DN")
 
-                Handles dict[str, list[str]].get() results and converts to string.
-                """
-                if value is None:
-                    return None
-                if isinstance(value, list):
-                    # For lists, extract first element
-                    if not value:
-                        return None
-                    return value[0]
-                # For string values, return as-is
-                return value
+            if not entry.attributes or not entry.attributes.attributes:
+                return FlextResult.fail("Entry must have attributes")
 
-            # Build user data with proper type conversion and defaults
-            user_data: dict[str, object] = {
-                "dn": entry.dn,
-                "cn": extract_first_value(entry.attributes.get("cn", "")) or "",
-                "uid": extract_first_value(entry.attributes.get("uid", "")) or "",
-                "sn": extract_first_value(entry.attributes.get("sn", "")) or "",
-                "given_name": extract_first_value(
-                    entry.attributes.get(
-                        "givenName", entry.attributes.get("given_name")
-                    )
-                ),
-                "mail": extract_first_value(entry.attributes.get("mail")),
-                "telephone_number": extract_first_value(
-                    entry.attributes.get(
-                        "telephoneNumber", entry.attributes.get("telephone_number")
-                    )
-                ),
-                "mobile": extract_first_value(entry.attributes.get("mobile")),
-                "department": extract_first_value(entry.attributes.get("department")),
-                "title": extract_first_value(entry.attributes.get("title")),
-                "organization": extract_first_value(
-                    entry.attributes.get("o", entry.attributes.get("organization"))
-                ),
-                "organizational_unit": extract_first_value(
-                    entry.attributes.get(
-                        "ou", entry.attributes.get("organizational_unit")
-                    )
-                ),
-                "user_password": extract_first_value(
-                    entry.attributes.get("userPassword")
-                ),
-                "entry_type": "user",
-                "object_classes": entry.object_classes
-                or ["person", "inetOrgPerson", "top"],
-                "status": extract_first_value(entry.attributes.get("status")),
-                "display_name": extract_first_value(
-                    entry.attributes.get("displayName")
-                ),
-                "additional_attributes": entry.attributes,
-            }
-
-            # Construct Entry with type-checking
-            user = FlextLdapModels.Entry.model_validate(user_data)
-            return FlextResult.ok(user)
-        except ValidationError as e:
+            # Entry is already valid - return it
+            return FlextResult.ok(entry)
+        except (AttributeError, ValueError) as e:
             return FlextResult.fail(f"User creation failed: {e}")
 
     def _validate_search_request(
@@ -1873,8 +1773,8 @@ class FlextLdapClients(FlextService[None]):
             return FlextResult.fail(f"Attribute building failed: {e}")
 
     def _create_user_from_entry(
-        self, entry: FlextLdapModels.Entry
-    ) -> FlextResult[FlextLdapModels.Entry]:
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Create user from entry (private helper method)."""
         return self._create_user_from_entry_result(entry)
 

@@ -13,6 +13,7 @@ import contextlib
 from typing import cast
 
 from flext_core import FlextModels, FlextResult, FlextService
+from flext_ldif import FlextLdifModels
 from ldap3 import SUBTREE, Connection, Server
 from ldap3.core.exceptions import (
     LDAPBindError,
@@ -28,7 +29,6 @@ from ldap3.core.exceptions import (
 from pydantic import ValidationError
 
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -76,11 +76,11 @@ class FlextLdapAuthentication(FlextService[None]):
         self,
         username: str,
         password: str,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Authenticate user credentials using FlextResults railways pattern.
 
         Note: Protocol specifies FlextResult[bool], but this implementation returns
-        FlextResult[FlextLdapModels.Entry] for richer authentication context.
+        FlextResult[FlextLdifModels.Entry] for richer authentication context.
 
         Args:
         username: Username to authenticate.
@@ -93,19 +93,19 @@ class FlextLdapAuthentication(FlextService[None]):
         # Railway pattern: Chain validation -> search -> bind -> create user
         validation_result = self._validate_connection()
         if validation_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 validation_result.error or "Validation failed",
             )
 
         search_result = self._search_user_by_username(username)
         if search_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 search_result.error or "Search failed",
             )
 
         auth_result = self._authenticate_user_credentials(search_result.value, password)
         if auth_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 auth_result.error or "Authentication failed",
             )
 
@@ -275,11 +275,23 @@ class FlextLdapAuthentication(FlextService[None]):
 
     def _create_user_from_entry_result(
         self,
-        user_entry: FlextLdapTypes.Ldap3Protocols.Entry,
-    ) -> FlextResult[FlextLdapModels.Entry]:
-        """Create user from LDAP entry using railway pattern."""
+        user_entry: FlextLdapTypes.Ldap3Protocols.Entry | FlextLdifModels.Entry,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Create user from LDAP entry using railway pattern.
+
+        Modern API: Accepts both ldap3 entries and FlextLdif entries.
+        """
         try:
-            # Safe attribute getters for different attribute types
+            # Handle both ldap3 Entry and FlextLdif Entry types
+            if isinstance(user_entry, FlextLdifModels.Entry):
+                # Modern Entry API: Already validated, just return it
+                if not user_entry.dn or not user_entry.dn.value:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "Entry must have a valid DN"
+                    )
+                return FlextResult[FlextLdifModels.Entry].ok(user_entry)
+
+            # Legacy ldap3 Entry support: convert to FlextLdif Entry
             def get_single_attr(obj: object, attr: str, default: str = "") -> str:
                 """Get single-valued attribute from LDAP entry."""
                 val = getattr(obj, attr, None)
@@ -302,23 +314,26 @@ class FlextLdapAuthentication(FlextService[None]):
                     return list(val) if len(val) > 0 else default
                 return [str(val)]
 
-            # Create user from entry - simplified for now
-            # ldap3 Entry uses entry_dn, not dn
-            user = FlextLdapModels.Entry(
-                dn=str(user_entry.entry_dn),
-                uid=get_single_attr(user_entry, "uid", ""),
-                cn=get_single_attr(user_entry, "cn", ""),
-                sn=get_single_attr(user_entry, "sn", ""),
-                mail=get_multi_attr(user_entry, "mail", [""]),
-                entry_type="user",
-                object_classes=["person", "inetOrgPerson", "top"],
+            # Build LdifAttributes object from entry attributes
+            entry_attrs = FlextLdifModels.LdifAttributes(
+                attributes={
+                    "uid": [get_single_attr(user_entry, "uid", "")],
+                    "cn": [get_single_attr(user_entry, "cn", "")],
+                    "sn": [get_single_attr(user_entry, "sn", "")],
+                    "mail": get_multi_attr(user_entry, "mail", [""]),
+                    "objectClass": ["person", "inetOrgPerson", "top"],
+                }
             )
-            return FlextResult[FlextLdapModels.Entry].ok(user)
+            user = FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value=str(user_entry.entry_dn)),
+                attributes=entry_attrs,
+            )
+            return FlextResult[FlextLdifModels.Entry].ok(user)
         except (
             AttributeError,
             ValidationError,
         ) as e:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 f"User creation failed: {e}",
             )
 

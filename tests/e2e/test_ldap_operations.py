@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 
 import pytest
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapClients, FlextLdapModels
 
@@ -48,7 +49,7 @@ class TestLdapE2EOperations:
         assert hasattr(connection_result, "is_success")
 
         # Create user request
-        user_request = FlextLdapModels.Entry(
+        user_request = FlextLdifModels.Entry(
             entry_type="user",
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             object_classes=["inetOrgPerson", "organizationalPerson", "person", "top"],

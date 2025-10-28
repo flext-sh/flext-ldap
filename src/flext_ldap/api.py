@@ -162,7 +162,7 @@ class FlextLdap(FlextService[None]):
             return True
 
         # Default: handle Entry type or return False for unknown types
-        return message_type is FlextLdapModels.Entry
+        return message_type is FlextLdifModels.Entry
 
     @property
     def authentication(self) -> FlextLdapAuthentication:
@@ -316,7 +316,8 @@ class FlextLdap(FlextService[None]):
 
         result = self.client.connect(
             server_uri=self._config.ldap_server_uri,
-            bind_dn=self._config.ldap_bind_dn or "",  # Handle None with default empty string
+            bind_dn=self._config.ldap_bind_dn
+            or "",  # Handle None with default empty string
             password=password_value,
             quirks_mode=quirks_mode,
         )
@@ -333,7 +334,7 @@ class FlextLdap(FlextService[None]):
         *,
         single: bool = False,
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
-    ) -> FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]:
+    ) -> FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]:
         """Unified query method (search consolidation) with quirks support.
 
         Queries LDAP directory with support for single entry or full response.
@@ -363,7 +364,7 @@ class FlextLdap(FlextService[None]):
         result = self.client.search(base_dn, filter_str, attributes)
         if result.is_failure:
             return cast(
-                "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
+                "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
                 result,
             )
 
@@ -372,16 +373,16 @@ class FlextLdap(FlextService[None]):
             search_response = cast("FlextLdapModels.SearchResponse", result.unwrap())
             if search_response and search_response.entries:
                 return cast(
-                    "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
+                    "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
                     FlextResult.ok(search_response.entries[0]),
                 )
             return cast(
-                "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
+                "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
                 FlextResult.ok(None),
             )
 
         return cast(
-            "FlextResult[FlextLdapModels.SearchResponse | FlextLdapModels.Entry | None]",
+            "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
             result,
         )
 
@@ -497,7 +498,9 @@ class FlextLdap(FlextService[None]):
             return cast(
                 "FlextResult[bool | list[bool]]",
                 self.client.modify_entry(
-                    dn, changes, operation=FlextLdapConstants.ModifyOperation.REPLACE  # type: ignore[arg-type,call-arg]
+                    dn,
+                    changes,  # type: ignore[arg-type]
+                    operation=FlextLdapConstants.ModifyOperation.REPLACE,  # type: ignore[call-arg]
                 ),
             )
 
@@ -505,7 +508,7 @@ class FlextLdap(FlextService[None]):
 
     def validate_entries(
         self,
-        entries: FlextLdapModels.Entry | list[FlextLdapModels.Entry],
+        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
         *,
         server_type: str | None = None,
         mode: Literal["schema", "business", "all"] = "all",
@@ -564,12 +567,12 @@ class FlextLdap(FlextService[None]):
 
     def convert(
         self,
-        entries: FlextLdapModels.Entry | list[FlextLdapModels.Entry],
+        entries: FlextLdifModels.Entry | list[FlextLdifModels.Entry],
         source_server: str | None = None,
         target_server: str | None = None,
         *,
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry | list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]]:
         """Entry conversion method with quirks support.
 
         Converts entries between server types with server-specific transformations.
@@ -596,9 +599,7 @@ class FlextLdap(FlextService[None]):
 
         # Determine source server
         if not source_server:
-            detect_result = self._entry_adapter.detect_entry_server_type(
-                cast("FlextLdifModels.Entry", entry_list[0])
-            )
+            detect_result = self._entry_adapter.detect_entry_server_type(entry_list[0])
             if detect_result.is_failure:
                 return FlextResult.fail(
                     f"Could not detect source server: {detect_result.error}"
@@ -613,7 +614,7 @@ class FlextLdap(FlextService[None]):
         converted_list = []
         for entry in entry_list:
             convert_result = self._entry_adapter.convert_entry_format(
-                cast("FlextLdifModels.Entry", entry), source_server, target_server
+                entry, source_server, target_server
             )
             if convert_result.is_failure:
                 return FlextResult.fail(
@@ -622,22 +623,22 @@ class FlextLdap(FlextService[None]):
             converted_list.append(convert_result.unwrap())
 
         if is_single:
-            return FlextResult[FlextLdapModels.Entry | list[FlextLdapModels.Entry]].ok(
-                cast("FlextLdapModels.Entry", converted_list[0])
+            return FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]].ok(
+                converted_list[0]
             )
-        return FlextResult[FlextLdapModels.Entry | list[FlextLdapModels.Entry]].ok(
-            cast("list[FlextLdapModels.Entry]", converted_list)
+        return FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]].ok(
+            cast("list[FlextLdifModels.Entry]", converted_list)
         )
 
     def exchange(
         self,
         data: str | None = None,
-        entries: list[FlextLdapModels.Entry] | None = None,
+        entries: list[FlextLdifModels.Entry] | None = None,
         *,
         data_format: Literal["ldif", "json", "csv"] = "ldif",
         direction: Literal["import", "export"] = "import",
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
-    ) -> FlextResult[str | list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[str | list[FlextLdifModels.Entry]]:
         """Data exchange method for import/export with quirks support.
 
         Consolidates import_from_ldif and export_to_ldif operations.
@@ -658,26 +659,26 @@ class FlextLdap(FlextService[None]):
 
         if direction == "import":
             if not data:
-                return FlextResult[str | list[FlextLdapModels.Entry]].fail(
+                return FlextResult[str | list[FlextLdifModels.Entry]].fail(
                     "Data required for import operation"
                 )
             if data_format == "ldif":
                 return cast(
-                    "FlextResult[str | list[FlextLdapModels.Entry]]",
+                    "FlextResult[str | list[FlextLdifModels.Entry]]",
                     self.import_from_ldif(data),
                 )
-            return FlextResult[str | list[FlextLdapModels.Entry]].fail(
+            return FlextResult[str | list[FlextLdifModels.Entry]].fail(
                 f"Import format {data_format} not yet supported"
             )
         # export
         if not entries:
-            return FlextResult[str | list[FlextLdapModels.Entry]].fail(
+            return FlextResult[str | list[FlextLdifModels.Entry]].fail(
                 "Entries required for export operation"
             )
         if data_format == "ldif":
             exported_data = self.export_to_ldif(entries)
-            return FlextResult[str | list[FlextLdapModels.Entry]].ok(exported_data)
-        return FlextResult[str | list[FlextLdapModels.Entry]].fail(
+            return FlextResult[str | list[FlextLdifModels.Entry]].ok(exported_data)
+        return FlextResult[str | list[FlextLdifModels.Entry]].fail(
             f"Export format {data_format} not yet supported"
         )
 
@@ -728,7 +729,9 @@ class FlextLdap(FlextService[None]):
 
             acl_result = self.get_acl_info()
             if acl_result.is_success:
-                info_dict["acl_format"] = acl_result.unwrap().get("format", "unknown")
+                acl_entry = acl_result.unwrap()
+                acl_format_attr = acl_entry.attributes.get("aclFormat")
+                info_dict["acl_format"] = acl_format_attr[0] if acl_format_attr else "unknown"
 
         if detail_level == "diagnostic":
             info_dict["server_specific_attributes"] = (
@@ -749,8 +752,6 @@ class FlextLdap(FlextService[None]):
         scope: str = "subtree",
         *,
         bulk: bool = False,
-        filter_str: str | None = None,
-        single: bool | None = None,
     ) -> FlextResult[
         FlextLdapModels.SearchResponse
         | list[tuple[str, FlextLdapModels.SearchResponse]]
@@ -758,27 +759,21 @@ class FlextLdap(FlextService[None]):
         """Perform LDAP search (single or bulk).
 
         Delegates to internal Client.search method for actual LDAP operations.
-
-        Supports both search_filter and filter_str (legacy) parameter names.
-        Also supports single parameter (legacy) for backward compatibility.
         """
-        # Support legacy filter_str parameter name for backward compatibility
-        actual_filter = search_filter if search_filter is not None else filter_str
-        if actual_filter is None:
-            error_message = (
-                "search() missing required argument: 'search_filter' (or 'filter_str')"
-            )
+        if search_filter is None:
+            error_message = "search() missing required argument: 'search_filter'"
             raise TypeError(error_message)
-
-        # Support legacy single parameter: single=True means bulk=False, single=False means bulk=True
-        actual_single = single if single is not None else (not bulk)
 
         # Call FlextLdapClients.search with type safety suppressed
         # Interface differences: api.py supports bulk, scope as str; FlextLdapClients requires specific types
         return cast(
             "FlextResult[FlextLdapModels.SearchResponse | list[tuple[str, FlextLdapModels.SearchResponse]]]",
             self.client.search(
-                base_dn, actual_filter, attributes, scope, single=actual_single  # type: ignore[arg-type]
+                base_dn,  # type: ignore[arg-type]
+                search_filter,
+                attributes,
+                scope,  # type: ignore[arg-type]
+                single=(not bulk),
             ),
         )
 
@@ -875,7 +870,8 @@ class FlextLdap(FlextService[None]):
                 temp_results = []
                 for batch_dn, batch_changes in modifications:
                     result = self.client.modify_entry(
-                        batch_dn, batch_changes  # type: ignore[arg-type]
+                        batch_dn,
+                        batch_changes,  # type: ignore[arg-type]
                     )
                     temp_results.append(result.is_success)
 
@@ -893,7 +889,8 @@ class FlextLdap(FlextService[None]):
                 )
             for batch_dn, batch_changes in modifications:
                 result = self.client.modify_entry(
-                    batch_dn, batch_changes  # type: ignore[arg-type]
+                    batch_dn,
+                    batch_changes,  # type: ignore[arg-type]
                 )
                 results.append(result.is_success)
             return cast(
@@ -912,27 +909,31 @@ class FlextLdap(FlextService[None]):
         """Delete LDAP entry."""
         return self.client.delete_entry(dn)
 
-    def get_server_info(self) -> FlextResult[dict[str, object]]:
-        """Get server information."""
-        return FlextResult.ok({
-            "type": self.servers.server_type,
-            "default_port": self.servers.get_default_port(),
-            "supports_starttls": self.servers.supports_start_tls(),
-        })
+    def get_server_info(self) -> FlextResult[FlextLdifModels.Entry]:
+        """Get server information as Entry object."""
+        from flext_ldif import FlextLdifModels as LdifModels
 
-    def get_acl_info(self) -> FlextResult[dict[str, object]]:
-        """Get ACL information."""
-        return FlextResult.ok({
-            "format": self.acl.get_acl_format(),
-        })
+        entry = LdifModels.Entry(
+            dn=LdifModels.DistinguishedName(value="cn=ServerInfo"),
+            attributes=LdifModels.LdifAttributes.create({
+                "serverType": [self.servers.server_type],
+                "defaultPort": [str(self.servers.get_default_port())],
+                "supportsStartTls": ["true" if self.servers.supports_start_tls() else "false"],
+            })
+        )
+        return FlextResult.ok(entry)
 
-    def test_connection(self) -> FlextResult[bool]:
-        """Test LDAP connection."""
-        return self.client.test_connection()
+    def get_acl_info(self) -> FlextResult[FlextLdifModels.Entry]:
+        """Get ACL information as Entry object."""
+        from flext_ldif import FlextLdifModels as LdifModels
 
-    def get_server_operations(self) -> FlextLdap.Servers:
-        """Get server operations instance."""
-        return self.servers
+        entry = LdifModels.Entry(
+            dn=LdifModels.DistinguishedName(value="cn=AclInfo"),
+            attributes=LdifModels.LdifAttributes.create({
+                "aclFormat": [self.acl.get_acl_format()],
+            })
+        )
+        return FlextResult.ok(entry)
 
     def get_server_specific_attributes(self, server_type: str) -> list[str]:
         """Get server-specific attributes."""
@@ -959,9 +960,9 @@ class FlextLdap(FlextService[None]):
 
     def normalize_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry,
+        entry: FlextLdifModels.Entry,
         target_server: str,
-    ) -> FlextLdapModels.Entry:
+    ) -> FlextLdifModels.Entry:
         """Normalize entry for target server."""
         # For now, return as-is
         # Mark parameters as used to avoid linting warnings
@@ -1009,12 +1010,12 @@ class FlextLdap(FlextService[None]):
                 f"Entry conversion failed: {e}"
             )
 
-    def export_to_ldif(self, entries: list[FlextLdapModels.Entry]) -> str:
+    def export_to_ldif(self, entries: list[FlextLdifModels.Entry]) -> str:
         """Export entries to LDIF format."""
         ldif_lines: list[str] = []
         for entry in entries:
-            entry_lines = [f"dn: {entry.dn}"]
-            for attr, value in entry.attributes.items():
+            entry_lines = [f"dn: {entry.dn.value}"]
+            for attr, value in entry.attributes.attributes.items():
                 if isinstance(value, list):
                     entry_lines.extend(f"{attr}: {v}" for v in value)
                 else:
@@ -1025,55 +1026,58 @@ class FlextLdap(FlextService[None]):
 
     def import_from_ldif(
         self, ldif_content: str
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Import entries from LDIF content."""
-        entries: list[FlextLdapModels.Entry] = []
+        entries: list[FlextLdifModels.Entry] = []
         # Simple LDIF parser (would need more robust implementation)
         lines = ldif_content.strip().split("\n")
-        current_entry: FlextLdapModels.Entry | None = None
         current_dn: str | None = None
+        current_attributes: dict[str, list[str]] = {}
 
         for line in lines:
             stripped_line = line.strip()
             if not stripped_line:
-                if current_entry:
-                    entries.append(current_entry)
-                    current_entry = None
+                if current_dn:
+                    # Create Entry with modernized API
+                    dn_obj = FlextLdifModels.DistinguishedName(value=current_dn)
+                    ldif_attrs = FlextLdifModels.LdifAttributes(
+                        attributes=current_attributes
+                    )
+                    entry = FlextLdifModels.Entry(dn=dn_obj, attributes=ldif_attrs)
+                    entries.append(entry)
                     current_dn = None
+                    current_attributes = {}
                 continue
 
             if stripped_line.startswith("dn:"):
-                if current_entry:
-                    entries.append(current_entry)
+                if current_dn:
+                    # Save previous entry
+                    dn_obj = FlextLdifModels.DistinguishedName(value=current_dn)
+                    ldif_attrs = FlextLdifModels.LdifAttributes(
+                        attributes=current_attributes
+                    )
+                    entry = FlextLdifModels.Entry(dn=dn_obj, attributes=ldif_attrs)
+                    entries.append(entry)
                 current_dn = stripped_line[3:].strip()
-                current_entry = FlextLdapModels.Entry(dn=current_dn, attributes={})
-            elif ":" in stripped_line and current_entry:
+                current_attributes = {}
+            elif ":" in stripped_line and current_dn:
                 attr, value = stripped_line.split(":", 1)
                 attr = attr.strip()
                 value = value.strip()
-                if attr in current_entry.attributes:
-                    existing_value = current_entry.attributes[attr]
-                    if isinstance(existing_value, list):
-                        existing_value.append(value)
-                    else:
-                        # Should not happen, but handle it
-                        current_entry.attributes[attr] = [existing_value, value]
+                if attr in current_attributes:
+                    current_attributes[attr].append(value)
                 else:
                     # Wrap value in list for dict[str, list[str]]
-                    current_entry.attributes[attr] = [value]
+                    current_attributes[attr] = [value]
 
-        if current_entry:
-            entries.append(current_entry)
+        if current_dn:
+            # Save final entry
+            dn_obj = FlextLdifModels.DistinguishedName(value=current_dn)
+            ldif_attrs = FlextLdifModels.LdifAttributes(attributes=current_attributes)
+            entry = FlextLdifModels.Entry(dn=dn_obj, attributes=ldif_attrs)
+            entries.append(entry)
 
         return FlextResult.ok(entries)
-
-    def add_entry(
-        self,
-        dn: str,
-        attributes: dict[str, str | list[str]],
-    ) -> FlextResult[bool]:
-        """Add new LDAP entry."""
-        return self.client.add_entry(dn, attributes)
 
     def get_server_capabilities(
         self,
@@ -1089,11 +1093,6 @@ class FlextLdap(FlextService[None]):
                 max_page_size=1000,
             )
         )
-
-    @property
-    def is_connected(self) -> bool:
-        """Check if connected to LDAP server."""
-        return self.client.is_connected
 
     def unbind(self) -> FlextResult[None]:
         """Unbind and close LDAP connection."""

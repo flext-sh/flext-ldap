@@ -34,6 +34,7 @@ import sys
 from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -87,8 +88,8 @@ def demonstrate_basic_search(api: FlextLdap) -> None:
 
     # Simple search for all person entries
     logger.info(f"Searching for person objects in {BASE_DN}")
-    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search_entries(
             base_dn=BASE_DN,
             filter_str="(objectClass=person)",
@@ -123,7 +124,7 @@ def demonstrate_search_one(api: FlextLdap) -> None:
         filter_str="(cn=admin)",
         attributes=["cn", "objectClass", "description"],
     )
-    result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(search_request)
+    result: FlextResult[FlextLdifModels.Entry | None] = api.search_one(search_request)
 
     if result.is_failure:
         logger.error(f"❌ Search failed: {result.error}")
@@ -166,8 +167,8 @@ def demonstrate_search_with_request(api: FlextLdap) -> None:
     logger.info(f"   Size Limit: {search_request.size_limit}")
 
     # Execute search using search_entries (returns list of entries)
-    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search_entries(
             base_dn=search_request.base_dn,
             filter_str=search_request.filter_str,  # Access the actual field name
@@ -199,8 +200,8 @@ def demonstrate_group_search(api: FlextLdap) -> None:
     groups_dn = f"ou=groups,{BASE_DN}"
     logger.info(f"Searching for groups in {groups_dn}")
 
-    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search_groups(
             search_base=groups_dn,
             attributes=["cn", "member", "description"],
@@ -239,8 +240,8 @@ def demonstrate_search_scopes(api: FlextLdap) -> None:
 
     for _scope, description in scopes:
         logger.info(f"\nTesting {description}:")
-        result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-            "FlextResult[list[FlextLdapModels.Entry]]",
+        result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+            "FlextResult[list[FlextLdifModels.Entry]]",
             api.search_entries(
                 base_dn=BASE_DN,
                 filter_str="(objectClass=*)",
@@ -326,8 +327,8 @@ def demonstrate_attribute_filtering(api: FlextLdap) -> None:
 
     # Search with specific attributes
     logger.info("Requesting only 'cn' and 'mail' attributes:")
-    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search(
             base_dn=BASE_DN,
             search_filter="(objectClass=inetOrgPerson)",
@@ -390,7 +391,7 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected:
+            if api.client.is_connected:
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 
