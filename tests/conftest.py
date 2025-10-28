@@ -660,6 +660,42 @@ def clean_ldap_container() -> dict[str, object]:
         "use_ssl": False,
     }
 
+    # Provision required organizational units for integration tests
+    provisioning_client = None
+    try:
+        provisioning_client = FlextLdapClients()
+        connect_result = provisioning_client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+
+        if connect_result.is_success:
+            # Create ou=people organizational unit if it doesn't exist
+            ou_people_dn = "ou=people,dc=flext,dc=local"
+            search_result = provisioning_client.search(
+                base_dn=ou_people_dn,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
+
+            if search_result.is_failure:
+                # OU doesn't exist, create it
+                add_result = provisioning_client.add_entry(
+                    dn=ou_people_dn,
+                    attributes={
+                        "objectClass": ["organizationalUnit", "top"],
+                        "ou": "people",
+                    },
+                )
+                if add_result.is_success:
+                    pass  # OU created successfully
+
+            # Unbind the provisioning client
+            provisioning_client.unbind()
+    except Exception:
+        pass  # Provisioning failure is non-critical; tests may still work
+
     return container_info
 
 

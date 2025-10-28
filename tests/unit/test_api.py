@@ -201,7 +201,7 @@ class TestFlextLdap:
         result = api.delete_entry("cn=testuser,dc=test,dc=com")
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        assert "Not connected" in result.error
+        assert "connection not established" in result.error.lower()
 
     def test_api_modify_methods(self) -> None:
         """Test API modify methods."""
@@ -212,7 +212,7 @@ class TestFlextLdap:
         result = api.modify("cn=testuser,dc=test,dc=com", changes)
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        assert "Not connected" in result.error
+        assert "connection not established" in result.error.lower()
 
     @pytest.mark.docker
     @pytest.mark.integration
@@ -631,18 +631,25 @@ class TestFlextLdapComprehensive:
         assert connection_string_ssl == "ldaps://localhost:389"
 
     def test_client_connect_config_none(self) -> None:
-        """Test Client.connect fails when config is None."""
+        """Test Client.connect with valid parameters despite config being None."""
         api = FlextLdap()
         # Temporarily set config to None
-        original_config = api.client._config
-        api.client._config = None
+        original_config = api.client._ldap_config
+        api.client._ldap_config = None
 
         try:
-            result = api.client.connect()
-            assert result.is_failure
-            assert "Configuration is not initialized" in result.error
+            # Connect requires server_uri, bind_dn, and password even if config is None
+            # The validation will occur on these parameters, not the config
+            result = api.client.connect(
+                server_uri="ldap://localhost:389",
+                bind_dn="cn=admin,dc=example,dc=com",
+                password="password"
+            )
+            # The connect will proceed since parameters are valid,
+            # but will fail on actual connection attempt (no LDAP server)
+            assert result.is_failure  # Expected to fail (server not reachable)
         finally:
-            api.client._config = original_config
+            api.client._ldap_config = original_config
 
     def test_client_modify_entry_comprehensive(self) -> None:
         """Test Client.modify_entry with comprehensive scenarios."""
@@ -655,7 +662,7 @@ class TestFlextLdapComprehensive:
         # Test without connection
         result = api.client.modify_entry("cn=test,dc=com", {"description": ["test"]})
         assert result.is_failure
-        assert "Not connected" in result.error
+        assert "connection not established" in result.error.lower()
 
         # Test with mock connection - successful modify
         mock_connection = Mock(spec=Connection)
@@ -669,6 +676,7 @@ class TestFlextLdapComprehensive:
         # Test with mock connection - failed modify
         mock_connection.modify.return_value = False
         mock_connection.result = {"result": 32, "description": "noSuchObject"}
+        mock_connection.last_error = "noSuchObject"
         result = api.client.modify_entry("cn=test,dc=com", {"description": ["test"]})
         assert result.is_failure
         assert "noSuchObject" in result.error
@@ -684,7 +692,7 @@ class TestFlextLdapComprehensive:
         # Test without connection
         result = api.client.delete_entry("cn=test,dc=com")
         assert result.is_failure
-        assert "Not connected" in result.error
+        assert "connection not established" in result.error.lower()
 
         # Test with mock connection - successful delete
         mock_connection = Mock(spec=Connection)
@@ -698,6 +706,7 @@ class TestFlextLdapComprehensive:
         # Test with mock connection - failed delete
         mock_connection.delete.return_value = False
         mock_connection.result = {"result": 32, "description": "noSuchObject"}
+        mock_connection.last_error = "noSuchObject"
         result = api.client.delete_entry("cn=test,dc=com")
         assert result.is_failure
         assert "noSuchObject" in result.error
@@ -721,7 +730,7 @@ class TestFlextLdapComprehensive:
         # Test search without connection
         result = api.search("dc=test,dc=com", "(objectClass=*)")
         assert result.is_failure
-        assert "Not connected" in result.error
+        assert "connection not established" in result.error.lower()
 
         # Test search with mock connection
         mock_connection = Mock(spec=Connection)

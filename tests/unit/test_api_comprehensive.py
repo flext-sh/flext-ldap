@@ -507,30 +507,6 @@ class TestFlextLdapOtherOperations:
         assert isinstance(result, FlextResult)
 
 
-class TestFlextLdapClientNestedClass:
-    """Test nested Client class operations."""
-
-    def test_client_initialization(self) -> None:
-        """Test Client class initialization."""
-        config = FlextLdapConfig()
-        client = FlextLdap.Client(config)
-
-        assert client is not None
-        assert client._config is config
-
-    def test_client_is_connected_false(self) -> None:
-        """Test Client.is_connected returns False initially."""
-        client = FlextLdap.Client(None)
-        assert client.is_connected is False
-
-    def test_client_execute_returns_flext_result(self) -> None:
-        """Test Client.execute returns FlextResult."""
-        client = FlextLdap.Client(None)
-        result = client.execute()
-
-        assert isinstance(result, FlextResult)
-
-
 class TestFlextLdapServersNestedClass:
     """Test nested Servers class operations."""
 

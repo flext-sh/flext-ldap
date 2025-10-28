@@ -133,8 +133,10 @@ class FlextLdapModels(FlextModels):
         @model_validator(mode="after")
         def validate_dn_structure(self) -> FlextLdapModels.DistinguishedName:
             """Cross-field validation for DN structure integrity."""
-            # Validate DN has at least one component
-            components = self.value.split(",")
+            # ROOT CAUSE FIX: Parse DN components respecting RFC 4514 escaped commas
+            # Issue 1.1: Naive split on "," breaks DNs with escaped commas (\,)
+            # RFC 4514 allows escaping special chars: \, \= \+ \< \> \# \; \\ \" \20
+            components = self._parse_dn_components(self.value)
             if len(components) < 1:
                 error_msg = "DN must have at least one component"
                 raise FlextExceptions.ValidationError(
@@ -221,6 +223,65 @@ class FlextLdapModels(FlextModels):
                     normalized_component = f"{attr.strip().lower()}={val.strip()}"
                     components.append(normalized_component)
             return ",".join(components)
+
+        @staticmethod
+        def _parse_dn_components(dn: str) -> list[str]:
+            r"""Parse DN components respecting RFC 4514 escape sequences.
+
+            RFC 4514 allows escaping special characters with backslash (\\):
+            - \\, (escaped comma) - not a separator
+            - \\= (escaped equals) - not attribute separator
+            - \\+ (escaped plus) - not multi-valued RDN separator
+            - \\< \\> (escaped angle brackets)
+            - \\# (escaped hash)
+            - \\; (escaped semicolon)
+            - \\ (escaped backslash)
+            - \" (escaped quote)
+            - \20 (escaped space)
+
+            This parser correctly handles escaped commas so DNs like:
+            cn=test\\, value,dc=example,dc=com
+            are not split on the escaped comma.
+
+            Args:
+                dn: DN string to parse
+
+            Returns:
+                List of DN components (RDN strings)
+
+            """
+            if not dn:
+                return []
+
+            components: list[str] = []
+            current_component: list[str] = []
+            i = 0
+
+            while i < len(dn):
+                char = dn[i]
+
+                if char == "\\" and i + 1 < len(dn):
+                    # Escape sequence - add backslash and next character as literal
+                    current_component.extend((char, dn[i + 1]))
+                    i += 2
+                elif char == ",":
+                    # Unescaped comma - component separator
+                    component_str = "".join(current_component).strip()
+                    if component_str:
+                        components.append(component_str)
+                    current_component = []
+                    i += 1
+                else:
+                    # Regular character
+                    current_component.append(char)
+                    i += 1
+
+            # Add the last component
+            component_str = "".join(current_component).strip()
+            if component_str:
+                components.append(component_str)
+
+            return components
 
         @classmethod
         def create(
@@ -626,8 +687,8 @@ class FlextLdapModels(FlextModels):
                             str_list.append("TRUE" if v else "FALSE")
                         elif isinstance(v, int) or v is not None:
                             str_list.append(str(v))
-                    if str_list:
-                        result[attr_name] = str_list
+                    # Preserve all attributes, including empty lists (attribute exists with no values)
+                    result[attr_name] = str_list
                 # Single value - convert to string, then wrap in list
                 elif isinstance(attr_value, bool):  # Must check bool before int
                     result[attr_name] = ["TRUE" if attr_value else "FALSE"]
