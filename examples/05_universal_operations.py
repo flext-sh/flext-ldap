@@ -153,7 +153,7 @@ def demonstrate_server_operations(api: FlextLdap) -> None:
     logger.info("\n=== Server Operations Access ===")
 
     # Get server operations instance
-    server_ops = api.get_server_operations()
+    server_ops = api.servers
     result = (
         FlextResult.ok(server_ops)
         if server_ops
@@ -197,8 +197,8 @@ def demonstrate_universal_search(api: FlextLdap) -> None:
 
     # Perform universal search (automatically uses server-specific optimizations)
     logger.info(f"Performing universal search on {BASE_DN}")
-    result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search(
             base_dn=BASE_DN,
             search_filter="(objectClass=*)",
@@ -242,7 +242,7 @@ def demonstrate_entry_normalization() -> None:
 
     logger.info("Normalizing entry for current server...")
     # Convert LDIF entry to LDAP entry for normalization
-    ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(sample_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -287,7 +287,7 @@ def demonstrate_entry_conversion() -> None:
     logger.info(f"   Source attributes: {src_attrs}")
 
     # Convert LDIF entry to LDAP entry for server conversion
-    ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(sample_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -360,7 +360,7 @@ def demonstrate_server_detection_from_entry() -> None:
         entry = test_case["entry"]
         if isinstance(entry, FlextLdifModels.Entry):
             # Convert LDIF entry to LDAP entry for server type detection
-            ldap_entry = FlextLdapModels.Entry.from_ldif(entry)
+            ldap_entry = FlextLdifModels.Entry.from_ldif(entry)
             ldif_entry_for_adapter = ldap_entry.to_ldif()
 
             adapter = FlextLdapEntryAdapter()
@@ -397,7 +397,7 @@ def demonstrate_entry_validation() -> None:
 
     logger.info("Validating entry for current server...")
     # Convert LDIF entry to LDAP entry for validation
-    ldap_entry = FlextLdapModels.Entry.from_ldif(sample_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(sample_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -655,7 +655,7 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected:
+            if api.client.is_connected:
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 

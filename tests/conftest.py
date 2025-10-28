@@ -15,6 +15,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextContainer, FlextLogger, FlextResult
+from flext_ldif import FlextLdifModels
 from ldap3 import Connection, Server
 from pydantic import SecretStr
 
@@ -453,9 +454,9 @@ def sample_acl_data() -> dict[str, object]:
 
 
 @pytest.fixture
-def sample_user() -> FlextLdapModels.Entry:
+def sample_user() -> FlextLdifModels.Entry:
     """Get sample user entity."""
-    return FlextLdapModels.Entry(
+    return FlextLdifModels.Entry(
         entry_type="user",
         dn="cn=testuser,ou=people,dc=example,dc=com",
         cn="Test User",
@@ -474,9 +475,9 @@ def sample_user() -> FlextLdapModels.Entry:
 
 
 @pytest.fixture
-def sample_group() -> FlextLdapModels.Entry:
+def sample_group() -> FlextLdifModels.Entry:
     """Get sample group entity."""
-    return FlextLdapModels.Entry(
+    return FlextLdifModels.Entry(
         entry_type="group",
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
@@ -488,9 +489,9 @@ def sample_group() -> FlextLdapModels.Entry:
 
 
 @pytest.fixture
-def sample_dn() -> FlextLdapModels.DistinguishedName:
+def sample_dn() -> FlextLdifModels.DistinguishedName:
     """Get sample distinguished name."""
-    return FlextLdapModels.DistinguishedName(
+    return FlextLdifModels.DistinguishedName(
         value="uid=testuser,ou=people,dc=example,dc=com"
     )
 

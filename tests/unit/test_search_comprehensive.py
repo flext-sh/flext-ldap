@@ -20,9 +20,9 @@ from unittest.mock import MagicMock
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.search import FlextLdapSearch
 
 
@@ -443,7 +443,7 @@ class TestFlextLdapSearchSyntheticData:
         assert entries is not None
         assert len(entries) == 3
         for entry in entries:
-            assert isinstance(entry, FlextLdapModels.Entry)
+            assert isinstance(entry, FlextLdifModels.Entry)
 
     def test_build_synthetic_entries_with_attributes(self) -> None:
         """Test synthetic entries with specific attributes."""

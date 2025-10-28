@@ -19,7 +19,6 @@ from ldap3 import Connection, Server
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapProtocols(FlextProtocols):
@@ -204,7 +203,7 @@ class FlextLdapProtocols(FlextProtocols):
                 search_base: str,
                 filter_str: str,
                 attributes: list[str] | None = None,
-            ) -> FlextResult[list[FlextLdapModels.Entry]]:
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -213,7 +212,7 @@ class FlextLdapProtocols(FlextProtocols):
                 attributes: List of attributes to retrieve
 
                 Returns:
-                FlextResult[list[FlextLdapModels.Entry]]: Search results
+                FlextResult[list[FlextLdifModels.Entry]]: Search results
 
                 """
                 ...
@@ -295,7 +294,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 username: str,
                 password: str,
-            ) -> FlextResult[FlextLdapModels.Entry]:
+            ) -> FlextResult[FlextLdifModels.Entry]:
                 """Authenticate user against LDAP.
 
                 Args:
@@ -303,7 +302,7 @@ class FlextLdapProtocols(FlextProtocols):
                 password: Password for authentication
 
                 Returns:
-                FlextResult[FlextLdapModels.Entry]: Auth result
+                FlextResult[FlextLdifModels.Entry]: Auth result
 
                 """
                 ...
@@ -470,7 +469,7 @@ class FlextLdapProtocols(FlextProtocols):
                 search_base: str,
                 filter_str: str,
                 attributes: list[str] | None = None,
-            ) -> FlextResult[FlextLdapModels.Entry | None]:
+            ) -> FlextResult[FlextLdifModels.Entry | None]:
                 """Search for single LDAP entry.
 
                 Args:
@@ -479,7 +478,7 @@ class FlextLdapProtocols(FlextProtocols):
                 attributes: List of attributes to retrieve
 
                 Returns:
-                FlextResult[FlextLdapModels.Entry | None]: Result or None
+                FlextResult[FlextLdifModels.Entry | None]: Result or None
 
                 """
                 ...
@@ -492,7 +491,7 @@ class FlextLdapProtocols(FlextProtocols):
                 scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
                 page_size: int = 0,
                 paged_cookie: bytes | None = None,
-            ) -> FlextResult[list[FlextLdapModels.Entry]]:
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Search for LDAP entries.
 
                 Args:
@@ -504,19 +503,19 @@ class FlextLdapProtocols(FlextProtocols):
                 paged_cookie: Cookie for paged results continuation
 
                 Returns:
-                FlextResult[list[FlextLdapModels.Entry]]: Search results
+                FlextResult[list[FlextLdifModels.Entry]]: Search results
 
                 """
                 ...
 
-            def get_user(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
+            def get_user(self, dn: str) -> FlextResult[FlextLdifModels.Entry | None]:
                 """Get user by DN.
 
                 Args:
                 dn: User distinguished name
 
                 Returns:
-                FlextResult[FlextLdapModels.Entry | None]: User object or None
+                FlextResult[FlextLdifModels.Entry | None]: User object or None
 
                 """
                 ...
@@ -530,14 +529,14 @@ class FlextLdapProtocols(FlextProtocols):
                 """
                 ...
 
-            def get_group(self, dn: str) -> FlextResult[FlextLdapModels.Entry | None]:
+            def get_group(self, dn: str) -> FlextResult[FlextLdifModels.Entry | None]:
                 """Get group by DN.
 
                 Args:
                 dn: Group distinguished name
 
                 Returns:
-                FlextResult[FlextLdapModels.Entry | None]: Group object or None
+                FlextResult[FlextLdifModels.Entry | None]: Group object or None
 
                 """
                 ...

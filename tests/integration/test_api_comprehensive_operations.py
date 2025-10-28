@@ -64,7 +64,7 @@ class TestFlextLdapSearch:
 
         result = api.client.search(
             base_dn="dc=flext,dc=local",
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
             attributes=["cn"],
         )
 
@@ -89,7 +89,7 @@ class TestFlextLdapSearch:
 
         result = api.client.search(
             base_dn="dc=flext,dc=local",
-            search_filter="(objectClass=*)",
+            filter_str="(objectClass=*)",
         )
 
         assert result.is_success or result.is_failure

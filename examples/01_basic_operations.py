@@ -31,6 +31,7 @@ from __future__ import annotations
 import sys
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import (
     FlextLdap,
@@ -80,7 +81,7 @@ def demonstrate_context_manager() -> None:
     try:
         with FlextLdap() as api:
             logger.info("✅ Automatically connected via context manager")
-            logger.info(f"   Connected: {api.is_connected}")
+            logger.info(f"   Connected: {api.client.is_connected}")
             logger.info(f"   Server: {config.ldap_server_uri}:{config.ldap_port}")
             # Connection automatically closed on exit
     except RuntimeError:
@@ -119,7 +120,7 @@ def demonstrate_create_entry(api: FlextLdap) -> str | None:
     }
 
     logger.info(f"Creating entry: {user_dn}")
-    create_result: FlextResult[bool] = api.add_entry(user_dn, attributes)
+    create_result: FlextResult[bool] = api.client.add_entry(user_dn, attributes)
 
     if create_result.is_failure:
         logger.error(f"❌ Create failed: {create_result.error}")
@@ -147,7 +148,7 @@ def demonstrate_read_entry(api: FlextLdap, user_dn: str) -> None:
     cn_value = user_dn.split(",", maxsplit=1)[0].split("=")[1]
 
     logger.info(f"Searching for entry: {user_dn}")
-    search_result: FlextResult[FlextLdapModels.Entry | None] = api.search_one(
+    search_result: FlextResult[FlextLdifModels.Entry | None] = api.search_one(
         FlextLdapModels.SearchRequest(
             base_dn=users_dn,
             filter_str=f"({FlextLdapConstants.LdapAttributeNames.CN}={cn_value})",
@@ -195,7 +196,7 @@ def demonstrate_convenience_methods(api: FlextLdap) -> None:
         f"✅ Found {len(search_response.entries)} users (using DEFAULT_USER_FILTER):"
     )
     for entry in search_response.entries:
-        # Entry is a FlextLdapModels.Entry object with direct attribute access
+        # Entry is a FlextLdifModels.Entry object with direct attribute access
         cn = entry.cn or "Unknown"
         mail = entry.mail or "N/A"
         logger.info(f"   - {cn} ({mail})")
@@ -456,7 +457,7 @@ def main() -> int:
 
         finally:
             # Always disconnect
-            if api.is_connected:
+            if api.client.is_connected:
                 api.unbind()
                 logger.info("Disconnected from LDAP server")
 

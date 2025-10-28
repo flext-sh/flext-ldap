@@ -26,6 +26,7 @@ from __future__ import annotations
 import sys
 
 from flext_core import FlextLogger
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapDomain, FlextLdapModels
 
@@ -143,7 +144,7 @@ def demonstrate_group_specification() -> None:
     logger.info("\n3. Member Addition Business Rules:")
 
     # Create a sample group
-    group = FlextLdapModels.Entry(
+    group = FlextLdifModels.Entry(
         entry_type="group",
         dn="cn=testgroup,ou=groups,dc=example,dc=com",
         cn="testgroup",
@@ -263,7 +264,7 @@ def demonstrate_domain_services() -> None:
     user_scenarios = [
         {
             "name": "User with display name",
-            "user": FlextLdapModels.Entry(
+            "user": FlextLdifModels.Entry(
                 entry_type="user",
                 dn="cn=john,dc=example,dc=com",
                 uid="john",
@@ -276,7 +277,7 @@ def demonstrate_domain_services() -> None:
         },
         {
             "name": "User with given name and surname",
-            "user": FlextLdapModels.Entry(
+            "user": FlextLdifModels.Entry(
                 entry_type="user",
                 dn="cn=jane,dc=example,dc=com",
                 uid="jane",
@@ -289,7 +290,7 @@ def demonstrate_domain_services() -> None:
         },
         {
             "name": "User with only CN",
-            "user": FlextLdapModels.Entry(
+            "user": FlextLdifModels.Entry(
                 entry_type="user",
                 dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                 uid="REDACTED_LDAP_BIND_PASSWORD",
@@ -303,7 +304,7 @@ def demonstrate_domain_services() -> None:
 
     for scenario in user_scenarios:
         user = scenario["user"]
-        if not isinstance(user, FlextLdapModels.Entry):
+        if not isinstance(user, FlextLdifModels.Entry):
             logger.error(
                 f"Invalid user type in scenario '{scenario['name']}': expected Entry, got {type(user)}"
             )

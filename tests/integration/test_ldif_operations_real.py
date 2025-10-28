@@ -12,8 +12,6 @@ Tests cover:
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapModels
-
 
 @pytest.mark.integration
 class TestRealLdifReadOperations:
@@ -71,7 +69,7 @@ class TestRealLdifReadOperations:
         assert len(entry.attributes.attributes["member"].values) == 1
 
     def test_multi_valued_attributes_as_lists(
-        self, sample_user: FlextLdapModels.Entry
+        self, sample_user: FlextLdifModels.Entry
     ) -> None:
         """Test that multi-valued LDAP attributes are correctly typed as lists."""
         # sample_user should have list-typed attributes
@@ -111,7 +109,7 @@ class TestRealLdifWriteOperations:
     """Test writing Entry objects to LDIF format strings."""
 
     def test_export_user_entry_to_ldif_format(
-        self, sample_user: FlextLdapModels.Entry
+        self, sample_user: FlextLdifModels.Entry
     ) -> None:
         """Test exporting user Entry to LDIF format string."""
         # Create LDIF representation from Entry
@@ -133,7 +131,7 @@ class TestRealLdifWriteOperations:
             assert sample_user.cn in ldif_output
 
     def test_export_group_entry_to_ldif_format(
-        self, sample_group: FlextLdapModels.Entry
+        self, sample_group: FlextLdifModels.Entry
     ) -> None:
         """Test exporting group Entry to LDIF format string."""
         ldif_lines = [
@@ -304,7 +302,7 @@ class TestRealDockerLdifDataStructures:
     def test_ldif_entry_structures_compatible_with_docker_ldap(self) -> None:
         """Test LDIF Entry structures are compatible with Docker LDAP server types."""
         # Create user entry compatible with OpenLDAP in Docker
-        user_entry = FlextLdapModels.Entry(
+        user_entry = FlextLdifModels.Entry(
             entry_type="user",
             dn="uid=docker-test-user,ou=people,dc=flext,dc=local",
             uid="docker-test-user",
@@ -323,7 +321,7 @@ class TestRealDockerLdifDataStructures:
     def test_docker_ldap_group_entry_structures(self) -> None:
         """Test group entry structures for Docker LDAP server."""
         # Create group entry compatible with Docker LDAP
-        group_entry = FlextLdapModels.Entry(
+        group_entry = FlextLdifModels.Entry(
             entry_type="group",
             dn="cn=docker-test-group,ou=groups,dc=flext,dc=local",
             cn="docker-test-group",

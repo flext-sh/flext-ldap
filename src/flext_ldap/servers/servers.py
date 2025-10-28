@@ -14,7 +14,6 @@ from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.servers.factory import FlextLdapServersFactory
 
@@ -156,11 +155,11 @@ class FlextLdapServers(FlextService[None]):
         attributes: list[str] | None = None,
         scope: str = "subtree",
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Perform paged search operation."""
         ops = self.operations
         if not ops:
-            return FlextResult[list[FlextLdapModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 "No server operations available",
             )
         return ops.search_with_paging(
@@ -204,13 +203,13 @@ class FlextLdapServers(FlextService[None]):
 
     def normalize_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for target server type."""
         ops = self.operations
         if not ops:
-            return FlextResult[FlextLdapModels.Entry].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 "No server operations available",
             )
         return ops.normalize_entry_for_server(entry, target_server_type)

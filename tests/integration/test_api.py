@@ -15,6 +15,7 @@ from uuid import uuid4
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -167,7 +168,7 @@ class TestLdapClientRealOperations:
         }
         modify_attributes = create_ldap_attributes(modify_attrs_raw)
         # Wrap in EntryChanges model for proper typing
-        modify_changes = FlextLdapModels.EntryChanges(**modify_attributes)
+        modify_changes = FlextLdifModels.EntryChanges(**modify_attributes)
         modify_result = client.modify_entry(
             test_dn,
             modify_changes,
@@ -296,7 +297,7 @@ class TestLdapServiceRealOperations:
         create_result = client.create_user(user_request)
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
-        default_user = FlextLdapModels.Entry(
+        default_user = FlextLdifModels.Entry(
             entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -326,7 +327,7 @@ class TestLdapServiceRealOperations:
         assert user_request.dn is not None, "User DN must not be None"
         get_result = client.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
-        default_user = FlextLdapModels.Entry(
+        default_user = FlextLdifModels.Entry(
             entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -368,7 +369,7 @@ class TestLdapServiceRealOperations:
         assert user_request.dn is not None, "User DN must not be None"
         updated_get_result = client.get_user(user_request.dn)
         assert updated_get_result.is_success
-        default_user = FlextLdapModels.Entry(
+        default_user = FlextLdifModels.Entry(
             entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -403,7 +404,7 @@ class TestLdapServiceRealOperations:
         assert search_result.is_success, (
             f"Failed to search users: {search_result.error}"
         )
-        default_users: list[FlextLdapModels.Entry] = []
+        default_users: list[FlextLdifModels.Entry] = []
         found_users = (
             search_result.unwrap() if search_result.is_success else default_users
         )
@@ -490,7 +491,7 @@ class TestLdapServiceRealOperations:
         assert group_request.dn is not None, "Group DN must not be None"
         get_result = client.get_group(group_request.dn)
         assert get_result.is_success, f"Failed to get group: {get_result.error}"
-        default_group = FlextLdapModels.Entry(
+        default_group = FlextLdifModels.Entry(
             entry_type="group",
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
@@ -589,7 +590,7 @@ class TestLdapServiceRealOperations:
         assert group_request.dn is not None, "Group DN must not be None"
         verify_result = client.get_group(group_request.dn)
         assert verify_result.is_success
-        default_group_verify: FlextLdapModels.Entry | None = None
+        default_group_verify: FlextLdifModels.Entry | None = None
         verified_group = (
             verify_result.unwrap() if verify_result.is_success else default_group_verify
         )
@@ -611,7 +612,7 @@ class TestLdapValidationRealOperations:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
         valid_dn = f"cn=validuser,ou=users,{clean_ldap_container['base_dn']}"
-        dn_result = FlextLdapModels.DistinguishedName.create(valid_dn)
+        dn_result = FlextLdifModels.DistinguishedName.create(valid_dn)
         assert dn_result.is_success, f"Valid DN should work: {dn_result.error}"
 
         # Test invalid DN formats - should fail validation
@@ -622,7 +623,7 @@ class TestLdapValidationRealOperations:
         ]
 
         for invalid_dn in invalid_dns:
-            dn_result = FlextLdapModels.DistinguishedName.create(
+            dn_result = FlextLdifModels.DistinguishedName.create(
                 invalid_dn,
             )
             if not dn_result.is_success:
@@ -684,7 +685,7 @@ class TestLdapValidationRealOperations:
         )
 
         # Verify the user follows business rules
-        default_user = FlextLdapModels.Entry(
+        default_user = FlextLdifModels.Entry(
             entry_type="user",
             dn="cn=default,dc=test,dc=com",
             uid="default",

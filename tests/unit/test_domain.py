@@ -1,7 +1,9 @@
 """Simplified tests for FlextLdapDomain module."""
 
+from flext_ldif import FlextLdifModels
+
 from flext_ldap.domain import FlextLdapDomain
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.domain_service import DomainServices
 
 
 class TestFlextLdapDomainSimple:
@@ -13,7 +15,7 @@ class TestFlextLdapDomainSimple:
         assert hasattr(FlextLdapDomain, "UserSpecification")
         assert hasattr(FlextLdapDomain, "GroupSpecification")
         assert hasattr(FlextLdapDomain, "SearchSpecification")
-        assert hasattr(FlextLdapDomain, "DomainServices")
+        assert DomainServices is not None
 
     def test_user_specification_valid_username(self) -> None:
         """Test valid username."""
@@ -44,30 +46,38 @@ class TestFlextLdapDomainSimple:
 
     def test_domain_services_display_name(self) -> None:
         """Test calculate display name."""
-        user = FlextLdapModels.Entry(
-            dn="cn=john,dc=example,dc=com",
-            object_classes=["inetOrgPerson"],
-            attributes={
-                "cn": ["john"],
-                "givenName": ["John"],
-                "sn": ["Doe"],
-            },
+        # Modern Entry API: use DistinguishedName and LdifAttributes
+        user = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=john,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["john"],
+                    "givenName": ["John"],
+                    "sn": ["Doe"],
+                    "objectClass": ["inetOrgPerson"],
+                }
+            ),
         )
-        result = FlextLdapDomain.DomainServices.calculate_user_display_name(user)
+        result = DomainServices.calculate_user_display_name(user)
         assert result == "John Doe"
 
     def test_domain_services_user_status(self) -> None:
         """Test determine user status."""
-        user = FlextLdapModels.Entry(
-            dn="cn=john,dc=example,dc=com",
-            object_classes=["inetOrgPerson"],
-            attributes={"cn": ["john"]},
+        # Modern Entry API: use DistinguishedName and LdifAttributes
+        user = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=john,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["john"],
+                    "objectClass": ["inetOrgPerson"],
+                }
+            ),
         )
-        result = FlextLdapDomain.DomainServices.determine_user_status(user)
+        result = DomainServices.determine_user_status(user)
         assert result == "active"
 
     def test_domain_services_unique_username(self) -> None:
         """Test generate unique username."""
-        result = FlextLdapDomain.DomainServices.generate_unique_username("john", [])
+        result = DomainServices.generate_unique_username("john", [])
         assert result.is_success
         assert result.unwrap() == "john"

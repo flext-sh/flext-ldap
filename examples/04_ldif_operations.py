@@ -49,7 +49,6 @@ from pydantic import SecretStr
 from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.models import FlextLdapModels
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -188,8 +187,8 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     # Search for entries to export
     logger.info("Searching for entries to export...")
-    search_result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-        "FlextResult[list[FlextLdapModels.Entry]]",
+    search_result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+        "FlextResult[list[FlextLdifModels.Entry]]",
         api.search(
             base_dn=BASE_DN,
             search_filter="(objectClass=person)",
@@ -208,7 +207,7 @@ def demonstrate_ldif_export(api: FlextLdap) -> Path | None:
 
     logger.info(f"Found {len(search_entries)} entries to export")
 
-    # Convert FlextLdapModels.Entry to FlextLdifModels.Entry
+    # Convert FlextLdifModels.Entry to FlextLdifModels.Entry
     ldif_entries = []
     for ldap_entry in search_entries:
         # Convert using model_dump and model_validate
@@ -251,8 +250,8 @@ def demonstrate_entry_conversion() -> None:
     logger.info("\n=== Entry Model Conversion ===")
 
     # Create Entry model manually
-    logger.info("Creating FlextLdapModels.Entry manually:")
-    entry = FlextLdapModels.Entry(
+    logger.info("Creating FlextLdifModels.Entry manually:")
+    entry = FlextLdifModels.Entry(
         dn="cn=test.user,ou=users,dc=example,dc=com",
         attributes={
             "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
@@ -374,7 +373,7 @@ def demonstrate_entry_adapter_conversion() -> None:
     logger.info("\n2. Converting to Oracle OUD format:")
 
     # Convert LDIF entry to LDAP entry first, then back to LDIF for adapter
-    ldap_entry = FlextLdapModels.Entry.from_ldif(openldap_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(openldap_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     # Use entry adapter to convert between server formats
@@ -469,7 +468,7 @@ def demonstrate_entry_server_detection() -> None:
             continue
         # entry is now guaranteed to be FlextLdifModels.Entry
         # Convert to LDAP entry for server type detection, then back to LDIF for adapter
-        ldap_entry = FlextLdapModels.Entry.from_ldif(entry)
+        ldap_entry = FlextLdifModels.Entry.from_ldif(entry)
         ldif_entry_for_adapter = ldap_entry.to_ldif()
 
         adapter = FlextLdapEntryAdapter()
@@ -518,7 +517,7 @@ def demonstrate_entry_normalization() -> None:
 
     logger.info("\n2. Normalizing for current server:")
     # Convert LDIF entry to LDAP entry for normalization, then back to LDIF for adapter
-    ldap_entry = FlextLdapModels.Entry.from_ldif(mixed_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(mixed_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -557,7 +556,7 @@ def demonstrate_entry_validation() -> None:
     )
 
     # Convert LDIF entry to LDAP entry for validation, then back to LDIF for adapter
-    ldap_entry = FlextLdapModels.Entry.from_ldif(valid_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(valid_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -591,7 +590,7 @@ def demonstrate_entry_validation() -> None:
     )
 
     # Convert LDIF entry to LDAP entry for validation, then back to LDIF for adapter
-    ldap_entry = FlextLdapModels.Entry.from_ldif(specific_entry)
+    ldap_entry = FlextLdifModels.Entry.from_ldif(specific_entry)
     ldif_entry_for_adapter = ldap_entry.to_ldif()
 
     adapter = FlextLdapEntryAdapter()
@@ -705,7 +704,7 @@ def main() -> int:
                 and api.client.is_connected
             ):
                 api.client.unbind()
-            elif hasattr(api, "is_connected") and api.is_connected:
+            elif hasattr(api.client, "is_connected") and api.client.is_connected:
                 if hasattr(api, "unbind"):
                     api.unbind()
             elif hasattr(api, "unbind"):

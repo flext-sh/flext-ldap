@@ -42,10 +42,8 @@ class TestFlextLdapQuirksIntegration:
                 dn=FlextLdifModels.DistinguishedName(value="cn=schema,cn=config"),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
-                        "objectClass": FlextLdifModels.AttributeValues(
-                            values=["device"]
-                        ),
-                        "cn": FlextLdifModels.AttributeValues(values=["schema"]),
+                        "objectClass": ["device"],
+                        "cn": ["schema"],
                     }
                 ),
             ),
@@ -53,10 +51,8 @@ class TestFlextLdapQuirksIntegration:
                 dn=FlextLdifModels.DistinguishedName(value="dc=example,dc=com"),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
-                        "objectClass": FlextLdifModels.AttributeValues(
-                            values=["dcObject"]
-                        ),
-                        "dc": FlextLdifModels.AttributeValues(values=["example"]),
+                        "objectClass": ["dcObject"],
+                        "dc": ["example"],
                     }
                 ),
             ),

@@ -13,8 +13,7 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextResult
-
-from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifModels
 
 
 class DomainServices:
@@ -26,7 +25,7 @@ class DomainServices:
     """
 
     @staticmethod
-    def calculate_user_display_name(user: FlextLdapModels.Entry) -> str:
+    def calculate_user_display_name(user: FlextLdifModels.Entry) -> str:
         """Calculate display name for user based on domain rules.
 
         Priority: displayName > givenName + sn > cn > uid
@@ -39,19 +38,36 @@ class DomainServices:
 
         """
         # Priority: displayName > givenName + sn > cn > uid
-        if user.display_name:
-            return user.display_name
+        display_name = user.attributes.get("displayName") if user.attributes else None
+        if display_name:
+            return (
+                str(display_name[0])
+                if isinstance(display_name, list)
+                else str(display_name)
+            )
 
-        if user.given_name and user.sn:
-            return f"{user.given_name} {user.sn}"
+        given_name = user.attributes.get("givenName") if user.attributes else None
+        sn = user.attributes.get("sn") if user.attributes else None
+        if given_name and sn:
+            given_str = (
+                str(given_name[0]) if isinstance(given_name, list) else str(given_name)
+            )
+            sn_str = str(sn[0]) if isinstance(sn, list) else str(sn)
+            return f"{given_str} {sn_str}"
 
-        if user.cn:
-            return user.cn
+        cn = user.attributes.get("cn") if user.attributes else None
+        if cn:
+            return str(cn[0]) if isinstance(cn, list) else str(cn)
 
-        return user.uid or "Unknown User"
+        uid = user.attributes.get("uid") if user.attributes else None
+        return (
+            str(uid[0])
+            if uid and isinstance(uid, list)
+            else (str(uid) if uid else "Unknown User")
+        )
 
     @staticmethod
-    def determine_user_status(user: FlextLdapModels.Entry) -> str:
+    def determine_user_status(user: FlextLdifModels.Entry) -> str:
         """Determine user status based on LDAP attributes.
 
         Checks for account lock indicators, disabled accounts, and other
@@ -72,15 +88,22 @@ class DomainServices:
         ]
 
         for attr in lock_attrs:
-            value = user.additional_attributes.get(attr)
+            value = user.attributes.get(attr) if user.attributes else None
             if value:
+                if isinstance(value, list):
+                    value = value[0]
                 if isinstance(value, str) and value.lower() in {"true", "1", "yes"}:
                     return "locked"
-                if isinstance(value, int) and value & 2:  # ADS_UF_ACCOUNTDISABLE
-                    return "disabled"
+                try:
+                    if (
+                        isinstance(value, (int, str)) and int(value) & 2
+                    ):  # ADS_UF_ACCOUNTDISABLE
+                        return "disabled"
+                except (ValueError, TypeError):
+                    pass
 
         # Check password expiry
-        pwd_expiry = user.additional_attributes.get("pwdChangedTime")
+        pwd_expiry = user.attributes.get("pwdChangedTime") if user.attributes else None
         if pwd_expiry:
             # Simplified check - in real implementation would compare with policy
             return "active"
@@ -89,8 +112,8 @@ class DomainServices:
 
     @staticmethod
     def validate_group_membership_rules(
-        user: FlextLdapModels.Entry,
-        group: FlextLdapModels.Entry,
+        user: FlextLdifModels.Entry,
+        group: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Validate if user can be member of group based on business rules.
 
@@ -106,13 +129,28 @@ class DomainServices:
 
         """
         # Example business rule: users must have email for certain groups
-        if group.cn and "REDACTED_LDAP_BIND_PASSWORD" in group.cn.lower() and not user.mail:
-            return FlextResult[bool].fail(
-                "Admin group members must have email addresses",
-            )
+        group_cn = group.attributes.get("cn") if group.attributes else None
+        user_mail = user.attributes.get("mail") if user.attributes else None
 
-        # Example business rule: users must be active
-        if not user.is_active():
+        if group_cn:
+            group_cn_str = (
+                str(group_cn[0]) if isinstance(group_cn, list) else str(group_cn)
+            )
+            if "REDACTED_LDAP_BIND_PASSWORD" in group_cn_str.lower() and not user_mail:
+                return FlextResult[bool].fail(
+                    "Admin group members must have email addresses",
+                )
+
+        # Example business rule: check for active status (entries without lock attributes are active)
+        lock_attrs = ["nsAccountLock", "userAccountControl", "ds-pwp-account-disabled"]
+        is_locked = False
+        for attr in lock_attrs:
+            value = user.attributes.get(attr) if user.attributes else None
+            if value:
+                is_locked = True
+                break
+
+        if is_locked:
             return FlextResult[bool].fail(
                 "Inactive users cannot be added to groups",
             )
@@ -122,7 +160,7 @@ class DomainServices:
     @staticmethod
     def generate_unique_username(
         base_name: str,
-        existing_users: list[FlextLdapModels.Entry],
+        existing_users: list[FlextLdifModels.Entry],
         max_attempts: int = 100,
     ) -> FlextResult[str]:
         """Generate unique username based on domain rules.
@@ -146,14 +184,23 @@ class DomainServices:
         username = base_name.lower().replace(" ", "_")
 
         # Remove invalid characters
-
         username = re.sub(r"[^a-zA-Z0-9_-]", "", username)
 
         if not username:
             return FlextResult[str].fail("Base name contains no valid characters")
 
         # Check if base username is available
-        existing_uids = {u.uid for u in existing_users if u.uid}
+        existing_uids = set()
+        for user in existing_users:
+            uid_values = user.attributes.get("uid") if user.attributes else None
+            if uid_values:
+                uid_str = (
+                    str(uid_values[0])
+                    if isinstance(uid_values, list)
+                    else str(uid_values)
+                )
+                existing_uids.add(uid_str)
+
         if username not in existing_uids:
             return FlextResult[str].ok(username)
 

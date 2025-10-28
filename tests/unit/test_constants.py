@@ -97,14 +97,6 @@ class TestFlextLdapConstants:
             == FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
         )
 
-    def test_attributes_get_group_attributes_method(self) -> None:
-        """Test get_group_attributes method returns copy."""
-        result = FlextLdapConstants.LdapAttributeNames.get_group_attributes()
-        assert result == FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
-        # Verify it's a copy (modification doesn't affect original)
-        result.append("test")
-        assert "test" not in FlextLdapConstants.LdapAttributeNames.ALL_GROUP_ATTRS
-
     def test_ldap_attribute_names_core(self) -> None:
         """Test LDAP attribute names core constants."""
         assert FlextLdapConstants.LdapAttributeNames.DN == "dn"
@@ -277,70 +269,74 @@ class TestFlextLdapConstants:
 
     def test_dict_keys_acl_constants(self) -> None:
         """Test dictionary keys ACL constants."""
-        assert FlextLdapConstants.DictKeys.OPERATION == "operation"
-        assert FlextLdapConstants.DictKeys.ACL_STRING == "acl_string"
-        assert FlextLdapConstants.DictKeys.ACL_DATA == "acl_data"
-        assert FlextLdapConstants.DictKeys.TARGET_FORMAT == "target_format"
-        assert FlextLdapConstants.DictKeys.FORMAT == "format"
+        assert FlextLdapConstants.LdapDictKeys.OPERATION == "operation"
+        assert FlextLdapConstants.LdapDictKeys.ACL_STRING == "acl_string"
+        assert FlextLdapConstants.LdapDictKeys.ACL_DATA == "acl_data"
+        assert FlextLdapConstants.LdapDictKeys.TARGET_FORMAT == "target_format"
+        assert FlextLdapConstants.LdapDictKeys.FORMAT == "format"
 
     def test_dict_keys_entry_constants(self) -> None:
         """Test dictionary keys entry constants."""
-        assert FlextLdapConstants.DictKeys.DN == "dn"
-        assert FlextLdapConstants.DictKeys.UID == "uid"
-        assert FlextLdapConstants.DictKeys.CN == "cn"
-        assert FlextLdapConstants.DictKeys.SN == "sn"
-        assert FlextLdapConstants.DictKeys.MAIL == "mail"
-        assert FlextLdapConstants.DictKeys.GIVEN_NAME == "given_name"
-        assert FlextLdapConstants.DictKeys.TELEPHONE_NUMBER == "telephoneNumber"
-        assert FlextLdapConstants.DictKeys.MOBILE == "mobile"
-        assert FlextLdapConstants.DictKeys.DEPARTMENT == "department"
-        assert FlextLdapConstants.DictKeys.TITLE == "title"
-        assert FlextLdapConstants.DictKeys.ORGANIZATION == "organization"
-        assert FlextLdapConstants.DictKeys.ORGANIZATIONAL_UNIT == "organizationalUnit"
-        assert FlextLdapConstants.DictKeys.USER_PASSWORD == "user_password"
+        assert FlextLdapConstants.LdapDictKeys.DN == "dn"
+        assert FlextLdapConstants.LdapDictKeys.UID == "uid"
+        assert FlextLdapConstants.LdapDictKeys.CN == "cn"
+        assert FlextLdapConstants.LdapDictKeys.SN == "sn"
+        assert FlextLdapConstants.LdapDictKeys.MAIL == "mail"
+        assert FlextLdapConstants.LdapDictKeys.GIVEN_NAME == "given_name"
+        assert FlextLdapConstants.LdapDictKeys.TELEPHONE_NUMBER == "telephoneNumber"
+        assert FlextLdapConstants.LdapDictKeys.MOBILE == "mobile"
+        assert FlextLdapConstants.LdapDictKeys.DEPARTMENT == "department"
+        assert FlextLdapConstants.LdapDictKeys.TITLE == "title"
+        assert FlextLdapConstants.LdapDictKeys.ORGANIZATION == "organization"
+        assert (
+            FlextLdapConstants.LdapDictKeys.ORGANIZATIONAL_UNIT == "organizationalUnit"
+        )
+        assert FlextLdapConstants.LdapDictKeys.USER_PASSWORD == "user_password"
 
     def test_dict_keys_connection_constants(self) -> None:
         """Test dictionary keys connection constants."""
-        assert FlextLdapConstants.DictKeys.LDAP_SERVER == "ldap_server"
-        assert FlextLdapConstants.DictKeys.LDAP_PORT == "ldap_port"
-        assert FlextLdapConstants.DictKeys.BIND_DN == "bind_dn"
-        assert FlextLdapConstants.DictKeys.BIND_PASSWORD == "bind_password"
-        assert FlextLdapConstants.DictKeys.LDAP_BIND_PASSWORD == "ldap_bind_password"
+        assert FlextLdapConstants.LdapDictKeys.LDAP_SERVER == "ldap_server"
+        assert FlextLdapConstants.LdapDictKeys.LDAP_PORT == "ldap_port"
+        assert FlextLdapConstants.LdapDictKeys.BIND_DN == "bind_dn"
+        assert FlextLdapConstants.LdapDictKeys.BIND_PASSWORD == "bind_password"
+        assert (
+            FlextLdapConstants.LdapDictKeys.LDAP_BIND_PASSWORD == "ldap_bind_password"
+        )
 
     def test_dict_keys_operation_constants(self) -> None:
         """Test dictionary keys operation constants."""
-        assert FlextLdapConstants.DictKeys.OPERATION_TYPE == "operation_type"
-        assert FlextLdapConstants.DictKeys.SERVER == "server"
-        assert FlextLdapConstants.DictKeys.SERVER_URI == "server_uri"
-        assert FlextLdapConstants.DictKeys.PORT == "port"
-        assert FlextLdapConstants.DictKeys.ATTRIBUTES == "attributes"
-        assert FlextLdapConstants.DictKeys.ATTRIBUTE == "attribute"
-        assert FlextLdapConstants.DictKeys.VALUES == "values"
+        assert FlextLdapConstants.LdapDictKeys.OPERATION_TYPE == "operation_type"
+        assert FlextLdapConstants.LdapDictKeys.SERVER == "server"
+        assert FlextLdapConstants.LdapDictKeys.SERVER_URI == "server_uri"
+        assert FlextLdapConstants.LdapDictKeys.PORT == "port"
+        assert FlextLdapConstants.LdapDictKeys.ATTRIBUTES == "attributes"
+        assert FlextLdapConstants.LdapDictKeys.ATTRIBUTE == "attribute"
+        assert FlextLdapConstants.LdapDictKeys.VALUES == "values"
 
     def test_dict_keys_config_constants(self) -> None:
         """Test dictionary keys config constants."""
-        assert FlextLdapConstants.DictKeys.DEFAULT_TIMEOUT == "default_timeout"
-        assert FlextLdapConstants.DictKeys.MAX_PAGE_SIZE == "max_page_size"
+        assert FlextLdapConstants.LdapDictKeys.DEFAULT_TIMEOUT == "default_timeout"
+        assert FlextLdapConstants.LdapDictKeys.MAX_PAGE_SIZE == "max_page_size"
         assert (
-            FlextLdapConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS
+            FlextLdapConstants.LdapDictKeys.SUPPORTS_OPERATIONAL_ATTRS
             == "supports_operational_attrs"
         )
-        assert FlextLdapConstants.DictKeys.SCHEMA_SUBENTRY == "schema_subentry"
+        assert FlextLdapConstants.LdapDictKeys.SCHEMA_SUBENTRY == "schema_subentry"
 
     def test_dict_keys_acl_specific_constants(self) -> None:
         """Test dictionary keys ACL-specific constants."""
-        assert FlextLdapConstants.DictKeys.ACL_ATTRIBUTE == "acl_attribute"
-        assert FlextLdapConstants.DictKeys.ACL_FORMAT == "acl_format"
-        assert FlextLdapConstants.DictKeys.SOURCE_FORMAT == "source_format"
-        assert FlextLdapConstants.DictKeys.PERMISSIONS == "permissions"
-        assert FlextLdapConstants.DictKeys.SUBJECT == "subject"
-        assert FlextLdapConstants.DictKeys.TARGET == "target"
-        assert FlextLdapConstants.DictKeys.TARGET_TYPE == "target_type"
-        assert FlextLdapConstants.DictKeys.ACCESS == "access"
-        assert FlextLdapConstants.DictKeys.WHO == "who"
-        assert FlextLdapConstants.DictKeys.TYPE == "type"
-        assert FlextLdapConstants.DictKeys.DESCRIPTION == "description"
-        # Note: SUCCESS and GENERIC keys don't exist in current DictKeys definition
+        assert FlextLdapConstants.LdapDictKeys.ACL_ATTRIBUTE == "acl_attribute"
+        assert FlextLdapConstants.LdapDictKeys.ACL_FORMAT == "acl_format"
+        assert FlextLdapConstants.LdapDictKeys.SOURCE_FORMAT == "source_format"
+        assert FlextLdapConstants.LdapDictKeys.PERMISSIONS == "permissions"
+        assert FlextLdapConstants.LdapDictKeys.SUBJECT == "subject"
+        assert FlextLdapConstants.LdapDictKeys.TARGET == "target"
+        assert FlextLdapConstants.LdapDictKeys.TARGET_TYPE == "target_type"
+        assert FlextLdapConstants.LdapDictKeys.ACCESS == "access"
+        assert FlextLdapConstants.LdapDictKeys.WHO == "who"
+        assert FlextLdapConstants.LdapDictKeys.TYPE == "type"
+        assert FlextLdapConstants.LdapDictKeys.DESCRIPTION == "description"
+        # Note: SUCCESS and GENERIC keys don't exist in current LdapDictKeys definition
 
     def test_permission_type_literals(self) -> None:
         """Test permission type literals are defined in FlextLdapConstants.Types."""
@@ -492,16 +488,3 @@ class TestFlextLdapConstants:
         """Test version constants."""
         assert FlextLdapConstants.Version.CURRENT_VERSION == "0.9.0"
         assert FlextLdapConstants.Version.VERSION_INFO == (0, 9, 0)
-
-    def test_version_get_version_method(self) -> None:
-        """Test version get_version method."""
-        version = FlextLdapConstants.Version.get_version()
-        assert version == "0.9.0"
-        assert isinstance(version, str)
-
-    def test_version_get_version_info_method(self) -> None:
-        """Test version get_version_info method."""
-        version_info = FlextLdapConstants.Version.get_version_info()
-        assert version_info == (0, 9, 0)
-        assert isinstance(version_info, tuple)
-        assert len(version_info) == 3

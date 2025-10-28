@@ -32,6 +32,7 @@ from copy import deepcopy
 from typing import ClassVar, Final
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
@@ -208,7 +209,7 @@ class DemoLdapApi:
 
     def authenticate_user(
         self, username: str, password: str
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Authenticate user with username and password.
 
         Args:
@@ -222,7 +223,7 @@ class DemoLdapApi:
         success, error = DemoAuthScenarios.authenticate(username, password)
         if success:
             # Create a mock Entry for demo purposes
-            user = FlextLdapModels.Entry(
+            user = FlextLdifModels.Entry(
                 entry_type="user",
                 dn=f"cn={username},{BASE_DN}",
                 cn=username,
@@ -230,8 +231,8 @@ class DemoLdapApi:
                 sn=username,
                 object_classes=["person", "organizationalPerson", "inetOrgPerson"],
             )
-            return FlextResult[FlextLdapModels.Entry].ok(user)
-        return FlextResult[FlextLdapModels.Entry].fail(error or "Authentication failed")
+            return FlextResult[FlextLdifModels.Entry].ok(user)
+        return FlextResult[FlextLdifModels.Entry].fail(error or "Authentication failed")
 
     @property
     def authentication(self) -> DemoLdapApi:
@@ -241,7 +242,7 @@ class DemoLdapApi:
     def search_one(
         self,
         request: FlextLdapModels.SearchRequest,
-    ) -> FlextResult[FlextLdapModels.Entry | None]:
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Search for a single entry in the demo LDAP.
 
         Args:
@@ -259,7 +260,7 @@ class DemoLdapApi:
                 username = inner.split("=", maxsplit=1)[1]
         attributes = DemoAuthScenarios.get_attributes(username)
         if attributes is None:
-            return FlextResult[FlextLdapModels.Entry | None].ok(None)
+            return FlextResult[FlextLdifModels.Entry | None].ok(None)
         # Convert attributes to correct type
         typed_attributes: dict[str, str | list[str]] = {}
         if attributes:
@@ -269,11 +270,11 @@ class DemoLdapApi:
                 else:
                     typed_attributes[key] = str(value)
 
-        entry = FlextLdapModels.Entry(
+        entry = FlextLdifModels.Entry(
             dn=f"cn={username},{BASE_DN}",
             attributes=typed_attributes,
         )
-        return FlextResult[FlextLdapModels.Entry | None].ok(entry)
+        return FlextResult[FlextLdifModels.Entry | None].ok(entry)
 
 
 def setup_api() -> FlextLdap | DemoLdapApi:
@@ -597,7 +598,7 @@ def main() -> int:
                 and api.client.is_connected
             ):
                 api.client.unbind()
-            elif hasattr(api, "is_connected") and api.is_connected:
+            elif hasattr(api, "is_connected") and api.client.is_connected:
                 if hasattr(api, "unbind"):
                     api.unbind()
             elif hasattr(api, "unbind"):

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
 
@@ -185,11 +186,11 @@ class TestFlextLdapFacadeRealCoverage:
     def test_flext_ldap_validate_entries(self, ldap: FlextLdap) -> None:
         """Test entry validation via facade."""
         entries = [
-            FlextLdapModels.Entry(
+            FlextLdifModels.Entry(
                 dn="cn=test1,dc=example,dc=com",
                 attributes={"cn": ["test1"]},
             ),
-            FlextLdapModels.Entry(
+            FlextLdifModels.Entry(
                 dn="cn=test2,dc=example,dc=com",
                 attributes={"cn": ["test2"]},
             ),
@@ -200,7 +201,7 @@ class TestFlextLdapFacadeRealCoverage:
 
     def test_flext_ldap_convert_entry(self, ldap: FlextLdap) -> None:
         """Test entry conversion via facade."""
-        entry = FlextLdapModels.Entry(
+        entry = FlextLdifModels.Entry(
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"], "objectClass": ["person"]},
         )

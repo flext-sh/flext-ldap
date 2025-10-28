@@ -13,6 +13,7 @@ from __future__ import annotations
 import time
 
 import pytest
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapSchema
 
@@ -37,7 +38,7 @@ class TestRealSchemaDiscovery:
         assert result.value is not None
 
         schema = result.value
-        assert isinstance(schema, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema, FlextLdifModels.SchemaDiscoveryResult)
         assert schema.server_type is not None
         assert schema.server_quirks is not None
 
@@ -126,7 +127,7 @@ class TestRealServerQuirksDetection:
 
         schema = discovery_result.value
         # discover_schema returns SchemaDiscoveryResult, not plain dict
-        assert isinstance(schema, FlextLdapModels.SchemaDiscoveryResult)
+        assert isinstance(schema, FlextLdifModels.SchemaDiscoveryResult)
         assert schema is not None  # Should have schema object
 
         # Test quirks detector directly

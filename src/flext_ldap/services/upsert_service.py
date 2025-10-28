@@ -5,6 +5,9 @@ that handles the complexity of determining whether to ADD new attributes or
 REPLACE existing ones based on actual current entry state.
 
 Usage:
+    from flext_ldap import FlextLdap, FlextLdapUpsertService
+
+    client = FlextLdap()
     upsert_service = FlextLdapUpsertService()
     result = upsert_service.upsert_entry(
         ldap_client=client,
@@ -28,7 +31,6 @@ from flext_core import FlextResult, FlextService
 
 from flext_ldap.api import FlextLdap
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 
 
 class FlextLdapUpsertService(FlextService[dict[str, object]]):
@@ -119,12 +121,15 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 normalized_new[attr] = [value]
 
         # Step 1: Try ADD first (most efficient for new entries)
-        self.logger.debug(f"Attempting ADD for DN={dn}")
-        add_result = ldap_client.add_entry(dn=dn, attributes=new_attributes)
+        self.logger.debug("Attempting ADD", extra={"dn": dn})
+        add_result = ldap_client.client.add_entry(dn=dn, attributes=new_attributes)
 
         # Entry created successfully
         if add_result.is_success:
-            self.logger.info(f"Entry created via ADD: DN={dn}")
+            self.logger.debug(
+                "Entry created via ADD",
+                extra={"dn": dn, "attribute_count": len(normalized_new)},
+            )
             return FlextResult[dict[str, object]].ok({
                 "upserted": True,
                 "added": len(normalized_new),
@@ -142,12 +147,13 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         if not is_already_exists:
             # Real error - not a "already exists" error
             self.logger.error(
-                f"ADD failed with non-existence error for DN={dn}: {add_result.error}"
+                "ADD failed with non-existence error",
+                extra={"dn": dn, "error": str(add_result.error)},
             )
             return FlextResult[dict[str, object]].fail(str(add_result.error))
 
         # Step 3: Entry exists - search for current attributes
-        self.logger.info(f"Entry exists, fetching current attributes for DN={dn}")
+        self.logger.debug("Entry exists, fetching current attributes", extra={"dn": dn})
         search_result = ldap_client.search(
             base_dn=dn,
             search_filter="(objectClass=*)",
@@ -156,7 +162,8 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         if search_result.is_failure:
             self.logger.error(
-                f"Failed to fetch existing entry {dn}: {search_result.error}"
+                "Failed to fetch existing entry",
+                extra={"dn": dn, "error": str(search_result.error)},
             )
             return FlextResult[dict[str, object]].fail(
                 f"Failed to fetch existing entry: {search_result.error}"
@@ -164,23 +171,29 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         search_response = search_result.unwrap()
         if not search_response:
-            self.logger.error(f"Entry {dn} reported as exists but not found in search")
+            self.logger.error(
+                "Entry reported as exists but not found in search",
+                extra={"dn": dn},
+            )
             return FlextResult[dict[str, object]].fail(
                 f"Entry {dn} not found in search despite ADD indicating existence"
             )
 
-        # Extract Entry from SearchResponse (search() returns SearchResponse containing entries list)
-        if isinstance(search_response, FlextLdapModels.SearchResponse):
-            # SearchResponse contains entries list
-            if not search_response.entries:
-                self.logger.error(f"Entry {dn} not found in search entries")
+        # Extract Entry from search response (search() returns list[Entry] | Entry | None)
+        # Handle three cases: None, single Entry, list of Entry objects
+        if isinstance(search_response, list):
+            if not search_response:
+                self.logger.error(
+                    "Entry not found in search entries",
+                    extra={"dn": dn},
+                )
                 return FlextResult[dict[str, object]].fail(
                     f"Entry {dn} not found in search entries despite ADD indicating existence"
                 )
-            existing_entry = search_response.entries[0]
+            existing_entry = search_response[0]
         else:
-            # Fallback for direct Entry return (legacy support)
-            existing_entry = cast("FlextLdapModels.Entry", search_response)
+            # Single Entry returned directly from search
+            existing_entry = search_response
 
         # Extract current attributes from existing entry
         existing_attrs: dict[str, list[str]] = {}
@@ -219,8 +232,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         # Step 5: Skip MODIFY if no changes detected
         if not to_add and not to_replace:
-            self.logger.info(
-                f"Entry {dn} already has identical attributes, skipping MODIFY"
+            self.logger.debug(
+                "Entry already has identical attributes, skipping MODIFY",
+                extra={"dn": dn, "unchanged_count": unchanged_count},
             )
             return FlextResult[dict[str, object]].ok({
                 "upserted": True,
@@ -230,8 +244,13 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             })
 
         # Step 6: Execute MODIFY operations (no retries)
-        self.logger.info(
-            f"Preparing MODIFY for DN={dn}: to_add={len(to_add)}, to_replace={len(to_replace)}"
+        self.logger.debug(
+            "Preparing MODIFY",
+            extra={
+                "dn": dn,
+                "to_add_count": len(to_add),
+                "to_replace_count": len(to_replace),
+            },
         )
 
         added_count = 0
@@ -240,8 +259,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         # Execute ADD modifications
         if to_add:
             add_changes = cast("dict[str, str | list[str]]", to_add)
-            self.logger.info(
-                f"Executing MODIFY ADD for DN={dn}, attrs={list(to_add.keys())}"
+            self.logger.debug(
+                "Executing MODIFY ADD",
+                extra={"dn": dn, "attributes": list(to_add.keys())},
             )
             add_result = ldap_client.modify(
                 dn=dn,
@@ -250,16 +270,23 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             )
             if add_result.is_failure:
                 # No retry - ADD should work since we verified attributes don't exist
-                self.logger.error(f"MODIFY ADD failed for DN={dn}: {add_result.error}")
+                self.logger.error(
+                    "MODIFY ADD failed",
+                    extra={"dn": dn, "error": str(add_result.error)},
+                )
                 return FlextResult[dict[str, object]].fail(str(add_result.error))
             added_count = len(to_add)
-            self.logger.info(f"MODIFY ADD successful for DN={dn}")
+            self.logger.debug(
+                "MODIFY ADD successful",
+                extra={"dn": dn, "added_count": added_count},
+            )
 
         # Execute REPLACE modifications
         if to_replace:
             replace_changes = cast("dict[str, str | list[str]]", to_replace)
-            self.logger.info(
-                f"Executing MODIFY REPLACE for DN={dn}, attrs={list(to_replace.keys())}"
+            self.logger.debug(
+                "Executing MODIFY REPLACE",
+                extra={"dn": dn, "attributes": list(to_replace.keys())},
             )
             replace_result = ldap_client.modify(
                 dn=dn,
@@ -268,14 +295,19 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             )
             if replace_result.is_failure:
                 self.logger.error(
-                    f"MODIFY REPLACE failed for DN={dn}: {replace_result.error}"
+                    "MODIFY REPLACE failed",
+                    extra={"dn": dn, "error": str(replace_result.error)},
                 )
                 return FlextResult[dict[str, object]].fail(str(replace_result.error))
             replaced_count = len(to_replace)
-            self.logger.info(f"MODIFY REPLACE successful for DN={dn}")
+            self.logger.debug(
+                "MODIFY REPLACE successful",
+                extra={"dn": dn, "replaced_count": replaced_count},
+            )
 
         self.logger.info(
-            f"Entry {dn} upserted successfully: added={added_count}, replaced={replaced_count}"
+            "Entry upserted successfully",
+            extra={"dn": dn, "added": added_count, "replaced": replaced_count},
         )
 
         return FlextResult[dict[str, object]].ok({

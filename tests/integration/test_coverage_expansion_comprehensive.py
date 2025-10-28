@@ -15,8 +15,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 
 @pytest.mark.docker
@@ -189,7 +190,7 @@ class TestClientsValidateOperations:
     def test_validate_entry(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test validating an entry object."""
         # Create an entry object to validate
-        entry = FlextLdapModels.Entry(
+        entry = FlextLdifModels.Entry(
             dn="cn=test,dc=flext,dc=local",
             attributes={"cn": ["test"], "objectClass": ["person"]},
         )

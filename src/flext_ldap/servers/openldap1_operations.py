@@ -9,13 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, override
+from typing import TYPE_CHECKING, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
 if TYPE_CHECKING:
@@ -30,7 +29,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     - access ACL attribute (not olcAccess)
     - Inherits most operations from OpenLDAP 2.x
     - Different ACL syntax (access to... by...)
-    - Legacy objectClass support
+    - OpenLDAP 1.x objectClass support
     - Different replication mechanisms (slurpd vs syncrepl)
     """
 
@@ -60,7 +59,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse access ACL string for OpenLDAP 1.x.
 
         OpenLDAP 1.x ACL format (slapd.conf):
@@ -86,10 +85,12 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         """
         try:
-            acl_dict: dict[str, object] = {
-                "raw": acl_string,
-                "format": "openldap1",
-                "server_type": "openldap1",
+            from flext_ldif import FlextLdifModels as LdifModels
+
+            acl_attributes: dict[str, list[str]] = {
+                "raw": [acl_string],
+                "format": ["openldap1"],
+                "serverType": ["openldap1"],
             }
 
             # Parse OpenLDAP 1.x syntax: access to <what> by <who> <access>
@@ -98,12 +99,13 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
                 # Split into "to" clause and "by" clauses
                 by_split = remainder.split(" by ", 1)
-                acl_dict["to"] = by_split[0].strip()
+                to_clause = by_split[0].strip()
+                acl_attributes["to"] = [to_clause]
 
                 if len(by_split) > 1:
                     # Parse multiple "by <who> <access>" rules
                     by_rules = by_split[1]
-                    rules: list[dict[str, str]] = []
+                    rules_list: list[str] = []
 
                     # Split by " by " to get individual rules
                     for rule in by_rules.split(" by "):
@@ -115,30 +117,28 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                                 len(parts)
                                 == FlextLdapConstants.AclParsing.ACL_RULE_PARTS
                             ):
-                                rules.append({
-                                    "who": parts[0].strip(),
-                                    "access": parts[1].strip(),
-                                })
+                                rules_list.append(f"{parts[0].strip()}:{parts[1].strip()}")
                             else:
                                 # Handle rule without explicit access level
-                                rules.append({
-                                    "who": rule_stripped,
-                                    "access": "read",  # Default
-                                })
+                                rules_list.append(f"{rule_stripped}:read")
 
-                    acl_dict["rules"] = rules
-                    # Keep legacy "by" field for backward compatibility
-                    acl_dict["by"] = by_rules
+                    if rules_list:
+                        acl_attributes["rules"] = rules_list
+                    acl_attributes["by"] = [by_rules]
 
-            return FlextResult[dict[str, object]].ok(acl_dict)
+            entry = LdifModels.Entry(
+                dn=LdifModels.DistinguishedName(value="cn=AclRule"),
+                attributes=LdifModels.LdifAttributes.create(acl_attributes)
+            )
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 f"OpenLDAP 1.x ACL parse failed: {e}",
             )
 
     @override
-    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
+    def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
         """Format ACL dict[str, object] to access string for OpenLDAP 1.x.
 
         Args:
@@ -146,7 +146,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
             {
                 "to": what clause,
                 "rules": [{"who": subject, "access": level}, ...],
-                OR "by": legacy by clause string
+                OR "by": by clause string
             }
 
         Returns:
@@ -158,32 +158,37 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         """
         try:
-            # Use raw if available
-            if "raw" in acl_dict:
-                return FlextResult[str].ok(str(acl_dict["raw"]))
+            # Extract attributes from entry
+            raw_attr = acl_entry.attributes.get("raw")
+            if raw_attr and len(raw_attr) > 0:
+                return FlextResult[str].ok(raw_attr[0])
 
             parts = ["access"]
 
             # Add "to" clause
-            if "to" in acl_dict:
-                parts.append(f"to {acl_dict['to']}")
+            to_attr = acl_entry.attributes.get("to")
+            if to_attr and len(to_attr) > 0:
+                parts.append(f"to {to_attr[0]}")
             else:
                 parts.append("to *")  # Default
 
             # Add "by" clauses from structured rules
-            if "rules" in acl_dict:
-                # Cast to list of dicts for type safety
-                rules_list = cast("list[dict[str, str]]", acl_dict["rules"])
-                for rule in rules_list:
-                    who = rule.get(FlextLdapConstants.LdapDictKeys.WHO, "*")
-                    access = rule.get(FlextLdapConstants.LdapDictKeys.ACCESS, "read")
-                    parts.append(f"by {who} {access}")
-            # Fallback to legacy "by" string
-            elif "by" in acl_dict:
-                parts.append(f"by {acl_dict['by']}")
+            rules_attr = acl_entry.attributes.get("rules")
+            if rules_attr:
+                for rule_str in rules_attr:
+                    if ":" in rule_str:
+                        who, access = rule_str.split(":", 1)
+                        parts.append(f"by {who} {access}")
+                    else:
+                        parts.append(f"by {rule_str}")
             else:
-                # Default ACL
-                parts.append("by * read")
+                # Fallback to "by" string
+                by_attr = acl_entry.attributes.get("by")
+                if by_attr and len(by_attr) > 0:
+                    parts.append(f"by {by_attr[0]}")
+                else:
+                    # Default ACL
+                    parts.append("by * read")
 
             return FlextResult[str].ok(" ".join(parts))
 
@@ -198,7 +203,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         """Normalize entry for OpenLDAP 1.x specifics.
 
         OpenLDAP 1.x Considerations:
-        - Supports standard objectClasses but may have legacy classes
+        - Supports standard objectClasses and OpenLDAP 1.x classes
         - Uses access ACLs instead of olcAccess
         - Schema extensions via slapd.conf include directives
 
@@ -218,34 +223,38 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 olc_access = attributes_dict.pop("olcAccess")
                 attributes_dict["access"] = olc_access
 
-            # Ensure objectClass compatibility
+            # Map objectClasses for OpenLDAP 1.x format
             if "objectClass" in attributes_dict:
                 object_class_attr = attributes_dict["objectClass"]
-                object_classes = object_class_attr.values
+                # object_class_attr is already a list, don't call .values
+                object_classes = (
+                    object_class_attr
+                    if isinstance(object_class_attr, list)
+                    else [object_class_attr]
+                )
 
                 # Map 2.x config objectClasses to 1.x equivalents
                 mapped_classes = []
                 for oc in object_classes:
-                    if oc == "olcDatabaseConfig":
+                    oc_str = str(oc)
+                    if oc_str == "olcDatabaseConfig":
                         # 1.x doesn't use olc* objectClasses
                         continue
-                    if oc.startswith("olc"):
-                        # Remove olc prefix for 1.x compatibility
+                    if oc_str.startswith("olc"):
+                        # Remove olc prefix for OpenLDAP 1.x format
                         prefix_len = (
                             FlextLdapConstants.AclParsing.OPENLDAP_PREFIX_LENGTH
                         )
                         min_len = FlextLdapConstants.AclParsing.MIN_OC_LENGTH
                         mapped_classes.append(
-                            oc[prefix_len:] if len(oc) > min_len else oc,
+                            oc_str[prefix_len:] if len(oc_str) > min_len else oc_str,
                         )
                     else:
-                        mapped_classes.append(oc)
+                        mapped_classes.append(oc_str)
 
                 if mapped_classes:
-                    # Update objectClass with mapped values
-                    attributes_dict["objectClass"] = FlextLdifModels.AttributeValues(
-                        values=mapped_classes,
-                    )
+                    # Update objectClass with mapped values (use list directly)
+                    attributes_dict["objectClass"] = mapped_classes
 
             # Create normalized entry
             normalized_attributes = FlextLdifModels.LdifAttributes(
@@ -276,7 +285,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         """Get replication mechanism for OpenLDAP 1.x.
 
         Returns:
-            "slurpd" - legacy replication daemon
+            "slurpd" - replication daemon for OpenLDAP 1.x
 
         """
         return "slurpd"
@@ -314,12 +323,12 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
                 attrs = {}
                 for attr in entry.entry_attributes:
                     attrs[attr] = entry[attr].value
-                return FlextResult[dict[str, object]].ok(attrs)
+                return FlextResult[FlextLdifModels.Entry].ok(attrs)
 
-            return FlextResult[dict[str, object]].fail("No Root DSE found")
+            return FlextResult[FlextLdifModels.Entry].fail("No Root DSE found")
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.Entry].fail(
                 f"Root DSE retrieval failed: {e}",
             )
 
@@ -369,9 +378,9 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     @override
     def normalize_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for OpenLDAP 1.x server specifics.
 
         Applies OpenLDAP 1.x-specific transformations:
@@ -387,27 +396,19 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         FlextResult containing normalized entry
 
         """
-        # Convert FlextLdapModels.Entry to FlextLdifModels.Entry if needed
-        # normalize_entry expects FlextLdifModels.Entry
-        if isinstance(entry, FlextLdapModels.Entry):
-            # Cast to FlextLdifModels.Entry since both have compatible structure
-            ldif_entry = cast("FlextLdifModels.Entry", entry)
-        else:
-            ldif_entry = entry
+        # Entry is already FlextLdifModels.Entry, use it directly
+        ldif_entry = entry
 
         # Reuse existing normalize_entry method which handles OpenLDAP 1.x specifics
         normalize_result = self.normalize_entry(ldif_entry)
         if normalize_result.is_failure:
-            return FlextResult[FlextLdapModels.Entry].fail(normalize_result.error)
+            return FlextResult[FlextLdifModels.Entry].fail(normalize_result.error)
 
-        # Convert FlextLdifModels.Entry to FlextLdapModels.Entry
+        # Get normalized entry
         normalized_ldif_entry = normalize_result.unwrap()
 
-        # Cast FlextLdifModels.Entry to FlextLdapModels.Entry
-        # Both have compatible structure (dn, attributes) and represent LDAP entries
-        return FlextResult[FlextLdapModels.Entry].ok(
-            cast("FlextLdapModels.Entry", normalized_ldif_entry),
-        )
+        # Return normalized entry directly (no cast needed)
+        return FlextResult[FlextLdifModels.Entry].ok(normalized_ldif_entry)
 
     @override
     def validate_entry_for_server(
@@ -447,11 +448,17 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
             # OpenLDAP 1.x specific: reject olc* objectClasses
             object_class_attr = attrs["objectClass"]
-            object_classes = object_class_attr.values
+            # object_class_attr is already a list, don't call .values
+            object_classes = (
+                object_class_attr
+                if isinstance(object_class_attr, list)
+                else [object_class_attr]
+            )
             for oc in object_classes:
-                if oc.startswith("olc"):
+                oc_str = str(oc)
+                if oc_str.startswith("olc"):
                     return FlextResult[bool].fail(
-                        f"OpenLDAP 2.x objectClass '{oc}' not supported in 1.x",
+                        f"OpenLDAP 2.x objectClass '{oc_str}' not supported in 1.x",
                     )
 
             # Warn about access ACL format

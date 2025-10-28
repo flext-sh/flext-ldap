@@ -20,7 +20,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from flext_ldif import FlextLdif, FlextLdifAclParser, FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 # Integration tests - require flext-ldif and Docker LDAP server
 pytestmark = pytest.mark.integration
@@ -62,7 +62,7 @@ def test_entries(
 
     # Create test organizational unit
     ou_dn = "ou=testusers,dc=flext,dc=local"
-    ou_entry = FlextLdapModels.Entry(
+    ou_entry = FlextLdifModels.Entry(
         dn=ou_dn,
         attributes={
             "objectClass": ["organizationalUnit"],
@@ -78,7 +78,7 @@ def test_entries(
     # Create test user entries
     for i in range(3):
         user_dn = f"cn=testuser{i},{ou_dn}"
-        user_entry = FlextLdapModels.Entry(
+        user_entry = FlextLdifModels.Entry(
             dn=user_dn,
             attributes={
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
@@ -271,7 +271,7 @@ sn: ImportedUser
                         else [attr_values.values]
                     )
 
-            ldap_entry = FlextLdapModels.Entry(
+            ldap_entry = FlextLdifModels.Entry(
                 dn=str(ldif_entry.dn),
                 attributes=ldap_attributes,
                 object_classes=object_classes_value,
@@ -345,7 +345,7 @@ sn: FileUser
                             else [attr_values.values]
                         )
 
-                ldap_entry_data = FlextLdapModels.Entry(
+                ldap_entry_data = FlextLdifModels.Entry(
                     dn=str(ldif_entry.dn),
                     attributes=ldap_attributes,
                     object_classes=object_classes_value,
@@ -371,7 +371,7 @@ class TestEntryConversion:
     def test_ldap_entry_to_ldif_entry_conversion(self) -> None:
         """Test converting LDAP entry to LDIF entry."""
         # Create LDAP entry
-        ldap_entry = FlextLdapModels.Entry(
+        ldap_entry = FlextLdifModels.Entry(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "organizationalPerson"],
@@ -445,7 +445,7 @@ class TestEntryConversion:
                     else [attr_values.values]
                 )
 
-        ldap_entry = FlextLdapModels.Entry(
+        ldap_entry = FlextLdifModels.Entry(
             dn=str(ldif_entry.dn),
             attributes=ldap_attributes,
             object_classes=object_classes_value,
@@ -462,7 +462,7 @@ class TestAclIntegration:
 
     def test_ldif_acl_models_available_in_ldap(self) -> None:
         """Test that LDIF ACL models are available in LDAP."""
-        target_result = FlextLdapModels.AclTarget.create(
+        target_result = FlextLdifModels.AclTarget.create(
             target_type="dn",
             dn_pattern="ou=users,dc=example,dc=com",
         )

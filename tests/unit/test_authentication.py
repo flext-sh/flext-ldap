@@ -199,20 +199,32 @@ class TestFlextLdapAuthenticationHelpers:
         self, auth_service: FlextLdapAuthentication
     ) -> None:
         """Test creating user from entry result."""
-        mock_entry = Mock()
-        mock_entry.entry_dn = "uid=testuser,ou=users,dc=test,dc=local"
-        mock_entry.uid = ["testuser"]
-        mock_entry.cn = ["Test User"]
-        mock_entry.sn = ["User"]
-        mock_entry.mail = ["test@example.com"]
+        # Modern Entry API: use real Entry with DistinguishedName and LdifAttributes
+        from flext_ldif import FlextLdifModels
 
-        result = auth_service._create_user_from_entry_result(mock_entry)
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="uid=testuser,ou=users,dc=test,dc=local"
+            ),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "uid": ["testuser"],
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "mail": ["test@example.com"],
+                    "objectClass": ["inetOrgPerson", "person"],
+                }
+            ),
+        )
+
+        result = auth_service._create_user_from_entry_result(entry)
         assert result.is_success
         user = result.unwrap()
-        assert user.uid == "testuser"
-        assert user.cn == "Test User"
-        assert user.sn == "User"
-        assert user.mail == ["test@example.com"]
+        # Modern Entry API: access attributes via attributes.attributes dict
+        assert user.attributes.attributes.get("uid") == ["testuser"]
+        assert user.attributes.attributes.get("cn") == ["Test User"]
+        assert user.attributes.attributes.get("sn") == ["User"]
+        assert user.attributes.attributes.get("mail") == ["test@example.com"]
 
 
 class TestFlextLdapAuthenticationExecute:

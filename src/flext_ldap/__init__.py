@@ -22,11 +22,12 @@ from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.repository import LdapEntryRepository, RepositoryBase
 from flext_ldap.schema import FlextLdapSchema
 from flext_ldap.search import FlextLdapSearch
 from flext_ldap.servers import FlextLdapServers
+from flext_ldap.services.upsert_service import FlextLdapUpsertService
 from flext_ldap.typings import FlextLdapTypes
-from flext_ldap.upsert_service import FlextLdapUpsertService
 
 __all__ = [
     "FlextExceptions",
@@ -45,6 +46,8 @@ __all__ = [
     "FlextLdapServers",
     "FlextLdapTypes",
     "FlextLdapUpsertService",
+    "LdapEntryRepository",
+    "RepositoryBase",
     "__version__",
     "__version_info__",
 ]

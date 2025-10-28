@@ -1,7 +1,7 @@
 """LDAP schema discovery and quirks handling.
 
 Automatic schema discovery and server quirks handling for universal
-LDAP compatibility following FLEXT architectural patterns with proper
+LDAP schema operations following FLEXT architectural patterns with proper
 domain separation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

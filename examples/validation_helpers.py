@@ -147,7 +147,7 @@ def validate_connection(
 
     start_time = time.time()
     try:
-        if not api.is_connected:
+        if not api.client.is_connected:
             duration = time.time() - start_time
             metrics.add_result(
                 test_name, "fail", "Not connected to LDAP server", duration
@@ -391,7 +391,7 @@ def validate_crud_operations(
                 ],
                 FlextLdapConstants.LdapAttributeNames.OU: "users",
             }
-            create_ou_result = api.add_entry(parent_ou_dn, ou_attributes)
+            create_ou_result = api.client.add_entry(parent_ou_dn, ou_attributes)
             if create_ou_result.is_failure:
                 logger.warning(
                     f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}"
@@ -418,7 +418,7 @@ def validate_crud_operations(
             FlextLdapConstants.LdapAttributeNames.MAIL: "testcrud@internal.invalid",
         }
 
-        result = api.add_entry(test_dn, attributes)
+        result = api.client.add_entry(test_dn, attributes)
         duration = time.time() - start_time
 
         if result.is_failure:
@@ -692,7 +692,7 @@ def validate_server_operations(
         # Test 2: Get supported operations
         try:
             start_time = time.time()
-            operations = api.get_server_operations()
+            operations = api.servers
             duration = time.time() - start_time
 
             # operations is FlextLdap.Servers object, not FlextResult

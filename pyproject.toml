@@ -22,9 +22,9 @@
         "flext-ldif @ file:../flext-ldif",
         "ldap3 (>=2.9.1)",
         "pydantic (>=2.12.3)",
+        "pydantic-core (>=2.41.4)",
         "pydantic-settings (>=2.11.0)",
         "structlog (>=25.4.0)",
-        "pydantic-core (>=2.41.4)",
     ]
     description = "Enterprise LDAP Operations Library for FLEXT Framework"
     keywords = [
@@ -57,120 +57,134 @@
         Homepage = "https://github.com/flext-sh/flext"
         Repository = "https://github.com/flext-sh/flext"
 
-[tool.ruff]
-    extend = "../ruff-shared.toml"
-
-[tool.poetry]
-    [[tool.poetry.packages]]
-        from = "src"
-        include = "flext_ldap"
-
-[tool.deptry]
-    known_first_party = [
-        "flext_ldap",
-    ]
-
-    [tool.poetry.dependencies]
-        cryptography = ">=45.0.5"
-        ldap3 = ">=2.9.1"
-        pydantic = ">=2.12.3"
-        pydantic-settings = ">=2.11.0"
-        python = ">=3.13,<3.14"
-        structlog = ">=25.4.0"
-
-[tool.pytest.ini_options]
-    addopts = [
-        "--strict-config",
-        "--tb=short",
-        "-ra",
-        "-p",
-        "no:randomly",
-    ]
-    filterwarnings = [
-        "ignore::DeprecationWarning",
-        "ignore::PendingDeprecationWarning",
-    ]
-    markers = [
-        "benchmark: Benchmark tests",
-        "concurrency: Concurrency tests",
-        "docker: Tests requiring Docker containers",
-        "e2e: End-to-end tests",
-        "factory_test: Factory tests",
-        "integration: Integration tests (require external services)",
-        "memory: Memory tests",
-        "mock_heavy: Tests with heavy mocking",
-        "performance: Performance tests (sensitive to load)",
-        "race_condition: Race condition tests",
-        "regression: Regression tests",
-        "slow: Slow tests (execution time > 5 seconds)",
-        "smoke: Smoke tests",
-        "stress: Stress tests",
-        "test: tests",
-        "timeout: Timeout tests",
-        "unit: Unit tests (fast, no external dependencies)",
-    ]
-    minversion = "8.0"
-    pythonpath = [
-        "src",
-    ]
-    testpaths = [
-        "tests",
-    ]
-    [tool.ruff.lint.isort]
-        known-first-party = [
+[tool]
+    [tool.deptry]
+        known_first_party = [
             "flext_ldap",
         ]
 
-        [tool.poetry.dependencies.flext-ldif]
-            develop = true
-            path = "../flext-ldif"
+    [tool.poetry]
+        [[tool.poetry.packages]]
+            from = "src"
+            include = "flext_ldap"
 
-    [tool.poetry.group.dev.dependencies]
-        autoflake = ">=2.3.1"
-        black = ">=25.1.0"
-        codespell = ">=2.3.0"
-        commitizen = ">=4.8.3"
-        detect-secrets = ">=1.5.0"
-        isort = ">=6.0.1"
-        pre-commit = ">=4.0.1"
-        pylint = ">=3.3.0"
-        pyrefly = "^0.34.0"
-        pyupgrade = ">=3.19.0"
-        radon = ">=6.0.1"
-        ruff = ">=0.12.3"
-        types-ldap3 = ">=2.9.13.20250622"
-        vulture = ">=2.13"
 
-    [tool.poetry.group.test.dependencies]
-        
-        
-docker = ">=7.1.0"
-        factory-boy = ">=3.3.1"
-        faker = ">=37.4.0"
-        hypothesis = ">=6.125.0"
-        pytest = ">=8.4.0"
-        pytest-benchmark = ">=5.1.0"
-        pytest-clarity = ">=1.0.1"
-        pytest-cov = "=7.0.0"
-        pytest-deadfixtures = ">=2.2.1"
-        pytest-env = ">=1.1.5"
-        pytest-mock = ">=3.14.0"
-        pytest-sugar = ">=1.0.0"
-        pytest-timeout = ">=2.4.0"
-        pytest-xdist = ">=3.8.0"
-        python-ldap = ">=3.4.4"
+        [tool.poetry.dependencies]
+            cryptography = ">=45.0.5"
+            ldap3 = ">=2.9.1"
+            pydantic = ">=2.12.3"
+            pydantic-settings = ">=2.11.0"
+            python = ">=3.13,<3.14"
+            structlog = ">=25.4.0"
 
-    [tool.poetry.group.typings.dependencies]
-        types-docker = "^7.1.0.20250809"
-        types-ldap3 = ">=2.9.13.20250622"
-        types-psutil = ">=7.0.0"
-        types-python-dateutil = ">=2.9.0"
-        types-pyyaml = ">=6.0.12"
-        types-redis = ">=4.6.0"
-        types-requests = ">=2.32.4"
-        types-setuptools = ">=80.9.0"
-        types-toml = ">=0.10.8.20240310"
+            [tool.poetry.dependencies.flext-ldif]
+                develop = true
+                path = "../flext-ldif"
 
-    [tool.poetry.group.security.dependencies]
-        bandit = ">=1.8.0"
-        pip-audit = ">=2.7.3"
+        [tool.poetry.group.dev.dependencies]
+            autoflake = ">=2.3.1"
+            black = ">=25.1.0"
+            codespell = ">=2.3.0"
+            commitizen = ">=4.8.3"
+            detect-secrets = ">=1.5.0"
+            isort = ">=6.0.1"
+            pre-commit = ">=4.0.1"
+            pylint = ">=3.3.0"
+            pyrefly = "^0.34.0"
+            pyupgrade = ">=3.19.0"
+            radon = ">=6.0.1"
+            ruff = ">=0.12.3"
+            types-ldap3 = ">=2.9.13.20250622"
+            vulture = ">=2.13"
+
+        [tool.poetry.group.test.dependencies]
+
+
+            docker = ">=7.1.0"
+            factory-boy = ">=3.3.1"
+            faker = ">=37.4.0"
+            hypothesis = ">=6.125.0"
+            pytest = ">=8.4.0"
+            pytest-benchmark = ">=5.1.0"
+            pytest-clarity = ">=1.0.1"
+            pytest-cov = "=7.0.0"
+            pytest-deadfixtures = ">=2.2.1"
+            pytest-env = ">=1.1.5"
+            pytest-mock = ">=3.14.0"
+            pytest-sugar = ">=1.0.0"
+            pytest-timeout = ">=2.4.0"
+            pytest-xdist = ">=3.8.0"
+            python-ldap = ">=3.4.4"
+
+        [tool.poetry.group.typings.dependencies]
+            types-docker = "^7.1.0.20250809"
+            types-ldap3 = ">=2.9.13.20250622"
+            types-psutil = ">=7.0.0"
+            types-python-dateutil = ">=2.9.0"
+            types-pyyaml = ">=6.0.12"
+            types-redis = ">=4.6.0"
+            types-requests = ">=2.32.4"
+            types-setuptools = ">=80.9.0"
+            types-toml = ">=0.10.8.20240310"
+
+        [tool.poetry.group.security.dependencies]
+            bandit = ">=1.8.0"
+            pip-audit = ">=2.7.3"
+
+    [tool.pytest.ini_options]
+        addopts = [
+            "--cov-report=term-missing",
+            "--cov=src/",
+            "--strict-config",
+            "--strict-markers",
+            "--tb=short",
+            "-p no:sugar",
+            "-p no:randomly",
+            "-q",
+            "-ra",
+        ]
+        filterwarnings = [
+            "ignore::DeprecationWarning",
+            "ignore::PendingDeprecationWarning",
+        ]
+        markers = [
+            "benchmark: Benchmark tests",
+            "concurrency: Concurrency tests",
+            "docker: Tests requiring Docker containers",
+            "e2e: End-to-end tests",
+            "factory_test: Factory tests",
+            "integration: Integration tests (require external services)",
+            "memory: Memory tests",
+            "mock_heavy: Tests with heavy mocking",
+            "performance: Performance tests (sensitive to load)",
+            "race_condition: Race condition tests",
+            "regression: Regression tests",
+            "slow: Slow tests (execution time > 5 seconds)",
+            "smoke: Smoke tests",
+            "stress: Stress tests",
+            "test: tests",
+            "timeout: Timeout tests",
+            "unit: Unit tests (fast, no external dependencies)",
+        ]
+        minversion = "8.0"
+        python_classes = [
+            "Test*",
+        ]
+        python_files = [
+            "*_test.py",
+            "test_*.py",
+        ]
+        python_functions = [
+            "test_*",
+        ]
+        testpaths = [
+            "tests",
+        ]
+
+    [tool.ruff]
+        extend = "../ruff-shared.toml"
+
+        [tool.ruff.lint.isort]
+            known-first-party = [
+                "flext_ldap",
+            ]

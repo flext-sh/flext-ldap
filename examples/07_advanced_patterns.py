@@ -36,6 +36,7 @@ from contextlib import contextmanager
 from typing import Final, TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import (
@@ -320,8 +321,8 @@ def demonstrate_flext_result_patterns() -> None:
                     attributes=["dn"],
                 )
                 search_result_raw = api.search_with_request(search_request)
-                search_result: FlextResult[list[FlextLdapModels.Entry]] = cast(
-                    "FlextResult[list[FlextLdapModels.Entry]]", search_result_raw
+                search_result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+                    "FlextResult[list[FlextLdifModels.Entry]]", search_result_raw
                 )
 
                 if search_result.is_failure:

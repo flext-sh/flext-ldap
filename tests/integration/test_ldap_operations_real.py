@@ -11,8 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration
@@ -196,7 +197,7 @@ class TestRealLdapCRUD:
         assert add_result.is_success, f"Add user failed: {add_result.error}"
 
         # Modify user
-        changes = FlextLdapModels.EntryChanges()
+        changes = FlextLdifModels.EntryChanges()
         changes.mail = ["newemail@internal.invalid"]
         modify_result = client.modify_entry(
             dn="cn=testuser,ou=users,dc=flext,dc=local",

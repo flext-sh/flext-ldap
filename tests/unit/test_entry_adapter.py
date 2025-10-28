@@ -60,12 +60,8 @@ class TestEntryAdapterUniversal:
         """Test detecting OpenLDAP 2.x from entry with olcAccess attribute."""
         # Arrange - entry with OpenLDAP 2.x characteristics
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "olcAccess": FlextLdifModels.AttributeValues(
-                values=["{0}to * by self write by * read"]
-            ),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "olcAccess": ["{0}to * by self write by * read"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -89,12 +85,8 @@ class TestEntryAdapterUniversal:
         """Test detecting OpenLDAP 1.x from entry with access attribute."""
         # Arrange - entry with OpenLDAP 1.x characteristics
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "access": FlextLdifModels.AttributeValues(
-                values=["access to * by self write by * read"]
-            ),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "access": ["access to * by self write by * read"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -125,12 +117,10 @@ class TestEntryAdapterUniversal:
         """Test detecting Oracle OID from entry with orclaci attribute."""
         # Arrange - entry with Oracle OID characteristics
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["orclContainer", "top"]
-            ),
-            "orclaci": FlextLdifModels.AttributeValues(
-                values=['access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" (read)']
-            ),
+            "objectClass": ["orclContainer", "top"],
+            "orclaci": [
+                'access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" (read)'
+            ],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=users,dc=example,dc=com"),
@@ -161,12 +151,8 @@ class TestEntryAdapterUniversal:
         """Test detecting Oracle OUD from entry with ds-privilege-name attribute."""
         # Arrange - entry with Oracle OUD characteristics
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["ds-root-dn-user", "top"]
-            ),
-            "ds-privilege-name": FlextLdifModels.AttributeValues(
-                values=["config-read", "config-write"]
-            ),
+            "objectClass": ["ds-root-dn-user", "top"],
+            "ds-privilege-name": ["config-read", "config-write"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -199,11 +185,9 @@ class TestEntryAdapterUniversal:
         """Test detecting Active Directory from entry with AD-specific attributes."""
         # Arrange - entry with Active Directory characteristics
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["user", "top"]),
-            "objectGUID": FlextLdifModels.AttributeValues(
-                values=["a9d1ca15-768a-11d1-aded-00c04fd8d5cd"]
-            ),
-            "sAMAccountName": FlextLdifModels.AttributeValues(values=["jdoe"]),
+            "objectClass": ["user", "top"],
+            "objectGUID": ["a9d1ca15-768a-11d1-aded-00c04fd8d5cd"],
+            "sAMAccountName": ["jdoe"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -241,9 +225,9 @@ class TestEntryAdapterUniversal:
         """
         # Arrange - standard person entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["person", "top"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Doe"]),
+            "objectClass": ["person", "top"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -269,15 +253,11 @@ class TestEntryAdapterUniversal:
         self, adapter_openldap2: FlextLdapEntryAdapter
     ) -> None:
         """Test normalizing entry for OpenLDAP 2.x server."""
-        # Arrange - entry with mixed attributes
+        # Arrange - entry with mixed attributes (modern API uses plain lists)
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "access": FlextLdifModels.AttributeValues(
-                values=["access to * by self write"]
-            ),
-            "cn": FlextLdifModels.AttributeValues(values=["config"]),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "access": ["access to * by self write"],
+            "cn": ["config"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -305,12 +285,8 @@ class TestEntryAdapterUniversal:
         """Test normalizing entry for OpenLDAP 1.x server."""
         # Arrange - entry with OpenLDAP 2.x attributes
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "olcAccess": FlextLdifModels.AttributeValues(
-                values=["{0}to * by self write"]
-            ),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "olcAccess": ["{0}to * by self write"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -337,10 +313,10 @@ class TestEntryAdapterUniversal:
         """Test normalizing entry preserves standard LDAP attributes."""
         # Arrange - entry with standard attributes
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["person", "top"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Doe"]),
-            "mail": FlextLdifModels.AttributeValues(values=["jdoe@example.com"]),
+            "objectClass": ["person", "top"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "mail": ["jdoe@example.com"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -355,12 +331,10 @@ class TestEntryAdapterUniversal:
         # Assert
         assert result.is_success
         normalized_entry = result.unwrap()
-        # Verify all standard attributes preserved
-        assert normalized_entry.attributes.attributes["cn"].values == ["John Doe"]
-        assert normalized_entry.attributes.attributes["sn"].values == ["Doe"]
-        assert normalized_entry.attributes.attributes["mail"].values == [
-            "jdoe@example.com"
-        ]
+        # Verify all standard attributes preserved (modern API uses plain lists)
+        assert normalized_entry.attributes.attributes["cn"] == ["John Doe"]
+        assert normalized_entry.attributes.attributes["sn"] == ["Doe"]
+        assert normalized_entry.attributes.attributes["mail"] == ["jdoe@example.com"]
 
     # =========================================================================
     # ENTRY VALIDATION TESTS
@@ -372,12 +346,8 @@ class TestEntryAdapterUniversal:
         """Test validating valid OpenLDAP 2.x entry."""
         # Arrange - valid OpenLDAP 2.x entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "olcAccess": FlextLdifModels.AttributeValues(
-                values=["{0}to * by self write"]
-            ),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "olcAccess": ["{0}to * by self write"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -398,9 +368,9 @@ class TestEntryAdapterUniversal:
         """Test validating generic entry is valid for any server."""
         # Arrange - generic entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["person", "top"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Doe"]),
+            "objectClass": ["person", "top"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -429,12 +399,8 @@ class TestEntryAdapterUniversal:
         """Test converting entry from OpenLDAP 1.x to OpenLDAP 2.x format."""
         # Arrange - OpenLDAP 1.x entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["databaseConfig", "top"]
-            ),
-            "access": FlextLdifModels.AttributeValues(
-                values=["access to * by self write by * read"]
-            ),
+            "objectClass": ["databaseConfig", "top"],
+            "access": ["access to * by self write by * read"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -461,12 +427,8 @@ class TestEntryAdapterUniversal:
         """Test converting entry from OpenLDAP 2.x to OpenLDAP 1.x format."""
         # Arrange - OpenLDAP 2.x entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["olcDatabaseConfig", "top"]
-            ),
-            "olcAccess": FlextLdifModels.AttributeValues(
-                values=["{0}to * by self write by * read"]
-            ),
+            "objectClass": ["olcDatabaseConfig", "top"],
+            "olcAccess": ["{0}to * by self write by * read"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config"),
@@ -493,12 +455,10 @@ class TestEntryAdapterUniversal:
         """Test converting entry from Oracle OID to Oracle OUD format."""
         # Arrange - Oracle OID entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["orclContainer", "top"]
-            ),
-            "orclaci": FlextLdifModels.AttributeValues(
-                values=['access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" (read)']
-            ),
+            "objectClass": ["orclContainer", "top"],
+            "orclaci": [
+                'access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" (read)'
+            ],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=users,dc=example,dc=com"),
@@ -525,8 +485,8 @@ class TestEntryAdapterUniversal:
         """Test converting entry to same server type preserves entry."""
         # Arrange - entry
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["person", "top"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
+            "objectClass": ["person", "top"],
+            "cn": ["John Doe"],
         }
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -646,10 +606,10 @@ class TestEntryAdapterCoreConversions:
     def sample_ldif_entry(self) -> FlextLdifModels.Entry:
         """Create a sample FlextLdif entry."""
         attributes_dict = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["person", "top"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Doe"]),
-            "mail": FlextLdifModels.AttributeValues(values=["jdoe@example.com"]),
+            "objectClass": ["person", "top"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "mail": ["jdoe@example.com"],
         }
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -898,7 +858,7 @@ class TestEntryAdapterCoreConversions:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
+                    "objectClass": ["person"],
                 }
             ),
         )

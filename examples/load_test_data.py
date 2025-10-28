@@ -124,7 +124,7 @@ def load_test_data_openldap() -> bool:
                     logger.info(f"Progress: {i}/{len(entries)} entries processed...")
 
                 # Add entry using flext-ldap
-                add_result = api.add_entry(dn=dn, attributes=attributes)
+                add_result = api.client.add_entry(dn=dn, attributes=attributes)
 
                 if add_result.is_success:
                     success_count += 1

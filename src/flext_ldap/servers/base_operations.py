@@ -15,8 +15,6 @@ from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
-from flext_ldap.models import FlextLdapModels
-
 
 class FlextLdapServersBaseOperations(FlextService[None], ABC):
     """Abstract base class for server-specific LDAP operations.
@@ -88,7 +86,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def discover_schema(self, connection: Connection) -> FlextResult[dict[str, object]]:
+    def discover_schema(
+        self, connection: Connection
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Discover schema from server.
 
         Args:
@@ -154,7 +154,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self,
         connection: Connection,
         dn: str,
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Get ACLs for a given DN.
 
         Args:
@@ -186,23 +186,23 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_string: str) -> FlextResult[dict[str, object]]:
-        """Parse ACL string to structured format.
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse ACL string to Entry format.
 
         Args:
         acl_string: ACL string in server-specific format
 
         Returns:
-        FlextResult containing parsed ACL structure
+        FlextResult containing parsed ACL as Entry object
 
         """
 
     @abstractmethod
-    def format_acl(self, acl_dict: dict[str, object]) -> FlextResult[str]:
-        """Format ACL structure to server-specific string.
+    def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
+        """Format ACL Entry to server-specific string.
 
         Args:
-        acl_dict: ACL dictionary structure
+        acl_entry: ACL Entry object
 
         Returns:
         FlextResult containing formatted ACL string
@@ -303,7 +303,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         attributes: list[str] | None = None,
         scope: str = "subtree",
         page_size: int = 100,
-    ) -> FlextResult[list[FlextLdapModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute paged search.
 
         Args:
@@ -361,9 +361,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     @abstractmethod
     def normalize_entry_for_server(
         self,
-        entry: FlextLdapModels.Entry | FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry,
         target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdapModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for this server type.
 
         Args:

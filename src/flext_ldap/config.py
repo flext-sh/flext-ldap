@@ -683,59 +683,6 @@ class FlextLdapConfig(FlextConfig):
     # UNIFIED FACTORY METHODS - Pattern-matched configuration creation
     # =========================================================================
 
-    @classmethod
-    def create_from_connection_config_data(
-        cls, data: dict[str, object]
-    ) -> FlextResult[FlextLdapConfig]:
-        """Create FlextLdapConfig from connection config data (wrapper for create_config).
-
-        Args:
-            data: Connection configuration data (server, port, bind_dn, bind_password, etc.)
-
-        Returns:
-            FlextResult[FlextLdapConfig]: Created configuration or error
-
-        Example:
-            >>> config_data = {
-            ...     "server": "ldap://localhost",
-            ...     "port": 389,
-            ...     "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            ...     "bind_password": "REDACTED_LDAP_BIND_PASSWORD123",
-            ... }
-            >>> result = FlextLdapConfig.create_from_connection_config_data(config_data)
-            >>> if result.is_success:
-            ...     config = result.unwrap()
-
-        """
-        return cls.create_config("connection", data)
-
-    @classmethod
-    def create_search_config(
-        cls, data: dict[str, object]
-    ) -> FlextResult[FlextLdapModels.SearchConfig]:
-        """Create SearchConfig from search config data (wrapper for create_config)."""
-        return cls.create_config("search", data)
-
-    @classmethod
-    def get_default_search_config(cls) -> FlextResult[FlextLdapModels.SearchConfig]:
-        """Get default SearchConfig (wrapper for create_config with default_search)."""
-        return cls.create_config("default_search")
-
-    @classmethod
-    def create_modify_config(cls, data: dict[str, object]) -> FlextResult[Any]:
-        """Create ModifyConfig from modify config data (wrapper for create_config)."""
-        return cls.create_config("modify", data)
-
-    @classmethod
-    def create_add_config(cls, data: dict[str, object]) -> FlextResult[Any]:
-        """Create AddConfig from add config data (wrapper for create_config)."""
-        return cls.create_config("add", data)
-
-    @classmethod
-    def create_delete_config(cls, data: dict[str, object]) -> FlextResult[Any]:
-        """Create DeleteConfig from delete config data (wrapper for create_config)."""
-        return cls.create_config("delete", data)
-
     @staticmethod
     def merge_configs(
         base_config: dict[str, object], override_config: dict[str, object]
