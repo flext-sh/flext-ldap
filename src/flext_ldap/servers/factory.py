@@ -9,11 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.quirks import FlextLdifQuirksManager
+from flext_ldif.services import FlextLdifQuirksManager
 from ldap3 import Connection
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.ad_operations import (
     FlextLdapServersActiveDirectoryOperations,
 )
@@ -51,16 +54,16 @@ class FlextLdapServersFactory(FlextService[None]):
         self._ldif = FlextLdif()
         self._quirks_manager = FlextLdifQuirksManager()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
-            "openldap1": FlextLdapServersOpenLDAP1Operations,
-            "openldap2": FlextLdapServersOpenLDAP2Operations,
-            "openldap": FlextLdapServersOpenLDAP2Operations,
-            "oid": FlextLdapServersOIDOperations,
-            "oracle_oid": FlextLdapServersOIDOperations,
-            "oud": FlextLdapServersOUDOperations,
-            "oracle_oud": FlextLdapServersOUDOperations,
-            "ad": FlextLdapServersActiveDirectoryOperations,
-            "active_directory": FlextLdapServersActiveDirectoryOperations,
-            "generic": FlextLdapServersGenericOperations,
+            FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
+            FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
+            FlextLdapConstants.ServerTypes.OPENLDAP: FlextLdapServersOpenLDAP2Operations,
+            FlextLdapConstants.ServerTypes.OID: FlextLdapServersOIDOperations,
+            FlextLdapConstants.ServerTypeAliases.ORACLE_OID: FlextLdapServersOIDOperations,
+            FlextLdapConstants.ServerTypes.OUD: FlextLdapServersOUDOperations,
+            FlextLdapConstants.ServerTypeAliases.ORACLE_OUD: FlextLdapServersOUDOperations,
+            FlextLdapConstants.ServerTypes.AD: FlextLdapServersActiveDirectoryOperations,
+            FlextLdapConstants.ServerTypeAliases.ACTIVE_DIRECTORY: FlextLdapServersActiveDirectoryOperations,
+            FlextLdapConstants.Defaults.SERVER_TYPE: FlextLdapServersGenericOperations,
         }
 
     def execute(self) -> FlextResult[None]:
@@ -215,8 +218,11 @@ class FlextLdapServersFactory(FlextService[None]):
             # Avoids errors when requesting attributes that don't exist
             success = connection.search(
                 search_base="",
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
                 attributes=[
                     "*",
                     "+",
@@ -225,21 +231,25 @@ class FlextLdapServersFactory(FlextService[None]):
 
             if not success or not connection.entries:
                 self.logger.debug("Root DSE query failed, unable to detect server type")
-                return FlextResult[str].ok("generic")
+                return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
 
             entry = connection.entries[0]
 
             # Detect OpenLDAP
             vendor_name = str(entry.vendorName) if hasattr(entry, "vendorName") else ""
-            if "openldap" in vendor_name.lower():
+            if FlextLdapConstants.VendorNames.OPENLDAP in vendor_name.lower():
                 # Check version for OpenLDAP 1.x vs 2.x
                 vendor_version = (
                     str(entry.vendorVersion) if hasattr(entry, "vendorVersion") else ""
                 )
-                if vendor_version.startswith("1."):
-                    detected_type = "openldap1"
+                if vendor_version.startswith(
+                    FlextLdapConstants.VersionPrefixes.VERSION_1_PREFIX,
+                ):
+                    detected_type = FlextLdapConstants.ServerTypes.OPENLDAP1
                 else:
-                    detected_type = "openldap2"  # Default to 2.x
+                    detected_type = (
+                        FlextLdapConstants.ServerTypes.OPENLDAP2
+                    )  # Default to 2.x
 
                 self.logger.debug(
                     "OpenLDAP detected from root DSE",
@@ -248,15 +258,22 @@ class FlextLdapServersFactory(FlextService[None]):
                 return FlextResult[str].ok(detected_type)
 
             # Detect Oracle OID/OUD
-            if "oracle" in vendor_name.lower():
+            if FlextLdapConstants.VendorNames.ORACLE in vendor_name.lower():
                 # Check for OUD-specific indicators
                 config_context = (
                     str(entry.configContext) if hasattr(entry, "configContext") else ""
                 )
-                if "cn=config" in config_context.lower():
-                    detected_type = "oud"  # OUD uses cn=config like OpenLDAP 2.x
+                if (
+                    FlextLdapConstants.SchemaDns.CONFIG.lower()
+                    in config_context.lower()
+                ):
+                    detected_type = (
+                        FlextLdapConstants.ServerTypes.OUD
+                    )  # OUD uses cn=config like OpenLDAP 2.x
                 else:
-                    detected_type = "oid"  # OID uses traditional structure
+                    detected_type = (
+                        FlextLdapConstants.ServerTypes.OID
+                    )  # OID uses traditional structure
 
                 self.logger.debug(
                     "Oracle directory server detected from root DSE",
@@ -265,19 +282,25 @@ class FlextLdapServersFactory(FlextService[None]):
                 return FlextResult[str].ok(detected_type)
 
             # Detect Active Directory
-            if hasattr(entry, "rootDomainNamingContext") or hasattr(
+            if hasattr(
                 entry,
-                "defaultNamingContext",
+                FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
+            ) or hasattr(
+                entry,
+                FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT,
             ):
                 self.logger.debug("Active Directory detected from root DSE")
-                return FlextResult[str].ok("ad")
+                return FlextResult[str].ok(FlextLdapConstants.ServerTypes.AD)
 
             # Generic fallback
             self.logger.debug(
                 "Generic LDAP server detected",
-                extra={"vendor": vendor_name or "unknown"},
+                extra={
+                    "vendor": vendor_name
+                    or FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                },
             )
-            return FlextResult[str].ok("generic")
+            return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
 
         except Exception as e:
             self.logger.exception(
@@ -388,5 +411,5 @@ class FlextLdapServersFactory(FlextService[None]):
 
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to get server info: {e}"
+                f"Failed to get server info: {e}",
             )

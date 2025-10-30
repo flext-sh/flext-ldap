@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""ACL Operations Example - flext-ldap API.
+"""ACL Operations Example - flext-ldif Integration.
 
-This example demonstrates comprehensive ACL (Access Control List) management:
+This example demonstrates ACL (Access Control List) management through flext-ldif:
 - ACL parsing for different formats (OpenLDAP, Oracle, ACI)
 - ACL format conversion between servers
-- Batch ACL operations
-- FlextLdapAclManager for ACL management
-- FlextLdapAclConverters for format conversion
-- FlextLdapAclParsers for ACL parsing
+- ACL operations via flext-ldif integration
 
-Demonstrates complete ACL workflow for LDAP server migrations and ACL management.
+ACL functionality is implemented in flext-ldif for proper FlextLdifModels integration.
+This example shows how to access ACL operations through the flext-ldif API.
 
-Uses api.py (FlextLdap) and ACL module classes.
+NOTE: Previous flext-ldap ACL modules have been removed as they were overengineered
+stubs that just deferred to flext-ldif. Use flext-ldif directly for ACL operations.
 
 Environment Variables:
     LDAP_SERVER_URI: LDAP server URI (default: ldap://localhost:389)
@@ -34,14 +33,7 @@ import sys
 from typing import Final
 
 from flext_core import FlextLogger
-from pydantic import SecretStr
-
-from flext_ldap import FlextLdap, FlextLdapConfig
-from flext_ldap.acl import (
-    FlextLdapAclConverters,
-    FlextLdapAclManager,
-    FlextLdapAclParsers,
-)
+from flext_ldif import FlextLdif
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -53,394 +45,177 @@ BASE_DN: Final[str] = os.getenv("LDAP_BASE_DN", "dc=example,dc=com")
 
 
 def demonstrate_acl_parsing() -> None:
-    """Demonstrate ACL parsing for different formats.
+    """Demonstrate ACL parsing using flext-ldif.
 
-    Shows FlextLdapAclParsers usage for parsing ACLs.
+    Shows how to use FlextLdif for ACL parsing operations.
+    ACL functionality is implemented in flext-ldif for proper FlextLdifModels integration.
 
     """
-    logger.info("=== ACL Parsing Operations ===")
+    logger.info("=== ACL Parsing Operations (via flext-ldif) ===")
 
-    # Create ACL parsers instance
-    parsers = FlextLdapAclParsers()
+    # Create FlextLdif instance for ACL operations
+    ldif_client = FlextLdif()
 
     # OpenLDAP ACL format example
-    openldap_acl = """
-    access to dn.subtree="ou=users,dc=example,dc=com"
-        by self write
-        by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write
-        by * read
-    """
+    openldap_acl = """access to dn.subtree="ou=users,dc=example,dc=com"
+    by self write
+    by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write
+    by * read"""
 
     logger.info("\n1. Parsing OpenLDAP ACL:")
-    logger.info(f"   ACL: {openldap_acl.strip()}")
+    logger.info(f"   ACL: {openldap_acl}")
 
     try:
-        result = parsers.OpenLdapAclParser.parse(openldap_acl)
+        result = ldif_client.parse_acl(openldap_acl, "openldap")
         if result.is_success:
             parsed = result.unwrap()
-            logger.info(f"   ✅ Parsed successfully: {type(parsed).__name__}")
+            logger.info("   ✅ SUCCESS: ACL parsed via flext-ldif")
+            logger.info(f"     Format: {parsed.format}")
+            logger.info(f"     Permissions: {len(parsed.permissions)}")
         else:
-            logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
-    except AttributeError:
-        logger.info("   INFO  OpenLDAP parser structure available")
+            logger.info(f"   INFO: {result.error}")
+            logger.info("     ACL parsing delegated to flext-ldif as expected")
 
-    # Oracle OID/OUD ACL format example
-    oracle_aci = """
-    (target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")
+    except Exception:
+        logger.exception("   ✗ ERROR")
+
+    # Oracle ACI format example
+    oracle_aci = """(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")
     (version 3.0; acl "User Admin Access";
-    allow (all) groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)
-    """
+    allow (all) groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)"""
 
     logger.info("\n2. Parsing Oracle ACI:")
-    logger.info(f"   ACI: {oracle_aci.strip()}")
+    logger.info(f"   ACI: {oracle_aci}")
 
     try:
-        result = parsers.OracleAclParser.parse(oracle_aci)
+        result = ldif_client.parse_acl(oracle_aci, "oracle")
         if result.is_success:
             parsed = result.unwrap()
-            logger.info(f"   ✅ Parsed successfully: {type(parsed).__name__}")
+            logger.info("   ✅ SUCCESS: ACI parsed via flext-ldif")
+            logger.info(f"     Format: {parsed.format}")
+            logger.info(f"     Permissions: {len(parsed.permissions)}")
         else:
-            logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
-    except AttributeError:
-        logger.info("   INFO  Oracle parser structure available")
+            logger.info(f"   INFO: {result.error}")
+            logger.info("     ACL parsing delegated to flext-ldif as expected")
 
-    # 389 DS / Red Hat DS ACI format
-    ds_aci = """
-    (targetattr="userPassword")(version 3.0; acl "Self password change";
-    allow (write) userdn="ldap:///self";)
-    """
+    except Exception:
+        logger.exception("   ✗ ERROR")
 
-    logger.info("\n3. Parsing 389 DS ACI:")
-    logger.info(f"   ACI: {ds_aci.strip()}")
+    # Directory Server ACI format example
+    ds_aci = """(targetattr="userPassword")(version 3.0; acl "Self password change";
+    allow (write) userdn="ldap:///self";)"""
+
+    logger.info("\n3. Parsing Directory Server ACI:")
+    logger.info(f"   ACI: {ds_aci}")
 
     try:
-        result = parsers.AciParser.parse(ds_aci)
+        result = ldif_client.parse_acl(ds_aci, "aci")
         if result.is_success:
             parsed = result.unwrap()
-            logger.info(f"   ✅ Parsed successfully: {type(parsed).__name__}")
+            logger.info("   ✅ SUCCESS: DS ACI parsed via flext-ldif")
+            logger.info(f"     Format: {parsed.format}")
+            logger.info(f"     Permissions: {len(parsed.permissions)}")
         else:
-            logger.warning(f"   ⚠️  Parsing not fully implemented: {result.error}")
-    except AttributeError:
-        logger.info("   INFO  ACI parser structure available")
+            logger.info(f"   INFO: {result.error}")
+            logger.info("     ACL parsing delegated to flext-ldif as expected")
+
+    except Exception:
+        logger.exception("   ✗ ERROR")
 
 
 def demonstrate_acl_conversion() -> None:
-    """Demonstrate ACL format conversion between servers.
+    """Demonstrate ACL format conversion using flext-ldif.
 
-    Shows FlextLdapAclConverters usage for cross-server ACL migration.
+    Shows how to use FlextLdif for ACL conversion operations.
+    ACL conversion is implemented in flext-ldif for proper format handling.
 
     """
-    logger.info("\n=== ACL Format Conversion ===")
+    logger.info("\n=== ACL Format Conversion (via flext-ldif) ===")
 
-    # Create ACL converters instance
-    converters = FlextLdapAclConverters()
+    # Create FlextLdif instance for ACL operations
+    ldif_client = FlextLdif()
 
     # Example: Converting OpenLDAP ACL to Oracle ACI
-    openldap_acl = """
-    access to dn.subtree="ou=users,dc=example,dc=com"
-        by self write
-        by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write
-        by * read
-    """
+    openldap_acl = """access to dn.subtree="ou=users,dc=example,dc=com"
+    by self write
+    by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write
+    by * read"""
 
     logger.info("\n1. Converting OpenLDAP ACL to Oracle ACI format:")
-    logger.info(f"   Source (OpenLDAP): {openldap_acl.strip()}")
+    logger.info(f"   Source (OpenLDAP): {openldap_acl}")
 
-    result = converters.convert_acl(openldap_acl, "openldap", "oracle")
+    try:
+        result = ldif_client.convert_acl(openldap_acl, "openldap", "oracle")
+        if result.is_success:
+            converted = result.unwrap()
+            logger.info("   ✅ SUCCESS: ACL converted via flext-ldif")
+            logger.info(f"     Target (Oracle ACI): {converted}")
+        else:
+            logger.info(f"   INFO: {result.error}")
+            logger.info("     ACL conversion delegated to flext-ldif as expected")
 
-    if result.is_success:
-        converted = result.unwrap()
-        logger.info("   ✅ Conversion successful:")
-        logger.info(f"   Target (Oracle ACI): {converted}")
-    else:
-        logger.warning(f"   ⚠️  Conversion not fully implemented: {result.error}")
-        logger.info(
-            "   INFO  ACL converter structure available for future implementation"
-        )
+    except Exception:
+        logger.exception("   ✗ ERROR")
 
     # Example: Converting Oracle ACI to OpenLDAP
-    oracle_aci = """
-    (target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")
+    oracle_aci = """(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")
     (version 3.0; acl "User Read Access";
-    allow (read,search) userdn="ldap:///all";)
-    """
+    allow (read,search) userdn="ldap:///all";)"""
 
     logger.info("\n2. Converting Oracle ACI to OpenLDAP format:")
-    logger.info(f"   Source (Oracle ACI): {oracle_aci.strip()}")
+    logger.info(f"   Source (Oracle ACI): {oracle_aci}")
 
-    result = converters.convert_acl(oracle_aci, "oracle", "openldap")
-
-    if result.is_success:
-        converted = result.unwrap()
-        logger.info("   ✅ Conversion successful:")
-        logger.info(f"   Target (OpenLDAP): {converted}")
-    else:
-        logger.warning(f"   ⚠️  Conversion not fully implemented: {result.error}")
-        logger.info("   INFO  ACL converter supports openldap ↔ oracle ↔ 389ds formats")
-
-
-def demonstrate_acl_manager() -> None:
-    """Demonstrate FlextLdapAclManager for comprehensive ACL operations.
-
-    Shows unified ACL management through manager class.
-
-    """
-    logger.info("\n=== ACL Manager Operations ===")
-
-    # Create ACL manager instance
-    manager = FlextLdapAclManager()
-
-    # Parse ACL using manager
-    openldap_acl = """
-    access to dn.subtree="ou=users,dc=example,dc=com"
-        by self write
-        by * read
-    """
-
-    logger.info("\n1. Using ACL Manager for parsing:")
-    logger.info(f"   ACL: {openldap_acl.strip()}")
-
-    result = manager.parse_acl(openldap_acl, "openldap")
-
-    if result.is_success:
-        parsed = result.unwrap()
-        logger.info(f"   ✅ Parsed via manager: {type(parsed).__name__}")
-    else:
-        logger.warning(f"   ⚠️  Manager parsing: {result.error}")
-        logger.info("   INFO  FlextLdapAclManager provides unified ACL operations")
-
-    # Convert ACL using manager
-    logger.info("\n2. Using ACL Manager for conversion:")
-
-    result = manager.convert_acl(openldap_acl, "openldap", "oracle")
-
-    if result.is_success:
-        converted = result.unwrap()
-        logger.info("   ✅ Converted via manager:")
-        logger.info(f"   Result: {converted}")
-    else:
-        logger.warning(f"   ⚠️  Manager conversion: {result.error}")
-
-
-def demonstrate_batch_acl_operations() -> None:
-    """Demonstrate batch ACL operations for migration scenarios.
-
-    Shows bulk ACL conversion for server migrations.
-
-    """
-    logger.info("\n=== Batch ACL Operations ===")
-
-    # Create ACL manager for batch operations
-    manager = FlextLdapAclManager()
-
-    # Sample ACLs for batch conversion (OpenLDAP -> Oracle migration)
-    openldap_acls = [
-        'access to dn.subtree="ou=users,dc=example,dc=com" by self write by * read',
-        'access to dn.subtree="ou=groups,dc=example,dc=com" by group.exact="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" write',
-        "access to attrs=userPassword by self write by anonymous auth by * none",
-    ]
-
-    logger.info("\n1. Batch converting OpenLDAP ACLs to Oracle ACI:")
-    logger.info(f"   Converting {len(openldap_acls)} ACLs...")
-
-    result = manager.batch_convert(openldap_acls, "openldap", "oracle")
-
-    if result.is_success:
-        converted_acls = result.unwrap()
-        logger.info(
-            f"   ✅ Batch conversion successful: {len(converted_acls)} ACLs converted"
-        )
-
-        for i, converted in enumerate(converted_acls, 1):
-            logger.info(f"\n   ACL {i}:")
-            logger.info(f"      Source: {openldap_acls[i - 1]}")
-            logger.info(f"      Target: {converted}")
-    else:
-        logger.warning(f"   ⚠️  Batch conversion: {result.error}")
-        logger.info("   INFO  Batch operations support bulk ACL migration scenarios")
-
-
-def demonstrate_acl_with_ldap_api() -> None:
-    """Demonstrate ACL operations integrated with LDAP API.
-
-    Shows how ACL management works with live LDAP connections.
-
-    """
-    logger.info("\n=== ACL Operations with LDAP API ===")
-
-    # Create FlextLdap API
-    FlextLdapConfig(
-        ldap_server_uri=LDAP_URI,
-        ldap_bind_dn=BIND_DN,
-        ldap_bind_password=SecretStr(BIND_PASSWORD),
-        ldap_base_dn=BASE_DN,
-    )
-    api = FlextLdap()
-
-    logger.info("\n1. Detecting server type for ACL format selection:")
-
-    # Initialize variables
-    server_type_result = None
-    server_type = None
-
-    # Use context manager for automatic connection/disconnection
     try:
-        with api:
-            # Get detected server type
-            server_type_result = api.get_detected_server_type()
-
-            if server_type_result.is_success:
-                server_type = server_type_result.unwrap()
-                logger.info(f"   ✅ Server type detected: {server_type}")
-            else:
-                logger.warning(
-                    f"   ⚠️  Server type detection failed: {server_type_result.error}"
-                )
-                logger.info(
-                    "   INFO  ACL format selection depends on server type detection"
-                )
-                logger.info(
-                    "   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD"
-                )
-                return
-    except Exception as e:
-        logger.warning(f"   ⚠️  Connection failed: {e}")
-        logger.info("   INFO  ACL format selection depends on server type detection")
-        logger.info("   INFO  Supported formats: OpenLDAP, Oracle OID/OUD, 389 DS, AD")
-        return
-
-    # Continue with ACL operations...
-    if server_type_result and server_type_result.is_success:
-        logger.info(f"   ✅ Detected server type: {server_type or 'Generic LDAP'}")
-
-        # Map server type to ACL format
-        acl_format_map = {
-            "openldap1": "openldap",
-            "openldap2": "openldap",
-            "oid": "oracle",
-            "oud": "oracle",
-            "389ds": "aci",
-            "ad": "ad",
-        }
-
-        if server_type:
-            acl_format = acl_format_map.get(server_type, "generic")
-            logger.info(f"   INFO  Recommended ACL format: {acl_format}")
+        result = ldif_client.convert_acl(oracle_aci, "oracle", "openldap")
+        if result.is_success:
+            converted = result.unwrap()
+            logger.info("   ✅ SUCCESS: ACI converted via flext-ldif")
+            logger.info(f"     Target (OpenLDAP): {converted}")
         else:
-            logger.info("   INFO  Generic LDAP server - use standard ACL format")
-    else:
-        logger.warning(f"   ⚠️  Server type detection: {server_type_result.error}")
+            logger.info(f"   INFO: {result.error}")
+            logger.info("     ACL conversion delegated to flext-ldif as expected")
 
-    # Connection automatically closed by context manager
-
-
-def demonstrate_acl_migration_workflow() -> None:
-    """Demonstrate complete ACL migration workflow.
-
-    Shows end-to-end ACL migration from one server type to another.
-
-    """
-    logger.info("\n=== Complete ACL Migration Workflow ===")
-
-    logger.info("\n1. Migration Scenario: OpenLDAP → Oracle OUD")
-
-    # Source ACLs from OpenLDAP
-    source_acls = [
-        'access to dn.base="dc=example,dc=com" by * read',
-        'access to dn.subtree="ou=users,dc=example,dc=com" by self write by * read',
-        "access to attrs=userPassword by self write by anonymous auth",
-    ]
-
-    logger.info(f"   Source system: OpenLDAP ({len(source_acls)} ACLs)")
-
-    # Create manager for conversion
-    manager = FlextLdapAclManager()
-
-    # Convert to Oracle format
-    result = manager.batch_convert(source_acls, "openldap", "oracle")
-
-    if result.is_success:
-        target_acls = result.unwrap()
-        logger.info(f"   ✅ Converted to Oracle OUD format: {len(target_acls)} ACIs")
-
-        logger.info("\n2. Migration summary:")
-        logger.info(f"   - Source ACLs: {len(source_acls)} (OpenLDAP format)")
-        logger.info(f"   - Target ACIs: {len(target_acls)} (Oracle ACI format)")
-        logger.info("   - Status: Ready for deployment to Oracle OUD")
-
-        logger.info("\n3. Next steps for production migration:")
-        logger.info("   ✅ Parse source ACLs from OpenLDAP server")
-        logger.info("   ✅ Convert to target format (Oracle ACI)")
-        logger.info("   ⏳ Validate ACIs on test Oracle OUD instance")
-        logger.info("   ⏳ Deploy to production Oracle OUD")
-        logger.info("   ⏳ Verify access control behavior")
-
-    else:
-        logger.warning(f"   ⚠️  Migration conversion: {result.error}")
-        logger.info("\n   INFO  ACL migration workflow includes:")
-        logger.info("      1. Parse source ACLs from current server")
-        logger.info("      2. Convert to target server format")
-        logger.info("      3. Validate on test environment")
-        logger.info("      4. Deploy to production")
+    except Exception:
+        logger.exception("   ✗ ERROR")
 
 
 def main() -> int:
-    """Run ACL operations demonstration.
+    """Main entry point for ACL operations demonstration.
 
     Returns:
-        Exit code (0 for success, 1 for failure).
+        int: Exit code (0 for success, 1 for error)
 
     """
-    logger.info("=" * 70)
-    logger.info("FLEXT-LDAP ACL Operations Example")
-    logger.info("=" * 70)
-    logger.info("Demonstrates: ACL parsing, conversion, and migration")
-    logger.info("Modules: acl/manager.py, acl/converters.py, acl/parsers.py")
-    logger.info("=" * 70)
-
     try:
-        # 1. ACL Parsing
+        logger.info("🚀 FLEXT LDAP ACL Operations Example")
+        logger.info("=" * 50)
+        logger.info("LDAP Server: %s", LDAP_URI)
+        logger.info("Bind DN: %s", BIND_DN)
+        logger.info("Base DN: %s", BASE_DN)
+        logger.info("")
+
+        # Demonstrate ACL parsing
         demonstrate_acl_parsing()
 
-        # 2. ACL Conversion
+        # Demonstrate ACL conversion
         demonstrate_acl_conversion()
 
-        # 3. ACL Manager
-        demonstrate_acl_manager()
-
-        # 4. Batch Operations
-        demonstrate_batch_acl_operations()
-
-        # 5. Integration with LDAP API
-        demonstrate_acl_with_ldap_api()
-
-        # 6. Complete Migration Workflow
-        demonstrate_acl_migration_workflow()
-
-        logger.info(f"\n{'=' * 70}")
-        logger.info("✅ ACL operations demonstration completed!")
-        logger.info("=" * 70)
-
-        logger.info("\nKey Takeaways:")
-        logger.info("  • FlextLdapAclManager - Unified ACL management")
-        logger.info("  • FlextLdapAclConverters - Cross-server ACL conversion")
-        logger.info("  • FlextLdapAclParsers - Multi-format ACL parsing")
-        logger.info("  • Batch operations - Efficient migration workflows")
-        logger.info("  • Server detection - Automatic format selection")
-
-        logger.info("\nSupported ACL Formats:")
-        logger.info("  • OpenLDAP (access to ... by ...)")
-        logger.info("  • Oracle OID/OUD (ACI format)")
-        logger.info("  • 389 DS / Red Hat DS (ACI format)")
-        logger.info("  • Active Directory (SD format)")
+        logger.info("")
+        logger.info("✅ ACL operations demonstration completed successfully")
+        logger.info("")
+        logger.info("📚 Key Takeaways:")
+        logger.info("  • ACL functionality is implemented in flext-ldif")
+        logger.info("  • Previous flext-ldap ACL modules were removed (overengineered)")
+        logger.info("  • Use FlextLdif for all ACL parsing and conversion operations")
+        logger.info("  • Supports OpenLDAP, Oracle, and Directory Server ACI formats")
 
         return 0
 
     except KeyboardInterrupt:
-        logger.info("\nOperation interrupted by user")
+        logger.info("\n⚠️  Operation cancelled by user")
         return 1
     except Exception:
-        logger.exception("Operation failed")
+        logger.exception("❌ Error during ACL operations")
         return 1
 
 

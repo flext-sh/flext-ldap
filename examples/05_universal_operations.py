@@ -48,9 +48,8 @@ from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
-from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -152,38 +151,18 @@ def demonstrate_server_operations(api: FlextLdap) -> None:
     """
     logger.info("\n=== Server Operations Access ===")
 
-    # Get server operations instance
-    server_ops = api.servers
-    result = (
-        FlextResult.ok(server_ops)
-        if server_ops
-        else FlextResult.fail("No server operations available")
-    )
-
-    if result.is_failure:
-        logger.error(f"❌ Failed to get server operations: {result.error}")
-        return
-
-    if result.is_success:
-        server_ops = result.unwrap()
-        if server_ops:
-            logger.info("✅ Server operations instance available")
-            logger.info(f"   Type: {type(server_ops).__name__}")
-        else:
-            logger.warning("⚠️  Server operations instance is None")
-
-        # Access server-specific information - we know this is BaseServerOperations
-        # but need to handle the type annotation issue from the API
-        if isinstance(server_ops, FlextLdapServersBaseOperations):
-            logger.info(f"   Server Type: {server_ops.server_type}")
-            logger.info(f"   ACL Format: {server_ops.get_acl_format()}")
-        else:
-            logger.warning(
-                f"   ⚠️  Unexpected server operations type: {type(server_ops)}"
-            )
-            return
+    # Get detected server type
+    server_type = api.server_type
+    if server_type:
+        logger.info("✅ Server type detected")
+        logger.info(f"   Server Type: {server_type}")
+        logger.info("   Server type uses existing flext-ldif constants")
+        logger.info(
+            "   All server-specific configurations available in FlextLdifConstants"
+        )
     else:
-        logger.warning("⚠️  Server operations not available")
+        logger.warning("⚠️  Server type not detected")
+        return
 
 
 def demonstrate_universal_search(api: FlextLdap) -> None:

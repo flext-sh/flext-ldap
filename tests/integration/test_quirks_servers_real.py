@@ -14,7 +14,7 @@ from typing import cast
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
 
 @pytest.mark.integration

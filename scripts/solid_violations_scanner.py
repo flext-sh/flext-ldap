@@ -227,7 +227,12 @@ def scan_layer_2_domain() -> list[Violation]:
                 )
 
             # Check for conversion methods (should be in adapters)
-            if isinstance(node, ast.FunctionDef) and node.name in {"to_ldap3", "from_ldap3", "to_dict", "from_dict"}:
+            if isinstance(node, ast.FunctionDef) and node.name in {
+                "to_ldap3",
+                "from_ldap3",
+                "to_dict",
+                "from_dict",
+            }:
                 violations.append(
                     Violation(
                         file="src/flext_ldap/models.py",
@@ -248,18 +253,23 @@ def scan_layer_2_domain() -> list[Violation]:
 
         # Check imports from infrastructure
         tree = ast.parse(content)
-        violations.extend(Violation(
-                        file="src/flext_ldap/domain.py",
-                        line=node.lineno,
-                        severity="critical",
-                        principle="D",
-                        issue=f"Domain layer imports infrastructure: {node.module}",
-                        suggestion="Depend on abstractions, not infrastructure",
-                    ) for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and (
+        violations.extend(
+            Violation(
+                file="src/flext_ldap/domain.py",
+                line=node.lineno,
+                severity="critical",
+                principle="D",
+                issue=f"Domain layer imports infrastructure: {node.module}",
+                suggestion="Depend on abstractions, not infrastructure",
+            )
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom)
+            and (
                 (node.module and "clients" in node.module)
                 or "ldap3" in node.module
                 or "servers" in node.module
-            ))
+            )
+        )
 
     print("Scanning protocols.py...")
     protocols_file = Path("src/flext_ldap/protocols.py")
@@ -268,14 +278,18 @@ def scan_layer_2_domain() -> list[Violation]:
             content = f.read()
 
         tree = ast.parse(content)
-        violations.extend(Violation(
-                        file="src/flext_ldap/protocols.py",
-                        line=node.lineno,
-                        severity="medium",
-                        principle="S",
-                        issue=f"Function '{node.name}' in protocols.py (should only have Protocol definitions)",
-                        suggestion="Move to appropriate module",
-                    ) for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"))
+        violations.extend(
+            Violation(
+                file="src/flext_ldap/protocols.py",
+                line=node.lineno,
+                severity="medium",
+                principle="S",
+                issue=f"Function '{node.name}' in protocols.py (should only have Protocol definitions)",
+                suggestion="Move to appropriate module",
+            )
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+        )
 
     return violations
 
@@ -306,9 +320,7 @@ def scan_layer_3_infrastructure() -> list[Violation]:
             if isinstance(node, ast.FunctionDef) and len(node.body) == 1:
                 # Check if method just returns a call (wrapper pattern)
                 stmt = node.body[0]
-                if isinstance(stmt, ast.Return) and isinstance(
-                    stmt.value, ast.Call
-                ):
+                if isinstance(stmt, ast.Return) and isinstance(stmt.value, ast.Call):
                     # This is likely a pure wrapper
                     violations.append(
                         Violation(
@@ -329,18 +341,20 @@ def scan_layer_3_infrastructure() -> list[Violation]:
             content = f.read()
 
         tree = ast.parse(content)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module and "FlextLdapModels" in str(node.names):
-                violations.append(
-                    Violation(
-                        file="src/flext_ldap/entry_adapter.py",
-                        line=node.lineno,
-                        severity="high",
-                        principle="D",
-                        issue="Adapter imports FlextLdapModels (should only use FlextLdifModels)",
-                        suggestion="Update to use FlextLdifModels directly",
-                    )
-                )
+        violations.extend(
+            Violation(
+                file="src/flext_ldap/entry_adapter.py",
+                line=node.lineno,
+                severity="high",
+                principle="D",
+                issue="Adapter imports FlextLdapModels (should only use FlextLdifModels)",
+                suggestion="Update to use FlextLdifModels directly",
+            )
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom)
+            and node.module
+            and "FlextLdapModels" in str(node.names)
+        )
 
     # Analyze server operations
     print("Scanning servers/...")
@@ -452,20 +466,20 @@ def scan_layer_4_application() -> list[Violation]:
 
             # Check for infrastructure imports (DI violation)
             tree = ast.parse(content)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and node.module and (
-                    "ldap3" in node.module or "clients" in node.module
-                ):
-                    violations.append(
-                        Violation(
-                            file=f"src/flext_ldap/services/{svc_file.name}",
-                            line=node.lineno,
-                            severity="high",
-                            principle="D",
-                            issue=f"Service imports concrete infrastructure: {node.module}",
-                            suggestion="Depend on abstractions/protocols instead",
-                        )
-                    )
+            violations.extend(
+                Violation(
+                    file=f"src/flext_ldap/services/{svc_file.name}",
+                    line=node.lineno,
+                    severity="high",
+                    principle="D",
+                    issue=f"Service imports concrete infrastructure: {node.module}",
+                    suggestion="Depend on abstractions/protocols instead",
+                )
+                for node in ast.walk(tree)
+                if isinstance(node, ast.ImportFrom)
+                and node.module
+                and ("ldap3" in node.module or "clients" in node.module)
+            )
 
     return violations
 

@@ -14,7 +14,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldap.schema_sync import FlextLdapSchemaSync
+from flext_ldap.services.schema_sync import FlextLdapSchemaSync
 
 
 @pytest.mark.docker

@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-import uuid
 from typing import Any, ClassVar, cast
 
 from dependency_injector import providers
@@ -55,7 +54,7 @@ class FlextLdapConfig(FlextConfig):
     # Override model_config with LDAP-specific env_prefix for environment variable loading
     model_config = SettingsConfigDict(
         case_sensitive=False,
-        env_prefix="FLEXT_",
+        env_prefix=FlextConstants.Platform.ENV_PREFIX,
         env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
         env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
@@ -78,85 +77,6 @@ class FlextLdapConfig(FlextConfig):
     # Singleton pattern inherited from FlextConfig - no need to redefine _instances
     # _lock inherited as well
     # Note: Removed __new__ override - Pydantic v2 handles SecretStr natively
-
-    # =========================================================================
-    # HANDLER CONFIGURATION UTILITIES - Integrated from LdapHandlerConfiguration
-    # =========================================================================
-
-    @staticmethod
-    def resolve_ldap_operation_mode(
-        operation_mode: str | None = None,
-        operation_config: object | None = None,
-    ) -> str | None:
-        """Resolve LDAP operation mode from various sources."""
-        valid_modes = {"search", "modify", "add", "delete", "authenticate", "bind"}
-        if operation_mode in valid_modes:
-            return operation_mode
-
-        if operation_config is not None:
-            if hasattr(operation_config, "operation_type"):
-                config_mode: str | None = getattr(
-                    operation_config, "operation_type", None
-                )
-                if config_mode in valid_modes:
-                    return str(config_mode)
-
-            if isinstance(operation_config, dict):
-                config_mode_dict = operation_config.get(
-                    FlextLdapConstants.LdapDictKeys.OPERATION_TYPE,
-                )
-                if (
-                    isinstance(config_mode_dict, str)
-                    and config_mode_dict in valid_modes
-                ):
-                    return config_mode_dict
-
-        return "search"
-
-    @staticmethod
-    def create_ldap_handler_config(
-        operation_mode: str | None = None,
-        ldap_operation: str | None = None,
-        handler_name: str | None = None,
-        handler_id: str | None = None,
-        ldap_config: dict[str, object] | None = None,
-        connection_timeout: int = 30,
-        operation_timeout: int = 60,
-        max_retries: int = 3,
-    ) -> dict[str, object]:
-        """Create LDAP handler configuration dictionary."""
-        resolved_mode = FlextLdapConfig.resolve_ldap_operation_mode(
-            operation_mode=operation_mode,
-            operation_config=ldap_config,
-        )
-
-        handler_id_final = (
-            handler_id or f"ldap_{resolved_mode}_handler_{uuid.uuid4().hex[:8]}"
-        )
-        handler_name_final = (
-            handler_name
-            or f"LDAP {(resolved_mode or 'operation').capitalize()} Handler"
-        )
-        ldap_operation_final = ldap_operation or resolved_mode
-
-        config: dict[str, object] = {
-            "handler_id": handler_id_final,
-            "handler_name": handler_name_final,
-            "handler_type": "command",
-            "handler_mode": "command",
-            "operation_mode": resolved_mode,
-            "ldap_operation": ldap_operation_final,
-            "connection_timeout": connection_timeout,
-            "operation_timeout": operation_timeout,
-            "max_retries": max_retries,
-            "ldap_config": ldap_config or {},
-            "metadata": {},
-        }
-
-        if ldap_config:
-            config.update(ldap_config)
-
-        return config
 
     # Inherit model_config from FlextConfig (includes debug, trace, all parent fields)
     # NO model_config override - Pydantic v2 pattern for proper field inheritance
@@ -289,45 +209,6 @@ class FlextLdapConfig(FlextConfig):
     # FIELD VALIDATORS - Business logic validation
     # =========================================================================
 
-    @field_validator("ldap_server_uri", mode="before")
-    @classmethod
-    def validate_and_normalize_server_uri(cls, v: str) -> str:
-        """Normalize LDAP server URI by adding scheme if missing.
-
-        Allows simplified URIs like 'localhost', 'server.example.com', or
-        'localhost:3389' and automatically prefixes them with 'ldap://' scheme.
-
-        Args:
-            v: LDAP server URI (may be with or without scheme)
-
-        Returns:
-            Normalized URI with scheme (ldap:// or ldaps://)
-
-        Raises:
-            ValidationError: If URI is invalid
-
-        """
-        import re
-
-        if not isinstance(v, str):
-            return v
-
-        v = v.strip()
-
-        # If already has scheme, return as-is; otherwise, prefix with ldap://
-        normalized = v if v.startswith(("ldap://", "ldaps://")) else f"ldap://{v}"
-
-        # Validate normalized URI matches pattern
-        pattern = r"^(ldaps?://)?([a-zA-Z0-9.-]+|localhost)(:\d+)?$"
-        if not re.match(pattern, normalized):
-            error_msg = (
-                f"Invalid LDAP server URI format: {normalized}. "
-                f"Expected: ldap://host[:port] or ldaps://host[:port]"
-            )
-            raise ValueError(error_msg)
-
-        return normalized
-
     @field_validator("ldap_bind_dn")
     @classmethod
     def validate_bind_dn(cls, v: str | None) -> str | None:
@@ -396,7 +277,7 @@ class FlextLdapConfig(FlextConfig):
             time_limit=self.ldap_time_limit,
             connection_timeout=int(self.ldap_connection_timeout),
             total_timeout=int(
-                self.ldap_operation_timeout + self.ldap_connection_timeout
+                self.ldap_operation_timeout + self.ldap_connection_timeout,
             ),
         )
 
@@ -445,16 +326,20 @@ class FlextLdapConfig(FlextConfig):
         if self.ldap_bind_dn is not None and self.ldap_bind_password is None:
             msg = "Bind password is required when bind DN is specified"
             raise FlextExceptions.ConfigurationError(
-                msg, config_key="ldap_bind_password"
+                msg,
+                config_key="ldap_bind_password",
             )
 
         # Validate caching configuration
-        if self.enable_caching and self.cache_ttl <= 0:
+        if self.enable_caching and self.cache_ttl <= 0:  # type: ignore[attr-defined]
             msg = "Cache TTL must be positive when caching is enabled"
             raise FlextExceptions.ConfigurationError(msg, config_key="ldap_cache_ttl")
 
         # Validate SSL configuration consistency
-        if self.ldap_server_uri.startswith("ldaps://") and not self.ldap_use_ssl:
+        if (
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
+            and not self.ldap_use_ssl
+        ):
             msg = "SSL must be enabled for ldaps:// server URIs"
             raise FlextExceptions.ConfigurationError(msg, config_key="ldap_use_ssl")
 
@@ -465,7 +350,8 @@ class FlextLdapConfig(FlextConfig):
     # =========================================================================
 
     def __call__(
-        self, key: str
+        self,
+        key: str,
     ) -> str | int | float | bool | list[Any] | dict[str, Any] | None:
         """Enhanced direct value access with LDAP-specific dot notation support.
 
@@ -505,61 +391,61 @@ class FlextLdapConfig(FlextConfig):
 
             # Match on category and resolve properties efficiently
             match category:
-                case "connection":
+                case FlextLdapConstants.ConfigCategoryKeys.CONNECTION:
                     match prop:
-                        case "server":
+                        case FlextLdapConstants.ConfigPropertyKeys.SERVER:
                             return self.ldap_server_uri
-                        case "port":
+                        case FlextLdapConstants.ConfigPropertyKeys.PORT:
                             return self.ldap_port
-                        case "ssl":
+                        case FlextLdapConstants.ConfigPropertyKeys.SSL:
                             return self.ldap_use_ssl
-                        case "timeout":
+                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
                             return self.ldap_connection_timeout
-                        case "uri":
+                        case FlextLdapConstants.ConfigPropertyKeys.URI:
                             return f"{self.ldap_server_uri}:{self.ldap_port}"
-                case "auth":
+                case FlextLdapConstants.ConfigCategoryKeys.AUTH:
                     match prop:
-                        case "bind_dn":
+                        case FlextLdapConstants.ConfigPropertyKeys.BIND_DN:
                             return self.ldap_bind_dn
-                        case "bind_password":
+                        case FlextLdapConstants.ConfigPropertyKeys.BIND_PASSWORD:
                             return self.effective_bind_password
-                        case "base_dn":
+                        case FlextLdapConstants.ConfigPropertyKeys.BASE_DN:
                             return self.ldap_base_dn
-                case "pool":
+                case FlextLdapConstants.ConfigCategoryKeys.POOL:
                     match prop:
-                        case "size":
+                        case FlextLdapConstants.ConfigPropertyKeys.SIZE:
                             return self.ldap_pool_size
-                        case "timeout":
+                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
                             return self.ldap_pool_timeout
-                case "operation":
+                case FlextLdapConstants.ConfigCategoryKeys.OPERATION:
                     match prop:
-                        case "timeout":
+                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
                             return self.ldap_operation_timeout
-                        case "size_limit":
+                        case FlextLdapConstants.ConfigPropertyKeys.SIZE_LIMIT:
                             return self.ldap_size_limit
-                        case "time_limit":
+                        case FlextLdapConstants.ConfigPropertyKeys.TIME_LIMIT:
                             return self.ldap_time_limit
-                case "cache":
+                case FlextLdapConstants.ConfigCategoryKeys.CACHE:
                     match prop:
-                        case "enabled":
-                            return self.enable_caching
-                        case "ttl":
-                            return self.cache_ttl
-                case "retry":
+                        case FlextLdapConstants.ConfigPropertyKeys.ENABLED:
+                            return self.enable_caching  # type: ignore[attr-defined]
+                        case FlextLdapConstants.ConfigPropertyKeys.TTL:
+                            return self.cache_ttl  # type: ignore[attr-defined]
+                case FlextLdapConstants.ConfigCategoryKeys.RETRY:
                     match prop:
-                        case "attempts":
-                            return self.max_retry_attempts
-                        case "delay":
-                            return self.retry_delay
-                case "logging":
+                        case FlextLdapConstants.ConfigPropertyKeys.ATTEMPTS:
+                            return self.max_retry_attempts  # type: ignore[attr-defined]
+                        case FlextLdapConstants.ConfigPropertyKeys.DELAY:
+                            return self.retry_delay  # type: ignore[attr-defined]
+                case FlextLdapConstants.ConfigCategoryKeys.LOGGING:
                     match prop:
-                        case "debug":
+                        case FlextLdapConstants.ConfigPropertyKeys.DEBUG:
                             return self.ldap_enable_debug
-                        case "trace":
+                        case FlextLdapConstants.ConfigPropertyKeys.TRACE:
                             return self.ldap_enable_trace
-                        case "queries":
+                        case FlextLdapConstants.ConfigPropertyKeys.QUERIES:
                             return self.ldap_log_queries
-                        case "mask_passwords":
+                        case FlextLdapConstants.ConfigPropertyKeys.MASK_PASSWORDS:
                             return self.ldap_mask_passwords
 
         # Fall back to standard FlextConfig access
@@ -630,20 +516,20 @@ class FlextLdapConfig(FlextConfig):
 
         # Validate LDAP URI and port consistency
         if (
-            self.ldap_server_uri.startswith("ldaps://")
-            and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_PORT
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
+            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT
         ):
-            port = FlextLdapConstants.Protocol.DEFAULT_PORT
-            ssl_port = FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
+            port = FlextLdapConstants.Defaults.DEFAULT_PORT
+            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
             msg = f"Port {port} is for LDAP, not LDAPS. Use {ssl_port}."
             return FlextResult[None].fail(msg)
 
         if (
-            self.ldap_server_uri.startswith("ldap://")
-            and self.ldap_port == FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAP)
+            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
         ):
-            ssl_port = FlextLdapConstants.Protocol.DEFAULT_SSL_PORT
-            port = FlextLdapConstants.Protocol.DEFAULT_PORT
+            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
+            port = FlextLdapConstants.Defaults.DEFAULT_PORT
             msg = f"Port {ssl_port} is for LDAPS, not LDAP. Use {port}."
             return FlextResult[None].fail(msg)
 
@@ -678,208 +564,6 @@ class FlextLdapConfig(FlextConfig):
                         config_dict = instance.model_dump()
                         cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
-
-    # =========================================================================
-    # UNIFIED FACTORY METHODS - Pattern-matched configuration creation
-    # =========================================================================
-
-    @staticmethod
-    def merge_configs(
-        base_config: dict[str, object], override_config: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Merge two configuration dicts (base + overrides).
-
-        Args:
-            base_config: Base configuration dictionary
-            override_config: Override configuration dictionary
-
-        Returns:
-            FlextResult[dict[str, object]]: Merged configuration or error
-
-        Example:
-            >>> base = {"server": "ldap://localhost", "port": 389}
-            >>> override = {"port": 636}
-            >>> result = FlextLdapConfig.merge_configs(base, override)
-            >>> if result.is_success:
-            ...     merged = (
-            ...         result.unwrap()
-            ...     )  # {"server": "ldap://localhost", "port": 636}
-
-        """
-        try:
-            # Create merged dict with base config
-            merged = dict(base_config)
-            # Update with override values
-            merged.update(override_config)
-            return FlextResult[dict[str, object]].ok(merged)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Config merge failed: {e!s}")
-
-    @classmethod
-    def create_config(
-        cls,
-        config_type: str,
-        data: dict[str, object] | None = None,
-        override_data: dict[str, object] | None = None,
-    ) -> FlextResult[Any]:
-        """Unified config factory using Python 3.13+ pattern matching.
-
-        Args:
-        config_type: Type of config (connection, search, modify, add, delete, default_search, merge)
-        data: Configuration data for creation
-        override_data: Override data for merge operations
-
-        Returns:
-        FlextResult: Created configuration or error
-
-        """
-        if data is None:
-            data = {}
-
-        def _extract_str_list(
-            source: dict[str, object], key: str, default: list[str] | None = None
-        ) -> list[str]:
-            """Extract and convert list to strings."""
-            items = source.get(key, default or [])
-            return (
-                [str(i) for i in items if i is not None]
-                if isinstance(items, list)
-                else []
-            )
-
-        try:
-            match config_type:
-                case "connection":
-                    config_kwargs: dict[str, object] = {
-                        "ldap_server_uri": str(
-                            data.get(
-                                FlextLdapConstants.LdapDictKeys.SERVER_URI,
-                                data.get(
-                                    FlextLdapConstants.LdapDictKeys.SERVER,
-                                    "ldap://localhost",
-                                ),
-                            ),
-                        ),
-                        "ldap_port": int(
-                            str(data.get(FlextLdapConstants.LdapDictKeys.PORT, 389))
-                        ),
-                        "ldap_base_dn": str(
-                            data.get(FlextLdapConstants.LdapDictKeys.BASE_DN, "")
-                        ),
-                    }
-                    bind_dn = data.get(FlextLdapConstants.LdapDictKeys.BIND_DN)
-                    if bind_dn:
-                        config_kwargs["ldap_bind_dn"] = str(bind_dn)
-                    bind_pwd = data.get(FlextLdapConstants.LdapDictKeys.BIND_PASSWORD)
-                    if bind_pwd:
-                        config_kwargs["ldap_bind_password"] = SecretStr(str(bind_pwd))
-                    conn_cfg: FlextLdapConfig = FlextLdapConfig.model_validate(
-                        config_kwargs
-                    )
-                    return FlextResult[FlextLdapConfig].ok(conn_cfg)
-
-                case "search":
-                    if not isinstance(data, dict):
-                        return FlextResult[FlextLdapModels.SearchConfig].fail(
-                            "Data must be a dictionary"
-                        )
-                    search_cfg: FlextLdapModels.SearchConfig = (
-                        FlextLdapModels.SearchConfig(
-                            base_dn=str(
-                                data.get(FlextLdapConstants.LdapDictKeys.BASE_DN, "")
-                            ),
-                            filter_str=str(
-                                data.get(
-                                    "filter_str",
-                                    FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                                ),
-                            ),
-                            attributes=_extract_str_list(
-                                data, FlextLdapConstants.LdapDictKeys.ATTRIBUTES
-                            ),
-                        )
-                    )
-                    return FlextResult[FlextLdapModels.SearchConfig].ok(search_cfg)
-
-                case "modify":
-                    if not isinstance(data, dict):
-                        return FlextResult[dict[str, str | list[str]]].fail(
-                            "Data must be a dictionary"
-                        )
-                    modify_cfg: dict[str, str | list[str]] = {
-                        FlextLdapConstants.LdapDictKeys.DN: str(
-                            data.get(FlextLdapConstants.LdapDictKeys.DN, ""),
-                        ),
-                        FlextLdapConstants.LdapDictKeys.OPERATION: str(
-                            data.get(
-                                FlextLdapConstants.LdapDictKeys.OPERATION, "replace"
-                            ),
-                        ),
-                        FlextLdapConstants.LdapDictKeys.ATTRIBUTE: str(
-                            data.get(FlextLdapConstants.LdapDictKeys.ATTRIBUTE, ""),
-                        ),
-                        FlextLdapConstants.LdapDictKeys.VALUES: _extract_str_list(
-                            data, FlextLdapConstants.LdapDictKeys.VALUES
-                        ),
-                    }
-                    return FlextResult[dict[str, str | list[str]]].ok(modify_cfg)
-
-                case "add":
-                    attributes = data.get(
-                        FlextLdapConstants.LdapDictKeys.ATTRIBUTES, {}
-                    )
-                    if not isinstance(attributes, dict):
-                        attributes = {}
-                    add_cfg: dict[str, str | dict[str, list[str]]] = {
-                        FlextLdapConstants.LdapDictKeys.DN: str(
-                            data.get(FlextLdapConstants.LdapDictKeys.DN, ""),
-                        ),
-                        "attributes": {
-                            str(k): [
-                                str(v)
-                                for v in (vals if isinstance(vals, list) else [vals])
-                            ]
-                            for k, vals in attributes.items()
-                        },
-                    }
-                    return FlextResult[dict[str, str | dict[str, list[str]]]].ok(
-                        add_cfg
-                    )
-
-                case "delete":
-                    del_cfg: dict[str, str] = {
-                        FlextLdapConstants.LdapDictKeys.DN: str(
-                            data.get(FlextLdapConstants.LdapDictKeys.DN, ""),
-                        ),
-                    }
-                    return FlextResult[dict[str, str]].ok(del_cfg)
-
-                case "default_search":
-                    search_config = FlextLdapModels.SearchConfig(
-                        base_dn=FlextLdapConstants.Defaults.DEFAULT_SEARCH_BASE,
-                        filter_str=FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                        attributes=[
-                            FlextLdapConstants.LdapAttributeNames.COMMON_NAME,
-                            FlextLdapConstants.LdapAttributeNames.SURNAME,
-                            FlextLdapConstants.LdapAttributeNames.MAIL,
-                        ],
-                    )
-                    return FlextResult[FlextLdapModels.SearchConfig].ok(search_config)
-
-                case "merge":
-                    merged: dict[str, object] = data.copy()
-                    if override_data:
-                        merged.update(override_data)
-                    return FlextResult[dict[str, object]].ok(merged)
-
-                case _:
-                    return FlextResult[dict[str, object]].fail(
-                        f"Unknown config type: {config_type}"
-                    )
-
-        except Exception as e:
-            error_msg = f"Config creation failed ({config_type}): {e}"
-            return FlextResult[dict[str, object]].fail(error_msg)
 
 
 __all__ = [

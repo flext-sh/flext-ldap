@@ -154,6 +154,7 @@
             "e2e: End-to-end tests",
             "factory_test: Factory tests",
             "integration: Integration tests (require external services)",
+            "ldap: LDAP-specific tests",
             "memory: Memory tests",
             "mock_heavy: Tests with heavy mocking",
             "performance: Performance tests (sensitive to load)",

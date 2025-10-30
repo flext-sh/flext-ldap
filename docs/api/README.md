@@ -13,6 +13,7 @@ Complete API reference for flext-ldap v0.10.0, covering all public interfaces, c
 ### Primary Entry Point
 
 **[FlextLdap](flextldap-api.md)** - Main API facade
+
 ```python
 from flext_ldap import FlextLdap
 
@@ -47,7 +48,7 @@ result = api.search_entries(search_request)
 
 6. **[Server Operations](servers-api.md)** - Server-specific implementations
    - OpenLDAP2Operations
-   - OpenLDAP1Operations  
+   - OpenLDAP1Operations
    - OracleOIDOperations
    - OracleOUDOperations
    - ActiveDirectoryOperations
@@ -79,6 +80,7 @@ from flext_ldap import FlextLdapEntryAdapter
 ### Common Operations
 
 **Search**:
+
 ```python
 api = FlextLdap()
 search_request = FlextLdapModels.SearchRequest(
@@ -89,12 +91,14 @@ result = api.search_entries(search_request)
 ```
 
 **Authentication**:
+
 ```python
 auth = FlextLdapClients.Authentication()
 result = auth.bind(connection, dn, password)
 ```
 
 **ACL Management**:
+
 ```python
 acl_manager = FlextLdapAcl.Manager()
 result = acl_manager.get_acls(connection, dn, server_type)
@@ -103,12 +107,14 @@ result = acl_manager.get_acls(connection, dn, server_type)
 ## API Stability
 
 ### Stable (Public API)
+
 - ✅ FlextLdap - Main API facade
 - ✅ FlextLdapModels - Domain models
 - ✅ FlextLdapClients - Client operations
 - ✅ FlextLdapAcl - ACL management
 
 ### Internal (Subject to Change)
+
 - ⚠️ FlextLdapServices - Internal business logic
 - ⚠️ FlextLdapHandlers - Internal handlers
 - ⚠️ Server operations - May evolve with new features
@@ -123,7 +129,7 @@ result = api.search_entries(request)
 # Success path
 if result.is_success:
     entries = result.unwrap()
-    
+
 # Failure path
 if result.is_failure:
     error = result.error

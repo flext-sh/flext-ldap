@@ -41,6 +41,7 @@ Application Layer → Domain Layer → Infrastructure Layer → Protocol Layer
 ### Module Structure (v0.10.0)
 
 **12 Root Modules**:
+
 - api.py, services.py, handlers.py
 - clients.py (Authentication, Search)
 - models.py (Domain, Validations)
@@ -50,6 +51,7 @@ Application Layer → Domain Layer → Infrastructure Layer → Protocol Layer
 - repositories.py, config.py, utilities.py
 
 **1 Subdirectory**:
+
 - servers/ - Server-specific implementations
 
 ## Related Documentation

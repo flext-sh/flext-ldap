@@ -225,16 +225,6 @@ class TestOracleOUDSpecificOperations:
         )
         assert result.is_success or result.is_failure
 
-    def test_oud_member_operations(self, shared_ldap_client: FlextLdapClients) -> None:
-        """Test group member operations on Oracle OUD."""
-        # Test adding member to group
-        result = shared_ldap_client.add_member(
-            group_dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
-            member_dn="cn=testuser,ou=people,dc=flext,dc=local",
-        )
-        # May succeed or fail depending on data
-        assert result.is_success or result.is_failure
-
     def test_oud_advanced_search(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test advanced search features on Oracle OUD."""
         result = shared_ldap_client.search(

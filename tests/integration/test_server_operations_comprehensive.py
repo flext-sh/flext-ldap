@@ -22,7 +22,6 @@ from __future__ import annotations
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.clients import FlextLdapClients
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 from flext_ldap.servers.openldap1_operations import (
     FlextLdapServersOpenLDAP1Operations,
@@ -31,6 +30,7 @@ from flext_ldap.servers.openldap2_operations import (
     FlextLdapServersOpenLDAP2Operations,
 )
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
+from flext_ldap.services.clients import FlextLdapClients
 
 
 @pytest.mark.integration
@@ -121,19 +121,21 @@ class TestOpenLDAP2EntryOperations:
         if shared_ldap_client._connection is None:
             pytest.skip("No LDAP connection available")
 
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "cn": ["testuser1"],
+            "sn": ["user"],
+            "objectClass": ["inetOrgPerson", "person"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=testuser1,ou=people,dc=flext,dc=local"
             ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["testuser1"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["user"]),
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson", "person"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
 
         result = ops.add_entry(shared_ldap_client._connection, entry)
@@ -464,16 +466,18 @@ class TestServerOperationsWithEntryModels:
         """Test normalizing LDIF Entry for OpenLDAP 2.x."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "cn": ["test"],
+            "objectClass": ["inetOrgPerson"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
 
         result = ops.normalize_entry_for_server(entry, "openldap2")
@@ -483,20 +487,21 @@ class TestServerOperationsWithEntryModels:
         """Test validating LDIF Entry for Oracle OID."""
         ops = FlextLdapServersOIDOperations()
 
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "cn": ["test"],
+            "objectClass": ["person"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                }
-            ),
+            attributes=attributes,
         )
 
         dn = entry.dn.value
-        attrs = {
-            attr_name: attr_values.values
-            for attr_name, attr_values in entry.attributes.attributes.items()
-        }
+        attrs = dict(entry.attributes.items())
         result = ops.validate_entry_for_server(dn, attrs)
         assert result.is_success or result.is_failure

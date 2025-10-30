@@ -20,7 +20,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdap, FlextLdapUpsertService
-from flext_ldap.clients import FlextLdapClients
+from flext_ldap.services.clients import FlextLdapClients
 
 # Mark all tests as integration tests requiring Docker
 # Skip all tests in this module - requires proper fixture integration with connected clients

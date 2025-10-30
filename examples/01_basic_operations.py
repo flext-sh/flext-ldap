@@ -352,7 +352,7 @@ def demonstrate_configuration() -> None:
     logger.info(f"   Base DN: {config_env.ldap_base_dn}")
     logger.info(f"   Port: {config_env.ldap_port} (auto-detected from URI)")
     logger.info(
-        f"   Timeout: {FlextLdapConstants.DEFAULT_TIMEOUT}s (from FlextConstants)"
+        f"   Timeout: {FlextLdapConstants.Connection.DEFAULT_TIMEOUT}s (from FlextConstants)"
     )
     logger.info(f"   Use SSL: {config_env.ldap_use_ssl} (auto-detected from URI)")
 
@@ -379,8 +379,8 @@ def demonstrate_constants() -> None:
 
     # Protocol constants (delegated to flext-core)
     logger.info("Protocol:")
-    logger.info(f"   Default Port: {FlextLdapConstants.LDAP_DEFAULT_PORT}")
-    logger.info(f"   SSL Port: {FlextLdapConstants.LDAPS_DEFAULT_PORT}")
+    logger.info(f"   Default Port: {FlextLdapConstants.Protocol.DEFAULT_PORT}")
+    logger.info(f"   SSL Port: {FlextLdapConstants.Protocol.DEFAULT_SSL_PORT}")
     logger.info(
         f"   Default Timeout: {FlextLdapConstants.Protocol.DEFAULT_TIMEOUT_SECONDS}s"
     )

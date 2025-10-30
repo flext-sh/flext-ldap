@@ -42,7 +42,7 @@ from flext_ldap import (
     FlextLdapQuirksIntegration,
     FlextLdapSchema,
 )
-from flext_ldap.clients import FlextLdapClients
+from flext_ldap.services.clients import FlextLdapClients
 
 logger: FlextLogger = FlextLogger(__name__)
 

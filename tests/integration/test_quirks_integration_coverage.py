@@ -23,7 +23,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClients
-from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration

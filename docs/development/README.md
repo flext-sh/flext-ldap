@@ -72,11 +72,13 @@ git push origin feature/my-feature
 ### ZERO TOLERANCE
 
 **Required before EVERY commit**:
+
 ```bash
 make validate  # Must pass: lint + type + security + test
 ```
 
 **Standards**:
+
 - ✅ Ruff linting: ZERO violations
 - ✅ Pyrefly type checking: ZERO errors
 - ✅ Bandit security: ZERO critical issues
@@ -144,7 +146,7 @@ def my_operation(data: dict) -> FlextResult[ProcessedData]:
     """Always return FlextResult[T]."""
     if not data:
         return FlextResult[ProcessedData].fail("Data required")
-    
+
     return (
         validate(data)
         .flat_map(transform)
@@ -159,7 +161,7 @@ from flext_core import FlextService
 
 class MyService(FlextService[None]):
     """Inherit from FlextService to get mixins."""
-    
+
     def operation(self):
         # ✅ Use inherited properties
         self.logger.info("message")  # From FlextMixins
@@ -191,6 +193,7 @@ class Config(BaseModel):
 ### Commit Messages
 
 Follow Conventional Commits:
+
 ```
 feat: add new LDAP operation
 fix: resolve connection timeout issue

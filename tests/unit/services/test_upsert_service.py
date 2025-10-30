@@ -308,7 +308,389 @@ class TestUpsertServiceConstants:
         assert hasattr(FlextLdapConstants.ModifyOperation, "REPLACE")
 
 
+@pytest.mark.unit
+class TestUpsertServiceBusinessLogic:
+    """Test UPSERT service business logic with mocked LDAP client."""
+
+    def _create_mock_client(self) -> object:
+        """Create a mock FlextLdap client for testing."""
+        from unittest.mock import MagicMock
+
+        mock_client = MagicMock()
+        # The service expects a client with a .client attribute
+        mock_client.client = MagicMock()
+        return mock_client
+
+    def test_upsert_entry_add_success_new_entry(self) -> None:
+        """Test upsert when ADD succeeds (new entry created)."""
+        from flext_core import FlextResult
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock successful ADD
+        mock_client.client.add_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=newuser,ou=users,dc=example,dc=com"
+        attrs = {"mail": ["user@example.com"], "cn": ["New User"]}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        assert stats["upserted"] is True
+        assert stats["added"] == 2
+        assert stats["replaced"] == 0
+        assert stats["unchanged"] == 0
+
+    def test_upsert_entry_add_fails_non_exists_error(self) -> None:
+        """Test upsert when ADD fails with non-exists error."""
+        from flext_core import FlextResult
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with non-exists error
+        error_msg = "LDAP error: no such object"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(error_msg)
+
+        dn = "cn=user,ou=invalidou,dc=example,dc=com"
+        attrs = {"mail": ["user@example.com"]}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_failure
+        assert "no such object" in str(result.error)
+
+    def test_upsert_entry_add_exists_search_and_add_new_attrs(self) -> None:
+        """Test upsert when entry exists and new attributes need ADD."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "entryalreadyexists"
+        )
+
+        # Mock search to return existing entry with only mail attribute
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["old@example.com"],
+                "cn": ["User"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock successful MODIFY ADD (for telephoneNumber)
+        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {
+            "mail": ["old@example.com"],  # unchanged
+            "cn": ["User"],  # RDN - skipped
+            "telephoneNumber": ["555-1234"],  # new
+        }
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        assert stats["upserted"] is True
+        assert stats["added"] == 1  # telephoneNumber added
+        # Mail should be treated as ADD or REPLACE depending on comparison
+        assert stats["replaced"] >= 0  # Could be ADD or REPLACE
+        assert stats["added"] + stats["replaced"] + stats["unchanged"] > 0
+
+    def test_upsert_entry_add_exists_search_and_replace_attrs(self) -> None:
+        """Test upsert when entry exists and attributes need REPLACE."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail("code 68")
+
+        # Mock search to return existing entry
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["old@example.com"],
+                "cn": ["User"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock successful MODIFY REPLACE
+        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {"mail": ["new@example.com"]}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        assert stats["replaced"] == 1  # mail changed
+        assert stats["added"] == 0
+
+    def test_upsert_entry_search_failure(self) -> None:
+        """Test upsert when search fails after entry exists detected."""
+        from flext_core import FlextResult
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "already exists"
+        )
+
+        # Mock search failure
+        mock_client.client.search.return_value = FlextResult[object].fail(
+            "Search operation failed"
+        )
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {"mail": ["user@example.com"]}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_failure
+        assert "Search operation failed" in str(result.error)
+
+    def test_upsert_entry_string_attribute_normalization(self) -> None:
+        """Test upsert with string attributes (not list format)."""
+        from flext_core import FlextResult
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD success for new entry with string attributes
+        mock_client.client.add_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        # Pass string attributes instead of lists
+        attrs = {"mail": "user@example.com", "cn": "User Name"}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        # Should normalize strings to lists and count both attributes
+        assert stats["added"] == 2
+        assert stats["replaced"] == 0
+
+    def test_upsert_entry_search_returns_none(self) -> None:
+        """Test upsert when search returns None after entry exists detection."""
+        from flext_core import FlextResult
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "already exists"
+        )
+
+        # Mock search returning None (entry doesn't exist)
+        mock_client.client.search.return_value = FlextResult[object].ok(None)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {"mail": ["user@example.com"]}
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_failure
+        assert "not found in search" in str(result.error).lower()
+
+    def test_upsert_entry_all_attributes_unchanged(self) -> None:
+        """Test upsert when entry exists with identical attributes."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail("code 68")
+
+        # Mock search to return existing entry with identical attributes
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["user@example.com"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock modify_entry to return success
+        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {"mail": ["user@example.com"]}  # Identical to existing
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        # Verify upsert was successful
+        assert stats["upserted"] is True
+
+    def test_upsert_entry_mixed_unchanged_and_new_attributes(self) -> None:
+        """Test upsert with mix of unchanged and new attributes."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "already exists"
+        )
+
+        # Mock search to return existing entry with mail attribute
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["user@example.com"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock successful MODIFY operations
+        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {
+            "mail": ["user@example.com"],  # Existing
+            "displayName": ["User Name"],  # New
+        }
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_success
+        stats = result.unwrap()
+        # Verify at least displayName was added as new attribute
+        assert stats["added"] >= 1
+        # Verify upsert was successful and modify was called
+        assert stats["upserted"] is True
+        mock_client.client.modify_entry.assert_called()
+
+    def test_upsert_entry_modify_add_failure(self) -> None:
+        """Test upsert when MODIFY ADD operation fails."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "already exists"
+        )
+
+        # Mock search to return existing entry
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["user@example.com"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock MODIFY ADD failure
+        mock_client.client.modify_entry.return_value = FlextResult[bool].fail(
+            "MODIFY ADD failed: permission denied"
+        )
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {
+            "mail": ["user@example.com"],  # Unchanged
+            "displayName": ["User Name"],  # New - will fail
+        }
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_failure
+        assert "permission denied" in str(result.error).lower()
+
+    def test_upsert_entry_modify_replace_failure(self) -> None:
+        """Test upsert when MODIFY REPLACE operation fails."""
+        from flext_core import FlextResult
+        from flext_ldif import FlextLdifModels
+
+        service = FlextLdapUpsertService()
+        mock_client = self._create_mock_client()
+
+        # Mock ADD failure with "already exists"
+        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+            "already exists"
+        )
+
+        # Mock search to return existing entry
+        existing_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=user,ou=users,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes.create({
+                "mail": ["old@example.com"],
+            }).unwrap(),
+        )
+
+        mock_client.client.search.return_value = FlextResult[
+            FlextLdifModels.Entry | None
+        ].ok(existing_entry)
+
+        # Mock MODIFY REPLACE failure
+        mock_client.client.modify_entry.return_value = FlextResult[bool].fail(
+            "MODIFY REPLACE failed: attribute is immutable"
+        )
+
+        dn = "cn=user,ou=users,dc=example,dc=com"
+        attrs = {
+            "mail": ["new@example.com"],  # Changed - will fail to replace
+        }
+
+        result = service.upsert_entry(mock_client, dn, attrs)
+
+        assert result.is_failure
+        assert "immutable" in str(result.error).lower()
+
+
 __all__ = [
+    "TestUpsertServiceBusinessLogic",
     "TestUpsertServiceConstants",
     "TestUpsertServiceDocumentation",
     "TestUpsertServiceErrorHandling",

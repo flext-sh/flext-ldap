@@ -15,6 +15,7 @@ import time
 
 import pytest
 from flext_ldif import FlextLdifModels
+from flext_ldif.constants import LdapServerType
 
 from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapSchema
 
@@ -60,11 +61,11 @@ class TestSharedSchemaDiscovery:
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
         server_type = schema_result_obj.server_type
         expected_types = {
-            FlextLdapModels.LdapServerType.OPENLDAP,
-            FlextLdapModels.LdapServerType.GENERIC,
+            LdapServerType.OPENLDAP,
+            LdapServerType.GENERIC,
             # Also accept string values (Pydantic may serialize enums to strings)
-            FlextLdapModels.LdapServerType.OPENLDAP.value,
-            FlextLdapModels.LdapServerType.GENERIC.value,
+            LdapServerType.OPENLDAP.value,
+            LdapServerType.GENERIC.value,
         }
         assert server_type in expected_types, f"Unexpected server type: {server_type}"
 

@@ -102,19 +102,32 @@ class TestOpenLDAP2Operations:
         result = ops.parse_acl(acl_string)
 
         assert result.is_success
-        acl_dict = result.unwrap()
-        assert isinstance(acl_dict, dict)
+        acl_entry = result.unwrap()
+        assert isinstance(acl_entry, FlextLdifModels.Entry)
+        assert acl_entry.attributes.get("raw") == [acl_string]
 
     def test_format_acl(self) -> None:
         """Test ACL formatting for OpenLDAP."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
-        acl_dict: dict[str, object] = {
-            "priority": 0,
-            "target": "*",
-            "permissions": "read",
-        }
-        result = ops.format_acl(acl_dict)
+        # Create Entry with ACL attributes for formatting
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "raw": ["{0}to * by * read"],
+            "priority": ["0"],
+            "target": ["*"],
+            "permissions": ["read"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
+
+        acl_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=AclRule"),
+            attributes=attributes,
+        )
+        result = ops.format_acl(acl_entry)
 
         assert result.is_success
         acl_string = result.unwrap()
@@ -216,17 +229,32 @@ class TestOIDOperations:
 
         # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure
+        if result.is_success:
+            acl_entry = result.unwrap()
+            assert isinstance(acl_entry, FlextLdifModels.Entry)
 
     def test_format_acl(self) -> None:
         """Test ACL formatting for Oracle OID."""
         ops = FlextLdapServersOIDOperations()
 
-        acl_dict: dict[str, object] = {
-            "action": "permit",
-            "subject": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "permissions": "read",
-        }
-        result = ops.format_acl(acl_dict)
+        # Create Entry with ACL attributes for formatting
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "raw": ["permit|dn:cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com|read"],
+            "action": ["permit"],
+            "subject": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
+            "permissions": ["read"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
+
+        acl_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=AclRule"),
+            attributes=attributes,
+        )
+        result = ops.format_acl(acl_entry)
 
         assert result.is_success or result.is_failure
 
@@ -345,11 +373,22 @@ class TestServerOperationsErrorHandling:
         assert result.is_success or result.is_failure
 
     def test_oid_format_acl_empty_dict(self) -> None:
-        """Test empty ACL dict formatting for OID."""
+        """Test empty ACL Entry formatting for OID."""
         ops = FlextLdapServersOIDOperations()
 
-        acl_dict: dict[str, object] = {}
-        result = ops.format_acl(acl_dict)
+        # Create minimal Entry for formatting
+        attrs_result = FlextLdifModels.LdifAttributes.create({})
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({"raw": [""]}).unwrap()
+        )
+
+        acl_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=AclRule"),
+            attributes=attributes,
+        )
+        result = ops.format_acl(acl_entry)
 
         # Should handle gracefully
         assert result.is_success or result.is_failure

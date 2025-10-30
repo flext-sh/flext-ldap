@@ -13,12 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-import re
 from datetime import datetime
-from enum import Enum
 from typing import (
     ClassVar,
-    Literal,
     Self,
     cast,
 )
@@ -41,12 +38,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldap.constants import (
-    AclType,
-    FlextLdapConstants,
-    ObjectClassKind,
-    UpdateStrategy,
-)
+from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapModels(FlextModels):
@@ -97,15 +89,6 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     # =========================================================================
-    # REUSABLE VALIDATORS - Consolidated to reduce duplication
-    # =========================================================================
-
-    @staticmethod
-    def validate_dn_field(value: str) -> str:
-        """Consolidated DN validator used by all request models."""
-        return FlextLdapModels.Validations.validate_dn_for_field(value)
-
-    # =========================================================================
     # VALUE OBJECTS - Immutable LDAP value objects
     # =========================================================================
 
@@ -118,7 +101,7 @@ class FlextLdapModels(FlextModels):
         expression: str = Field(
             ...,
             min_length=1,
-            pattern=r"^\(.*\)$",
+            pattern=FlextLdapConstants.RegexPatterns.FILTER_PATTERN,
             description="LDAP filter expression",
         )
 
@@ -147,53 +130,53 @@ class FlextLdapModels(FlextModels):
         Extends FlextModels.Value for proper Pydantic 2 validation and composition.
         """
 
-        value: Literal["base", "onelevel", "subtree"] = Field(
-            ..., description="LDAP search scope value"
+        value: FlextLdapConstants.Types.SearchScope = Field(
+            ...,
+            description="LDAP search scope value using FlextLdapConstants",
         )
 
-        BASE: ClassVar[str] = "base"
-        ONELEVEL: ClassVar[str] = "onelevel"
-        SUBTREE: ClassVar[str] = "subtree"
+        BASE: ClassVar[str] = FlextLdapConstants.Scopes.BASE
+        ONELEVEL: ClassVar[str] = FlextLdapConstants.Scopes.ONELEVEL
+        SUBTREE: ClassVar[str] = FlextLdapConstants.Scopes.SUBTREE
 
         @classmethod
         def base(cls) -> FlextLdapModels.Scope:
-            """Create base scope."""
-            return cls(value=cast("Literal['base']", cls.BASE))
+            """Create base scope using FlextLdapConstants."""
+            return cls(
+                value=cast(
+                    "FlextLdapConstants.Types.SearchScope",
+                    FlextLdapConstants.Scopes.BASE,
+                ),
+            )
 
         @classmethod
         def onelevel(cls) -> FlextLdapModels.Scope:
-            """Create onelevel scope."""
-            return cls(value=cast("Literal['onelevel']", cls.ONELEVEL))
+            """Create onelevel scope using FlextLdapConstants."""
+            return cls(
+                value=cast(
+                    "FlextLdapConstants.Types.SearchScope",
+                    FlextLdapConstants.Scopes.ONELEVEL,
+                ),
+            )
 
         @classmethod
         def subtree(cls) -> FlextLdapModels.Scope:
-            """Create subtree scope."""
-            return cls(value=cast("Literal['subtree']", cls.SUBTREE))
+            """Create subtree scope using FlextLdapConstants."""
+            return cls(
+                value=cast(
+                    "FlextLdapConstants.Types.SearchScope",
+                    FlextLdapConstants.Scopes.SUBTREE,
+                ),
+            )
 
     # =========================================================================
     # SCHEMA MODELS - LDAP schema discovery and server quirks handling
     # =========================================================================
 
-    class LdapServerType(Enum):
-        """Known LDAP server types for quirks handling."""
-
-        UNKNOWN = "unknown"
-        OPENLDAP = "openldap"
-        ACTIVE_DIRECTORY = "active_directory"
-        ORACLE_DIRECTORY = "oracle_directory"
-        ORACLE_OUD = "oracle_oud"
-        SUN_OPENDS = "sun_opends"
-        APACHE_DIRECTORY = "apache_directory"
-        NOVELL_EDIRECTORY = "novell_edirectory"
-        IBM_DIRECTORY = "ibm_directory"
-        GENERIC = "generic"
-
     class ServerQuirks(FlextModels.Value):
         """LDAP server-specific quirks and behaviors - Pydantic Value Object."""
 
-        server_type: FlextLdapModels.LdapServerType = Field(
-            description="LDAP server type for quirks"
-        )
+        server_type: str = Field(description="LDAP server type for quirks")
         case_sensitive_dns: bool = True
         case_sensitive_attributes: bool = True
         supports_paged_results: bool = True
@@ -277,6 +260,28 @@ class FlextLdapModels(FlextModels):
             List of default user attributes.
 
             """
+            return cls.DEFAULT_USER_ATTRIBUTES.copy()
+
+    class SearchRequest(BaseModel):
+        """LDAP Search Request with parameters and Pydantic 2.11 validation."""
+
+        # Default attribute constants (replicated from _SearchDefaults)
+        DEFAULT_USER_ATTRIBUTES: ClassVar[list[str]] = [
+            "cn",
+            "sn",
+            "mail",
+            "objectClass",
+        ]
+        DEFAULT_GROUP_ATTRIBUTES: ClassVar[list[str]] = [
+            "cn",
+            "member",
+            "description",
+            "objectClass",
+        ]
+
+        @classmethod
+        def get_user_attributes(cls) -> list[str]:
+            """Get default user attributes for search requests."""
             return cls.DEFAULT_USER_ATTRIBUTES.copy()
 
         # Search scope
@@ -399,12 +404,12 @@ class FlextLdapModels(FlextModels):
             uid: str,
             base_dn: str = "ou=users,dc=example,dc=com",
             attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
+        ) -> Self:
             """Create search request for user."""
-            return FlextLdapModels.SearchRequest.model_validate(
+            return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=person)(uid={uid}))",
+                    "filter_str": f"(&{FlextLdapConstants.Filters.ALL_USERS_FILTER[1:-1]}(uid={uid}))",  # Remove outer parens and combine
                     "attributes": attributes or ["uid", "cn", "mail", "sn"],
                     "page_size": 100,  # Default page size
                     "paged_cookie": None,
@@ -417,12 +422,12 @@ class FlextLdapModels(FlextModels):
             cn: str,
             base_dn: str = "ou=groups,dc=example,dc=com",
             attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
+        ) -> Self:
             """Create search request for group."""
-            return FlextLdapModels.SearchRequest.model_validate(
+            return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
+                    "filter_str": f"(&{FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER[1:-1]}({FlextLdapConstants.LdapAttributeNames.CN}={cn}))",
                     "attributes": attributes or ["cn", "member", "description"],
                     "page_size": 100,  # Default page size
                     "paged_cookie": None,
@@ -436,7 +441,7 @@ class FlextLdapModels(FlextModels):
             filter_str: str,
             scope: str = "subtree",
             attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
+        ) -> Self:
             """Factory method with smart defaults from FlextLdapConstants.
 
             Creates a SearchRequest with intelligent defaults for common parameters,
@@ -450,7 +455,7 @@ class FlextLdapModels(FlextModels):
                 attributes: Attributes to retrieve (empty list = all)
 
             Returns:
-                FlextLdapModels.SearchRequest: Configured request with smart defaults
+                SearchRequest: Configured request with smart defaults
 
             Example:
                 # OLD: Manual parameter specification
@@ -469,7 +474,7 @@ class FlextLdapModels(FlextModels):
                 )
 
             """
-            return FlextLdapModels.SearchRequest.model_validate({
+            return cls.model_validate({
                 "base_dn": base_dn,
                 "filter_str": filter_str,
                 "scope": scope,
@@ -505,7 +510,7 @@ class FlextLdapModels(FlextModels):
                 # "(&(objectClass=person)(uid=john))"
 
             """
-            base_filter = "(objectClass=person)"
+            base_filter = FlextLdapConstants.Filters.ALL_USERS_FILTER
             if username_filter:
                 return f"(&{base_filter}{username_filter})"
             return base_filter
@@ -533,7 +538,7 @@ class FlextLdapModels(FlextModels):
                 # "(&(objectClass=groupOfNames)(cn=REDACTED_LDAP_BIND_PASSWORDs))"
 
             """
-            base_filter = "(objectClass=groupOfNames)"
+            base_filter = FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER
             if group_filter:
                 return f"(&{base_filter}{group_filter})"
             return base_filter
@@ -587,11 +592,13 @@ class FlextLdapModels(FlextModels):
         schema_dn: str | None = Field(default=None, description="DN of schema subentry")
 
         # General attributes (for Add, Update, Upsert operations)
-        attributes: dict[str, str | list[str]] | None = Field(
-            default=None, description="Entry attributes"
+        attributes: FlextLdifModels.LdifAttributes | None = Field(
+            default=None,
+            description="Entry attributes",
         )
         object_classes: list[str] | None = Field(
-            default=None, description="LDAP object classes"
+            default=None,
+            description="LDAP object classes",
         )
 
         # User/Group specific fields
@@ -606,7 +613,7 @@ class FlextLdapModels(FlextModels):
 
         # ACL operations
         acl_rules: list[str] | None = Field(default=None, description="ACL rules")
-        acl_type: AclType = "auto"
+        acl_type: FlextLdapConstants.Types.AclType = "auto"
 
         # Schema attribute fields
         name: str | None = Field(default=None, description="Schema element name")
@@ -618,25 +625,32 @@ class FlextLdapModels(FlextModels):
 
         # Schema changes/elements
         changes: dict[str, str | list[str]] | None = Field(
-            default=None, description="Schema changes"
+            default=None,
+            description="Schema changes",
         )
         schema_element: dict[str, str | list[str]] | None = Field(
-            default=None, description="Schema element"
+            default=None,
+            description="Schema element",
         )
 
         # Object class definition fields
         must_attributes: list[str] = Field(
-            default_factory=list, description="MUST attributes"
+            default_factory=list,
+            description="MUST attributes",
         )
         may_attributes: list[str] = Field(
-            default_factory=list, description="MAY attributes"
+            default_factory=list,
+            description="MAY attributes",
         )
-        parent: str | None = "top"
-        kind: ObjectClassKind = "STRUCTURAL"
+        parent: str | None = FlextLdapConstants.ObjectClasses.TOP
+        kind: FlextLdapConstants.Types.ObjectClassKind = cast(
+            "FlextLdapConstants.Types.ObjectClassKind",
+            FlextLdapConstants.ObjectClassKindConstants.STRUCTURAL,
+        )
 
         # Update/Upsert strategies
-        strategy: UpdateStrategy = "merge"
-        update_strategy: UpdateStrategy = "merge"
+        strategy: FlextLdapConstants.Types.UpdateStrategy = "merge"
+        update_strategy: FlextLdapConstants.Types.UpdateStrategy = "merge"
 
         # General fields
         description: str | None = None
@@ -650,13 +664,17 @@ class FlextLdapModels(FlextModels):
         organizational_unit: str | None = None
         mobile: str | None = None
 
-        def to_attributes(self) -> dict[str, str | list[str]]:
-            """Convert request to LDAP attributes dict."""
+        def to_attributes(self) -> FlextLdifModels.LdifAttributes:
+            """Convert request to LDAP attributes using FlextLdifModels.LdifAttributes.
+
+            Returns FlextLdifModels.LdifAttributes wrapping standardized LDAP attribute
+            dict with all values as lists (RFC 4511 LDAP protocol standard).
+            """
             if self.attributes:
                 return self.attributes
 
             # Build from individual fields (for user/group creation)
-            attrs: dict[str, str | list[str]] = {}
+            attrs: dict[str, list[str]] = {}
             if self.cn:
                 attrs["cn"] = [self.cn]
             if self.sn:
@@ -674,8 +692,11 @@ class FlextLdapModels(FlextModels):
             if self.member:
                 attrs["member"] = self.member
             if self.object_classes:
-                attrs["objectClass"] = self.object_classes
-            return attrs
+                attrs[FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS] = (
+                    self.object_classes
+                )
+
+            return FlextLdifModels.LdifAttributes(attributes=attrs)
 
     # =========================================================================
     # CONSOLIDATED SYNC RESULT - Python 3.13+ composition pattern
@@ -701,29 +722,36 @@ class FlextLdapModels(FlextModels):
         deleted: int = Field(default=0, description="Number of items deleted")
         failed: int = Field(default=0, description="Number of failed operations")
         errors: list[str] = Field(
-            default_factory=list, description="Error messages from failed operations"
+            default_factory=list,
+            description="Error messages from failed operations",
         )
         operations: list[dict[str, str]] = Field(
-            default_factory=list, description="Detailed operation log"
+            default_factory=list,
+            description="Detailed operation log",
         )
 
         # ACL sync specific fields (optional for composition)
         acls_converted: int = Field(
-            default=0, description="Number of ACLs converted between formats"
+            default=0,
+            description="Number of ACLs converted between formats",
         )
         server_types_detected: list[str] = Field(
-            default_factory=list, description="Server types detected during sync"
+            default_factory=list,
+            description="Server types detected during sync",
         )
 
         # Schema sync specific fields (optional for composition)
         attributes_created: int = Field(
-            default=0, description="Number of schema attributes created"
+            default=0,
+            description="Number of schema attributes created",
         )
         object_classes_created: int = Field(
-            default=0, description="Number of object classes created"
+            default=0,
+            description="Number of object classes created",
         )
         schema_conflicts: list[str] = Field(
-            default_factory=list, description="Schema conflicts encountered"
+            default_factory=list,
+            description="Schema conflicts encountered",
         )
 
         @property
@@ -747,7 +775,10 @@ class FlextLdapModels(FlextModels):
         """LDAP Connection Information entity."""
 
         # Connection details
-        server: str = Field(default="localhost", description="LDAP server hostname/IP")
+        server: str = Field(
+            default=FlextLdapConstants.DefaultValues.LOCALHOST,
+            description="LDAP server hostname/IP",
+        )
         port: int = Field(
             FlextLdapConstants.Protocol.DEFAULT_PORT,
             description="LDAP server port",
@@ -877,7 +908,11 @@ class FlextLdapModels(FlextModels):
         @computed_field  # Pydantic v2 computed field - no @property needed
         def server_uri(self) -> str:
             """Get server URI."""
-            protocol = "ldaps://" if self.use_ssl else "ldap://"
+            protocol = (
+                FlextLdapConstants.Protocols.LDAPS
+                if self.use_ssl
+                else FlextLdapConstants.Protocols.LDAP
+            )
             return f"{protocol}{self.server}:{self.port}"
 
         @computed_field  # Pydantic v2 computed field - no @property needed
@@ -910,7 +945,8 @@ class FlextLdapModels(FlextModels):
         base_dn: str = Field(default="", description="LDAP search base DN")
         filter_str: str = Field(min_length=1, description="LDAP search filter")
         attributes: list[str] = Field(
-            default_factory=list, description="Attributes to retrieve"
+            default_factory=list,
+            description="Attributes to retrieve",
         )
 
     # =========================================================================
@@ -962,7 +998,8 @@ class FlextLdapModels(FlextModels):
 
             bind_dn_configured: bool = Field(..., description="Bind DN is configured")
             bind_password_configured: bool = Field(
-                ..., description="Bind password is configured"
+                ...,
+                description="Bind password is configured",
             )
             base_dn: str = Field(..., description="LDAP base DN")
             anonymous_bind: bool = Field(..., description="Using anonymous bind")
@@ -978,15 +1015,18 @@ class FlextLdapModels(FlextModels):
             """Operation limits configuration information."""
 
             operation_timeout: int = Field(
-                ..., description="Operation timeout in seconds"
+                ...,
+                description="Operation timeout in seconds",
             )
             size_limit: int = Field(..., description="Search size limit")
             time_limit: int = Field(..., description="Search time limit in seconds")
             connection_timeout: int = Field(
-                ..., description="Connection timeout in seconds"
+                ...,
+                description="Connection timeout in seconds",
             )
             total_timeout: int = Field(
-                ..., description="Total timeout (operation + connection)"
+                ...,
+                description="Total timeout (operation + connection)",
             )
 
         class Caching(BaseModel):
@@ -996,7 +1036,8 @@ class FlextLdapModels(FlextModels):
             cache_ttl: int = Field(..., description="Cache TTL in seconds")
             cache_ttl_minutes: int = Field(..., description="Cache TTL in minutes")
             cache_effective: bool = Field(
-                ..., description="Caching is effectively active"
+                ...,
+                description="Caching is effectively active",
             )
 
         class Retry(BaseModel):
@@ -1004,20 +1045,24 @@ class FlextLdapModels(FlextModels):
 
             retry_attempts: int = Field(..., description="Number of retry attempts")
             retry_delay: int = Field(
-                ..., description="Delay between retries in seconds"
+                ...,
+                description="Delay between retries in seconds",
             )
             total_retry_time: int = Field(
-                ..., description="Total retry time (attempts × delay)"
+                ...,
+                description="Total retry time (attempts × delay)",
             )
             retry_enabled: bool = Field(..., description="Retrying is enabled")
 
         # Composite sections
         authentication: Authentication = Field(
-            ..., description="Authentication configuration metadata"
+            ...,
+            description="Authentication configuration metadata",
         )
         pooling: Pooling = Field(..., description="Pooling configuration metadata")
         operation_limits: OperationLimits = Field(
-            ..., description="Operation limits configuration metadata"
+            ...,
+            description="Operation limits configuration metadata",
         )
         caching: Caching = Field(..., description="Caching configuration metadata")
         retry: Retry = Field(..., description="Retry configuration metadata")
@@ -1030,11 +1075,13 @@ class FlextLdapModels(FlextModels):
         supports_retry: bool = Field(..., description="Retry is supported")
         supports_debug: bool = Field(..., description="Debug logging is supported")
         has_authentication: bool = Field(
-            ..., description="Authentication is configured"
+            ...,
+            description="Authentication is configured",
         )
         has_pooling: bool = Field(..., description="Connection pooling is enabled")
         is_production_ready: bool = Field(
-            ..., description="Configuration is production-ready"
+            ...,
+            description="Configuration is production-ready",
         )
 
     # =========================================================================
@@ -1046,13 +1093,16 @@ class FlextLdapModels(FlextModels):
 
         access_line: str = Field(..., description="OpenLDAP access directive line")
         target_spec: str = Field(
-            ..., description="Target specification (*, attrs, etc.)"
+            ...,
+            description="Target specification (*, attrs, etc.)",
         )
         subject_spec: str = Field(
-            ..., description="Subject specification (user, group, etc.)"
+            ...,
+            description="Subject specification (user, group, etc.)",
         )
         permissions: str = Field(
-            ..., description="Permission specification (read, write, etc.)"
+            ...,
+            description="Permission specification (read, write, etc.)",
         )
         control: str = Field(default="", description="Control specification")
 
@@ -1081,7 +1131,7 @@ class FlextLdapModels(FlextModels):
                         if len(subject_perm_split) >= min_subject_perm_parts:
                             subject_spec = subject_spec or subject_perm_split[0]
                             permissions = permissions or " ".join(
-                                subject_perm_split[1:]
+                                subject_perm_split[1:],
                             )
 
                 return FlextResult[FlextLdapModels.OpenLdapAcl].ok(
@@ -1089,12 +1139,13 @@ class FlextLdapModels(FlextModels):
                         access_line=access_line,
                         target_spec=target_spec,
                         subject_spec=subject_spec or "*",
-                        permissions=permissions or "read",
-                    )
+                        permissions=permissions
+                        or FlextLdapConstants.AclPermissions.READ,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdapModels.OpenLdapAcl].fail(
-                    f"Failed to create OpenLdapAcl: {e}"
+                    f"Failed to create OpenLdapAcl: {e}",
                 )
 
     class OracleAcl(BaseModel):
@@ -1121,12 +1172,13 @@ class FlextLdapModels(FlextModels):
                         aci_value=aci_value,
                         target_dn=target_dn,
                         subject_spec=subject_spec or "*",
-                        permissions=permissions or "read",
-                    )
+                        permissions=permissions
+                        or FlextLdapConstants.AclPermissions.READ,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdapModels.OracleAcl].fail(
-                    f"Failed to create OracleAcl: {e}"
+                    f"Failed to create OracleAcl: {e}",
                 )
 
     class AciFormat(BaseModel):
@@ -1153,12 +1205,13 @@ class FlextLdapModels(FlextModels):
                         aci_string=aci_string,
                         target=target or "*",
                         subject=subject or "*",
-                        permissions=permissions or "read",
-                    )
+                        permissions=permissions
+                        or FlextLdapConstants.AclPermissions.READ,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdapModels.AciFormat].fail(
-                    f"Failed to create AciFormat: {e}"
+                    f"Failed to create AciFormat: {e}",
                 )
 
     class ConversionResult(BaseModel):
@@ -1201,11 +1254,11 @@ class FlextLdapModels(FlextModels):
                         converted_data=converted_data or {},
                         errors=errors or [],
                         warnings=warnings or [],
-                    )
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdapModels.ConversionResult].fail(
-                    f"Failed to create ConversionResult: {e}"
+                    f"Failed to create ConversionResult: {e}",
                 )
 
     class ServerInfo(FlextModels.ArbitraryTypesModel):
@@ -1217,19 +1270,24 @@ class FlextLdapModels(FlextModels):
         model_config = ConfigDict(extra="allow")
 
         naming_contexts: list[str] = Field(
-            default_factory=list, description="Naming contexts"
+            default_factory=list,
+            description="Naming contexts",
         )
         supported_ldap_version: list[str] = Field(
-            default_factory=list, description="Supported LDAP versions"
+            default_factory=list,
+            description="Supported LDAP versions",
         )
         supported_sasl_mechanisms: list[str] = Field(
-            default_factory=list, description="Supported SASL mechanisms"
+            default_factory=list,
+            description="Supported SASL mechanisms",
         )
         supported_controls: list[str] = Field(
-            default_factory=list, description="Supported controls"
+            default_factory=list,
+            description="Supported controls",
         )
         supported_extensions: list[str] = Field(
-            default_factory=list, description="Supported extensions"
+            default_factory=list,
+            description="Supported extensions",
         )
         vendor_name: str | None = Field(default=None, description="Vendor name")
         vendor_version: str | None = Field(default=None, description="Vendor version")
@@ -1250,13 +1308,16 @@ class FlextLdapModels(FlextModels):
         supports_ssl: bool = Field(default=True, description="Supports SSL/TLS")
         supports_starttls: bool = Field(default=True, description="Supports STARTTLS")
         supports_paged_results: bool = Field(
-            default=True, description="Supports paged results"
+            default=True,
+            description="Supports paged results",
         )
         supports_vlv: bool = Field(
-            default=False, description="Supports Virtual List View"
+            default=False,
+            description="Supports Virtual List View",
         )
         supports_sasl: bool = Field(
-            default=True, description="Supports SASL authentication"
+            default=True,
+            description="Supports SASL authentication",
         )
         max_page_size: int = Field(default=1000, ge=0, description="Maximum page size")
 
@@ -1269,22 +1330,28 @@ class FlextLdapModels(FlextModels):
         """Model for LDAP Root DSE (DSA-Specific Entry) information."""
 
         naming_contexts: list[str] = Field(
-            default_factory=list, description="Naming contexts"
+            default_factory=list,
+            description="Naming contexts",
         )
         supported_ldap_version: list[str] = Field(
-            default_factory=list, description="Supported LDAP versions"
+            default_factory=list,
+            description="Supported LDAP versions",
         )
         supported_sasl_mechanisms: list[str] = Field(
-            default_factory=list, description="Supported SASL mechanisms"
+            default_factory=list,
+            description="Supported SASL mechanisms",
         )
         supported_controls: list[str] = Field(
-            default_factory=list, description="Supported controls"
+            default_factory=list,
+            description="Supported controls",
         )
         supported_extensions: list[str] = Field(
-            default_factory=list, description="Supported extensions"
+            default_factory=list,
+            description="Supported extensions",
         )
         subschema_subentry: str | None = Field(
-            default=None, description="Subschema subentry DN"
+            default=None,
+            description="Subschema subentry DN",
         )
         vendor_name: str | None = Field(default=None, description="Vendor name")
         vendor_version: str | None = Field(default=None, description="Vendor version")
@@ -1292,490 +1359,8 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
     # LDAP OPERATION ENTITIES - Request/Response Objects
     # =========================================================================
-
-    class SearchRequest(BaseModel):
-        """LDAP Search Request with parameters and Pydantic 2.11 validation."""
-
-        # Default attribute constants
-        DEFAULT_USER_ATTRIBUTES: ClassVar[list[str]] = [
-            "uid",
-            "cn",
-            "sn",
-            "mail",
-            "objectClass",
-        ]
-        DEFAULT_GROUP_ATTRIBUTES: ClassVar[list[str]] = [
-            "cn",
-            "member",
-            "description",
-            "objectClass",
-        ]
-
-        @classmethod
-        def get_user_attributes(cls) -> list[str]:
-            """Get default user attributes for search requests.
-
-            Returns:
-            List of default user attributes.
-
-            """
-            return cls.DEFAULT_USER_ATTRIBUTES.copy()
-
-        # Search scope
-        base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter")
-
-        @field_validator("base_dn")
-        @classmethod
-        def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN is not empty."""
-            if not v or not v.strip():
-                error_msg = "DN cannot be empty"
-                raise ValueError(error_msg)
-            return v
-
-        @field_validator("filter_str")
-        @classmethod
-        def validate_filter_str(cls, v: str) -> str:
-            """Validate filter string is not empty."""
-            if not v or not v.strip():
-                error_msg = "Filter string cannot be empty"
-                raise ValueError(error_msg)
-            return v
-
-        scope: str = Field(
-            default="subtree",
-            description="Search scope: base, onelevel, subtree",
-            pattern="^(base|onelevel|subtree|BASE|ONELEVEL|SUBTREE)$",
-        )
-
-        # Attribute selection
-        attributes: list[str] | None = Field(
-            default=None,
-            description="Attributes to return (None = all)",
-        )
-
-        # Search limits - using centralized constants
-        size_limit: int = Field(
-            default=FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
-            description="Maximum number of entries to return",
-            ge=0,
-        )
-        time_limit: int = Field(
-            default=FlextConstants.Network.DEFAULT_TIMEOUT,
-            description="Search timeout in seconds",
-            ge=0,
-            le=300,
-        )
-
-        # Paging - Optional for paged LDAP search results
-        page_size: int | None = Field(
-            default=None,
-            description="Page size for paged results",
-            ge=1,
-        )
-        paged_cookie: bytes | None = Field(
-            default=None,
-            description="Paging cookie for continuation",
-        )
-
-        # Additional options
-        types_only: bool = Field(
-            default=False,
-            description="Return attribute types only (no values)",
-        )
-        deref_aliases: str = Field(
-            default="never",
-            description="Alias dereferencing: never, searching, finding, always",
-            pattern="^(never|searching|finding|always)$",
-        )
-
-        @model_validator(mode="after")
-        def validate_search_consistency(self) -> Self:
-            """Model validator for cross-field validation and search optimization."""
-            max_time_limit_seconds = 300  # 5 minutes maximum
-            max_page_multiplier = 100  # Maximum page size multiplier
-
-            # Optimize size limit for paged searches
-            if (
-                self.page_size is not None
-                and self.page_size > 0
-                and self.size_limit > self.page_size * max_page_multiplier
-            ):
-                # Automatically adjust size limit for very large paged searches
-                self.size_limit = min(
-                    self.size_limit,
-                    self.page_size * max_page_multiplier,
-                )
-
-            # Validate time limit is reasonable
-            if self.time_limit > max_time_limit_seconds:
-                msg = f"Time limit exceeds {max_time_limit_seconds} seconds"
-                raise FlextExceptions.ValidationError(
-                    msg,
-                    field="time_limit",
-                    value=str(self.time_limit),
-                )
-
-            # (objectClass=*) valid for BASE scope; retrieves entry at base DN
-
-            return self
-
-        @field_serializer("paged_cookie")
-        def serialize_cookie(self, value: bytes | None) -> str | None:
-            """Field serializer for paging cookie."""
-            if value is None:
-                return None
-            # Encode bytes as base64 for JSON serialization
-            return base64.b64encode(value).decode("ascii")
-
-        @field_serializer("filter_str")
-        def serialize_filter(self, value: str) -> str:
-            """Field serializer for LDAP filter normalization."""
-            # Normalize whitespace in filter
-            return " ".join(value.split())
-
-        @classmethod
-        def create_user_search(
-            cls,
-            uid: str,
-            base_dn: str = "ou=users,dc=example,dc=com",
-            attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
-            """Create search request for user."""
-            return FlextLdapModels.SearchRequest.model_validate(
-                {
-                    "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=person)(uid={uid}))",
-                    "attributes": attributes or ["uid", "cn", "mail", "sn"],
-                    "page_size": 100,  # Default page size
-                    "paged_cookie": None,
-                },
-            )
-
-        @classmethod
-        def create_group_search(
-            cls,
-            cn: str,
-            base_dn: str = "ou=groups,dc=example,dc=com",
-            attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
-            """Create search request for group."""
-            return FlextLdapModels.SearchRequest.model_validate(
-                {
-                    "base_dn": base_dn,
-                    "filter_str": f"(&(objectClass=groupOfNames)(cn={cn}))",
-                    "attributes": attributes or ["cn", "member", "description"],
-                    "page_size": 100,  # Default page size
-                    "paged_cookie": None,
-                },
-            )
-
-        @classmethod
-        def create(
-            cls,
-            base_dn: str,
-            filter_str: str,
-            scope: str = "subtree",
-            attributes: list[str] | None = None,
-        ) -> FlextLdapModels.SearchRequest:
-            """Factory method with smart defaults from FlextLdapConstants.
-
-            Creates a SearchRequest with intelligent defaults for common parameters,
-            eliminating the need to specify page_size, paged_cookie, and other
-            boilerplate parameters.
-
-            Args:
-                base_dn: Search base Distinguished Name
-                filter_str: LDAP search filter (required)
-                scope: Search scope (default: SUBTREE from FlextLdapConstants)
-                attributes: Attributes to retrieve (empty list = all)
-
-            Returns:
-                FlextLdapModels.SearchRequest: Configured request with smart defaults
-
-            Example:
-                # OLD: Manual parameter specification
-                request = FlextLdapModels.SearchRequest(
-                    base_dn=base_dn,
-                    filter_str=filter_str,
-                    scope=scope,
-                    attributes=attributes or [],
-                    page_size=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-                    paged_cookie=b"",
-                )
-
-                # Factory method with smart defaults
-                req = FlextLdapModels.SearchRequest.create(
-                    base_dn, filter_str, scope, attributes
-                )
-
-            """
-            return FlextLdapModels.SearchRequest.model_validate({
-                "base_dn": base_dn,
-                "filter_str": filter_str,
-                "scope": scope,
-                "attributes": attributes or [],
-                "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-                "paged_cookie": b"",
-                "size_limit": (
-                    FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
-                ),
-                "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
-            })
-
-        @staticmethod
-        def create_user_filter(username_filter: str | None = None) -> str:
-            """Create LDAP filter for user search.
-
-            Creates a base filter for person objects, optionally combined with
-            additional filter criteria.
-
-            Args:
-                username_filter: Optional additional filter to combine with base filter
-
-            Returns:
-                LDAP filter string for user search
-
-            Example:
-                # Basic user filter
-                filter_str = SearchRequest.create_user_filter()
-                # "(objectClass=person)"
-
-                # Combined filter
-                filter_str = SearchRequest.create_user_filter("(uid=john)")
-                # "(&(objectClass=person)(uid=john))"
-
-            """
-            base_filter = "(objectClass=person)"
-            if username_filter:
-                return f"(&{base_filter}{username_filter})"
-            return base_filter
-
-        @staticmethod
-        def create_group_filter(group_filter: str | None = None) -> str:
-            """Create LDAP filter for group search.
-
-            Creates a base filter for group objects, optionally combined with
-            additional filter criteria.
-
-            Args:
-                group_filter: Optional additional filter to combine with base filter
-
-            Returns:
-                LDAP filter string for group search
-
-            Example:
-                # Basic group filter
-                filter_str = SearchRequest.create_group_filter()
-                # "(objectClass=groupOfNames)"
-
-                # Combined filter
-                filter_str = SearchRequest.create_group_filter("(cn=REDACTED_LDAP_BIND_PASSWORDs)")
-                # "(&(objectClass=groupOfNames)(cn=REDACTED_LDAP_BIND_PASSWORDs))"
-
-            """
-            base_filter = "(objectClass=groupOfNames)"
-            if group_filter:
-                return f"(&{base_filter}{group_filter})"
-            return base_filter
-
-    # =========================================================================
-    # VALIDATIONS - LDAP-specific validation logic (from validations.py)
-    # =========================================================================
-
-    class Validations:
-        """LDAP-specific validation rules (consolidated from validations.py).
-
-        Provides centralized validation logic for LDAP operations. Generic
-        validations (timeout, size_limit) removed - use Pydantic native types.
-        """
-
-        @staticmethod
-        def validate_dn(dn: str | None, context: str = "DN") -> FlextResult[bool]:
-            """Centralized DN validation (RFC 2253 format)."""
-            if dn is None:
-                return FlextResult[bool].fail(f"{context} cannot be None")
-            if not dn or not dn.strip():
-                return FlextResult[bool].fail(f"{context} cannot be empty")
-
-            # Validate DN must contain = for proper DN format
-            dn_stripped = dn.strip()
-            if "=" not in dn_stripped:
-                return FlextResult[bool].fail(
-                    f"{context} must contain '=' for proper DN format"
-                )
-
-            # RFC 2253 format with OpenLDAP extensions (allows curly braces)
-            if not re.match(r"^[a-zA-Z0-9=,\s\-\._\{\}]+$", dn_stripped):
-                return FlextResult[bool].fail(f"{context} contains invalid characters")
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_filter(filter_str: str | None) -> FlextResult[bool]:
-            """Centralized LDAP filter validation."""
-            if filter_str is None:
-                return FlextResult[bool].fail("Filter cannot be None")
-            if not filter_str or not filter_str.strip():
-                return FlextResult[bool].fail("Filter cannot be empty")
-
-            # LDAP filters must be enclosed in parentheses
-            if not re.match(r"^\(.*\)$", filter_str.strip()):
-                return FlextResult[bool].fail("Filter must be enclosed in parentheses")
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_attributes(attributes: list[str] | None) -> FlextResult[bool]:
-            """Centralized LDAP attributes validation."""
-            if attributes is None or not attributes:
-                return FlextResult[bool].fail("Attributes list cannot be empty")
-
-            for attr in attributes:
-                if not attr or not attr.strip():
-                    return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
-
-                # LDAP attribute names: start with letter, alphanumeric or hyphen
-                if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attr.strip()):
-                    return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_server_uri(server_uri: str | None) -> FlextResult[bool]:
-            """Centralized server URI validation."""
-            if server_uri is None:
-                return FlextResult[bool].fail("URI cannot be None")
-            if not server_uri or not server_uri.strip():
-                return FlextResult[bool].fail("URI cannot be empty")
-
-            server_uri_stripped = server_uri.strip()
-
-            # LDAP URIs must start with ldap:// or ldaps://
-            if not re.match(r"^ldaps?://", server_uri_stripped):
-                return FlextResult[bool].fail("URI must start with ldap:// or ldaps://")
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_scope(scope: str | None) -> FlextResult[bool]:
-            """Centralized LDAP scope validation."""
-            if scope is None:
-                return FlextResult[bool].fail("Scope cannot be None")
-
-            valid_scopes = {"base", "onelevel", "subtree"}
-            if scope.lower() not in valid_scopes:
-                scopes_str = ", ".join(sorted(valid_scopes))
-                error_msg = f"Invalid scope: {scope}. Must be one of {scopes_str}"
-                return FlextResult[bool].fail(error_msg)
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_modify_operation(operation: str | None) -> FlextResult[bool]:
-            """Centralized LDAP modify operation validation."""
-            if operation is None:
-                return FlextResult[bool].fail("Operation cannot be None")
-
-            valid_operations = {"add", "delete", "replace"}
-            if operation.lower() not in valid_operations:
-                ops_str = ", ".join(sorted(valid_operations))
-                error_msg = f"Invalid operation: {operation}. Must be one of {ops_str}"
-                return FlextResult[bool].fail(error_msg)
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_object_class(object_class: str | None) -> FlextResult[bool]:
-            """Centralized LDAP object class validation."""
-            if object_class is None:
-                return FlextResult[bool].fail("Object class cannot be None")
-
-            if not object_class or not object_class.strip():
-                return FlextResult[bool].fail("Object class cannot be empty")
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_password(password: str | None) -> FlextResult[bool]:
-            """Centralized password validation."""
-            if password is None:
-                return FlextResult[bool].fail("Password cannot be None")
-
-            min_length = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
-            max_length = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
-
-            if len(password) < min_length:
-                return FlextResult[bool].fail(
-                    f"Password must be at least {min_length} characters"
-                )
-
-            if len(password) > max_length:
-                return FlextResult[bool].fail(
-                    f"Password must be no more than {max_length} characters"
-                )
-
-            return FlextResult[bool].ok(True)
-
-        @staticmethod
-        def validate_connection_config(
-            config: dict[str, object] | None,
-        ) -> FlextResult[bool]:
-            """Centralized connection config validation."""
-            if config is None:
-                return FlextResult[bool].fail("Config cannot be None")
-
-            required_fields = ["server", "port", "bind_dn", "bind_password"]
-            for field in required_fields:
-                if field not in config or config[field] is None:
-                    return FlextResult[bool].fail(f"Missing required field: {field}")
-
-            return FlextResult[bool].ok(True)
-
-        # Pydantic field validators (raise exceptions)
-
-        @staticmethod
-        def validate_dn_for_field(dn: str) -> str:
-            """DN validation for Pydantic field validators."""
-            # Import here to avoid circular dependency
-            from flext_ldif import FlextLdifDnService
-
-            cleaned_dn = FlextLdifDnService.clean_dn(dn)
-
-            validation_result = FlextLdapModels.Validations.validate_dn(cleaned_dn).map(
-                lambda _: None
-            )
-            if validation_result.is_failure:
-                error_msg = validation_result.error or "DN validation failed"
-
-                raise FlextExceptions.ValidationError(error_msg, field="dn", value=dn)
-            return cleaned_dn.strip()
-
-        @staticmethod
-        def validate_password_for_field(password: str | None) -> str | None:
-            """Password field validator."""
-            validation_result = FlextLdapModels.Validations.validate_password(
-                str(password) if password is not None else ""
-            ).map(lambda _: None)
-            if validation_result.is_failure:
-                error_msg = validation_result.error or "Password validation failed"
-
-                raise FlextExceptions.ValidationError(
-                    error_msg, field="password", value="***"
-                )
-            return password
-
-        @staticmethod
-        def validate_required_string_for_field(value: str) -> str:
-            """Required string field validator."""
-            if not value or not value.strip():
-                error_msg = "Required field cannot be empty"
-
-                raise FlextExceptions.ValidationError(
-                    error_msg, field="required_string", value=value
-                )
-            return value.strip()
+    # Note: SearchRequest is defined earlier in this file (see line 247)
+    # This duplicate definition section has been removed to eliminate duplication
 
 
 __all__ = [
