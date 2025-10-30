@@ -1,286 +1,328 @@
-"""Comprehensive unit tests for FlextLdapSearch module.
+"""Unit tests for FlextLdapSearch service.
 
-Tests search operations with real functionality and Clean Architecture patterns.
+Tests the actual FlextLdapSearch API including:
+- Service initialization and FlextService integration
+- Connection context management
+- Search method signature and error handling
+- Search scope handling (base, level, subtree)
+- Quirks mode management
+- Execute methods required by FlextService
+- FlextResult railway pattern compliance
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
+All tests verify the API contract without requiring actual LDAP connections.
+Docker-based integration tests with real LDAP servers are deferred to tests/integration/.
 """
 
 from __future__ import annotations
 
-from flext_ldap.search import FlextLdapSearch
+import pytest
+from flext_core import FlextResult
+
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.services.search import FlextLdapSearch
 
 
-class TestFlextLdapSearch:
-    """Comprehensive test cases for FlextLdapSearch."""
+class TestFlextLdapSearchInitialization:
+    """Test FlextLdapSearch initialization and basic functionality."""
 
-    def test_search_initialization(self) -> None:
-        """Test search service initialization."""
+    @pytest.mark.unit
+    def test_search_service_can_be_instantiated(self) -> None:
+        """Test FlextLdapSearch can be instantiated."""
         search = FlextLdapSearch()
         assert search is not None
-        assert hasattr(search, "search")
-        assert hasattr(search, "search_one")
-        assert hasattr(search, "user_exists")
-        assert hasattr(search, "group_exists")
-        assert hasattr(search, "get_user")
-        assert hasattr(search, "get_group")
+        assert isinstance(search, FlextLdapSearch)
 
-    def test_search_factory_method(self) -> None:
-        """Test search service factory method."""
+    @pytest.mark.unit
+    def test_search_service_with_parent_none(self) -> None:
+        """Test search service can be instantiated with parent=None."""
+        search = FlextLdapSearch(parent=None)
+        assert search is not None
+
+    @pytest.mark.unit
+    def test_search_service_has_logger(self) -> None:
+        """Test search service inherits logger from FlextService."""
+        search = FlextLdapSearch()
+        assert hasattr(search, "logger")
+        assert search.logger is not None
+
+    @pytest.mark.unit
+    def test_search_service_has_container(self) -> None:
+        """Test search service has container from FlextService."""
+        search = FlextLdapSearch()
+        assert hasattr(search, "container")
+
+    @pytest.mark.unit
+    def test_search_service_connection_initially_none(self) -> None:
+        """Test connection context is initially None."""
+        search = FlextLdapSearch()
+        assert search._connection is None
+
+    @pytest.mark.unit
+    def test_search_service_factory_method(self) -> None:
+        """Test factory method create() works."""
         search = FlextLdapSearch.create()
         assert search is not None
         assert isinstance(search, FlextLdapSearch)
 
-    def test_search_initialization_with_parent(self) -> None:
-        """Test search service initialization with parent."""
-        from flext_ldap import FlextLdapClients
 
-        parent = FlextLdapClients()
-        search = FlextLdapSearch(parent=parent)
-        assert search is not None
-        assert hasattr(search, "_parent")
+class TestConnectionContextManagement:
+    """Test connection context management."""
 
-    def test_search_initialization_without_parent(self) -> None:
-        """Test search service initialization without parent."""
+    @pytest.mark.unit
+    def test_set_connection_context_with_none(self) -> None:
+        """Test setting connection context with None."""
         search = FlextLdapSearch()
-        assert search is not None
-        assert hasattr(search, "_parent")
-
-    def test_search_has_connection_context_setter(self) -> None:
-        """Test search service has connection context setter."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "set_connection_context")
-        assert callable(search.set_connection_context)
-
-    def test_search_connection_initially_none(self) -> None:
-        """Test search service connection is initially None."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "_connection")
-        # Connection starts as None until set
+        search.set_connection_context(None)
         assert search._connection is None
 
-    # =========================================================================
-    # FLEXT SERVICE PROTOCOL TESTS
-    # =========================================================================
-
-    def test_search_is_flext_service(self) -> None:
-        """Test search service inherits from FlextService."""
+    @pytest.mark.unit
+    def test_set_connection_context_idempotent(self) -> None:
+        """Test setting connection context multiple times."""
         search = FlextLdapSearch()
-        # Should have FlextService methods
-        assert hasattr(search, "execute")
-        assert callable(search.execute)
+        search.set_connection_context(None)
+        search.set_connection_context(None)
+        assert search._connection is None
 
-    def test_search_execute_method(self) -> None:
-        """Test search service execute method."""
+
+class TestQuirksModeManagement:
+    """Test quirks mode management."""
+
+    @pytest.mark.unit
+    def test_set_quirks_mode_automatic(self) -> None:
+        """Test setting quirks mode to automatic."""
+        search = FlextLdapSearch()
+        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.AUTOMATIC)
+        assert search is not None
+
+    @pytest.mark.unit
+    def test_set_quirks_mode_server(self) -> None:
+        """Test setting quirks mode to server."""
+        search = FlextLdapSearch()
+        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.SERVER)
+        assert search is not None
+
+    @pytest.mark.unit
+    def test_set_quirks_mode_rfc(self) -> None:
+        """Test setting quirks mode to rfc."""
+        search = FlextLdapSearch()
+        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RFC)
+        assert search is not None
+
+    @pytest.mark.unit
+    def test_set_quirks_mode_relaxed(self) -> None:
+        """Test setting quirks mode to relaxed."""
+        search = FlextLdapSearch()
+        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RELAXED)
+        assert search is not None
+
+
+class TestSearchMethodWithoutConnection:
+    """Test search method behavior without connection context."""
+
+    @pytest.mark.unit
+    def test_search_without_connection_fails(self) -> None:
+        """Test search fails when no connection context is set."""
+        search = FlextLdapSearch()
+        result = search.search(None, "dc=example,dc=com", "(objectClass=*)")
+        assert result.is_failure
+        assert "connection" in result.error.lower()
+
+    @pytest.mark.unit
+    def test_search_returns_flext_result(self) -> None:
+        """Test search returns FlextResult[list[Entry]]."""
+        search = FlextLdapSearch()
+        result = search.search(None, "dc=example,dc=com", "(objectClass=*)")
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_search_with_base_scope(self) -> None:
+        """Test search with base scope."""
+        search = FlextLdapSearch()
+        result = search.search(
+            None,
+            "dc=example,dc=com",
+            "(objectClass=*)",
+            scope=FlextLdapConstants.Scopes.BASE,
+        )
+        assert result.is_failure
+
+    @pytest.mark.unit
+    def test_search_with_subtree_scope(self) -> None:
+        """Test search with subtree scope."""
+        search = FlextLdapSearch()
+        result = search.search(
+            None,
+            "dc=example,dc=com",
+            "(objectClass=*)",
+            scope=FlextLdapConstants.Scopes.SUBTREE,
+        )
+        assert result.is_failure
+
+    @pytest.mark.unit
+    def test_search_with_attributes(self) -> None:
+        """Test search with specific attributes."""
+        search = FlextLdapSearch()
+        result = search.search(
+            None,
+            "dc=example,dc=com",
+            "(objectClass=*)",
+            attributes=["cn", "mail", "uid"],
+        )
+        assert result.is_failure
+
+
+class TestSearchOneMethodWithoutConnection:
+    """Test search_one method behavior without connection context."""
+
+    @pytest.mark.unit
+    def test_search_one_without_connection_fails(self) -> None:
+        """Test search_one fails when no connection context is set."""
+        search = FlextLdapSearch()
+        result = search.search_one("cn=test,dc=example,dc=com", "(cn=test)")
+        assert result.is_failure
+        assert "connection" in result.error.lower()
+
+    @pytest.mark.unit
+    def test_search_one_returns_flext_result(self) -> None:
+        """Test search_one returns FlextResult[Entry | None]."""
+        search = FlextLdapSearch()
+        result = search.search_one("cn=test,dc=example,dc=com", "(cn=test)")
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_search_one_with_attributes(self) -> None:
+        """Test search_one with specific attributes."""
+        search = FlextLdapSearch()
+        result = search.search_one(
+            "cn=test,dc=example,dc=com",
+            "(cn=test)",
+            attributes=["cn", "mail"],
+        )
+        assert result.is_failure
+
+
+class TestSearchExecuteMethods:
+    """Test the execute methods required by FlextService."""
+
+    @pytest.mark.unit
+    def test_execute_returns_flext_result(self) -> None:
+        """Test execute method returns FlextResult."""
         search = FlextLdapSearch()
         result = search.execute()
+        assert isinstance(result, FlextResult)
 
-        # execute() should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-        assert result.is_success  # Default execute returns success
-
-    # =========================================================================
-    # SEARCH METHOD AVAILABILITY TESTS
-    # =========================================================================
-
-    def test_search_has_search_method(self) -> None:
-        """Test search service has search method."""
+    @pytest.mark.unit
+    def test_execute_returns_success(self) -> None:
+        """Test execute method returns successful result."""
         search = FlextLdapSearch()
-        assert hasattr(search, "search")
-        assert callable(search.search)
+        result = search.execute()
+        assert result.is_success
 
-    def test_search_has_search_one_method(self) -> None:
-        """Test search service has search_one method."""
+    @pytest.mark.unit
+    def test_execute_result_value_is_none(self) -> None:
+        """Test execute result unwraps to None as per design."""
         search = FlextLdapSearch()
-        assert hasattr(search, "search_one")
-        assert callable(search.search_one)
+        result = search.execute()
+        assert result.unwrap() is None
 
-    def test_search_has_user_exists_method(self) -> None:
-        """Test search service has user_exists method."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "user_exists")
-        assert callable(search.user_exists)
-
-    def test_search_has_group_exists_method(self) -> None:
-        """Test search service has group_exists method."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "group_exists")
-        assert callable(search.group_exists)
-
-    def test_search_has_get_user_method(self) -> None:
-        """Test search service has get_user method."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "get_user")
-        assert callable(search.get_user)
-
-    def test_search_has_get_group_method(self) -> None:
-        """Test search service has get_group method."""
-        search = FlextLdapSearch()
-        assert hasattr(search, "get_group")
-        assert callable(search.get_group)
-
-    # =========================================================================
-    # CONNECTION CONTEXT TESTS
-    # =========================================================================
-
-    def test_search_set_connection_context(self) -> None:
-        """Test setting connection context."""
-        from ldap3 import Connection, Server
-
+    @pytest.mark.unit
+    def test_execute_operation_returns_flext_result(self) -> None:
+        """Test execute_operation method returns FlextResult."""
         search = FlextLdapSearch()
 
-        # Create a test connection
-        server = Server("ldap://localhost:389")
-        connection = Connection(server, auto_bind=False)
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
 
-        # Set connection context
-        search.set_connection_context(connection)
+        from flext_ldap.models import FlextLdapModels
 
-        # Connection should be set
-        assert search._connection is connection
-
-    # =========================================================================
-    # SEARCH OPERATION TESTS (without real LDAP server)
-    # =========================================================================
-
-    def test_search_method_returns_flext_result(self) -> None:
-        """Test search method returns FlextResult."""
-        search = FlextLdapSearch()
-
-        # Call search without connection (will fail gracefully)
-        result = search.search(
-            base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
+        request = FlextLdapModels.OperationExecutionRequest(
+            operation_name="search-op",
+            operation_callable=dummy_operation,
+            arguments={},
         )
+        result = search.execute_operation(request)
+        assert isinstance(result, FlextResult)
 
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-        # Will fail without connection
-        assert result.is_failure
-
-    def test_search_one_method_returns_flext_result(self) -> None:
-        """Test search_one method returns FlextResult."""
+    @pytest.mark.unit
+    def test_execute_operation_returns_success(self) -> None:
+        """Test execute_operation method returns successful result."""
         search = FlextLdapSearch()
 
-        # Call search_one without connection (will fail gracefully)
-        result = search.search_one(
-            search_base="dc=example,dc=com",
-            filter_str="(uid=testuser)",
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
+
+        from flext_ldap.models import FlextLdapModels
+
+        request = FlextLdapModels.OperationExecutionRequest(
+            operation_name="search-op",
+            operation_callable=dummy_operation,
+            arguments={},
         )
+        result = search.execute_operation(request)
+        assert result.is_success
 
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-        # Will fail without connection
-        assert result.is_failure
 
-    def test_user_exists_method_returns_flext_result(self) -> None:
-        """Test user_exists method returns FlextResult."""
+class TestSearchScopeHandling:
+    """Test search scope handling."""
+
+    @pytest.mark.unit
+    def test_get_ldap3_scope_base(self) -> None:
+        """Test scope conversion for base scope."""
+        search = FlextLdapSearch()
+        scope = search._get_ldap3_scope(FlextLdapConstants.Scopes.BASE)
+        assert scope is not None
+
+    @pytest.mark.unit
+    def test_get_ldap3_scope_subtree(self) -> None:
+        """Test scope conversion for subtree scope."""
+        search = FlextLdapSearch()
+        scope = search._get_ldap3_scope(FlextLdapConstants.Scopes.SUBTREE)
+        assert scope is not None
+
+    @pytest.mark.unit
+    def test_get_ldap3_scope_case_insensitive(self) -> None:
+        """Test scope conversion is case-insensitive."""
+        search = FlextLdapSearch()
+        scope_lower = search._get_ldap3_scope("subtree")
+        scope_upper = search._get_ldap3_scope("SUBTREE")
+        scope_mixed = search._get_ldap3_scope("SubTree")
+        assert scope_lower == scope_upper == scope_mixed
+
+    @pytest.mark.unit
+    def test_get_ldap3_scope_invalid_raises_valueerror(self) -> None:
+        """Test scope conversion raises ValueError for invalid scope."""
+        search = FlextLdapSearch()
+        with pytest.raises(ValueError):
+            search._get_ldap3_scope("invalid_scope")
+
+
+class TestSearchIntegration:
+    """Integration tests for FlextLdapSearch service."""
+
+    @pytest.mark.unit
+    def test_complete_search_service_workflow(self) -> None:
+        """Test complete search service workflow."""
+        search = FlextLdapSearch()
+        assert search is not None
+
+        search.set_connection_context(None)
+        assert search._connection is None
+
+        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RFC)
+        result = search.execute()
+        assert result.is_success
+
+    @pytest.mark.unit
+    def test_search_service_flext_result_pattern(self) -> None:
+        """Test all public methods follow FlextResult railway pattern."""
         search = FlextLdapSearch()
 
-        # Call user_exists without connection (will fail gracefully)
-        result = search.user_exists(dn="uid=testuser,ou=users,dc=example,dc=com")
-
-        # Should return FlextResult[bool]
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    def test_group_exists_method_returns_flext_result(self) -> None:
-        """Test group_exists method returns FlextResult."""
-        search = FlextLdapSearch()
-
-        # Call group_exists without connection (will fail gracefully)
-        result = search.group_exists(dn="cn=testgroup,ou=groups,dc=example,dc=com")
-
-        # Should return FlextResult[bool]
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    def test_get_user_method_returns_flext_result(self) -> None:
-        """Test get_user method returns FlextResult."""
-        search = FlextLdapSearch()
-
-        # Call get_user without connection (will fail gracefully)
-        result = search.get_user(dn="uid=testuser,ou=users,dc=example,dc=com")
-
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    def test_get_group_method_returns_flext_result(self) -> None:
-        """Test get_group method returns FlextResult."""
-        search = FlextLdapSearch()
-
-        # Call get_group without connection (will fail gracefully)
-        result = search.get_group(dn="cn=testgroup,ou=groups,dc=example,dc=com")
-
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    # =========================================================================
-    # SEARCH WITH ATTRIBUTES TESTS
-    # =========================================================================
-
-    def test_search_with_specific_attributes(self) -> None:
-        """Test search with specific attributes list."""
-        search = FlextLdapSearch()
-
-        # Call search with attributes
-        result = search.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=person)",
-            attributes=["uid", "cn", "mail"],
+        assert isinstance(search.execute(), FlextResult)
+        assert isinstance(
+            search.search(None, "test", "test"),
+            FlextResult,
         )
-
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    def test_search_one_with_specific_attributes(self) -> None:
-        """Test search_one with specific attributes list."""
-        search = FlextLdapSearch()
-
-        # Call search_one with attributes
-        result = search.search_one(
-            search_base="dc=example,dc=com",
-            filter_str="(uid=testuser)",
-            attributes=["uid", "cn", "sn"],
+        assert isinstance(
+            search.search_one("test", "test"),
+            FlextResult,
         )
-
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    # =========================================================================
-    # ERROR HANDLING TESTS
-    # =========================================================================
-
-    def test_search_without_connection_fails_gracefully(self) -> None:
-        """Test search fails gracefully without connection."""
-        search = FlextLdapSearch()
-
-        # No connection set
-        result = search.search(
-            base_dn="dc=example,dc=com", filter_str="(objectClass=*)"
-        )
-
-        # Should fail gracefully
-        assert result.is_failure
-        assert result.error is not None
-        assert "not established" in result.error.lower()
-
-    def test_search_one_without_connection_fails_gracefully(self) -> None:
-        """Test search_one fails gracefully without connection."""
-        search = FlextLdapSearch()
-
-        # No connection set
-        result = search.search_one(
-            search_base="dc=example,dc=com", filter_str="(uid=test)"
-        )
-
-        # Should fail gracefully
-        assert result.is_failure
-        assert result.error is not None

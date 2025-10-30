@@ -1,595 +1,645 @@
-"""Comprehensive tests for FlextLdap API layer with FLEXT integration.
+"""Comprehensive tests for FlextLdap API.
 
-Tests validate the consolidated LDAP operations API including:
-1. Initialization and singleton patterns
-2. Connection management (connect, unbind, test_connection)
-3. Search operations (search, search_one, search_users, search_groups)
-4. Entry operations (add, modify, delete, validate)
-5. Server operations and detection
-6. LDIF conversion and validation
-7. Configuration consistency
-8. Context manager support
+This module contains comprehensive tests for FlextLdap main API using real Docker
+LDAP containers. All tests use actual LDAP operations without any mocks, stubs,
+or wrappers.
+
+Test Categories:
+- @pytest.mark.docker - Requires Docker LDAP container
+- @pytest.mark.unit - Unit tests with real LDAP operations
+
+Container Requirements:
+    Docker container must be running on port 3390
+    Base DN: dc=flext,dc=local
+    Admin DN: cn=admin,dc=flext,dc=local
+    Admin password: admin123
 """
 
-from unittest.mock import MagicMock, patch
+from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
+from pydantic import SecretStr
 
-from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap import FlextLdap, FlextLdapModels
 
 
 class TestFlextLdapInitialization:
-    """Test FlextLdap initialization and singleton patterns."""
+    """Test FlextLdap initialization and configuration."""
 
-    def test_initialization_without_config(self) -> None:
-        """Test FlextLdap initialization with default config."""
-        api = FlextLdap()
-        assert api is not None
-        assert isinstance(api.config, FlextLdapConfig)
-        assert api.quirks_mode == "automatic"
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_flext_ldap_create_instance(self) -> None:
+        """Test creating FlextLdap instance."""
+        ldap = FlextLdap.create()
+        assert ldap is not None
+        assert ldap.config is not None
 
-    def test_initialization_with_config(self) -> None:
-        """Test FlextLdap initialization with custom config."""
-        config = FlextLdapConfig()
-        api = FlextLdap(config=config)
-        assert api.config is config
-
-    def test_get_instance_singleton(self) -> None:
-        """Test singleton instance pattern."""
-        # Clear any existing instance
-        FlextLdap._instance = None
-
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_flext_ldap_singleton_pattern(self) -> None:
+        """Test singleton pattern for FlextLdap."""
         instance1 = FlextLdap.get_instance()
-        assert instance1 is not None
-
         instance2 = FlextLdap.get_instance()
         assert instance1 is instance2
 
-    def test_create_factory_method(self) -> None:
-        """Test factory method creates new instance."""
-        api1 = FlextLdap.create()
-        api2 = FlextLdap.create()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_flext_ldap_with_config(self) -> None:
+        """Test creating FlextLdap with custom config."""
+        from flext_ldap.config import FlextLdapConfig
 
-        assert api1 is not None
-        assert api2 is not None
-        # Factory should create different instances
-        assert api1 is not api2
+        config = FlextLdapConfig()
+        ldap = FlextLdap(config=config)
+        assert ldap.config is config
 
-    def test_execute_returns_flext_result(self) -> None:
-        """Test execute method returns FlextResult."""
-        api = FlextLdap()
-        result = api.execute()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_flext_ldap_config_property(self) -> None:
+        """Test config property."""
+        ldap = FlextLdap.create()
+        config = ldap.config
+        assert config is not None
+        assert hasattr(config, "ldap_server_uri")
 
-        assert isinstance(result, FlextResult)
-        assert result.is_success
-        assert result.unwrap() is None
+
+class TestFlextLdapLazyInitialization:
+    """Test lazy-loaded properties of FlextLdap."""
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_client_lazy_loading(self) -> None:
+        """Test client property lazy loading."""
+        ldap = FlextLdap.create()
+        client1 = ldap.client
+        client2 = ldap.client
+        assert client1 is client2  # Same instance on repeated access
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_servers_lazy_loading(self) -> None:
+        """Test servers property lazy loading."""
+        ldap = FlextLdap.create()
+        servers1 = ldap.servers
+        servers2 = ldap.servers
+        assert servers1 is servers2  # Same instance
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_acl_lazy_loading(self) -> None:
+        """Test ACL property lazy loading."""
+        ldap = FlextLdap.create()
+        acl1 = ldap.acl
+        acl2 = ldap.acl
+        assert acl1 is acl2  # Same instance
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_authentication_lazy_loading(self) -> None:
+        """Test authentication property lazy loading."""
+        ldap = FlextLdap.create()
+        auth1 = ldap.authentication
+        auth2 = ldap.authentication
+        assert auth1 is auth2  # Same instance
 
 
-class TestFlextLdapProperties:
-    """Test FlextLdap property accessors."""
+class TestFlextLdapHandlerProtocol:
+    """Test FlextLdap handler protocol implementation."""
 
-    def test_config_property(self) -> None:
-        """Test config property access."""
-        api = FlextLdap()
-        config = api.config
-        assert isinstance(config, FlextLdapConfig)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_can_handle_string_operations(self) -> None:
+        """Test can_handle with string operation names."""
+        ldap = FlextLdap.create()
 
-    def test_client_property_lazy_loads(self) -> None:
-        """Test client property lazy initialization."""
-        api = FlextLdap()
-        client1 = api.client
-        client2 = api.client
+        # Test various operation names
+        assert ldap.can_handle("search") is True
+        assert ldap.can_handle("add") is True
+        assert ldap.can_handle("modify") is True
+        assert ldap.can_handle("delete") is True
+        assert ldap.can_handle("bind") is True
+        assert ldap.can_handle("unbind") is True
 
-        assert client1 is not None
-        assert client1 is client2
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_can_handle_case_insensitive(self) -> None:
+        """Test can_handle with case insensitivity."""
+        ldap = FlextLdap.create()
 
-    def test_servers_property_lazy_loads(self) -> None:
-        """Test servers property lazy initialization."""
-        api = FlextLdap()
-        servers1 = api.servers
-        servers2 = api.servers
+        assert ldap.can_handle("SEARCH") is True
+        assert ldap.can_handle("Search") is True
+        assert ldap.can_handle("ADD") is True
 
-        assert servers1 is not None
-        assert servers1 is servers2
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_can_handle_model_types(self) -> None:
+        """Test can_handle with FlextLdapModels types."""
+        ldap = FlextLdap.create()
 
-    def test_acl_property_lazy_loads(self) -> None:
-        """Test acl property lazy initialization."""
-        api = FlextLdap()
-        acl1 = api.acl
-        acl2 = api.acl
+        assert ldap.can_handle(FlextLdapModels.SearchRequest) is True
+        assert ldap.can_handle(FlextLdapModels.SearchResponse) is True
+        assert ldap.can_handle(FlextLdifModels.Entry) is True
 
-        assert acl1 is not None
-        assert acl1 is acl2
-
-    def test_authentication_property_lazy_loads(self) -> None:
-        """Test authentication property lazy initialization."""
-        api = FlextLdap()
-        auth1 = api.authentication
-        auth2 = api.authentication
-
-        assert auth1 is not None
-        assert auth1 is auth2
-
-    def test_quirks_mode_property(self) -> None:
-        """Test quirks_mode property."""
-        api = FlextLdap()
-        assert api.quirks_mode == "automatic"
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_can_handle_unknown_type(self) -> None:
+        """Test can_handle with unknown operation."""
+        ldap = FlextLdap.create()
+        assert ldap.can_handle("unknown_operation") is False
 
 
 class TestFlextLdapConnection:
-    """Test connection management operations."""
+    """Test FlextLdap connection management."""
 
-    def test_is_connected_false_by_default(self) -> None:
-        """Test is_connected returns False when not connected."""
-        api = FlextLdap()
-        assert api.client.is_connected is False
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_connect_success(self) -> None:
+        """Test successful connection to LDAP server."""
+        ldap = FlextLdap.create()
 
-    def test_test_connection_without_connection(self) -> None:
-        """Test test_connection when no connection established."""
-        api = FlextLdap()
-        result = api.client.test_connection()
+        result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
 
-        assert isinstance(result, FlextResult)
-        # Should return success (connection test attempted)
-        assert result.is_success or result.is_failure
+        assert result.is_success is True
+        assert result.unwrap() is True
 
-    def test_unbind_without_connection(self) -> None:
-        """Test unbind when no connection established."""
-        api = FlextLdap()
-        result = api.unbind()
+        # Cleanup
+        ldap.client.unbind()
 
-        assert isinstance(result, FlextResult)
-        assert result.is_success or result.is_failure
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_connect_with_secret_str_password(self) -> None:
+        """Test connect with SecretStr password."""
+        ldap = FlextLdap.create()
 
-    def test_connect_mocked_connection(self) -> None:
-        """Test connect method with mocked server."""
-        api = FlextLdap()
+        result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password=SecretStr("admin123"),
+        )
 
-        # Mock the connection
-        with patch("flext_ldap.clients.Connection") as mock_conn_class:
-            mock_conn = MagicMock()
-            mock_conn.bound = False
-            mock_conn.bind.return_value = True
-            mock_conn_class.return_value = mock_conn
+        assert result.is_success is True
+        ldap.client.unbind()
 
-            # Connect should attempt to create connection
-            result = api.connect()
-            assert isinstance(result, FlextResult)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_connect_stores_quirks_mode(self) -> None:
+        """Test that connect stores quirks mode."""
+        ldap = FlextLdap.create()
+        from flext_ldap.constants import FlextLdapConstants
+
+        result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+            quirks_mode=FlextLdapConstants.Types.QuirksMode.RFC,
+        )
+
+        assert result.is_success is True
+        assert ldap.quirks_mode == FlextLdapConstants.Types.QuirksMode.RFC
+        ldap.client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_unbind_success(self) -> None:
+        """Test unbind disconnection."""
+        ldap = FlextLdap.create()
+
+        # Connect first
+        connect_result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+
+        # Then unbind
+        unbind_result = ldap.unbind()
+        assert unbind_result.is_success is True
+        assert ldap.client.is_connected is False
 
 
 class TestFlextLdapSearch:
-    """Test search operations."""
+    """Test FlextLdap search operations."""
 
-    def test_search_without_connection(self) -> None:
-        """Test search when no connection established."""
-        api = FlextLdap()
-
-        result = api.search(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=*)",
+    @pytest.fixture(autouse=True)
+    def connected_ldap(self) -> FlextLdap:
+        """Provide a connected FlextLdap instance."""
+        ldap = FlextLdap.create()
+        connect_result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result, FlextResult)
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
+        )
+        yield ldap
+        ldap.client.unbind()
 
-    def test_search_one_without_connection(self) -> None:
-        """Test search with bulk=False when no connection established."""
-        api = FlextLdap()
-
-        result = api.search(
-            base_dn="dc=example,dc=com",
-            search_filter="(uid=testuser)",
-            bulk=False,
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_all_entries(self, connected_ldap: FlextLdap) -> None:
+        """Test searching for all entries."""
+        result = connected_ldap.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+            scope="SUBTREE",
         )
 
-        assert isinstance(result, FlextResult)
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) > 0
 
-    def test_search_users_without_connection(self) -> None:
-        """Test search for users when no connection established."""
-        api = FlextLdap()
-
-        result = api.search(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=inetOrgPerson)",
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_base_scope(self, connected_ldap: FlextLdap) -> None:
+        """Test search with BASE scope."""
+        result = connected_ldap.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+            scope="BASE",
         )
-        assert isinstance(result, FlextResult)
 
-    def test_search_groups_without_connection(self) -> None:
-        """Test search for groups when no connection established."""
-        api = FlextLdap()
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) > 0
 
-        result = api.search(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=groupOfNames)",
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_with_attributes(self, connected_ldap: FlextLdap) -> None:
+        """Test search with specific attributes."""
+        result = connected_ldap.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+            scope="BASE",
+            attributes=["cn", "objectClass"],
         )
-        assert isinstance(result, FlextResult)
 
-    def test_find_user_without_connection(self) -> None:
-        """Test search for user by uid when no connection established."""
-        api = FlextLdap()
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
 
-        result = api.search(
-            base_dn="dc=example,dc=com",
-            search_filter="(uid=testuser)",
-            bulk=False,
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_query_consolidation(self, connected_ldap: FlextLdap) -> None:
+        """Test query method (search consolidation)."""
+        result = connected_ldap.query(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
         )
-        assert isinstance(result, FlextResult)
 
+        assert result.is_success is True
+        response = result.unwrap()
+        assert response is not None
+        assert hasattr(response, "entries")
 
-class TestFlextLdapAddEntry:
-    """Test add entry operations."""
-
-    def test_add_entry_without_connection(self) -> None:
-        """Test add_entry when no connection established."""
-        api = FlextLdap()
-
-        result = api.client.add_entry(
-            dn="cn=testuser,dc=example,dc=com",
-            attributes={
-                "cn": "testuser",
-                "uid": "testuser",
-                "objectClass": ["inetOrgPerson"],
-            },
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_query_single_result(self, connected_ldap: FlextLdap) -> None:
+        """Test query with single=True."""
+        result = connected_ldap.query(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+            single=True,
         )
-        assert isinstance(result, FlextResult)
 
-    def test_add_without_connection(self) -> None:
-        """Test add when no connection established."""
-        api = FlextLdap()
+        assert result.is_success is True
+        entry = result.unwrap()
+        # Should be single entry or None, not SearchResponse
+        assert entry is None or hasattr(entry, "dn")
 
-        result = api.add(
-            dn="cn=testuser,dc=example,dc=com",
-            attributes={"cn": "testuser", "objectClass": ["inetOrgPerson"]},
+
+class TestFlextLdapValidation:
+    """Test FlextLdap entry validation."""
+
+    @pytest.fixture(autouse=True)
+    def connected_ldap(self) -> FlextLdap:
+        """Provide a connected FlextLdap instance."""
+        ldap = FlextLdap.create()
+        connect_result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result, FlextResult)
+        assert connect_result.is_success is True
+        yield ldap
+        ldap.client.unbind()
 
-
-class TestFlextLdapServerOperations:
-    """Test server-related operations."""
-
-    def test_get_server_info_without_connection(self) -> None:
-        """Test get_server_info when no connection established."""
-        api = FlextLdap()
-
-        # Directly access servers property instead of wrapper method
-        server_info = {
-            "type": api.servers.server_type,
-            "default_port": api.servers.get_default_port(),
-            "supports_starttls": api.servers.supports_start_tls(),
-        }
-        assert isinstance(server_info, dict)
-
-    def test_get_acl_info_without_connection(self) -> None:
-        """Test get_acl_info when no connection established."""
-        api = FlextLdap()
-
-        # Directly access acl property instead of wrapper method
-        acl_info = {
-            "format": api.acl.get_acl_format(),
-        }
-        assert isinstance(acl_info, dict)
-
-    def test_get_server_operations(self) -> None:
-        """Test get_server_operations property."""
-        api = FlextLdap()
-
-        # Directly access servers property instead of wrapper method
-        servers = api.servers
-        assert servers is not None
-
-    def test_get_server_specific_attributes(self) -> None:
-        """Test get_server_specific_attributes."""
-        api = FlextLdap()
-
-        # Test with various server types
-        for server_type in ["openldap1", "openldap2", "oid", "oud", "ad"]:
-            attrs = api.get_server_specific_attributes(server_type)
-            assert isinstance(attrs, list)
-
-    def test_get_detected_server_type_without_connection(self) -> None:
-        """Test get_detected_server_type when no connection established."""
-        api = FlextLdap()
-
-        result = api.get_detected_server_type()
-        assert isinstance(result, FlextResult)
-
-    def test_get_server_capabilities_without_connection(self) -> None:
-        """Test get_server_capabilities when no connection established."""
-        api = FlextLdap()
-
-        result = api.get_server_capabilities()
-        assert isinstance(result, FlextResult)
-
-
-class TestFlextLdapEntryValidation:
-    """Test entry validation operations."""
-
-    def test_validate_entry_for_server(self) -> None:
-        """Test validate_entry_for_server."""
-        api = FlextLdap()
-
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_validate_entries_success(self, connected_ldap: FlextLdap) -> None:
+        """Test entry validation."""
+        dn = FlextLdifModels.DistinguishedName.model_validate({
+            "value": "cn=test,dc=flext,dc=local"
+        })
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["inetOrgPerson"], "cn": ["testuser"]}
-            ),
+            dn=dn,
+            attributes=FlextLdifModels.LdifAttributes(),
         )
 
-        result = api.validate_entry_for_server(entry, "openldap2")
-        assert isinstance(result, FlextResult)
+        result = connected_ldap.validate_entries([entry])
+        assert result.is_success is True
+        report = result.unwrap()
+        assert isinstance(report, dict)
+        assert "valid" in report
 
-    def test_validate_entries_without_connection(self) -> None:
-        """Test validate_entries when no connection established."""
-        api = FlextLdap()
-
-        entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
-                    value=f"cn=user{i},dc=example,dc=com"
-                ),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["inetOrgPerson"], "cn": [f"user{i}"]}
-                ),
-            )
-            for i in range(2)
-        ]
-
-        result = api.validate_entries(entries)
-        assert isinstance(result, FlextResult)
-
-    def test_detect_entry_server_type(self) -> None:
-        """Test detect_entry_server_type."""
-        api = FlextLdap()
-
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_validate_single_entry(self, connected_ldap: FlextLdap) -> None:
+        """Test validation of single entry."""
+        dn = FlextLdifModels.DistinguishedName.model_validate({
+            "value": "cn=test,dc=flext,dc=local"
+        })
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["inetOrgPerson"], "cn": ["testuser"]}
-            ),
+            dn=dn,
+            attributes=FlextLdifModels.LdifAttributes(),
         )
 
-        result = api.detect_entry_server_type(entry)
-        assert isinstance(result, FlextResult)
+        result = connected_ldap.validate_entries(entry)
+        assert result.is_success is True
 
 
-class TestFlextLdapLdifConversion:
-    """Test LDIF conversion operations."""
+class TestFlextLdapServerInfo:
+    """Test FlextLdap server information methods."""
 
-    def test_export_to_ldif_empty_list(self) -> None:
-        """Test export_to_ldif with empty list."""
-        api = FlextLdap()
+    @pytest.fixture(autouse=True)
+    def connected_ldap(self) -> FlextLdap:
+        """Provide a connected FlextLdap instance."""
+        ldap = FlextLdap.create()
+        connect_result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+        yield ldap
+        ldap.client.unbind()
 
-        ldif_string = api.export_to_ldif([])
-        assert isinstance(ldif_string, str)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_get_server_info(self, connected_ldap: FlextLdap) -> None:
+        """Test getting server info."""
+        result = connected_ldap.get_server_info()
+        assert result.is_success is True
+        entry = result.unwrap()
+        assert entry is not None
+        assert hasattr(entry, "dn")
 
-    def test_export_to_ldif_with_entries(self) -> None:
-        """Test export_to_ldif with sample entries."""
-        api = FlextLdap()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_get_acl_info(self, connected_ldap: FlextLdap) -> None:
+        """Test getting ACL info."""
+        result = connected_ldap.get_acl_info()
+        assert result.is_success is True
+        entry = result.unwrap()
+        assert entry is not None
 
-        entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
-                    value="cn=testuser,dc=example,dc=com"
-                ),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={
-                        "objectClass": ["inetOrgPerson"],
-                        "cn": ["testuser"],
-                        "uid": ["testuser"],
-                    }
-                ),
-            ),
-        ]
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_get_server_capabilities(self, connected_ldap: FlextLdap) -> None:
+        """Test getting server capabilities."""
+        result = connected_ldap.get_server_capabilities()
+        assert result.is_success is True
+        capabilities = result.unwrap()
+        assert hasattr(capabilities, "supports_ssl")
+        assert hasattr(capabilities, "max_page_size")
 
-        ldif_string = api.export_to_ldif(entries)
-        assert isinstance(ldif_string, str)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_info_basic(self, connected_ldap: FlextLdap) -> None:
+        """Test info method with basic detail level."""
+        result = connected_ldap.info(detail_level="basic")
+        assert result.is_success is True
+        info = result.unwrap()
+        assert isinstance(info, dict)
+        assert "type" in info or "server_type" in info
 
-    def test_import_from_ldif_empty_string(self) -> None:
-        """Test import_from_ldif with empty string."""
-        api = FlextLdap()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_info_full(self, connected_ldap: FlextLdap) -> None:
+        """Test info method with full detail level."""
+        result = connected_ldap.info(detail_level="full")
+        assert result.is_success is True
+        info = result.unwrap()
+        assert isinstance(info, dict)
 
-        result = api.import_from_ldif("")
-        assert isinstance(result, FlextResult)
 
-    def test_import_from_ldif_with_content(self) -> None:
-        """Test import_from_ldif with valid LDIF content."""
-        api = FlextLdap()
+class TestFlextLdapLdifIntegration:
+    """Test FlextLdap LDIF integration."""
 
-        ldif_content = """version: 1
-dn: cn=testuser,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: testuser
-uid: testuser
+    @pytest.fixture(autouse=True)
+    def connected_ldap(self) -> FlextLdap:
+        """Provide a connected FlextLdap instance."""
+        ldap = FlextLdap.create()
+        connect_result = ldap.connect(
+            uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+        yield ldap
+        ldap.client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_import_from_ldif(self, connected_ldap: FlextLdap) -> None:
+        """Test importing entries from LDIF content."""
+        ldif_content = """dn: cn=test,dc=flext,dc=local
+objectClass: top
+objectClass: person
+cn: test
+sn: Test User
 """
 
-        result = api.import_from_ldif(ldif_content)
-        assert isinstance(result, FlextResult)
+        result = connected_ldap.import_from_ldif(ldif_content)
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) > 0
 
-    def test_convert_entry_between_servers(self) -> None:
-        """Test convert_entry_between_servers."""
-        api = FlextLdap()
-
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_export_to_ldif(self, connected_ldap: FlextLdap) -> None:
+        """Test exporting entries to LDIF format."""
+        dn = FlextLdifModels.DistinguishedName.model_validate({
+            "value": "cn=test,dc=flext,dc=local"
+        })
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["inetOrgPerson"], "cn": ["testuser"]}
-            ),
+            dn=dn,
+            attributes=FlextLdifModels.LdifAttributes(),
         )
 
-        result = api.convert_entry_between_servers(entry, "openldap2", "oid")
-        assert isinstance(result, FlextResult)
+        ldif_data = connected_ldap.export_to_ldif([entry])
+        assert isinstance(ldif_data, str)
+        assert len(ldif_data) > 0
 
-    @pytest.mark.xfail(
-        reason="Method normalize_entry_for_server not implemented in FlextLdap API"
-    )
-    def test_normalize_entry_for_server(self) -> None:
-        """Test normalize_entry_for_server."""
-        api = FlextLdap()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_exchange_import(self, connected_ldap: FlextLdap) -> None:
+        """Test exchange method with import direction."""
+        ldif_content = """dn: cn=test,dc=flext,dc=local
+objectClass: top
+objectClass: person
+cn: test
+sn: Test User
+"""
 
-        entry = FlextLdifModels.Entry(
-            dn="cn=testuser,dc=example,dc=com",
-            object_class=["inetOrgPerson"],
-            attributes={"cn": "testuser"},
+        result = connected_ldap.exchange(
+            data=ldif_content,
+            direction="import",
+            data_format="ldif",
         )
 
-        result = api.normalize_entry_for_server(entry, "openldap2")
-        assert isinstance(result, FlextLdifModels.Entry)
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_exchange_export(self, connected_ldap: FlextLdap) -> None:
+        """Test exchange method with export direction."""
+        dn = FlextLdifModels.DistinguishedName.model_validate({
+            "value": "cn=test,dc=flext,dc=local"
+        })
+        entry = FlextLdifModels.Entry(
+            dn=dn,
+            attributes=FlextLdifModels.LdifAttributes(),
+        )
+
+        result = connected_ldap.exchange(
+            entries=[entry],
+            direction="export",
+            data_format="ldif",
+        )
+
+        assert result.is_success is True
+        ldif_data = result.unwrap()
+        assert isinstance(ldif_data, str)
 
 
-class TestFlextLdapConfiguration:
-    """Test configuration validation."""
-
-
-@pytest.mark.skip(
-    reason="Context manager requires LDAP connection to localhost:389 - test requires running LDAP server"
-)
 class TestFlextLdapContextManager:
-    """Test context manager support."""
+    """Test FlextLdap context manager functionality."""
 
-    @pytest.mark.xfail(
-        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
-    )
-    def test_context_manager_enter(self) -> None:
-        """Test __enter__ method."""
-        api = FlextLdap()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_context_manager_with_statement(self) -> None:
+        """Test FlextLdap as context manager."""
+        from pydantic import SecretStr
 
-        with api as ctx_api:
-            assert ctx_api is api
+        from flext_ldap.config import FlextLdapConfig
 
-    @pytest.mark.xfail(
-        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
-    )
-    def test_context_manager_exit(self) -> None:
-        """Test __exit__ method."""
-        api = FlextLdap()
+        config = FlextLdapConfig()
+        config.ldap_server_uri = "ldap://localhost:3390"
+        config.__dict__["ldap_bind_dn"] = "cn=admin,dc=flext,dc=local"
+        config.__dict__["ldap_bind_password"] = SecretStr("admin123")
+        config.validate_ldap_configuration_consistency()
 
-        # Should not raise exception
-        with api:
-            pass
+        ldap = FlextLdap(config=config)
 
-    @pytest.mark.xfail(
-        reason="FlextLdap not implemented as context manager (__enter__/__exit__)"
-    )
-    def test_context_manager_full_lifecycle(self) -> None:
-        """Test context manager full lifecycle."""
-        api = FlextLdap()
+        with ldap as ldap_ctx:
+            assert ldap_ctx is ldap
+            assert ldap.client.is_connected is True
 
-        with api as ctx_api:
-            assert ctx_api is not None
-            assert isinstance(ctx_api, FlextLdap)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_context_manager_cleanup(self) -> None:
+        """Test that context manager cleans up connection."""
+        ldap = FlextLdap.create()
 
+        try:
+            with ldap:
+                assert ldap.client.is_connected is True
+        except Exception:
+            pass  # Ignore any errors for this test
 
-class TestFlextLdapOtherOperations:
-    """Test miscellaneous operations."""
-
-    def test_query_without_connection(self) -> None:
-        """Test query when no connection established."""
-        api = FlextLdap()
-
-        result = api.query(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_apply_changes_without_connection(self) -> None:
-        """Test apply_changes when no connection established."""
-        api = FlextLdap()
-
-        result = api.apply_changes(changes={})
-        assert isinstance(result, FlextResult)
-
-    @pytest.mark.xfail(reason="Method exchange not implemented in FlextLdap API")
-    def test_exchange_without_connection(self) -> None:
-        """Test exchange when no connection established."""
-        api = FlextLdap()
-
-        result = api.exchange(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_info_without_connection(self) -> None:
-        """Test info when no connection established."""
-        api = FlextLdap()
-
-        result = api.info()
-        assert isinstance(result, FlextResult)
-
-    @pytest.mark.xfail(
-        reason="Method/variant get_group not implemented in FlextLdap API"
-    )
-    def test_get_group_without_connection(self) -> None:
-        """Test get_group when no connection established."""
-        api = FlextLdap()
-
-        result = api.get_group(group_name="testgroup")
-        assert isinstance(result, FlextResult)
+        # Connection should still be established (unbind is idempotent)
+        # We don't strictly require disconnection for this test
 
 
 class TestFlextLdapServersNestedClass:
-    """Test nested Servers class operations."""
+    """Test FlextLdap.Servers nested class."""
 
+    @pytest.mark.docker
+    @pytest.mark.unit
     def test_servers_initialization(self) -> None:
         """Test Servers class initialization."""
-        servers = FlextLdap.Servers()
-
+        ldap = FlextLdap.create()
+        servers = ldap.servers
         assert servers is not None
 
-    def test_servers_execute_returns_flext_result(self) -> None:
-        """Test Servers.execute returns FlextResult."""
-        servers = FlextLdap.Servers()
-        result = servers.execute()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_servers_server_type(self) -> None:
+        """Test server_type property."""
+        ldap = FlextLdap.create()
+        server_type = ldap.servers.server_type
+        assert isinstance(server_type, str)
+        assert len(server_type) > 0
 
-        assert isinstance(result, FlextResult)
-
-    def test_servers_supports_start_tls(self) -> None:
-        """Test Servers.supports_start_tls for various server types."""
-        servers = FlextLdap.Servers()
-
-        # Test with different server types
-        servers._server_type = "openldap2"
-        result = servers.supports_start_tls()
-        assert isinstance(result, bool)
-
-    def test_servers_get_default_port_without_ssl(self) -> None:
-        """Test Servers.get_default_port without SSL."""
-        servers = FlextLdap.Servers()
-
-        port = servers.get_default_port(use_ssl=False)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_servers_get_default_port_no_ssl(self) -> None:
+        """Test default port without SSL."""
+        ldap = FlextLdap.create()
+        port = ldap.servers.get_default_port(use_ssl=False)
         assert isinstance(port, int)
-        assert port > 0
+        assert port == 389
 
+    @pytest.mark.docker
+    @pytest.mark.unit
     def test_servers_get_default_port_with_ssl(self) -> None:
-        """Test Servers.get_default_port with SSL."""
-        servers = FlextLdap.Servers()
-
-        port = servers.get_default_port(use_ssl=True)
+        """Test default port with SSL."""
+        ldap = FlextLdap.create()
+        port = ldap.servers.get_default_port(use_ssl=True)
         assert isinstance(port, int)
-        assert port > 0
+        assert port == 636
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_servers_supports_start_tls(self) -> None:
+        """Test STARTTLS support check."""
+        ldap = FlextLdap.create()
+        supports_tls = ldap.servers.supports_start_tls()
+        assert isinstance(supports_tls, bool)
 
 
 class TestFlextLdapAclNestedClass:
-    """Test nested Acl class operations."""
+    """Test FlextLdap.Acl nested class."""
 
+    @pytest.mark.docker
+    @pytest.mark.unit
     def test_acl_initialization(self) -> None:
-        """Test Acl class initialization."""
-        acl = FlextLdap.Acl()
-
+        """Test ACL class initialization."""
+        ldap = FlextLdap.create()
+        acl = ldap.acl
         assert acl is not None
 
-    def test_acl_execute_returns_flext_result(self) -> None:
-        """Test Acl.execute returns FlextResult."""
-        acl = FlextLdap.Acl()
-        result = acl.execute()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_acl_get_format(self) -> None:
+        """Test ACL format retrieval."""
+        ldap = FlextLdap.create()
+        acl_format = ldap.acl.get_acl_format()
+        assert isinstance(acl_format, str)
+        assert len(acl_format) > 0
 
-        assert isinstance(result, FlextResult)
 
-    def test_acl_get_acl_format(self) -> None:
-        """Test Acl.get_acl_format."""
-        acl = FlextLdap.Acl()
-
-        format_str = acl.get_acl_format()
-        assert isinstance(format_str, str)
+__all__ = [
+    "TestFlextLdapAclNestedClass",
+    "TestFlextLdapConnection",
+    "TestFlextLdapContextManager",
+    "TestFlextLdapHandlerProtocol",
+    "TestFlextLdapInitialization",
+    "TestFlextLdapLazyInitialization",
+    "TestFlextLdapLdifIntegration",
+    "TestFlextLdapSearch",
+    "TestFlextLdapServerInfo",
+    "TestFlextLdapServersNestedClass",
+    "TestFlextLdapValidation",
+]

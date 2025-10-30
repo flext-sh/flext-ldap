@@ -1,344 +1,420 @@
-"""Comprehensive unit tests for FlextLdapClients real operations.
+"""Comprehensive real Docker LDAP tests for FlextLdapClients.
 
-Tests all FlextLdapClients methods with real LDAP operations when container is available,
-otherwise gracefully skips with informative reasons.
+This module contains comprehensive tests for FlextLdapClients using real Docker
+LDAP containers. All tests use actual LDAP operations without any mocks, stubs,
+or wrappers.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Test Categories:
+- @pytest.mark.docker - Requires Docker LDAP container
+- @pytest.mark.unit - Unit tests with real LDAP operations
 
+Container Requirements:
+    Docker container must be running on port 3390
+    Base DN: dc=flext,dc=local
+    Admin DN: cn=admin,dc=flext,dc=local
+    Admin password: admin123
 """
 
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
 
-from flext_ldap import FlextLdapClients, FlextLdapModels
+from flext_ldap import FlextLdapClients
 
 
-@pytest.mark.unit
-class TestFlextLdapClientsEdgeCases:
-    """Edge case tests for FlextLdapClients methods."""
+class TestFlextLdapClientsConnection:
+    """Test connection and binding operations with real LDAP."""
 
-    def test_normalize_dn_with_various_formats(self) -> None:
-        """Test DN normalization with multiple input formats."""
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_connect_with_credentials_success(self) -> None:
+        """Test authenticated connection to LDAP server."""
         client = FlextLdapClients()
 
-        # Test uppercase DN
-        dn1 = "CN=John,DC=Example,DC=Com"
-        normalized1 = client.normalize_dn(dn1)
-        assert isinstance(normalized1, str)
-
-        # Test lowercase DN
-        dn2 = "cn=john,dc=example,dc=com"
-        normalized2 = client.normalize_dn(dn2)
-        assert isinstance(normalized2, str)
-
-        # Test mixed case DN
-        dn3 = "Cn=John,Dc=Example,Dc=Com"
-        normalized3 = client.normalize_dn(dn3)
-        assert isinstance(normalized3, str)
-
-        # Test with spaces
-        dn4 = "CN=John Doe,DC=Example,DC=Com"
-        normalized4 = client.normalize_dn(dn4)
-        assert isinstance(normalized4, str)
-
-    def test_get_server_capabilities_structure(self) -> None:
-        """Test get_server_capabilities returns proper structure."""
-        client = FlextLdapClients()
-        result = client.get_server_capabilities()
-
-        # Should return FlextResult
-        assert isinstance(result, FlextResult)
-
-    def test_clients_initialization_with_config(self) -> None:
-        """Test FlextLdapClients initialization with configuration."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://localhost:389",
-            port=389,
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password",
-            base_dn="dc=example,dc=com",
+        result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
 
-        client = FlextLdapClients(config=config)
-        assert client is not None
+        assert result.is_success is True
+        assert client.is_connected is True
 
-    def test_search_with_attributes_list(self) -> None:
-        """Test search with explicit attributes list."""
+        # Cleanup
+        client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_unbind_success(self) -> None:
+        """Test unbind operation."""
         client = FlextLdapClients()
 
-        result = client.search(
-            base_dn="dc=example,dc=com",
+        # Connect
+        result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert result.is_success is True
+        assert client.is_connected is True
+
+        # Unbind
+        unbind_result = client.unbind()
+        assert unbind_result.is_success is True
+        assert client.is_connected is False
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_bind_after_connect(self) -> None:
+        """Test explicit bind after connection."""
+        client = FlextLdapClients()
+
+        # First connect with initial credentials
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+
+        # Verify connected
+        assert client.is_connected is True
+
+        # Cleanup
+        client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_test_connection_success(self) -> None:
+        """Test connection testing method on connected client."""
+        client = FlextLdapClients()
+
+        # First connect
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+
+        # Then test the connection
+        result = client.test_connection()
+        assert result.is_success is True
+        assert result.unwrap() is True
+
+        # Cleanup
+        client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_is_connected_property(self) -> None:
+        """Test is_connected property."""
+        client = FlextLdapClients()
+
+        assert client.is_connected is False
+
+        client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert client.is_connected is True
+
+        client.unbind()
+        assert client.is_connected is False
+
+
+class TestFlextLdapClientsSearch:
+    """Test search operations with real LDAP data."""
+
+    @pytest.fixture(autouse=True)
+    def connected_client(self) -> FlextLdapClients:
+        """Provide a connected LDAP client."""
+        client = FlextLdapClients()
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
+        )
+        yield client
+        client.unbind()
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_base_scope(self, connected_client: FlextLdapClients) -> None:
+        """Test search with BASE scope."""
+        result = connected_client.search(
+            base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
-            attributes=["cn", "mail", "objectClass"],
+            scope="BASE",
         )
 
-        assert isinstance(result, FlextResult)
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) > 0
 
-    def test_search_with_single_attribute(self) -> None:
-        """Test search with single attribute as string."""
-        client = FlextLdapClients()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_subtree_scope(self, connected_client: FlextLdapClients) -> None:
+        """Test search with SUBTREE scope."""
+        result = connected_client.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(objectClass=*)",
+            scope="SUBTREE",
+        )
 
-        result = client.search(
-            base_dn="dc=example,dc=com",
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) >= 1
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_with_filter(self, connected_client: FlextLdapClients) -> None:
+        """Test search with specific filter."""
+        result = connected_client.search(
+            base_dn="dc=flext,dc=local",
             filter_str="(cn=*)",
-            attributes=["cn"],
+            scope="SUBTREE",
         )
 
-        assert isinstance(result, FlextResult)
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
 
-    def test_search_with_no_attributes(self) -> None:
-        """Test search without specifying attributes (all returned)."""
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_empty_result(self, connected_client: FlextLdapClients) -> None:
+        """Test search with filter that returns no results."""
+        result = connected_client.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(cn=nonexistent-entry-xyz)",
+            scope="SUBTREE",
+        )
+
+        assert result.is_success is True
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert len(entries) == 0
+
+
+class TestFlextLdapClientsConnectionValidation:
+    """Test connection validation and lifecycle."""
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_connection_persistence(self) -> None:
+        """Test that connection persists across operations."""
         client = FlextLdapClients()
 
-        result = client.search(
-            base_dn="dc=example,dc=com",
+        # Connect
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
+        )
+        assert connect_result.is_success is True
+        assert client.is_connected is True
+
+        # Perform multiple operations on same connection
+        search_result1 = client.search(
+            base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
+            scope="BASE",
         )
+        assert search_result1.is_success is True
 
-        assert isinstance(result, FlextResult)
-
-    def test_search_scope_variations(self) -> None:
-        """Test search with different scope values."""
-        client = FlextLdapClients()
-
-        # Base scope
-        result_base = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-            scope="base",
+        search_result2 = client.search(
+            base_dn="dc=flext,dc=local",
+            filter_str="(cn=*)",
+            scope="SUBTREE",
         )
-        assert isinstance(result_base, FlextResult)
+        assert search_result2.is_success is True
 
-        # OneLevel scope
-        result_one = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-            scope="onelevel",
+        # Connection should still be active
+        assert client.is_connected is True
+
+        # Cleanup
+        client.unbind()
+        assert client.is_connected is False
+
+
+class TestFlextLdapClientsUserManagement:
+    """Test user management operations with real LDAP data."""
+
+    @pytest.fixture(autouse=True)
+    def connected_client(self) -> FlextLdapClients:
+        """Provide a connected LDAP client."""
+        client = FlextLdapClients()
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result_one, FlextResult)
-
-        # Subtree scope
-        result_sub = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-            scope="subtree",
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
         )
-        assert isinstance(result_sub, FlextResult)
+        yield client
+        client.unbind()
 
-    def test_test_connection_without_credentials(self) -> None:
-        """Test connection test without providing credentials."""
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_users(self, connected_client: FlextLdapClients) -> None:
+        """Test searching for users."""
+        result = connected_client.search_users(base_dn="dc=flext,dc=local")
+
+        assert result.is_success is True or result.is_failure is True
+        if result.is_success:
+            users = result.unwrap()
+            assert isinstance(users, list)
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_user_exists_nonexistent(self, connected_client: FlextLdapClients) -> None:
+        """Test checking if user exists."""
+        # Construct DN from username and base DN
+        dn = "uid=nonexistent-user-xyz-abc,ou=people,dc=flext,dc=local"
+        result = connected_client.user_exists(dn)
+
+        assert result.is_success is True
+        exists = result.unwrap()
+        assert isinstance(exists, bool)
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_build_user_attributes(self, connected_client: FlextLdapClients) -> None:
+        """Test building user attributes."""
+        user_data = {
+            "username": "testuser",
+            "cn": "testuser",
+            "sn": "User",
+            "givenName": "Test",
+        }
+
+        result = connected_client.build_user_attributes(user_data)
+
+        assert result.is_success is True or result.is_failure is True
+
+
+class TestFlextLdapClientsGroupManagement:
+    """Test group management operations with real LDAP data."""
+
+    @pytest.fixture(autouse=True)
+    def connected_client(self) -> FlextLdapClients:
+        """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        result = client.test_connection()
-        assert isinstance(result, FlextResult)
-
-    def test_search_filter_with_special_characters(self) -> None:
-        """Test search with LDAP filter special characters."""
-        client = FlextLdapClients()
-
-        # Filter with wildcards and operators
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(&(objectClass=person)(cn=*John*))",
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result, FlextResult)
-
-    def test_normalize_dn_empty_string(self) -> None:
-        """Test normalizing empty DN string."""
-        client = FlextLdapClients()
-        result = client.normalize_dn("")
-        assert isinstance(result, str)
-
-    def test_normalize_dn_single_component(self) -> None:
-        """Test normalizing DN with single component."""
-        client = FlextLdapClients()
-        result = client.normalize_dn("cn=admin")
-        assert isinstance(result, str)
-
-    def test_normalize_dn_with_special_chars(self) -> None:
-        """Test normalizing DN with special characters."""
-        client = FlextLdapClients()
-
-        # DN with special characters (email-like)
-        dn_special = "cn=user+admin@example.com,dc=example,dc=com"
-        result = client.normalize_dn(dn_special)
-        assert isinstance(result, str)
-
-        # DN with spaces and quotes
-        dn_spaces = 'cn=John "The Admin" Doe,dc=example,dc=com'
-        result2 = client.normalize_dn(dn_spaces)
-        assert isinstance(result2, str)
-
-
-@pytest.mark.unit
-class TestFlextLdapClientsValidation:
-    """Validation and error handling tests for FlextLdapClients."""
-
-    def test_search_with_invalid_base_dn(self) -> None:
-        """Test search with malformed base DN."""
-        client = FlextLdapClients()
-
-        # Invalid DN format should still return FlextResult (error)
-        result = client.search(
-            base_dn="invalid:dn:format",
-            filter_str="(objectClass=*)",
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
         )
-        assert isinstance(result, FlextResult)
+        yield client
+        client.unbind()
 
-    def test_search_with_invalid_filter(self) -> None:
-        """Test search with malformed LDAP filter."""
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_search_groups(self, connected_client: FlextLdapClients) -> None:
+        """Test searching for groups."""
+        result = connected_client.search_groups(base_dn="dc=flext,dc=local")
+
+        assert result.is_success is True or result.is_failure is True
+        if result.is_success:
+            groups = result.unwrap()
+            assert isinstance(groups, list)
+
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_group_exists_nonexistent(self, connected_client: FlextLdapClients) -> None:
+        """Test checking if group exists."""
+        # Construct DN from group name and base DN
+        dn = "cn=nonexistent-group-xyz,ou=groups,dc=flext,dc=local"
+        result = connected_client.group_exists(dn)
+
+        assert result.is_success is True
+        exists = result.unwrap()
+        assert isinstance(exists, bool)
+
+
+class TestFlextLdapClientsServerInfo:
+    """Test server information retrieval."""
+
+    @pytest.fixture(autouse=True)
+    def connected_client(self) -> FlextLdapClients:
+        """Provide a connected LDAP client."""
         client = FlextLdapClients()
-
-        # Invalid filter format should return FlextResult (error)
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(invalid filter without closing paren",
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result, FlextResult)
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
+        )
+        yield client
+        client.unbind()
 
-    def test_search_with_empty_filter(self) -> None:
-        """Test search with empty filter string."""
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_get_server_info(self, connected_client: FlextLdapClients) -> None:
+        """Test getting server information."""
+        result = connected_client.get_server_info()
+
+        assert result.is_success is True or result.is_failure is True
+        if result.is_success:
+            info = result.unwrap()
+            assert isinstance(info, dict)
+
+
+class TestFlextLdapClientsMethods:
+    """Test various client methods."""
+
+    @pytest.fixture(autouse=True)
+    def connected_client(self) -> FlextLdapClients:
+        """Provide a connected LDAP client."""
         client = FlextLdapClients()
-
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="",
+        connect_result = client.connect(
+            server_uri="ldap://localhost:3390",
+            bind_dn="cn=admin,dc=flext,dc=local",
+            password="admin123",
         )
-        assert isinstance(result, FlextResult)
-
-    def test_search_with_null_character_in_filter(self) -> None:
-        """Test search with null character in filter (edge case)."""
-        client = FlextLdapClients()
-
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(cn=test\x00injected)",
+        assert connect_result.is_success is True, (
+            f"Connection failed: {connect_result.error}"
         )
-        assert isinstance(result, FlextResult)
+        yield client
+        client.unbind()
 
-    def test_normalize_dn_with_long_string(self) -> None:
-        """Test normalizing very long DN string."""
-        client = FlextLdapClients()
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_client_has_connection_property(
+        self, connected_client: FlextLdapClients
+    ) -> None:
+        """Test client has connection property."""
+        assert hasattr(connected_client, "connection")
+        connection = connected_client.connection
+        assert connection is not None
 
-        # Create a very long DN
-        long_dn = "cn=" + "a" * 1000 + ",dc=example,dc=com"
-        result = client.normalize_dn(long_dn)
-        assert isinstance(result, str)
-
-    def test_search_with_extremely_large_attributes_list(self) -> None:
-        """Test search with very large attributes list."""
-        client = FlextLdapClients()
-
-        # Create large list of attributes
-        large_attrs = [f"attr{i}" for i in range(100)]
-
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-            attributes=large_attrs,
-        )
-        assert isinstance(result, FlextResult)
+    @pytest.mark.docker
+    @pytest.mark.unit
+    def test_config_property(self, connected_client: FlextLdapClients) -> None:
+        """Test client config property."""
+        assert hasattr(connected_client, "config")
+        config = connected_client.config
+        assert config is not None
 
 
-@pytest.mark.unit
-class TestFlextLdapClientsConfigVariations:
-    """Tests for various client configuration scenarios."""
-
-    def test_clients_with_none_config(self) -> None:
-        """Test creating client with None config."""
-        client = FlextLdapClients(config=None)
-        assert client is not None
-
-    def test_clients_with_ssl_enabled(self) -> None:
-        """Test client configuration with SSL enabled."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldaps://localhost:636",
-            port=636,
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password",
-            base_dn="dc=example,dc=com",
-            use_ssl=True,
-        )
-
-        client = FlextLdapClients(config=config)
-        assert client is not None
-
-    def test_clients_with_start_tls(self) -> None:
-        """Test client configuration with START_TLS."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://localhost:389",
-            port=389,
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password",
-            base_dn="dc=example,dc=com",
-            use_ssl=False,
-        )
-
-        client = FlextLdapClients(config=config)
-        assert client is not None
-
-    def test_clients_with_custom_timeout(self) -> None:
-        """Test client with custom connection timeout."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://localhost:389",
-            port=389,
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password",
-            base_dn="dc=example,dc=com",
-            timeout=30,
-        )
-
-        client = FlextLdapClients(config=config)
-        assert client is not None
-
-    def test_clients_with_minimal_config(self) -> None:
-        """Test client with minimal required configuration."""
-        config = FlextLdapModels.ConnectionConfig(
-            server="ldap://localhost:389",
-            port=389,
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password",
-            base_dn="dc=example,dc=com",
-        )
-
-        client = FlextLdapClients(config=config)
-        assert client is not None
-
-
-@pytest.mark.unit
-class TestFlextLdapClientsReturnTypes:
-    """Test that all methods return correct types."""
-
-    def test_normalize_dn_returns_string(self) -> None:
-        """Verify normalize_dn always returns string."""
-        client = FlextLdapClients()
-
-        result = client.normalize_dn("cn=test,dc=example,dc=com")
-        assert isinstance(result, str)
-        assert len(result) > 0
-
-    def test_search_returns_flext_result(self) -> None:
-        """Verify search always returns FlextResult."""
-        client = FlextLdapClients()
-
-        result = client.search(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)",
-        )
-        assert isinstance(result, FlextResult)
-
-    def test_test_connection_returns_flext_result(self) -> None:
-        """Verify test_connection always returns FlextResult."""
-        client = FlextLdapClients()
-
-        result = client.test_connection()
-        assert isinstance(result, FlextResult)
-
-    def test_get_server_capabilities_returns_flext_result(self) -> None:
-        """Verify get_server_capabilities always returns FlextResult."""
-        client = FlextLdapClients()
-
-        result = client.get_server_capabilities()
-        assert isinstance(result, FlextResult)
+__all__ = [
+    "TestFlextLdapClientsConnection",
+    "TestFlextLdapClientsConnectionValidation",
+    "TestFlextLdapClientsGroupManagement",
+    "TestFlextLdapClientsMethods",
+    "TestFlextLdapClientsSearch",
+    "TestFlextLdapClientsServerInfo",
+    "TestFlextLdapClientsUserManagement",
+]

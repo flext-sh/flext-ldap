@@ -18,7 +18,8 @@ import pytest
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.quirks_integration import FlextLdapQuirksIntegration
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
 
 class TestFlextLdapQuirksIntegration:
@@ -392,73 +393,89 @@ class TestFlextLdapQuirksIntegration:
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults for generic server."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("generic")
         assert result.is_success
         defaults = result.unwrap()
-        assert isinstance(defaults, dict)
-        assert "port" in defaults
-        assert "use_ssl" in defaults
-        assert "supports_starttls" in defaults
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
+        assert defaults.use_ssl is False
 
     def test_get_connection_defaults_openldap(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults for OpenLDAP."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("openldap2")
         assert result.is_success
         defaults = result.unwrap()
-        assert defaults["port"] == 389
-        assert defaults["use_ssl"] is False
-        assert defaults["supports_starttls"] is True
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
+        assert defaults.use_ssl is False
 
     def test_get_connection_defaults_oid(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults for Oracle OID."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("oid")
         assert result.is_success
         defaults = result.unwrap()
-        assert defaults["port"] == 389
-        assert defaults["use_ssl"] is False
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
+        assert defaults.use_ssl is False
 
     def test_get_connection_defaults_oud(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults for Oracle OUD."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("oud")
         assert result.is_success
         defaults = result.unwrap()
-        assert defaults["port"] == 389
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
 
     def test_get_connection_defaults_active_directory(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults for Active Directory."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("ad")
         assert result.is_success
         defaults = result.unwrap()
-        assert defaults["port"] == 389
-        assert defaults["use_ssl"] is True
-        assert defaults["supports_starttls"] is False
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
+        assert defaults.use_ssl is True
 
     def test_get_connection_defaults_with_detected_type(
         self, quirks_adapter_with_server_type: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting connection defaults using detected type."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter_with_server_type.get_connection_defaults()
         assert result.is_success
         defaults = result.unwrap()
-        assert isinstance(defaults, dict)
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
 
     def test_get_connection_defaults_unknown_type_fallback(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test connection defaults falls back to generic for unknown type."""
+        from flext_ldap.models import FlextLdapModels
+
         result = quirks_adapter.get_connection_defaults("unknown_server")
         assert result.is_success
         defaults = result.unwrap()
+        assert isinstance(defaults, FlextLdapModels.ConnectionConfig)
         # Should fall back to generic defaults
-        assert defaults["port"] == 389
+        assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
 
     def test_multiple_quirks_cache_entries(
         self, quirks_adapter: FlextLdapQuirksIntegration

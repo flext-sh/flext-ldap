@@ -15,8 +15,8 @@ from collections.abc import Generator
 
 import pytest
 
-from flext_ldap.clients import FlextLdapClients
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.services.clients import FlextLdapClients
 
 
 @pytest.mark.integration

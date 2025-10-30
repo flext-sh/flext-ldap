@@ -16,17 +16,6 @@ from typing import Annotated, Protocol
 from flext_core import FlextTypes
 from pydantic import Field
 
-from flext_ldap.constants import (
-    AclType,
-    AuthenticationMethod,
-    ConnectionState,
-    LdapProjectType,
-    ObjectClassKind,
-    OperationType,
-    SecurityLevel,
-    UpdateStrategy,
-)
-
 
 class FlextLdapTypes(FlextTypes):
     """LDAP types class extending FlextTypes with LDAP-specific definitions.
@@ -160,8 +149,11 @@ class FlextLdapTypes(FlextTypes):
 
         # Composite configuration
         ConfigValue = (
-            str | int | bool | list[str] |
-            dict[str, str | int | bool | list[str] | None]
+            str
+            | int
+            | bool
+            | list[str]
+            | dict[str, str | int | bool | list[str] | None]
         )
         """LDAP composite configuration value."""
 
@@ -224,7 +216,8 @@ class FlextLdapTypes(FlextTypes):
         """LDAP search filter string."""
 
         SearchScope = Annotated[
-            str, Field(pattern=r"^(BASE|LEVEL|SUBTREE|SUBORDINATE)$")
+            str,
+            Field(pattern=r"^(BASE|LEVEL|SUBTREE|SUBORDINATE)$"),
         ]
         """LDAP search scope selector."""
 
@@ -414,42 +407,6 @@ class FlextLdapTypes(FlextTypes):
                 ...
 
 
-# =========================================================================
-# PUBLIC API EXPORTS - FLEXT ONE CLASS PER MODULE
-# =========================================================================
-
-# FLEXT Standard: Single unified class per module
-# All types are accessed through FlextLdapTypes:
-#   from flext_ldap.typings import FlextLdapTypes
-#
-#   # Dictionary types
-#   FlextLdapTypes.DictionaryTypes.ModifyDict
-#   FlextLdapTypes.DictionaryTypes.ConfigDict
-#
-#   # Domain types
-#   FlextLdapTypes.DomainTypes.AttributeValue
-#   FlextLdapTypes.DomainTypes.SearchFilter
-#
-#   # Config types
-#   FlextLdapTypes.ConfigTypes.ServerConfig
-#   FlextLdapTypes.ConfigTypes.ConnectionConfig
-#
-#   # Annotated Pydantic types
-#   FlextLdapTypes.AnnotatedLdap.DistinguishedName
-#   FlextLdapTypes.AnnotatedLdap.ServerUri
-#
-#   # Protocol definitions (ldap3 compatibility)
-#   FlextLdapTypes.Ldap3Protocols.Connection
-#   FlextLdapTypes.Ldap3Protocols.Entry
-
 __all__ = [
-    "AclType",
-    "AuthenticationMethod",
-    "ConnectionState",
     "FlextLdapTypes",
-    "LdapProjectType",
-    "ObjectClassKind",
-    "OperationType",
-    "SecurityLevel",
-    "UpdateStrategy",
 ]

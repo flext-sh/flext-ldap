@@ -12,12 +12,10 @@ from typing import cast, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
-from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
+from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
@@ -39,28 +37,62 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         self._global_catalog_port_ssl = 3269
         self._global_catalog_port = 3268
 
+    # --------------------------------------------------------------------- #
+    # INHERITED METHODS (from FlextLdapServersBaseOperations)
+    # --------------------------------------------------------------------- #
+    # These methods are used directly from the base class without override:
+    # - get_default_port(): Returns 389 (standard LDAP port)
+    # - supports_start_tls(): Returns True (standard LDAP feature)
+    # - get_schema_dn(): Returns "cn=schema,cn=configuration,dc=..." (AD-specific)
+    # - discover_schema(): Uses ldap3.Server.schema for AD schema discovery
+    # - parse_object_class(): Generic objectClass parsing
+    # - parse_attribute_type(): Generic attributeType parsing
+    # - get_acls(): Generic ACL retrieval
+    # - set_acls(): Generic ACL setting
+    # - parse_acl(): Generic ACL parsing
+    # - format_acl(): Generic ACL formatting
+    # - add_entry(): Generic entry addition
+    # - modify_entry(): Generic entry modification
+    # - delete_entry(): Generic entry deletion
+    # - normalize_entry(): Generic entry normalization
+    # - get_max_page_size(): Returns 1000 (standard page size)
+    # - supports_paged_results(): Returns True (standard LDAP feature)
+    # - search_with_paging(): Generic paged search implementation
+    # - get_supported_controls(): AD-specific supported controls
+    # - normalize_entry_for_server(): Generic entry normalization
+    #
+    # --------------------------------------------------------------------- #
+    # OVERRIDDEN METHODS (from FlextLdapServersBaseOperations)
+    # --------------------------------------------------------------------- #
+    # These methods override the base class with Active Directory-specific logic:
+    # - get_bind_mechanisms(): Returns AD-specific bind mechanisms
+    # - get_acl_attribute_name(): Returns "nTSecurityDescriptor" (AD ACL attribute)
+    # - get_acl_format(): Returns "ad" (Active Directory format)
+    # - get_acls(): AD-specific ACL retrieval with nTSecurityDescriptor
+    # - set_acls(): AD-specific ACL setting with nTSecurityDescriptor
+    # - parse_acl(): AD-specific ACL parsing with SDDL support
+    # - supports_vlv(): Returns True (AD supports VLV)
+    # - get_root_dse_attributes(): AD-specific Root DSE with operational attributes
+    # - detect_server_type_from_root_dse(): AD server detection logic
+    # - validate_entry_for_server(): AD-specific entry validation
+
     # =========================================================================
     # CONNECTION OPERATIONS
     # =========================================================================
-
-    @override
-    def get_default_port(self, *, use_ssl: bool = False) -> int:
-        """Get default AD port."""
-        return 636 if use_ssl else 389
 
     def get_global_catalog_port(self, *, use_ssl: bool = False) -> int:
         """Get AD Global Catalog port."""
         return self._global_catalog_port_ssl if use_ssl else self._global_catalog_port
 
     @override
-    def supports_start_tls(self) -> bool:
-        """AD supports START_TLS."""
-        return True
-
-    @override
     def get_bind_mechanisms(self) -> list[str]:
         """AD supports multiple bind mechanisms."""
-        return ["SIMPLE", "NTLM", "GSSAPI", "DIGEST-MD5"]
+        return [
+            FlextLdapConstants.SaslMechanisms.SIMPLE,
+            FlextLdapConstants.SaslMechanisms.NTLM,
+            FlextLdapConstants.SaslMechanisms.GSSAPI,
+            FlextLdapConstants.SaslMechanisms.DIGEST_MD5,
+        ]
 
     # =========================================================================
     # SCHEMA OPERATIONS - Use ldap3's built-in parser
@@ -73,43 +105,59 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
 
     @override
     def discover_schema(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Discover AD schema using ldap3.Server.schema.
 
         ldap3 does all RFC 4512 parsing automatically!
         """
         try:
+            # Check connection first
+            conn_check = self._check_connection(connection)
+            if conn_check.is_failure:
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                    conn_check.error,
+                )
+
             schema_result = FlextLdifModels.SchemaDiscoveryResult(server_type="ad")
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(schema_result)
 
         except Exception as e:
             self.logger.exception("AD schema discovery error", extra={"error": str(e)})
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-                f"AD schema discovery failed: {e}"
+                f"AD schema discovery failed: {e}",
             )
 
     @override
     def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextResult[dict[str, object]]:
-        """Parse objectClass - delegate to ldap3.Server.schema."""
-        return FlextResult[FlextLdifModels.Entry].ok({
-            "definition": object_class_def,
-            "server_type": "ad",
-            "note": "Use connection.server.schema for full parsing",
-        })
+        self,
+        object_class_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse objectClass - enhanced with AD note."""
+        result = super().parse_object_class(object_class_def)
+        if not result.is_failure:
+            entry = result.unwrap()
+            # Add AD-specific note
+            entry.attributes.attributes["note"] = [
+                "Use connection.server.schema for full parsing",
+            ]
+        return result
 
     @override
     def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextResult[dict[str, object]]:
-        """Parse attributeType - delegate to ldap3.Server.schema."""
-        return FlextResult[FlextLdifModels.Entry].ok({
-            "definition": attribute_def,
-            "server_type": "ad",
-            "note": "Use connection.server.schema for full parsing",
-        })
+        self,
+        attribute_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse attributeType - enhanced with AD note."""
+        result = super().parse_attribute_type(attribute_def)
+        if not result.is_failure:
+            entry = result.unwrap()
+            # Add AD-specific note
+            entry.attributes.attributes["note"] = [
+                "Use connection.server.schema for full parsing",
+            ]
+        return result
 
     # =========================================================================
     # ACL OPERATIONS
@@ -118,29 +166,32 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     @override
     def get_acl_attribute_name(self) -> str:
         """AD uses nTSecurityDescriptor."""
-        return "nTSecurityDescriptor"
+        return FlextLdapConstants.AclAttributes.NT_SECURITY_DESCRIPTOR
 
     @override
     def get_acl_format(self) -> str:
         """AD uses SDDL format."""
-        return "sddl"  # Security Descriptor Definition Language
+        return FlextLdapConstants.AclFormat.SDDL
 
     @override
     def get_acls(
         self,
-        connection: Connection,
-        dn: str,
+        _connection: Connection,
+        _dn: str,
     ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Get nTSecurityDescriptor from AD entry."""
         try:
-            success = connection.search(
-                search_base=dn,
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["nTSecurityDescriptor"],
+            success = _connection.search(
+                search_base=_dn,
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
+                attributes=[FlextLdapConstants.AclAttributes.NT_SECURITY_DESCRIPTOR],
             )
 
-            if not success or not connection.entries:
+            if not success or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # Return empty list - AD ACL parsing requires SDDL decoder in flext-ldif
@@ -149,25 +200,25 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         except Exception as e:
             self.logger.exception("AD ACL retrieval error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Acl]].fail(
-                f"AD ACL retrieval failed: {e}"
+                f"AD ACL retrieval failed: {e}",
             )
 
     @override
     def set_acls(
         self,
-        connection: Connection,
-        dn: str,
-        acls: list[dict[str, object]],
+        _connection: Connection,
+        _dn: str,
+        _acls: list[dict[str, object]],
     ) -> FlextResult[bool]:
         """Set nTSecurityDescriptor on AD entry."""
         try:
-            if not connection or not connection.bound:
+            if not _connection or not _connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
             # AD ACL modification requires special handling
             # For now, return not implemented as SDDL encoding is complex
             return FlextResult[bool].fail(
-                "AD ACL modification requires SDDL encoding - use Windows tools"
+                "AD ACL modification requires SDDL encoding - use Windows tools",
             )
 
         except Exception as e:
@@ -176,241 +227,40 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
 
     @override
     def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
-        """Parse SDDL ACL string to Entry format."""
+        """Parse SDDL ACL string to Entry format - enhanced with AD note."""
         try:
-            from flext_ldif import FlextLdifModels as LdifModels
-
-            acl_attributes: dict[str, list[str]] = {
-                "raw": [acl_string],
-                "format": ["sddl"],
-                "serverType": ["ad"],
-                "note": ["SDDL parsing requires Windows Security APIs"],
-            }
-
-            entry = LdifModels.Entry(
-                dn=LdifModels.DistinguishedName(value="cn=AclRule"),
-                attributes=LdifModels.LdifAttributes.create(acl_attributes)
-            )
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            result = super().parse_acl(acl_string)
+            if not result.is_failure:
+                entry = result.unwrap()
+                # Add AD-specific note about SDDL parsing
+                acl_attrs = entry.attributes.attributes
+                acl_attrs["note"] = ["SDDL parsing requires Windows Security APIs"]
+            return result
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"SDDL ACL parse failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"SDDL ACL parse failed: {e}",
+            )
 
-    @override
-    def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
-        """Format ACL Entry to SDDL string."""
-        raw_attr = acl_entry.attributes.get("raw")
-        if raw_attr and len(raw_attr) > 0:
-            return FlextResult[str].ok(raw_attr[0])
-        return FlextResult[str].fail("SDDL formatting requires raw ACL string")
+    # format_acl() - Use base implementation
 
     # =========================================================================
     # ENTRY OPERATIONS
     # =========================================================================
 
-    @override
-    def add_entry(
-        self,
-        connection: Connection,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[bool]:
-        """Add entry to Active Directory."""
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
+    # add_entry(), modify_entry(), delete_entry() - Use base implementations
 
-            # Normalize entry for AD
-            norm_result = self.normalize_entry(entry)
-            if norm_result.is_failure:
-                return FlextResult[bool].fail(
-                    norm_result.error or "Normalization failed"
-                )
-
-            normalized_entry = norm_result.unwrap()
-
-            # Extract objectClass
-            attrs = normalized_entry.attributes.attributes
-            oc_attr = attrs.get("objectClass", ["top"])
-            object_class = oc_attr
-
-            # Convert attributes to dict format for ldap3
-            ldap3_attrs: dict[str, list[str]] = {}
-            for attr_name, attr_value in attrs.items():
-                if attr_name != "objectClass":
-                    value_list = (
-                        attr_value if isinstance(attr_value, list) else [attr_value]
-                    )
-                    ldap3_attrs[attr_name] = [str(v) for v in value_list]
-
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            attrs_casted = cast(
-                "dict[str, str | list[str]] | None", ldap3_attrs or None
-            )
-            success: bool = typed_conn.add(
-                str(normalized_entry.dn), object_class, attributes=attrs_casted
-            )
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Add entry error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Add entry failed: {e}")
-
-    @override
-    def modify_entry(
-        self,
-        connection: Connection,
-        dn: str,
-        modifications: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Modify entry in Active Directory."""
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Convert modifications to ldap3 format
-            ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
-            for attr, value in modifications.items():
-                values = value if isinstance(value, list) else [value]
-                str_values: list[str] | str = [str(v) for v in values]
-                ldap3_mods[attr] = cast(
-                    "list[tuple[object, list[str] | str]]",
-                    [(MODIFY_REPLACE, str_values)],
-                )
-
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
-            success: bool = typed_conn.modify(dn, mods)
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Modify entry error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Modify entry failed: {e}")
-
-    @override
-    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
-        """Delete entry from Active Directory."""
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            success: bool = typed_conn.delete(dn)
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Delete entry error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Delete entry failed: {e}")
-
-    @override
-    def normalize_entry(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Active Directory."""
-        # AD generally uses standard LDAP conventions
-        # No special normalization needed for most cases
-        return FlextResult[FlextLdifModels.Entry].ok(entry)
+    # normalize_entry() - Use base implementation (returns entry as-is)
 
     # =========================================================================
     # SEARCH OPERATIONS
     # =========================================================================
 
     @override
-    def get_max_page_size(self) -> int:
-        """AD max page size."""
-        return 1000
-
-    @override
-    def supports_paged_results(self) -> bool:
-        """AD supports paged results."""
-        return True
-
-    @override
     def supports_vlv(self) -> bool:
         """AD supports VLV."""
         return True
 
-    @override
-    def search_with_paging(
-        self,
-        connection: Connection,
-        base_dn: str,
-        search_filter: str,
-        attributes: list[str] | None = None,
-        scope: str = "subtree",
-        page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Execute paged search on Active Directory."""
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    "Connection not bound"
-                )
-
-            # Convert scope string to ldap3 constant
-            scope_map = {
-                "base": BASE,
-                "level": LEVEL,
-                "subtree": SUBTREE,
-            }
-            search_scope = scope_map.get(scope.lower(), SUBTREE)
-
-            # Use ldap3 paged search
-            entry_generator = connection.extend.standard.paged_search(
-                search_base=base_dn,
-                search_filter=search_filter,
-                search_scope=search_scope,
-                attributes=attributes or ["*"],
-                paged_size=page_size,
-                generator=True,
-            )
-
-            # Convert results to FlextLdap entries
-            adapter = FlextLdapEntryAdapter()
-            entries: list[FlextLdifModels.Entry] = []
-
-            for ldap3_entry in entry_generator:
-                if "dn" in ldap3_entry and "attributes" in ldap3_entry:
-                    # Convert ldap3 entry to LDIF entry first
-                    ldif_entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-                    if ldif_entry_result.is_success:
-                        ldif_entry = ldif_entry_result.unwrap()
-                        # ldif_entry is already FlextLdifModels.Entry
-                        entries.append(ldif_entry)
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-        except Exception as e:
-            self.logger.exception("Paged search error", extra={"error": str(e)})
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Paged search failed: {e}"
-            )
+    # search_with_paging() - Use base implementation
 
     # =========================================================================
     # SERVER DETECTION OPERATIONS
@@ -421,21 +271,25 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         self,
         connection: Connection,
     ) -> FlextResult[dict[str, object]]:
-        """Get Root DSE attributes for AD."""
+        """Get Root DSE attributes for AD - enhanced with operational attributes."""
         try:
-            if not connection or not connection.bound:
-                return FlextResult[FlextLdifModels.Entry].fail("Connection not bound")
+            conn_check = self._check_connection(connection)
+            if conn_check.is_failure:
+                return FlextResult[dict[str, object]].fail(conn_check.error)
 
-            # Use standard Root DSE search
+            # AD-specific: include operational attributes with "+"
             success: bool = connection.search(
                 search_base="",
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
                 attributes=["*", "+"],
             )
 
             if not success or not connection.entries:
-                return FlextResult[FlextLdifModels.Entry].fail("No Root DSE found")
+                return FlextResult[dict[str, object]].fail("No Root DSE found")
 
             # Extract attributes from the first entry
             entry = connection.entries[0]
@@ -444,25 +298,33 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                 value = entry[attr].value
                 attrs[attr] = value
 
-            return FlextResult[FlextLdifModels.Entry].ok(attrs)
+            return FlextResult[dict[str, object]].ok(attrs)
 
         except Exception as e:
             self.logger.exception("Root DSE error", extra={"error": str(e)})
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Root DSE retrieval failed: {e}"
+            return FlextResult[dict[str, object]].fail(
+                f"Root DSE retrieval failed: {e}",
             )
 
     @override
-    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
         """Detect AD from Root DSE attributes."""
         # Check for AD-specific attributes
-        if "rootDomainNamingContext" in root_dse or "defaultNamingContext" in root_dse:
-            return "ad"
-        if "vendorName" in root_dse:
-            vendor = str(root_dse["vendorName"]).lower()
-            if "microsoft" in vendor or "windows" in vendor:
-                return "ad"
-        return "generic"
+        if (
+            FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT in _root_dse
+            or FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT in _root_dse
+        ):
+            return FlextLdapConstants.ServerTypes.AD
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in _root_dse:
+            vendor = str(
+                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
+            ).lower()
+            if (
+                FlextLdapConstants.VendorNames.MICROSOFT in vendor
+                or FlextLdapConstants.VendorNames.WINDOWS in vendor
+            ):
+                return FlextLdapConstants.ServerTypes.AD
+        return FlextLdapConstants.Defaults.SERVER_TYPE
 
     @override
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
@@ -514,7 +376,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     def normalize_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        target_server_type: str | None = None,
+        _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for AD server specifics."""
         # Entry is already FlextLdifModels.Entry
@@ -534,7 +396,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     def validate_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        server_type: str | None = None,
+        _server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry for AD server."""
         try:
@@ -561,7 +423,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             # Ensure at least one objectClass value
             if not object_classes:
                 return FlextResult[bool].fail(
-                    "objectClass must have at least one value"
+                    "objectClass must have at least one value",
                 )
 
             return FlextResult[bool].ok(True)

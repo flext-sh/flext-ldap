@@ -13,10 +13,9 @@ from typing import cast, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
-from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
+from ldap3 import MODIFY_REPLACE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.typings import FlextLdapTypes
 
@@ -35,26 +34,53 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
     def __init__(self) -> None:
         """Initialize OpenLDAP 2.x operations."""
-        super().__init__(server_type="openldap2")
+        super().__init__(server_type=FlextLdapConstants.ServerTypes.OPENLDAP2)
+
+    # --------------------------------------------------------------------- #
+    # INHERITED METHODS (from FlextLdapServersBaseOperations)
+    # --------------------------------------------------------------------- #
+    # These methods are used directly from the base class without override:
+    # - get_default_port(): Returns 389 (standard LDAP port)
+    # - supports_start_tls(): Returns True (standard LDAP feature)
+    # - get_schema_dn(): Returns "cn=subschema" (OpenLDAP standard)
+    # - get_max_page_size(): Returns 1000 (standard page size)
+    # - supports_paged_results(): Returns True (standard LDAP feature)
+    # - supports_vlv(): Returns False (OpenLDAP VLV support limited)
+    # - search_with_paging(): Generic paged search implementation
+    # - get_supported_controls(): OpenLDAP-specific supported controls
+    # - normalize_entry_for_server(): Generic entry normalization
+    #
+    # --------------------------------------------------------------------- #
+    # OVERRIDDEN METHODS (from FlextLdapServersBaseOperations)
+    # --------------------------------------------------------------------- #
+    # These methods override the base class with OpenLDAP 2.x-specific logic:
+    # - get_bind_mechanisms(): Returns OpenLDAP-specific bind mechanisms
+    # - discover_schema(): OpenLDAP-specific schema discovery
+    # - parse_object_class(): OpenLDAP-specific objectClass parsing
+    # - parse_attribute_type(): OpenLDAP-specific attributeType parsing
+    # - get_acl_attribute_name(): Returns "olcAccess" (OpenLDAP 2.x ACL attribute)
+    # - get_acl_format(): Returns "openldap2" (OpenLDAP 2.x format)
+    # - get_acls(): OpenLDAP-specific ACL retrieval with olcAccess
+    # - set_acls(): OpenLDAP-specific ACL setting with olcAccess
+    # - parse_acl(): OpenLDAP 2.x-specific ACL parsing (olcAccess format)
+    # - format_acl(): OpenLDAP 2.x-specific ACL formatting (olcAccess format)
+    # - get_root_dse_attributes(): OpenLDAP 2.x-specific Root DSE retrieval
+    # - detect_server_type_from_root_dse(): OpenLDAP 2.x server detection logic
+    # - validate_entry_for_server(): OpenLDAP 2.x-specific entry validation
 
     # =========================================================================
     # CONNECTION OPERATIONS
     # =========================================================================
 
     @override
-    def get_default_port(self, *, use_ssl: bool = False) -> int:
-        """Get default port for OpenLDAP."""
-        return 636 if use_ssl else 389
-
-    @override
-    def supports_start_tls(self) -> bool:
-        """OpenLDAP supports START_TLS."""
-        return True
-
-    @override
     def get_bind_mechanisms(self) -> list[str]:
         """Get supported BIND mechanisms."""
-        return ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5", "SASL/GSSAPI"]
+        return [
+            FlextLdapConstants.SaslMechanisms.SIMPLE,
+            FlextLdapConstants.SaslMechanisms.SASL_EXTERNAL,
+            FlextLdapConstants.SaslMechanisms.SASL_DIGEST_MD5,
+            FlextLdapConstants.SaslMechanisms.SASL_GSSAPI,
+        ]
 
     # =========================================================================
     # SCHEMA OPERATIONS
@@ -63,46 +89,40 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     @override
     def get_schema_dn(self) -> str:
         """OpenLDAP 2.x uses cn=subschema."""
-        return "cn=subschema"
+        return FlextLdapConstants.Defaults.SCHEMA_SUBENTRY
 
     @override
     def discover_schema(
-        self, connection: Connection
+        self,
+        connection: Connection,
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
-        """Discover schema from OpenLDAP 2.x server.
-
-        Args:
-        connection: Active ldap3 connection
-
-        Returns:
-        FlextResult containing schema information
-
-        """
+        """Discover schema from OpenLDAP 2.x - enhanced with matchingRules."""
         try:
-            if not connection or not connection.bound:
+            conn_check = self._check_connection(connection)
+            if conn_check.is_failure:
                 return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-                    "Connection not bound"
+                    conn_check.error,
                 )
 
-            # Search for schema
+            # OpenLDAP 2.x needs more schema attributes
             success: bool = connection.search(
                 search_base=self.get_schema_dn(),
-                search_filter="(objectClass=*)",
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 attributes=[
-                    "objectClasses",
-                    "attributeTypes",
-                    "ldapSyntaxes",
-                    "matchingRules",
+                    FlextLdapConstants.SchemaAttributes.OBJECT_CLASSES,
+                    FlextLdapConstants.SchemaAttributes.ATTRIBUTE_TYPES,
+                    FlextLdapConstants.SchemaAttributes.LDAP_SYNTAXES,
+                    FlextLdapConstants.SchemaAttributes.MATCHING_RULES,
                 ],
             )
 
             if not success or not connection.entries:
                 return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-                    "Schema discovery failed"
+                    "Schema discovery failed",
                 )
 
             schema_result = FlextLdifModels.SchemaDiscoveryResult(
-                server_type="openldap2"
+                server_type=FlextLdapConstants.ServerTypes.OPENLDAP2,
             )
 
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(schema_result)
@@ -110,53 +130,34 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         except Exception as e:
             self.logger.exception("Schema discovery error", extra={"error": str(e)})
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-                f"Schema discovery failed: {e}"
+                f"Schema discovery failed: {e}",
             )
 
     @override
     def parse_object_class(
-        self, object_class_def: str
-    ) -> FlextResult[dict[str, object]]:
-        """Parse OpenLDAP objectClass definition.
-
-        Args:
-        object_class_def: ObjectClass definition string
-
-        Returns:
-        FlextResult containing parsed objectClass
-
-        """
-        # Basic parsing - would need full RFC 4512 parser for production
-        try:
-            parsed: dict[str, object] = {
-                "definition": object_class_def,
-                "server_type": "openldap2",
-            }
-            return FlextResult[dict[str, object]].ok(parsed)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Parse failed: {e}")
+        self,
+        object_class_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse OpenLDAP 2.x objectClass definition - enhanced with OpenLDAP 2.x note."""
+        result = super().parse_object_class(object_class_def)
+        if not result.is_failure:
+            entry = result.unwrap()
+            # Add OpenLDAP 2.x-specific note
+            entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
+        return result
 
     @override
     def parse_attribute_type(
-        self, attribute_def: str
-    ) -> FlextResult[dict[str, object]]:
-        """Parse OpenLDAP attributeType definition.
-
-        Args:
-        attribute_def: AttributeType definition string
-
-        Returns:
-        FlextResult containing parsed attribute
-
-        """
-        try:
-            parsed: dict[str, object] = {
-                "definition": attribute_def,
-                "server_type": "openldap2",
-            }
-            return FlextResult[dict[str, object]].ok(parsed)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Parse failed: {e}")
+        self,
+        attribute_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse OpenLDAP 2.x attributeType definition - enhanced with OpenLDAP 2.x note."""
+        result = super().parse_attribute_type(attribute_def)
+        if not result.is_failure:
+            entry = result.unwrap()
+            # Add OpenLDAP 2.x-specific note
+            entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
+        return result
 
     # =========================================================================
     # ACL OPERATIONS
@@ -165,7 +166,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     @override
     def get_acl_attribute_name(self) -> str:
         """OpenLDAP 2.x uses olcAccess attribute."""
-        return "olcAccess"
+        return FlextLdapConstants.AclAttributes.OLC_ACCESS
 
     @override
     def get_acl_format(self) -> str:
@@ -175,33 +176,36 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     @override
     def get_acls(
         self,
-        connection: Connection,
-        dn: str,
+        _connection: Connection,
+        _dn: str,
     ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Get olcAccess ACLs from OpenLDAP 2.x.
 
         Args:
-        connection: Active ldap3 connection
-        dn: DN of config entry (e.g., olcDatabase={1}mdb,cn=config)
+        _connection: Active ldap3 connection
+        _dn: DN of config entry (e.g., olcDatabase={1}mdb,cn=config)
 
         Returns:
         FlextResult containing list of ACLs
 
         """
         try:
-            if not connection or not connection.bound:
+            if not _connection or not _connection.bound:
                 return FlextResult[list[FlextLdifModels.Acl]].fail(
-                    "Connection not bound"
+                    "Connection not bound",
                 )
 
-            success: bool = connection.search(
-                search_base=dn,
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["olcAccess"],
+            success: bool = _connection.search(
+                search_base=_dn,
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
+                attributes=[FlextLdapConstants.AclAttributes.OLC_ACCESS],
             )
 
-            if not success or not connection.entries:
+            if not success or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # ACL parsing delegated to flext-ldif - return empty list for now
@@ -209,35 +213,59 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
         except Exception as e:
-            self.logger.exception("Get ACLs error", extra={"dn": dn, "error": str(e)})
+            self.logger.exception("Get ACLs error", extra={"dn": _dn, "error": str(e)})
             return FlextResult[list[FlextLdifModels.Acl]].fail(f"Get ACLs failed: {e}")
 
     @override
     def set_acls(
         self,
-        connection: Connection,
-        dn: str,
-        acls: list[dict[str, object]],
+        _connection: Connection,
+        _dn: str,
+        _acls: list[dict[str, object]],
     ) -> FlextResult[bool]:
         """Set olcAccess ACLs on OpenLDAP 2.x.
 
         Args:
-        connection: Active ldap3 connection
-        dn: DN of config entry
-        acls: List of ACL dictionaries
+        _connection: Active ldap3 connection
+        _dn: DN of config entry
+        _acls: List of ACL dictionaries
 
         Returns:
         FlextResult indicating success
 
         """
         try:
-            if not connection or not connection.bound:
+            if not _connection or not _connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
             # Format ACLs to olcAccess strings
             formatted_acls: list[str] = []
-            for acl in acls:
-                format_result = self.format_acl(acl)
+            for acl in _acls:
+                # Use Entry.create() instead of LdifAttributes.create() + Entry()
+                # Convert acl dict to proper type (dict[str, str | list[str]])
+                acl_dict: dict[str, str | list[str]] = {}
+                for key, value in acl.items():
+                    if isinstance(value, list):
+                        acl_dict[key] = (
+                            value
+                            if all(isinstance(v, str) for v in value)
+                            else [str(v) for v in value]
+                        )
+                    elif isinstance(value, str):
+                        acl_dict[key] = value
+                    else:
+                        acl_dict[key] = [str(value)]
+
+                acl_entry_result = FlextLdifModels.Entry.create(
+                    dn=FlextLdapConstants.SyntheticDns.ACL_RULE,
+                    attributes=acl_dict,
+                )
+                if acl_entry_result.is_failure:
+                    return FlextResult[bool].fail(
+                        f"Failed to create ACL entry: {acl_entry_result.error}",
+                    )
+                acl_entry = acl_entry_result.unwrap()
+                format_result = self.format_acl(acl_entry)
                 if format_result.is_failure:
                     return FlextResult[bool].fail(
                         format_result.error or "ACL format failed",
@@ -246,24 +274,28 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
             # Modify entry with new ACLs
             # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
             mods = cast(
                 "dict[str, list[tuple[int, list[str]]]]",
-                {"olcAccess": [(MODIFY_REPLACE, formatted_acls)]},
+                {
+                    FlextLdapConstants.AclAttributes.OLC_ACCESS: [
+                        (MODIFY_REPLACE, formatted_acls),
+                    ],
+                },
             )
-            success: bool = typed_conn.modify(dn, mods)
+            success: bool = typed_conn.modify(_dn, mods)
 
             if not success:
-                error_msg = connection.result.get(
+                error_msg = _connection.result.get(
                     FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
+                    FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
                 )
                 return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 
             return FlextResult[bool].ok(True)
 
         except Exception as e:
-            self.logger.exception("Set ACLs error", extra={"dn": dn, "error": str(e)})
+            self.logger.exception("Set ACLs error", extra={"dn": _dn, "error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
@@ -284,13 +316,15 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
         """
         try:
-            from flext_ldif import FlextLdifModels as LdifModels
-
             # Parse ACL components
             acl_attributes: dict[str, list[str]] = {
-                "raw": [acl_string],
-                "format": ["openldap2"],
-                "serverType": ["openldap2"],
+                FlextLdapConstants.AclAttributes.RAW: [acl_string],
+                FlextLdapConstants.AclAttributes.FORMAT: [
+                    FlextLdapConstants.AclFormat.OPENLDAP2,
+                ],
+                FlextLdapConstants.AclAttributes.SERVER_TYPE_ALT: [
+                    FlextLdapConstants.ServerTypes.OPENLDAP2,
+                ],
             }
 
             # Extract index if present
@@ -298,21 +332,39 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             if acl_string.startswith("{"):
                 end_idx = acl_string.find("}")
                 if end_idx > 0:
-                    acl_attributes["index"] = [acl_string[1:end_idx]]
+                    acl_attributes[FlextLdapConstants.AclAttributes.INDEX] = [
+                        acl_string[1:end_idx],
+                    ]
                     remaining = acl_string[end_idx + 1 :].strip()
 
             # Extract 'to' clause
             if remaining.startswith("to "):
                 parts = remaining.split(" by ", 1)
-                acl_attributes["to"] = [parts[0][3:].strip()]
+                acl_attributes[FlextLdapConstants.AclAttributes.TO] = [
+                    parts[0][3:].strip(),
+                ]
                 if len(parts) > 1:
-                    acl_attributes["by"] = [parts[1]]
+                    acl_attributes[FlextLdapConstants.AclSyntaxKeywords.BY] = [parts[1]]
 
-            entry = LdifModels.Entry(
-                dn=LdifModels.DistinguishedName(value="cn=AclRule"),
-                attributes=LdifModels.LdifAttributes.create(acl_attributes)
+            # LdifAttributes.create returns FlextResult, need to unwrap
+            # Use Entry.create() instead of LdifAttributes.create() + Entry()
+            # Convert attributes dict to proper type for Entry.create()
+            acl_attrs_for_create: dict[str, str | list[str]] = {}
+            for key, values in acl_attributes.items():
+                if isinstance(values, list) and len(values) == 1:
+                    acl_attrs_for_create[key] = values[0]
+                else:
+                    acl_attrs_for_create[key] = values
+
+            entry_result = FlextLdifModels.Entry.create(
+                dn="cn=AclRule",
+                attributes=acl_attrs_for_create,
             )
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            if entry_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create ACL entry: {entry_result.error}",
+                )
+            return entry_result
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(f"ACL parse failed: {e}")
@@ -330,22 +382,24 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """
         try:
             # Extract attributes from entry
-            raw_attr = acl_entry.attributes.get("raw")
+            raw_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.RAW)
             if raw_attr and len(raw_attr) > 0:
                 return FlextResult[str].ok(raw_attr[0])
 
             # Otherwise construct from parts
             parts: list[str] = []
 
-            index_attr = acl_entry.attributes.get("index")
+            index_attr = acl_entry.attributes.get(
+                FlextLdapConstants.AclAttributes.INDEX,
+            )
             if index_attr and len(index_attr) > 0:
                 parts.append(f"{{{index_attr[0]}}}")
 
-            to_attr = acl_entry.attributes.get("to")
+            to_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.TO)
             if to_attr and len(to_attr) > 0:
                 parts.append(f"to {to_attr[0]}")
 
-            by_attr = acl_entry.attributes.get("by")
+            by_attr = acl_entry.attributes.get(FlextLdapConstants.AclSyntaxKeywords.BY)
             if by_attr and len(by_attr) > 0:
                 parts.append(f"by {by_attr[0]}")
 
@@ -358,280 +412,21 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     # ENTRY OPERATIONS
     # =========================================================================
 
-    @override
-    def add_entry(
-        self,
-        connection: Connection,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[bool]:
-        """Add entry to OpenLDAP 2.x server.
+    # add_entry(), modify_entry(), delete_entry() - Use base implementations
 
-        Args:
-        connection: Active ldap3 connection
-        entry: FlextLdif Entry to add
-
-        Returns:
-        FlextResult indicating success
-
-        """
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Normalize entry for OpenLDAP
-            norm_result = self.normalize_entry(entry)
-            if norm_result.is_failure:
-                return FlextResult[bool].fail(
-                    norm_result.error or "Normalization failed",
-                )
-
-            normalized_entry = norm_result.unwrap()
-
-            # Extract objectClass from entry
-            attrs = normalized_entry.attributes.attributes
-            # objectClass is already a list, don't call .values
-            oc_attr = attrs.get("objectClass", ["top"])
-            object_class: list[str] = (
-                oc_attr if isinstance(oc_attr, list) else [oc_attr]
-            )
-
-            # Convert attributes to dict format for ldap3
-            ldap3_attrs: dict[str, list[str]] = {}
-            for attr_name, attr_value in normalized_entry.attributes.attributes.items():
-                if attr_name != "objectClass":  # Skip objectClass (passed separately)
-                    # attr_value is already a list, don't call .values
-                    value_list = (
-                        attr_value if isinstance(attr_value, list) else [attr_value]
-                    )
-                    ldap3_attrs[attr_name] = [str(v) for v in value_list]
-
-            # Add entry using ldap3
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            attrs_casted = cast(
-                "dict[str, str | list[str]] | None", ldap3_attrs or None
-            )
-            success: bool = typed_conn.add(
-                str(normalized_entry.dn), object_class, attributes=attrs_casted
-            )
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Add entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception(
-                "Add entry error",
-                extra={"dn": str(entry.dn), "error": str(e)},
-            )
-            return FlextResult[bool].fail(f"Add entry failed: {e}")
-
-    @override
-    def modify_entry(
-        self,
-        connection: Connection,
-        dn: str,
-        modifications: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Modify entry in OpenLDAP 2.x.
-
-        Args:
-        connection: Active ldap3 connection
-        dn: DN of entry to modify
-        modifications: Dict of attribute modifications
-
-        Returns:
-        FlextResult indicating success
-
-        """
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Convert modifications to ldap3 format
-            ldap3_mods: dict[str, list[tuple[object, list[str] | str]]] = {}
-            for attr, value in modifications.items():
-                values = value if isinstance(value, list) else [value]
-                # Convert all values to strings
-                str_values: list[str] | str = [str(v) for v in values]
-                ldap3_mods[attr] = cast(
-                    "list[tuple[object, list[str] | str]]",
-                    [(MODIFY_REPLACE, str_values)],
-                )
-
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            mods = cast("dict[str, list[tuple[int, list[str]]]]", ldap3_mods)
-            success = typed_conn.modify(dn, mods)
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Modify entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception(
-                "Modify entry error",
-                extra={"dn": dn, "error": str(e)},
-            )
-            return FlextResult[bool].fail(f"Modify entry failed: {e}")
-
-    @override
-    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
-        """Delete entry from OpenLDAP 2.x.
-
-        Args:
-        connection: Active ldap3 connection
-        dn: DN of entry to delete
-
-        Returns:
-        FlextResult indicating success
-
-        """
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Cast to Protocol type for proper type checking with ldap3
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", connection)
-            success: bool = typed_conn.delete(dn)
-
-            if not success:
-                error_msg = connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    "Unknown error",
-                )
-                return FlextResult[bool].fail(f"Delete entry failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception(
-                "Delete entry error",
-                extra={"dn": dn, "error": str(e)},
-            )
-            return FlextResult[bool].fail(f"Delete entry failed: {e}")
-
-    @override
-    def normalize_entry(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for OpenLDAP 2.x.
-
-        Args:
-        entry: FlextLdif Entry to normalize
-
-        Returns:
-        FlextResult containing normalized entry
-
-        """
-        # OpenLDAP 2.x generally uses standard LDAP conventions
-        # No special normalization needed for most cases
-        return FlextResult[FlextLdifModels.Entry].ok(entry)
+    # normalize_entry() - Use base implementation (returns entry as-is)
 
     # =========================================================================
     # SEARCH OPERATIONS
     # =========================================================================
 
-    @override
-    def get_max_page_size(self) -> int:
-        """OpenLDAP 2.x default max page size."""
-        return 1000
+    # get_max_page_size(), supports_paged_results() - Use base defaults
+    # supports_vlv() - Use base default (False)
 
-    @override
-    def supports_paged_results(self) -> bool:
-        """OpenLDAP 2.x supports paged results control."""
-        return True
-
-    @override
-    def supports_vlv(self) -> bool:
-        """OpenLDAP 2.x does not support VLV by default."""
-        return False
-
-    @override
-    def search_with_paging(
-        self,
-        connection: Connection,
-        base_dn: str,
-        search_filter: str,
-        attributes: list[str] | None = None,
-        scope: str = "subtree",
-        page_size: int = 100,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Execute paged search on OpenLDAP 2.x.
-
-        Args:
-        connection: Active ldap3 connection
-        base_dn: Search base DN
-        search_filter: LDAP search filter
-        attributes: Attributes to retrieve
-        scope: Search scope (base, level, or subtree)
-        page_size: Page size for results
-
-        Returns:
-        FlextResult containing list of entries
-
-        """
-        try:
-            if not connection or not connection.bound:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    "Connection not bound",
-                )
-
-            # Convert scope string to ldap3 constant
-            scope_map = {
-                "base": BASE,
-                "level": LEVEL,
-                "subtree": SUBTREE,
-            }
-            search_scope = scope_map.get(scope.lower(), SUBTREE)
-
-            # Use ldap3 paged search
-            entry_generator = connection.extend.standard.paged_search(
-                search_base=base_dn,
-                search_filter=search_filter,
-                search_scope=search_scope,
-                attributes=attributes or ["*"],
-                paged_size=page_size,
-                generator=True,
-            )
-
-            # Convert results to FlextLdap entries
-            adapter = FlextLdapEntryAdapter()
-            entries: list[FlextLdifModels.Entry] = []
-
-            for ldap3_entry in entry_generator:
-                if "dn" in ldap3_entry and "attributes" in ldap3_entry:
-                    # Convert ldap3 entry to LDIF entry first
-                    ldif_entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-                    if ldif_entry_result.is_success:
-                        ldif_entry = ldif_entry_result.unwrap()
-                        # ldif_entry is already FlextLdifModels.Entry
-                        entries.append(ldif_entry)
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-        except Exception as e:
-            self.logger.exception(
-                "Paged search error",
-                extra={"base_dn": base_dn, "error": str(e)},
-            )
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Paged search failed: {e}",
-            )
+    # search_with_paging() - Use base implementation
 
     # =========================================================================
-    # SERVER DETECTION OPERATIONS
+    # Root DSE OPERATIONS
     # =========================================================================
 
     @override
@@ -655,8 +450,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             # Use standard Root DSE search
             success: bool = connection.search(
                 search_base="",
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
                 attributes=["*", "+"],
             )
 
@@ -679,36 +477,44 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             )
 
     @override
-    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
         """Detect OpenLDAP version from Root DSE attributes.
 
         Args:
-            root_dse: Root DSE attributes
+            _root_dse: Root DSE attributes
 
         Returns:
             Detected server type ("openldap2", "openldap1", or "openldap")
 
         """
         # Check for vendorName
-        if "vendorName" in root_dse:
-            vendor = str(root_dse["vendorName"]).lower()
-            if "openldap" in vendor:
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in _root_dse:
+            vendor = str(
+                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
+            ).lower()
+            if FlextLdapConstants.VendorNames.OPENLDAP in vendor:
                 # Check for version to distinguish 1.x from 2.x
-                if "vendorVersion" in root_dse:
-                    version = str(root_dse["vendorVersion"]).lower()
-                    if version.startswith("1."):
-                        return "openldap1"
-                    if version.startswith("2."):
-                        return "openldap2"
+                if FlextLdapConstants.RootDseAttributes.VENDOR_VERSION in _root_dse:
+                    version = str(
+                        _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_VERSION],
+                    ).lower()
+                    if version.startswith(
+                        FlextLdapConstants.VersionPrefixes.VERSION_1_PREFIX,
+                    ):
+                        return FlextLdapConstants.ServerTypes.OPENLDAP1
+                    if version.startswith(
+                        FlextLdapConstants.VersionPrefixes.VERSION_2_PREFIX,
+                    ):
+                        return FlextLdapConstants.ServerTypes.OPENLDAP2
                 # Default to 2.x if version unclear
-                return "openldap2"
+                return FlextLdapConstants.ServerTypes.OPENLDAP2
 
         # Check for configContext (2.x feature - cn=config)
-        if "configContext" in root_dse:
-            return "openldap2"
+        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in _root_dse:
+            return FlextLdapConstants.ServerTypes.OPENLDAP2
 
         # Fallback to generic openldap
-        return "openldap"
+        return FlextLdapConstants.ServerTypes.OPENLDAP
 
     @override
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
@@ -762,7 +568,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     def normalize_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        target_server_type: str | None = None,
+        _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for OpenLDAP 2.x server specifics.
 
@@ -773,7 +579,6 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
         Args:
         entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-        target_server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
 
         Returns:
         FlextResult containing normalized entry
@@ -801,7 +606,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     def validate_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        server_type: str | None = None,
+        _server_type: str | None = None,
     ) -> FlextResult[bool]:
         """Validate entry for OpenLDAP 2.x server.
 
@@ -813,7 +618,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
         Args:
         entry: Entry to validate
-        server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
+        ^_server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
 
         Returns:
         FlextResult[bool] indicating validation success
@@ -829,11 +634,13 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
             # Check for objectClass
             attrs = entry.attributes.attributes
-            if "objectClass" not in attrs:
+            if FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS not in attrs:
                 return FlextResult[bool].fail("Entry must have objectClass attribute")
 
             # OpenLDAP 2.x accepts both standard and olc* objectClasses
-            object_class_attr = attrs["objectClass"]
+            object_class_attr = attrs[
+                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
+            ]
             # object_class_attr is already a list, don't call .values
             object_classes = (
                 object_class_attr
@@ -844,7 +651,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             # Ensure at least one objectClass value
             if not object_classes:
                 return FlextResult[bool].fail(
-                    "objectClass must have at least one value"
+                    "objectClass must have at least one value",
                 )
 
             return FlextResult[bool].ok(True)

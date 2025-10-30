@@ -444,7 +444,7 @@ def main() -> int:
 
         logger.info("\nSpecification Pattern Usage:")
         logger.info("  ```python")
-        logger.info("  from flext_ldap.domain import FlextLdapDomain")
+        logger.info("  from flext_ldap.services.domain import FlextLdapDomain")
         logger.info("  ")
         logger.info("  # Validate username")
         logger.info(
@@ -461,7 +461,7 @@ def main() -> int:
 
         logger.info("\nDomain Service Usage:")
         logger.info("  ```python")
-        logger.info("  from flext_ldap.domain import FlextLdapDomain")
+        logger.info("  from flext_ldap.services.domain import FlextLdapDomain")
         logger.info("  ")
         logger.info("  # Calculate display name")
         logger.info(

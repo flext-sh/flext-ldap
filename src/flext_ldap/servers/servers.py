@@ -41,7 +41,7 @@ class FlextLdapServers(FlextService[None]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._server_type = server_type or FlextLdapConstants.Servers.GENERIC
+        self._server_type = server_type or FlextLdapConstants.ServerTypes.GENERIC
         self._operations: FlextLdapServersBaseOperations | None = None
 
     def execute(self) -> FlextResult[None]:
@@ -83,7 +83,9 @@ class FlextLdapServers(FlextService[None]):
                 server_type,
                 error=result.error,
             )
-            result = factory.create_from_server_type(FlextLdapConstants.Servers.GENERIC)
+            result = factory.create_from_server_type(
+                FlextLdapConstants.ServerTypes.GENERIC,
+            )
 
         if result.is_failure:
             # Even generic operations failed - this shouldn't happen
@@ -103,7 +105,7 @@ class FlextLdapServers(FlextService[None]):
     def get_acl_format(self) -> str:
         """Get ACL format for current server type."""
         ops = self.operations
-        return ops.get_acl_format() if ops else "unknown"
+        return ops.get_acl_format() if ops else FlextLdapConstants.ErrorStrings.UNKNOWN
 
     def get_acl_attribute_name(self) -> str:
         """Get ACL attribute name for current server type."""
@@ -113,7 +115,7 @@ class FlextLdapServers(FlextService[None]):
     def get_schema_dn(self) -> str:
         """Get schema DN for current server type."""
         ops = self.operations
-        return ops.get_schema_dn() if ops else "cn=schema"
+        return ops.get_schema_dn() if ops else FlextLdapConstants.SchemaDns.SCHEMA
 
     def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for current server type."""
@@ -130,7 +132,11 @@ class FlextLdapServers(FlextService[None]):
     def get_bind_mechanisms(self) -> list[str]:
         """Get supported bind mechanisms."""
         ops = self.operations
-        return ops.get_bind_mechanisms() if ops else ["SIMPLE"]
+        return (
+            ops.get_bind_mechanisms()
+            if ops
+            else [FlextLdapConstants.SaslMechanisms.SIMPLE]
+        )
 
     def get_max_page_size(self) -> int:
         """Get maximum page size for paged results."""
@@ -189,7 +195,7 @@ class FlextLdapServers(FlextService[None]):
         return (
             ops.detect_server_type_from_root_dse(root_dse)
             if ops
-            else FlextLdapConstants.Servers.GENERIC
+            else FlextLdapConstants.ServerTypes.GENERIC
         )
 
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
@@ -227,6 +233,125 @@ class FlextLdapServers(FlextService[None]):
             )
         return ops.validate_entry_for_server(entry, server_type)
 
+    def add_entry(
+        self,
+        connection: Connection,
+        entry: FlextLdifModels.Entry,
+        *,
+        should_normalize: bool = True,
+    ) -> FlextResult[bool]:
+        """Add entry to LDAP server."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[bool].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.add_entry(connection, entry, should_normalize=should_normalize)
+
+    def modify_entry(
+        self,
+        connection: Connection,
+        dn: str,
+        modifications: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Modify entry on LDAP server."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[bool].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.modify_entry(connection, dn, modifications)
+
+    def delete_entry(self, connection: Connection, dn: str) -> FlextResult[bool]:
+        """Delete entry from LDAP server."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[bool].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.delete_entry(connection, dn)
+
+    def get_acls(
+        self,
+        connection: Connection,
+        dn: str,
+    ) -> FlextResult[list[FlextLdifModels.Acl]]:
+        """Get ACLs for entry."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[list[FlextLdifModels.Acl]].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.get_acls(connection, dn)
+
+    def set_acls(
+        self,
+        connection: Connection,
+        dn: str,
+        acls: list[dict[str, object]],
+    ) -> FlextResult[bool]:
+        """Set ACLs for entry."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[bool].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.set_acls(connection, dn, acls)
+
+    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse ACL string to Entry."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.parse_acl(acl_string)
+
+    def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
+        """Format ACL Entry to string."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[str].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.format_acl(acl_entry)
+
+    def discover_schema(
+        self,
+        connection: Connection,
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Discover schema from server."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.discover_schema(connection)
+
+    def parse_object_class(
+        self,
+        object_class_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse objectClass definition."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.parse_object_class(object_class_def)
+
+    def parse_attribute_type(
+        self,
+        attribute_def: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse attributeType definition."""
+        ops = self.operations
+        if not ops:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
+            )
+        return ops.parse_attribute_type(attribute_def)
+
     # =========================================================================
     # FACTORY METHODS - Create operations for specific server types
     # =========================================================================
@@ -234,32 +359,32 @@ class FlextLdapServers(FlextService[None]):
     @classmethod
     def for_openldap1(cls) -> FlextLdapServers:
         """Create operations for OpenLDAP 1.x."""
-        return cls(FlextLdapConstants.Servers.OPENLDAP_1)
+        return cls(FlextLdapConstants.ServerTypes.OPENLDAP1)
 
     @classmethod
     def for_openldap2(cls) -> FlextLdapServers:
         """Create operations for OpenLDAP 2.x."""
-        return cls(FlextLdapConstants.Servers.OPENLDAP_2)
+        return cls(FlextLdapConstants.ServerTypes.OPENLDAP2)
 
     @classmethod
     def for_oracle_oid(cls) -> FlextLdapServers:
         """Create operations for Oracle Internet Directory."""
-        return cls(FlextLdapConstants.Servers.ORACLE_OID)
+        return cls(FlextLdapConstants.ServerTypes.OID)
 
     @classmethod
     def for_oracle_oud(cls) -> FlextLdapServers:
         """Create operations for Oracle Unified Directory."""
-        return cls(FlextLdapConstants.Servers.ORACLE_OUD)
+        return cls(FlextLdapConstants.ServerTypes.OUD)
 
     @classmethod
     def for_active_directory(cls) -> FlextLdapServers:
         """Create operations for Active Directory."""
-        return cls(FlextLdapConstants.Servers.ACTIVE_DIRECTORY)
+        return cls(FlextLdapConstants.ServerTypes.AD)
 
     @classmethod
     def generic(cls) -> FlextLdapServers:
         """Create generic operations."""
-        return cls(FlextLdapConstants.Servers.GENERIC)
+        return cls(FlextLdapConstants.ServerTypes.GENERIC)
 
 
 __all__ = ["FlextLdapServers"]

@@ -1,6 +1,6 @@
-"""Comprehensive tests for FlextLdapModels.Validations.
+"""Comprehensive tests for FlextLdapValidations.
 
-This module provides complete test coverage for the FlextLdapModels.Validations class
+This module provides complete test coverage for the FlextLdapValidations class
 following FLEXT standards with proper domain separation and centralized fixtures.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,24 +13,24 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextConstants
 
-from flext_ldap import FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.services.validations import FlextLdapValidations
 
 
 @pytest.mark.unit
 class TestFlextLdapValidations:
-    """Comprehensive test suite for FlextLdapModels.Validations."""
+    """Comprehensive test suite for FlextLdapValidations."""
 
     def test_validations_initialization(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test validations initialization."""
         assert validations is not None
-        # FlextLdapModels.Validations is a static class, so all methods are static
-        assert validations == FlextLdapModels.Validations
+        # FlextLdapValidations is a static class, so all methods are static
+        assert validations == FlextLdapValidations
 
     def test_validate_dn_success(
-        self, validations: type[FlextLdapModels.Validations], sample_valid_dn: str
+        self, validations: type[FlextLdapValidations], sample_valid_dn: str
     ) -> None:
         """Test successful DN validation."""
         result = validations.validate_dn(sample_valid_dn)
@@ -39,7 +39,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_dn_failure(
-        self, validations: type[FlextLdapModels.Validations], sample_invalid_dn: str
+        self, validations: type[FlextLdapValidations], sample_invalid_dn: str
     ) -> None:
         """Test DN validation failure."""
         result = validations.validate_dn(sample_invalid_dn)
@@ -50,9 +50,7 @@ class TestFlextLdapValidations:
             "must contain '='" in result.error or "invalid" in result.error.lower()
         )
 
-    def test_validate_dn_empty(
-        self, validations: type[FlextLdapModels.Validations]
-    ) -> None:
+    def test_validate_dn_empty(self, validations: type[FlextLdapValidations]) -> None:
         """Test DN validation with empty string."""
         result = validations.validate_dn("")
 
@@ -60,9 +58,7 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "DN cannot be empty" in result.error
 
-    def test_validate_dn_none(
-        self, validations: type[FlextLdapModels.Validations]
-    ) -> None:
+    def test_validate_dn_none(self, validations: type[FlextLdapValidations]) -> None:
         """Test DN validation with None."""
         result = validations.validate_dn(None)
 
@@ -71,7 +67,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "DN cannot be None" in result.error
 
     def test_validate_dn_whitespace_only(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test DN validation with whitespace only."""
         result = validations.validate_dn("   ")
@@ -83,7 +79,7 @@ class TestFlextLdapValidations:
     # validate_email tests removed - use flext-core FlextUtilities.Validation.validate_email directly
 
     def test_validate_filter_success(
-        self, validations: type[FlextLdapModels.Validations], sample_valid_filter: str
+        self, validations: type[FlextLdapValidations], sample_valid_filter: str
     ) -> None:
         """Test successful filter validation."""
         result = validations.validate_filter(sample_valid_filter)
@@ -92,7 +88,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_filter_failure(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test filter validation failure."""
         result = validations.validate_filter("invalid-filter")
@@ -106,7 +102,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_filter_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test filter validation with empty string."""
         result = validations.validate_filter("")
@@ -118,7 +114,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_filter_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test filter validation with None."""
         result = validations.validate_filter(None)
@@ -128,7 +124,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "Filter cannot be None" in result.error
 
     def test_validate_password_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful password validation."""
         result = validations.validate_password("validpassword123")
@@ -137,7 +133,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_password_too_short(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test password validation with too short password."""
         result = validations.validate_password("123")
@@ -151,7 +147,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_password_too_long(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test password validation with too long password."""
         long_password = (
@@ -168,7 +164,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_password_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test password validation with empty string."""
         result = validations.validate_password("")
@@ -182,7 +178,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_password_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test password validation with None."""
         result = validations.validate_password(None)
@@ -194,7 +190,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_attributes_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful attributes validation."""
         attributes = ["cn", "sn", "mail", "uid"]
@@ -204,7 +200,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_attributes_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test attributes validation with empty list."""
         result = validations.validate_attributes([])
@@ -218,7 +214,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_attributes_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test attributes validation with None."""
         result = validations.validate_attributes(None)
@@ -232,7 +228,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_attributes_invalid_format(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test attributes validation with invalid format."""
         attributes = ["cn", "", "mail"]  # Empty attribute
@@ -245,7 +241,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_attributes_invalid_regex(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test attributes validation with invalid regex pattern."""
         # Attribute starting with number (invalid)
@@ -261,7 +257,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_server_uri_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful server URI validation."""
         result = validations.validate_server_uri(
@@ -272,7 +268,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_server_uri_ldaps(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test server URI validation with LDAPS."""
         result = validations.validate_server_uri("ldaps://localhost:636")
@@ -281,7 +277,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_server_uri_failure(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test server URI validation failure."""
         result = validations.validate_server_uri("invalid-uri")
@@ -295,7 +291,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_server_uri_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test server URI validation with empty string."""
         result = validations.validate_server_uri("")
@@ -305,7 +301,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "URI cannot be empty" in result.error
 
     def test_validate_server_uri_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test server URI validation with None."""
         result = validations.validate_server_uri(None)
@@ -317,7 +313,7 @@ class TestFlextLdapValidations:
     # validate_port tests removed - use flext-core FlextUtilities.Validation.validate_port directly
 
     def test_validate_scope_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful scope validation."""
         result = validations.validate_scope("subtree")
@@ -325,18 +321,14 @@ class TestFlextLdapValidations:
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_validate_scope_base(
-        self, validations: type[FlextLdapModels.Validations]
-    ) -> None:
+    def test_validate_scope_base(self, validations: type[FlextLdapValidations]) -> None:
         """Test scope validation with base scope."""
         result = validations.validate_scope("base")
 
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_validate_scope_one(
-        self, validations: type[FlextLdapModels.Validations]
-    ) -> None:
+    def test_validate_scope_one(self, validations: type[FlextLdapValidations]) -> None:
         """Test scope validation with one scope."""
         result = validations.validate_scope("one")
 
@@ -348,7 +340,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "onelevel" in result.error
 
     def test_validate_scope_invalid(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test scope validation with invalid scope."""
         result = validations.validate_scope("invalid")
@@ -358,7 +350,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "Invalid scope" in result.error
 
     def test_validate_scope_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test scope validation with empty string."""
         result = validations.validate_scope("")
@@ -374,9 +366,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "subtree" in result.error
         assert result.error and result.error and "onelevel" in result.error
 
-    def test_validate_scope_none(
-        self, validations: type[FlextLdapModels.Validations]
-    ) -> None:
+    def test_validate_scope_none(self, validations: type[FlextLdapValidations]) -> None:
         """Test scope validation with None."""
         result = validations.validate_scope(None)
 
@@ -385,7 +375,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "Scope cannot be None" in result.error
 
     def test_validate_modify_operation_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful modify operation validation."""
         result = validations.validate_modify_operation("MODIFY_REPLACE")
@@ -402,7 +392,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_add(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test modify operation validation with add."""
         result = validations.validate_modify_operation("add")
@@ -411,7 +401,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_modify_operation_delete(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test modify operation validation with delete."""
         result = validations.validate_modify_operation("delete")
@@ -420,7 +410,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_modify_operation_invalid(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test modify operation validation with invalid operation."""
         result = validations.validate_modify_operation("INVALID_OPERATION")
@@ -437,7 +427,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test modify operation validation with empty string."""
         result = validations.validate_modify_operation("")
@@ -454,7 +444,7 @@ class TestFlextLdapValidations:
         assert result.error and result.error and "replace" in result.error
 
     def test_validate_modify_operation_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test modify operation validation with None."""
         result = validations.validate_modify_operation(None)
@@ -466,7 +456,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_object_class_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful object class validation."""
         result = validations.validate_object_class("inetOrgPerson")
@@ -475,7 +465,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_object_class_organizational_person(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test object class validation with organizationalPerson."""
         result = validations.validate_object_class("organizationalPerson")
@@ -484,7 +474,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_object_class_group(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test object class validation with groupOfNames."""
         result = validations.validate_object_class("groupOfNames")
@@ -493,7 +483,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_object_class_invalid(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test object class validation with invalid class."""
         result = validations.validate_object_class("invalidClass")
@@ -508,7 +498,7 @@ class TestFlextLdapValidations:
             )
 
     def test_validate_object_class_empty(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test object class validation with empty string."""
         result = validations.validate_object_class("")
@@ -522,7 +512,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_object_class_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test object class validation with None."""
         result = validations.validate_object_class(None)
@@ -536,12 +526,12 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_connection_config_success(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test successful connection config validation."""
         config: dict[str, object] = {
-            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.LDAP_DEFAULT_PORT}",
-            "port": FlextLdapConstants.LDAP_DEFAULT_PORT,
+            "server": f"{FlextLdapConstants.Protocol.DEFAULT_SERVER_URI}:{FlextLdapConstants.Protocol.DEFAULT_PORT}",
+            "port": FlextLdapConstants.Protocol.DEFAULT_PORT,
             "bind_dn": "cn=admin,dc=example,dc=com",
             "bind_password": "admin123",
             "base_dn": "dc=example,dc=com",
@@ -553,7 +543,7 @@ class TestFlextLdapValidations:
         assert result.unwrap() is True
 
     def test_validate_connection_config_missing_fields(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test connection config validation with missing fields."""
         config: dict[str, object] = {
@@ -572,7 +562,7 @@ class TestFlextLdapValidations:
         )
 
     def test_validate_connection_config_invalid_fields(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test connection config validation with invalid fields."""
         config: dict[str, object] = {
@@ -588,7 +578,7 @@ class TestFlextLdapValidations:
         assert result.is_success
 
     def test_validate_connection_config_none(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test connection config validation with None."""
         result = validations.validate_connection_config(None)
@@ -601,7 +591,7 @@ class TestFlextLdapValidations:
         reason="validate_timeout method removed during Pydantic v2 refactoring"
     )
     def test_validations_integration_complete_workflow(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test complete validations workflow integration - LDAP-specific validations only."""
         # Test complete workflow with LDAP-specific validations
@@ -642,7 +632,7 @@ class TestFlextLdapValidations:
         reason="validate_size_limit method removed during Pydantic v2 refactoring"
     )
     def test_validations_error_handling_consistency(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test consistent error handling across validation methods."""
         # Test consistent None handling - LDAP-specific validations only
@@ -694,7 +684,7 @@ class TestFlextLdapValidations:
         assert "None" in object_class_result.error
 
     def test_validations_performance_large_datasets(
-        self, validations: type[FlextLdapModels.Validations]
+        self, validations: type[FlextLdapValidations]
     ) -> None:
         """Test validations performance with large datasets."""
         # Test large attributes list

@@ -75,14 +75,14 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 
 #### Complete Implementations (Production-Ready)
 
-| Server | ACL Format | Schema DN | Status |
-|--------|-----------|-----------|--------|
-| **OpenLDAP 2.x** | olcAccess | cn=subschema | 🟢 Production |
-| **OpenLDAP 1.x** | access | cn=subschema | 🟢 Production |
-| **Oracle OID** | orclaci | cn=subschemasubentry | 🟢 Production |
-| **Oracle OUD** | ds-privilege-name | cn=schema | 🟢 Production |
-| **Active Directory** | nTSecurityDescriptor | cn=schema | 🟢 Production |
-| **Generic LDAP** | N/A | cn=subschema | 🟢 Fallback |
+| Server               | ACL Format           | Schema DN            | Status        |
+| -------------------- | -------------------- | -------------------- | ------------- |
+| **OpenLDAP 2.x**     | olcAccess            | cn=subschema         | 🟢 Production |
+| **OpenLDAP 1.x**     | access               | cn=subschema         | 🟢 Production |
+| **Oracle OID**       | orclaci              | cn=subschemasubentry | 🟢 Production |
+| **Oracle OUD**       | ds-privilege-name    | cn=schema            | 🟢 Production |
+| **Active Directory** | nTSecurityDescriptor | cn=schema            | 🟢 Production |
+| **Generic LDAP**     | N/A                  | cn=subschema         | 🟢 Fallback   |
 
 #### Key Features by Server
 
@@ -158,6 +158,7 @@ flext-ldap/
 ```
 
 **Key Improvements**:
+
 - **12 root modules** (down from 18)
 - **Nested classes** for related functionality
 - **Single FlextXxx** class per module
@@ -448,14 +449,14 @@ ops = ActiveDirectoryOperations()
 
 ### Feature Comparison
 
-| Feature | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | Active Directory |
-|---------|--------------|--------------|------------|------------|------------------|
-| **Schema Discovery** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **ACL Management** | ✅ olcAccess | ✅ access | ✅ orclaci | ✅ ds-privilege | ✅ Security Descriptors |
-| **Paged Results** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **VLV Support** | ✅ | ⚠️ Limited | ✅ | ✅ | ✅ |
-| **START_TLS** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Replication** | ✅ | ✅ | ✅ | ✅ Advanced | ✅ |
+| Feature              | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD      | Active Directory        |
+| -------------------- | ------------ | ------------ | ---------- | --------------- | ----------------------- |
+| **Schema Discovery** | ✅           | ✅           | ✅         | ✅              | ✅                      |
+| **ACL Management**   | ✅ olcAccess | ✅ access    | ✅ orclaci | ✅ ds-privilege | ✅ Security Descriptors |
+| **Paged Results**    | ✅           | ✅           | ✅         | ✅              | ✅                      |
+| **VLV Support**      | ✅           | ⚠️ Limited   | ✅         | ✅              | ✅                      |
+| **START_TLS**        | ✅           | ✅           | ✅         | ✅              | ✅                      |
+| **Replication**      | ✅           | ✅           | ✅         | ✅ Advanced     | ✅                      |
 
 ---
 
@@ -604,17 +605,18 @@ Use pytest markers to control test execution:
 
 ### Architecture Metrics
 
-| Metric | v0.9.0 | v0.10.0 | Improvement |
-|--------|--------|---------|-------------|
-| Root Modules | 18 | 12 | -33% |
-| Subdirectories | 2 | 1 | -50% |
-| Test Files | 87 | ~60 | -31% |
-| Duplicate LOC | ~1,200 | 0 | -100% |
-| Total LOC | ~4,000 | ~2,800-3,150 | -28-30% |
+| Metric         | v0.9.0 | v0.10.0      | Improvement |
+| -------------- | ------ | ------------ | ----------- |
+| Root Modules   | 18     | 12           | -33%        |
+| Subdirectories | 2      | 1            | -50%        |
+| Test Files     | 87     | ~60          | -31%        |
+| Duplicate LOC  | ~1,200 | 0            | -100%       |
+| Total LOC      | ~4,000 | ~2,800-3,150 | -28-30%     |
 
 ### Implementation Status
 
 **Complete**:
+
 - ✅ Universal LDAP interface
 - ✅ Server-specific operations (6 servers)
 - ✅ FlextLdif integration
@@ -625,6 +627,7 @@ Use pytest markers to control test execution:
 - ✅ Python 3.13+ type syntax
 
 **In Progress**:
+
 - 🔄 Test coverage expansion (35% → 75%+)
 - 🔄 Active Directory enhancements
 - 🔄 Performance optimization
@@ -636,6 +639,7 @@ Use pytest markers to control test execution:
 ### Current Release (v0.10.0) - Architecture Refactoring
 
 ✅ **Complete**:
+
 - Simplified architecture (18 → 12 modules)
 - Zero code duplication with flext-core
 - Consistent FlextXxx module patterns
@@ -646,6 +650,7 @@ Use pytest markers to control test execution:
 ### Next Release (v0.10.1) - Test Coverage Enhancement
 
 🎯 **Planned**:
+
 - Expand test coverage (35% → 75%+)
 - Real LDAP functionality tests
 - Integration test expansion
@@ -654,6 +659,7 @@ Use pytest markers to control test execution:
 ### Future Release (v1.0.0) - Production Hardening
 
 🔮 **Future**:
+
 - Active Directory feature completion
 - Connection pooling and retry mechanisms
 - Performance optimization for large directories
@@ -697,11 +703,13 @@ Use pytest markers to control test execution:
 ### Quality Standards
 
 **MANDATORY before commits**:
+
 ```bash
 make validate    # Must pass: lint + type-check + security + test
 ```
 
 **Code standards**:
+
 - Line length: 88 characters (Ruff default)
 - Type annotations: Complete, strict (Pyrefly)
 - Test coverage: 75%+ for new features
@@ -736,6 +744,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ### Reporting Issues
 
 When reporting issues, please include:
+
 - flext-ldap version (`pip show flext-ldap`)
 - Python version (`python --version`)
 - Error messages and stack traces

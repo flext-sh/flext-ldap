@@ -21,10 +21,10 @@ from __future__ import annotations
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.clients import FlextLdapClients
 from flext_ldap.servers.generic_operations import (
     FlextLdapServersGenericOperations,
 )
+from flext_ldap.services.clients import FlextLdapClients
 
 
 @pytest.mark.integration

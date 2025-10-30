@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import cast
 
 import pytest
 from flext_core import FlextContainer, FlextLogger, FlextResult
@@ -23,11 +22,6 @@ from flext_ldap import (
     FlextLdap,
     FlextLdapClients,
     FlextLdapModels,
-)
-from flext_ldap.acl import (
-    FlextLdapAclConverters,
-    FlextLdapAclManager,
-    FlextLdapAclParsers,
 )
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -55,15 +49,6 @@ def secret(value: str = "test") -> SecretStr:
 
 
 # Import test data directly to avoid pyrefly import issues
-SAMPLE_ACL_DATA = {
-    "target": "dc=example,dc=com",
-    "subject": "cn=admin,dc=example,dc=com",
-    "permissions": ["read", "write"],
-    "unified_acl": "target:dc=example,dc=com;subject:cn=admin,dc=example,dc=com;permissions:read,write",
-    "openldap_aci": '(targetattr="*")(version 3.0;acl "test";allow (read,write) userdn="ldap:///cn=admin,dc=example,dc=com";)',
-    "oracle_aci": 'aci: (targetattr="*")(version 3.0;acl "test";allow (read,write) userdn="ldap:///cn=admin,dc=example,dc=com";)',
-}
-
 SAMPLE_GROUP_ENTRY = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
@@ -342,7 +327,7 @@ def ldap_config(clean_ldap_container: dict[str, object]) -> FlextLdapConfig:
         "ldap_use_ssl": False,
         "ldap_bind_dn": str(clean_ldap_container["bind_dn"]),
         "ldap_bind_password": secret(str(clean_ldap_container["password"])),
-        "ldap_connection_timeout": FlextLdapConstants.DEFAULT_TIMEOUT,
+        "ldap_connection_timeout": FlextLdapConstants.Connection.DEFAULT_TIMEOUT,
     }
     return FlextLdapConfig(**config_dict)
 
@@ -356,7 +341,7 @@ def ldap_config_invalid() -> FlextLdapConfig:
     config.ldap_use_ssl = False
     config.ldap_bind_dn = ""  # Invalid empty DN
     config.ldap_bind_password = secret("")  # Invalid empty password
-    config.ldap_connection_timeout = FlextLdapConstants.DEFAULT_TIMEOUT
+    config.ldap_connection_timeout = FlextLdapConstants.Connection.DEFAULT_TIMEOUT
     return config
 
 
@@ -418,22 +403,7 @@ def acl_constants() -> FlextLdapConstants:
     return FlextLdapConstants()
 
 
-@pytest.fixture
-def acl_converters() -> FlextLdapAclConverters:
-    """Get ACL converters instance."""
-    return FlextLdapAclConverters()
-
-
-@pytest.fixture
-def acl_manager() -> FlextLdapAclManager:
-    """Get ACL manager instance."""
-    return FlextLdapAclManager()
-
-
-@pytest.fixture
-def acl_parsers() -> FlextLdapAclParsers:
-    """Get ACL parsers instance."""
-    return FlextLdapAclParsers()
+# ACL fixtures removed - ACL module no longer exists as of Phase 3 backward compatibility removal
 
 
 @pytest.fixture
@@ -442,10 +412,7 @@ def acl_models() -> FlextLdapModels:
     return FlextLdapModels()
 
 
-@pytest.fixture
-def sample_acl_data() -> dict[str, object]:
-    """Get sample ACL data for testing."""
-    return cast("dict[str, object]", SAMPLE_ACL_DATA.copy())
+# sample_acl_data fixture removed - SAMPLE_ACL_DATA no longer exists
 
 
 # =============================================================================
@@ -453,39 +420,7 @@ def sample_acl_data() -> dict[str, object]:
 # =============================================================================
 
 
-@pytest.fixture
-def sample_user() -> FlextLdifModels.Entry:
-    """Get sample user entity."""
-    return FlextLdifModels.Entry(
-        entry_type="user",
-        dn="cn=testuser,ou=people,dc=example,dc=com",
-        cn="Test User",
-        uid="testuser",
-        sn="User",
-        given_name="Test",
-        mail=["testuser@example.com"],
-        telephone_number=["+1234567890"],
-        mobile=["+0987654321"],
-        department="IT",
-        title="Software Engineer",
-        organization="Example Corp",
-        organizational_unit="Engineering",
-        user_password="password123",
-    )
-
-
-@pytest.fixture
-def sample_group() -> FlextLdifModels.Entry:
-    """Get sample group entity."""
-    return FlextLdifModels.Entry(
-        entry_type="group",
-        dn="cn=testgroup,ou=groups,dc=example,dc=com",
-        cn="testgroup",
-        description="Test group",
-        object_classes=["top", "groupOfNames"],
-        gid_number=1000,
-        member_dns=["uid=testuser,ou=people,dc=example,dc=com"],
-    )
+# sample_user and sample_group fixtures removed - use Entry.create() for proper Entry model construction
 
 
 @pytest.fixture
@@ -532,9 +467,11 @@ def multiple_test_groups() -> list[dict[str, object]]:
 
 
 @pytest.fixture
-def validations() -> type[FlextLdapModels.Validations]:
+def validations() -> type:
     """Get validations class (all static methods)."""
-    return FlextLdapModels.Validations
+    from flext_ldap.services.validations import FlextLdapValidations
+
+    return FlextLdapValidations
 
 
 @pytest.fixture
@@ -726,7 +663,7 @@ def shared_ldap_connection_config() -> FlextLdapModels.ConnectionConfig:
         bind_password="admin123",
         base_dn="dc=flext,dc=local",
         use_ssl=False,
-        timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
+        timeout=FlextLdapConstants.Connection.DEFAULT_TIMEOUT,
     )
 
 
@@ -910,11 +847,6 @@ def clean_ldap_state(monkeypatch: pytest.MonkeyPatch) -> None:
 # =============================================================================
 
 __all__ = [
-    "acl_constants",
-    "acl_converters",
-    "acl_manager",
-    "acl_models",
-    "acl_parsers",
     "clean_ldap_container",  # FlextTestDocker session-scoped fixture
     "clean_ldap_state",
     "flext_container",
@@ -931,13 +863,10 @@ __all__ = [
     "mock_search_result",
     "multiple_test_groups",
     "multiple_test_users",
-    "sample_acl_data",
     "sample_dn",
     "sample_filter",
-    "sample_group",
     "sample_invalid_dn",
     "sample_invalid_email",
-    "sample_user",
     "sample_valid_dn",
     "sample_valid_email",
     "sample_valid_filter",

@@ -448,7 +448,7 @@ class TestFlextLdapWithRealFixtures:
         # COMPARE: Verify strict validation
         assert result.is_success
 
-    def test_relaxed_quirks_mode_permissive(self, api: FlextLdap) -> None:
+    def test_relaxed_mode_permissive(self, api: FlextLdap) -> None:
         """Test relaxed quirks mode skips strict checks."""
         # SETUP: Create minimal entry using modern API
         dn_obj = FlextLdifModels.DistinguishedName(value="cn=minimal")

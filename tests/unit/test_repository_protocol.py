@@ -221,7 +221,7 @@ class TestRepositoryBaseProtocol:
         assert hasattr(RepositoryBase, "__abstractmethods__")
         # Should not be able to instantiate directly
         with pytest.raises(TypeError):
-            RepositoryBase()  # type: ignore[arg-type]
+            RepositoryBase()
 
     def test_repository_has_get_by_id_method(self) -> None:
         """Test that RepositoryBase defines get_by_id method."""

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 from flext_ldif import FlextLdifModels
@@ -108,7 +108,7 @@ class FlextLdapProtocols(FlextProtocols):
                 self,
                 search_base: str,
                 search_filter: str,
-                _search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
+                _search_scope: FlextLdapConstants.Types.Ldap3Scope,
                 attributes: list[str] | None = None,
                 _paged_size: int | None = None,
                 paged_cookie: str | bytes | None = None,
@@ -488,7 +488,7 @@ class FlextLdapProtocols(FlextProtocols):
                 base_dn: str,
                 filter_str: str,
                 attributes: list[str] | None = None,
-                scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
+                scope: FlextLdapConstants.Types.Ldap3Scope = "SUBTREE",
                 page_size: int = 0,
                 paged_cookie: bytes | None = None,
             ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -566,7 +566,8 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
             def set_quirks_mode(
-                self, quirks_mode: FlextLdapConstants.Types.QuirksMode
+                self,
+                quirks_mode: FlextLdapConstants.Types.QuirksMode,
             ) -> None:
                 """Set quirks mode for search operations.
 

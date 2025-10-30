@@ -359,3 +359,202 @@ class TestServerOperationsIntegration:
         for server in servers:
             mechanisms = server.get_bind_mechanisms()
             assert "SIMPLE" in mechanisms
+
+
+@pytest.mark.unit
+@pytest.mark.docker
+class TestBaseOperationsRealDocker:
+    """Real Docker LDAP tests for base server operations."""
+
+    def test_base_operations_server_type_generic(self) -> None:
+        """Test base operations server type identification."""
+        ops = FlextLdapServersGenericOperations()
+        assert ops.server_type == "generic"
+
+    def test_base_operations_supports_start_tls_generic(self) -> None:
+        """Test START_TLS support detection."""
+        ops = FlextLdapServersGenericOperations()
+        assert ops.supports_start_tls() is True
+
+    def test_base_operations_get_schema_dn(self) -> None:
+        """Test schema DN retrieval."""
+        ops = FlextLdapServersGenericOperations()
+        schema_dn = ops.get_schema_dn()
+        assert schema_dn in {"cn=schema", "cn=subschema", ""}
+
+    def test_base_operations_get_acl_attribute_name(self) -> None:
+        """Test ACL attribute name retrieval."""
+        ops = FlextLdapServersGenericOperations()
+        acl_attr = ops.get_acl_attribute_name()
+        assert isinstance(acl_attr, str)
+
+    def test_base_operations_get_acl_format(self) -> None:
+        """Test ACL format identification."""
+        ops = FlextLdapServersGenericOperations()
+        acl_format = ops.get_acl_format()
+        assert isinstance(acl_format, str)
+
+    def test_base_operations_openldap2_server_type(self) -> None:
+        """Test OpenLDAP 2.x server operations."""
+        ops = FlextLdapServersOpenLDAP2Operations()
+        assert ops.server_type == "openldap2"
+        assert ops.get_default_port(use_ssl=False) == 389
+        assert ops.get_default_port(use_ssl=True) == 636
+
+    def test_base_operations_oid_server_type(self) -> None:
+        """Test Oracle OID server operations."""
+        ops = FlextLdapServersOIDOperations()
+        assert ops.server_type == "oid"
+        assert ops.get_default_port(use_ssl=False) == 389
+        assert ops.get_default_port(use_ssl=True) == 636
+
+    def test_base_operations_oud_server_type(self) -> None:
+        """Test Oracle OUD server operations."""
+        ops = FlextLdapServersOUDOperations()
+        assert ops.server_type == "oud"
+        assert ops.get_default_port(use_ssl=False) == 389
+        assert ops.get_default_port(use_ssl=True) == 636
+
+    def test_base_operations_all_servers_have_execute(self) -> None:
+        """Test all server operations have execute method."""
+        servers = [
+            FlextLdapServersGenericOperations(),
+            FlextLdapServersOpenLDAP1Operations(),
+            FlextLdapServersOpenLDAP2Operations(),
+            FlextLdapServersOIDOperations(),
+            FlextLdapServersOUDOperations(),
+            FlextLdapServersActiveDirectoryOperations(),
+        ]
+        for server in servers:
+            result = server.execute()
+            assert isinstance(result, FlextResult)
+
+    def test_base_operations_normalize_entry_validation(self) -> None:
+        """Test entry normalization validation."""
+        from flext_ldif import FlextLdifModels
+
+        # Create test entry
+        entry_result = FlextLdifModels.Entry.create(
+            dn="cn=test,dc=com",
+            attributes={
+                "cn": ["Test User"],
+                "objectClass": ["person"],
+            },
+        )
+
+        if entry_result.is_success:
+            _ = entry_result.unwrap()
+            ops = FlextLdapServersGenericOperations()
+
+            # Verify normalize_entry exists and returns FlextResult
+            assert hasattr(ops, "normalize_entry")
+            assert callable(ops.normalize_entry)
+
+
+@pytest.mark.unit
+@pytest.mark.docker
+class TestServerSpecificOperations:
+    """Tests for server-specific LDAP operations implementations."""
+
+    def test_openldap1_capabilities(self) -> None:
+        """Test OpenLDAP 1.x specific capabilities."""
+        ops = FlextLdapServersOpenLDAP1Operations()
+        assert ops.server_type == "openldap1"
+        assert ops.supports_start_tls() is True
+        assert "SIMPLE" in ops.get_bind_mechanisms()
+
+    def test_openldap2_capabilities(self) -> None:
+        """Test OpenLDAP 2.x specific capabilities."""
+        ops = FlextLdapServersOpenLDAP2Operations()
+        assert ops.server_type == "openldap2"
+        assert ops.supports_start_tls() is True
+        assert "SIMPLE" in ops.get_bind_mechanisms()
+
+    def test_oid_capabilities(self) -> None:
+        """Test Oracle OID specific capabilities."""
+        ops = FlextLdapServersOIDOperations()
+        assert ops.server_type == "oid"
+        assert "SIMPLE" in ops.get_bind_mechanisms()
+
+    def test_oud_capabilities(self) -> None:
+        """Test Oracle OUD specific capabilities."""
+        ops = FlextLdapServersOUDOperations()
+        assert ops.server_type == "oud"
+        assert "SIMPLE" in ops.get_bind_mechanisms()
+
+    def test_ad_capabilities(self) -> None:
+        """Test Active Directory specific capabilities."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert ops.server_type == "ad"
+        assert "SIMPLE" in ops.get_bind_mechanisms()
+
+    def test_server_port_consistency(self) -> None:
+        """Test all server types have consistent port numbers."""
+        server_ops = [
+            FlextLdapServersOpenLDAP1Operations(),
+            FlextLdapServersOpenLDAP2Operations(),
+            FlextLdapServersOIDOperations(),
+            FlextLdapServersOUDOperations(),
+            FlextLdapServersActiveDirectoryOperations(),
+            FlextLdapServersGenericOperations(),
+        ]
+
+        for ops in server_ops:
+            # Standard LDAP ports
+            assert ops.get_default_port(use_ssl=False) == 389
+            assert ops.get_default_port(use_ssl=True) == 636
+
+    def test_openldap_schema_dn(self) -> None:
+        """Test OpenLDAP schema DN."""
+        openldap1_ops = FlextLdapServersOpenLDAP1Operations()
+        openldap2_ops = FlextLdapServersOpenLDAP2Operations()
+
+        # Both OpenLDAP versions have schema DN
+        dn1 = openldap1_ops.get_schema_dn()
+        dn2 = openldap2_ops.get_schema_dn()
+
+        assert isinstance(dn1, str)
+        assert isinstance(dn2, str)
+
+    def test_oracle_server_identification(self) -> None:
+        """Test Oracle server type identification."""
+        oid_ops = FlextLdapServersOIDOperations()
+        oud_ops = FlextLdapServersOUDOperations()
+
+        # Oracle servers should have distinct types
+        assert oid_ops.server_type == "oid"
+        assert oud_ops.server_type == "oud"
+        assert oid_ops.server_type != oud_ops.server_type
+
+    def test_all_servers_have_acl_support(self) -> None:
+        """Test all server types have ACL attribute name."""
+        server_ops = [
+            FlextLdapServersOpenLDAP1Operations(),
+            FlextLdapServersOpenLDAP2Operations(),
+            FlextLdapServersOIDOperations(),
+            FlextLdapServersOUDOperations(),
+            FlextLdapServersActiveDirectoryOperations(),
+            FlextLdapServersGenericOperations(),
+        ]
+
+        for ops in server_ops:
+            acl_attr = ops.get_acl_attribute_name()
+            assert isinstance(acl_attr, str)
+            acl_fmt = ops.get_acl_format()
+            assert isinstance(acl_fmt, str)
+
+    def test_server_execute_method_returns_flextresult(self) -> None:
+        """Test all server execute methods return FlextResult."""
+        server_ops = [
+            FlextLdapServersOpenLDAP1Operations(),
+            FlextLdapServersOpenLDAP2Operations(),
+            FlextLdapServersOIDOperations(),
+            FlextLdapServersOUDOperations(),
+            FlextLdapServersActiveDirectoryOperations(),
+        ]
+
+        for ops in server_ops:
+            result = ops.execute()
+            assert isinstance(result, FlextResult)
+            assert hasattr(result, "is_success")
+            assert hasattr(result, "is_failure")

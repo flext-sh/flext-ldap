@@ -1,251 +1,296 @@
-"""Comprehensive tests for FlextLdapAuthentication module.
+"""Unit tests for FlextLdapAuthentication service.
 
-Tests cover:
-- Initialization and factory methods
+Tests the actual FlextLdapAuthentication API including:
+- Service initialization and FlextService integration
 - Connection context management
-- User authentication with various scenarios
-- Credential validation
-- Error handling and edge cases
+- Credential validation with proper error handling
+- User authentication with FlextResult patterns
+- Execute methods required by FlextService
+
+All tests use real FlextLdapAuthentication objects with no mocks for initialization
+and configuration. LDAP-specific tests (validate_credentials, authenticate_user)
+verify error handling when connection context is not available.
+
+Docker-based integration tests are deferred to tests/integration/ for real LDAP operations.
 """
 
-from unittest.mock import Mock, patch
+from __future__ import annotations
 
 import pytest
-from flext_core import (
-    FlextModels,
-)
-from ldap3 import Connection, Server
+from flext_core import FlextModels, FlextResult
 
-from flext_ldap.authentication import FlextLdapAuthentication
-
-
-@pytest.fixture
-def mock_connection() -> Mock:
-    """Create a mock LDAP connection."""
-    conn = Mock(spec=Connection)
-    conn.bound = True
-    conn.entries = []
-    return conn
-
-
-@pytest.fixture
-def mock_server() -> Mock:
-    """Create a mock LDAP server."""
-    return Mock(spec=Server)
-
-
-@pytest.fixture
-def mock_config() -> Mock:
-    """Create a mock LDAP configuration."""
-    config = Mock()
-    config.ldap_base_dn = "dc=test,dc=local"
-    return config
-
-
-@pytest.fixture
-def auth_service() -> FlextLdapAuthentication:
-    """Create an authentication service instance."""
-    return FlextLdapAuthentication()
-
-
-@pytest.fixture
-def auth_with_context(
-    auth_service: FlextLdapAuthentication,
-    mock_connection: Mock,
-    mock_server: Mock,
-    mock_config: Mock,
-) -> FlextLdapAuthentication:
-    """Create authentication service with connection context."""
-    auth_service.set_connection_context(mock_connection, mock_server, mock_config)
-    return auth_service
+from flext_ldap.config import FlextLdapConfig
+from flext_ldap.services.authentication import FlextLdapAuthentication
 
 
 class TestFlextLdapAuthenticationInitialization:
-    """Test authentication service initialization."""
+    """Test FlextLdapAuthentication initialization and basic functionality."""
 
-    def test_authentication_initialization(self) -> None:
-        """Test basic authentication initialization."""
+    @pytest.mark.unit
+    def test_authentication_service_can_be_instantiated(self) -> None:
+        """Test FlextLdapAuthentication can be instantiated."""
         auth = FlextLdapAuthentication()
         assert auth is not None
+        assert isinstance(auth, FlextLdapAuthentication)
+
+    @pytest.mark.unit
+    def test_authentication_service_has_logger(self) -> None:
+        """Test authentication service inherits logger from FlextService."""
+        auth = FlextLdapAuthentication()
+        assert hasattr(auth, "logger")
+        assert auth.logger is not None
+
+    @pytest.mark.unit
+    def test_authentication_service_has_container(self) -> None:
+        """Test authentication service has container from FlextService."""
+        auth = FlextLdapAuthentication()
+        assert hasattr(auth, "container")
+
+    @pytest.mark.unit
+    def test_authentication_service_connection_initially_none(self) -> None:
+        """Test connection context is initially None."""
+        auth = FlextLdapAuthentication()
         assert auth._connection is None
         assert auth._server is None
         assert auth._ldap_config is None
 
-    def test_set_connection_context(
-        self,
-        auth_service: FlextLdapAuthentication,
-        mock_connection: Mock,
-        mock_server: Mock,
-        mock_config: Mock,
-    ) -> None:
-        """Test setting connection context."""
-        auth_service.set_connection_context(mock_connection, mock_server, mock_config)
-        assert auth_service._connection is mock_connection
-        assert auth_service._server is mock_server
-        assert auth_service._ldap_config is mock_config
+
+class TestConnectionContextManagement:
+    """Test connection context management."""
+
+    @pytest.mark.unit
+    def test_set_connection_context_with_all_none(self) -> None:
+        """Test setting connection context with all None values."""
+        auth = FlextLdapAuthentication()
+        auth.set_connection_context(None, None, None)
+        assert auth._connection is None
+        assert auth._server is None
+        assert auth._ldap_config is None
+
+    @pytest.mark.unit
+    def test_set_connection_context_with_config(self) -> None:
+        """Test setting connection context with config."""
+        auth = FlextLdapAuthentication()
+        config = FlextLdapConfig()
+        auth.set_connection_context(None, None, config)
+        assert auth._ldap_config is config
+
+    @pytest.mark.unit
+    def test_set_connection_context_idempotent(self) -> None:
+        """Test setting connection context multiple times."""
+        auth = FlextLdapAuthentication()
+        config1 = FlextLdapConfig()
+        config2 = FlextLdapConfig()
+
+        auth.set_connection_context(None, None, config1)
+        assert auth._ldap_config is config1
+
+        auth.set_connection_context(None, None, config2)
+        assert auth._ldap_config is config2
 
 
-class TestFlextLdapAuthenticationUserAuth:
-    """Test user authentication functionality."""
+class TestAuthenticationExecute:
+    """Test the execute method required by FlextService."""
 
-    def test_authenticate_user_no_connection(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test authenticate_user fails without connection."""
-        result = auth_service.authenticate_user("testuser", "testpass")
-        assert result.is_failure
-        assert result.error and "connection not established" in result.error.lower()
+    @pytest.mark.unit
+    def test_execute_returns_flext_result(self) -> None:
+        """Test execute method returns FlextResult."""
+        auth = FlextLdapAuthentication()
+        result = auth.execute()
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_execute_returns_success(self) -> None:
+        """Test execute method returns successful result."""
+        auth = FlextLdapAuthentication()
+        result = auth.execute()
+        assert result.is_success
+
+    @pytest.mark.unit
+    def test_execute_result_value_is_none(self) -> None:
+        """Test execute result unwraps to None as per design."""
+        auth = FlextLdapAuthentication()
+        result = auth.execute()
+        assert result.unwrap() is None
 
 
-class TestFlextLdapAuthenticationCredentials:
-    """Test credential validation functionality."""
+class TestExecuteOperation:
+    """Test the execute_operation method."""
 
-    def test_validate_credentials_no_connection(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test validate_credentials fails without connection context."""
-        result = auth_service.validate_credentials(
-            "cn=test,dc=example,dc=com", "password"
+    @pytest.mark.unit
+    def test_execute_operation_returns_flext_result(self) -> None:
+        """Test execute_operation method returns FlextResult."""
+        auth = FlextLdapAuthentication()
+
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
+
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="test-op",
+            operation_callable=dummy_operation,
+            arguments={},
         )
-        assert result.is_failure
-        assert result.error and "no connection context" in result.error.lower()
+        result = auth.execute_operation(request)
+        assert isinstance(result, FlextResult)
 
-    def test_validate_credentials_bind_failure(
-        self, auth_with_context: FlextLdapAuthentication, mock_server: Mock
-    ) -> None:
-        """Test validate_credentials with bind failure."""
-        with patch("flext_ldap.authentication.Connection") as mock_conn_class:
-            mock_test_conn = Mock(spec=Connection)
-            mock_test_conn.bind.return_value = False
-            mock_test_conn.bound = False
-            mock_conn_class.return_value = mock_test_conn
+    @pytest.mark.unit
+    def test_execute_operation_returns_success(self) -> None:
+        """Test execute_operation method returns successful result."""
+        auth = FlextLdapAuthentication()
 
-            result = auth_with_context.validate_credentials(
-                "cn=test,dc=example,dc=com", "wrongpass"
-            )
-            # Should succeed but return False
-            assert result.is_success
-            assert result.unwrap() is False
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
 
-    def test_validate_credentials_success(
-        self, auth_with_context: FlextLdapAuthentication, mock_server: Mock
-    ) -> None:
-        """Test successful credential validation."""
-        with patch("flext_ldap.authentication.Connection") as mock_conn_class:
-            mock_test_conn = Mock(spec=Connection)
-            mock_test_conn.bind.return_value = True
-            mock_test_conn.bound = True
-            mock_test_conn.unbind.return_value = None
-            mock_conn_class.return_value = mock_test_conn
-
-            result = auth_with_context.validate_credentials(
-                "cn=test,dc=example,dc=com", "correctpass"
-            )
-            assert result.is_success
-            assert result.unwrap() is True
-
-
-class TestFlextLdapAuthenticationHelpers:
-    """Test helper methods."""
-
-    def test_validate_connection_no_connection(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test connection validation fails without connection."""
-        result = auth_service._validate_connection()
-        assert result.is_failure
-        assert result.error and "connection not established" in result.error.lower()
-
-    def test_validate_connection_with_connection(
-        self, auth_with_context: FlextLdapAuthentication
-    ) -> None:
-        """Test connection validation succeeds with connection."""
-        result = auth_with_context._validate_connection()
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="test-op",
+            operation_callable=dummy_operation,
+            arguments={},
+        )
+        result = auth.execute_operation(request)
         assert result.is_success
 
-    def test_search_user_by_username_no_connection(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test user search fails without connection."""
-        result = auth_service._search_user_by_username("testuser")
+    @pytest.mark.unit
+    def test_execute_operation_result_value_is_none(self) -> None:
+        """Test execute_operation result unwraps to None."""
+        auth = FlextLdapAuthentication()
+
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
+
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="test-op",
+            operation_callable=dummy_operation,
+            arguments={},
+        )
+        result = auth.execute_operation(request)
+        assert result.unwrap() is None
+
+
+class TestValidateCredentialsWithoutConnection:
+    """Test validate_credentials behavior without connection context."""
+
+    @pytest.mark.unit
+    def test_validate_credentials_without_connection_fails(self) -> None:
+        """Test validate_credentials fails when no connection context is set."""
+        auth = FlextLdapAuthentication()
+        result = auth.validate_credentials("cn=user,dc=example,dc=com", "password")
         assert result.is_failure
-        assert result.error and "connection not established" in result.error.lower()
+        assert "connection context" in result.error.lower()
 
-    def test_search_user_by_username_not_found(
-        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
-    ) -> None:
-        """Test user search returns failure when user not found."""
-        mock_connection.entries = []
-        mock_connection.search.return_value = True
+    @pytest.mark.unit
+    def test_validate_credentials_returns_flext_result(self) -> None:
+        """Test validate_credentials returns FlextResult[bool]."""
+        auth = FlextLdapAuthentication()
+        result = auth.validate_credentials("cn=user,dc=example,dc=com", "password")
+        assert isinstance(result, FlextResult)
 
-        result = auth_with_context._search_user_by_username("nonexistent")
+    @pytest.mark.unit
+    def test_validate_credentials_with_empty_dn_fails(self) -> None:
+        """Test validate_credentials with empty DN fails gracefully."""
+        auth = FlextLdapAuthentication()
+        result = auth.validate_credentials("", "password")
         assert result.is_failure
-        assert result.error and "user not found" in result.error.lower()
 
-    def test_search_user_by_username_found(
-        self, auth_with_context: FlextLdapAuthentication, mock_connection: Mock
-    ) -> None:
-        """Test user search succeeds when user found."""
-        mock_entry = Mock()
-        mock_entry.entry_dn = "uid=testuser,ou=users,dc=test,dc=local"
-        mock_connection.entries = [mock_entry]
-        mock_connection.search.return_value = True
+    @pytest.mark.unit
+    def test_validate_credentials_with_empty_password_fails(self) -> None:
+        """Test validate_credentials with empty password fails gracefully."""
+        auth = FlextLdapAuthentication()
+        result = auth.validate_credentials("cn=user,dc=example,dc=com", "")
+        assert result.is_failure
 
-        result = auth_with_context._search_user_by_username("testuser")
+
+class TestAuthenticateUserWithoutConnection:
+    """Test authenticate_user behavior without connection context."""
+
+    @pytest.mark.unit
+    def test_authenticate_user_without_connection_fails(self) -> None:
+        """Test authenticate_user fails when no connection context is set."""
+        auth = FlextLdapAuthentication()
+        result = auth.authenticate_user("testuser", "password")
+        assert result.is_failure
+        assert "connection" in result.error.lower()
+
+    @pytest.mark.unit
+    def test_authenticate_user_returns_flext_result(self) -> None:
+        """Test authenticate_user returns FlextResult[FlextLdifModels.Entry]."""
+        auth = FlextLdapAuthentication()
+        result = auth.authenticate_user("testuser", "password")
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_authenticate_user_with_empty_username_fails(self) -> None:
+        """Test authenticate_user with empty username fails gracefully."""
+        auth = FlextLdapAuthentication()
+        result = auth.authenticate_user("", "password")
+        assert result.is_failure
+
+    @pytest.mark.unit
+    def test_authenticate_user_with_empty_password_fails(self) -> None:
+        """Test authenticate_user with empty password fails gracefully."""
+        auth = FlextLdapAuthentication()
+        result = auth.authenticate_user("testuser", "")
+        assert result.is_failure
+
+
+class TestAuthenticationIntegration:
+    """Integration tests for FlextLdapAuthentication service."""
+
+    @pytest.mark.unit
+    def test_complete_authentication_service_workflow(self) -> None:
+        """Test complete authentication service workflow."""
+        # Create service
+        auth = FlextLdapAuthentication()
+        assert auth is not None
+
+        # Set connection context
+        config = FlextLdapConfig()
+        auth.set_connection_context(None, None, config)
+        assert auth._ldap_config is config
+
+        # Execute service
+        result = auth.execute()
         assert result.is_success
-        assert result.unwrap() is mock_entry
 
-    def test_create_user_from_entry_result(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test creating user from entry result."""
-        # Modern Entry API: use real Entry with DistinguishedName and LdifAttributes
-        from flext_ldif import FlextLdifModels
+    @pytest.mark.unit
+    def test_authentication_service_with_operation_request(self) -> None:
+        """Test authentication service with operation request."""
+        auth = FlextLdapAuthentication()
 
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="uid=testuser,ou=users,dc=test,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "uid": ["testuser"],
-                    "cn": ["Test User"],
-                    "sn": ["User"],
-                    "mail": ["test@example.com"],
-                    "objectClass": ["inetOrgPerson", "person"],
-                }
-            ),
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
+
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="auth-test",
+            operation_callable=dummy_operation,
+            arguments={"username": "test"},
         )
 
-        result = auth_service._create_user_from_entry_result(entry)
-        assert result.is_success
-        user = result.unwrap()
-        # Modern Entry API: access attributes via attributes.attributes dict
-        assert user.attributes.attributes.get("uid") == ["testuser"]
-        assert user.attributes.attributes.get("cn") == ["Test User"]
-        assert user.attributes.attributes.get("sn") == ["User"]
-        assert user.attributes.attributes.get("mail") == ["test@example.com"]
-
-
-class TestFlextLdapAuthenticationExecute:
-    """Test service execute methods."""
-
-    def test_execute_returns_success(
-        self, auth_service: FlextLdapAuthentication
-    ) -> None:
-        """Test execute method returns success."""
-        result = auth_service.execute()
+        result = auth.execute_operation(request)
+        assert isinstance(result, FlextResult)
         assert result.is_success
 
-    def test_execute_operation(self, auth_service: FlextLdapAuthentication) -> None:
-        """Test execute_operation method."""
+    @pytest.mark.unit
+    def test_authentication_service_flext_result_pattern(self) -> None:
+        """Test all public methods follow FlextResult railway pattern."""
+        auth = FlextLdapAuthentication()
 
-        def test_op() -> None:
-            return None
+        # All should return FlextResult
+        assert isinstance(auth.execute(), FlextResult)
+        assert isinstance(
+            auth.validate_credentials("test", "test"),
+            FlextResult,
+        )
+        assert isinstance(
+            auth.authenticate_user("test", "test"),
+            FlextResult,
+        )
 
-        operation = FlextModels.OperationExecutionRequest(
+        def dummy_operation() -> None:
+            """Dummy operation for testing."""
+
+        request = FlextModels.OperationExecutionRequest(
             operation_name="test",
-            operation_callable=test_op,
+            operation_callable=dummy_operation,
+            arguments={},
         )
-        result = auth_service.execute_operation(operation)
-        assert result.is_success
+        assert isinstance(auth.execute_operation(request), FlextResult)

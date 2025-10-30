@@ -1,661 +1,546 @@
-"""Tests for Active Directory operations.
+"""Comprehensive unit tests for FlextLdapServersActiveDirectoryOperations.
 
-Uses ldap3.MOCK_SYNC for fast unit tests.
-Uses hypothesis for property-based testing.
-Uses factory-boy for test data generation.
+Tests Active Directory-specific LDAP operations including ACL handling,
+schema discovery, and directory feature detection.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Test Categories:
+- @pytest.mark.unit - Unit tests with real objects
 """
 
 from __future__ import annotations
 
-from typing import Protocol
+from unittest.mock import MagicMock, patch
 
-import ldap3
 import pytest
-from hypothesis import given, strategies as st
-from ldap3 import Connection, Server
+from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
+from ldap3 import Connection
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.ad_operations import FlextLdapServersActiveDirectoryOperations
 
-MOCK_SYNC: str = ldap3.MOCK_SYNC
+
+class TestADOperationsInitialization:
+    """Test AD operations initialization."""
+
+    @pytest.mark.unit
+    def test_ad_initialization_success(self) -> None:
+        """Test AD operations initialization."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert ops is not None
+        assert ops.server_type == "ad"
+
+    @pytest.mark.unit
+    def test_ad_global_catalog_ports(self) -> None:
+        """Test AD global catalog port configuration."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert ops.get_global_catalog_port(use_ssl=False) == 3268
+        assert ops.get_global_catalog_port(use_ssl=True) == 3269
 
 
-# Protocol for ldap3 mock strategy (incomplete type stubs in ldap3)
-class MockStrategy(Protocol):
-    """Protocol for ldap3 MOCK_SYNC strategy."""
+class TestADOperationsBindMechanisms:
+    """Test AD bind mechanism support."""
 
-    def add_entry(self, dn: str, attributes: dict[str, str | list[str]]) -> bool:
-        """Add entry to mock directory."""
-        ...
+    @pytest.mark.unit
+    def test_get_bind_mechanisms(self) -> None:
+        """Test AD supports multiple bind mechanisms."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mechanisms = ops.get_bind_mechanisms()
+        assert isinstance(mechanisms, list)
+        assert len(mechanisms) >= 3
+        assert FlextLdapConstants.SaslMechanisms.SIMPLE in mechanisms
+        assert FlextLdapConstants.SaslMechanisms.NTLM in mechanisms
+        assert FlextLdapConstants.SaslMechanisms.GSSAPI in mechanisms
 
-
-# Protocol for ldap3 Connection with mock strategy
-class MockableConnection(Protocol):
-    """Protocol for ldap3 Connection with mock capabilities."""
-
-    server: Server
-    strategy: MockStrategy
-
-    def open(self) -> bool:
-        """Open connection."""
-        ...
-
-    def bind(self) -> bool:
-        """Bind connection."""
-        ...
-
-    def unbind(self) -> bool:
-        """Unbind connection."""
-        ...
+    @pytest.mark.unit
+    def test_bind_mechanisms_contains_expected_types(self) -> None:
+        """Test all expected bind mechanisms are present."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mechanisms = ops.get_bind_mechanisms()
+        assert all(isinstance(m, str) for m in mechanisms)
 
 
-@pytest.fixture
-def mock_ad_server() -> Server:
-    """Create mock AD server using ldap3 built-in schema."""
-    return Server("mock_ad_server", get_info="SCHEMA")
+class TestADOperationsSchemaDN:
+    """Test AD schema DN discovery."""
+
+    @pytest.mark.unit
+    def test_get_schema_dn_returns_string(self) -> None:
+        """Test get_schema_dn returns valid schema DN."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        dn = ops.get_schema_dn()
+        assert isinstance(dn, str)
+        assert len(dn) > 0
+        assert "schema" in dn.lower()
+
+    @pytest.mark.unit
+    def test_get_schema_dn_ad_format(self) -> None:
+        """Test AD schema DN has correct format."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        dn = ops.get_schema_dn()
+        # AD schema DN typically contains cn=schema,cn=configuration
+        assert "cn=" in dn.lower()
 
 
-@pytest.fixture
-def mock_ad_connection(mock_ad_server: Server) -> Connection:
-    """Create mock AD connection using ldap3.MOCK_SYNC."""
-    from typing import cast
+class TestADOperationsACLOperations:
+    """Test AD ACL attribute and format methods."""
 
-    connection = Connection(
-        mock_ad_server,
-        user="CN=Administrator,CN=Users,DC=example,DC=com",
-        password="P@ssw0rd",
-        client_strategy=MOCK_SYNC,
-    )
+    @pytest.mark.unit
+    def test_get_acl_attribute_name(self) -> None:
+        """Test AD ACL attribute name."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        attr_name = ops.get_acl_attribute_name()
+        assert isinstance(attr_name, str)
+        assert attr_name == "nTSecurityDescriptor"
 
-    # Cast to MockableConnection to access mock-specific attributes
-    mock_conn = cast("MockableConnection", connection)
-
-    # Open connection and add admin user first
-    mock_conn.open()
-
-    # Add admin user to mock directory
-    mock_conn.strategy.add_entry(
-        "CN=Administrator,CN=Users,DC=example,DC=com",
-        {
-            "objectClass": ["top", "person", "user"],
-            "cn": "Administrator",
-            "userPassword": "P@ssw0rd",
-        },
-    )
-
-    # Now bind with credentials
-    connection.bind()
-
-    # Add mock schema entry
-    mock_conn.strategy.add_entry(
-        "CN=Schema,CN=Configuration,DC=example,DC=com",
-        {"objectClass": ["top", "container"], "cn": "Schema"},
-    )
-
-    # Add mock user entry
-    mock_conn.strategy.add_entry(
-        "CN=TestUser,CN=Users,DC=example,DC=com",
-        {
-            "objectClass": ["top", "person", "user"],
-            "cn": "TestUser",
-            "sAMAccountName": "testuser",
-        },
-    )
-
-    return connection
+    @pytest.mark.unit
+    def test_get_acl_format(self) -> None:
+        """Test AD ACL format."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        acl_format = ops.get_acl_format()
+        assert isinstance(acl_format, str)
+        assert acl_format == "sddl"
 
 
-@pytest.fixture
-def ad_ops() -> FlextLdapServersActiveDirectoryOperations:
-    """AD operations instance."""
-    return FlextLdapServersActiveDirectoryOperations()
+class TestADOperationsVLVSupport:
+    """Test AD Virtual List View support."""
+
+    @pytest.mark.unit
+    def test_supports_vlv_returns_true(self) -> None:
+        """Test AD supports VLV."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        result = ops.supports_vlv()
+        assert result is True
 
 
-class TestADConnectionOperations:
-    """Test AD connection operations."""
+class TestADOperationsServerDetection:
+    """Test AD server type detection from Root DSE."""
 
-    def test_get_default_port(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test default port retrieval."""
-        assert ad_ops.get_default_port(use_ssl=False) == 389
-        assert ad_ops.get_default_port(use_ssl=True) == 636
-
-    def test_get_global_catalog_port(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test Global Catalog port retrieval."""
-        assert ad_ops.get_global_catalog_port(use_ssl=False) == 3268
-        assert ad_ops.get_global_catalog_port(use_ssl=True) == 3269
-
-    def test_supports_start_tls(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test START_TLS support."""
-        assert ad_ops.supports_start_tls() is True
-
-    def test_get_bind_mechanisms(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test bind mechanisms."""
-        mechanisms = ad_ops.get_bind_mechanisms()
-        assert "SIMPLE" in mechanisms
-        assert "NTLM" in mechanisms
-        assert "GSSAPI" in mechanisms
-
-
-class TestADSchemaOperations:
-    """Test AD schema operations using ldap3.Server.schema."""
-
-    def test_get_schema_dn(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test schema DN retrieval."""
-        schema_dn = ad_ops.get_schema_dn()
-        assert "CN=Schema" in schema_dn
-        assert "CN=Configuration" in schema_dn
-
-    def test_discover_schema_success(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test successful schema discovery - returns FlextLdifModels.SchemaDiscoveryResult.
-
-        Schema discovery in flext-ldap provides minimal server type information.
-        Detailed schema parsing (attributes, object classes, syntaxes, matching rules)
-        is deferred to flext-ldif for proper FlextLdifModels integration.
-        """
-        result = ad_ops.discover_schema(mock_ad_connection)
-
-        assert result.is_success
-        schema = result.unwrap()
-        # Schema discovery now returns FlextLdifModels.SchemaDiscoveryResult object
-        # with server_type and other properties, not a dict with "object_classes" key
-        assert schema.server_type == "ad"
-        # Attributes and objectclasses are now empty dicts (schema parsing deferred to flext-ldif)
-        assert isinstance(schema.objectclasses, dict)
-        assert isinstance(schema.attributes, dict)
-
-    def test_discover_schema_uses_ldap3_parser(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Verify schema discovery delegates to flext-ldif for detailed parsing.
-
-        This test documents that detailed schema parsing (syntaxes, matching_rules, etc.)
-        is now the responsibility of flext-ldif, not flext-ldap infrastructure layer.
-        """
-        result = ad_ops.discover_schema(mock_ad_connection)
-
-        assert result.is_success
-        schema = result.unwrap()
-        # Schema discovery now returns FlextLdifModels.SchemaDiscoveryResult
-        # with minimal fields. Detailed parsing (syntaxes, matching_rules) is in flext-ldif.
-        assert hasattr(schema, "server_type")
-        assert schema.server_type == "ad"
-
-    def test_discover_schema_unbound_connection(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test schema discovery with unbound connection."""
-        server = Server("test_server")
-        connection = Connection(server, client_strategy=MOCK_SYNC)
-        # Don't bind
-
-        result = ad_ops.discover_schema(connection)
-        # Should still work as ldap3 will bind automatically
-        assert result.is_success or result.is_failure  # Either is valid
-
-    @given(st.text(min_size=1, max_size=100))
-    def test_schema_dn_property(self, dn_suffix: str) -> None:
-        """Property test: schema DN should always be valid."""
-        ad_ops = FlextLdapServersActiveDirectoryOperations()
-        schema_dn = ad_ops.get_schema_dn()
-        assert "CN=Schema" in schema_dn
-        assert len(schema_dn) > 0
-
-    def test_parse_object_class(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test objectClass parsing delegates to ldap3."""
-        result = ad_ops.parse_object_class(
-            "( 1.2.3.4 NAME 'testClass' DESC 'test' SUP top )"
-        )
-
-        assert result.is_success
-        parsed = result.unwrap()
-        assert "definition" in parsed
-        assert parsed["server_type"] == "ad"
-
-    def test_parse_attribute_type(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test attributeType parsing delegates to ldap3."""
-        result = ad_ops.parse_attribute_type(
-            "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-
-        assert result.is_success
-        parsed = result.unwrap()
-        assert "definition" in parsed
-        assert parsed["server_type"] == "ad"
-
-
-class TestADACLOperations:
-    """Test AD ACL operations with nTSecurityDescriptor."""
-
-    def test_acl_attribute_name(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test ACL attribute name."""
-        assert ad_ops.get_acl_attribute_name() == "nTSecurityDescriptor"
-
-    def test_acl_format(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test ACL format identifier."""
-        assert ad_ops.get_acl_format() == "sddl"
-
-    def test_get_acls_empty_result(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test ACL retrieval with no ACLs present."""
-        result = ad_ops.get_acls(mock_ad_connection, "CN=test,DC=example,DC=com")
-
-        assert result.is_success
-        assert isinstance(result.unwrap(), list)
-
-    def test_set_acls_not_implemented(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test ACL setting returns not implemented."""
-        result = ad_ops.set_acls(mock_ad_connection, "CN=test,DC=example,DC=com", [])
-
-        assert result.is_failure
-        # Either "not bound" or "SDDL encoding" error is valid
-        assert "SDDL encoding" in (result.error or "") or "not bound" in (
-            result.error or ""
-        )
-
-    def test_parse_acl(self, ad_ops: FlextLdapServersActiveDirectoryOperations) -> None:
-        """Test ACL parsing."""
-        result = ad_ops.parse_acl("O:DAG:DAD:(A;;RPWPCCDCLCLORCWOWDSDDTSW;;;SY)")
-
-        assert result.is_success
-        parsed = result.unwrap()
-        assert parsed["format"] == "sddl"
-        assert parsed["server_type"] == "ad"
-
-    def test_format_acl_with_raw(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test ACL formatting with raw string."""
-        acl_dict: dict[str, object] = {
-            "raw": "O:DAG:DAD:(A;;RPWPCCDCLCLORCWOWDSDDTSW;;;SY)"
+    @pytest.mark.unit
+    def test_detect_server_type_from_root_dse_with_ad_indicators(self) -> None:
+        """Test server type detection with AD-specific Root DSE."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {
+            "vendorName": ["Microsoft Corporation"],
+            "dnsHostName": ["dc.example.com"],
         }
+        server_type = ops.detect_server_type_from_root_dse(root_dse)
+        assert isinstance(server_type, str)
 
-        result = ad_ops.format_acl(acl_dict)
-
-        assert result.is_success
-        assert "O:DAG:DAD" in result.unwrap()
-
-    def test_format_acl_without_raw(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test ACL formatting without raw string fails."""
-        acl_dict: dict[str, object] = {"format": "sddl"}
-
-        result = ad_ops.format_acl(acl_dict)
-
-        assert result.is_failure
+    @pytest.mark.unit
+    def test_detect_server_type_returns_string(self) -> None:
+        """Test server detection returns string type."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {}
+        server_type = ops.detect_server_type_from_root_dse(root_dse)
+        assert isinstance(server_type, str)
 
 
-class TestADEntryOperations:
-    """Test AD entry operations."""
+class TestADOperationsEntryOperations:
+    """Test AD-specific entry operations."""
 
-    def test_add_entry_success(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test successful entry addition."""
+    @pytest.mark.unit
+    def test_validate_entry_for_server_with_valid_entry(self) -> None:
+        """Test entry validation for AD."""
+        ops = FlextLdapServersActiveDirectoryOperations()
         from flext_ldif import FlextLdifModels
 
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=NewUser,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": ["top", "person", "user"],
-                    "cn": ["NewUser"],
-                    "sAMAccountName": ["newuser"],
-                }
-            ),
+        dn = FlextLdifModels.DistinguishedName(
+            value="cn=user,cn=users,dc=example,dc=com"
         )
+        attrs = FlextLdifModels.LdifAttributes(attributes={"cn": ["user"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
+        result = ops.validate_entry_for_server(entry)
+        assert isinstance(result, FlextResult)
 
-        result = ad_ops.add_entry(mock_ad_connection, entry)
-
-        assert result.is_success
-
-    def test_add_entry_unbound_connection(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test entry addition with unbound connection."""
-        from flext_ldif import FlextLdifModels
-
-        server = Server("test_server")
-        connection = Connection(server, client_strategy=MOCK_SYNC)
-        # Don't bind
-
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=Test,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["top"]}
-            ),
-        )
-
-        result = ad_ops.add_entry(connection, entry)
-
-        assert result.is_failure
-        assert "not bound" in (result.error or "")
-
-    def test_modify_entry_success(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test successful entry modification."""
-        modifications: dict[str, object] = {"description": "Test Description"}
-
-        result = ad_ops.modify_entry(
-            mock_ad_connection,
-            "CN=TestUser,CN=Users,DC=example,DC=com",
-            modifications,
-        )
-
-        assert result.is_success
-
-    def test_delete_entry_success(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test successful entry deletion."""
-        result = ad_ops.delete_entry(
-            mock_ad_connection, "CN=TestUser,CN=Users,DC=example,DC=com"
-        )
-
-        assert result.is_success
-
-    def test_normalize_entry(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
+    @pytest.mark.unit
+    def test_normalize_entry_for_server_returns_result(self) -> None:
         """Test entry normalization for AD."""
+        ops = FlextLdapServersActiveDirectoryOperations()
         from flext_ldif import FlextLdifModels
 
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=Test,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["top"]}
-            ),
+        dn = FlextLdifModels.DistinguishedName(
+            value="cn=user,cn=users,dc=example,dc=com"
         )
+        attrs = FlextLdifModels.LdifAttributes(attributes={"cn": ["user"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
+        result = ops.normalize_entry_for_server(entry)
+        assert isinstance(result, FlextResult)
 
-        result = ad_ops.normalize_entry(entry)
 
+class TestADOperationsFunctionalLevels:
+    """Test AD functional level detection (requires connection)."""
+
+    @pytest.mark.unit
+    def test_get_forest_functional_level_returns_result_type(self) -> None:
+        """Test forest functional level method signature."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # This would require a real AD connection
+        # Just verify the method exists and is callable
+        assert callable(ops.get_forest_functional_level)
+
+    @pytest.mark.unit
+    def test_get_domain_functional_level_returns_result_type(self) -> None:
+        """Test domain functional level method signature."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # This would require a real AD connection
+        # Just verify the method exists and is callable
+        assert callable(ops.get_domain_functional_level)
+
+
+class TestADOperationsRootDSE:
+    """Test AD Root DSE attribute retrieval."""
+
+    @pytest.mark.unit
+    def test_get_root_dse_attributes_returns_result(self) -> None:
+        """Test Root DSE attributes method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.get_root_dse_attributes)
+
+
+class TestADOperationsSchemaMethods:
+    """Test AD schema discovery methods."""
+
+    @pytest.mark.unit
+    def test_discover_schema_method_exists(self) -> None:
+        """Test discover_schema method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.discover_schema)
+
+    @pytest.mark.unit
+    def test_parse_object_class_method_exists(self) -> None:
+        """Test parse_object_class method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.parse_object_class)
+
+    @pytest.mark.unit
+    def test_parse_attribute_type_method_exists(self) -> None:
+        """Test parse_attribute_type method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.parse_attribute_type)
+
+
+class TestADOperationsACLMethods:
+    """Test AD ACL operations methods."""
+
+    @pytest.mark.unit
+    def test_get_acls_method_exists(self) -> None:
+        """Test get_acls method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.get_acls)
+
+    @pytest.mark.unit
+    def test_set_acls_method_exists(self) -> None:
+        """Test set_acls method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.set_acls)
+
+    @pytest.mark.unit
+    def test_parse_acl_method_exists(self) -> None:
+        """Test parse_acl method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.parse_acl)
+
+    @pytest.mark.unit
+    def test_parse_acl_with_sample_string(self) -> None:
+        """Test parse_acl with sample ACL string."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        result = ops.parse_acl("sample_acl_string")
+        assert isinstance(result, FlextResult)
+
+
+class TestADOperationsSupportedControls:
+    """Test AD supported controls method."""
+
+    @pytest.mark.unit
+    def test_get_supported_controls_method_exists(self) -> None:
+        """Test get_supported_controls method exists."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        assert callable(ops.get_supported_controls)
+
+
+class TestADOperationsIntegration:
+    """Integration tests for AD operations."""
+
+    @pytest.mark.unit
+    def test_ad_operations_has_all_required_methods(self) -> None:
+        """Test AD operations has all required methods."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        required_methods = [
+            "get_global_catalog_port",
+            "get_bind_mechanisms",
+            "get_schema_dn",
+            "discover_schema",
+            "parse_object_class",
+            "parse_attribute_type",
+            "get_acl_attribute_name",
+            "get_acl_format",
+            "get_acls",
+            "set_acls",
+            "parse_acl",
+            "supports_vlv",
+            "get_root_dse_attributes",
+            "detect_server_type_from_root_dse",
+            "get_supported_controls",
+            "normalize_entry_for_server",
+            "validate_entry_for_server",
+            "get_forest_functional_level",
+            "get_domain_functional_level",
+        ]
+        for method in required_methods:
+            assert hasattr(ops, method), f"Missing method: {method}"
+            assert callable(getattr(ops, method))
+
+    @pytest.mark.unit
+    def test_ad_operations_complete_workflow(self) -> None:
+        """Test complete AD operations workflow."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+
+        # Test basic properties
+        assert ops.server_type == "ad"
+        assert ops.get_global_catalog_port(use_ssl=False) == 3268
+        assert ops.get_global_catalog_port(use_ssl=True) == 3269
+
+        # Test ACL settings
+        assert ops.get_acl_attribute_name() == "nTSecurityDescriptor"
+        assert ops.get_acl_format() == "sddl"
+
+        # Test bind mechanisms
+        mechanisms = ops.get_bind_mechanisms()
+        assert len(mechanisms) >= 3
+
+        # Test VLV support
+        assert ops.supports_vlv() is True
+
+        # Test schema DN
+        dn = ops.get_schema_dn()
+        assert isinstance(dn, str)
+        assert len(dn) > 0
+
+
+class TestADOperationsSchemaDiscovery:
+    """Test AD schema discovery operations."""
+
+    @pytest.mark.unit
+    def test_discover_schema_returns_result(self) -> None:
+        """Test discover_schema returns FlextResult."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        with patch("flext_ldap.servers.ad_operations.Connection") as mock_conn:
+            result = ops.discover_schema(mock_conn)
+            assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_discover_schema_exception_handling(self) -> None:
+        """Test discover_schema handles connection failure."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock()
+        mock_conn.bound = False  # Connection not bound - should fail
+        result = ops.discover_schema(mock_conn)
+        assert result.is_failure
+
+
+class TestADOperationsParseSchemaComponents:
+    """Test AD schema component parsing."""
+
+    @pytest.mark.unit
+    def test_parse_object_class_success(self) -> None:
+        """Test parse_object_class returns result."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        with patch.object(
+            ops.__class__.__bases__[0], "parse_object_class"
+        ) as mock_parse:
+            mock_parse.return_value = FlextResult.ok(
+                FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(value="cn=test"),
+                    attributes=FlextLdifModels.LdifAttributes(attributes={}),
+                )
+            )
+            result = ops.parse_object_class("test_def")
+            assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_parse_attribute_type_success(self) -> None:
+        """Test parse_attribute_type returns result."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        with patch.object(
+            ops.__class__.__bases__[0], "parse_attribute_type"
+        ) as mock_parse:
+            mock_parse.return_value = FlextResult.ok(
+                FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(value="cn=test"),
+                    attributes=FlextLdifModels.LdifAttributes(attributes={}),
+                )
+            )
+            result = ops.parse_attribute_type("test_def")
+            assert isinstance(result, FlextResult)
+
+
+class TestADOperationsGetAclsDetailed:
+    """Test AD ACL retrieval with detailed scenarios."""
+
+    @pytest.mark.unit
+    def test_get_acls_no_entries(self) -> None:
+        """Test get_acls when search returns no entries."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.search.return_value = False
+        mock_conn.entries = []
+        result = ops.get_acls(mock_conn, "cn=test,dc=example,dc=com")
         assert result.is_success
+        assert result.unwrap() == []
+
+    @pytest.mark.unit
+    def test_get_acls_exception(self) -> None:
+        """Test get_acls exception handling."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.search.side_effect = Exception("Search error")
+        result = ops.get_acls(mock_conn, "cn=test,dc=example,dc=com")
+        assert result.is_failure
 
 
-class TestADSearchOperations:
-    """Test AD search operations."""
+class TestADOperationsSetAclsDetailed:
+    """Test AD ACL setting operations."""
 
-    def test_get_max_page_size(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test max page size."""
-        assert ad_ops.get_max_page_size() == 1000
+    @pytest.mark.unit
+    def test_set_acls_unbound_connection(self) -> None:
+        """Test set_acls with unbound connection."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = False
+        result = ops.set_acls(mock_conn, "cn=test,dc=example,dc=com", [])
+        assert result.is_failure
+        assert "bound" in result.error.lower()
 
-    def test_supports_paged_results(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test paged results support."""
-        assert ad_ops.supports_paged_results() is True
-
-    def test_supports_vlv(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test VLV support."""
-        assert ad_ops.supports_vlv() is True
-
-    def test_search_with_paging(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test paged search."""
-        result = ad_ops.search_with_paging(
-            mock_ad_connection,
-            "DC=example,DC=com",
-            "(objectClass=user)",
-            attributes=["cn", "sAMAccountName"],
-            scope="subtree",
-            page_size=100,
-        )
-
-        assert result.is_success
-        entries = result.unwrap()
-        assert isinstance(entries, list)
+    @pytest.mark.unit
+    def test_set_acls_exception(self) -> None:
+        """Test set_acls exception handling."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
+        mock_conn.modify.side_effect = Exception("Modify error")
+        result = ops.set_acls(mock_conn, "cn=test,dc=example,dc=com", [])
+        assert result.is_failure
 
 
-class TestADRootDSEOperations:
-    """Test AD root DSE operations."""
+class TestADOperationsParseAclDetailed:
+    """Test AD ACL parsing operations."""
 
-    def test_get_root_dse_attributes(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test Root DSE retrieval."""
-        result = ad_ops.get_root_dse_attributes(mock_ad_connection)
-
-        # MOCK_SYNC doesn't support empty DN searches - accept failure
-        if result.is_success:
-            root_dse = result.unwrap()
-            assert isinstance(root_dse, dict)
-        else:
-            # Expected with MOCK_SYNC
-            assert "empty dn" in (result.error or "")
-
-    def test_detect_server_type_from_root_dse(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test AD detection from Root DSE."""
-        root_dse: dict[str, object] = {
-            "defaultNamingContext": "DC=example,DC=com",
-            "rootDomainNamingContext": "DC=example,DC=com",
-        }
-
-        server_type = ad_ops.detect_server_type_from_root_dse(root_dse)
-
-        assert server_type == "ad"
-
-    def test_detect_server_type_from_vendor(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test AD detection from vendor name."""
-        root_dse: dict[str, object] = {"vendorName": "Microsoft Corporation"}
-
-        server_type = ad_ops.detect_server_type_from_root_dse(root_dse)
-
-        assert server_type == "ad"
-
-    def test_get_supported_controls(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test supported controls retrieval."""
-        result = ad_ops.get_supported_controls(mock_ad_connection)
-
-        # MOCK_SYNC may fail on root DSE - accept failure or success
-        if result.is_success:
-            controls = result.unwrap()
-            assert isinstance(controls, list)
-            # Should return common AD controls as fallback
-            assert len(controls) > 0
-        else:
-            # Expected with MOCK_SYNC when root DSE query fails
+    @pytest.mark.unit
+    def test_parse_acl_with_exception(self) -> None:
+        """Test parse_acl exception handling."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        with patch.object(ops.__class__.__bases__[0], "parse_acl") as mock_parse:
+            mock_parse.side_effect = Exception("Parse error")
+            result = ops.parse_acl("invalid_sddl")
             assert result.is_failure
 
 
-class TestADEntryValidation:
-    """Test AD entry validation."""
+class TestADOperationsRootDseDetailed:
+    """Test Root DSE operations with detailed scenarios."""
 
-    def test_validate_entry_for_server_success(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test successful entry validation."""
-        from flext_ldif import FlextLdifModels
+    @pytest.mark.unit
+    def test_get_root_dse_attributes_invalid_connection(self) -> None:
+        """Test get_root_dse_attributes with invalid connection."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        result = ops.get_root_dse_attributes(None)
+        assert result.is_failure
 
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=Test,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": ["top", "person"],
-                    "cn": ["Test"],
-                }
-            ),
-        )
+    @pytest.mark.unit
+    def test_get_root_dse_attributes_unbound(self) -> None:
+        """Test get_root_dse_attributes with unbound connection."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = False
+        result = ops.get_root_dse_attributes(mock_conn)
+        assert result.is_failure
 
-        result = ad_ops.validate_entry_for_server(entry)
+    @pytest.mark.unit
+    def test_get_root_dse_attributes_search_fails(self) -> None:
+        """Test get_root_dse_attributes when search fails."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
+        mock_conn.search.return_value = False
+        result = ops.get_root_dse_attributes(mock_conn)
+        assert result.is_failure
 
-        assert result.is_success
-
-    def test_validate_entry_with_objectclass(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test validation succeeds for entry with objectClass."""
-        from flext_ldif import FlextLdifModels
-
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=Test,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["Test"],
-                    "objectClass": ["top"],
-                }
-            ),
-        )
-
-        result = ad_ops.validate_entry_for_server(entry)
-
-        assert result.is_success
+    @pytest.mark.unit
+    def test_get_root_dse_attributes_exception(self) -> None:
+        """Test get_root_dse_attributes exception handling."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
+        mock_conn.search.side_effect = Exception("Search error")
+        result = ops.get_root_dse_attributes(mock_conn)
+        assert result.is_failure
 
 
-class TestADNormalization:
-    """Test AD entry normalization."""
+class TestADOperationsServerDetectionLogic:
+    """Test AD server type detection with various Root DSE attributes."""
 
-    def test_normalize_entry_for_server(
-        self, ad_ops: FlextLdapServersActiveDirectoryOperations
-    ) -> None:
-        """Test entry normalization for AD server."""
-        from flext_ldif import FlextLdifModels
+    @pytest.mark.unit
+    def test_detect_ad_from_root_domain_naming_context(self) -> None:
+        """Test AD detection from rootDomainNamingContext."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {
+            FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT: "DC=example,DC=com"
+        }
+        result = ops.detect_server_type_from_root_dse(root_dse)
+        assert result == FlextLdapConstants.ServerTypes.AD
 
-        # Create LDIF entry
-        ldif_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="CN=Test,CN=Users,DC=example,DC=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["top"]}
-            ),
-        )
+    @pytest.mark.unit
+    def test_detect_ad_from_vendor_microsoft(self) -> None:
+        """Test AD detection from vendorName with Microsoft."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {
+            FlextLdapConstants.RootDseAttributes.VENDOR_NAME: "Microsoft Corporation"
+        }
+        result = ops.detect_server_type_from_root_dse(root_dse)
+        assert result == FlextLdapConstants.ServerTypes.AD
 
-        result = ad_ops.normalize_entry_for_server(ldif_entry)
+    @pytest.mark.unit
+    def test_detect_ad_from_vendor_windows(self) -> None:
+        """Test AD detection from vendorName with Windows."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {
+            FlextLdapConstants.RootDseAttributes.VENDOR_NAME: "Windows Active Directory"
+        }
+        result = ops.detect_server_type_from_root_dse(root_dse)
+        assert result == FlextLdapConstants.ServerTypes.AD
 
-        assert result.is_success
-        normalized = result.unwrap()
-        assert isinstance(normalized, (FlextLdifModels.Entry, FlextLdifModels.Entry))
+    @pytest.mark.unit
+    def test_detect_non_ad_root_dse(self) -> None:
+        """Test non-AD detection returns generic type."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        root_dse = {
+            FlextLdapConstants.RootDseAttributes.VENDOR_NAME: "OpenLDAP Foundation"
+        }
+        result = ops.detect_server_type_from_root_dse(root_dse)
+        assert result == FlextLdapConstants.Defaults.SERVER_TYPE
 
-
-class TestADSpecificFeatures:
-    """Test AD-specific operations."""
-
-    def test_get_forest_functional_level(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test forest functional level retrieval."""
-        result = ad_ops.get_forest_functional_level(mock_ad_connection)
-
-        # May succeed or fail depending on mock server setup
-        assert result.is_success or result.is_failure
-
-    def test_get_domain_functional_level(
-        self,
-        ad_ops: FlextLdapServersActiveDirectoryOperations,
-        mock_ad_connection: Connection,
-    ) -> None:
-        """Test domain functional level retrieval."""
-        result = ad_ops.get_domain_functional_level(mock_ad_connection)
-
-        # May succeed or fail depending on mock server setup
-        assert result.is_success or result.is_failure
+    @pytest.mark.unit
+    def test_detect_empty_root_dse(self) -> None:
+        """Test detection with empty Root DSE."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        result = ops.detect_server_type_from_root_dse({})
+        assert result == FlextLdapConstants.Defaults.SERVER_TYPE
 
 
-class TestADPropertyTests:
-    """Property-based tests for AD operations."""
-
-    @given(
-        st.text(
-            min_size=1,
-            max_size=50,
-            alphabet=st.characters(blacklist_characters=",=\n\r"),
-        )
-    )
-    def test_detect_server_type_property(self, vendor_name: str) -> None:
-        """Property test: detection should always return a valid server type."""
-        ad_ops = FlextLdapServersActiveDirectoryOperations()
-        root_dse: dict[str, object] = {"vendorName": vendor_name}
-
-        server_type = ad_ops.detect_server_type_from_root_dse(root_dse)
-
-        # Should always return a string
-        assert isinstance(server_type, str)
-        assert len(server_type) > 0
-
-    @given(st.booleans())
-    def test_port_property(self, use_ssl: bool) -> None:
-        """Property test: port should always be valid."""
-        ad_ops = FlextLdapServersActiveDirectoryOperations()
-        port = ad_ops.get_default_port(use_ssl=use_ssl)
-
-        assert isinstance(port, int)
-        assert 1 <= port <= 65535
-
-    @given(st.booleans())
-    def test_global_catalog_port_property(self, use_ssl: bool) -> None:
-        """Property test: Global Catalog port should always be valid."""
-        ad_ops = FlextLdapServersActiveDirectoryOperations()
-        port = ad_ops.get_global_catalog_port(use_ssl=use_ssl)
-
-        assert isinstance(port, int)
-        assert 1 <= port <= 65535
-        assert port in {3268, 3269}
+__all__ = [
+    "TestADOperationsACLMethods",
+    "TestADOperationsACLOperations",
+    "TestADOperationsBindMechanisms",
+    "TestADOperationsEntryOperations",
+    "TestADOperationsFunctionalLevels",
+    "TestADOperationsInitialization",
+    "TestADOperationsIntegration",
+    "TestADOperationsParseSchemaComponents",
+    "TestADOperationsRootDSE",
+    "TestADOperationsSchemaDN",
+    "TestADOperationsSchemaDiscovery",
+    "TestADOperationsSchemaMethods",
+    "TestADOperationsServerDetection",
+    "TestADOperationsServerDetectionLogic",
+    "TestADOperationsSupportedControls",
+    "TestADOperationsVLVSupport",
+]

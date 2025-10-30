@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClients
-from flext_ldap.search import FlextLdapSearch
+from flext_ldap.services.search import FlextLdapSearch
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration

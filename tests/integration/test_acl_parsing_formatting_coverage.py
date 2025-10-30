@@ -1,114 +1,25 @@
-"""ACL Parsing & Formatting comprehensive coverage - Real Docker LDAP testing.
+"""ACL Operations via flext-ldif - Real Docker LDAP testing.
 
-Targets uncovered ACL parsing and formatting code paths in parsers.py and manager.py
-with real Docker LDAP fixture data and comprehensive ACL operation testing.
+Tests ACL operations through flext-ldif integration with server-specific operations
+(FlextLdapServersOIDOperations, FlextLdapServersOUDOperations) using real Docker
+LDAP fixture data.
 
-This test suite expands ACL parsing/formatting coverage from current gaps to 95%+.
+Note: ACL functionality has been moved to flext-ldif. Previous flext-ldap ACL
+modules were overengineered stubs and have been removed.
+
+This test suite covers server-specific ACL attribute handling and integration
+with flext-ldif ACL operations.
 """
 
 from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap import FlextLdapClients
-from flext_ldap.acl.manager import FlextLdapAclManager
-from flext_ldap.acl.parsers import FlextLdapAclParsers
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
-
-# ============================================================================
-# OPENLDAP ACL PARSING COVERAGE
-# ============================================================================
-
-
-@pytest.mark.integration
-@pytest.mark.docker
-class TestOpenLdapAclParsing:
-    """OpenLDAP ACL parsing - comprehensive real Docker testing."""
-
-    def test_parse_openldap_acl_valid_basic(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing valid basic OpenLDAP ACL format."""
-        acl_str = "access to * by * read"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert result.is_success
-        acl = result.unwrap()
-        assert acl is not None
-        assert isinstance(acl, dict) or hasattr(acl, "target")
-
-    def test_parse_openldap_acl_valid_complex_target(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with complex target."""
-        acl_str = 'access to dn.subtree="cn=config" by dn="cn=admin" write'
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_with_multiple_by_clauses(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with multiple conditions."""
-        acl_str = "access to * by users read by anonymous none"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_empty_string_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing empty ACL string fails properly."""
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse("")
-        assert result.is_failure
-
-    def test_parse_openldap_acl_none_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing None ACL fails properly."""
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(None)
-        assert result.is_failure
-
-    def test_parse_openldap_acl_whitespace_only_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing whitespace-only ACL fails."""
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse("   ")
-        assert result.is_failure
-
-    def test_parse_openldap_acl_no_access_keyword_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing ACL without 'access' keyword fails."""
-        acl_str = "to * by * read"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert result.is_failure
-
-    def test_parse_openldap_acl_no_by_keyword_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing ACL without 'by' keyword fails."""
-        acl_str = "access to * read"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert result.is_failure
-
-    def test_parse_openldap_acl_missing_subject_fails(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing ACL with missing subject fails."""
-        acl_str = "access to * by"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert result.is_failure
-
-    def test_parse_openldap_acl_with_permissions(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with various permissions."""
-        for perm in ["read", "write", "search", "compare", "none", "manage"]:
-            acl_str = f"access to * by * {perm}"
-            result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-            assert isinstance(result, FlextResult)
-
 
 # ============================================================================
 # ACL FORMAT CONVERSION COVERAGE
@@ -124,40 +35,42 @@ class TestAclFormatConversion:
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test ACL manager parse_acl with basic ACL."""
-        manager = FlextLdapAclManager()
+        ldif_client = FlextLdif()
         acl_str = "access to * by * read"
-        result = manager.parse_acl(acl_str, "openldap")
+        result = ldif_client.parse_acl(acl_str, "openldap")
         assert isinstance(result, FlextResult)
 
-    def test_acl_manager_convert_acl(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test ACL manager convert_acl converts between formats."""
-        manager = FlextLdapAclManager()
-        acl_str = "access to * by * read"
-        result = manager.convert_acl(acl_str, "openldap", "oid")
+    def test_acl_service_accessible(self, shared_ldap_client: FlextLdapClients) -> None:
+        """Test that ACL service is accessible through flext-ldif."""
+        ldif_client = FlextLdif()
+        acl_service = ldif_client.acl_service
+        assert acl_service is not None
+        # Test that we can access ACL parsing method
+        result = acl_service.parse_acl("access to * by * read", "openldap")
         assert isinstance(result, FlextResult)
 
-    def test_acl_manager_validate_syntax(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test ACL manager validate_acl_syntax validates format."""
-        manager = FlextLdapAclManager()
-        acl_str = "access to * by * read"
-        result = manager.validate_acl_syntax(acl_str, "openldap")
+    def test_acl_service_parse_acl(self, shared_ldap_client: FlextLdapClients) -> None:
+        """Test ACL service parse_acl through flext-ldif."""
+        ldif_client = FlextLdif()
+        acl_service = ldif_client.acl_service
+        result = acl_service.parse_acl("access to * by * read", "openldap")
         assert isinstance(result, FlextResult)
 
-    def test_acl_manager_batch_convert(
+    def test_acl_service_multiple_formats(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
-        """Test ACL manager batch_convert converts multiple ACLs."""
-        manager = FlextLdapAclManager()
-        acls = [
-            "access to * by * read",
-            "access to cn=admin by admin write",
-        ]
-        result = manager.batch_convert(acls, "openldap", "oid")
-        assert isinstance(result, FlextResult)
+        """Test ACL service supports multiple formats through flext-ldif."""
+        ldif_client = FlextLdif()
+        acl_service = ldif_client.acl_service
+
+        # Test OpenLDAP ACL
+        result_openldap = acl_service.parse_acl("access to * by * read", "openldap")
+        assert isinstance(result_openldap, FlextResult)
+
+        # Test Oracle ACL
+        oracle_acl = '(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "User Access"; allow (read,search,compare) groupdn="ldap:///cn=Admins,ou=Groups,dc=example,dc=com";)'
+        result_oracle = acl_service.parse_acl(oracle_acl, "oracle")
+        assert isinstance(result_oracle, FlextResult)
 
 
 # ============================================================================
@@ -195,19 +108,19 @@ class TestOIDServerAclParsing:
     ) -> None:
         """Test OID normalize entry with ACL attributes."""
         ops = FlextLdapServersOIDOperations()
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "objectClass": ["inetOrgPerson"],
+            "cn": ["acl_test"],
+            "orclaci": ["(target=dn:*)(version 3.0; acl test;)"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=acl_test,dc=flext,dc=local"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["acl_test"]),
-                    "orclaci": FlextLdifModels.AttributeValues(
-                        values=["(target=dn:*)(version 3.0; acl test;)"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
         result = ops.normalize_entry_for_server(entry)
         assert isinstance(result, FlextResult)
@@ -217,21 +130,21 @@ class TestOIDServerAclParsing:
     ) -> None:
         """Test OID validate entry with ACL attributes."""
         ops = FlextLdapServersOIDOperations()
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "objectClass": ["inetOrgPerson"],
+            "cn": ["acl_validate"],
+            "orclaci": ["(target=dn:*)(version 3.0; acl test;)"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=acl_validate,dc=flext,dc=local"
             ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["acl_validate"]),
-                    "orclaci": FlextLdifModels.AttributeValues(
-                        values=["(target=dn:*)(version 3.0; acl test;)"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
         result = ops.validate_entry_for_server(entry)
         assert isinstance(result, FlextResult)
@@ -271,21 +184,21 @@ class TestOUDServerAclParsing:
     ) -> None:
         """Test OUD normalize entry with privilege attributes."""
         ops = FlextLdapServersOUDOperations()
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "objectClass": ["inetOrgPerson"],
+            "cn": ["priv_test"],
+            "ds-privilege-name": ["admin"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=priv_test,dc=flext,dc=local"
             ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["priv_test"]),
-                    "ds-privilege-name": FlextLdifModels.AttributeValues(
-                        values=["admin"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
         result = ops.normalize_entry_for_server(entry)
         assert isinstance(result, FlextResult)
@@ -295,80 +208,21 @@ class TestOUDServerAclParsing:
     ) -> None:
         """Test OUD validate entry with privilege attributes."""
         ops = FlextLdapServersOUDOperations()
+        attrs_result = FlextLdifModels.LdifAttributes.create({
+            "objectClass": ["inetOrgPerson"],
+            "cn": ["priv_validate"],
+            "ds-privilege-name": ["user"],
+        })
+        attributes = (
+            attrs_result.unwrap()
+            if attrs_result.is_success
+            else FlextLdifModels.LdifAttributes.create({}).unwrap()
+        )
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=priv_validate,dc=flext,dc=local"
             ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["priv_validate"]),
-                    "ds-privilege-name": FlextLdifModels.AttributeValues(
-                        values=["user"]
-                    ),
-                }
-            ),
+            attributes=attributes,
         )
         result = ops.validate_entry_for_server(entry)
-        assert isinstance(result, FlextResult)
-
-
-# ============================================================================
-# ACL EDGE CASES AND ERROR HANDLING
-# ============================================================================
-
-
-@pytest.mark.integration
-@pytest.mark.docker
-class TestAclParsingEdgeCases:
-    """Test ACL parsing edge cases and error conditions."""
-
-    def test_parse_openldap_acl_with_quotes(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with quoted values."""
-        acl_str = 'access to dn="ou=people,dc=example,dc=com" by users read'
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_with_attributes(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with attribute specifications."""
-        acl_str = "access to dn.subtree=* attr=userPassword by self write"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_complex_filter(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with filter expression."""
-        acl_str = 'access to filter="(objectClass=inetOrgPerson)" by users read'
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_dn_matching(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with DN matching rules."""
-        acl_str = "access to * by dn.base=cn=admin,dc=example,dc=com write"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_self_reference(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with self reference."""
-        acl_str = "access to * by self write"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
-        assert isinstance(result, FlextResult)
-
-    def test_parse_openldap_acl_anonymous_access(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
-        """Test parsing OpenLDAP ACL with anonymous access."""
-        acl_str = "access to * by anonymous none"
-        result = FlextLdapAclParsers.OpenLdapAclParser.parse(acl_str)
         assert isinstance(result, FlextResult)

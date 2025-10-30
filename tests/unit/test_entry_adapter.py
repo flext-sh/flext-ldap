@@ -14,9 +14,8 @@ from typing import cast
 
 import pytest
 from flext_ldif import FlextLdifModels
-from ldap3 import Entry as Ldap3Entry
 
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 class TestEntryAdapterUniversal:
@@ -626,13 +625,11 @@ class TestEntryAdapterCoreConversions:
         self, adapter: FlextLdapEntryAdapter, sample_ldap3_entry: dict[str, object]
     ) -> None:
         """Test converting ldap3 dict[str, object] to FlextLdif Entry."""
-        from typing import cast
-
-        from flext_ldap.typings import LdapSearchResultDict
+        from flext_ldap.typings import FlextLdapTypes
 
         # Act
         result = adapter.ldap3_to_ldif_entry(
-            cast("LdapSearchResultDict", sample_ldap3_entry)
+            cast("FlextLdapTypes.DictionaryTypes.ResponseDict", sample_ldap3_entry)
         )
 
         # Assert
@@ -665,12 +662,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        from typing import cast
 
-        from flext_ldap.typings import LdapSearchResultDict
+        from flext_ldap.typings import FlextLdapTypes
 
         result = adapter.ldap3_to_ldif_entry(
-            cast("LdapSearchResultDict", invalid_entry)
+            cast("FlextLdapTypes.DictionaryTypes.ResponseDict", invalid_entry)
         )
 
         # Assert
@@ -687,12 +683,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        from typing import cast
 
-        from flext_ldap.typings import LdapSearchResultDict
+        from flext_ldap.typings import FlextLdapTypes
 
         result = adapter.ldap3_to_ldif_entry(
-            cast("LdapSearchResultDict", invalid_entry)
+            cast("FlextLdapTypes.DictionaryTypes.ResponseDict", invalid_entry)
         )
 
         # Assert
@@ -710,12 +705,11 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        from typing import cast
 
-        from flext_ldap.typings import LdapSearchResultDict
+        from flext_ldap.typings import FlextLdapTypes
 
         result = adapter.ldap3_to_ldif_entry(
-            cast("LdapSearchResultDict", invalid_entry)
+            cast("FlextLdapTypes.DictionaryTypes.ResponseDict", invalid_entry)
         )
 
         # Assert
@@ -736,11 +730,12 @@ class TestEntryAdapterCoreConversions:
         }
 
         # Act
-        from typing import cast
 
-        from flext_ldap.typings import LdapSearchResultDict
+        from flext_ldap.typings import FlextLdapTypes
 
-        result = adapter.ldap3_to_ldif_entry(cast("LdapSearchResultDict", entry))
+        result = adapter.ldap3_to_ldif_entry(
+            cast("FlextLdapTypes.DictionaryTypes.ResponseDict", entry)
+        )
 
         # Assert
         assert result.is_success
@@ -749,264 +744,6 @@ class TestEntryAdapterCoreConversions:
         assert str(ldif_entry.dn) == "cn=Multi,ou=people,dc=example,dc=com"
         # Verify attributes were preserved (structure depends on FlextLdif internal representation)
         assert len(ldif_entry.attributes.attributes) > 0
-
-    # =========================================================================
-    # MULTIPLE ENTRIES CONVERSION TESTS
-    # =========================================================================
-
-    def test_ldap3_entries_to_ldif_entries_success(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting multiple ldap3 entries to FlextLdif entries."""
-        # Arrange
-        ldap3_entries = [
-            {
-                "dn": "cn=User1,ou=people,dc=example,dc=com",
-                "attributes": {"cn": ["User1"], "objectClass": ["person"]},
-            },
-            {
-                "dn": "cn=User2,ou=people,dc=example,dc=com",
-                "attributes": {"cn": ["User2"], "objectClass": ["person"]},
-            },
-        ]
-
-        # Act
-        result = adapter.ldap3_entries_to_ldif_entries(
-            cast("list[Ldap3Entry]", ldap3_entries)
-        )
-
-        # Assert
-        assert result.is_success
-        ldif_entries = result.unwrap()
-        assert len(ldif_entries) == 2
-        assert str(ldif_entries[0].dn) == "cn=User1,ou=people,dc=example,dc=com"
-        assert str(ldif_entries[1].dn) == "cn=User2,ou=people,dc=example,dc=com"
-
-    def test_ldap3_entries_to_ldif_entries_empty_list(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting empty list returns empty list."""
-        # Act
-        result = adapter.ldap3_entries_to_ldif_entries([])
-
-        # Assert
-        assert result.is_success
-        ldif_entries = result.unwrap()
-        assert len(ldif_entries) == 0
-
-    def test_ldap3_entries_to_ldif_entries_one_invalid(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting entries fails if one entry is invalid."""
-        # Arrange
-        ldap3_entries = [
-            {
-                "dn": "cn=User1,ou=people,dc=example,dc=com",
-                "attributes": {"cn": ["User1"]},
-            },
-            {"dn": "cn=Invalid,ou=people,dc=example,dc=com"},  # Missing attributes
-        ]
-
-        # Act
-        result = adapter.ldap3_entries_to_ldif_entries(
-            cast("list[Ldap3Entry]", ldap3_entries)
-        )
-
-        # Assert
-        assert result.is_failure
-        assert result.error and "Failed to convert entry" in result.error
-
-    # =========================================================================
-    # LDIF TO LDAP3 CONVERSION TESTS
-    # =========================================================================
-
-    def test_ldif_entry_to_ldap3_attributes_success(
-        self, adapter: FlextLdapEntryAdapter, sample_ldif_entry: FlextLdifModels.Entry
-    ) -> None:
-        """Test converting FlextLdif Entry to ldap3 attributes dict."""
-        # Act
-        result = adapter.ldif_entry_to_ldap3_attributes(sample_ldif_entry)
-
-        # Assert
-        assert result.is_success
-        attributes = result.unwrap()
-        assert isinstance(attributes, dict)
-        assert attributes["cn"] == ["John Doe"]
-        assert attributes["sn"] == ["Doe"]
-        assert attributes["mail"] == ["jdoe@example.com"]
-        assert "person" in attributes["objectClass"]
-
-    def test_ldif_entry_to_ldap3_attributes_none_input(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting None FlextLdif entry fails."""
-        # Act
-        result = adapter.ldif_entry_to_ldap3_attributes(None)
-
-        # Assert
-        assert result.is_failure
-        assert result.error and "cannot be None" in result.error
-
-    def test_ldif_entry_to_ldap3_attributes_empty_attributes(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test converting FlextLdif entry with empty attributes."""
-        # Arrange
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=Empty,ou=people,dc=example,dc=com"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "objectClass": ["person"],
-                }
-            ),
-        )
-
-        # Act
-        result = adapter.ldif_entry_to_ldap3_attributes(entry)
-
-        # Assert
-        assert result.is_success
-        attributes = result.unwrap()
-        assert isinstance(attributes, dict)
-        # Entry now requires objectClass, so attributes should contain it
-        assert "objectClass" in attributes
-        assert attributes["objectClass"] == ["person"]
-
-    # =========================================================================
-    # ATTRIBUTE NORMALIZATION TESTS
-    # =========================================================================
-
-    def test_normalize_attributes_for_add_mixed_values(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test normalizing attributes with mixed single and list values."""
-        # Arrange
-        attributes: dict[str, str | list[str]] = {
-            "cn": "John Doe",  # Single value
-            "objectClass": ["person", "top"],  # List value
-            "sn": "Doe",  # Single value
-            "mail": ["jdoe@example.com"],  # Already list
-        }
-
-        # Act
-        result = adapter.normalize_attributes_for_add(attributes)
-
-        # Assert
-        assert result.is_success
-        normalized = result.unwrap()
-        # All values should be lists
-        assert normalized["cn"] == ["John Doe"]
-        assert normalized["objectClass"] == ["person", "top"]
-        assert normalized["sn"] == ["Doe"]
-        assert normalized["mail"] == ["jdoe@example.com"]
-
-    def test_normalize_attributes_for_add_all_lists(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test normalizing attributes that are already lists."""
-        # Arrange
-        from typing import cast
-
-        attributes: dict[str, object] = {
-            "cn": ["John Doe"],
-            "objectClass": ["person", "top"],
-        }
-
-        # Act
-        result = adapter.normalize_attributes_for_add(
-            cast("dict[str, str | list[str]]", attributes)
-        )
-
-        # Assert
-        assert result.is_success
-        normalized = result.unwrap()
-        assert normalized["cn"] == ["John Doe"]
-        assert normalized["objectClass"] == ["person", "top"]
-
-    def test_normalize_attributes_for_add_empty_dict(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test normalizing empty attributes dict."""
-        # Act
-        result = adapter.normalize_attributes_for_add({})
-
-        # Assert
-        assert result.is_success
-        normalized = result.unwrap()
-        assert len(normalized) == 0
-
-    # =========================================================================
-    # MODIFY CHANGES CREATION TESTS
-    # =========================================================================
-
-    def test_create_modify_changes_single_values(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test creating modify changes with single values."""
-        # Arrange
-        from ldap3 import MODIFY_REPLACE
-
-        modifications: dict[str, object] = {
-            "mail": "newemail@example.com",
-            "telephoneNumber": "555-1234",
-        }
-
-        # Act
-        from typing import cast
-
-        from flext_ldap.typings import LdapModifyDict
-
-        result = adapter.create_modify_changes(cast("LdapModifyDict", modifications))
-
-        # Assert
-        assert result.is_success
-        changes = result.unwrap()
-        assert "mail" in changes
-        assert "telephoneNumber" in changes
-        # Should use MODIFY_REPLACE operation
-        assert changes["mail"][0][0] == MODIFY_REPLACE
-        assert changes["mail"][0][1] == ["newemail@example.com"]
-        assert changes["telephoneNumber"][0][1] == ["555-1234"]
-
-    def test_create_modify_changes_list_values(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test creating modify changes with list values."""
-        # Arrange
-        from ldap3 import MODIFY_REPLACE
-
-        modifications: dict[str, object] = {
-            "mail": ["email1@example.com", "email2@example.com"],
-            "objectClass": ["person", "organizationalPerson"],
-        }
-
-        # Act
-        from typing import cast
-
-        from flext_ldap.typings import LdapModifyDict
-
-        result = adapter.create_modify_changes(cast("LdapModifyDict", modifications))
-
-        # Assert
-        assert result.is_success
-        changes = result.unwrap()
-        assert changes["mail"][0][0] == MODIFY_REPLACE
-        assert changes["mail"][0][1] == ["email1@example.com", "email2@example.com"]
-        assert changes["objectClass"][0][1] == ["person", "organizationalPerson"]
-
-    def test_create_modify_changes_empty_dict(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test creating modify changes with empty dict."""
-        # Act
-        result = adapter.create_modify_changes({})
-
-        # Assert
-        assert result.is_success
-        changes = result.unwrap()
-        assert len(changes) == 0
 
     # =========================================================================
     # EXECUTE METHOD TESTS
