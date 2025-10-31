@@ -16,8 +16,7 @@ import types
 from typing import Literal, Self, cast, override
 
 from flext_core import FlextResult, FlextService
-from flext_ldif import FlextLdifConstants, FlextLdifModels, LdapServerType
-from flext_ldif.services.entry_builder import FlextLdifEntryBuilder
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 from ldap3 import (
     Connection,
     Server,
@@ -436,7 +435,7 @@ class FlextLdapClients(FlextService[None]):
             if not self._connection or not self._connection.bound:
                 return FlextResult[dict[str, object]].fail("Connection not bound")
 
-            success = self._connection.search(
+            search_result = self._connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -447,7 +446,7 @@ class FlextLdapClients(FlextService[None]):
                 size_limit=1,
             )
 
-            if not success or not self._connection.entries:
+            if not search_result or not self._connection.entries:
                 return FlextResult[dict[str, object]].fail("No Root DSE found")
 
             entry = self._connection.entries[0]
@@ -1075,7 +1074,7 @@ class FlextLdapClients(FlextService[None]):
                 if hasattr(changes, "model_dump")
                 else dict(changes)
                 if hasattr(changes, "items")
-                else changes  # type: ignore[assignment]
+                else changes
             )
             for attr, change_spec in changes_dict.items():
                 # Check if already in ldap3 tuple format: [(operation, values)]
@@ -1493,7 +1492,7 @@ class FlextLdapClients(FlextService[None]):
             return None
         # Create server quirks based on detected type
         return FlextLdapModels.ServerQuirks(
-            server_type=LdapServerType(
+            server_type=FlextLdifConstants.LdapServerType(
                 self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE,
             ),
             case_sensitive_dns=self._detected_server_type
@@ -1538,71 +1537,6 @@ class FlextLdapClients(FlextService[None]):
         """Validate search request (private helper method)."""
         # Basic validation is handled by Pydantic model
         return FlextResult.ok(None)
-
-    def build_user_attributes(
-        self,
-        user_request: FlextLdapModels._LdapRequest,
-    ) -> FlextResult[dict[str, str | list[str]]]:
-        """Build user attributes from request object using FlextLdifEntryBuilder.
-
-        Delegates to FlextLdifEntryBuilder.build_person_entry() to eliminate
-        duplication and ensure consistent entry creation.
-        """
-        try:
-            # Use FlextLdifEntryBuilder for person entry creation
-            # Determine base DN (required for entry builder)
-            # Use a default base DN if not provided
-            base_dn = getattr(user_request, "base_dn", "ou=users,dc=example,dc=com")
-
-            # Build person entry using FlextLdifEntryBuilder
-            entry_builder = FlextLdifEntryBuilder()
-            build_result = entry_builder.build_person_entry(
-                cn=user_request.cn or "",
-                sn=user_request.sn or "",
-                base_dn=base_dn,
-                uid=user_request.uid,
-                mail=user_request.mail,
-                given_name=user_request.given_name,
-                additional_attrs={
-                    k: v
-                    for k, v in {
-                        "userPassword": [user_request.user_password]
-                        if user_request.user_password
-                        else None,
-                        "telephoneNumber": [user_request.telephone_number]
-                        if user_request.telephone_number
-                        else None,
-                        "description": [user_request.description]
-                        if hasattr(user_request, "description")
-                        and user_request.description
-                        else None,
-                        "ou": [user_request.department]
-                        if user_request.department
-                        else None,
-                        "title": [user_request.title] if user_request.title else None,
-                        "o": [user_request.organization]
-                        if user_request.organization
-                        else None,
-                    }.items()
-                    if v is not None
-                },
-            )
-
-            if build_result.is_failure:
-                return FlextResult.fail(f"Entry building failed: {build_result.error}")
-
-            # Extract attributes from the built entry
-            entry = build_result.unwrap()
-            attributes: dict[str, str | list[str]] = {}
-            for attr_name, attr_value in entry.attributes.attributes.items():
-                if isinstance(attr_value, list):
-                    attributes[attr_name] = [str(v) for v in attr_value]
-                else:
-                    attributes[attr_name] = [str(attr_value)] if attr_value else []
-
-            return FlextResult.ok(attributes)
-        except (ValidationError, AttributeError) as e:
-            return FlextResult.fail(f"Attribute building failed: {e}")
 
     def _create_user_from_entry(
         self,

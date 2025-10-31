@@ -24,7 +24,9 @@ from flext_ldap.services.schema_sync import FlextLdapSchemaSync
 @pytest.fixture
 def temp_schema_file() -> Path:
     """Create a temporary schema LDIF file for testing."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+    ) as f:
         # Write minimal LDIF content
         f.write("version: 1\n")
         f.write("dn: cn=schema\n")
@@ -47,9 +49,7 @@ class TestFlextLdapSchemaSyncInitialization:
         assert isinstance(service, FlextLdapSchemaSync)
 
     @pytest.mark.unit
-    def test_schema_sync_service_has_logger(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_schema_sync_service_has_logger(self, temp_schema_file: Path) -> None:
         """Test schema sync service inherits logger from FlextService."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file, server_host="localhost"
@@ -58,9 +58,7 @@ class TestFlextLdapSchemaSyncInitialization:
         assert service.logger is not None
 
     @pytest.mark.unit
-    def test_schema_sync_service_has_container(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_schema_sync_service_has_container(self, temp_schema_file: Path) -> None:
         """Test schema sync service has container from FlextService."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file, server_host="localhost"
@@ -91,9 +89,7 @@ class TestSchemaSyncExecute:
         assert isinstance(result, FlextResult)
 
     @pytest.mark.unit
-    def test_execute_without_connection_fails(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_execute_without_connection_fails(self, temp_schema_file: Path) -> None:
         """Test execute fails when no connection context is set."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file, server_host="localhost"
@@ -105,9 +101,7 @@ class TestSchemaSyncExecute:
             assert isinstance(result.error, str)
 
     @pytest.mark.unit
-    def test_execute_returns_dict_or_failure(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_execute_returns_dict_or_failure(self, temp_schema_file: Path) -> None:
         """Test execute returns dict result or failure."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file, server_host="localhost"
@@ -137,9 +131,7 @@ class TestSchemaSyncServiceProperties:
         assert service._server_port == 3890
 
     @pytest.mark.unit
-    def test_schema_sync_service_with_ssl(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_schema_sync_service_with_ssl(self, temp_schema_file: Path) -> None:
         """Test schema sync service SSL configuration."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file,
@@ -149,9 +141,7 @@ class TestSchemaSyncServiceProperties:
         assert service._use_ssl is True
 
     @pytest.mark.unit
-    def test_schema_sync_service_with_credentials(
-        self, temp_schema_file: Path
-    ) -> None:
+    def test_schema_sync_service_with_credentials(self, temp_schema_file: Path) -> None:
         """Test schema sync service with credentials."""
         service = FlextLdapSchemaSync(
             schema_ldif_file=temp_schema_file,
@@ -177,8 +167,8 @@ class TestSchemaSyncIntegration:
         )
         assert service is not None
 
-        # Set connection context
-        service.set_connection_context(None)
+        # Verify service is properly initialized
+        assert service._server_host == "localhost"
         assert service._connection is None
 
         # Execute service
@@ -203,8 +193,7 @@ class TestSchemaSyncIntegration:
 
 __all__ = [
     "TestFlextLdapSchemaSyncInitialization",
-    "TestConnectionContextManagement",
     "TestSchemaSyncExecute",
-    "TestSchemaSyncServiceProperties",
     "TestSchemaSyncIntegration",
+    "TestSchemaSyncServiceProperties",
 ]

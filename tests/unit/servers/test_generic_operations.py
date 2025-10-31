@@ -418,7 +418,7 @@ class TestGenericOperationsValidateEntryExceptionHandling:
     def test_validate_entry_with_none(self) -> None:
         """Test validate_entry_for_server with None."""
         ops = FlextLdapServersGenericOperations()
-        result = ops.validate_entry_for_server(None)  # type: ignore[arg-type]
+        result = ops.validate_entry_for_server(None)
         assert isinstance(result, FlextResult)
 
     def test_validate_entry_exception_handling(self) -> None:

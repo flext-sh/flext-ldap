@@ -74,9 +74,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         self._use_ssl = use_ssl
         self._connection: FlextLdapClients | None = None
         # Use flext-ldif schema parser to eliminate duplication
-        self._schema_parser = FlextLdifParserService(
-            str(schema_ldif_file)  # type: ignore[arg-type]
-        )
+        self._schema_parser = FlextLdifParserService()
 
     @override
     def execute(self) -> FlextResult[dict[str, object]]:

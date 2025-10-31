@@ -295,7 +295,7 @@ class FlextLdapAuthentication(FlextService[None]):
 
         # Use FlextLdapEntryAdapter for ldap3 → FlextLdif conversion
         adapter = FlextLdapEntryAdapter()
-        return adapter.ldap3_to_ldif_entry(user_entry)  # type: ignore[arg-type]
+        return adapter.ldap3_to_ldif_entry(user_entry)
 
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""

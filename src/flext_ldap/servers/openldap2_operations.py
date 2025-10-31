@@ -105,7 +105,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 )
 
             # OpenLDAP 2.x needs more schema attributes
-            success: bool = connection.search(
+            search_result = connection.search(
                 search_base=self.get_schema_dn(),
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 attributes=[
@@ -116,7 +116,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 ],
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                     "Schema discovery failed",
                 )
@@ -195,7 +195,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                     "Connection not bound",
                 )
 
-            success: bool = _connection.search(
+            search_result = _connection.search(
                 search_base=_dn,
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -205,7 +205,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 attributes=[FlextLdapConstants.AclAttributes.OLC_ACCESS],
             )
 
-            if not success or not _connection.entries:
+            if not search_result or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # ACL parsing delegated to flext-ldif - return empty list for now
@@ -286,9 +286,13 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             success: bool = typed_conn.modify(_dn, mods)
 
             if not success:
-                error_msg = _connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                error_msg = (
+                    _connection.result.get(
+                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
+                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                    )
+                    if _connection.result
+                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
                 )
                 return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 
@@ -448,7 +452,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextResult[dict[str, object]].fail("Connection not bound")
 
             # Use standard Root DSE search
-            success: bool = connection.search(
+            search_result = connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -458,7 +462,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 attributes=["*", "+"],
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 return FlextResult[dict[str, object]].fail("No Root DSE found")
 
             # Extract attributes from the first entry

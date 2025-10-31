@@ -56,25 +56,25 @@ __all__ = [
 def __getattr__(name: str) -> object:
     """Lazy load service and repository classes to avoid circular imports."""
     if name == "FlextLdapClients":
-        from flext_ldap.services.clients import FlextLdapClients  # noqa: PLC0415
+        from flext_ldap.services.clients import FlextLdapClients
 
         return FlextLdapClients
     if name == "FlextLdapSchema":
-        from flext_ldap.services.schema import FlextLdapSchema  # noqa: PLC0415
+        from flext_ldap.services.schema import FlextLdapSchema
 
         return FlextLdapSchema
     if name == "FlextLdapUpsertService":
-        from flext_ldap.services.upsert import FlextLdapUpsertService  # noqa: PLC0415
+        from flext_ldap.services.upsert import FlextLdapUpsertService
 
         return FlextLdapUpsertService
     if name == "LdapEntryRepository":
-        from flext_ldap.services.repository import (  # noqa: PLC0415
+        from flext_ldap.services.repository import (
             LdapEntryRepository,
         )
 
         return LdapEntryRepository
     if name == "RepositoryBase":
-        from flext_ldap.services.repository import RepositoryBase  # noqa: PLC0415
+        from flext_ldap.services.repository import RepositoryBase
 
         return RepositoryBase
     msg = f"module {__name__!r} has no attribute {name!r}"

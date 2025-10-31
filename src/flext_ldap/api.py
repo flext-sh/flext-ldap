@@ -69,7 +69,7 @@ class FlextLdap(FlextService[None]):
         self._config: FlextLdapConfig = (
             config if config is not None else FlextLdapConfig()
         )
-        self._ldif: FlextLdif | None = None
+        self._ldif: FlextLdif = FlextLdif.get_instance()  # Always use singleton
         self._entry_adapter: FlextLdapEntryAdapter | None = None
         self._quirks_mode: FlextLdapConstants.Types.QuirksMode = (
             FlextLdapConstants.Types.QuirksMode.AUTOMATIC
@@ -98,6 +98,11 @@ class FlextLdap(FlextService[None]):
     def config(self) -> FlextLdapConfig:
         """Get LDAP configuration."""
         return self._config
+
+    @property
+    def ldif(self) -> FlextLdif:
+        """Get FlextLdif singleton instance for deep LDIF integration."""
+        return self._ldif
 
     def _lazy_init(self, attr_name: str, factory: Callable[[], object]) -> object:
         """Unified lazy initialization pattern using FlextContainer-like pattern.
@@ -881,9 +886,8 @@ class FlextLdap(FlextService[None]):
         Delegates to FlextLdif.write() to eliminate duplication and ensure
         RFC-compliant LDIF formatting.
         """
-        ldif = FlextLdif()
-        # Use FlextLdif.write() with all entries at once (more efficient)
-        write_result = ldif.write(entries)
+        # Use integrated FlextLdif singleton instance
+        write_result = self._ldif.write(entries)
         if write_result.is_failure:
             # Return empty string on failure (or could log the error)
             return ""
@@ -894,8 +898,8 @@ class FlextLdap(FlextService[None]):
         ldif_content: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Import entries from LDIF content using FlextLdif library."""
-        ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        # Use integrated FlextLdif singleton instance
+        result = self._ldif.parse(ldif_content)
 
         if result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(result.error)
@@ -961,7 +965,7 @@ class FlextLdap(FlextService[None]):
                 return FlextResult[dict[str, object]].fail(
                     "Cannot get server quirks info: not connected to LDAP server",
                 )
-            return self.client.get_server_quirks_info()  # type: ignore[attr-defined]
+            return self.client.get_server_quirks_info()
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to get server quirks information: {e}",
@@ -995,7 +999,7 @@ class FlextLdap(FlextService[None]):
                 return FlextResult[list[str]].fail(
                     "Cannot get server attributes: not connected to LDAP server",
                 )
-            return self.client.get_server_attributes(capability)  # type: ignore[attr-defined]
+            return self.client.get_server_attributes(capability)
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult[list[str]].fail(
                 f"Failed to get server attributes for capability '{capability}': {e}",
@@ -1038,7 +1042,7 @@ class FlextLdap(FlextService[None]):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     "Cannot transform: entry is empty or None",
                 )
-            return self.client.transform_entry_for_server(entry, target_server_type)  # type: ignore[attr-defined]
+            return self.client.transform_entry_for_server(entry, target_server_type)
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Failed to transform entry for server type '{target_server_type}': {e}",

@@ -34,31 +34,31 @@ __all__ = [
 def __getattr__(name: str) -> object:
     """Lazy load service classes and repository classes to avoid circular imports."""
     if name == "DomainServices":
-        from flext_ldap.services.domain import DomainServices  # noqa: PLC0415
+        from flext_ldap.services.domain import DomainServices
 
         return DomainServices
     if name == "FlextLdapAclService":
-        from flext_ldap.services.acl import FlextLdapAclService  # noqa: PLC0415
+        from flext_ldap.services.acl import FlextLdapAclService
 
         return FlextLdapAclService
     if name == "FlextLdapSchema":
-        from flext_ldap.services.schema import FlextLdapSchema  # noqa: PLC0415
+        from flext_ldap.services.schema import FlextLdapSchema
 
         return FlextLdapSchema
     if name == "FlextLdapServersService":
-        from flext_ldap.services.servers import FlextLdapServersService  # noqa: PLC0415
+        from flext_ldap.services.servers import FlextLdapServersService
 
         return FlextLdapServersService
     if name == "FlextLdapUpsertService":
-        from flext_ldap.services.upsert import FlextLdapUpsertService  # noqa: PLC0415
+        from flext_ldap.services.upsert import FlextLdapUpsertService
 
         return FlextLdapUpsertService
     if name == "LdapEntryRepository":
-        from flext_ldap.services.repository import LdapEntryRepository  # noqa: PLC0415
+        from flext_ldap.services.repository import LdapEntryRepository
 
         return LdapEntryRepository
     if name == "RepositoryBase":
-        from flext_ldap.services.repository import RepositoryBase  # noqa: PLC0415
+        from flext_ldap.services.repository import RepositoryBase
 
         return RepositoryBase
     msg = f"module {__name__!r} has no attribute {name!r}"

@@ -194,9 +194,7 @@ class TestFlextLdapBaseOperationsAcl:
         connected_client: FlextLdapClients,
     ) -> None:
         """Test getting ACLs returns FlextResult."""
-        result = operations.get_acls(
-            connected_client.connection, dn="dc=flext,dc=local"
-        )
+        result = operations.get_acls(connected_client.connection, "dc=flext,dc=local")
 
         assert result.is_success is True or result.is_failure is True
         # Both success and failure are valid - depends on server configuration

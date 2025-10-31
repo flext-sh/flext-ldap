@@ -14,7 +14,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services import FlextLdifEntrys, FlextLdifQuirksManager
+from flext_ldif.services import FlextLdifEntrys, FlextLdifRegistry
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -53,9 +53,9 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._ldif = FlextLdif()
-        self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
-        self._entry_quirks = FlextLdifEntrys()
+        self._ldif = FlextLdif.get_instance()
+        self._quirks_manager = FlextLdifRegistry.get_global_instance()
+        self._entrys = FlextLdifEntrys()
         self._detected_server_type: str | None = server_type
         self._quirks_cache: dict[str, object] = {}
 
@@ -78,7 +78,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         return self._detected_server_type
 
     @property
-    def quirks_manager(self) -> FlextLdifQuirksManager:
+    def quirks_manager(self) -> FlextLdifRegistry:
         """Get FlextLdif quirks manager instance."""
         return self._quirks_manager
 
@@ -111,7 +111,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         ldif_content = ldif_write_result.unwrap()
 
         # Use FlextLdif API for server detection
-        api = FlextLdif()
+        api = FlextLdif.get_instance()
         detection_result = api.detect_server_type(ldif_content=ldif_content)
         if detection_result.is_failure:
             self.logger.warning(
@@ -160,16 +160,15 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
                 del self._quirks_cache[target_type]
 
             # Get quirks from FlextLdif manager
-            quirks = self._quirks_manager.quirks_registry.get(target_type, {})
+            quirks = self._quirks_manager.get_all_quirks_for_server(target_type)
 
             if not quirks:
                 self.logger.warning(
                     "No quirks found for server type, using generic",
                     extra={"server_type": target_type},
                 )
-                quirks = self._quirks_manager.quirks_registry.get(
+                quirks = self._quirks_manager.get_all_quirks_for_server(
                     FlextLdapConstants.LdapDictKeys.GENERIC,
-                    {},
                 )
 
             # Cache the quirks
@@ -355,9 +354,9 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
 
         """
         # Delegate to FlextLdifEntrys for server-specific normalization
-        adapt_result = self._entry_quirks.adapt_entry(
+        adapt_result = self._entrys.adapt_entry(
             entry,
-            target_server=target_server_type,
+            target_server_type,
         )
         if adapt_result.is_failure:
             self.logger.warning(

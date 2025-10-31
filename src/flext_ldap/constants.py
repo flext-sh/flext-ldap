@@ -102,7 +102,7 @@ class FlextLdapConstants(FlextLdifConstants):
         MAX_PAGE_SIZE_GENERIC: Final[int] = 1000
         MAX_PAGE_SIZE_AD: Final[int] = 100000
 
-    class Scopes:  # type: ignore[override]
+    class Scopes:
         """LDAP search scope constants (RFC 4511)."""
 
         BASE: Final[str] = "base"
@@ -174,7 +174,7 @@ class FlextLdapConstants(FlextLdifConstants):
     # ACL SUBJECT TYPES
     # =========================================================================
 
-    class AclSubjectTypes:  # type: ignore[override]
+    class AclSubjectTypes:
         """ACL subject type constants."""
 
         USER: Final[str] = "user"
@@ -676,7 +676,7 @@ class FlextLdapConstants(FlextLdifConstants):
     # SERVER TYPES - Server identification constants
     # =========================================================================
 
-    class ServerTypes:  # type: ignore[override]
+    class ServerTypes:
         """LDAP server type identifiers extending FlextLdifConstants.
 
         Inherits server types from FlextLdifConstants and adds LDAP-specific

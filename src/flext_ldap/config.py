@@ -331,7 +331,7 @@ class FlextLdapConfig(FlextConfig):
             )
 
         # Validate caching configuration
-        if self.enable_caching and self.cache_ttl <= 0:  # type: ignore[attr-defined]
+        if self.enable_caching and self.cache_ttl <= 0:
             msg = "Cache TTL must be positive when caching is enabled"
             raise FlextExceptions.ConfigurationError(msg, config_key="ldap_cache_ttl")
 
@@ -428,15 +428,15 @@ class FlextLdapConfig(FlextConfig):
                 case FlextLdapConstants.ConfigCategoryKeys.CACHE:
                     match prop:
                         case FlextLdapConstants.ConfigPropertyKeys.ENABLED:
-                            return self.enable_caching  # type: ignore[attr-defined]
+                            return self.enable_caching
                         case FlextLdapConstants.ConfigPropertyKeys.TTL:
-                            return self.cache_ttl  # type: ignore[attr-defined]
+                            return self.cache_ttl
                 case FlextLdapConstants.ConfigCategoryKeys.RETRY:
                     match prop:
                         case FlextLdapConstants.ConfigPropertyKeys.ATTEMPTS:
-                            return self.max_retry_attempts  # type: ignore[attr-defined]
+                            return self.max_retry_attempts
                         case FlextLdapConstants.ConfigPropertyKeys.DELAY:
-                            return self.retry_delay  # type: ignore[attr-defined]
+                            return self.retry_delay
                 case FlextLdapConstants.ConfigCategoryKeys.LOGGING:
                     match prop:
                         case FlextLdapConstants.ConfigPropertyKeys.DEBUG:

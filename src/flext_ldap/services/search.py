@@ -199,7 +199,7 @@ class FlextLdapSearch(FlextService[None]):
                     "FlextLdapConstants.Types.Ldap3Scope",
                     ldap3_scope,
                 )
-                success = active_connection.search(
+                search_result = active_connection.search(
                     base_dn,
                     filter_str,
                     scope_value,
@@ -222,7 +222,7 @@ class FlextLdapSearch(FlextService[None]):
                     e,
                 )
                 scope_value = cast("FlextLdapConstants.Types.Ldap3Scope", ldap3_scope)
-                success = active_connection.search(
+                search_result = active_connection.search(
                     base_dn,
                     filter_str,
                     scope_value,
@@ -251,7 +251,7 @@ class FlextLdapSearch(FlextService[None]):
                             "FlextLdapConstants.Types.Ldap3Scope",
                             ldap3_scope,
                         )
-                        success = active_connection.search(
+                        search_result = active_connection.search(
                             base_dn,
                             filter_str,
                             scope_value,
@@ -268,7 +268,7 @@ class FlextLdapSearch(FlextService[None]):
                 last_error_text = str(active_connection.last_error)
 
             # ldap3 returns False when search matches zero results (not an error)
-            if not success and active_connection.bound and not last_error_text:
+            if not search_result and active_connection.bound and not last_error_text:
                 self.logger.debug(
                     "ldap3 returned False with no error (zero results), treating as success",
                 )

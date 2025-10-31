@@ -14,7 +14,7 @@ import time
 
 import pytest
 from flext_ldif import FlextLdifModels
-from flext_ldif.constants import LdapServerType
+from flext_ldif.constants import FlextLdifConstants
 
 from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapSchema
 
@@ -61,8 +61,8 @@ class TestRealSchemaDiscovery:
 
         # OpenLDAP should be detected or GENERIC (enum values)
         assert server_type in {
-            LdapServerType.OPENLDAP,
-            LdapServerType.GENERIC,
+            FlextLdifConstants.LdapServerType.OPENLDAP,
+            FlextLdifConstants.LdapServerType.GENERIC,
         }, f"Unexpected server type: {server_type}"
 
     def test_discover_server_capabilities(
@@ -139,7 +139,7 @@ class TestRealServerQuirksDetection:
         server_type = detector.detect_server_type(server_info)
 
         assert server_type is not None
-        assert isinstance(server_type, LdapServerType)
+        assert isinstance(server_type, FlextLdifConstants.LdapServerType)
 
         # Get quirks for detected type
         quirks = detector.get_server_quirks(str(server_type))
@@ -166,7 +166,7 @@ class TestRealServerQuirksDetection:
         assert quirks is not None
 
         # OpenLDAP typically has these characteristics
-        if quirks.server_type == LdapServerType.OPENLDAP:
+        if quirks.server_type == FlextLdifConstants.LdapServerType.OPENLDAP:
             assert quirks.case_sensitive_dns is True
             assert quirks.case_sensitive_attributes is True
             assert quirks.supports_paged_results is True
